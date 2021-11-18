@@ -49,7 +49,7 @@ class PackageInfoError(ValueError):
     def __init__(
         self, path: Union[Path, str], *reasons: Union[BaseException, str]
     ) -> None:
-        reasons = (f"Unable to determine package info for path: {str(path)}",) + reasons
+        reasons = (f"Unable to determine package info for path: {path!s}",) + reasons
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
 
@@ -178,8 +178,8 @@ class PackageInfo:
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 self._log(
-                    "Invalid constraint ({}) found in {}-{} dependencies, "
-                    "skipping".format(req, package.name, package.version),
+                    f"Invalid constraint ({req}) found in {package.name}-{package.version} dependencies, "
+                    "skipping",
                     level="warning",
                 )
                 continue
@@ -460,6 +460,10 @@ class PackageInfo:
             dest_dir = venv.path.parent / "dist"
             dest_dir.mkdir()
 
+            pep517_meta_build_script = PEP517_META_BUILD.format(
+                source=path.as_posix(), dest=dest_dir.as_posix()
+            )
+
             try:
                 venv.run_pip(
                     "install",
@@ -470,9 +474,7 @@ class PackageInfo:
                 venv.run(
                     "python",
                     "-",
-                    input_=PEP517_META_BUILD.format(
-                        source=path.as_posix(), dest=dest_dir.as_posix()
-                    ),
+                    input_=pep517_meta_build_script,
                 )
                 return cls.from_metadata(dest_dir)
             except EnvCommandError as e:

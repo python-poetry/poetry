@@ -130,9 +130,7 @@ class Incompatibility:
             assert depender.is_positive()
             assert not dependee.is_positive()
 
-            return "{} depends on {}".format(
-                self._terse(depender, allow_every=True), self._terse(dependee)
-            )
+            return f"{self._terse(depender, allow_every=True)} depends on {self._terse(dependee)}"
         elif isinstance(self._cause, PythonCause):
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
@@ -155,9 +153,7 @@ class Incompatibility:
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
 
-            return "no versions of {} match {}".format(
-                self._terms[0].dependency.name, self._terms[0].constraint
-            )
+            return f"no versions of {self._terms[0].dependency.name} match {self._terms[0].constraint}"
         elif isinstance(self._cause, PackageNotFoundCause):
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
@@ -168,18 +164,14 @@ class Incompatibility:
             assert not self._terms[0].is_positive()
             assert self._terms[0].dependency.is_root
 
-            return "{} is {}".format(
-                self._terms[0].dependency.name, self._terms[0].dependency.constraint
-            )
+            return f"{self._terms[0].dependency.name} is {self._terms[0].dependency.constraint}"
         elif self.is_failure():
             return "version solving failed"
 
         if len(self._terms) == 1:
             term = self._terms[0]
-            return "{} is {}".format(
-                term.dependency.name,
-                "forbidden" if term.is_positive() else "required",
-            )
+            verb = "forbidden" if term.is_positive() else "required"
+            return f"{term.dependency.name} is {verb}"
 
         if len(self._terms) == 2:
             term1 = self._terms[0]
@@ -200,9 +192,7 @@ class Incompatibility:
 
                     return f"{package1} is incompatible with {package2}"
                 else:
-                    return "either {} or {}".format(
-                        self._terse(term1), self._terse(term2)
-                    )
+                    return f"either {self._terse(term1)} or {self._terse(term2)}"
 
         positive = []
         negative = []
@@ -217,17 +207,13 @@ class Incompatibility:
             if len(positive) == 1:
                 positive_term = [term for term in self._terms if term.is_positive()][0]
 
-                return "{} requires {}".format(
-                    self._terse(positive_term, allow_every=True), " or ".join(negative)
-                )
+                return f"{self._terse(positive_term, allow_every=True)} requires {' or '.join(negative)}"
             else:
-                return "if {} then {}".format(
-                    " and ".join(positive), " or ".join(negative)
-                )
+                return f"if {' and '.join(positive)} then {' or '.join(negative)}"
         elif positive:
-            return "one of {} must be false".format(" or ".join(positive))
+            return f"one of {' or '.join(positive)} must be false"
         else:
-            return "one of {} must be true".format(" or ".join(negative))
+            return f"one of {' or '.join(negative)} must be true"
 
     def and_to_string(
         self,
@@ -254,12 +240,12 @@ class Incompatibility:
 
         buffer = [str(self)]
         if this_line is not None:
-            buffer.append(" " + str(this_line))
+            buffer.append(f" {this_line!s}")
 
-        buffer.append(f" and {str(other)}")
+        buffer.append(f" and {other!s}")
 
         if other_line is not None:
-            buffer.append(" " + str(other_line))
+            buffer.append(f" {other_line!s}")
 
         return "\n".join(buffer)
 
@@ -454,9 +440,7 @@ class Incompatibility:
         if term.dependency.is_root:
             return term.dependency.pretty_name
 
-        return "{} ({})".format(
-            term.dependency.pretty_name, term.dependency.pretty_constraint
-        )
+        return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
 
     def _single_term_where(
         self, callable: Callable[["Term"], bool]
@@ -474,4 +458,4 @@ class Incompatibility:
         return found
 
     def __repr__(self) -> str:
-        return f"<Incompatibility {str(self)}>"
+        return f"<Incompatibility {self!s}>"

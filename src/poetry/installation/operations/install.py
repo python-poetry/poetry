@@ -25,11 +25,7 @@ class Install(Operation):
         return "install"
 
     def __str__(self) -> str:
-        return "Installing {} ({})".format(
-            self.package.pretty_name, self.format_version(self.package)
-        )
+        return f"Installing {self.package.pretty_name} ({self.format_version(self.package)})"
 
     def __repr__(self) -> str:
-        return "<Install {} ({})>".format(
-            self.package.pretty_name, self.format_version(self.package)
-        )
+        return f"<Install {self.package.pretty_name} ({self.format_version(self.package)})>"

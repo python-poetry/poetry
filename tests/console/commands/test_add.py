@@ -366,7 +366,7 @@ def test_add_directory_constraint(
     path = "../git/github.com/demo/demo"
     tester.execute(f"{path}" if not editable else f"-e {path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -376,10 +376,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == tester.io.fetch_output()
     assert tester.command.installer.executor.installations_count == 2
@@ -409,7 +407,7 @@ def test_add_directory_with_poetry(
     path = "../git/github.com/demo/pyproject-demo"
     tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -419,10 +417,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == tester.io.fetch_output()
     assert tester.command.installer.executor.installations_count == 2
@@ -443,7 +439,7 @@ def test_add_file_constraint_wheel(
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -453,10 +449,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == tester.io.fetch_output()
     assert tester.command.installer.executor.installations_count == 2
@@ -483,7 +477,7 @@ def test_add_file_constraint_sdist(
     path = "../distributions/demo-0.1.0.tar.gz"
     tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -493,10 +487,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == tester.io.fetch_output()
     assert tester.command.installer.executor.installations_count == 2
@@ -1305,7 +1297,7 @@ def test_add_directory_constraint_old_installer(
     path = "../git/github.com/demo/demo"
     old_tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -1315,10 +1307,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.2 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1345,7 +1335,7 @@ def test_add_directory_with_poetry_old_installer(
     path = "../git/github.com/demo/pyproject-demo"
     old_tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -1355,10 +1345,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.2 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1380,7 +1368,7 @@ def test_add_file_constraint_wheel_old_installer(
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     old_tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -1390,10 +1378,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1422,7 +1408,7 @@ def test_add_file_constraint_sdist_old_installer(
     path = "../distributions/demo-0.1.0.tar.gz"
     old_tester.execute(f"{path}")
 
-    expected = """\
+    expected = f"""\
 
 Updating dependencies
 Resolving dependencies...
@@ -1432,10 +1418,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 {})
-""".format(
-        app.poetry.file.parent.joinpath(path).resolve().as_posix()
-    )
+  - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+"""
 
     assert expected == old_tester.io.fetch_output()
 

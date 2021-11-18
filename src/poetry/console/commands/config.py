@@ -230,7 +230,7 @@ To remove a repository (repo is a short alias for repositories):
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "
-                        "(username, password), got {}".format(len(values))
+                        f"(username, password), got {len(values)}"
                     )
                 else:
                     username = values[0]
@@ -270,7 +270,7 @@ To remove a repository (repo is a short alias for repositories):
 
             return 0
 
-        raise ValueError("Setting {} does not exist".format(self.argument("key")))
+        raise ValueError(f"Setting {self.argument('key')} does not exist")
 
     def _handle_single_value(
         self,
@@ -307,19 +307,16 @@ To remove a repository (repo is a short alias for repositories):
 
                 continue
             elif isinstance(value, list):
-                value = [
+                value = ", ".join(
                     json.dumps(val) if isinstance(val, list) else val for val in value
-                ]
-
-                value = "[{}]".format(", ".join(value))
+                )
+                value = f"[{value}]"
 
             if k.startswith("repositories."):
-                message = "<c1>{}</c1> = <c2>{}</c2>".format(
-                    k + key, json.dumps(raw_val)
-                )
+                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>"
             elif isinstance(raw_val, str) and raw_val != value:
-                message = "<c1>{}</c1> = <c2>{}</c2>  # {}".format(
-                    k + key, json.dumps(raw_val), value
+                message = (
+                    f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>  # {value}"
                 )
             else:
                 message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
@@ -361,12 +358,11 @@ To remove a repository (repo is a short alias for repositories):
                     continue
 
                 if isinstance(value, list):
-                    value = [
+                    value = ", ".join(
                         json.dumps(val) if isinstance(val, list) else val
                         for val in value
-                    ]
-
-                    value = "[{}]".format(", ".join(value))
+                    )
+                    value = f"[{value}]"
 
                 value = json.dumps(value)
 

@@ -24,6 +24,7 @@ class PluginShowCommand(Command):
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.utils.env import EnvManager
         from poetry.utils.helpers import canonicalize_name
+        from poetry.utils.helpers import pluralize
 
         plugins: DefaultDict[str, Dict[str, Union["Package", List[str]]]] = defaultdict(
             lambda: {
@@ -57,27 +58,21 @@ class PluginShowCommand(Command):
 
         for name, info in plugins.items():
             package = info["package"]
+            description = " " + package.description if package.description else ""
             self.line("")
-            self.line(
-                "  • <c1>{}</c1> (<c2>{}</c2>){}".format(
-                    name,
-                    package.version,
-                    " " + package.description if package.description else "",
-                )
-            )
+            self.line(f"  • <c1>{name}</c1> (<c2>{package.version}</c2>){description}")
             provide_line = "     "
             if info["plugins"]:
-                provide_line += " <info>{}</info> plugin{}".format(
-                    len(info["plugins"]), "s" if len(info["plugins"]) > 1 else ""
-                )
+                count = len(info["plugins"])
+                provide_line += f" <info>{count}</info> plugin{pluralize(count)}"
 
             if info["application_plugins"]:
                 if info["plugins"]:
                     provide_line += " and"
 
-                provide_line += " <info>{}</info> application plugin{}".format(
-                    len(info["application_plugins"]),
-                    "s" if len(info["application_plugins"]) > 1 else "",
+                count = len(info["application_plugins"])
+                provide_line += (
+                    f" <info>{count}</info> application plugin{pluralize(count)}"
                 )
 
             self.line(provide_line)
@@ -87,9 +82,7 @@ class PluginShowCommand(Command):
                 self.line("      <info>Dependencies</info>")
                 for dependency in package.requires:
                     self.line(
-                        "        - {} (<c2>{}</c2>)".format(
-                            dependency.pretty_name, dependency.pretty_constraint
-                        )
+                        f"        - {dependency.pretty_name} (<c2>{dependency.pretty_constraint}</c2>)"
                     )
 
         return 0

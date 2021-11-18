@@ -1125,11 +1125,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-foo @ {}/tests/fixtures/sample_project
-""".format(
-        working_directory.as_uri()
-    )
+    expected = f"""\
+foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
+"""
 
     assert expected == content
 
@@ -1193,15 +1191,11 @@ def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-bar @ {}/tests/fixtures/project_with_nested_local/bar
-baz @ {}/tests/fixtures/project_with_nested_local
-foo @ {}/tests/fixtures/sample_project
-""".format(
-        working_directory.as_uri(),
-        working_directory.as_uri(),
-        working_directory.as_uri(),
-    )
+    expected = f"""\
+bar @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local/bar
+baz @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local
+foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
+"""
 
     assert expected == content
 
@@ -1242,11 +1236,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-foo @ {}/tests/fixtures/sample_project ; python_version < "3.7"
-""".format(
-        working_directory.as_uri()
-    )
+    expected = f"""\
+foo @ {working_directory.as_uri()}/tests/fixtures/sample_project ; python_version < "3.7"
+"""
 
     assert expected == content
 
@@ -1286,11 +1278,9 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
-""".format(
-        working_directory.as_uri()
-    )
+    expected = f"""\
+foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz
+"""
 
     assert expected == content
 
@@ -1331,11 +1321,9 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz ; python_version < "3.7"
-""".format(
-        working_directory.as_uri()
-    )
+    expected = f"""\
+foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz ; python_version < "3.7"
+"""
 
     assert expected == content
 
@@ -1570,7 +1558,7 @@ def test_exporter_exports_requirements_txt_with_dev_extras(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    assert content == "{}\n".format("\n".join(expected))
+    assert content == "\n".join(expected) + "\n"
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(

@@ -430,18 +430,15 @@ A = []
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
     locker: Locker, caplog: "LogCaptureFixture"
 ):
-    content = """\
+    version = ".".join(Version.parse(Locker._VERSION).next_minor().text.split(".")[:2])
+    content = f"""\
 [metadata]
 lock-version = "{version}"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
-""".format(
-        version=".".join(
-            Version.parse(Locker._VERSION).next_minor().text.split(".")[:2]
-        )
-    )
+"""
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker.lock.write(tomlkit.parse(content))
@@ -524,16 +521,14 @@ def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatibl
     older_version = ".".join(
         [str(current_version.major), str(current_version.minor - 1)]
     )
-    content = """\
+    content = f"""\
 [metadata]
-lock-version = "{version}"
+lock-version = "{older_version}"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
-""".format(
-        version=older_version
-    )
+"""
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker.lock.write(tomlkit.parse(content))

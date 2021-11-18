@@ -70,7 +70,7 @@ def test_self_update_can_update_from_recommended_installation(
 
     tester.execute()
 
-    expected_output = """\
+    expected_output = f"""\
 Updating Poetry to 1.2.0
 
 Updating dependencies
@@ -79,14 +79,12 @@ Resolving dependencies...
 Package operations: 0 installs, 2 updates, 0 removals
 
   - Updating cleo (0.8.2 -> 1.0.0)
-  - Updating poetry ({} -> {})
+  - Updating poetry ({__version__} -> {new_version})
 
 Updating the poetry script
 
-Poetry ({}) is installed now. Great!
-""".format(
-        __version__, new_version, new_version
-    )
+Poetry ({new_version}) is installed now. Great!
+"""
 
     assert tester.io.fetch_output() == expected_output
 

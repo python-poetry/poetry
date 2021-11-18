@@ -67,9 +67,7 @@ class Publisher:
                 auth = self._authenticator.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
-                        "Found authentication information for {}.".format(
-                            repository_name
-                        )
+                        f"Found authentication information for {repository_name}."
                     )
                     username = auth["username"]
                     password = auth["password"]
@@ -88,13 +86,11 @@ class Publisher:
 
         self._uploader.auth(username, password)
 
+        if repository_name == "pypi":
+            repository_name = "PyPI"
         self._io.write_line(
-            "Publishing <c1>{}</c1> (<c2>{}</c2>) "
-            "to <info>{}</info>".format(
-                self._package.pretty_name,
-                self._package.pretty_version,
-                "PyPI" if repository_name == "pypi" else repository_name,
-            )
+            f"Publishing <c1>{self._package.pretty_name}</c1> (<c2>{self._package.pretty_version}</c2>) "
+            f"to <info>{repository_name}</info>"
         )
 
         self._uploader.upload(

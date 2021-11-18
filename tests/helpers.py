@@ -216,8 +216,6 @@ class TestRepository(Repository):
     def find_links_for_package(self, package: Package) -> List[Link]:
         return [
             Link(
-                "https://foo.bar/files/{}-{}-py2.py3-none-any.whl".format(
-                    escape_name(package.name), escape_version(package.version.text)
-                )
+                f"https://foo.bar/files/{escape_name(package.name)}-{escape_version(package.version.text)}-py2.py3-none-any.whl"
             )
         ]

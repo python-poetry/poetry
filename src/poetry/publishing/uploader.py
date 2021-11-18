@@ -335,4 +335,4 @@ class Uploader:
         elif len(exts) >= 2 and "".join(exts[-2:]) == ".tar.gz":
             return "sdist"
 
-        raise ValueError("Unknown distribution format {}".format("".join(exts)))
+        raise ValueError("Unknown distribution format " + "".join(exts))

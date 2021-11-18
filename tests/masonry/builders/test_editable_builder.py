@@ -152,42 +152,36 @@ My Package
     assert str(dist_info.joinpath("entry_points.txt")) in records
     assert str(dist_info.joinpath("RECORD")) in records
 
-    baz_script = """\
-#!{python}
+    baz_script = f"""\
+#!{tmp_venv.python}
 import sys
 from bar import baz
 
 if __name__ == '__main__':
     sys.exit(baz.boom.bim())
-""".format(
-        python=tmp_venv.python
-    )
+"""
 
     assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text()
 
-    foo_script = """\
-#!{python}
+    foo_script = f"""\
+#!{tmp_venv.python}
 import sys
 from foo import bar
 
 if __name__ == '__main__':
     sys.exit(bar())
-""".format(
-        python=tmp_venv.python
-    )
+"""
 
     assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
 
-    fox_script = """\
-#!{python}
+    fox_script = f"""\
+#!{tmp_venv.python}
 import sys
 from fuz.foo import bar
 
 if __name__ == '__main__':
     sys.exit(bar.baz())
-""".format(
-        python=tmp_venv.python
-    )
+"""
 
     assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text()
 

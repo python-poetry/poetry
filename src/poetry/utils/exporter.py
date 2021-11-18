@@ -45,7 +45,7 @@ class Exporter:
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError(f"Invalid export format: {fmt}")
 
-        getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
+        getattr(self, "_export_" + fmt.replace(".", "_"))(
             cwd,
             output,
             with_hashes=with_hashes,
@@ -120,11 +120,8 @@ class Exporter:
                     hashes.append(f"{algorithm}:{h}")
 
                 if hashes:
-                    line += " \\\n"
-                    for i, h in enumerate(hashes):
-                        line += "    --hash={}{}".format(
-                            h, " \\\n" if i < len(hashes) - 1 else ""
-                        )
+                    sep = " \\\n"
+                    line += sep + sep.join(f"    --hash={h}" for h in hashes)
             dependency_lines.add(line)
 
         content += "\n".join(sorted(dependency_lines))

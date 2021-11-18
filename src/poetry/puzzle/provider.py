@@ -216,9 +216,8 @@ class Provider:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
-        tmp_dir = Path(
-            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
-        )
+        suffix = url.split("/")[-1].rstrip(".git")
+        tmp_dir = Path(mkdtemp(prefix=f"pypoetry-git-{suffix}"))
 
         try:
             git = Git()
@@ -259,9 +258,7 @@ class Provider:
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, package.name
-                )
+                f"The dependency name for {dependency.name} does not match the actual package's name: {package.name}"
             )
 
         if dependency.base is not None:
@@ -321,9 +318,7 @@ class Provider:
         if name and name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    name, package.name
-                )
+                f"The dependency name for {name} does not match the actual package's name: {package.name}"
             )
 
         return package
@@ -337,9 +332,7 @@ class Provider:
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, package.name
-                )
+                f"The dependency name for {dependency.name} does not match the actual package's name: {package.name}"
             )
 
         for extra in dependency.extras:
@@ -596,7 +589,7 @@ class Provider:
                 continue
 
             if len(by_constraint) == 1:
-                self.debug(f"<debug>Merging requirements for {str(deps[0])}</debug>")
+                self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
                 dependencies.append(list(by_constraint.values())[0][0])
                 continue
 
@@ -633,28 +626,19 @@ class Provider:
             # with the following overrides:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
-            markers = []
-            for deps in by_constraint.values():
-                markers.append(deps[0].marker)
-
             _deps = [_dep[0] for _dep in by_constraint.values()]
-            self.debug(
-                "<warning>Different requirements found for {}.</warning>".format(
-                    ", ".join(
-                        "<c1>{}</c1> <fg=default>(<c2>{}</c2>)</> with markers <b>{}</b>".format(
-                            d.name,
-                            d.pretty_constraint,
-                            d.marker if not d.marker.is_any() else "*",
-                        )
-                        for d in _deps[:-1]
-                    )
-                    + " and "
-                    + "<c1>{}</c1> <fg=default>(<c2>{}</c2>)</> with markers <b>{}</b>".format(
-                        _deps[-1].name,
-                        _deps[-1].pretty_constraint,
-                        _deps[-1].marker if not _deps[-1].marker.is_any() else "*",
-                    )
+
+            def fmt_warning(d: "Dependency") -> str:
+                marker = d.marker if not d.marker.is_any() else "*"
+                return (
+                    f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</> "
+                    f"with markers <b>{marker}</b>"
                 )
+
+            warnings = ", ".join(fmt_warning(d) for d in _deps[:-1])
+            warnings += f" and {fmt_warning(_deps[-1])}"
+            self.debug(
+                f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
             # We need to check if one of the duplicate dependencies
@@ -758,10 +742,8 @@ class Provider:
                     version = ""
 
                 message = (
-                    "<fg=blue>fact</>: <c1>{}</c1>{} "
-                    "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
-                        name, version, m.group(2), m.group(3)
-                    )
+                    f"<fg=blue>fact</>: <c1>{name}</c1>{version} "
+                    f"depends on <c1>{m.group(2)}</c1> (<c2>{m.group(3)}</c2>)"
                 )
             elif " is " in message:
                 message = re.sub(
@@ -773,7 +755,7 @@ class Provider:
                 message = re.sub(
                     r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<c2>\\2</c2>)", message
                 )
-                message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
+                message = f"<fg=blue>fact</>: {message.split('fact: ')[1]}"
         elif message.startswith("selecting "):
             message = re.sub(
                 r"selecting (.+?) \((.+?)\)",
@@ -783,12 +765,10 @@ class Provider:
         elif message.startswith("derived:"):
             m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
-                message = "<fg=blue>derived</>: <c1>{}</c1> (<c2>{}</c2>)".format(
-                    m.group(1), m.group(2)
-                )
+                message = f"<fg=blue>derived</>: <c1>{m.group(1)}</c1> (<c2>{m.group(2)}</c2>)"
             else:
-                message = "<fg=blue>derived</>: <c1>{}</c1>".format(
-                    message.split("derived: ")[1]
+                message = (
+                    f"<fg=blue>derived</>: <c1>{message.split('derived: ')[1]}</c1>"
                 )
         elif message.startswith("conflict:"):
             m = re.match(r"conflict: (.+?) depends on (.+?) \((.+?)\)", message)
@@ -802,15 +782,11 @@ class Provider:
                     version = ""
 
                 message = (
-                    "<fg=red;options=bold>conflict</>: <c1>{}</c1>{} "
-                    "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
-                        name, version, m.group(2), m.group(3)
-                    )
+                    f"<fg=red;options=bold>conflict</>: <c1>{name}</c1>{version} "
+                    f"depends on <c1>{m.group(2)}</c1> (<c2>{m.group(3)}</c2>)"
                 )
             else:
-                message = "<fg=red;options=bold>conflict</>: {}".format(
-                    message.split("conflict: ")[1]
-                )
+                message = f"<fg=red;options=bold>conflict</>: {message.split('conflict: ')[1]}"
 
         message = message.replace("! ", "<error>!</error> ")
 

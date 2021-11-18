@@ -41,9 +41,8 @@ class SetupReader:
             if not filepath.exists():
                 continue
 
-            new_result = getattr(cls(), "read_{}".format(filename.replace(".", "_")))(
-                filepath
-            )
+            read_file_func = getattr(cls(), "read_" + filename.replace(".", "_"))
+            new_result = read_file_func(filepath)
 
             for key in result.keys():
                 if new_result[key]:

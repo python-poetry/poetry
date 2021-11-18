@@ -26,6 +26,7 @@ from poetry.installation.chooser import Chooser
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 from poetry.utils.pip import pip_install
@@ -221,6 +222,7 @@ class Executor:
 
     def _execute_operation(self, operation: "OperationTypes") -> None:
         try:
+            op_message = self.get_operation_message(operation)
             if self.supports_fancy_output():
                 if id(operation) not in self._sections and self._should_write_operation(
                     operation
@@ -228,27 +230,20 @@ class Executor:
                     with self._lock:
                         self._sections[id(operation)] = self._io.section()
                         self._sections[id(operation)].write_line(
-                            "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
-                                message=self.get_operation_message(operation),
-                            ),
+                            f"  <fg=blue;options=bold>•</> {op_message}: <fg=blue>Pending...</>"
                         )
             else:
                 if self._should_write_operation(operation):
                     if not operation.skipped:
                         self._io.write_line(
-                            "  <fg=blue;options=bold>•</> {message}".format(
-                                message=self.get_operation_message(operation),
-                            ),
+                            f"  <fg=blue;options=bold>•</> {op_message}"
                         )
                     else:
                         self._io.write_line(
-                            "  <fg=default;options=bold,dark>•</> {message}: "
+                            f"  <fg=default;options=bold,dark>•</> {op_message}: "
                             "<fg=default;options=bold,dark>Skipped</> "
                             "<fg=default;options=dark>for the following reason:</> "
-                            "<fg=default;options=bold,dark>{reason}</>".format(
-                                message=self.get_operation_message(operation),
-                                reason=operation.skip_reason,
-                            )
+                            f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
                         )
 
             try:
@@ -271,11 +266,7 @@ class Executor:
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
-                    message = (
-                        "  <error>•</error> {message}: <error>Failed</error>".format(
-                            message=self.get_operation_message(operation, error=True),
-                        )
-                    )
+                    message = f"  <error>•</error> {self.get_operation_message(operation, error=True)}: <error>Failed</error>"
                     self._write(operation, message)
                     io = self._sections.get(id(operation), self._io)
 
@@ -288,9 +279,7 @@ class Executor:
                     self._shutdown = True
         except KeyboardInterrupt:
             try:
-                message = "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
-                    message=self.get_operation_message(operation, warning=True),
-                )
+                message = f"  <warning>•</warning> {self.get_operation_message(operation, warning=True)}: <warning>Cancelled</warning>"
                 if not self.supports_fancy_output():
                     self._io.write_line(message)
                 else:
@@ -307,13 +296,10 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    "  <fg=default;options=bold,dark>•</> {message}: "
+                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
                     "<fg=default;options=bold,dark>Skipped</> "
                     "<fg=default;options=dark>for the following reason:</> "
-                    "<fg=default;options=bold,dark>{reason}</>".format(
-                        message=operation_message,
-                        reason=operation.skip_reason,
-                    ),
+                    f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
                 )
 
             self._skipped[operation.job_type] += 1
@@ -321,11 +307,7 @@ class Executor:
             return 0
 
         if not self._enabled or self._dry_run:
-            self._io.write_line(
-                "  <fg=blue;options=bold>•</> {message}".format(
-                    message=operation_message,
-                )
-            )
+            self._io.write_line(f"  <fg=blue;options=bold>•</> {operation_message}")
 
             return 0
 
@@ -334,9 +316,8 @@ class Executor:
         if result != 0:
             return result
 
-        message = "  <fg=green;options=bold>•</> {message}".format(
-            message=self.get_operation_message(operation, done=True),
-        )
+        operation_message = self.get_operation_message(operation, done=True)
+        message = f"  <fg=green;options=bold>•</> {operation_message}"
         self._write(operation, message)
 
         self._increment_operations_count(operation, True)
@@ -394,38 +375,23 @@ class Executor:
             package_color += "_dark"
 
         if operation.job_type == "install":
-            return "<{}>Installing <{}>{}</{}> (<{}>{}</>)</>".format(
-                base_tag,
-                package_color,
-                operation.package.name,
-                package_color,
-                operation_color,
-                operation.package.full_pretty_version,
+            return (
+                f"<{base_tag}>Installing <{package_color}>{operation.package.name}</{package_color}> "
+                f"(<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
         if operation.job_type == "uninstall":
-            return "<{}>Removing <{}>{}</{}> (<{}>{}</>)</>".format(
-                base_tag,
-                package_color,
-                operation.package.name,
-                package_color,
-                operation_color,
-                operation.package.full_pretty_version,
+            return (
+                f"<{base_tag}>Removing <{package_color}>{operation.package.name}</{package_color}> "
+                f"(<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
         if operation.job_type == "update":
-            return "<{}>Updating <{}>{}</{}> (<{}>{}</{}> -> <{}>{}</>)</>".format(
-                base_tag,
-                package_color,
-                operation.initial_package.name,
-                package_color,
-                source_operation_color,
-                operation.initial_package.full_pretty_version,
-                source_operation_color,
-                operation_color,
-                operation.target_package.full_pretty_version,
+            return (
+                f"<{base_tag}>Updating <{package_color}>{operation.initial_package.name}</{package_color}> "
+                f"(<{source_operation_color}>{operation.initial_package.full_pretty_version}</{source_operation_color}> "
+                f"-> <{operation_color}>{operation.target_package.full_pretty_version}</>)</>"
             )
-
         return ""
 
     def _display_summary(self, operations: List["OperationTypes"]) -> None:
@@ -452,21 +418,13 @@ class Executor:
             return
 
         self._io.write_line("")
-        self._io.write_line(
-            "<b>Package operations</b>: "
-            "<info>{}</> install{}, "
-            "<info>{}</> update{}, "
-            "<info>{}</> removal{}"
-            "{}".format(
-                installs,
-                "" if installs == 1 else "s",
-                updates,
-                "" if updates == 1 else "s",
-                uninstalls,
-                "" if uninstalls == 1 else "s",
-                f", <info>{skipped}</> skipped" if skipped and self._verbose else "",
-            )
-        )
+        self._io.write("<b>Package operations</b>: ")
+        self._io.write(f"<info>{installs}</> install{pluralize(installs)}, ")
+        self._io.write(f"<info>{updates}</> update{pluralize(updates)}, ")
+        self._io.write(f"<info>{uninstalls}</> removal{pluralize(uninstalls)}")
+        if skipped and self._verbose:
+            self._io.write(f", <info>{skipped}</> skipped")
+        self._io.write_line("")
         self._io.write_line("")
 
     def _execute_install(self, operation: Union["Install", "Update"]) -> int:
@@ -484,11 +442,8 @@ class Executor:
         return status_code
 
     def _execute_uninstall(self, operation: "Uninstall") -> int:
-        message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
-                message=self.get_operation_message(operation),
-            )
-        )
+        op_msg = self.get_operation_message(operation)
+        message = f"  <fg=blue;options=bold>•</> {op_msg}: <info>Removing...</info>"
         self._write(operation, message)
 
         return self._remove(operation)
@@ -509,11 +464,7 @@ class Executor:
             archive = self._download(operation)
 
         operation_message = self.get_operation_message(operation)
-        message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
-                message=operation_message,
-            )
-        )
+        message = f"  <fg=blue;options=bold>•</> {operation_message}: <info>Installing...</info>"
         self._write(operation, message)
         return self.pip_install(archive, upgrade=operation.job_type == "update")
 
@@ -539,12 +490,9 @@ class Executor:
 
     def _prepare_file(self, operation: Union["Install", "Update"]) -> Path:
         package = operation.package
+        operation_message = self.get_operation_message(operation)
 
-        message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
-                message=self.get_operation_message(operation),
-            )
-        )
+        message = f"  <fg=blue;options=bold>•</> {operation_message}: <info>Preparing...</info>"
         self._write(operation, message)
 
         archive = Path(package.source_url)
@@ -561,11 +509,7 @@ class Executor:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Building...</info>".format(
-                message=operation_message,
-            )
-        )
+        message = f"  <fg=blue;options=bold>•</> {operation_message}: <info>Building...</info>"
         self._write(operation, message)
 
         if package.root_dir:
@@ -622,9 +566,7 @@ class Executor:
         operation_message = self.get_operation_message(operation)
 
         message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Cloning...</info>".format(
-                message=operation_message,
-            )
+            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
         )
         self._write(operation, message)
 
@@ -716,9 +658,7 @@ class Executor:
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)
         message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(
-                message=operation_message,
-            )
+            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>"
         )
         progress = None
         if self.supports_fancy_output():

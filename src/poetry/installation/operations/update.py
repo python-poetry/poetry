@@ -38,17 +38,17 @@ class Update(Operation):
         return "update"
 
     def __str__(self) -> str:
-        return "Updating {} ({}) to {} ({})".format(
-            self.initial_package.pretty_name,
-            self.format_version(self.initial_package),
-            self.target_package.pretty_name,
-            self.format_version(self.target_package),
+        init_version = self.format_version(self.initial_package)
+        target_version = self.format_version(self.target_package)
+        return (
+            f"Updating {self.initial_package.pretty_name} ({init_version}) "
+            f"to {self.target_package.pretty_name} ({target_version})"
         )
 
     def __repr__(self) -> str:
-        return "<Update {} ({}) to {} ({})>".format(
-            self.initial_package.pretty_name,
-            self.format_version(self.initial_package),
-            self.target_package.pretty_name,
-            self.format_version(self.target_package),
+        init_version = self.format_version(self.initial_package)
+        target_version = self.format_version(self.target_package)
+        return (
+            f"<Update {self.initial_package.pretty_name} ({init_version}) "
+            f"to {self.target_package.pretty_name} ({target_version})>"
         )

@@ -309,7 +309,7 @@ def current_python(current_env: SystemEnv) -> Tuple[int, int, int]:
 
 @pytest.fixture(scope="session")
 def default_python(current_python: Tuple[int, int, int]) -> str:
-    return "^{}".format(".".join(str(v) for v in current_python[:2]))
+    return "^" + ".".join(str(v) for v in current_python[:2])
 
 
 @pytest.fixture

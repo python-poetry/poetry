@@ -145,7 +145,7 @@ class Page:
         """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
         the link, it will be rewritten to %20 (while not over-quoting
         % or other characters)."""
-        return self._clean_re.sub(lambda match: "%%%2x" % ord(match.group(0)), url)
+        return self._clean_re.sub(lambda match: f"%{match.group(0):2x}", url)
 
 
 # TODO: revisit whether the LegacyRepository should inherit from PyPiRepository.
@@ -217,14 +217,10 @@ class LegacyRepository(PyPiRepository):
             return self.url
 
         parsed = urllib.parse.urlparse(self.url)
+        username = quote(self._session.auth.username, safe="")
+        password = quote(self._session.auth.password, safe="")
 
-        return "{scheme}://{username}:{password}@{netloc}{path}".format(
-            scheme=parsed.scheme,
-            username=quote(self._session.auth.username, safe=""),
-            password=quote(self._session.auth.password, safe=""),
-            netloc=parsed.netloc,
-            path=parsed.path,
-        )
+        return f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
 
     def find_packages(self, dependency: "Dependency") -> List[Package]:
         packages = []
@@ -247,14 +243,14 @@ class LegacyRepository(PyPiRepository):
 
         key = dependency.name
         if not constraint.is_any():
-            key = f"{key}:{str(constraint)}"
+            key = f"{key}:{constraint!s}"
 
         ignored_pre_release_versions = []
 
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get_page("/{}/".format(dependency.name.replace(".", "-")))
+            page = self._get_page(f"/{dependency.name.replace('.', '-')}/")
             if page is None:
                 return []
 
@@ -284,9 +280,7 @@ class LegacyRepository(PyPiRepository):
                 packages.append(package)
 
             self._log(
-                "{} packages found for {} {}".format(
-                    len(packages), dependency.name, str(constraint)
-                ),
+                f"{len(packages)} packages found for {dependency.name} {constraint!s}",
                 level="debug",
             )
 
@@ -323,14 +317,14 @@ class LegacyRepository(PyPiRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> List[Link]:
-        page = self._get_page("/{}/".format(package.name.replace(".", "-")))
+        page = self._get_page(f"/{package.name.replace('.', '-')}/")
         if page is None:
             return []
 
         return list(page.links_for_version(package.version))
 
     def _get_release_info(self, name: str, version: str) -> dict:
-        page = self._get_page("/{}/".format(canonicalize_name(name).replace(".", "-")))
+        page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
@@ -348,9 +342,7 @@ class LegacyRepository(PyPiRepository):
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
             raise PackageNotFound(
-                'No valid distribution links found for package: "{}" version: "{}"'.format(
-                    name, version
-                )
+                f'No valid distribution links found for package: "{name}" version: "{version}"'
             )
         urls = defaultdict(list)
         files = []
@@ -388,9 +380,7 @@ class LegacyRepository(PyPiRepository):
                             required_hash.update(chunk)
 
                     if not known_hash or known_hash.hexdigest() == link.hash:
-                        file_hash = "{}:{}".format(
-                            required_hash.name, required_hash.hexdigest()
-                        )
+                        file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
 
             files.append({"file": link.filename, "hash": file_hash})
 
@@ -422,9 +412,7 @@ class LegacyRepository(PyPiRepository):
 
         if response.url != url:
             self._log(
-                "Response URL {response_url} differs from request URL {url}".format(
-                    response_url=response.url, url=url
-                ),
+                f"Response URL {response.url} differs from request URL {url}",
                 level="debug",
             )
 

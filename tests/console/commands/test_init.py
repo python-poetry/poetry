@@ -180,7 +180,8 @@ def test_empty_license(tester: CommandTester):
     ]
     tester.execute(inputs="\n".join(inputs))
 
-    expected = """\
+    python = ".".join(str(c) for c in sys.version_info[:2])
+    expected = f"""\
 [tool.poetry]
 name = "my-package"
 version = "1.2.3"
@@ -191,9 +192,7 @@ packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
-""".format(
-        python=".".join(str(c) for c in sys.version_info[:2])
-    )
+"""
     assert expected in tester.io.fetch_output()
 
 

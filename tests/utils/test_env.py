@@ -470,10 +470,8 @@ def test_deactivate_non_activated_but_existing(
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
-    (
-        Path(tmp_dir)
-        / "{}-py{}".format(venv_name, ".".join(str(c) for c in sys.version_info[:2]))
-    ).mkdir()
+    python = ".".join(str(c) for c in sys.version_info[:2])
+    (Path(tmp_dir) / f"{venv_name}-py{python}").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
@@ -485,9 +483,7 @@ def test_deactivate_non_activated_but_existing(
     manager.deactivate(NullIO())
     env = manager.get()
 
-    assert env.path == Path(tmp_dir) / "{}-py{}".format(
-        venv_name, ".".join(str(c) for c in sys.version_info[:2])
-    )
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py{python}"
     assert Path("/prefix")
 
 
@@ -502,7 +498,7 @@ def test_deactivate_activated(
         del os.environ["VIRTUAL_ENV"]
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    version = Version.from_parts(*sys.version_info[:3])
     other_version = Version.parse("3.4") if version.major == 2 else version.next_minor()
     (Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}").mkdir()
     (
@@ -527,9 +523,7 @@ def test_deactivate_activated(
     manager.deactivate(NullIO())
     env = manager.get()
 
-    assert env.path == Path(tmp_dir) / "{}-py{}.{}".format(
-        venv_name, version.major, version.minor
-    )
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}"
     assert Path("/prefix")
 
     envs = envs_file.read()
@@ -928,9 +922,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
-    poetry.package.python_versions = "^{}".format(
-        ".".join(str(c) for c in sys.version_info[:3])
+    version = Version.from_parts(*sys.version_info[:3])
+    poetry.package.python_versions = "^" + ".".join(
+        str(c) for c in sys.version_info[:3]
     )
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
@@ -966,10 +960,8 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
-    poetry.package.python_versions = "~{}".format(
-        ".".join(str(c) for c in (version.major, version.minor - 1, 0))
-    )
+    version = Version.from_parts(*sys.version_info[:3])
+    poetry.package.python_versions = f"~{version.major}.{version.minor-1}.0"
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     check_output = mocker.patch(
@@ -1087,16 +1079,10 @@ def test_env_finds_the_correct_executables(tmp_dir: str, manager: EnvManager):
     manager.build_venv(str(venv_path), with_pip=True)
     venv = VirtualEnv(venv_path)
 
-    default_executable = expected_executable = "python" + (".exe" if WINDOWS else "")
-    default_pip_executable = expected_pip_executable = "pip" + (
-        ".exe" if WINDOWS else ""
-    )
-    major_executable = "python{}{}".format(
-        sys.version_info[0], ".exe" if WINDOWS else ""
-    )
-    major_pip_executable = "pip{}{}".format(
-        sys.version_info[0], ".exe" if WINDOWS else ""
-    )
+    default_executable = expected_executable = f"python{'.exe' if WINDOWS else ''}"
+    default_pip_executable = expected_pip_executable = f"pip{'.exe' if WINDOWS else ''}"
+    major_executable = f"python{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
+    major_pip_executable = f"pip{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
 
     if (
         venv._bin_dir.joinpath(default_executable).exists()
@@ -1130,11 +1116,11 @@ def test_env_finds_the_correct_executables_for_generic_env(
     )
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
 
-    expected_executable = "python{}.{}{}".format(
-        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    expected_executable = (
+        f"python{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
-    expected_pip_executable = "pip{}.{}{}".format(
-        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    expected_pip_executable = (
+        f"pip{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
 
     if WINDOWS:
@@ -1157,12 +1143,10 @@ def test_env_finds_fallback_executables_for_generic_env(
     )
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
 
-    default_executable = "python" + (".exe" if WINDOWS else "")
-    major_executable = "python{}{}".format(
-        sys.version_info[0], ".exe" if WINDOWS else ""
-    )
-    minor_executable = "python{}.{}{}".format(
-        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    default_executable = f"python{'.exe' if WINDOWS else ''}"
+    major_executable = f"python{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
+    minor_executable = (
+        f"python{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
     expected_executable = minor_executable
     if (
@@ -1179,12 +1163,10 @@ def test_env_finds_fallback_executables_for_generic_env(
         venv._bin_dir.joinpath(expected_executable).unlink()
         expected_executable = default_executable
 
-    default_pip_executable = "pip" + (".exe" if WINDOWS else "")
-    major_pip_executable = "pip{}{}".format(
-        sys.version_info[0], ".exe" if WINDOWS else ""
-    )
-    minor_pip_executable = "pip{}.{}{}".format(
-        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    default_pip_executable = f"pip{'.exe' if WINDOWS else ''}"
+    major_pip_executable = f"pip{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
+    minor_pip_executable = (
+        f"pip{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
     expected_pip_executable = minor_pip_executable
     if (

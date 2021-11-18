@@ -47,9 +47,7 @@ class EditableBuilder(Builder):
 
     def build(self) -> None:
         self._debug(
-            "  - Building package <c1>{}</c1> in <info>editable</info> mode".format(
-                self._package.name
-            )
+            f"  - Building package <c1>{self._package.name}</c1> in <info>editable</info> mode"
         )
 
         if self._package.build_script:
@@ -65,9 +63,7 @@ class EditableBuilder(Builder):
             distribution_name=self._package.name
         ):
             self._debug(
-                "  - Removed <c2>{}</c2> directory from <b>{}</b>".format(
-                    removed.name, removed.parent
-                )
+                f"  - Removed <c2>{removed.name}</c2> directory from <b>{removed.parent}</b>"
             )
 
         added_files = []
@@ -128,9 +124,7 @@ class EditableBuilder(Builder):
         # remove any pre-existing pth files for this package
         for file in self._env.site_packages.find(path=pth_file, writable_only=True):
             self._debug(
-                "  - Removing existing <c2>{}</c2> from <b>{}</b> for {}".format(
-                    file.name, file.parent, self._poetry.file.parent
-                )
+                f"  - Removing existing <c2>{file.name}</c2> from <b>{file.parent}</b> for {self._poetry.file.parent}"
             )
             # We can't use unlink(missing_ok=True) because it's not always available
             if file.exists():
@@ -141,17 +135,13 @@ class EditableBuilder(Builder):
                 pth_file, content, encoding="utf-8"
             )
             self._debug(
-                "  - Adding <c2>{}</c2> to <b>{}</b> for {}".format(
-                    pth_file.name, pth_file.parent, self._poetry.file.parent
-                )
+                f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for {self._poetry.file.parent}"
             )
             return [pth_file]
         except OSError:
             # TODO: Replace with PermissionError
             self._io.write_error_line(
-                "  - Failed to create <c2>{}</c2> for {}".format(
-                    pth_file.name, self._poetry.file.parent
-                )
+                f"  - Failed to create <c2>{pth_file.name}</c2> for {self._poetry.file.parent}"
             )
             return []
 
@@ -164,9 +154,7 @@ class EditableBuilder(Builder):
                 break
         else:
             self._io.write_error_line(
-                "  - Failed to find a suitable script installation directory for {}".format(
-                    self._poetry.file.parent
-                )
+                f"  - Failed to find a suitable script installation directory for {self._poetry.file.parent}"
             )
             return []
 
@@ -178,9 +166,7 @@ class EditableBuilder(Builder):
 
             script_file = scripts_path.joinpath(name)
             self._debug(
-                "  - Adding the <c2>{}</c2> script to <b>{}</b>".format(
-                    name, scripts_path
-                )
+                f"  - Adding the <c2>{name}</c2> script to <b>{scripts_path}</b>"
             )
             with script_file.open("w", encoding="utf-8") as f:
                 f.write(
@@ -202,9 +188,7 @@ class EditableBuilder(Builder):
                 cmd_script = script_file.with_suffix(".cmd")
                 cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
                 self._debug(
-                    "  - Adding the <c2>{}</c2> script wrapper to <b>{}</b>".format(
-                        cmd_script.name, scripts_path
-                    )
+                    f"  - Adding the <c2>{cmd_script.name}</c2> script wrapper to <b>{scripts_path}</b>"
                 )
 
                 with cmd_script.open("w", encoding="utf-8") as f:
@@ -223,9 +207,7 @@ class EditableBuilder(Builder):
         dist_info = self._env.site_packages.mkdir(Path(builder.dist_info))
 
         self._debug(
-            "  - Adding the <c2>{}</c2> directory to <b>{}</b>".format(
-                dist_info.name, dist_info.parent
-            )
+            f"  - Adding the <c2>{dist_info.name}</c2> directory to <b>{dist_info.parent}</b>"
         )
 
         with dist_info.joinpath("METADATA").open("w", encoding="utf-8") as f:
@@ -246,14 +228,15 @@ class EditableBuilder(Builder):
 
             added_files.append(dist_info.joinpath("entry_points.txt"))
 
-        with dist_info.joinpath("RECORD").open("w", encoding="utf-8") as f:
+        record = dist_info.joinpath("RECORD")
+        with record.open("w", encoding="utf-8") as f:
             for path in added_files:
                 hash = self._get_file_hash(path)
                 size = path.stat().st_size
-                f.write(f"{str(path)},sha256={hash},{size}\n")
+                f.write(f"{path!s},sha256={hash},{size}\n")
 
             # RECORD itself is recorded with no hash or size
-            f.write("{},,\n".format(dist_info.joinpath("RECORD")))
+            f.write(f"{record},,\n")
 
     def _get_file_hash(self, filepath: Path) -> str:
         hashsum = hashlib.sha256()

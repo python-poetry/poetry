@@ -161,18 +161,16 @@ def test_execute_executes_a_batch_of_operations(
         ]
     )
 
-    expected = """
+    expected = f"""
 Package operations: 4 installs, 1 update, 1 removal
 
   • Installing pytest (3.5.2)
   • Removing attrs (17.4.0)
   • Updating requests (2.18.3 -> 2.18.4)
-  • Installing demo (0.1.0 {})
-  • Installing simple-project (1.2.3 {})
+  • Installing demo (0.1.0 {file_package.source_url})
+  • Installing simple-project (1.2.3 {directory_package.source_url})
   • Installing demo (0.1.0 master)
-""".format(
-        file_package.source_url, directory_package.source_url
-    )
+"""
 
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())

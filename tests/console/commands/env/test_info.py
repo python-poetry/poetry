@@ -33,27 +33,21 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
 def test_env_info_displays_complete_info(tester: "CommandTester"):
     tester.execute()
 
-    expected = """
+    expected = f"""
 Virtualenv
 Python:         3.7.0
 Implementation: CPython
-Path:           {prefix}
-Executable:     {executable}
+Path:           {Path('/prefix')}
+Executable:     {sys.executable}
 Valid:          True
 
 System
 Platform:   darwin
 OS:         posix
-Python:     {base_version}
-Path:       {base_prefix}
-Executable: {base_executable}
-""".format(
-        prefix=str(Path("/prefix")),
-        base_prefix=str(Path("/base/prefix")),
-        base_version=".".join(str(v) for v in sys.version_info[:3]),
-        executable=sys.executable,
-        base_executable="python",
-    )
+Python:     {'.'.join(str(v) for v in sys.version_info[:3])}
+Path:       {Path('/base/prefix')}
+Executable: python
+"""
 
     assert expected == tester.io.fetch_output()
 

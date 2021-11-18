@@ -176,19 +176,15 @@ dependencies and not including the current project, run the command with the
             # If this is a true error it will be picked up later by build anyway.
             return 0
 
+        log_install = (
+            f"<b>Installing</> the current project: <c1>{self.poetry.package.pretty_name}</c1> "
+            f"(<{{tag}}>{self.poetry.package.pretty_version}</>)"
+        )
+        overwrite = self._io.output.is_decorated() and not self.io.is_debug()
         self.line("")
-        if not self._io.output.is_decorated() or self.io.is_debug():
-            self.line(
-                "<b>Installing</> the current project: <c1>{}</c1> (<c2>{}</c2>)".format(
-                    self.poetry.package.pretty_name, self.poetry.package.pretty_version
-                )
-            )
-        else:
-            self.write(
-                "<b>Installing</> the current project: <c1>{}</c1> (<c2>{}</c2>)".format(
-                    self.poetry.package.pretty_name, self.poetry.package.pretty_version
-                )
-            )
+        self.write(log_install.format(tag="c2"))
+        if not overwrite:
+            self.line("")
 
         if self.option("dry-run"):
             self.line("")
@@ -196,12 +192,8 @@ dependencies and not including the current project, run the command with the
 
         builder.build()
 
-        if self._io.output.is_decorated() and not self.io.is_debug():
-            self.overwrite(
-                "<b>Installing</> the current project: <c1>{}</c1> (<success>{}</success>)".format(
-                    self.poetry.package.pretty_name, self.poetry.package.pretty_version
-                )
-            )
+        if overwrite:
+            self.overwrite(log_install.format(tag="success"))
             self.line("")
 
         return 0
