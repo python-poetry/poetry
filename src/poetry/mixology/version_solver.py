@@ -8,8 +8,6 @@ from typing import Tuple
 from typing import Union
 
 from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import ConflictCause
@@ -23,6 +21,8 @@ from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
     from poetry.puzzle.provider import Provider
 
 
@@ -40,9 +40,9 @@ class VersionSolver:
 
     def __init__(
         self,
-        root: ProjectPackage,
+        root: "ProjectPackage",
         provider: "Provider",
-        locked: Dict[str, Package] = None,
+        locked: Dict[str, "Package"] = None,
         use_latest: List[str] = None,
     ):
         self._root = root
@@ -446,7 +446,7 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency: Dependency) -> Optional[Package]:
+    def _get_locked(self, dependency: Dependency) -> Optional["Package"]:
         if dependency.name in self._use_latest:
             return None
 

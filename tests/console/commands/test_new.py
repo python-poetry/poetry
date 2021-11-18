@@ -1,10 +1,14 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Optional
 
 import pytest
 
 from poetry.factory import Factory
-from poetry.poetry import Poetry
+
+
+if TYPE_CHECKING:
+    from poetry.poetry import Poetry
 
 
 @pytest.fixture
@@ -14,7 +18,7 @@ def tester(command_tester_factory):
 
 def verify_project_directory(
     path: Path, package_name: str, package_path: str, include_from: Optional[str] = None
-) -> Poetry:
+) -> "Poetry":
     package_path = Path(package_path)
     assert path.is_dir()
 

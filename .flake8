@@ -3,6 +3,8 @@ min_python_version = 3.6.0
 max-line-length = 88
 ban-relative-imports = true
 inline-quotes = double
+enable-extensions = TC, TC2
+type-checking-exempt-modules = typing, typing-extensions
 extend-ignore =
     # E501: Line too long (FIXME: long string constants)
     E501,
@@ -10,7 +12,8 @@ extend-ignore =
     E203,
 per-file-ignores =
     # F401: Module imported by unused (non-implicit modules)
-    __init__.py:F401,
+    # TC002: Move third-party import '...' into a type-checking block
+    __init__.py:F401,TC002,
 extend-exclude =
     # Frozen and not subject to change in this repo:
     get-poetry.py,

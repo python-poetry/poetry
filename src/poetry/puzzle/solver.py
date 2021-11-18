@@ -13,38 +13,38 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from cleo.io.io import IO
-
-from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import Provider
-from poetry.repositories import Pool
-from poetry.repositories import Repository
-from poetry.utils.env import Env
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.puzzle.transaction import Transaction
+    from poetry.repositories import Pool
+    from poetry.repositories import Repository
+    from poetry.utils.env import Env
 
 
 class Solver:
     def __init__(
         self,
-        package: ProjectPackage,
-        pool: Pool,
-        installed: Repository,
-        locked: Repository,
-        io: IO,
+        package: "ProjectPackage",
+        pool: "Pool",
+        installed: "Repository",
+        locked: "Repository",
+        io: "IO",
         provider: Optional[Provider] = None,
     ):
         self._package = package
@@ -64,7 +64,7 @@ class Solver:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env: Env) -> Iterator[None]:
+    def use_environment(self, env: "Env") -> Iterator[None]:
         with self.provider.use_environment(env):
             yield
 
@@ -125,7 +125,7 @@ class Solver:
 
         return packages, depths
 
-    def _solve(self, use_latest: List[str] = None) -> Tuple[List[Package], List[int]]:
+    def _solve(self, use_latest: List[str] = None) -> Tuple[List["Package"], List[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
@@ -205,7 +205,7 @@ class VisitedState(enum.Enum):
 
 def depth_first_search(
     source: "PackageNode", aggregator: Callable
-) -> List[Tuple[Package, int]]:
+) -> List[Tuple["Package", int]]:
     back_edges: Dict[DFSNodeID, List["PackageNode"]] = defaultdict(list)
     visited: Dict[DFSNodeID, VisitedState] = {}
     topo_sorted_nodes: List["PackageNode"] = []
@@ -259,9 +259,9 @@ def dfs_visit(
 class PackageNode(DFSNode):
     def __init__(
         self,
-        package: Package,
-        packages: List[Package],
-        seen: List[Package],
+        package: "Package",
+        packages: List["Package"],
+        seen: List["Package"],
         previous: Optional["PackageNode"] = None,
         previous_dep: Optional[
             Union[
@@ -377,7 +377,7 @@ class PackageNode(DFSNode):
 
 def aggregate_package_nodes(
     nodes: List[PackageNode], children: List[PackageNode]
-) -> Tuple[Package, int]:
+) -> Tuple["Package", int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
     groups: List[str] = []

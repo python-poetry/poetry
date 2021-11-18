@@ -7,14 +7,14 @@ from typing import Tuple
 
 from packaging.tags import Tag
 
-from poetry.core.packages.package import Package
-from poetry.core.packages.utils.link import Link
-from poetry.utils.env import Env
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.utils.link import Link
     from poetry.repositories.pool import Pool
+    from poetry.utils.env import Env
 
 
 class InvalidWheelName(Exception):
@@ -44,7 +44,7 @@ class Wheel:
 
         return min(indexes) if indexes else None
 
-    def is_supported_by_environment(self, env: Env) -> bool:
+    def is_supported_by_environment(self, env: "Env") -> bool:
         return bool(set(env.supported_tags).intersection(self.tags))
 
 
@@ -53,11 +53,11 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: "Pool", env: Env) -> None:
+    def __init__(self, pool: "Pool", env: "Env") -> None:
         self._pool = pool
         self._env = env
 
-    def choose_for(self, package: Package) -> Link:
+    def choose_for(self, package: "Package") -> "Link":
         """
         Return the url of the selected archive for a given package.
         """
@@ -83,7 +83,7 @@ class Chooser:
 
         return chosen
 
-    def _get_links(self, package: Package) -> List[Link]:
+    def _get_links(self, package: "Package") -> List["Link"]:
         if not package.source_type:
             if not self._pool.has_repository("pypi"):
                 repository = self._pool.repositories[0]
@@ -117,7 +117,7 @@ class Chooser:
 
         return selected_links
 
-    def _sort_key(self, package: Package, link: Link) -> Tuple:
+    def _sort_key(self, package: "Package", link: "Link") -> Tuple:
         """
         Function to pass as the `key` argument to a call to sorted() to sort
         InstallationCandidates by preference.
@@ -175,7 +175,9 @@ class Chooser:
             pri,
         )
 
-    def _is_link_hash_allowed_for_package(self, link: Link, package: Package) -> bool:
+    def _is_link_hash_allowed_for_package(
+        self, link: "Link", package: "Package"
+    ) -> bool:
         if not link.hash:
             return True
 

@@ -3,14 +3,18 @@ import re
 
 from copy import deepcopy
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Optional
 
-from poetry.config.config_source import ConfigSource
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.locations import CACHE_DIR
+
+
+if TYPE_CHECKING:
+    from poetry.config.config_source import ConfigSource
 
 
 def boolean_validator(val: str) -> bool:
@@ -41,27 +45,27 @@ class Config:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
         self._base_dir = base_dir
-        self._config_source: ConfigSource = DictConfigSource()
-        self._auth_config_source: ConfigSource = DictConfigSource()
+        self._config_source: "ConfigSource" = DictConfigSource()
+        self._auth_config_source: "ConfigSource" = DictConfigSource()
 
     @property
     def config(self) -> Dict:
         return self._config
 
     @property
-    def config_source(self) -> ConfigSource:
+    def config_source(self) -> "ConfigSource":
         return self._config_source
 
     @property
-    def auth_config_source(self) -> ConfigSource:
+    def auth_config_source(self) -> "ConfigSource":
         return self._auth_config_source
 
-    def set_config_source(self, config_source: ConfigSource) -> "Config":
+    def set_config_source(self, config_source: "ConfigSource") -> "Config":
         self._config_source = config_source
 
         return self
 
-    def set_auth_config_source(self, config_source: ConfigSource) -> "Config":
+    def set_auth_config_source(self, config_source: "ConfigSource") -> "Config":
         self._auth_config_source = config_source
 
         return self

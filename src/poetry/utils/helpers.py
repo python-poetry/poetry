@@ -15,12 +15,11 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 
-from poetry.config.config import Config
-
 
 if TYPE_CHECKING:
     from requests import Session
 
+    from poetry.config.config import Config
     from poetry.core.packages.package import Package
 
 
@@ -49,7 +48,7 @@ def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
     shutil.rmtree(name, onerror=_del_ro)
 
 
-def get_cert(config: Config, repository_name: str) -> Optional[Path]:
+def get_cert(config: "Config", repository_name: str) -> Optional[Path]:
     cert = config.get(f"certificates.{repository_name}.cert")
     if cert:
         return Path(cert)
@@ -57,7 +56,7 @@ def get_cert(config: Config, repository_name: str) -> Optional[Path]:
         return None
 
 
-def get_client_cert(config: Config, repository_name: str) -> Optional[Path]:
+def get_client_cert(config: "Config", repository_name: str) -> Optional[Path]:
     client_cert = config.get(f"certificates.{repository_name}.client-cert")
     if client_cert:
         return Path(client_cert)

@@ -1,6 +1,5 @@
 import os
 
-from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import cast
@@ -8,12 +7,9 @@ from typing import cast
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
-
-
-if TYPE_CHECKING:
-    from poetry.console.application import Application
-    from poetry.console.commands.update import UpdateCommand
+from poetry.console.commands.update import UpdateCommand
 
 
 class PluginAddCommand(InitCommand):
@@ -153,10 +149,8 @@ You can specify a package in the following forms:
         # From this point forward, all the logic will be deferred to
         # the update command, by using the previously created `pyproject.toml`
         # file.
-        application = cast("Application", self.application)
-        update_command: "UpdateCommand" = cast(
-            "UpdateCommand", application.find("update")
-        )
+        application = cast(Application, self.application)
+        update_command: UpdateCommand = cast(UpdateCommand, application.find("update"))
         # We won't go through the event dispatching done by the application
         # so we need to configure the command manually
         update_command.set_poetry(Factory().create_poetry(env_dir))

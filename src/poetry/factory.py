@@ -4,7 +4,6 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 
 from poetry.config.config import Config
@@ -19,6 +18,8 @@ from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
+
     from poetry.repositories.legacy_repository import LegacyRepository
 
 
@@ -30,7 +31,7 @@ class Factory(BaseFactory):
     def create_poetry(
         self,
         cwd: Optional[Path] = None,
-        io: Optional[IO] = None,
+        io: Optional["IO"] = None,
         disable_plugins: bool = False,
     ) -> Poetry:
         if io is None:
@@ -90,7 +91,7 @@ class Factory(BaseFactory):
         return ProjectPackage(name, version, version)
 
     @classmethod
-    def create_config(cls, io: Optional[IO] = None) -> Config:
+    def create_config(cls, io: Optional["IO"] = None) -> Config:
         if io is None:
             io = NullIO()
 
@@ -127,7 +128,7 @@ class Factory(BaseFactory):
 
     @classmethod
     def configure_sources(
-        cls, poetry: "Poetry", sources: List[Dict[str, str]], config: "Config", io: "IO"
+        cls, poetry: Poetry, sources: List[Dict[str, str]], config: Config, io: "IO"
     ) -> None:
         for source in sources:
             repository = cls.create_legacy_repository(source, config)
@@ -185,9 +186,7 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_pyproject_from_package(
-        cls, package: "ProjectPackage", path: "Path"
-    ) -> None:
+    def create_pyproject_from_package(cls, package: ProjectPackage, path: Path) -> None:
         import tomlkit
 
         from poetry.layouts.layout import POETRY_DEFAULT

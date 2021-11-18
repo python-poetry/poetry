@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import ContextManager
 from typing import Dict
@@ -29,7 +30,6 @@ import packaging.tags
 import tomlkit
 import virtualenv
 
-from cleo.io.io import IO
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
@@ -39,9 +39,7 @@ from virtualenv.seed.wheels.embed import get_embed_wheel
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
-from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
-from poetry.poetry import Poetry
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
@@ -49,6 +47,13 @@ from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import temporary_directory
+
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO
+
+    from poetry.core.version.markers import BaseMarker
+    from poetry.poetry import Poetry
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -453,10 +458,10 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry) -> None:
+    def __init__(self, poetry: "Poetry") -> None:
         self._poetry = poetry
 
-    def activate(self, python: str, io: IO) -> "Env":
+    def activate(self, python: str, io: "IO") -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -553,7 +558,7 @@ class EnvManager:
 
         return self.get(reload=True)
 
-    def deactivate(self, io: IO) -> None:
+    def deactivate(self, io: "IO") -> None:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -763,7 +768,7 @@ class EnvManager:
 
     def create_venv(
         self,
-        io: IO,
+        io: "IO",
         name: Optional[str] = None,
         executable: Optional[str] = None,
         force: bool = False,
@@ -1301,7 +1306,7 @@ class Env:
     def get_paths(self) -> Dict[str, str]:
         raise NotImplementedError()
 
-    def is_valid_for_marker(self, marker: BaseMarker) -> bool:
+    def is_valid_for_marker(self, marker: "BaseMarker") -> bool:
         return marker.validate(self.marker_env)
 
     def is_sane(self) -> bool:

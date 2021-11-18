@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
     from poetry.installation.installer import Installer
-    from poetry.installation.installer import Optional
 
 
 class InstallerCommand(EnvCommand):

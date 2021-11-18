@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
@@ -9,6 +8,8 @@ from poetry.core.poetry import Poetry as BasePoetry
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.config.config import Config
     from poetry.core.packages.project_package import ProjectPackage
     from poetry.packages.locker import Locker
@@ -22,7 +23,7 @@ class Poetry(BasePoetry):
 
     def __init__(
         self,
-        file: Path,
+        file: "Path",
         local_config: dict,
         package: "ProjectPackage",
         locker: "Locker",
@@ -35,7 +36,7 @@ class Poetry(BasePoetry):
         self._locker = locker
         self._config = config
         self._pool = Pool()
-        self._plugin_manager: Optional[PluginManager] = None
+        self._plugin_manager: Optional["PluginManager"] = None
 
     @property
     def locker(self) -> "Locker":

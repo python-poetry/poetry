@@ -102,7 +102,7 @@ class Layout:
 
         return package
 
-    def create(self, path: "Path", with_tests: bool = True) -> None:
+    def create(self, path: Path, with_tests: bool = True) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
@@ -174,27 +174,27 @@ class Layout:
 
         return content
 
-    def _create_default(self, path: "Path", src: bool = True) -> None:
+    def _create_default(self, path: Path, src: bool = True) -> None:
         package_path = path / self.package_path
         package_path.mkdir(parents=True)
 
         package_init = package_path / "__init__.py"
         package_init.touch()
 
-    def _create_readme(self, path: "Path") -> "Path":
+    def _create_readme(self, path: Path) -> Path:
         readme_file = path.joinpath(f"README.{self._readme_format}")
         readme_file.touch()
         return readme_file
 
     @staticmethod
-    def _create_tests(path: "Path") -> None:
+    def _create_tests(path: Path) -> None:
         tests = path / "tests"
         tests.mkdir()
 
         tests_init = tests / "__init__.py"
         tests_init.touch(exist_ok=False)
 
-    def _write_poetry(self, path: "Path") -> None:
+    def _write_poetry(self, path: Path) -> None:
         content = self.generate_poetry_content()
 
         poetry = path / "pyproject.toml"

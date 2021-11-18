@@ -3,6 +3,7 @@ import signal
 import sys
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Optional
 
@@ -13,7 +14,10 @@ from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
 from poetry.utils._compat import WINDOWS
-from poetry.utils.env import VirtualEnv
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env import VirtualEnv
 
 
 class Shell:
@@ -62,7 +66,7 @@ class Shell:
 
         return cls._shell
 
-    def activate(self, env: VirtualEnv) -> Optional[int]:
+    def activate(self, env: "VirtualEnv") -> Optional[int]:
         if WINDOWS:
             return env.execute(self.path)
 

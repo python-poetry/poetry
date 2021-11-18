@@ -8,6 +8,7 @@ import urllib.parse
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import mkdtemp
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -18,13 +19,7 @@ from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
 
-from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.package import Package
-from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.version import Version
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
@@ -37,10 +32,19 @@ from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
-from poetry.repositories import Pool
-from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
+    from poetry.repositories import Pool
+    from poetry.utils.env import Env
 
 
 logger = logging.getLogger(__name__)
@@ -58,22 +62,22 @@ class Provider:
     UNSAFE_PACKAGES: Set[str] = set()
 
     def __init__(
-        self, package: Package, pool: Pool, io: Any, env: Optional[Env] = None
+        self, package: "Package", pool: "Pool", io: Any, env: Optional["Env"] = None
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._search_for: Dict[Dependency, List[Package]] = {}
+        self._search_for: Dict["Dependency", List["Package"]] = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
         self._overrides: Dict = {}
-        self._deferred_cache: Dict[Dependency, Package] = {}
+        self._deferred_cache: Dict["Dependency", "Package"] = {}
         self._load_deferred = True
 
     @property
-    def pool(self) -> Pool:
+    def pool(self) -> "Pool":
         return self._pool
 
     def is_debugging(self) -> bool:
@@ -86,7 +90,7 @@ class Provider:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_environment(self, env: Env) -> Iterator["Provider"]:
+    def use_environment(self, env: "Env") -> Iterator["Provider"]:
         original_env = self._env
         original_python_constraint = self._python_constraint
 
@@ -101,13 +105,13 @@ class Provider:
     def search_for(
         self,
         dependency: Union[
-            Dependency,
-            VCSDependency,
-            FileDependency,
-            DirectoryDependency,
-            URLDependency,
+            "Dependency",
+            "VCSDependency",
+            "FileDependency",
+            "DirectoryDependency",
+            "URLDependency",
         ],
-    ) -> List[DependencyPackage]:
+    ) -> List["DependencyPackage"]:
         """
         Search for the specifications that match the given dependency.
 
@@ -162,7 +166,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
+    def search_for_vcs(self, dependency: "VCSDependency") -> List["Package"]:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -207,7 +211,7 @@ class Provider:
         tag: Optional[str] = None,
         rev: Optional[str] = None,
         name: Optional[str] = None,
-    ) -> Package:
+    ) -> "Package":
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
@@ -238,7 +242,7 @@ class Provider:
 
         return package
 
-    def search_for_file(self, dependency: FileDependency) -> List[Package]:
+    def search_for_file(self, dependency: "FileDependency") -> List["Package"]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -269,7 +273,7 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_file(cls, file_path: Path) -> Package:
+    def get_package_from_file(cls, file_path: Path) -> "Package":
         try:
             package = PackageInfo.from_path(path=file_path).to_package(
                 root_dir=file_path
@@ -281,7 +285,9 @@ class Provider:
 
         return package
 
-    def search_for_directory(self, dependency: DirectoryDependency) -> List[Package]:
+    def search_for_directory(
+        self, dependency: "DirectoryDependency"
+    ) -> List["Package"]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -306,7 +312,7 @@ class Provider:
     @classmethod
     def get_package_from_directory(
         cls, directory: Path, name: Optional[str] = None
-    ) -> Package:
+    ) -> "Package":
         package = PackageInfo.from_directory(path=directory).to_package(
             root_dir=directory
         )
@@ -321,7 +327,7 @@ class Provider:
 
         return package
 
-    def search_for_url(self, dependency: URLDependency) -> List[Package]:
+    def search_for_url(self, dependency: "URLDependency") -> List["Package"]:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
@@ -351,7 +357,7 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
+    def get_package_from_url(cls, url: str) -> "Package":
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
@@ -543,7 +549,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates: Dict[str, List[Dependency]] = {}
+        duplicates: Dict[str, List["Dependency"]] = {}
         for dep in dependencies:
             if dep.complete_name not in duplicates:
                 duplicates[dep.complete_name] = []
@@ -559,7 +565,7 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
-            by_constraint: Dict[str, List[Dependency]] = {}
+            by_constraint: Dict[str, List["Dependency"]] = {}
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []

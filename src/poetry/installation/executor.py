@@ -17,16 +17,11 @@ from typing import Union
 from cleo.io.null_io import NullIO
 
 from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
-from poetry.installation.operations.install import Install
-from poetry.installation.operations.operation import Operation
-from poetry.installation.operations.uninstall import Uninstall
-from poetry.installation.operations.update import Update
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
@@ -39,7 +34,12 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
 
     from poetry.config.config import Config
+    from poetry.core.packages.package import Package
     from poetry.installation.operations import OperationTypes
+    from poetry.installation.operations.install import Install
+    from poetry.installation.operations.operation import Operation
+    from poetry.installation.operations.uninstall import Uninstall
+    from poetry.installation.operations.update import Update
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
@@ -457,21 +457,21 @@ class Executor:
         )
         self._io.write_line("")
 
-    def _execute_install(self, operation: Union[Install, Update]) -> int:
+    def _execute_install(self, operation: Union["Install", "Update"]) -> int:
         status_code = self._install(operation)
 
         self._save_url_reference(operation)
 
         return status_code
 
-    def _execute_update(self, operation: Union[Install, Update]) -> int:
+    def _execute_update(self, operation: Union["Install", "Update"]) -> int:
         status_code = self._update(operation)
 
         self._save_url_reference(operation)
 
         return status_code
 
-    def _execute_uninstall(self, operation: Uninstall) -> int:
+    def _execute_uninstall(self, operation: "Uninstall") -> int:
         message = (
             "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
                 message=self.get_operation_message(operation),
@@ -481,7 +481,7 @@ class Executor:
 
         return self._remove(operation)
 
-    def _install(self, operation: Union[Install, Update]) -> int:
+    def _install(self, operation: Union["Install", "Update"]) -> int:
         package = operation.package
         if package.source_type == "directory":
             return self._install_directory(operation)
@@ -505,10 +505,10 @@ class Executor:
         self._write(operation, message)
         return self.pip_install(archive, upgrade=operation.job_type == "update")
 
-    def _update(self, operation: Union[Install, Update]) -> int:
+    def _update(self, operation: Union["Install", "Update"]) -> int:
         return self._install(operation)
 
-    def _remove(self, operation: Uninstall) -> int:
+    def _remove(self, operation: "Uninstall") -> int:
         package = operation.package
 
         # If we have a VCS package, remove its source directory
@@ -525,7 +525,7 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Union[Install, Update]) -> Path:
+    def _prepare_file(self, operation: Union["Install", "Update"]) -> Path:
         package = operation.package
 
         message = (
@@ -543,7 +543,7 @@ class Executor:
 
         return archive
 
-    def _install_directory(self, operation: Union[Install, Update]) -> int:
+    def _install_directory(self, operation: Union["Install", "Update"]) -> int:
         from poetry.factory import Factory
 
         package = operation.package
@@ -603,7 +603,7 @@ class Executor:
 
         return self.pip_install(req, upgrade=True)
 
-    def _install_git(self, operation: Union[Install, Update]) -> int:
+    def _install_git(self, operation: Union["Install", "Update"]) -> int:
         from poetry.core.vcs import Git
 
         package = operation.package
@@ -641,12 +641,12 @@ class Executor:
 
         return status_code
 
-    def _download(self, operation: Union[Install, Update]) -> Link:
+    def _download(self, operation: Union["Install", "Update"]) -> Link:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation: Union[Install, Update], link: Link) -> Link:
+    def _download_link(self, operation: Union["Install", "Update"], link: Link) -> Link:
         package = operation.package
 
         archive = self._chef.get_cached_archive_for_link(link)
@@ -677,7 +677,7 @@ class Executor:
         return archive
 
     @staticmethod
-    def _validate_archive_hash(archive: Union[Path, Link], package: Package) -> str:
+    def _validate_archive_hash(archive: Union[Path, Link], package: "Package") -> str:
         archive_path = (
             url_to_path(archive.url) if isinstance(archive, Link) else archive
         )
@@ -695,7 +695,9 @@ class Executor:
 
         return archive_hash
 
-    def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
+    def _download_archive(
+        self, operation: Union["Install", "Update"], link: Link
+    ) -> Path:
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
@@ -744,7 +746,7 @@ class Executor:
 
         return archive
 
-    def _should_write_operation(self, operation: Operation) -> bool:
+    def _should_write_operation(self, operation: "Operation") -> bool:
         return not operation.skipped or self._dry_run or self._verbose
 
     def _save_url_reference(self, operation: "OperationTypes") -> None:

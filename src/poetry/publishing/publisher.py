@@ -1,6 +1,5 @@
 import logging
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
@@ -13,6 +12,8 @@ from poetry.utils.helpers import get_client_cert
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io import BufferedIO
     from cleo.io import ConsoleIO
 
@@ -34,7 +35,7 @@ class Publisher:
         self._authenticator = Authenticator(poetry.config, self._io)
 
     @property
-    def files(self) -> List[Path]:
+    def files(self) -> List["Path"]:
         return self._uploader.files
 
     def publish(
@@ -42,8 +43,8 @@ class Publisher:
         repository_name: Optional[str],
         username: Optional[str],
         password: Optional[str],
-        cert: Optional[Path] = None,
-        client_cert: Optional[Path] = None,
+        cert: Optional["Path"] = None,
+        client_cert: Optional["Path"] = None,
         dry_run: bool = False,
     ) -> None:
         if not repository_name:

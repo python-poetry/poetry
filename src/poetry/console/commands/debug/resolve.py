@@ -93,7 +93,7 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: ShowCommand = self.application.find("show")
+            show_command: "ShowCommand" = self.application.find("show")
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]

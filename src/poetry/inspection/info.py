@@ -5,6 +5,7 @@ import tarfile
 import zipfile
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -16,7 +17,6 @@ import pkginfo
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
@@ -24,6 +24,10 @@ from poetry.core.version.markers import InvalidMarker
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages.project_package import ProjectPackage
 
 
 logger = logging.getLogger(__name__)
@@ -426,7 +430,7 @@ class PackageInfo:
         )
 
     @staticmethod
-    def _get_poetry_package(path: Path) -> Optional[ProjectPackage]:
+    def _get_poetry_package(path: Path) -> Optional["ProjectPackage"]:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():

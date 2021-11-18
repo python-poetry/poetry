@@ -1,16 +1,19 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Optional
 
 import pytest
 
-from pytest_mock.plugin import MockerFixture
-
-from poetry.core.packages.package import Package
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
 from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.compat import zipp
 
+
+if TYPE_CHECKING:
+    from pytest_mock.plugin import MockerFixture
+
+    from poetry.core.packages.package import Package
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 ENV_DIR = (FIXTURES_DIR / "installed").resolve()
@@ -59,7 +62,7 @@ def env() -> MockEnv:
 
 
 @pytest.fixture
-def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
+def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -81,7 +84,7 @@ def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
 
 def get_package_from_repository(
     name: str, repository: InstalledRepository
-) -> Optional[Package]:
+) -> Optional["Package"]:
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg
