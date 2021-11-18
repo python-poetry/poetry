@@ -88,9 +88,7 @@ list of installed packages
         not_found = set(packages).difference(removed)
         if not_found:
             raise ValueError(
-                "The following packages were not found: {}".format(
-                    ", ".join(sorted(not_found))
-                )
+                "The following packages were not found: " + ", ".join(sorted(not_found))
             )
 
         # Refresh the locker

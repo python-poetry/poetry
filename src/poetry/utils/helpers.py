@@ -110,16 +110,14 @@ def get_package_version_display_string(
     package: "Package", root: Optional[Path] = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
-        return "{} {}".format(
-            package.version,
-            Path(os.path.relpath(package.source_url, root.as_posix())).as_posix(),
-        )
+        path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
+        return f"{package.version} {path}"
 
     return package.full_pretty_version
 
 
 def paths_csv(paths: List[Path]) -> str:
-    return ", ".join(f'"{str(c)}"' for c in paths)
+    return ", ".join(f'"{c!s}"' for c in paths)
 
 
 def is_dir_writable(path: Path, create: bool = False) -> bool:
@@ -135,3 +133,9 @@ def is_dir_writable(path: Path, create: bool = False) -> bool:
         return False
     else:
         return True
+
+
+def pluralize(count: int, word: str = "") -> str:
+    if count == 1:
+        return word
+    return word + "s"

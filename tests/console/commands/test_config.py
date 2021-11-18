@@ -45,7 +45,9 @@ def test_list_displays_default_value_if_not_set(
 ):
     tester.execute("--list")
 
-    expected = """cache-dir = {cache}
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
 installer.max-workers = null
 installer.parallel = true
@@ -53,12 +55,8 @@ virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {path}  # {virtualenvs}
-""".format(
-        cache=json.dumps(str(config_cache_dir)),
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
-        virtualenvs=str(config_cache_dir / "virtualenvs"),
-    )
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+"""
 
     assert expected == tester.io.fetch_output()
 
@@ -70,7 +68,9 @@ def test_list_displays_set_get_setting(
 
     tester.execute("--list")
 
-    expected = """cache-dir = {cache}
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
 installer.max-workers = null
 installer.parallel = true
@@ -78,12 +78,8 @@ virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {path}  # {virtualenvs}
-""".format(
-        cache=json.dumps(str(config_cache_dir)),
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
-        virtualenvs=str(config_cache_dir / "virtualenvs"),
-    )
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+"""
 
     assert config.set_config_source.call_count == 0
     assert expected == tester.io.fetch_output()
@@ -119,7 +115,9 @@ def test_list_displays_set_get_local_setting(
 
     tester.execute("--list")
 
-    expected = """cache-dir = {cache}
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
 installer.max-workers = null
 installer.parallel = true
@@ -127,12 +125,8 @@ virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {path}  # {virtualenvs}
-""".format(
-        cache=json.dumps(str(config_cache_dir)),
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
-        virtualenvs=str(config_cache_dir / "virtualenvs"),
-    )
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+"""
 
     assert config.set_config_source.call_count == 1
     assert expected == tester.io.fetch_output()

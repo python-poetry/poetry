@@ -149,8 +149,8 @@ class Chooser:
             wheel = Wheel(link.filename)
             if not wheel.is_supported_by_environment(self._env):
                 raise RuntimeError(
-                    "{} is not a supported wheel for this platform. It "
-                    "can't be sorted.".format(wheel.filename)
+                    f"{wheel.filename} is not a supported wheel for this platform. It "
+                    "can't be sorted."
                 )
 
             # TODO: Binary preference

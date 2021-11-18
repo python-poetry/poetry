@@ -100,9 +100,7 @@ class Factory(BaseFactory):
         if config_file.exists():
             if io.is_debug():
                 io.write_line(
-                    "<debug>Loading configuration file {}</debug>".format(
-                        config_file.path
-                    )
+                    f"<debug>Loading configuration file {config_file.path}</debug>"
                 )
 
             config.merge(config_file.read())
@@ -114,9 +112,7 @@ class Factory(BaseFactory):
         if auth_config_file.exists():
             if io.is_debug():
                 io.write_line(
-                    "<debug>Loading configuration file {}</debug>".format(
-                        auth_config_file.path
-                    )
+                    f"<debug>Loading configuration file {auth_config_file.path}</debug>"
                 )
 
             config.merge(auth_config_file.read())
@@ -134,9 +130,7 @@ class Factory(BaseFactory):
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
             if io.is_debug():
-                message = "Adding repository {} ({})".format(
-                    repository.name, repository.url
-                )
+                message = f"Adding repository {repository.name} ({repository.url})"
                 if is_default:
                     message += " and setting it as the default one"
                 elif is_secondary:

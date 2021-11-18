@@ -201,9 +201,7 @@ lists all packages available."""
                 self.line("<info>dependencies</info>")
                 for dependency in pkg.requires:
                     self.line(
-                        " - <c1>{}</c1> <b>{}</b>".format(
-                            dependency.pretty_name, dependency.pretty_constraint
-                        )
+                        f" - <c1>{dependency.pretty_name}</c1> <b>{dependency.pretty_constraint}</b>"
                     )
 
             if required_by:
@@ -303,16 +301,12 @@ lists all packages available."""
             ):
                 continue
 
-            line = "<fg={}>{:{}}{}</>".format(
-                color, name, name_length - len(install_marker), install_marker
-            )
+            line = f"<fg={color}>{name:{name_length - len(install_marker)}}{install_marker}</>"
             if write_version:
-                line += " <b>{:{}}</b>".format(
-                    get_package_version_display_string(
-                        locked, root=self.poetry.file.parent
-                    ),
-                    version_length,
+                version = get_package_version_display_string(
+                    locked, root=self.poetry.file.parent
                 )
+                line += f" <b>{version:{version_length}}</b>"
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
                 update_status = latest_statuses[locked.pretty_name]
@@ -324,13 +318,10 @@ lists all packages available."""
                     elif update_status == "update-possible":
                         color = "yellow"
 
-                    line += " <fg={}>{:{}}</>".format(
-                        color,
-                        get_package_version_display_string(
-                            latest, root=self.poetry.file.parent
-                        ),
-                        latest_length,
+                    version = get_package_version_display_string(
+                        latest, root=self.poetry.file.parent
                     )
+                    line += f" <fg={color}>{version:{latest_length}}</>"
 
             if write_description:
                 description = locked.description
@@ -366,12 +357,7 @@ lists all packages available."""
 
             level = 1
             color = self.colors[level]
-            info = "{tree_bar}── <{color}>{name}</{color}> {constraint}".format(
-                tree_bar=tree_bar,
-                color=color,
-                name=dependency.name,
-                constraint=dependency.pretty_constraint,
-            )
+            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint}"
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
@@ -414,13 +400,7 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = "(circular dependency aborted here)"
 
-            info = "{tree_bar}── <{color}>{name}</{color}> {constraint} {warn}".format(
-                tree_bar=tree_bar,
-                color=color,
-                name=dependency.name,
-                constraint=dependency.pretty_constraint,
-                warn=circular_warn,
-            )
+            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint} {circular_warn}"
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")

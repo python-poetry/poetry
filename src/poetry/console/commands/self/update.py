@@ -139,9 +139,7 @@ class SelfUpdateCommand(Command):
 
         self.line("")
         self.line(
-            "<c1>Poetry</c1> (<c2>{}</c2>) is installed now. Great!".format(
-                release.version
-            )
+            f"<c1>Poetry</c1> (<c2>{release.version}</c2>) is installed now. Great!"
         )
 
         return 0

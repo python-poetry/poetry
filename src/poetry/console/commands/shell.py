@@ -25,8 +25,7 @@ If one doesn't exist yet, it will be created.
         ) == str(self.env.path)
         if venv_activated:
             self.line(
-                "Virtual environment already activated: "
-                "<info>{}</>".format(self.env.path)
+                f"Virtual environment already activated: <info>{self.env.path}</>"
             )
 
             return

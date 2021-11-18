@@ -39,13 +39,9 @@ if TYPE_CHECKING:
 
 def load_command(name: str) -> Callable:
     def _load() -> Type[Command]:
-        module = import_module(
-            "poetry.console.commands.{}".format(".".join(name.split(" ")))
-        )
-        command_class = getattr(
-            module, "{}Command".format("".join(c.title() for c in name.split(" ")))
-        )
-
+        words = name.split(" ")
+        module = import_module("poetry.console.commands." + ".".join(words))
+        command_class = getattr(module, "".join(c.title() for c in words) + "Command")
         return command_class()
 
     return _load

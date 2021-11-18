@@ -207,7 +207,7 @@ def test_authenticator_request_retries_on_exception(
     mocker: "MockerFixture", config: "Config", http: Type[httpretty.httpretty]
 ):
     sleep = mocker.patch("time.sleep")
-    sdist_uri = f"https://foo.bar/files/{str(uuid.uuid4())}/foo-0.1.0.tar.gz"
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
     content = str(uuid.uuid4())
     seen = []
 
@@ -232,7 +232,7 @@ def test_authenticator_request_raises_exception_when_attempts_exhausted(
     mocker: "MockerFixture", config: "Config", http: Type[httpretty.httpretty]
 ):
     sleep = mocker.patch("time.sleep")
-    sdist_uri = f"https://foo.bar/files/{str(uuid.uuid4())}/foo-0.1.0.tar.gz"
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
 
     def callback(*_: Any, **___: Any) -> None:
         raise requests.exceptions.ConnectionError(str(uuid.uuid4()))
@@ -267,7 +267,7 @@ def test_authenticator_request_retries_on_status_code(
     attempts: int,
 ):
     sleep = mocker.patch("time.sleep")
-    sdist_uri = f"https://foo.bar/files/{str(uuid.uuid4())}/foo-0.1.0.tar.gz"
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
     content = str(uuid.uuid4())
 
     def callback(

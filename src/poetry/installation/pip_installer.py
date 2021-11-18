@@ -52,9 +52,7 @@ class PipInstaller(BaseInstaller):
             parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
                 self._io.write_error(
-                    "    <warning>Installing from unsecure host: {}</warning>".format(
-                        parsed.hostname
-                    )
+                    f"    <warning>Installing from unsecure host: {parsed.hostname}</warning>"
                 )
                 args += ["--trusted-host", parsed.hostname]
 
@@ -161,9 +159,7 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "git":
-            req = "git+{}@{}#egg={}".format(
-                package.source_url, package.source_reference, package.name
-            )
+            req = f"git+{package.source_url}@{package.source_reference}#egg={package.name}"
 
             if package.develop:
                 req = ["-e", req]

@@ -43,7 +43,7 @@ class CacheClearCommand(Command):
             if not self.option("all"):
                 raise RuntimeError(
                     "Add the --all option if you want to clear all "
-                    "{} caches".format(parts[0])
+                    f"{parts[0]} caches"
                 )
 
             if not os.path.exists(str(cache_dir)):

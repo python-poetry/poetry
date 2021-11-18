@@ -58,9 +58,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.line(version.to_string())
             else:
                 self.line(
-                    "Bumping version from <b>{}</> to <fg=green>{}</>".format(
-                        self.poetry.package.pretty_version, version
-                    )
+                    f"Bumping version from <b>{self.poetry.package.pretty_version}</> to <fg=green>{version}</>"
                 )
 
             content = self.poetry.file.read()

@@ -162,7 +162,8 @@ class Term:
         return Term(self.dependency.with_constraint(constraint), is_positive)
 
     def __str__(self) -> str:
-        return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
+        prefix = "not " if not self.is_positive() else ""
+        return f"{prefix}{self._dependency}"
 
     def __repr__(self) -> str:
-        return f"<Term {str(self)}>"
+        return f"<Term {self!s}>"

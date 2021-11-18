@@ -50,7 +50,7 @@ class NewCommand(Command):
         if path.exists() and list(path.glob("*")):
             # Directory is not empty. Aborting.
             raise RuntimeError(
-                "Destination <fg=yellow>{}</> " "exists and is not empty".format(path)
+                f"Destination <fg=yellow>{path}</> " "exists and is not empty"
             )
 
         readme_format = self.option("readme") or "md"
@@ -64,9 +64,7 @@ class NewCommand(Command):
                 author += f" <{author_email}>"
 
         current_env = SystemEnv(Path(sys.executable))
-        default_python = "^{}".format(
-            ".".join(str(v) for v in current_env.version_info[:2])
-        )
+        default_python = "^" + ".".join(str(v) for v in current_env.version_info[:2])
 
         layout_ = layout_(
             name,
@@ -83,7 +81,5 @@ class NewCommand(Command):
             path = path.relative_to(Path.cwd())
 
         self.line(
-            "Created package <info>{}</> in <fg=blue>{}</>".format(
-                layout_._package_name, path.as_posix()
-            )
+            f"Created package <info>{layout_._package_name}</> in <fg=blue>{path.as_posix()}</>"
         )

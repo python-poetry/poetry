@@ -254,19 +254,16 @@ class SitePackages:
                 except ValueError:
                     pass
             else:
+                site_type = "writable " if writable_only else ""
                 raise ValueError(
-                    "{} is not relative to any discovered {}sites".format(
-                        path, "writable " if writable_only else ""
-                    )
+                    f"{path} is not relative to any discovered {site_type}sites"
                 )
 
         results = [candidate / path for candidate in candidates if candidate]
 
         if not results and strict:
             raise RuntimeError(
-                'Unable to find a suitable destination for "{}" in {}'.format(
-                    str(path), paths_csv(self._candidates)
-                )
+                f'Unable to find a suitable destination for "{path}" in {paths_csv(self._candidates)}'
             )
 
         return results
@@ -421,9 +418,7 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: Optional[str] = None) -> None:
         self.e = e
 
-        message = "Command {} errored with the following return code {}, and output: \n{}".format(
-            e.cmd, e.returncode, decode(e.output)
-        )
+        message = f"Command {e.cmd} errored with the following return code {e.returncode}, and output: \n{decode(e.output)}"
         if input:
             message += f"input was : {input}"
         super().__init__(message)
@@ -433,11 +428,11 @@ class NoCompatiblePythonVersionFound(EnvError):
     def __init__(self, expected: str, given: Optional[str] = None) -> None:
         if given:
             message = (
-                "The specified Python version ({}) "
-                "is not supported by the project ({}).\n"
+                f"The specified Python version ({given}) "
+                f"is not supported by the project ({expected}).\n"
                 "Please choose a compatible version "
                 "or loosen the python constraint specified "
-                "in the pyproject.toml file.".format(given, expected)
+                "in the pyproject.toml file."
             )
         else:
             message = (
@@ -573,11 +568,8 @@ class EnvManager:
             envs = envs_file.read()
             env = envs.get(name)
             if env is not None:
-                io.write_line(
-                    "Deactivating virtualenv: <comment>{}</comment>".format(
-                        venv_path / (name + "-py{}".format(env["minor"]))
-                    )
-                )
+                venv = venv_path / f"{name}-py{env['minor']}"
+                io.write_line(f"Deactivating virtualenv: <comment>{venv}</comment>")
                 del envs[name]
 
                 envs_file.write(envs)
@@ -834,11 +826,9 @@ class EnvManager:
                 )
 
             io.write_line(
-                "<warning>The currently activated Python version {} "
-                "is not supported by the project ({}).\n"
-                "Trying to find and use a compatible version.</warning> ".format(
-                    python_patch, self._poetry.package.python_versions
-                )
+                f"<warning>The currently activated Python version {python_patch} "
+                f"is not supported by the project ({self._poetry.package.python_versions}).\n"
+                "Trying to find and use a compatible version.</warning> "
             )
 
             for python_to_try in sorted(
@@ -910,17 +900,15 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_line(f"Creating virtualenv <c1>{name}</> in {str(venv_path)}")
+            io.write_line(f"Creating virtualenv <c1>{name}</> in {venv_path!s}")
         else:
             create_venv = False
             if force:
                 if not env.is_sane():
                     io.write_line(
-                        "<warning>The virtual environment found in {} seems to be broken.</warning>".format(
-                            env.path
-                        )
+                        f"<warning>The virtual environment found in {env.path} seems to be broken.</warning>"
                     )
-                io.write_line(f"Recreating virtualenv <c1>{name}</> in {str(venv)}")
+                io.write_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
                 self.remove_venv(venv)
                 create_venv = True
             elif io.is_very_verbose():
@@ -1493,7 +1481,7 @@ class SystemEnv(Env):
     def get_marker_env(self) -> Dict[str, Any]:
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
-            iver = "{0.major}.{0.minor}.{0.micro}".format(info)
+            iver = f"{info.major}.{info.minor}.{info.micro}"
             kind = info.releaselevel
             if kind != "final":
                 iver += kind[0] + str(info.serial)
@@ -1678,8 +1666,8 @@ class GenericEnv(VirtualEnv):
         patterns = [("python*", "pip*")]
 
         if self._child_env:
-            minor_version = "{}.{}".format(
-                self._child_env.version_info[0], self._child_env.version_info[1]
+            minor_version = (
+                f"{self._child_env.version_info[0]}.{self._child_env.version_info[1]}"
             )
             major_version = f"{self._child_env.version_info[0]}"
             patterns = [
