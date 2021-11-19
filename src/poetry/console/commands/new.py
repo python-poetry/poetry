@@ -1,5 +1,7 @@
 import sys
 
+from contextlib import suppress
+
 from cleo.helpers import argument
 from cleo.helpers import option
 
@@ -76,10 +78,8 @@ class NewCommand(Command):
 
         path = path.resolve()
 
-        try:
+        with suppress(ValueError):
             path = path.relative_to(Path.cwd())
-        except ValueError:
-            pass
 
         self.line(
             "Created package <info>{}</> in <fg=blue>{}</>".format(

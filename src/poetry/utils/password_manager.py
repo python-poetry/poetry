@@ -1,5 +1,6 @@
 import logging
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
@@ -185,9 +186,7 @@ class PasswordManager:
         if not auth or "username" not in auth:
             return
 
-        try:
+        with suppress(KeyRingError):
             self.keyring.delete_password(name, auth["username"])
-        except KeyRingError:
-            pass
 
         self._config.auth_config_source.remove_property(f"http-basic.{name}")

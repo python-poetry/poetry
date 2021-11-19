@@ -1,5 +1,6 @@
 import sys
 
+from contextlib import suppress
 from typing import List
 from typing import Optional
 
@@ -20,10 +21,8 @@ def decode(string: str, encodings: Optional[List[str]] = None) -> str:
     encodings = encodings or ["utf-8", "latin1", "ascii"]
 
     for encoding in encodings:
-        try:
+        with suppress(UnicodeEncodeError, UnicodeDecodeError):
             return string.decode(encoding)
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            pass
 
     return string.decode(encodings[0], errors="ignore")
 
@@ -35,10 +34,8 @@ def encode(string: str, encodings: Optional[List[str]] = None) -> bytes:
     encodings = encodings or ["utf-8", "latin1", "ascii"]
 
     for encoding in encodings:
-        try:
+        with suppress(UnicodeEncodeError, UnicodeDecodeError):
             return string.encode(encoding)
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            pass
 
     return string.encode(encodings[0], errors="ignore")
 

@@ -1,3 +1,4 @@
+from contextlib import suppress
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
@@ -135,10 +136,8 @@ class Pool(BaseRepository):
             raise ValueError(f'Repository "{repository}" does not exist.')
 
         if repository is not None and not self._ignore_repository_names:
-            try:
+            with suppress(PackageNotFound):
                 return self.repository(repository).package(name, version, extras=extras)
-            except PackageNotFound:
-                pass
         else:
             for repo in self._repositories:
                 try:
