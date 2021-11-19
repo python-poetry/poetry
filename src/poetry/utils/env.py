@@ -1217,7 +1217,7 @@ class Env:
                 self.purelib,
                 self.platlib,
                 fallbacks,
-                skip_write_checks=False if fallbacks else True,
+                skip_write_checks=not fallbacks,
             )
         return self._site_packages
 
