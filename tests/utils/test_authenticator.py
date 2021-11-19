@@ -6,14 +6,15 @@ import pytest
 import requests
 
 from cleo.io.null_io import NullIO
+from dataclasses import dataclass
 
 from poetry.utils.authenticator import Authenticator
 
 
+@dataclass
 class SimpleCredential:
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
+    username: str
+    password: str
 
 
 @pytest.fixture()
