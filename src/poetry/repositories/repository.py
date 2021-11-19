@@ -84,12 +84,9 @@ class Repository(BaseRepository):
 
     def has_package(self, package: "Package") -> bool:
         package_id = package.unique_name
-
-        for repo_package in self.packages:
-            if package_id == repo_package.unique_name:
-                return True
-
-        return False
+        return any(
+            package_id == repo_package.unique_name for repo_package in self.packages
+        )
 
     def add_package(self, package: "Package") -> None:
         self._packages.append(package)
