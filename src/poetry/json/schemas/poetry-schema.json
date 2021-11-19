@@ -54,8 +54,19 @@
       "$ref": "#/definitions/maintainers"
     },
     "readme": {
-      "type": "string",
-      "description": "The path to the README file"
+      "anyOf": [
+        {
+          "type": "string",
+          "description": "The path to the README file."
+        },
+        {
+          "type": "array",
+          "description": "A list of paths to the readme files.",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "classifiers": {
       "type": "array",
