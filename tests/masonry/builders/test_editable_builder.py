@@ -2,6 +2,7 @@ import os
 import shutil
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -14,8 +15,14 @@ from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
 
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from poetry.poetry import Poetry
+
+
 @pytest.fixture()
-def simple_poetry():
+def simple_poetry() -> "Poetry":
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
     )
@@ -24,7 +31,7 @@ def simple_poetry():
 
 
 @pytest.fixture()
-def project_with_include():
+def project_with_include() -> "Poetry":
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "with-include"
     )
@@ -33,7 +40,7 @@ def project_with_include():
 
 
 @pytest.fixture()
-def extended_poetry():
+def extended_poetry() -> "Poetry":
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
     )
@@ -42,7 +49,7 @@ def extended_poetry():
 
 
 @pytest.fixture()
-def extended_without_setup_poetry():
+def extended_without_setup_poetry() -> "Poetry":
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent
         / "fixtures"
@@ -53,12 +60,12 @@ def extended_without_setup_poetry():
 
 
 @pytest.fixture()
-def env_manager(simple_poetry):
+def env_manager(simple_poetry: "Poetry") -> EnvManager:
     return EnvManager(simple_poetry)
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir, env_manager):
+def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
     venv_path = Path(tmp_dir) / "venv"
 
     env_manager.build_venv(str(venv_path))
@@ -69,7 +76,9 @@ def tmp_venv(tmp_dir, env_manager):
     shutil.rmtree(str(venv.path))
 
 
-def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_venv):
+def test_builder_installs_proper_files_for_standard_packages(
+    simple_poetry: "Poetry", tmp_venv: VirtualEnv
+):
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
     builder.build()
@@ -184,7 +193,7 @@ if __name__ == '__main__':
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    mocker, extended_poetry, tmp_dir
+    mocker: "MockerFixture", extended_poetry: "Poetry", tmp_dir: str
 ):
     pip_editable_install = mocker.patch(
         "poetry.masonry.builders.editable.pip_editable_install"
@@ -200,7 +209,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
 
 
 def test_builder_installs_proper_files_when_packages_configured(
-    project_with_include, tmp_venv
+    project_with_include: "Poetry", tmp_venv: VirtualEnv
 ):
     builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
     builder.build()
@@ -224,7 +233,9 @@ def test_builder_installs_proper_files_when_packages_configured(
     assert len(paths) == len(expected)
 
 
-def test_builder_should_execute_build_scripts(extended_without_setup_poetry, tmp_dir):
+def test_builder_should_execute_build_scripts(
+    extended_without_setup_poetry: "Poetry", tmp_dir: str
+):
     env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_without_setup_poetry, env, NullIO())
 
