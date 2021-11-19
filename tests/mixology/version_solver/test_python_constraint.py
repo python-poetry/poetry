@@ -1,9 +1,19 @@
+from typing import TYPE_CHECKING
+
 from poetry.factory import Factory
 from tests.mixology.helpers import add_to_repo
 from tests.mixology.helpers import check_solver_result
 
 
-def test_dependency_does_not_match_root_python_constraint(root, provider, repo):
+if TYPE_CHECKING:
+    from poetry.packages.project_package import ProjectPackage
+    from poetry.repositories import Repository
+    from tests.mixology.version_solver.conftest import Provider
+
+
+def test_dependency_does_not_match_root_python_constraint(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     provider.set_package_python_versions("^3.6")
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
