@@ -5,8 +5,14 @@ import sys
 import tempfile
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Tuple
+from typing import Type
 
 import httpretty
 import pytest
@@ -32,6 +38,12 @@ from tests.helpers import TestRepository
 from tests.helpers import get_package
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
+
+
+if TYPE_CHECKING:
+    from poetry.poetry import Poetry
+    from tests.types import CommandTesterFactory
+    from tests.types import ProjectFactory
 
 
 class Config(BaseConfig):
@@ -110,7 +122,7 @@ def with_chained_keyring(mocker):
 
 
 @pytest.fixture
-def config_cache_dir(tmp_dir):
+def config_cache_dir(tmp_dir: str) -> Path:
     path = Path(tmp_dir) / ".cache" / "pypoetry"
     path.mkdir(parents=True)
     return path
@@ -130,14 +142,14 @@ def config_source(config_cache_dir):
 
 
 @pytest.fixture
-def auth_config_source():
+def auth_config_source() -> DictConfigSource:
     source = DictConfigSource()
 
     return source
 
 
 @pytest.fixture
-def config(config_source, auth_config_source, mocker):
+def config(config_source, auth_config_source, mocker) -> Config:
     import keyring
 
     from keyring.backends.fail import Keyring
@@ -189,7 +201,7 @@ def pep517_metadata_mock(mocker):
 
 
 @pytest.fixture
-def environ():
+def environ() -> Iterator[None]:
     original_environ = dict(os.environ)
 
     yield
@@ -208,7 +220,7 @@ def git_mock(mocker):
 
 
 @pytest.fixture
-def http():
+def http() -> Iterator[Type[httpretty.httpretty]]:
     httpretty.reset()
     httpretty.enable(allow_net_connect=False)
 
@@ -219,20 +231,20 @@ def http():
 
 
 @pytest.fixture
-def fixture_base():
+def fixture_base() -> Path:
     return Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
-def fixture_dir(fixture_base):
-    def _fixture_dir(name):
+def fixture_dir(fixture_base: Path) -> Callable[[str], Path]:
+    def _fixture_dir(name: str):
         return fixture_base / name
 
     return _fixture_dir
 
 
 @pytest.fixture
-def tmp_dir():
+def tmp_dir() -> Iterator[str]:
     dir_ = tempfile.mkdtemp(prefix="poetry_")
 
     yield dir_
@@ -256,7 +268,7 @@ def mocked_open_files(mocker):
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir):
+def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
     venv_path = Path(tmp_dir) / "venv"
 
     EnvManager.build_venv(str(venv_path))
@@ -268,27 +280,27 @@ def tmp_venv(tmp_dir):
 
 
 @pytest.fixture
-def installed():
+def installed() -> Repository:
     return Repository()
 
 
 @pytest.fixture(scope="session")
-def current_env():
+def current_env() -> SystemEnv:
     return SystemEnv(Path(sys.executable))
 
 
 @pytest.fixture(scope="session")
-def current_python(current_env):
+def current_python(current_env: SystemEnv) -> Tuple[int, int, int]:
     return current_env.version_info[:3]
 
 
 @pytest.fixture(scope="session")
-def default_python(current_python):
+def default_python(current_python: Tuple[int, int, int]) -> str:
     return "^{}".format(".".join(str(v) for v in current_python[:2]))
 
 
 @pytest.fixture
-def repo(http):
+def repo(http: Type[httpretty.httpretty]) -> TestRepository:
     http.register_uri(
         http.GET,
         re.compile("^https?://foo.bar/(.+?)$"),
@@ -297,17 +309,23 @@ def repo(http):
 
 
 @pytest.fixture
-def project_factory(tmp_dir, config, repo, installed, default_python):
+def project_factory(
+    tmp_dir: str,
+    config: Config,
+    repo: TestRepository,
+    installed: Repository,
+    default_python: str,
+) -> "ProjectFactory":
     workspace = Path(tmp_dir)
 
     def _factory(
-        name=None,
-        dependencies=None,
-        dev_dependencies=None,
-        pyproject_content=None,
-        poetry_lock_content=None,
-        install_deps=True,
-    ):
+        name: Optional[str] = None,
+        dependencies: Optional[Dict[str, str]] = None,
+        dev_dependencies: Optional[Dict[str, str]] = None,
+        pyproject_content: Optional[str] = None,
+        poetry_lock_content: Optional[str] = None,
+        install_deps: bool = True,
+    ) -> "Poetry":
         project_dir = workspace / f"poetry-fixture-{name}"
         dependencies = dependencies or {}
         dev_dependencies = dev_dependencies or {}
@@ -359,7 +377,7 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
 
 
 @pytest.fixture
-def command_tester_factory(app, env):
+def command_tester_factory(app, env) -> "CommandTesterFactory":
     def _tester(command, poetry=None, installer=None, executor=None, environment=None):
         command = app.find(command)
         tester = CommandTester(command)
@@ -400,7 +418,7 @@ def command_tester_factory(app, env):
 
 
 @pytest.fixture
-def do_lock(command_tester_factory, poetry):
+def do_lock(command_tester_factory: "CommandTesterFactory", poetry: "Poetry") -> None:
     command_tester_factory("lock").execute()
     assert poetry.locker.lock.exists()
 

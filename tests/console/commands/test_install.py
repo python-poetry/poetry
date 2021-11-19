@@ -1,12 +1,23 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("install")
 
 
-def test_group_options_are_passed_to_the_installer(tester, mocker):
+def test_group_options_are_passed_to_the_installer(
+    tester: "CommandTester", mocker: "MockerFixture"
+):
     """
     Group options are passed properly to the installer.
     """
@@ -19,7 +30,9 @@ def test_group_options_are_passed_to_the_installer(tester, mocker):
     assert tester.command.installer._only_groups == ["bam"]
 
 
-def test_sync_option_is_passed_to_the_installer(tester, mocker):
+def test_sync_option_is_passed_to_the_installer(
+    tester: "CommandTester", mocker: "MockerFixture"
+):
     """
     The --sync option is passed properly to the installer.
     """

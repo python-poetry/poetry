@@ -1,13 +1,30 @@
+from typing import TYPE_CHECKING
+
 import dataclasses
 import pytest
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+
+    from poetry.config.source import Source
+    from poetry.poetry import Poetry
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture
-def tester(command_tester_factory, poetry_with_source):
+def tester(
+    command_tester_factory: "CommandTesterFactory", poetry_with_source: "Poetry"
+) -> "CommandTester":
     return command_tester_factory("source add", poetry=poetry_with_source)
 
 
-def assert_source_added(tester, poetry, source_existing, source_added):
+def assert_source_added(
+    tester: "CommandTester",
+    poetry: "Poetry",
+    source_existing: "Source",
+    source_added: "Source",
+) -> None:
     assert (
         tester.io.fetch_output().strip()
         == f"Adding source with name {source_added.name}."
@@ -18,26 +35,37 @@ def assert_source_added(tester, poetry, source_existing, source_added):
     assert tester.status_code == 0
 
 
-def test_source_add_simple(tester, source_existing, source_one, poetry_with_source):
+def test_source_add_simple(
+    tester: "CommandTester",
+    source_existing: "Source",
+    source_one: "Source",
+    poetry_with_source: "Poetry",
+):
     tester.execute(f"{source_one.name} {source_one.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_one)
 
 
 def test_source_add_default(
-    tester, source_existing, source_default, poetry_with_source
+    tester: "CommandTester",
+    source_existing: "Source",
+    source_default: "Source",
+    poetry_with_source: "Poetry",
 ):
     tester.execute(f"--default {source_default.name} {source_default.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_default)
 
 
 def test_source_add_secondary(
-    tester, source_existing, source_secondary, poetry_with_source
+    tester: "CommandTester",
+    source_existing: "Source",
+    source_secondary: "Source",
+    poetry_with_source: "Poetry",
 ):
     tester.execute(f"--secondary {source_secondary.name} {source_secondary.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_secondary)
 
 
-def test_source_add_error_default_and_secondary(tester):
+def test_source_add_error_default_and_secondary(tester: "CommandTester"):
     tester.execute("--default --secondary error https://error.com")
     assert (
         tester.io.fetch_error().strip()
@@ -46,7 +74,7 @@ def test_source_add_error_default_and_secondary(tester):
     assert tester.status_code == 1
 
 
-def test_source_add_error_pypi(tester):
+def test_source_add_error_pypi(tester: "CommandTester"):
     tester.execute("pypi https://test.pypi.org/simple/")
     assert (
         tester.io.fetch_error().strip()
@@ -55,7 +83,9 @@ def test_source_add_error_pypi(tester):
     assert tester.status_code == 1
 
 
-def test_source_add_existing(tester, source_existing, poetry_with_source):
+def test_source_add_existing(
+    tester: "CommandTester", source_existing: "Source", poetry_with_source: "Poetry"
+):
     tester.execute(f"--default {source_existing.name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()

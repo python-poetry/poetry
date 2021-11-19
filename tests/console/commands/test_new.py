@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import List
 from typing import Optional
 
 import pytest
@@ -8,11 +9,14 @@ from poetry.factory import Factory
 
 
 if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+
     from poetry.poetry import Poetry
+    from tests.types import CommandTesterFactory
 
 
 @pytest.fixture
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("new")
 
 
@@ -139,7 +143,13 @@ def verify_project_directory(
     ],
 )
 def test_command_new(
-    options, directory, package_name, package_path, include_from, tester, tmp_dir
+    options: List[str],
+    directory: str,
+    package_name: str,
+    package_path: str,
+    include_from: Optional[str],
+    tester: "CommandTester",
+    tmp_dir: str,
 ):
     path = Path(tmp_dir) / directory
     options.append(path.as_posix())
@@ -148,7 +158,9 @@ def test_command_new(
 
 
 @pytest.mark.parametrize("fmt", [(None,), ("md",), ("rst",)])
-def test_command_new_with_readme(fmt, tester, tmp_dir):
+def test_command_new_with_readme(
+    fmt: Optional[str], tester: "CommandTester", tmp_dir: str
+):
     fmt = "md"
     package = "package"
     path = Path(tmp_dir) / package
