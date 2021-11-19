@@ -96,8 +96,8 @@ def is_decorated():
     if WINDOWS:
         return (
             os.getenv("ANSICON") is not None
-            or "ON" == os.getenv("ConEmuANSI")
-            or "xterm" == os.getenv("Term")
+            or os.getenv("ConEmuANSI") == "ON"
+            or os.getenv("Term") == "xterm"
         )
 
     if not hasattr(sys.stdout, "fileno"):

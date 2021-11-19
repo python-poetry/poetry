@@ -106,7 +106,7 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         package.description == "Python Language Server for the Language Server Protocol"
     )
 
-    assert 25 == len(package.requires)
+    assert len(package.requires) == 25
     assert sorted(
         (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
@@ -202,10 +202,10 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
 
     package = repo.package("ipython", "5.7.0")
 
-    assert "ipython" == package.name
-    assert "5.7.0" == package.version.text
-    assert "*" == package.python_versions
-    assert 41 == len(package.requires)
+    assert package.name == "ipython"
+    assert package.version.text == "5.7.0"
+    assert package.python_versions == "*"
+    assert len(package.requires) == 41
 
     expected = [
         Dependency("appnope", "*"),
@@ -225,14 +225,14 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     required = [r for r in package.requires if not r.is_optional()]
     assert expected == required
 
-    assert 'python_version == "2.7"' == str(required[1].marker)
-    assert 'sys_platform == "win32" and python_version < "3.6"' == str(
-        required[12].marker
+    assert str(required[1].marker) == 'python_version == "2.7"'
+    assert (
+        str(required[12].marker) == 'sys_platform == "win32" and python_version < "3.6"'
     )
-    assert 'python_version == "2.7" or python_version == "3.3"' == str(
-        required[4].marker
+    assert (
+        str(required[4].marker) == 'python_version == "2.7" or python_version == "3.3"'
     )
-    assert 'sys_platform != "win32"' == str(required[5].marker)
+    assert str(required[5].marker) == 'sys_platform != "win32"'
 
 
 def test_get_package_with_dist_and_universal_py3_wheel():
@@ -240,9 +240,9 @@ def test_get_package_with_dist_and_universal_py3_wheel():
 
     package = repo.package("ipython", "7.5.0")
 
-    assert "ipython" == package.name
-    assert "7.5.0" == package.version.text
-    assert ">=3.5" == package.python_versions
+    assert package.name == "ipython"
+    assert package.version.text == "7.5.0"
+    assert package.python_versions == ">=3.5"
 
     expected = [
         Dependency("appnope", "*"),

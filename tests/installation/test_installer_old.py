@@ -1741,7 +1741,7 @@ def test_installer_can_handle_old_lock_files(
 
     installer.run()
 
-    assert 6 == len(installer.installer.installs)
+    assert len(installer.installer.installs) == 6
 
     installer = Installer(
         NullIO(),
@@ -1756,7 +1756,7 @@ def test_installer_can_handle_old_lock_files(
     installer.run()
 
     # funcsigs will be added
-    assert 7 == len(installer.installer.installs)
+    assert len(installer.installer.installs) == 7
 
     installer = Installer(
         NullIO(),
@@ -1771,4 +1771,4 @@ def test_installer_can_handle_old_lock_files(
     installer.run()
 
     # colorama will be added
-    assert 8 == len(installer.installer.installs)
+    assert len(installer.installer.installs) == 8

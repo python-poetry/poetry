@@ -92,10 +92,10 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
     assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("entry_points.txt").exists()
 
-    assert "poetry" == dist_info.joinpath("INSTALLER").read_text()
+    assert dist_info.joinpath("INSTALLER").read_text() == "poetry"
     assert (
-        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
-        == dist_info.joinpath("entry_points.txt").read_text()
+        dist_info.joinpath("entry_points.txt").read_text()
+        == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
     )
 
     metadata = """\

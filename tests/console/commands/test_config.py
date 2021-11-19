@@ -36,7 +36,7 @@ def test_show_config_with_local_config_file_empty(
     )
     tester.execute()
 
-    assert "" == tester.io.fetch_output()
+    assert tester.io.fetch_output() == ""
 
 
 def test_list_displays_default_value_if_not_set(
@@ -82,7 +82,7 @@ virtualenvs.path = {path}  # {virtualenvs}
         virtualenvs=str(config_cache_dir / "virtualenvs"),
     )
 
-    assert 0 == config.set_config_source.call_count
+    assert config.set_config_source.call_count == 0
     assert expected == tester.io.fetch_output()
 
 
@@ -130,7 +130,7 @@ virtualenvs.path = {path}  # {virtualenvs}
         virtualenvs=str(config_cache_dir / "virtualenvs"),
     )
 
-    assert 1 == config.set_config_source.call_count
+    assert config.set_config_source.call_count == 1
     assert expected == tester.io.fetch_output()
 
 
@@ -140,7 +140,7 @@ def test_set_pypi_token(
     tester.execute("pypi-token.pypi mytoken")
     tester.execute("--list")
 
-    assert "mytoken" == auth_config_source.config["pypi-token"]["pypi"]
+    assert auth_config_source.config["pypi-token"]["pypi"] == "mytoken"
 
 
 def test_set_client_cert(
@@ -153,8 +153,8 @@ def test_set_client_cert(
     tester.execute("certificates.foo.client-cert path/to/cert.pem")
 
     assert (
-        "path/to/cert.pem"
-        == auth_config_source.config["certificates"]["foo"]["client-cert"]
+        auth_config_source.config["certificates"]["foo"]["client-cert"]
+        == "path/to/cert.pem"
     )
 
 
@@ -167,7 +167,7 @@ def test_set_cert(
 
     tester.execute("certificates.foo.cert path/to/ca.pem")
 
-    assert "path/to/ca.pem" == auth_config_source.config["certificates"]["foo"]["cert"]
+    assert auth_config_source.config["certificates"]["foo"]["cert"] == "path/to/ca.pem"
 
 
 def test_config_installer_parallel(

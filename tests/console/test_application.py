@@ -46,7 +46,7 @@ def test_application_with_plugins(mocker: "MockerFixture"):
     tester.execute("")
 
     assert re.search(r"\s+foo\s+Foo Command", tester.io.fetch_output()) is not None
-    assert 0 == tester.status_code
+    assert tester.status_code == 0
 
 
 def test_application_with_plugins_disabled(mocker: "MockerFixture"):
@@ -65,7 +65,7 @@ def test_application_with_plugins_disabled(mocker: "MockerFixture"):
     tester.execute("--no-plugins")
 
     assert re.search(r"\s+foo\s+Foo Command", tester.io.fetch_output()) is None
-    assert 0 == tester.status_code
+    assert tester.status_code == 0
 
 
 def test_application_execute_plugin_command(mocker: "MockerFixture"):
@@ -83,8 +83,8 @@ def test_application_execute_plugin_command(mocker: "MockerFixture"):
     tester = ApplicationTester(app)
     tester.execute("foo")
 
-    assert "foo called\n" == tester.io.fetch_output()
-    assert 0 == tester.status_code
+    assert tester.io.fetch_output() == "foo called\n"
+    assert tester.status_code == 0
 
 
 def test_application_execute_plugin_command_with_plugins_disabled(
@@ -104,6 +104,6 @@ def test_application_execute_plugin_command_with_plugins_disabled(
     tester = ApplicationTester(app)
     tester.execute("foo --no-plugins")
 
-    assert "" == tester.io.fetch_output()
-    assert '\nThe command "foo" does not exist.\n' == tester.io.fetch_error()
-    assert 1 == tester.status_code
+    assert tester.io.fetch_output() == ""
+    assert tester.io.fetch_error() == '\nThe command "foo" does not exist.\n'
+    assert tester.status_code == 1

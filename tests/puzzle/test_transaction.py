@@ -9,7 +9,7 @@ def check_operations(ops, expected):
 
     result = []
     for op in ops:
-        if "update" == op.job_type:
+        if op.job_type == "update":
             result.append(
                 {
                     "job": "update",

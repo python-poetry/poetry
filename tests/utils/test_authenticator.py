@@ -37,7 +37,7 @@ def test_authenticator_uses_url_provided_credentials(config, mock_remote, http):
 
     request = http.last_request()
 
-    assert "Basic Zm9vMDAxOmJhcjAwMg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic Zm9vMDAxOmJhcjAwMg=="
 
 
 def test_authenticator_uses_credentials_from_config_if_not_provided(
@@ -55,7 +55,7 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
 
     request = http.last_request()
 
-    assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
 
 
 def test_authenticator_uses_username_only_credentials(
@@ -73,7 +73,7 @@ def test_authenticator_uses_username_only_credentials(
 
     request = http.last_request()
 
-    assert "Basic Zm9vMDAxOg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic Zm9vMDAxOg=="
 
 
 def test_authenticator_uses_password_only_credentials(config, mock_remote, http):
@@ -89,7 +89,7 @@ def test_authenticator_uses_password_only_credentials(config, mock_remote, http)
 
     request = http.last_request()
 
-    assert "Basic OmJhcjAwMg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcjAwMg=="
 
 
 def test_authenticator_uses_empty_strings_as_default_password(
@@ -107,7 +107,7 @@ def test_authenticator_uses_empty_strings_as_default_password(
 
     request = http.last_request()
 
-    assert "Basic YmFyOg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic YmFyOg=="
 
 
 def test_authenticator_uses_empty_strings_as_default_username(
@@ -125,7 +125,7 @@ def test_authenticator_uses_empty_strings_as_default_username(
 
     request = http.last_request()
 
-    assert "Basic OmJhcg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
 def test_authenticator_falls_back_to_keyring_url(
@@ -146,7 +146,7 @@ def test_authenticator_falls_back_to_keyring_url(
 
     request = http.last_request()
 
-    assert "Basic OmJhcg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
 def test_authenticator_falls_back_to_keyring_netloc(
@@ -165,7 +165,7 @@ def test_authenticator_falls_back_to_keyring_netloc(
 
     request = http.last_request()
 
-    assert "Basic OmJhcg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
@@ -250,4 +250,4 @@ def test_authenticator_uses_env_provided_credentials(
 
     request = http.last_request()
 
-    assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic YmFyOmJheg=="

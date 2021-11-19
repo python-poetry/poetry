@@ -29,7 +29,7 @@ def test_publish_returns_non_zero_code_for_upload_errors(
 
     exit_code = app_tester.execute("publish --username foo --password bar")
 
-    assert 1 == exit_code
+    assert exit_code == 1
 
     expected_output = """
 Publishing simple-project (1.2.3) to PyPI
@@ -59,7 +59,7 @@ def test_publish_returns_non_zero_code_for_connection_errors(
 
     exit_code = app_tester.execute("publish --username foo --password bar")
 
-    assert 1 == exit_code
+    assert exit_code == 1
 
     expected = str(UploadError(error=requests.ConnectionError()))
 
@@ -96,7 +96,7 @@ def test_publish_dry_run(
 
     exit_code = app_tester.execute("publish --dry-run --username foo --password bar")
 
-    assert 0 == exit_code
+    assert exit_code == 0
 
     output = app_tester.io.fetch_output()
     error = app_tester.io.fetch_error()

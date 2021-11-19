@@ -58,7 +58,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -80,9 +80,9 @@ Failed to add packages. Only vcs/path dependencies support editable installs. ca
 
 No changes were applied.
 """
-    assert 1 == tester.status_code
+    assert tester.status_code == 1
     assert expected == tester.io.fetch_error()
-    assert 0 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 0
     assert content == app.poetry.file.read()["tool"]["poetry"]
 
 
@@ -107,7 +107,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
 
 def test_add_greater_constraint(
@@ -131,7 +131,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
 
 def test_add_constraint_with_extras(
@@ -162,7 +162,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_constraint_dependencies(
@@ -192,7 +192,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_git_constraint(
@@ -222,7 +222,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -258,7 +258,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_git_constraint_with_extras(
@@ -291,7 +291,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 """
 
     assert expected.strip() == tester.io.fetch_output().strip()
-    assert 4 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 4
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -332,7 +332,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -381,7 +381,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -424,7 +424,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_file_constraint_wheel(
@@ -458,7 +458,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -498,7 +498,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -536,7 +536,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -576,7 +576,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -618,7 +618,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     expected = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
     assert expected == output
-    assert 4 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 4
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -652,7 +652,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -689,7 +689,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -724,7 +724,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -741,7 +741,7 @@ def test_add_constraint_with_source_that_does_not_exist(
     with pytest.raises(ValueError) as e:
         tester.execute("foo --source i-dont-exist")
 
-    assert 'Repository "i-dont-exist" does not exist.' == str(e.value)
+    assert str(e.value) == 'Repository "i-dont-exist" does not exist.'
 
 
 def test_add_constraint_not_found_with_source(
@@ -761,7 +761,7 @@ def test_add_constraint_not_found_with_source(
     with pytest.raises(ValueError) as e:
         tester.execute("cachy --source my-index")
 
-    assert "Could not find a matching version of package cachy" == str(e.value)
+    assert str(e.value) == "Could not find a matching version of package cachy"
 
 
 def test_add_to_section_that_does_not_exist_yet(
@@ -786,7 +786,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -827,7 +827,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -857,7 +857,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester.command.installer.executor.installations_count
+    assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -1696,7 +1696,7 @@ def test_add_constraint_with_source_that_does_not_exist_old_installer(
     with pytest.raises(ValueError) as e:
         old_tester.execute("foo --source i-dont-exist")
 
-    assert 'Repository "i-dont-exist" does not exist.' == str(e.value)
+    assert str(e.value) == 'Repository "i-dont-exist" does not exist.'
 
 
 def test_add_constraint_not_found_with_source_old_installer(
@@ -1716,7 +1716,7 @@ def test_add_constraint_not_found_with_source_old_installer(
     with pytest.raises(ValueError) as e:
         old_tester.execute("cachy --source my-index")
 
-    assert "Could not find a matching version of package cachy" == str(e.value)
+    assert str(e.value) == "Could not find a matching version of package cachy"
 
 
 def test_add_to_section_that_does_no_exist_yet_old_installer(
