@@ -10,6 +10,8 @@ extend-ignore =
     E501,
     # E203: Whitespace before ':' (pycqa/pycodestyle#373)
     E203,
+    # SIM106: Handle error-cases first
+    SIM106,
 per-file-ignores =
     # F401: Module imported by unused (non-implicit modules)
     # TC002: Move third-party import '...' into a type-checking block
