@@ -1,6 +1,9 @@
 import json
 import os
 
+from typing import TYPE_CHECKING
+from typing import Callable
+
 import pytest
 
 from poetry.config.config_source import ConfigSource
@@ -8,12 +11,25 @@ from poetry.core.pyproject.exceptions import PyProjectException
 from poetry.factory import Factory
 
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from poetry.config.dict_config_source import DictConfigSource
+    from tests.conftest import Config
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("config")
 
 
-def test_show_config_with_local_config_file_empty(tester, mocker):
+def test_show_config_with_local_config_file_empty(
+    tester: "CommandTester", mocker: "MockerFixture"
+):
     mocker.patch(
         "poetry.factory.Factory.create_poetry",
         side_effect=PyProjectException("[tool.poetry] section not found"),
@@ -23,7 +39,9 @@ def test_show_config_with_local_config_file_empty(tester, mocker):
     assert "" == tester.io.fetch_output()
 
 
-def test_list_displays_default_value_if_not_set(tester, config, config_cache_dir):
+def test_list_displays_default_value_if_not_set(
+    tester: "CommandTester", config: "Config", config_cache_dir: "Path"
+):
     tester.execute("--list")
 
     expected = """cache-dir = {cache}
@@ -43,7 +61,9 @@ virtualenvs.path = {path}  # {virtualenvs}
     assert expected == tester.io.fetch_output()
 
 
-def test_list_displays_set_get_setting(tester, config, config_cache_dir):
+def test_list_displays_set_get_setting(
+    tester: "CommandTester", config: "Config", config_cache_dir: "Path"
+):
     tester.execute("virtualenvs.create false")
 
     tester.execute("--list")
@@ -66,7 +86,7 @@ virtualenvs.path = {path}  # {virtualenvs}
     assert expected == tester.io.fetch_output()
 
 
-def test_display_single_setting(tester, config):
+def test_display_single_setting(tester: "CommandTester", config: "Config"):
     tester.execute("virtualenvs.create")
 
     expected = """true
@@ -75,7 +95,9 @@ def test_display_single_setting(tester, config):
     assert expected == tester.io.fetch_output()
 
 
-def test_display_single_local_setting(command_tester_factory, fixture_dir):
+def test_display_single_local_setting(
+    command_tester_factory: "CommandTesterFactory", fixture_dir: Callable[[str], "Path"]
+):
     tester = command_tester_factory(
         "config", poetry=Factory().create_poetry(fixture_dir("with_local_config"))
     )
@@ -87,7 +109,9 @@ def test_display_single_local_setting(command_tester_factory, fixture_dir):
     assert expected == tester.io.fetch_output()
 
 
-def test_list_displays_set_get_local_setting(tester, config, config_cache_dir):
+def test_list_displays_set_get_local_setting(
+    tester: "CommandTester", config: "Config", config_cache_dir: "Path"
+):
     tester.execute("virtualenvs.create false --local")
 
     tester.execute("--list")
@@ -110,14 +134,20 @@ virtualenvs.path = {path}  # {virtualenvs}
     assert expected == tester.io.fetch_output()
 
 
-def test_set_pypi_token(tester, auth_config_source):
+def test_set_pypi_token(
+    tester: "CommandTester", auth_config_source: "DictConfigSource"
+):
     tester.execute("pypi-token.pypi mytoken")
     tester.execute("--list")
 
     assert "mytoken" == auth_config_source.config["pypi-token"]["pypi"]
 
 
-def test_set_client_cert(tester, auth_config_source, mocker):
+def test_set_client_cert(
+    tester: "CommandTester",
+    auth_config_source: "DictConfigSource",
+    mocker: "MockerFixture",
+):
     mocker.spy(ConfigSource, "__init__")
 
     tester.execute("certificates.foo.client-cert path/to/cert.pem")
@@ -128,7 +158,11 @@ def test_set_client_cert(tester, auth_config_source, mocker):
     )
 
 
-def test_set_cert(tester, auth_config_source, mocker):
+def test_set_cert(
+    tester: "CommandTester",
+    auth_config_source: "DictConfigSource",
+    mocker: "MockerFixture",
+):
     mocker.spy(ConfigSource, "__init__")
 
     tester.execute("certificates.foo.cert path/to/ca.pem")
@@ -136,7 +170,9 @@ def test_set_cert(tester, auth_config_source, mocker):
     assert "path/to/ca.pem" == auth_config_source.config["certificates"]["foo"]["cert"]
 
 
-def test_config_installer_parallel(tester, command_tester_factory):
+def test_config_installer_parallel(
+    tester: "CommandTester", command_tester_factory: "CommandTesterFactory"
+):
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"
 

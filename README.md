@@ -9,6 +9,10 @@ It supports Python 3.6+.
 
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
+[![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)](https://pypi.org/project/poetry/)
+[![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=alpha&include_prereleases&sort=semver)](https://pypi.org/project/poetry/#history)
+[![Downloads](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
+[![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)](https://discord.com/invite/awxPgve)
 
 The [complete documentation](https://python-poetry.org/docs/) is available on the [official website](https://python-poetry.org).
 

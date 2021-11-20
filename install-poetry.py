@@ -213,7 +213,7 @@ def _get_win_folder_with_ctypes(csidl_name):
 
 if WINDOWS:
     try:
-        from ctypes import windll  # noqa
+        from ctypes import windll  # noqa: F401
 
         _get_win_folder = _get_win_folder_with_ctypes
     except ImportError:
@@ -580,7 +580,7 @@ class Installer:
         try:
             self._install_comment(version, "Creating environment")
             yield VirtualEnvironment.make(env_path)
-        except Exception as e:  # noqa
+        except Exception as e:
             if env_path.exists():
                 self._install_comment(
                     version, "An error occurred. Removing partial environment."
@@ -871,7 +871,7 @@ def main():
     try:
         return installer.run()
     except PoetryInstallationError as e:
-        installer._write(colorize("error", "Poetry installation failed."))  # noqa
+        installer._write(colorize("error", "Poetry installation failed."))
 
         if e.log is not None:
             import traceback
@@ -882,7 +882,7 @@ def main():
                 dir=str(Path.cwd()),
                 text=True,
             )
-            installer._write(colorize("error", f"See {path} for error logs."))  # noqa
+            installer._write(colorize("error", f"See {path} for error logs."))
             text = f"{e.log}\nTraceback:\n\n{''.join(traceback.format_tb(e.__traceback__))}"
             Path(path).write_text(text)
 

@@ -520,6 +520,10 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
+Note that this commmand starts a new shell and activates the virtual environment.
+
+As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
+
 ## check
 
 The `check` command validates the structure of the `pyproject.toml` file
@@ -602,6 +606,7 @@ Only the `requirements.txt` format is currently supported.
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+* `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
 ## env

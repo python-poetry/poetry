@@ -262,6 +262,13 @@ poetry = 'poetry.console:run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
+To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
+
+```toml
+[tool.poetry.scripts]
+devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
+```
+
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}

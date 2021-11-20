@@ -24,11 +24,9 @@ class MockRepository(LegacyRepository):
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
     def __init__(self):
-        super(MockRepository, self).__init__(
-            "legacy", url="http://legacy.foo.bar", disable_cache=True
-        )
+        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get(self, endpoint):
+    def _get_page(self, endpoint):
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -49,7 +47,7 @@ class MockRepository(LegacyRepository):
 def test_page_relative_links_path_are_correct():
     repo = MockRepository()
 
-    page = repo._get("/relative")
+    page = repo._get_page("/relative")
 
     for link in page.links:
         assert link.netloc == "legacy.foo.bar"
@@ -59,7 +57,7 @@ def test_page_relative_links_path_are_correct():
 def test_page_absolute_links_path_are_correct():
     repo = MockRepository()
 
-    page = repo._get("/absolute")
+    page = repo._get_page("/absolute")
 
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
@@ -68,7 +66,7 @@ def test_page_absolute_links_path_are_correct():
 
 def test_sdist_format_support():
     repo = MockRepository()
-    page = repo._get("/relative")
+    page = repo._get_page("/relative")
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
@@ -110,7 +108,7 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
 
     assert 25 == len(package.requires)
     assert sorted(
-        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+        (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
         Dependency("configparser", "*"),
         Dependency("future", ">=0.14.0"),
@@ -323,9 +321,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 class MockHttpRepository(LegacyRepository):
     def __init__(self, endpoint_responses, http):
         base_url = "http://legacy.foo.bar"
-        super(MockHttpRepository, self).__init__(
-            "legacy", url=base_url, disable_cache=True
-        )
+        super().__init__("legacy", url=base_url, disable_cache=True)
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint
@@ -335,21 +331,21 @@ class MockHttpRepository(LegacyRepository):
 def test_get_200_returns_page(http):
     repo = MockHttpRepository({"/foo": 200}, http)
 
-    assert repo._get("/foo")
+    assert repo._get_page("/foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
 def test_get_40x_and_returns_none(http, status_code):
     repo = MockHttpRepository({"/foo": status_code}, http)
 
-    assert repo._get("/foo") is None
+    assert repo._get_page("/foo") is None
 
 
 def test_get_5xx_raises(http):
     repo = MockHttpRepository({"/foo": 500}, http)
 
     with pytest.raises(RepositoryError):
-        repo._get("/foo")
+        repo._get_page("/foo")
 
 
 def test_get_redirected_response_url(http, monkeypatch):
@@ -363,4 +359,4 @@ def test_get_redirected_response_url(http, monkeypatch):
         return response
 
     monkeypatch.setattr(repo.session, "get", get_mock)
-    assert repo._get("/foo")._url == "http://legacy.redirect.bar/foo/"
+    assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"

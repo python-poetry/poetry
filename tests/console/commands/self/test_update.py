@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Type
 
 import pytest
 
@@ -13,16 +15,29 @@ from poetry.repositories.repository import Repository
 from poetry.utils.env import EnvManager
 
 
+if TYPE_CHECKING:
+    import httpretty
+
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from poetry.utils.env import VirtualEnv
+    from tests.types import CommandTesterFactory
+
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
 
 
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("self update")
 
 
 def test_self_update_can_update_from_recommended_installation(
-    tester, http, mocker, environ, tmp_venv
+    tester: "CommandTester",
+    http: Type["httpretty.httpretty"],
+    mocker: "MockerFixture",
+    environ: None,
+    tmp_venv: "VirtualEnv",
 ):
     mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
 
@@ -76,7 +91,11 @@ Poetry ({}) is installed now. Great!
 
 
 def test_self_update_does_not_update_non_recommended_installation(
-    tester, http, mocker, environ, tmp_venv
+    tester: "CommandTester",
+    http: Type["httpretty.httpretty"],
+    mocker: "MockerFixture",
+    environ: None,
+    tmp_venv: "VirtualEnv",
 ):
     mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
 
