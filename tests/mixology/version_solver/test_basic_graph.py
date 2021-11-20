@@ -1,9 +1,19 @@
+from typing import TYPE_CHECKING
+
 from poetry.factory import Factory
 from tests.mixology.helpers import add_to_repo
 from tests.mixology.helpers import check_solver_result
 
 
-def test_simple_dependencies(root, provider, repo):
+if TYPE_CHECKING:
+    from poetry.packages.project_package import ProjectPackage
+    from poetry.repositories import Repository
+    from tests.mixology.version_solver.conftest import Provider
+
+
+def test_simple_dependencies(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("a", "1.0.0"))
     root.add_dependency(Factory.create_dependency("b", "1.0.0"))
 
@@ -28,7 +38,9 @@ def test_simple_dependencies(root, provider, repo):
     )
 
 
-def test_shared_dependencies_with_overlapping_constraints(root, provider, repo):
+def test_shared_dependencies_with_overlapping_constraints(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("a", "1.0.0"))
     root.add_dependency(Factory.create_dependency("b", "1.0.0"))
 
@@ -44,7 +56,7 @@ def test_shared_dependencies_with_overlapping_constraints(root, provider, repo):
 
 
 def test_shared_dependency_where_dependent_version_affects_other_dependencies(
-    root, provider, repo
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
     root.add_dependency(Factory.create_dependency("foo", "<=1.0.2"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
@@ -63,7 +75,9 @@ def test_shared_dependency_where_dependent_version_affects_other_dependencies(
     )
 
 
-def test_circular_dependency(root, provider, repo):
+def test_circular_dependency(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
 
@@ -7,7 +8,13 @@ from poetry.installation.chef import Chef
 from poetry.utils.env import MockEnv
 
 
-def test_get_cached_archive_for_link(config, mocker):
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tests.conftest import Config
+
+
+def test_get_cached_archive_for_link(config: "Config", mocker: "MockerFixture"):
     chef = Chef(
         config,
         MockEnv(
@@ -38,7 +45,7 @@ def test_get_cached_archive_for_link(config, mocker):
     assert Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl") == archive
 
 
-def test_get_cached_archives_for_link(config, mocker):
+def test_get_cached_archives_for_link(config: "Config", mocker: "MockerFixture"):
     chef = Chef(
         config,
         MockEnv(
@@ -63,7 +70,7 @@ def test_get_cached_archives_for_link(config, mocker):
     }
 
 
-def test_get_cache_directory_for_link(config, config_cache_dir):
+def test_get_cache_directory_for_link(config: "Config", config_cache_dir: Path):
     chef = Chef(
         config,
         MockEnv(

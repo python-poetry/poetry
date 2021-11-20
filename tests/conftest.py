@@ -424,5 +424,5 @@ def do_lock(command_tester_factory: "CommandTesterFactory", poetry: "Poetry") ->
 
 
 @pytest.fixture
-def project_root():
+def project_root() -> Path:
     return Path(__file__).parent.parent

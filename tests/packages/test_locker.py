@@ -2,6 +2,7 @@ import logging
 import tempfile
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import tomlkit
@@ -15,8 +16,13 @@ from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
+if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
+    from pytest_mock import MockerFixture
+
+
 @pytest.fixture
-def locker():
+def locker() -> Locker:
     with tempfile.NamedTemporaryFile() as f:
         f.close()
         locker = Locker(f.name, {})
@@ -25,11 +31,11 @@ def locker():
 
 
 @pytest.fixture
-def root():
+def root() -> ProjectPackage:
     return ProjectPackage("root", "1.2.3")
 
 
-def test_lock_file_data_is_ordered(locker, root):
+def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
@@ -99,7 +105,7 @@ git-package = []
     assert expected == content
 
 
-def test_locker_properly_loads_extras(locker):
+def test_locker_properly_loads_extras(locker: Locker):
     content = """\
 [[package]]
 name = "cachecontrol"
@@ -144,7 +150,7 @@ cachecontrol = []
     assert lockfile_dep.name == "lockfile"
 
 
-def test_locker_properly_loads_nested_extras(locker):
+def test_locker_properly_loads_nested_extras(locker: Locker):
     content = """\
 [[package]]
 name = "a"
@@ -224,7 +230,7 @@ content-hash = "123456789"
     assert len(packages) == 1
 
 
-def test_locker_properly_loads_extras_legacy(locker):
+def test_locker_properly_loads_extras_legacy(locker: Locker):
     content = """\
 [[package]]
 name = "a"
@@ -274,7 +280,7 @@ content-hash = "123456789"
     assert dependency_b.name == "b"
 
 
-def test_lock_packages_with_null_description(locker, root):
+def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.description = None
 
@@ -303,7 +309,7 @@ A = []
     assert expected == content
 
 
-def test_lock_file_should_not_have_mixed_types(locker, root):
+def test_lock_file_should_not_have_mixed_types(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0.0"))
     package_a.add_dependency(
@@ -346,7 +352,7 @@ A = []
     assert expected == content
 
 
-def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
+def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker: Locker):
     content = """[[package]]
 name = "A"
 version = "1.0.0"
@@ -378,7 +384,9 @@ A = []
     assert "Unable to read the lock file" in str(e.value)
 
 
-def test_locking_legacy_repository_package_should_include_source_section(root, locker):
+def test_locking_legacy_repository_package_should_include_source_section(
+    root: ProjectPackage, locker: Locker
+):
     package_a = Package(
         "A",
         "1.0.0",
@@ -419,7 +427,7 @@ A = []
 
 
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
-    locker, caplog
+    locker: Locker, caplog: "LogCaptureFixture"
 ):
     content = """\
 [metadata]
@@ -453,7 +461,7 @@ regenerate the lock file with the `poetry lock` command.\
 
 
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
-    locker, caplog
+    locker: Locker, caplog: "LogCaptureFixture"
 ):
     content = """\
 [metadata]
@@ -471,7 +479,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
         _ = locker.lock_data
 
 
-def test_extras_dependencies_are_ordered(locker, root):
+def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
@@ -509,7 +517,7 @@ A = []
 
 
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
-    locker, caplog
+    locker: Locker, caplog: "LogCaptureFixture"
 ):
     current_version = Version.parse(Locker._VERSION)
     older_version = ".".join(
@@ -534,7 +542,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     assert 0 == len(caplog.records)
 
 
-def test_locker_dumps_dependency_information_correctly(locker, root):
+def test_locker_dumps_dependency_information_correctly(
+    locker: Locker, root: ProjectPackage
+):
     root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
@@ -599,7 +609,9 @@ A = []
     assert expected == content
 
 
-def test_locked_repository_uses_root_dir_of_package(locker, mocker):
+def test_locked_repository_uses_root_dir_of_package(
+    locker: Locker, mocker: "MockerFixture"
+):
     content = """\
 [[package]]
 name = "lib-a"
