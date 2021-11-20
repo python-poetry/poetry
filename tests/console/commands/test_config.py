@@ -46,6 +46,7 @@ def test_list_displays_default_value_if_not_set(
 
     expected = """cache-dir = {cache}
 experimental.new-installer = true
+installer.max-workers = null
 installer.parallel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -70,6 +71,7 @@ def test_list_displays_set_get_setting(
 
     expected = """cache-dir = {cache}
 experimental.new-installer = true
+installer.max-workers = null
 installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -118,6 +120,7 @@ def test_list_displays_set_get_local_setting(
 
     expected = """cache-dir = {cache}
 experimental.new-installer = true
+installer.max-workers = null
 installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
