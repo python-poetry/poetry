@@ -35,6 +35,7 @@ repos:
           - flake8-broken-line==0.4.0
           - flake8-bugbear==21.9.2
           - flake8-comprehensions==3.7.0
+          - flake8-eradicate==1.2.0
           - flake8-no-pep420==1.2.0
           - flake8-quotes==3.3.1
           - flake8-simplify==0.14.2

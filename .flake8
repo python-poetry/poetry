@@ -8,6 +8,7 @@ inline-quotes = double
 mypy-init-return = true
 enable-extensions = TC, TC2
 type-checking-exempt-modules = typing, typing-extensions
+eradicate-whitelist-extend = ^-.*;
 extend-ignore =
     # E501: Line too long (FIXME: long string constants)
     E501,
