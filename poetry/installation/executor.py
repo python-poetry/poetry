@@ -24,7 +24,6 @@ from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import get_max_workers
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 
@@ -56,7 +55,6 @@ class Executor:
         config: "Config",
         io: "IO",
         parallel: bool = None,
-        max_workers: Optional[int] = None,
     ) -> None:
         self._env = env
         self._io = io
@@ -71,9 +69,8 @@ class Executor:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            self._max_workers = config.get(
-                "installer.max-workers",
-                get_max_workers(desired_max_workers=max_workers),
+            self._max_workers = self._get_max_workers(
+                desired_max_workers=config.get("installer.max-workers")
             )
         else:
             self._max_workers = 1
@@ -190,6 +187,21 @@ class Executor:
                 break
 
         return 1 if self._shutdown else 0
+
+    @staticmethod
+    def _get_max_workers(desired_max_workers: Optional[int] = None):
+        # This should be directly handled by ThreadPoolExecutor
+        # however, on some systems the number of CPUs cannot be determined
+        # (it raises a NotImplementedError), so, in this case, we assume
+        # that the system only has one CPU.
+        try:
+            default_max_workers = os.cpu_count() + 4
+        except NotImplementedError:
+            default_max_workers = 5
+
+        if desired_max_workers is None:
+            return default_max_workers
+        return min(default_max_workers, desired_max_workers)
 
     def _write(self, operation: "OperationTypes", line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(

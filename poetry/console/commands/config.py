@@ -52,8 +52,8 @@ To remove a repository (repo is a short alias for repositories):
 
         from poetry.config.config import boolean_normalizer
         from poetry.config.config import boolean_validator
+        from poetry.config.config import int_normalizer
         from poetry.locations import CACHE_DIR
-        from poetry.utils.helpers import get_max_workers
 
         unique_config_values = {
             "cache-dir": (
@@ -90,8 +90,8 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "installer.max-workers": (
                 lambda val: int(val) > 0,
-                lambda val: int(val),
-                get_max_workers(),
+                int_normalizer,
+                None,
             ),
         }
 

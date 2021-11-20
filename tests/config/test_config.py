@@ -19,8 +19,8 @@ def test_config_get_processes_depended_on_values(config, config_cache_dir):
     [
         ("installer.parallel", "true", True),
         ("installer.parallel", "false", False),
-        ("installer.max-workers", "4", "4"),
-        ("installer.max-workers", "2", "2"),
+        ("installer.max-workers", "4", 4),
+        ("installer.max-workers", "2", 2),
         ("virtualenvs.create", "true", True),
         ("virtualenvs.create", "false", False),
     ],
