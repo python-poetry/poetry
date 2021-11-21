@@ -97,14 +97,13 @@ class PyPiRepository(RemoteRepository):
             constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange):
-            if (
-                constraint.max is not None
-                and constraint.max.is_unstable()
-                or constraint.min is not None
-                and constraint.min.is_unstable()
-            ):
-                allow_prereleases = True
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
 
         try:
             info = self.get_package_info(dependency.name)

@@ -42,14 +42,13 @@ class Transaction:
                 if result_package.name == installed_package.name:
                     installed = True
 
-                    if result_package.version != installed_package.version:
-                        operations.append(
-                            Update(installed_package, result_package, priority=priority)
+                    if result_package.version != installed_package.version or (
+                        (
+                            installed_package.source_type
+                            or result_package.source_type != "legacy"
                         )
-                    elif (
-                        installed_package.source_type
-                        or result_package.source_type != "legacy"
-                    ) and not result_package.is_same_package_as(installed_package):
+                        and not result_package.is_same_package_as(installed_package)
+                    ):
                         operations.append(
                             Update(installed_package, result_package, priority=priority)
                         )

@@ -569,9 +569,8 @@ class Installer:
 
             # If a package is optional and not requested
             # in any extra we skip it
-            if package.optional:
-                if package.name not in extra_packages:
-                    op.skip("Not required")
+            if package.optional and package.name not in extra_packages:
+                op.skip("Not required")
 
     def _get_extra_packages(self, repo: Repository) -> List[str]:
         """

@@ -99,11 +99,9 @@ class Shell:
         sys.exit(c.exitstatus)
 
     def _get_activate_script(self) -> str:
-        if "fish" == self._name:
+        if self._name == "fish":
             suffix = ".fish"
-        elif "csh" == self._name:
-            suffix = ".csh"
-        elif "tcsh" == self._name:
+        elif self._name in ("csh", "tcsh"):
             suffix = ".csh"
         else:
             suffix = ""
@@ -111,13 +109,8 @@ class Shell:
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if "fish" == self._name:
+        if self._name in ("fish", "csh", "tcsh"):
             return "source"
-        elif "csh" == self._name:
-            return "source"
-        elif "tcsh" == self._name:
-            return "source"
-
         return "."
 
     def __repr__(self) -> str:

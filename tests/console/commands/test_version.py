@@ -55,19 +55,19 @@ def test_increment_version(
 
 def test_version_show(tester: "CommandTester"):
     tester.execute()
-    assert "simple-project 1.2.3\n" == tester.io.fetch_output()
+    assert tester.io.fetch_output() == "simple-project 1.2.3\n"
 
 
 def test_short_version_show(tester: "CommandTester"):
     tester.execute("--short")
-    assert "1.2.3\n" == tester.io.fetch_output()
+    assert tester.io.fetch_output() == "1.2.3\n"
 
 
 def test_version_update(tester: "CommandTester"):
     tester.execute("2.0.0")
-    assert "Bumping version from 1.2.3 to 2.0.0\n" == tester.io.fetch_output()
+    assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
 
 
 def test_short_version_update(tester: "CommandTester"):
     tester.execute("--short 2.0.0")
-    assert "2.0.0\n" == tester.io.fetch_output()
+    assert tester.io.fetch_output() == "2.0.0\n"

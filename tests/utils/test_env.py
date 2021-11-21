@@ -516,7 +516,7 @@ def test_list(tmp_dir, manager, poetry, config):
 
     venvs = manager.list()
 
-    assert 2 == len(venvs)
+    assert len(venvs) == 2
     assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venvs[0].path
     assert (Path(tmp_dir) / f"{venv_name}-py3.7") == venvs[1].path
 
@@ -782,7 +782,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
     )
 
     assert expected_message == str(e.value)
-    assert 0 == m.call_count
+    assert m.call_count == 0
 
 
 def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
@@ -808,7 +808,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     )
 
     assert expected_message == str(e.value)
-    assert 0 == m.call_count
+    assert m.call_count == 0
 
 
 def test_create_venv_uses_patch_version_to_detect_compatibility(

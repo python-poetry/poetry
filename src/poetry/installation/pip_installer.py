@@ -66,12 +66,14 @@ class PipInstaller(BaseInstaller):
             index_url = repository.authenticated_url
 
             args += ["--index-url", index_url]
-            if self._pool.has_default():
-                if repository.name != self._pool.repositories[0].name:
-                    args += [
-                        "--extra-index-url",
-                        self._pool.repositories[0].authenticated_url,
-                    ]
+            if (
+                self._pool.has_default()
+                and repository.name != self._pool.repositories[0].name
+            ):
+                args += [
+                    "--extra-index-url",
+                    self._pool.repositories[0].authenticated_url,
+                ]
 
         if update:
             args.append("-U")

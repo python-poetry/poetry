@@ -60,9 +60,8 @@ class Factory(BaseFactory):
         for source in base_poetry.pyproject.poetry_config.get("source", []):
             name = source.get("name")
             url = source.get("url")
-            if name and url:
-                if name not in existing_repositories:
-                    repositories[name] = {"url": url}
+            if name and url and name not in existing_repositories:
+                repositories[name] = {"url": url}
 
         config.merge({"repositories": repositories})
 

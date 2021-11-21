@@ -161,7 +161,7 @@ def test_pypi_repository_supports_reading_bz2_files():
     package = repo.package("twisted", "18.9.0")
 
     assert package.name == "twisted"
-    assert 71 == len(package.requires)
+    assert len(package.requires) == 71
     assert sorted(
         (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
@@ -223,8 +223,8 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
 def test_urls():
     repository = PyPiRepository()
 
-    assert "https://pypi.org/simple/" == repository.url
-    assert "https://pypi.org/simple/" == repository.authenticated_url
+    assert repository.url == "https://pypi.org/simple/"
+    assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
 def test_use_pypi_pretty_name():

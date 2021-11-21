@@ -121,7 +121,7 @@ def test_chooser_chooses_universal_wheel_link_if_available(
 
     link = chooser.choose_for(package)
 
-    assert "pytest-3.5.0-py2.py3-none-any.whl" == link.filename
+    assert link.filename == "pytest-3.5.0-py2.py3-none-any.whl"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -142,7 +142,7 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
 
     link = chooser.choose_for(package)
 
-    assert "isort-4.3.4-py3-none-any.whl" == link.filename
+    assert link.filename == "isort-4.3.4-py3-none-any.whl"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -166,7 +166,7 @@ def test_chooser_chooses_system_specific_wheel_link_if_available(
 
     link = chooser.choose_for(package)
 
-    assert "PyYAML-3.13-cp37-cp37m-win32.whl" == link.filename
+    assert link.filename == "PyYAML-3.13-cp37-cp37m-win32.whl"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -191,7 +191,7 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
 
     link = chooser.choose_for(package)
 
-    assert "PyYAML-3.13.tar.gz" == link.filename
+    assert link.filename == "PyYAML-3.13.tar.gz"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -224,7 +224,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
 
     link = chooser.choose_for(package)
 
-    assert "isort-4.3.4.tar.gz" == link.filename
+    assert link.filename == "isort-4.3.4.tar.gz"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])

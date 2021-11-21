@@ -156,7 +156,7 @@ def test_create_poetry_with_multi_constraints_dependency():
 def test_poetry_with_default_source(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
-    assert 1 == len(poetry.pool.repositories)
+    assert len(poetry.pool.repositories) == 1
 
 
 def test_poetry_with_non_default_source(with_simple_keyring):
@@ -246,7 +246,7 @@ def test_poetry_with_two_default_sources(with_simple_keyring):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 
-    assert "Only one repository can be the default" == str(e.value)
+    assert str(e.value) == "Only one repository can be the default"
 
 
 def test_validate():
@@ -299,4 +299,4 @@ def test_create_poetry_with_plugins(mocker):
 
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
-    assert "9.9.9" == poetry.package.version.text
+    assert poetry.package.version.text == "9.9.9"

@@ -1,6 +1,7 @@
 import logging
 import re
 
+from contextlib import suppress
 from importlib import import_module
 from typing import TYPE_CHECKING
 from typing import Any
@@ -195,10 +196,8 @@ class Application(BaseApplication):
         # We need to check if the command being run
         # is the "run" command.
         definition = self.definition
-        try:
+        with suppress(CleoException):
             io.input.bind(definition)
-        except CleoException:
-            pass
 
         name = io.input.first_argument
         if name == "run":
@@ -218,10 +217,8 @@ class Application(BaseApplication):
                         for shortcut in shortcuts:
                             run_input.add_parameter_option("-" + shortcut.lstrip("-"))
 
-            try:
+            with suppress(CleoException):
                 run_input.bind(definition)
-            except CleoException:
-                pass
 
             for option_name, value in input.options.items():
                 if value:

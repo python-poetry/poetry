@@ -27,7 +27,7 @@ def test_uploader_properly_handles_400_errors(http, uploader):
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
-    assert "HTTP Error 400: Bad Request" == str(e.value)
+    assert str(e.value) == "HTTP Error 400: Bad Request"
 
 
 def test_uploader_properly_handles_403_errors(http, uploader):
@@ -36,7 +36,7 @@ def test_uploader_properly_handles_403_errors(http, uploader):
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
-    assert "HTTP Error 403: Forbidden" == str(e.value)
+    assert str(e.value) == "HTTP Error 403: Forbidden"
 
 
 def test_uploader_properly_handles_301_redirects(http, uploader):
@@ -45,8 +45,9 @@ def test_uploader_properly_handles_301_redirects(http, uploader):
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
-    assert "Redirects are not supported. Is the URL missing a trailing slash?" == str(
-        e.value
+    assert (
+        str(e.value)
+        == "Redirects are not supported. Is the URL missing a trailing slash?"
     )
 
 
@@ -59,4 +60,4 @@ def test_uploader_registers_for_appropriate_400_errors(mocker, http, uploader):
     with pytest.raises(UploadError):
         uploader.upload("https://foo.com")
 
-    assert 1 == register.call_count
+    assert register.call_count == 1

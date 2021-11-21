@@ -4,6 +4,7 @@ import shutil
 import sys
 import tempfile
 
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -188,10 +189,8 @@ def download_mock(mocker):
 def pep517_metadata_mock(mocker):
     @classmethod
     def _pep517_metadata(cls, path):
-        try:
+        with suppress(PackageInfoError):
             return PackageInfo.from_setup_files(path)
-        except PackageInfoError:
-            pass
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(

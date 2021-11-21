@@ -211,15 +211,16 @@ class Executor:
     def _execute_operation(self, operation: "OperationTypes") -> None:
         try:
             if self.supports_fancy_output():
-                if id(operation) not in self._sections:
-                    if self._should_write_operation(operation):
-                        with self._lock:
-                            self._sections[id(operation)] = self._io.section()
-                            self._sections[id(operation)].write_line(
-                                "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
-                                    message=self.get_operation_message(operation),
-                                ),
-                            )
+                if id(operation) not in self._sections and self._should_write_operation(
+                    operation
+                ):
+                    with self._lock:
+                        self._sections[id(operation)] = self._io.section()
+                        self._sections[id(operation)].write_line(
+                            "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
+                                message=self.get_operation_message(operation),
+                            ),
+                        )
             else:
                 if self._should_write_operation(operation):
                     if not operation.skipped:

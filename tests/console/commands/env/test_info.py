@@ -60,5 +60,5 @@ Executable: {base_executable}
 
 def test_env_info_displays_path_only(tester: "CommandTester"):
     tester.execute("--path")
-    expected = str(Path("/prefix"))
-    assert expected + "\n" == tester.io.fetch_output()
+    expected = str(Path("/prefix")) + "\n"
+    assert tester.io.fetch_output() == expected

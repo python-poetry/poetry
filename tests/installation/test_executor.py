@@ -178,8 +178,8 @@ Package operations: 4 installs, 1 update, 1 removal
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
     assert expected == output
-    assert 5 == len(env.executed)
-    assert 0 == return_code
+    assert len(env.executed) == 5
+    assert return_code == 0
     pip_editable_install.assert_called_once()
 
 
@@ -192,8 +192,11 @@ def test_execute_shows_skipped_operations_if_verbose(
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
-    assert 0 == executor.execute(
-        [Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed")]
+    assert (
+        executor.execute(
+            [Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed")]
+        )
+        == 0
     )
 
     expected = """
@@ -202,7 +205,7 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
   • Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
 """
     assert expected == io.fetch_output()
-    assert 0 == len(env.executed)
+    assert len(env.executed) == 0
 
 
 def test_execute_should_show_errors(
@@ -213,7 +216,7 @@ def test_execute_should_show_errors(
 
     mocker.patch.object(executor, "_install", side_effect=Exception("It failed!"))
 
-    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+    assert executor.execute([Install(Package("clikit", "0.2.3"))]) == 1
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
@@ -265,7 +268,7 @@ def test_execute_works_with_ansi_output(
 
     for line in expected:
         assert line in output
-    assert 0 == return_code
+    assert return_code == 0
 
 
 def test_execute_works_with_no_ansi_output(
@@ -301,7 +304,7 @@ Package operations: 1 install, 0 updates, 0 removals
     expected = set(expected.splitlines())
     output = set(io_not_decorated.fetch_output().splitlines())
     assert expected == output
-    assert 0 == return_code
+    assert return_code == 0
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
@@ -313,7 +316,7 @@ def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_inter
     # A return code of -2 means KeyboardInterrupt in the pip subprocess
     mocker.patch.object(executor, "_install", return_value=-2)
 
-    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+    assert executor.execute([Install(Package("clikit", "0.2.3"))]) == 1
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
@@ -340,7 +343,7 @@ def test_execute_should_gracefully_handle_io_error(
 
     mocker.patch.object(io, "write_line", side_effect=write_line)
 
-    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+    assert executor.execute([Install(Package("clikit", "0.2.3"))]) == 1
 
     expected = r"""
 Package operations: 1 install, 0 updates, 0 removals

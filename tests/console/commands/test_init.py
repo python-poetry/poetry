@@ -112,7 +112,7 @@ def test_noninteractive(
 
     expected = "Using version ^3.6.0 for pytest\n"
     assert tester.io.fetch_output() == expected
-    assert "" == tester.io.fetch_error()
+    assert tester.io.fetch_error() == ""
 
     toml_content = (tmp_path / "pyproject.toml").read_text()
     assert 'name = "my-package"' in toml_content

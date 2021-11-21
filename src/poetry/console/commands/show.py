@@ -359,11 +359,9 @@ lists all packages available."""
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
         tree_bar = "├"
-        j = 0
         total = len(dependencies)
-        for dependency in dependencies:
-            j += 1
-            if j == total:
+        for i, dependency in enumerate(dependencies, 1):
+            if i == total:
                 tree_bar = "└"
 
             level = 1
@@ -403,10 +401,8 @@ lists all packages available."""
 
         dependencies = sorted(dependencies, key=lambda x: x.name)
         tree_bar = previous_tree_bar + "   ├"
-        i = 0
         total = len(dependencies)
-        for dependency in dependencies:
-            i += 1
+        for i, dependency in enumerate(dependencies, 1):
             current_tree = packages_in_tree
             if i == total:
                 tree_bar = previous_tree_bar + "   └"

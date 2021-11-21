@@ -82,7 +82,7 @@ def check_solver_result(transaction, expected, synchronize=False):
     result = []
     ops = transaction.calculate_operations(synchronize=synchronize)
     for op in ops:
-        if "update" == op.job_type:
+        if op.job_type == "update":
             result.append(
                 {
                     "job": "update",
@@ -999,7 +999,7 @@ def test_solver_circular_dependency(solver, repo, package):
         ],
     )
 
-    assert "main" == ops[0].package.category
+    assert ops[0].package.category == "main"
 
 
 def test_solver_circular_dependency_chain(solver, repo, package):
@@ -1034,7 +1034,7 @@ def test_solver_circular_dependency_chain(solver, repo, package):
         ],
     )
 
-    assert "main" == ops[0].package.category
+    assert ops[0].package.category == "main"
 
 
 def test_solver_dense_dependencies(solver, repo, package):
@@ -2123,7 +2123,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
         ],
     )
 
-    assert "http://legacy.foo.bar" == ops[0].package.source_url
+    assert ops[0].package.source_url == "http://legacy.foo.bar"
 
 
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
@@ -2162,7 +2162,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         ],
     )
 
-    assert "http://legacy.foo.bar" == ops[0].package.source_url
+    assert ops[0].package.source_url == "http://legacy.foo.bar"
 
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
@@ -2209,10 +2209,10 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
         ],
     )
 
-    assert "http://legacy.foo.bar" == ops[0].package.source_url
+    assert ops[0].package.source_url == "http://legacy.foo.bar"
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
-    assert "http://legacy.foo.bar" == ops[2].package.source_url
+    assert ops[2].package.source_url == "http://legacy.foo.bar"
 
 
 def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, io):
@@ -2247,7 +2247,7 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
         ],
     )
 
-    assert "http://legacy.foo.bar" == ops[0].package.source_url
+    assert ops[0].package.source_url == "http://legacy.foo.bar"
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
     assert ops[2].package.source_type is None

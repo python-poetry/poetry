@@ -140,11 +140,11 @@ cachecontrol = []
 
     packages = locker.locked_repository().packages
 
-    assert 1 == len(packages)
+    assert len(packages) == 1
 
     package = packages[0]
-    assert 3 == len(package.requires)
-    assert 2 == len(package.extras)
+    assert len(package.requires) == 3
+    assert len(package.extras) == 2
 
     lockfile_dep = package.extras["filecache"][0]
     assert lockfile_dep.name == "lockfile"
@@ -202,7 +202,7 @@ content-hash = "123456789"
     locker.lock.write(tomlkit.parse(content))
 
     repository = locker.locked_repository()
-    assert 3 == len(repository.packages)
+    assert len(repository.packages) == 3
 
     packages = repository.find_packages(get_dependency("a", "1.0"))
     assert len(packages) == 1
@@ -267,7 +267,7 @@ content-hash = "123456789"
     locker.lock.write(tomlkit.parse(content))
 
     repository = locker.locked_repository()
-    assert 2 == len(repository.packages)
+    assert len(repository.packages) == 2
 
     packages = repository.find_packages(get_dependency("a", "1.0"))
     assert len(packages) == 1
@@ -447,10 +447,10 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
     _ = locker.lock_data
 
-    assert 1 == len(caplog.records)
+    assert len(caplog.records) == 1
 
     record = caplog.records[0]
-    assert "WARNING" == record.levelname
+    assert record.levelname == "WARNING"
 
     expected = """\
 The lock file might not be compatible with the current version of Poetry.
@@ -539,7 +539,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
     _ = locker.lock_data
 
-    assert 0 == len(caplog.records)
+    assert len(caplog.records) == 0
 
 
 def test_locker_dumps_dependency_information_correctly(

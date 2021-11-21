@@ -96,8 +96,8 @@ def test_load_plugins_and_activate(
     manager.load_plugins()
     manager.activate(poetry, io)
 
-    assert "9.9.9" == poetry.package.version.text
-    assert "Updating version\n" == io.fetch_output()
+    assert poetry.package.version.text == "9.9.9"
+    assert io.fetch_output() == "Updating version\n"
 
 
 def test_load_plugins_with_invalid_plugin(
@@ -136,5 +136,5 @@ def test_load_plugins_with_plugins_disabled(
 
     no_plugin_manager.load_plugins()
 
-    assert "1.2.3" == poetry.package.version.text
-    assert "" == io.fetch_output()
+    assert poetry.package.version.text == "1.2.3"
+    assert io.fetch_output() == ""
