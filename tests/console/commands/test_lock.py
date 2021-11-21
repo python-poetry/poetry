@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Type
 
 import pytest
@@ -17,6 +16,7 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
 
@@ -33,7 +33,7 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
 def _project_factory(
     fixture_name: str,
     project_factory: "ProjectFactory",
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ) -> "Poetry":
     source = fixture_dir(fixture_name)
     pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
@@ -47,21 +47,21 @@ def _project_factory(
 
 @pytest.fixture
 def poetry_with_outdated_lockfile(
-    project_factory: "ProjectFactory", fixture_dir: Callable[[str], Path]
+    project_factory: "ProjectFactory", fixture_dir: "FixtureDirGetter"
 ) -> "Poetry":
     return _project_factory("outdated_lock", project_factory, fixture_dir)
 
 
 @pytest.fixture
 def poetry_with_up_to_date_lockfile(
-    project_factory: "ProjectFactory", fixture_dir: Callable[[str], Path]
+    project_factory: "ProjectFactory", fixture_dir: "FixtureDirGetter"
 ) -> "Poetry":
     return _project_factory("up_to_date_lock", project_factory, fixture_dir)
 
 
 @pytest.fixture
 def poetry_with_old_lockfile(
-    project_factory: "ProjectFactory", fixture_dir: Callable[[str], Path]
+    project_factory: "ProjectFactory", fixture_dir: "FixtureDirGetter"
 ) -> "Poetry":
     return _project_factory("old_lock", project_factory, fixture_dir)
 

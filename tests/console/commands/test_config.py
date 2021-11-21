@@ -2,7 +2,6 @@ import json
 import os
 
 from typing import TYPE_CHECKING
-from typing import Callable
 
 import pytest
 
@@ -20,6 +19,7 @@ if TYPE_CHECKING:
     from poetry.config.dict_config_source import DictConfigSource
     from tests.conftest import Config
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -98,7 +98,7 @@ def test_display_single_setting(tester: "CommandTester", config: "Config"):
 
 
 def test_display_single_local_setting(
-    command_tester_factory: "CommandTesterFactory", fixture_dir: Callable[[str], "Path"]
+    command_tester_factory: "CommandTesterFactory", fixture_dir: "FixtureDirGetter"
 ):
     tester = command_tester_factory(
         "config", poetry=Factory().create_poetry(fixture_dir("with_local_config"))

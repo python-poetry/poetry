@@ -8,7 +8,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -52,6 +51,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import MockEnv
     from tests.helpers import PoetryTestApplication
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
 
@@ -249,7 +249,7 @@ def fixture_base() -> Path:
 
 
 @pytest.fixture
-def fixture_dir(fixture_base: Path) -> Callable[[str], Path]:
+def fixture_dir(fixture_base: Path) -> "FixtureDirGetter":
     def _fixture_dir(name: str) -> Path:
         return fixture_base / name
 

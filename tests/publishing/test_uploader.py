@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Type
 
 import pytest
@@ -12,15 +11,15 @@ from poetry.publishing.uploader import UploadError
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import httpretty
 
     from pytest_mock import MockerFixture
 
+    from tests.types import FixtureDirGetter
+
 
 @pytest.fixture
-def uploader(fixture_dir: Callable[[str], "Path"]) -> Uploader:
+def uploader(fixture_dir: "FixtureDirGetter") -> Uploader:
     return Uploader(Factory().create_poetry(fixture_dir("simple_project")), NullIO())
 
 

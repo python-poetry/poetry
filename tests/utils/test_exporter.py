@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 class Locker(BaseLocker):
@@ -71,7 +71,7 @@ def locker() -> Locker:
 
 
 @pytest.fixture
-def poetry(fixture_dir: Callable[[str], Path], locker: Locker) -> "Poetry":
+def poetry(fixture_dir: "FixtureDirGetter", locker: Locker) -> "Poetry":
     p = Factory().create_poetry(fixture_dir("sample_project"))
     p._locker = locker
 

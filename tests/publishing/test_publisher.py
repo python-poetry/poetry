@@ -2,7 +2,6 @@ import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Callable
 
 import pytest
 
@@ -17,10 +16,11 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 def test_publish_publishes_to_pypi_by_default(
-    fixture_dir: Callable[[str], Path], mocker: "MockerFixture", config: "Config"
+    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -42,7 +42,7 @@ def test_publish_publishes_to_pypi_by_default(
 
 @pytest.mark.parametrize("fixture_name", ["sample_project", "with_default_source"])
 def test_publish_can_publish_to_given_repository(
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
     mocker: "MockerFixture",
     config: "Config",
     fixture_name: str,
@@ -74,7 +74,7 @@ def test_publish_can_publish_to_given_repository(
 
 
 def test_publish_raises_error_for_undefined_repository(
-    fixture_dir: Callable[[str], Path], config: "Config"
+    fixture_dir: "FixtureDirGetter", config: "Config"
 ):
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
@@ -88,7 +88,7 @@ def test_publish_raises_error_for_undefined_repository(
 
 
 def test_publish_uses_token_if_it_exists(
-    fixture_dir: Callable[[str], Path], mocker: "MockerFixture", config: "Config"
+    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -107,7 +107,7 @@ def test_publish_uses_token_if_it_exists(
 
 
 def test_publish_uses_cert(
-    fixture_dir: Callable[[str], Path], mocker: "MockerFixture", config: "Config"
+    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
     cert = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
@@ -133,7 +133,7 @@ def test_publish_uses_cert(
 
 
 def test_publish_uses_client_cert(
-    fixture_dir: Callable[[str], Path], mocker: "MockerFixture", config: "Config"
+    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
     client_cert = "path/to/client.pem"
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -156,7 +156,7 @@ def test_publish_uses_client_cert(
 
 
 def test_publish_read_from_environment_variable(
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
     environ: None,
     mocker: "MockerFixture",
     config: "Config",

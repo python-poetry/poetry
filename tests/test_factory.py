@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Callable
 
 import pytest
 
@@ -19,6 +18,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
@@ -290,7 +290,7 @@ The Poetry configuration is invalid:
     assert expected == str(e.value)
 
 
-def test_create_poetry_with_local_config(fixture_dir: Callable[[str], Path]):
+def test_create_poetry_with_local_config(fixture_dir: "FixtureDirGetter"):
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
 
     assert not poetry.config.get("virtualenvs.in-project")

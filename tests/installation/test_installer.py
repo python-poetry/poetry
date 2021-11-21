@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -49,6 +48,7 @@ if TYPE_CHECKING:
     from poetry.packages import DependencyPackage
     from poetry.utils.env import Env
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
@@ -1195,7 +1195,7 @@ def test_run_installs_with_local_file(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
@@ -1215,7 +1215,7 @@ def test_run_installs_wheel_with_no_requires_dist(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     file_path = fixture_dir(
         "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
@@ -1237,7 +1237,7 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     file_path = fixture_dir("project_with_extras")
     package.add_dependency(
@@ -1262,7 +1262,7 @@ def test_run_installs_with_local_poetry_directory_transitive(
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -1294,7 +1294,7 @@ def test_run_installs_with_local_poetry_file_transitive(
     repo: Repository,
     package: ProjectPackage,
     tmpdir: str,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -1328,7 +1328,7 @@ def test_run_installs_with_local_setuptools_directory(
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     file_path = fixture_dir("project_with_setup/")
     package.add_dependency(

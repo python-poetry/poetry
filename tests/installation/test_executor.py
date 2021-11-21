@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -37,6 +36,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.utils.env import VirtualEnv
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture
@@ -531,7 +531,7 @@ def test_executor_should_use_cached_link_and_hash(
     config: Config,
     io: BufferedIO,
     mocker: "MockerFixture",
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     # Produce a file:/// URI that is a valid link
     link_cached = Link(
