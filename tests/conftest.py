@@ -42,6 +42,8 @@ from tests.helpers import mock_download
 
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import ProjectFactory
@@ -104,7 +106,7 @@ def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
 
 
 @pytest.fixture()
-def with_fail_keyring():
+def with_fail_keyring() -> None:
     import keyring
 
     from keyring.backends.fail import Keyring
@@ -113,7 +115,7 @@ def with_fail_keyring():
 
 
 @pytest.fixture()
-def with_chained_keyring(mocker):
+def with_chained_keyring(mocker: "MockerFixture") -> None:
     from keyring.backends.fail import Keyring
 
     mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
