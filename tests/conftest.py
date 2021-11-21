@@ -68,34 +68,36 @@ class Config(BaseConfig):
 
 
 class DummyBackend(KeyringBackend):
-    def __init__(self):
+    def __init__(self) -> None:
         self._passwords = {}
 
     @classmethod
-    def priority(cls):
+    def priority(cls) -> int:
         return 42
 
-    def set_password(self, service, username, password):
+    def set_password(
+        self, service: str, username: Optional[str], password: Any
+    ) -> None:
         self._passwords[service] = {username: password}
 
-    def get_password(self, service, username):
+    def get_password(self, service: str, username: Optional[str]) -> Any:
         return self._passwords.get(service, {}).get(username)
 
-    def get_credential(self, service, username):
+    def get_credential(self, service: str, username: Optional[str]) -> Any:
         return self._passwords.get(service, {}).get(username)
 
-    def delete_password(self, service, username):
+    def delete_password(self, service: str, username: Optional[str]) -> None:
         if service in self._passwords and username in self._passwords[service]:
             del self._passwords[service][username]
 
 
 @pytest.fixture()
-def dummy_keyring():
+def dummy_keyring() -> DummyBackend:
     return DummyBackend()
 
 
 @pytest.fixture()
-def with_simple_keyring(dummy_keyring):
+def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
     import keyring
 
     keyring.set_keyring(dummy_keyring)
@@ -130,7 +132,7 @@ def config_cache_dir(tmp_dir: str) -> Path:
 
 
 @pytest.fixture
-def config_virtualenvs_path(config_cache_dir):
+def config_virtualenvs_path(config_cache_dir: Path) -> Path:
     return config_cache_dir / "virtualenvs"
 
 
