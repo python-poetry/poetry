@@ -25,6 +25,10 @@ def boolean_normalizer(val: str) -> bool:
     return val in ["true", "1"]
 
 
+def int_normalizer(val: str) -> int:
+    return int(val)
+
+
 class Config:
 
     default_config: Dict[str, Any] = {
@@ -36,7 +40,7 @@ class Config:
             "options": {"always-copy": False, "system-site-packages": False},
         },
         "experimental": {"new-installer": True},
-        "installer": {"parallel": True},
+        "installer": {"parallel": True, "max-workers": None},
     }
 
     def __init__(
@@ -129,7 +133,8 @@ class Config:
 
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
 
-    def _get_normalizer(self, name: str) -> Callable:
+    @staticmethod
+    def _get_normalizer(name: str) -> Callable:
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",
@@ -142,5 +147,8 @@ class Config:
 
         if name == "virtualenvs.path":
             return lambda val: str(Path(val))
+
+        if name == "installer.max-workers":
+            return int_normalizer
 
         return lambda val: val

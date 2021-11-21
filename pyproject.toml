@@ -65,6 +65,7 @@ deepdiff = "^5.0"
 httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
+flatdict = "^4.0.1"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"

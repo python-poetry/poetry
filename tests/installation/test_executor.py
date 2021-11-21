@@ -559,3 +559,35 @@ def test_executor_should_use_cached_link_and_hash(
         Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
     )
     assert archive == link_cached
+
+
+@pytest.mark.parametrize(
+    ("max_workers", "cpu_count", "side_effect", "expected_workers"),
+    [
+        (None, 3, None, 7),
+        (3, 4, None, 3),
+        (8, 3, None, 7),
+        (None, 8, NotImplementedError(), 5),
+        (2, 8, NotImplementedError(), 2),
+        (8, 8, NotImplementedError(), 5),
+    ],
+)
+def test_executor_should_be_initialized_with_correct_workers(
+    tmp_venv,
+    pool,
+    config,
+    io,
+    mocker,
+    max_workers,
+    cpu_count,
+    side_effect,
+    expected_workers,
+):
+    config = Config()
+    config.merge({"installer": {"max-workers": max_workers}})
+
+    mocker.patch("os.cpu_count", return_value=cpu_count, side_effect=side_effect)
+
+    executor = Executor(tmp_venv, pool, config, io)
+
+    assert executor._max_workers == expected_workers

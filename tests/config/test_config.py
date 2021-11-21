@@ -2,31 +2,29 @@ import os
 import re
 
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
+from typing import Callable
 from typing import Iterator
-from typing import Optional
 from typing import Tuple
 
 import pytest
 
+from flatdict import FlatDict
+
 from poetry.config.config import Config
+from poetry.config.config import boolean_normalizer
+from poetry.config.config import int_normalizer
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-def get_boolean_options(config: Optional[Dict[str, Any]] = None) -> str:
-    if config is None:
-        config = Config.default_config
+def get_options_based_on_normalizer(normalizer: Callable) -> str:
+    flattened_config = FlatDict(Config.default_config, delimiter=".")
 
-    for k, v in config.items():
-        if isinstance(v, bool) or v is None:
+    for k in flattened_config:
+        if Config._get_normalizer(k) == normalizer:
             yield k
-        if isinstance(v, dict):
-            for suboption in get_boolean_options(v):
-                yield f"{k}.{suboption}"
 
 
 @pytest.mark.parametrize(
@@ -43,10 +41,14 @@ def test_config_get_processes_depended_on_values(
 
 
 def generate_environment_variable_tests() -> Iterator[Tuple[str, str, str, bool]]:
-    for env_value, value in [("true", True), ("false", False)]:
-        for name in get_boolean_options():
-            env_var = "POETRY_{}".format(re.sub("[.-]+", "_", name).upper())
-            yield name, env_var, env_value, value
+    for normalizer, values in [
+        (boolean_normalizer, [("true", True), ("false", False)]),
+        (int_normalizer, [("4", 4), ("2", 2)]),
+    ]:
+        for env_value, value in values:
+            for name in get_options_based_on_normalizer(normalizer=normalizer):
+                env_var = "POETRY_" + re.sub("[.-]+", "_", name).upper()
+                yield name, env_var, env_value, value
 
 
 @pytest.mark.parametrize(

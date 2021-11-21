@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Union
 
 from cleo.io.null_io import NullIO
@@ -66,14 +67,9 @@ class Executor:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            # This should be directly handled by ThreadPoolExecutor
-            # however, on some systems the number of CPUs cannot be determined
-            # (it raises a NotImplementedError), so, in this case, we assume
-            # that the system only has one CPU.
-            try:
-                self._max_workers = os.cpu_count() + 4
-            except NotImplementedError:
-                self._max_workers = 5
+            self._max_workers = self._get_max_workers(
+                desired_max_workers=config.get("installer.max-workers")
+            )
         else:
             self._max_workers = 1
 
@@ -189,6 +185,21 @@ class Executor:
                 break
 
         return 1 if self._shutdown else 0
+
+    @staticmethod
+    def _get_max_workers(desired_max_workers: Optional[int] = None):
+        # This should be directly handled by ThreadPoolExecutor
+        # however, on some systems the number of CPUs cannot be determined
+        # (it raises a NotImplementedError), so, in this case, we assume
+        # that the system only has one CPU.
+        try:
+            default_max_workers = os.cpu_count() + 4
+        except NotImplementedError:
+            default_max_workers = 5
+
+        if desired_max_workers is None:
+            return default_max_workers
+        return min(default_max_workers, desired_max_workers)
 
     def _write(self, operation: "OperationTypes", line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
