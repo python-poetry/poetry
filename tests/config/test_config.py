@@ -20,11 +20,10 @@ if TYPE_CHECKING:
 
 
 def get_options_based_on_normalizer(normalizer: Callable) -> str:
-    config = Config()
-    flattened_config = FlatDict(config.default_config, delimiter=".")
+    flattened_config = FlatDict(Config.default_config, delimiter=".")
 
     for k in flattened_config:
-        if config._get_normalizer(k) == normalizer:
+        if Config._get_normalizer(k) == normalizer:
             yield k
 
 

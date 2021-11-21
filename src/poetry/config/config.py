@@ -133,7 +133,8 @@ class Config:
 
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
 
-    def _get_normalizer(self, name: str) -> Callable:
+    @staticmethod
+    def _get_normalizer(name: str) -> Callable:
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",
