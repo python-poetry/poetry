@@ -41,6 +41,7 @@ repos:
           - flake8-type-checking==1.1.0
           - flake8-typing-imports==1.11.0
           - pep8-naming==0.12.1
+          - flake8-annotations
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.29.1
