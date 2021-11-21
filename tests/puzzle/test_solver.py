@@ -1232,7 +1232,7 @@ So, because no versions of a match !=1.0
 
 
 def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
-    solver, repo, package
+    solver: Solver, repo: Repository, package: Package
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "1.0"))

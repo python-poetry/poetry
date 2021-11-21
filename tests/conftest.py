@@ -11,7 +11,9 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
+from typing import TextIO
 from typing import Tuple
 from typing import Type
 
@@ -44,7 +46,11 @@ from tests.helpers import mock_download
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
+    from poetry.utils.env import Env
+    from poetry.utils.env import MockEnv
+    from tests.helpers import PoetryTestApplication
     from tests.types import CommandTesterFactory
     from tests.types import ProjectFactory
 
@@ -139,7 +145,7 @@ def config_virtualenvs_path(config_cache_dir: Path) -> Path:
 
 
 @pytest.fixture
-def config_source(config_cache_dir):
+def config_source(config_cache_dir: Path) -> DictConfigSource:
     source = DictConfigSource()
     source.add_property("cache-dir", str(config_cache_dir))
 
@@ -154,7 +160,11 @@ def auth_config_source() -> DictConfigSource:
 
 
 @pytest.fixture
-def config(config_source, auth_config_source, mocker) -> Config:
+def config(
+    config_source: DictConfigSource,
+    auth_config_source: DictConfigSource,
+    mocker: "MockerFixture",
+) -> Config:
     import keyring
 
     from keyring.backends.fail import Keyring
@@ -173,7 +183,7 @@ def config(config_source, auth_config_source, mocker) -> Config:
 
 
 @pytest.fixture(autouse=True)
-def mock_user_config_dir(mocker):
+def mock_user_config_dir(mocker: "MockerFixture") -> Iterator[None]:
     config_dir = tempfile.mkdtemp(prefix="poetry_config_")
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
     mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
@@ -182,7 +192,7 @@ def mock_user_config_dir(mocker):
 
 
 @pytest.fixture(autouse=True)
-def download_mock(mocker):
+def download_mock(mocker: "MockerFixture") -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
     mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
@@ -190,9 +200,9 @@ def download_mock(mocker):
 
 
 @pytest.fixture(autouse=True)
-def pep517_metadata_mock(mocker):
+def pep517_metadata_mock(mocker: "MockerFixture") -> None:
     @classmethod
-    def _pep517_metadata(cls, path):
+    def _pep517_metadata(cls: PackageInfo, path: Path) -> PackageInfo:
         with suppress(PackageInfoError):
             return PackageInfo.from_setup_files(path)
         return PackageInfo(name="demo", version="0.1.2")
@@ -214,7 +224,7 @@ def environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def git_mock(mocker):
+def git_mock(mocker: "MockerFixture") -> None:
     # Patch git module to not actually clone projects
     mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
     mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
@@ -240,7 +250,7 @@ def fixture_base() -> Path:
 
 @pytest.fixture
 def fixture_dir(fixture_base: Path) -> Callable[[str], Path]:
-    def _fixture_dir(name: str):
+    def _fixture_dir(name: str) -> Path:
         return fixture_base / name
 
     return _fixture_dir
@@ -256,18 +266,18 @@ def tmp_dir() -> Iterator[str]:
 
 
 @pytest.fixture
-def mocked_open_files(mocker):
+def mocked_open_files(mocker: "MockerFixture") -> List:
     files = []
     original = Path.open
 
-    def mocked_open(self, *args, **kwargs):
+    def mocked_open(self: Path, *args: Any, **kwargs: Any) -> TextIO:
         if self.name in {"pyproject.toml"}:
             return mocker.MagicMock()
         return original(self, *args, **kwargs)
 
     mocker.patch("pathlib.Path.open", mocked_open)
 
-    yield files
+    return files
 
 
 @pytest.fixture
@@ -380,8 +390,16 @@ def project_factory(
 
 
 @pytest.fixture
-def command_tester_factory(app, env) -> "CommandTesterFactory":
-    def _tester(command, poetry=None, installer=None, executor=None, environment=None):
+def command_tester_factory(
+    app: "PoetryTestApplication", env: "MockEnv"
+) -> "CommandTesterFactory":
+    def _tester(
+        command: str,
+        poetry: Optional["Poetry"] = None,
+        installer: Optional[Installer] = None,
+        executor: Optional["Executor"] = None,
+        environment: Optional["Env"] = None,
+    ) -> CommandTester:
         command = app.find(command)
         tester = CommandTester(command)
 
