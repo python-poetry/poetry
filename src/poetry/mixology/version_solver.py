@@ -378,8 +378,9 @@ class VersionSolver:
                             if version.version != locked.version:
                                 version = None
                             break
-            with suppress(IndexError):
-                version = version or packages[0]
+            if version is None:
+                with suppress(IndexError):
+                    version = packages[0]
 
             if version is None:
                 # If there are no versions that satisfy the constraint,
