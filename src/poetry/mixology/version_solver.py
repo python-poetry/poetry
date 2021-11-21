@@ -372,12 +372,10 @@ class VersionSolver:
                 # required in order to not unnecessarily update dependencies with
                 # extras, e.g. "coverage" vs. "coverage[toml]"
                 locked = self._locked.get(dependency.name, None)
-                if locked is not None:
-                    for version in packages:
-                        if version.version <= locked.version:
-                            if version.version != locked.version:
-                                version = None
-                            break
+            if locked is not None:
+                version = next(
+                    (p for p in packages if p.version == locked.version), None
+                )
             if version is None:
                 with suppress(IndexError):
                     version = packages[0]
