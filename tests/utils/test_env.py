@@ -1120,3 +1120,12 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
         with_setuptools=True,
         with_wheel=True,
     )
+
+
+def test_generate_env_name_ignores_case_for_case_insensitive_fs(tmp_dir):
+    venv_name1 = EnvManager.generate_env_name("simple-project", "MyDiR")
+    venv_name2 = EnvManager.generate_env_name("simple-project", "mYdIr")
+    if sys.platform == "win32":
+        assert venv_name1 == venv_name2
+    else:
+        assert venv_name1 != venv_name2
