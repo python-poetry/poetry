@@ -1,6 +1,10 @@
 import shutil
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Optional
+from typing import Type
 
 import pytest
 import requests
@@ -18,15 +22,20 @@ try:
 except ImportError:
     import urlparse
 
+if TYPE_CHECKING:
+    import httpretty
+
+    from _pytest.monkeypatch import MonkeyPatch
+
 
 class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint):
+    def _get_page(self, endpoint: str) -> Optional[Page]:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -37,7 +46,7 @@ class MockRepository(LegacyRepository):
         with fixture.open(encoding="utf-8") as f:
             return Page(self._url + endpoint, f.read(), {})
 
-    def _download(self, url, dest):
+    def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
@@ -143,8 +152,10 @@ def test_find_packages_no_prereleases():
     assert packages[0].source_url == repo.url
 
 
-@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
-def test_find_packages_only_prereleases(constraint, count):
+@pytest.mark.parametrize(
+    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+)
+def test_find_packages_only_prereleases(constraint: str, count: int):
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
@@ -319,7 +330,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 class MockHttpRepository(LegacyRepository):
-    def __init__(self, endpoint_responses, http):
+    def __init__(self, endpoint_responses: Dict, http: Type["httpretty.httpretty"]):
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
@@ -328,31 +339,33 @@ class MockHttpRepository(LegacyRepository):
             http.register_uri(http.GET, url, status=response)
 
 
-def test_get_200_returns_page(http):
+def test_get_200_returns_page(http: Type["httpretty.httpretty"]):
     repo = MockHttpRepository({"/foo": 200}, http)
 
     assert repo._get_page("/foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
-def test_get_40x_and_returns_none(http, status_code):
+def test_get_40x_and_returns_none(http: Type["httpretty.httpretty"], status_code: int):
     repo = MockHttpRepository({"/foo": status_code}, http)
 
     assert repo._get_page("/foo") is None
 
 
-def test_get_5xx_raises(http):
+def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
     repo = MockHttpRepository({"/foo": 500}, http)
 
     with pytest.raises(RepositoryError):
         repo._get_page("/foo")
 
 
-def test_get_redirected_response_url(http, monkeypatch):
+def test_get_redirected_response_url(
+    http: Type["httpretty.httpretty"], monkeypatch: "MonkeyPatch"
+):
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
-    def get_mock(url):
+    def get_mock(url: str) -> requests.Response:
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"

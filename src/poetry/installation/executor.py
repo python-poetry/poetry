@@ -187,7 +187,7 @@ class Executor:
         return 1 if self._shutdown else 0
 
     @staticmethod
-    def _get_max_workers(desired_max_workers: Optional[int] = None):
+    def _get_max_workers(desired_max_workers: Optional[int] = None) -> int:
         # This should be directly handled by ThreadPoolExecutor
         # however, on some systems the number of CPUs cannot be determined
         # (it raises a NotImplementedError), so, in this case, we assume

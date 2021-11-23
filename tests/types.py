@@ -6,6 +6,8 @@ from tests.compat import Protocol
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
 
@@ -46,4 +48,9 @@ class ProjectFactory(Protocol):
         poetry_lock_content: Optional[str] = None,
         install_deps: bool = True,
     ) -> "Poetry":
+        ...
+
+
+class FixtureDirGetter(Protocol):
+    def __call__(self, name: str) -> "Path":
         ...
