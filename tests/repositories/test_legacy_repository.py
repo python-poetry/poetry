@@ -24,8 +24,6 @@ except ImportError:
 if TYPE_CHECKING:
     import httpretty
 
-    from _pytest.monkeypatch import MonkeyPatch
-
 
 class MockRepository(LegacyRepository):
 
@@ -356,4 +354,3 @@ def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
 
     with pytest.raises(RepositoryError):
         repo._get_page("/foo")
-

@@ -2,7 +2,6 @@ import json
 import shutil
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 
@@ -11,10 +10,6 @@ import pytest
 from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.pypi_repository import PyPiRepository
-
-
-if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
 
 
 class MockRepository(PyPiRepository):
@@ -206,6 +201,7 @@ def test_invalid_versions_ignored():
     # and a correct one.
     packages = repo.find_packages(Factory.create_dependency("pygame-music-grid", "*"))
     assert len(packages) == 1
+
 
 def test_urls():
     repository = PyPiRepository()
