@@ -4,7 +4,6 @@ import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Iterator
 
 import pytest
@@ -22,6 +21,7 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from tests.helpers import TestRepository
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture
@@ -339,7 +339,7 @@ def test_interactive_with_directory_dependency(
     tester: CommandTester,
     repo: "TestRepository",
     source_dir: Path,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -390,7 +390,7 @@ def test_interactive_with_directory_dependency_and_other_name(
     tester: CommandTester,
     repo: "TestRepository",
     source_dir: Path,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -442,7 +442,7 @@ def test_interactive_with_file_dependency(
     tester: CommandTester,
     repo: "TestRepository",
     source_dir: Path,
-    fixture_dir: Callable[[str], Path],
+    fixture_dir: "FixtureDirGetter",
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))

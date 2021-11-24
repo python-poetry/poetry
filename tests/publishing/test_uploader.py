@@ -1,4 +1,5 @@
-from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Type
 
 import pytest
 
@@ -9,19 +10,22 @@ from poetry.publishing.uploader import Uploader
 from poetry.publishing.uploader import UploadError
 
 
-fixtures_dir = Path(__file__).parent.parent / "fixtures"
+if TYPE_CHECKING:
+    import httpretty
 
+    from pytest_mock import MockerFixture
 
-def project(name):
-    return fixtures_dir / name
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture
-def uploader():
-    return Uploader(Factory().create_poetry(project("simple_project")), NullIO())
+def uploader(fixture_dir: "FixtureDirGetter") -> Uploader:
+    return Uploader(Factory().create_poetry(fixture_dir("simple_project")), NullIO())
 
 
-def test_uploader_properly_handles_400_errors(http, uploader):
+def test_uploader_properly_handles_400_errors(
+    http: Type["httpretty.httpretty"], uploader: Uploader
+):
     http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
 
     with pytest.raises(UploadError) as e:
@@ -30,7 +34,9 @@ def test_uploader_properly_handles_400_errors(http, uploader):
     assert str(e.value) == "HTTP Error 400: Bad Request"
 
 
-def test_uploader_properly_handles_403_errors(http, uploader):
+def test_uploader_properly_handles_403_errors(
+    http: Type["httpretty.httpretty"], uploader: Uploader
+):
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
 
     with pytest.raises(UploadError) as e:
@@ -39,7 +45,9 @@ def test_uploader_properly_handles_403_errors(http, uploader):
     assert str(e.value) == "HTTP Error 403: Forbidden"
 
 
-def test_uploader_properly_handles_301_redirects(http, uploader):
+def test_uploader_properly_handles_301_redirects(
+    http: Type["httpretty.httpretty"], uploader: Uploader
+):
     http.register_uri(http.POST, "https://foo.com", status=301, body="Redirect")
 
     with pytest.raises(UploadError) as e:
@@ -51,7 +59,9 @@ def test_uploader_properly_handles_301_redirects(http, uploader):
     )
 
 
-def test_uploader_registers_for_appropriate_400_errors(mocker, http, uploader):
+def test_uploader_registers_for_appropriate_400_errors(
+    mocker: "MockerFixture", http: Type["httpretty.httpretty"], uploader: Uploader
+):
     register = mocker.patch("poetry.publishing.uploader.Uploader._register")
     http.register_uri(
         http.POST, "https://foo.com", status=400, body="No package was ever registered"

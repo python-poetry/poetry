@@ -1,5 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Dict
+from typing import List
 from typing import Optional
 
 import pytest
@@ -45,14 +47,14 @@ INSTALLED_RESULTS = [
 
 class MockEnv(BaseMockEnv):
     @property
-    def paths(self):
+    def paths(self) -> Dict[str, Path]:
         return {
             "purelib": SITE_PURELIB,
             "platlib": SITE_PLATLIB,
         }
 
     @property
-    def sys_path(self):
+    def sys_path(self) -> List[Path]:
         return [ENV_DIR, SITE_PLATLIB, SITE_PURELIB]
 
 
@@ -91,16 +93,16 @@ def get_package_from_repository(
     return None
 
 
-def test_load_successful(repository):
+def test_load_successful(repository: InstalledRepository):
     assert len(repository.packages) == len(INSTALLED_RESULTS) - 1
 
 
-def test_load_ensure_isolation(repository):
+def test_load_ensure_isolation(repository: InstalledRepository):
     package = get_package_from_repository("attrs", repository)
     assert package is None
 
 
-def test_load_standard_package(repository):
+def test_load_standard_package(repository: InstalledRepository):
     cleo = get_package_from_repository("cleo", repository)
     assert cleo is not None
     assert cleo.name == "cleo"
@@ -115,7 +117,7 @@ def test_load_standard_package(repository):
     assert foo.version.text == "0.1.0"
 
 
-def test_load_git_package(repository):
+def test_load_git_package(repository: InstalledRepository):
     pendulum = get_package_from_repository("pendulum", repository)
     assert pendulum is not None
     assert pendulum.name == "pendulum"
@@ -129,7 +131,7 @@ def test_load_git_package(repository):
     assert pendulum.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
 
 
-def test_load_git_package_pth(repository):
+def test_load_git_package_pth(repository: InstalledRepository):
     bender = get_package_from_repository("bender", repository)
     assert bender is not None
     assert bender.name == "bender"
@@ -137,14 +139,14 @@ def test_load_git_package_pth(repository):
     assert bender.source_type == "git"
 
 
-def test_load_platlib_package(repository):
+def test_load_platlib_package(repository: InstalledRepository):
     lib64 = get_package_from_repository("lib64", repository)
     assert lib64 is not None
     assert lib64.name == "lib64"
     assert lib64.version.text == "2.3.4"
 
 
-def test_load_editable_package(repository):
+def test_load_editable_package(repository: InstalledRepository):
     # test editable package with text .pth file
     editable = get_package_from_repository("editable", repository)
     assert editable is not None
@@ -157,7 +159,7 @@ def test_load_editable_package(repository):
     )
 
 
-def test_load_editable_with_import_package(repository):
+def test_load_editable_with_import_package(repository: InstalledRepository):
     # test editable package with executable .pth file
     editable = get_package_from_repository("editable-with-import", repository)
     assert editable is not None
@@ -167,7 +169,7 @@ def test_load_editable_with_import_package(repository):
     assert editable.source_url is None
 
 
-def test_load_standard_package_with_pth_file(repository):
+def test_load_standard_package_with_pth_file(repository: InstalledRepository):
     # test standard packages with .pth file is not treated as editable
     standard = get_package_from_repository("standard", repository)
     assert standard is not None
@@ -177,7 +179,7 @@ def test_load_standard_package_with_pth_file(repository):
     assert standard.source_url is None
 
 
-def test_load_pep_610_compliant_git_packages(repository):
+def test_load_pep_610_compliant_git_packages(repository: InstalledRepository):
     package = get_package_from_repository("git-pep-610", repository)
 
     assert package is not None
@@ -189,7 +191,7 @@ def test_load_pep_610_compliant_git_packages(repository):
     assert package.source_resolved_reference == "123456"
 
 
-def test_load_pep_610_compliant_url_packages(repository):
+def test_load_pep_610_compliant_url_packages(repository: InstalledRepository):
     package = get_package_from_repository("url-pep-610", repository)
 
     assert package is not None
@@ -202,7 +204,7 @@ def test_load_pep_610_compliant_url_packages(repository):
     )
 
 
-def test_load_pep_610_compliant_file_packages(repository):
+def test_load_pep_610_compliant_file_packages(repository: InstalledRepository):
     package = get_package_from_repository("file-pep-610", repository)
 
     assert package is not None
@@ -212,7 +214,7 @@ def test_load_pep_610_compliant_file_packages(repository):
     assert package.source_url == "/path/to/distributions/file-pep-610-1.2.3.tar.gz"
 
 
-def test_load_pep_610_compliant_directory_packages(repository):
+def test_load_pep_610_compliant_directory_packages(repository: InstalledRepository):
     package = get_package_from_repository("directory-pep-610", repository)
 
     assert package is not None
@@ -223,7 +225,9 @@ def test_load_pep_610_compliant_directory_packages(repository):
     assert not package.develop
 
 
-def test_load_pep_610_compliant_editable_directory_packages(repository):
+def test_load_pep_610_compliant_editable_directory_packages(
+    repository: InstalledRepository,
+):
     package = get_package_from_repository("editable-directory-pep-610", repository)
 
     assert package is not None
