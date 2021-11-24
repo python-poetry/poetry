@@ -1,18 +1,13 @@
 import json
 import shutil
 
-from io import BytesIO
 from pathlib import Path
 
 import pytest
 
-from requests.exceptions import TooManyRedirects
-from requests.models import Response
-
 from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import encode
 
 
 class MockRepository(PyPiRepository):
@@ -202,22 +197,6 @@ def test_invalid_versions_ignored():
     # and a correct one.
     packages = repo.find_packages(Factory.create_dependency("pygame-music-grid", "*"))
     assert len(packages) == 1
-
-
-def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
-    delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
-
-    response = Response()
-    response.encoding = "utf-8"
-    response.raw = BytesIO(encode('{"foo": "bar"}'))
-    mocker.patch(
-        "cachecontrol.adapter.CacheControlAdapter.send",
-        side_effect=[TooManyRedirects(), response],
-    )
-    repository = PyPiRepository()
-    repository._get("https://pypi.org/pypi/async-timeout/json")
-
-    assert delete_cache.called
 
 
 def test_urls():

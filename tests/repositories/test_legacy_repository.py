@@ -3,7 +3,6 @@ import shutil
 from pathlib import Path
 
 import pytest
-import requests
 
 from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
@@ -346,17 +345,3 @@ def test_get_5xx_raises(http):
 
     with pytest.raises(RepositoryError):
         repo._get_page("/foo")
-
-
-def test_get_redirected_response_url(http, monkeypatch):
-    repo = MockHttpRepository({"/foo": 200}, http)
-    redirect_url = "http://legacy.redirect.bar"
-
-    def get_mock(url):
-        response = requests.Response()
-        response.status_code = 200
-        response.url = redirect_url + "/foo"
-        return response
-
-    monkeypatch.setattr(repo.session, "get", get_mock)
-    assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"

@@ -11,7 +11,6 @@ from typing import Union
 
 import requests
 
-from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachecontrol.controller import logger as cache_control_logger
 from cachy import CacheManager
@@ -72,18 +71,11 @@ class PyPiRepository(RemoteRepository):
         )
 
         self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
-        self._session = CacheControl(
-            requests.session(), cache=self._cache_control_cache
-        )
-
         self._name = "PyPI"
 
     @property
-    def session(self) -> CacheControl:
-        return self._session
-
-    def __del__(self) -> None:
-        self._session.close()
+    def session(self) -> requests.Session:
+        return requests.session()
 
     def find_packages(self, dependency: Dependency) -> List[Package]:
         """
@@ -323,14 +315,7 @@ class PyPiRepository(RemoteRepository):
         return data.asdict()
 
     def _get(self, endpoint: str) -> Union[dict, None]:
-        try:
-            json_response = self.session.get(self._base_url + endpoint)
-        except requests.exceptions.TooManyRedirects:
-            # Cache control redirect loop.
-            # We try to remove the cache and try again
-            self._cache_control_cache.delete(self._base_url + endpoint)
-            json_response = self.session.get(self._base_url + endpoint)
-
+        json_response = self.session.get(self._base_url + endpoint)
         if json_response.status_code == 404:
             return None
 
