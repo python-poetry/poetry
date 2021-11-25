@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import List
+from typing import Mapping
 from typing import Optional
 from urllib.parse import quote
 
@@ -40,8 +41,6 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    import requests.structures
-
     from poetry.core.packages.dependency import Dependency
 
 with warnings.catch_warnings():
@@ -62,9 +61,7 @@ class Page:
         ".tar",
     ]
 
-    def __init__(
-        self, url: str, content: bytes, headers: requests.structures.CaseInsensitiveDict
-    ) -> None:
+    def __init__(self, url: str, content: bytes, headers: Mapping) -> None:
         if not url.endswith("/"):
             url += "/"
 
