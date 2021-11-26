@@ -15,11 +15,11 @@ import pytest
 
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
-
-from poetry.config.config import Config
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.utils._compat import PY36
+
+from poetry.config.config import Config
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall

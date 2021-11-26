@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.config.config_source import ConfigSource
 from poetry.core.pyproject.exceptions import PyProjectException
+
+from poetry.config.config_source import ConfigSource
 from poetry.factory import Factory
 
 

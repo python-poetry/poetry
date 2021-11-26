@@ -11,6 +11,7 @@ from poetry.repositories.exceptions import PackageNotFound
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+
     from poetry.repositories.repository import Repository
 
 

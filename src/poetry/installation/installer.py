@@ -21,9 +21,9 @@ from poetry.utils.helpers import canonicalize_name
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
-    from poetry.core.packages.project_package import ProjectPackage
     from poetry.installation.base_installer import BaseInstaller
     from poetry.installation.operations import OperationTypes
     from poetry.installation.operations.operation import Operation

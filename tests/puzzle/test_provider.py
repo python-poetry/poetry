@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
-
 from poetry.core.packages.directory_dependency import DirectoryDependency
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
+
 from poetry.inspection.info import PackageInfo
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool

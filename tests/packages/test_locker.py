@@ -10,6 +10,7 @@ import tomlkit
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.semver.version import Version
+
 from poetry.factory import Factory
 from poetry.packages.locker import Locker
 from tests.helpers import get_dependency

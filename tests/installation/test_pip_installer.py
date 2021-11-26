@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
-
 from poetry.core.packages.package import Package
+
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool

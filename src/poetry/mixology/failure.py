@@ -5,6 +5,7 @@ from typing import Optional
 from typing import Tuple
 
 from poetry.core.semver.helpers import parse_constraint
+
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import PythonCause
 

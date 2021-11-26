@@ -6,6 +6,7 @@ from typing import Sequence
 from typing import Union
 
 from poetry.core.packages.utils.utils import path_to_url
+
 from poetry.utils._compat import decode
 
 

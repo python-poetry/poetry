@@ -1,5 +1,1 @@
-from pkgutil import extend_path
-from typing import List
-
-
-__path__: List[str] = extend_path(__path__, __name__)
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)  # type: ignore[has-type]

@@ -8,6 +8,7 @@ from poetry.mixology.term import Term
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+
     from poetry.mixology.incompatibility import Incompatibility
 
 

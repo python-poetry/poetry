@@ -18,11 +18,11 @@ from cleo.io.null_io import NullIO
 from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
 from deepdiff import DeepDiff
-
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
+
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor

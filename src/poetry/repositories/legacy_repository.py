@@ -21,14 +21,14 @@ import requests.exceptions
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
-
-from poetry.config.config import Config
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
+
+from poetry.config.config import Config
 from poetry.inspection.info import PackageInfo
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.repositories.exceptions import PackageNotFound

@@ -76,11 +76,11 @@ class AddCommand(InstallerCommand, InitCommand):
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
+        from poetry.core.semver.helpers import parse_constraint
         from tomlkit import inline_table
         from tomlkit import parse as parse_toml
         from tomlkit import table
 
-        from poetry.core.semver.helpers import parse_constraint
         from poetry.factory import Factory
 
         packages = self.argument("name")

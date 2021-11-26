@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from entrypoints import EntryPoint
-
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
+
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository

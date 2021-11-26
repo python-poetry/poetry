@@ -8,6 +8,7 @@ from typing import Tuple
 from typing import Union
 
 from poetry.core.packages.dependency import Dependency
+
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import ConflictCause
@@ -23,6 +24,7 @@ from poetry.mixology.term import Term
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.puzzle.provider import Provider
 
 

@@ -13,9 +13,8 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
-    from tomlkit.items import InlineTable
-
     from poetry.core.pyproject.toml import PyProjectTOML
+    from tomlkit.items import InlineTable
 
 
 POETRY_DEFAULT = """\

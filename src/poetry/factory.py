@@ -5,11 +5,11 @@ from typing import List
 from typing import Optional
 
 from cleo.io.null_io import NullIO
+from poetry.core.factory import Factory as BaseFactory
+from poetry.core.toml.file import TOMLFile
 
 from poetry.config.config import Config
 from poetry.config.file_config_source import FileConfigSource
-from poetry.core.factory import Factory as BaseFactory
-from poetry.core.toml.file import TOMLFile
 from poetry.locations import CONFIG_DIR
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage

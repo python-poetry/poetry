@@ -18,11 +18,11 @@ from typing import Set
 from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
-
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.semver.version import Version
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
+
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.mixology.incompatibility import Incompatibility
@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
+
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 

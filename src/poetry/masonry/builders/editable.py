@@ -11,6 +11,7 @@ from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
 from poetry.core.semver.version import Version
+
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
@@ -19,8 +20,8 @@ from poetry.utils.pip import pip_editable_install
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-
     from poetry.core.poetry import Poetry
+
     from poetry.utils.env import Env
 
 SCRIPT_TEMPLATE = """\

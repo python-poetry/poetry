@@ -67,6 +67,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
+
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
@@ -383,6 +384,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
     def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
         from poetry.core.pyproject.exceptions import PyProjectException
+
         from poetry.puzzle.provider import Provider
 
         result = []

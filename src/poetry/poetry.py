@@ -2,16 +2,18 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
+from poetry.core.poetry import Poetry as BasePoetry
+
 from poetry.__version__ import __version__
 from poetry.config.source import Source
-from poetry.core.poetry import Poetry as BasePoetry
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from poetry.config.config import Config
     from poetry.core.packages.project_package import ProjectPackage
+
+    from poetry.config.config import Config
     from poetry.packages.locker import Locker
     from poetry.plugins.plugin_manager import PluginManager
     from poetry.repositories.pool import Pool

@@ -5,6 +5,7 @@ from typing import Callable
 import pytest
 
 from poetry.core.version.exceptions import InvalidVersion
+
 from poetry.utils.setup_reader import SetupReader
 
 

@@ -17,13 +17,6 @@ from typing import Set
 from typing import Tuple
 from typing import Union
 
-from tomlkit import array
-from tomlkit import document
-from tomlkit import inline_table
-from tomlkit import item
-from tomlkit import table
-from tomlkit.exceptions import TOMLKitError
-
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver.helpers import parse_constraint
@@ -31,6 +24,13 @@ from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
+from tomlkit import array
+from tomlkit import document
+from tomlkit import inline_table
+from tomlkit import item
+from tomlkit import table
+from tomlkit.exceptions import TOMLKitError
+
 from poetry.packages import DependencyPackage
 from poetry.utils.extras import get_extra_package_names
 
