@@ -16,11 +16,11 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
+from poetry.core.utils._compat import PY37
 
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
-from poetry.core.utils._compat import PY37
 
 
 if TYPE_CHECKING:

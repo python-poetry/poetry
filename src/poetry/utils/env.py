@@ -34,11 +34,11 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-from virtualenv.seed.wheels.embed import get_embed_wheel
-
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
+from virtualenv.seed.wheels.embed import get_embed_wheel
+
 from poetry.locations import CACHE_DIR
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
@@ -51,8 +51,8 @@ from poetry.utils.helpers import temporary_directory
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-
     from poetry.core.version.markers import BaseMarker
+
     from poetry.poetry import Poetry
 
 

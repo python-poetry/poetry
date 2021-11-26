@@ -37,8 +37,8 @@ class DebugResolveCommand(InitCommand):
 
     def handle(self) -> Optional[int]:
         from cleo.io.null_io import NullIO
-
         from poetry.core.packages.project_package import ProjectPackage
+
         from poetry.factory import Factory
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool

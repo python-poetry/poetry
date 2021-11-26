@@ -4,6 +4,7 @@ from typing import List
 import pytest
 
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 from poetry.utils.extras import get_extra_package_names
 

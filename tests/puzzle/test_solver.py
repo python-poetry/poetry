@@ -9,12 +9,12 @@ from typing import Type
 import pytest
 
 from cleo.io.null_io import NullIO
-
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
+
 from poetry.factory import Factory
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError

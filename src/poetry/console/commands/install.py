@@ -87,6 +87,7 @@ dependencies and not including the current project, run the command with the
 
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+
         from poetry.masonry.builders import EditableBuilder
 
         self._installer.use_executor(

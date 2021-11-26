@@ -11,9 +11,9 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
-
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
+
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller

@@ -4,8 +4,8 @@ from typing import Type
 import pytest
 
 from entrypoints import EntryPoint as _EntryPoint
-
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin

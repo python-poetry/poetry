@@ -9,10 +9,10 @@ from typing import Optional
 
 import pytest
 
+from poetry.core.packages.dependency import Dependency
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import encode

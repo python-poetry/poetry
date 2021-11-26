@@ -6,6 +6,7 @@ from typing import Tuple
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
+
     from poetry.installation.operations import OperationTypes
 
 

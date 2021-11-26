@@ -23,7 +23,6 @@ from poetry.puzzle.provider import Provider
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
@@ -31,6 +30,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
+
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import Pool
     from poetry.repositories import Repository

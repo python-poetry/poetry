@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
-
 from poetry.core.packages.utils.link import Link
+
 from poetry.installation.chef import Chef
 from poetry.utils.env import MockEnv
 

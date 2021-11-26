@@ -11,9 +11,9 @@ from poetry.console.commands.env_command import EnvCommand
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+
     from poetry.packages.project_package import ProjectPackage
     from poetry.repositories import Repository
     from poetry.repositories.installed_repository import InstalledRepository

@@ -7,6 +7,7 @@ from poetry.core.semver.version import Version
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
+
     from poetry.repositories import Pool
 
 

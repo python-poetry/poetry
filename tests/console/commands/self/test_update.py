@@ -4,10 +4,11 @@ from typing import Type
 
 import pytest
 
-from poetry.__version__ import __version__
-from poetry.console.exceptions import PoetrySimpleConsoleException
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
+
+from poetry.__version__ import __version__
+from poetry.console.exceptions import PoetrySimpleConsoleException
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool

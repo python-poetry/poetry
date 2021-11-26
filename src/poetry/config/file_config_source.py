@@ -10,9 +10,8 @@ from poetry.config.config_source import ConfigSource
 
 
 if TYPE_CHECKING:
-    from tomlkit.toml_document import TOMLDocument
-
     from poetry.core.toml.file import TOMLFile
+    from tomlkit.toml_document import TOMLDocument
 
 
 class FileConfigSource(ConfigSource):

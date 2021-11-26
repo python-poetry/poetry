@@ -6,6 +6,7 @@ from typing import Union
 
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path
+
 from poetry.exceptions import PoetryException
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment

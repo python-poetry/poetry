@@ -9,6 +9,7 @@ from typing import Any
 from typing import Union
 
 from poetry.core.pyproject.toml import PyProjectTOML
+
 from poetry.installation.base_installer import BaseInstaller
 from poetry.utils._compat import encode
 from poetry.utils.helpers import safe_rmtree
@@ -18,8 +19,8 @@ from poetry.utils.pip import pip_install
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-
     from poetry.core.packages.package import Package
+
     from poetry.repositories.pool import Pool
     from poetry.utils.env import Env
 

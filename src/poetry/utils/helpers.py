@@ -17,10 +17,10 @@ from typing import Optional
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
     from requests import Session
 
     from poetry.config.config import Config
-    from poetry.core.packages.package import Package
 
 
 _canonicalize_regex = re.compile("[-_]+")

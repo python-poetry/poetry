@@ -4,6 +4,7 @@ from typing import List
 import pytest
 
 from poetry.core.semver.version import Version
+
 from tests.console.commands.env.helpers import check_output_wrapper
 
 

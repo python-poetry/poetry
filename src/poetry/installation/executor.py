@@ -16,11 +16,11 @@ from typing import Optional
 from typing import Union
 
 from cleo.io.null_io import NullIO
-
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
+
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
 from poetry.utils._compat import decode
@@ -33,9 +33,9 @@ from poetry.utils.pip import pip_install
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
-    from poetry.core.packages.package import Package
     from poetry.installation.operations import OperationTypes
     from poetry.installation.operations.install import Install
     from poetry.installation.operations.operation import Operation

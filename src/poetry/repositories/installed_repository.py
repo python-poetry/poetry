@@ -11,6 +11,7 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import canonicalize_name
 from poetry.core.utils.helpers import module_name
+
 from poetry.repositories.repository import Repository
 from poetry.utils._compat import metadata
 

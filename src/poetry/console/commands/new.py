@@ -29,6 +29,7 @@ class NewCommand(Command):
         from pathlib import Path
 
         from poetry.core.vcs.git import GitConfig
+
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 

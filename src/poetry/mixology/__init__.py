@@ -7,6 +7,7 @@ from poetry.mixology.version_solver import VersionSolver
 
 if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.mixology.result import SolverResult
     from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider

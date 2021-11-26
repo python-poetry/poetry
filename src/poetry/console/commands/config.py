@@ -100,9 +100,10 @@ To remove a repository (repo is a short alias for repositories):
     def handle(self) -> Optional[int]:
         from pathlib import Path
 
-        from poetry.config.file_config_source import FileConfigSource
         from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.core.toml.file import TOMLFile
+
+        from poetry.config.file_config_source import FileConfigSource
         from poetry.factory import Factory
         from poetry.locations import CONFIG_DIR
 
