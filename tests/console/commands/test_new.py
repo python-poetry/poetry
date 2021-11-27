@@ -157,15 +157,18 @@ def test_command_new(
     verify_project_directory(path, package_name, package_path, include_from)
 
 
-@pytest.mark.parametrize("fmt", [(None,), ("md",), ("rst",)])
+@pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",)])
 def test_command_new_with_readme(
     fmt: Optional[str], tester: "CommandTester", tmp_dir: str
 ):
-    fmt = "md"
     package = "package"
     path = Path(tmp_dir) / package
-    options = [f"--readme {fmt}" if fmt else "md", path.as_posix()]
+    options = [path.as_posix()]
+
+    if fmt:
+        options.insert(0, f"--readme {fmt}")
+
     tester.execute(" ".join(options))
 
     poetry = verify_project_directory(path, package, package, None)
-    assert poetry.local_config.get("readme") == "README.{}".format(fmt or "md")
+    assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"
