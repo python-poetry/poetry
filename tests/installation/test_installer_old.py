@@ -1867,7 +1867,6 @@ def test_installer_uses_prereleases_if_they_are_compatible(
 
 
 def test_installer_can_handle_old_lock_files(
-    installer: Installer,
     locker: Locker,
     package: ProjectPackage,
     repo: Repository,

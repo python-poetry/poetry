@@ -68,16 +68,16 @@ def install_plugin(env: "MockEnv", installed: "Repository", pyproject: None) -> 
         tomlkit.dumps(lock_content), encoding="utf-8"
     )
 
-    pyproject = tomlkit.loads(
+    pyproject_toml = tomlkit.loads(
         env.path.joinpath("pyproject.toml").read_text(encoding="utf-8")
     )
-    content = pyproject["tool"]["poetry"]
+    content = pyproject_toml["tool"]["poetry"]
 
     dependency_section = content["dependencies"]
     dependency_section["poetry-plugin"] = "^1.2.3"
 
     env.path.joinpath("pyproject.toml").write_text(
-        tomlkit.dumps(pyproject), encoding="utf-8"
+        tomlkit.dumps(pyproject_toml), encoding="utf-8"
     )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))

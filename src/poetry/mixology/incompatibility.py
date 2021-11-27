@@ -176,16 +176,10 @@ class Incompatibility:
 
         if len(self._terms) == 1:
             term = self._terms[0]
-            if term.constraint.is_any():
-                return "{} is {}".format(
-                    term.dependency.name,
-                    "forbidden" if term.is_positive() else "required",
-                )
-            else:
-                return "{} is {}".format(
-                    term.dependency.name,
-                    "forbidden" if term.is_positive() else "required",
-                )
+            return "{} is {}".format(
+                term.dependency.name,
+                "forbidden" if term.is_positive() else "required",
+            )
 
         if len(self._terms) == 2:
             term1 = self._terms[0]
