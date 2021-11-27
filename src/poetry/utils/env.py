@@ -1719,8 +1719,6 @@ class GenericEnv(VirtualEnv):
                     if pip_executable.endswith(".exe"):
                         pip_executable = pip_executable[:-4]
 
-                    pip_executable = pip_executable
-
             if python_executable:
                 self._executable = python_executable
 

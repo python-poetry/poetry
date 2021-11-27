@@ -1878,7 +1878,6 @@ def test_solver_can_resolve_directory_dependencies(
 
 
 def test_solver_can_resolve_directory_dependencies_nested_editable(
-    solver: Solver,
     repo: Repository,
     pool: Pool,
     installed: InstalledRepository,
@@ -2552,7 +2551,6 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
 
 
 def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
-    solver: Solver,
     repo: Repository,
     package: Package,
     locked: Repository,
