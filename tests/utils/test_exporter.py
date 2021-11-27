@@ -752,6 +752,79 @@ foo==1.2.3
     assert expected == content
 
 
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_markers(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "bar": [
+                            {
+                                "version": ">=1.2.3,<7.8.10",
+                                "markers": 'platform_system != "Windows"',
+                            },
+                            {
+                                "version": ">=4.5.6,<7.8.10",
+                                "markers": 'platform_system == "Windows"',
+                            },
+                        ]
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": True,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "baz": {
+                            "version": "!=10.11.12",
+                            "markers": 'platform_system == "Windows"',
+                        }
+                    },
+                },
+                {
+                    "name": "baz",
+                    "version": "10.11.13",
+                    "category": "main",
+                    "optional": True,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": [], "baz": []},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export(
+        "requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False
+    )
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==7.8.9
+baz==10.11.13; platform_system == "Windows"
+foo==1.2.3
+"""
+
+    assert expected == content
+
+
 def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     tmp_dir, poetry
 ):
