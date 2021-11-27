@@ -245,16 +245,15 @@ class Locker(object):
                         locked_package.to_dependency().constraint
                     )
 
-                if key not in nested_dependencies:
-                    for require in locked_package.requires:
-                        if require.marker.is_empty():
-                            require.marker = requirement.marker
-                        else:
-                            require.marker = require.marker.intersect(
-                                requirement.marker
-                            )
+                for require in locked_package.requires:
+                    if require.marker.is_empty():
+                        require.marker = requirement.marker
+                    else:
+                        require.marker = require.marker.intersect(requirement.marker)
 
-                        require.marker = require.marker.intersect(locked_package.marker)
+                    require.marker = require.marker.intersect(locked_package.marker)
+
+                    if key not in nested_dependencies:
                         next_level_dependencies.append(require)
 
             if requirement.name in project_level_dependencies and level == 0:
