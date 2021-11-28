@@ -55,37 +55,37 @@ by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
 ```bash
-python install-poetry.py --uninstall
-POETRY_UNINSTALL=1 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python - --uninstall
+curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python -
 ```
 
 By default, Poetry is installed into the user's platform-specific home directory.
 If you wish to change this, you may define the `POETRY_HOME` environment variable:
 
 ```bash
-POETRY_HOME=/etc/poetry python install-poetry.py
+curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python -
 ```
 
 If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`
 or by using the `POETRY_PREVIEW` environment variable:
 
 ```bash
-python install-poetry.py --preview
-POETRY_PREVIEW=1 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python - --preview
+curl -sSL https://install.python-poetry.org | POETRY_PREVIEW=1 python -
 ```
 
 Similarly, if you want to install a specific version, you can use `--version` option or the `POETRY_VERSION`
 environment variable:
 
 ```bash
-python install-poetry.py --version 1.2.0
-POETRY_VERSION=1.2.0 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python - --version 1.2.0
+curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python -
 ```
 
 You can also install Poetry for a `git` repository by using the `--git` option:
 
 ```bash
-python install-poetry.py --git https://github.com/python-poetry/poetry.git@master
+curl -sSL https://install.python-poetry.org | python - --git https://github.com/python-poetry/poetry.git@master
 ````
 
 **Note**: Note that the installer does not support Python < 3.6.
