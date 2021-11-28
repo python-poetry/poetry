@@ -170,12 +170,12 @@ authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 
-readme = 'README.md'  # Markdown files are supported
+readme = "README.md"  # Markdown files are supported
 
 repository = "https://github.com/python-poetry/poetry"
 homepage = "https://github.com/python-poetry/poetry"
 
-keywords = ['packaging', 'poetry']
+keywords = ["packaging", "poetry"]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
@@ -195,7 +195,7 @@ pytest = "^3.0"
 pytest-cov = "^2.4"
 
 [tool.poetry.scripts]
-my-script = 'my_package:main'
+my-script = "my_package:main"
 ```
 
 There are some things we can notice here:
