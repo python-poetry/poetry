@@ -62,8 +62,8 @@ by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
 ```bash
-python install-poetry.py --uninstall
-POETRY_UNINSTALL=1 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python - --uninstall
+curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python -
 ```
 
 By default, Poetry is installed into the user's platform-specific home directory.
