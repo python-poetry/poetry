@@ -1,12 +1,22 @@
+import sys
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from poetry.utils.env import MockEnv
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture(autouse=True)
-def setup(mocker):
+def setup(mocker: "MockerFixture") -> None:
     mocker.patch(
         "poetry.utils.env.EnvManager.get",
         return_value=MockEnv(
@@ -16,32 +26,33 @@ def setup(mocker):
 
 
 @pytest.fixture
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("env info")
 
 
-def test_env_info_displays_complete_info(tester):
+def test_env_info_displays_complete_info(tester: "CommandTester"):
     tester.execute()
 
-    expected = """
+    expected = f"""
 Virtualenv
 Python:         3.7.0
 Implementation: CPython
-Path:           {prefix}
+Path:           {Path('/prefix')}
+Executable:     {sys.executable}
 Valid:          True
 
 System
-Platform: darwin
-OS:       posix
-Python:   {base_prefix}
-""".format(
-        prefix=str(Path("/prefix")), base_prefix=str(Path("/base/prefix"))
-    )
+Platform:   darwin
+OS:         posix
+Python:     {'.'.join(str(v) for v in sys.version_info[:3])}
+Path:       {Path('/base/prefix')}
+Executable: python
+"""
 
     assert expected == tester.io.fetch_output()
 
 
-def test_env_info_displays_path_only(tester):
+def test_env_info_displays_path_only(tester: "CommandTester"):
     tester.execute("--path")
-    expected = str(Path("/prefix"))
-    assert expected + "\n" == tester.io.fetch_output()
+    expected = str(Path("/prefix")) + "\n"
+    assert tester.io.fetch_output() == expected

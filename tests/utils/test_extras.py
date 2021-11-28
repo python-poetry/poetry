@@ -1,6 +1,10 @@
+from typing import Dict
+from typing import List
+
 import pytest
 
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 from poetry.utils.extras import get_extra_package_names
 
@@ -18,7 +22,7 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
 
 
 @pytest.mark.parametrize(
-    "packages,extras,extra_names,expected_extra_package_names",
+    ["packages", "extras", "extra_names", "expected_extra_package_names"],
     [
         # Empty edge case
         ([], {}, [], []),
@@ -56,7 +60,10 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
     ],
 )
 def test_get_extra_package_names(
-    packages, extras, extra_names, expected_extra_package_names
+    packages: List[Package],
+    extras: Dict[str, List[str]],
+    extra_names: List[str],
+    expected_extra_package_names: List[str],
 ):
     assert expected_extra_package_names == list(
         get_extra_package_names(packages, extras, extra_names)

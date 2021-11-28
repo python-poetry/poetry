@@ -87,7 +87,7 @@ An URL to the documentation of the project. **Optional**
 
 ## keywords
 
-A list of keywords (max: 5) that the package is related to. **Optional**
+A list of keywords that the package is related to. **Optional**
 
 ## classifiers
 
@@ -201,7 +201,7 @@ If no format is specified, it will default to include both `sdist` and `wheel`.
 exclude = ["my_package/excluded.py"]
 ```
 
-## `dependencies` and `dev-dependencies`
+## dependencies and dependency groups
 
 Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
 Only the name and a version string are required in this case.
@@ -211,12 +211,20 @@ Only the name and a version string are required in this case.
 requests = "^2.13.0"
 ```
 
-If you want to use a private repository, you can add it to your `pyproject.toml` file, like so:
+If you want to use a [private repository]({{< relref "repositories#using-a-private-repository" >}}),
+you can add it to your `pyproject.toml` file, like so:
 
 ```toml
 [[tool.poetry.source]]
-name = 'private'
-url = 'http://example.com/simple'
+name = "private"
+url = "http://example.com/simple"
+```
+
+If you have multiple repositories configured, you can explicitly tell poetry where to look for a specific package:
+
+```toml
+[tool.poetry.dependencies]
+requests = { version = "^2.13.0", source = "private" }
 ```
 
 {{% note %}}
@@ -229,6 +237,20 @@ python = "^3.6"
 ```
 {{% /note %}}
 
+You can organize your dependencies in [groups]({{< relref "managing-dependencies#dependency-groups" >}})
+to manage them in a more granular way.
+
+```toml
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "*"
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for a more in-depth look
+at how to manage dependency groups.
+
 ## `scripts`
 
 This section describes the scripts or executables that will be installed when installing the package
@@ -239,6 +261,13 @@ poetry = 'poetry.console:run'
 ```
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+
+To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
+
+```toml
+[tool.poetry.scripts]
+devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
+```
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
@@ -290,7 +319,7 @@ pip install awesome[databases]
 {{% note %}}
 The dependencies specified for each `extra` must already be defined as project dependencies.
 
-Dependencies listed in the `dev-dependencies` section cannot be specified as extras.
+Dependencies listed in [dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) cannot be specified as extras.
 {{% /note %}}
 
 

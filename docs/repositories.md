@@ -75,6 +75,21 @@ If a system keyring is available and supported, the password is stored to and re
 
 Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
 
+{{% note %}}
+
+Poetry will fallback to Pip style use of keyring so that backends like
+Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a change to retrieve
+valid credentials. It will need to be properly installed into Poetry's virtualenv,
+preferably by installing a plugin.
+
+If you are letting Poetry manage your virtual environments you will want a virtualenv
+seeder installed in Poetry's virtualenv that installs the desired keyring backend
+during `poetry install`. To again use Azure DevOps as an example: [azure-devops-artifacts-helpers](https://pypi.org/project/azure-devops-artifacts-helpers/)
+provides such a seeder. This would of course best achieved by installing a Poetry plugin
+if it exists for you use case instead of doing it yourself.
+
+{{% /note %}}
+
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
@@ -85,6 +100,14 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
+
+If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a
+command line option instead of a password.
+You can prevent this by adding double dashes to prevent any following argument from being parsed as an option.
+
+```bash
+poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
+```
 
 #### Custom certificate authority and mutual TLS authentication
 Poetry supports repositories that are secured by a custom certificate authority as well as those that require

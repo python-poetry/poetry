@@ -27,12 +27,11 @@ This will create the `poetry-demo` directory with the following content:
 ```text
 poetry-demo
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── poetry_demo
 │   └── __init__.py
 └── tests
-    ├── __init__.py
-    └── test_poetry_demo.py
+    └── __init__.py
 ```
 
 The `pyproject.toml` file is what is the most important here. This will orchestrate
@@ -44,13 +43,22 @@ name = "poetry-demo"
 version = "0.1.0"
 description = ""
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
+readme = "README.md"
+packages = [{include = "poetry_demo"}]
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^3.6"
 
-[tool.poetry.dev-dependencies]
-pytest = "^3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 ```
+
+Poetry assumes your package contains a package with the same name as `tool.poetry.name`.
+If this is not the case, populate `tool.poetry.packages` to specify your package or packages.
+
+See [Packages](/docs/pyproject#packages) for more information.
 
 ### Initialising a pre-existing project
 
@@ -68,13 +76,13 @@ If you want to add dependencies to your project, you can specify them in the `to
 
 ```toml
 [tool.poetry.dependencies]
-pendulum = "^1.4"
+pendulum = "^2.1"
 ```
 
 As you can see, it takes a mapping of **package names** and **version constraints**.
 
 Poetry uses this information to search for the right set of files in package "repositories" that you register
-in the `tool.poetry.repositories` section, or on [PyPI](https://pypi.org) by default.
+in the `tool.poetry.source` section, or on [PyPI](https://pypi.org) by default.
 
 Also, instead of modifying the `pyproject.toml` file by hand, you can use the `add` command.
 
@@ -82,7 +90,7 @@ Also, instead of modifying the `pyproject.toml` file by hand, you can use the `a
 $ poetry add pendulum
 ```
 
-It will automatically find a suitable version constraint **and install** the package and subdependencies.
+It will automatically find a suitable version constraint **and install** the package and sub-dependencies.
 
 
 ## Using your virtual environment
@@ -128,17 +136,17 @@ To get the path to your virtual environment run `poetry env info --path`.
 You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                        | Windows                               | Exit/Deactivate |
-| ----------------- | -------------------------------------------------- | ------------------------------------- | --------------- |
-| New Shell         | `poetry shell`                                     | `poetry shell`                        | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`               | `{path_to_venv}\Scripts\activate.bat` | `deactivate`    |
-| One-liner         | ```source `poetry env info --path`/bin/activate``` |                                       | `deactivate`    |
+|                   | POSIX Shell                                     | Windows                               | Exit/Deactivate |
+| ----------------- | ----------------------------------------------- | ------------------------------------- | --------------- |
+| New Shell         | `poetry shell`                                  | `poetry shell`                        | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.bat` | `deactivate`    |
+| One-liner         | `source $(poetry env info --path)/bin/activate` |                                       | `deactivate`    |
 
 
 ### Version constraints
 
-In our example, we are requesting the `pendulum` package with the version constraint `^1.4`.
-This means any version greater or equal to 1.4.0 and less than 2.0.0 (`>=1.4.0 <2.0.0`).
+In our example, we are requesting the `pendulum` package with the version constraint `^2.1`.
+This means any version greater or equal to 2.1.0 and less than 3.0.0 (`>=2.1.0 <3.0.0`).
 
 Please read [Dependency specification]({{< relref "dependency-specification" >}} "Dependency specification documentation") for more in-depth information on versions,
 how versions relate to each other, and on the different ways you can specify dependencies.
@@ -159,7 +167,7 @@ for the version constraint you have specified.
 
 ## Installing dependencies
 
-To install the defined dependencies for your project, just run the `install` command.
+To install the defined dependencies for your project, just run the [`install`]({{< relref "cli#install" >}}) command.
 
 ```bash
 poetry install
@@ -172,7 +180,7 @@ When you run this command, one of two things may happen:
 If you have never run the command before and there is also no `poetry.lock` file present,
 Poetry simply resolves all dependencies listed in your `pyproject.toml` file and downloads the latest version of their files.
 
-When Poetry has finished installing, it writes all of the packages and the exact versions of them that it downloaded to the `poetry.lock` file,
+When Poetry has finished installing, it writes all the packages and their exact versions that it downloaded to the `poetry.lock` file,
 locking the project to those specific versions.
 You should commit the `poetry.lock` file to your project repo so that all people working on the project are locked to the same versions of dependencies (more below).
 
@@ -187,7 +195,7 @@ Either way, running `install` when a `poetry.lock` file is present resolves and 
 but Poetry uses the exact versions listed in `poetry.lock` to ensure that the package versions are consistent for everyone working on your project.
 As a result you will have all dependencies requested by your `pyproject.toml` file,
 but they may not all be at the very latest available versions
-(some of the dependencies listed in the `poetry.lock` file may have released newer versions since the file was created).
+(some dependencies listed in the `poetry.lock` file may have released newer versions since the file was created).
 This is by design, it ensures that your project does not break because of unexpected changes in dependencies.
 
 ### Commit your `poetry.lock` file to version control
@@ -207,7 +215,7 @@ For libraries it is not necessary to commit the lock file.
 
 ### Installing dependencies only
 
-The current project is installed in [editable](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) mode by default.
+The current project is installed in [editable](https://pip.pypa.io/en/stable/cli/pip_install/#install-editable) mode by default.
 
 If you want to install the dependencies only, run the `install` command with the `--no-root` flag:
 

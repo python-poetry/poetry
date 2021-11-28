@@ -1,10 +1,19 @@
+from typing import TYPE_CHECKING
+
 from poetry.factory import Factory
+from tests.mixology.helpers import add_to_repo
+from tests.mixology.helpers import check_solver_result
 
-from ..helpers import add_to_repo
-from ..helpers import check_solver_result
+
+if TYPE_CHECKING:
+    from poetry.packages.project_package import ProjectPackage
+    from poetry.repositories import Repository
+    from tests.mixology.version_solver.conftest import Provider
 
 
-def test_no_version_matching_constraint(root, provider, repo):
+def test_no_version_matching_constraint(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "^1.0"))
 
     add_to_repo(repo, "foo", "2.0.0")
@@ -20,7 +29,9 @@ def test_no_version_matching_constraint(root, provider, repo):
     )
 
 
-def test_no_version_that_matches_combined_constraints(root, provider, repo):
+def test_no_version_that_matches_combined_constraints(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
 
@@ -38,7 +49,9 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
     check_solver_result(root, provider, error=error)
 
 
-def test_disjoint_constraints(root, provider, repo):
+def test_disjoint_constraints(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
 
@@ -56,7 +69,9 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
     check_solver_result(root, provider, error=error)
 
 
-def test_disjoint_root_constraints(root, provider, repo):
+def test_disjoint_root_constraints(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("foo", "2.0.0"))
 
@@ -69,7 +84,9 @@ Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving faile
     check_solver_result(root, provider, error=error)
 
 
-def test_no_valid_solution(root, provider, repo):
+def test_no_valid_solution(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
 

@@ -1,14 +1,22 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("check")
 
 
-def test_check_valid(tester):
+def test_check_valid(tester: "CommandTester"):
     tester.execute()
 
     expected = """\
@@ -18,7 +26,7 @@ All set!
     assert expected == tester.io.fetch_output()
 
 
-def test_check_invalid(mocker, tester):
+def test_check_invalid(mocker: "MockerFixture", tester: "CommandTester"):
     mocker.patch(
         "poetry.factory.Factory.locate",
         return_value=Path(__file__).parent.parent.parent

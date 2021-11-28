@@ -12,8 +12,6 @@ from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 
 cmdclass = {}
-if sys.version_info < (2, 7):
-    raise Exception("SQLAlchemy requires Python 2.7 or higher.")
 
 cpython = platform.python_implementation() == "CPython"
 

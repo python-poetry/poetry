@@ -133,25 +133,49 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-You can specify to the command that you do not want the development dependencies installed by passing
-the `--no-dev` option.
+If you want to exclude one or more dependency group for the installation, you can use
+the `--without` option.
 
 ```bash
-poetry install --no-dev
+poetry install --without test,docs
 ```
 
-Conversely, you can specify to the command that you only want to install the development dependencies
-by passing the `--dev-only` option. Note that `--no-dev` takes priority if both options are passed.
+{{% note %}}
+The `--no-dev` option is now deprecated. You should use the `--without dev` notation instead.
+{{% /note %}}
+
+You can also select optional dependency groups with the `--with` option.
 
 ```bash
-poetry install --dev-only
+poetry install --with test,docs
 ```
 
-If you want to remove old dependencies no longer present in the lock file, use the
-`--remove-untracked` option.
+It's also possible to only install specific dependency groups by using the `only` option.
 
 ```bash
-poetry install --remove-untracked
+poetry install --only test,docs
+```
+
+{{% note %}}
+The `--dev-only` option is now deprecated. You should use the `--only dev` notation instead.
+{{% /note %}}
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
+If you want to synchronize your environment – and ensure it matches the lock file – use the
+`--sync` option.
+
+```bash
+poetry install --sync
+```
+
+The `--sync` can be combined with group-related options:
+
+```bash
+poetry install --without dev --sync
+poetry install --with docs --sync
+poetry install --only dev
 ```
 
 You can also specify the extras you want installed
@@ -162,7 +186,7 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-By default `poetry` will install your project's package everytime you run `install`:
+By default `poetry` will install your project's package every time you run `install`:
 
 ```bash
 $ poetry install
@@ -179,17 +203,23 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--dev-only`
-option is passed.
+Installation of your project's package is also skipped when the `--only`
+option is used.
 
 ### Options
 
-* `--no-dev`: Do not install dev dependencies.
-* `--dev-only`: Only install dev dependencies.
+* `--without`: The dependency groups to ignore for installation.
+* `--with`: The optional dependency groups to include for installation.
+* `--only`: The only dependency groups to install.
+* `--default`: Only install the default dependencies.
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
-* `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
+* `--dev-only`: Only install dev dependencies. (**Deprecated**)
+* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
+
 
 ## update
 
@@ -311,17 +341,27 @@ poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
+If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
+
+```bash
+poetry add mkdocs --group docs
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
 ### Options
 
-* `--dev (-D)`: Add package as development dependency.
+* `--group (-G)`: The group to add the dependency to.
+* `--dev (-D)`: Add package as development dependency. (**Deprecated**)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
-* `---allow-prereleases`: Accept prereleases.
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--allow-prereleases`: Accept prereleases.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--lock`: Do not perform install (only update the lockfile).
 
 
@@ -334,9 +374,19 @@ list of installed packages.
 poetry remove pendulum
 ```
 
+If you want to remove a package from a specific group of dependencies, you can use the `--group (-G)` option:
+
+```bash
+poetry remove mkdocs --group docs
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
 ### Options
 
-* `--dev (-D)`: Removes a package from the development dependencies.
+* `--group (-D)`: The group to remove the dependency from.
+* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
@@ -357,14 +407,21 @@ name        : pendulum
 version     : 1.4.2
 description : Python datetimes made easy
 
-dependencies:
+dependencies
  - python-dateutil >=2.6.1
  - tzlocal >=1.4
  - pytzdata >=2017.2.2
+
+required by
+ - calendar >=1.4.0
 ```
 
 ### Options
 
+* `--without`: Do not show the information of the specified groups' dependencies.
+* `--with`: Show the information of the specified optional groups' dependencies as well.
+* `--only`: Only show the information of dependencies belonging to the specified groups.
+* `--default`: Only show the information of the default dependencies.
 * `--no-dev`: Do not list the dev dependencies.
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
@@ -463,6 +520,10 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
+Note that this commmand starts a new shell and activates the virtual environment.
+
+As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
+
 ## check
 
 The `check` command validates the structure of the `pyproject.toml` file
@@ -551,6 +612,7 @@ This command is also available as a `pre-commit` hook. See [pre-commit hooks](/d
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+* `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
 ## env

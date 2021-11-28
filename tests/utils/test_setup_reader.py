@@ -1,20 +1,25 @@
 import os
 
+from typing import Callable
+
 import pytest
 
 from poetry.core.version.exceptions import InvalidVersion
+
 from poetry.utils.setup_reader import SetupReader
 
 
 @pytest.fixture()
-def setup():
-    def _setup(name):
+def setup() -> Callable[[str], str]:
+    def _setup(name: str) -> str:
         return os.path.join(os.path.dirname(__file__), "fixtures", "setups", name)
 
     return _setup
 
 
-def test_setup_reader_read_first_level_setup_call_with_direct_types(setup):
+def test_setup_reader_read_first_level_setup_call_with_direct_types(
+    setup: Callable[[str], str]
+):
     result = SetupReader.read_from_directory(setup("flask"))
 
     expected_name = "Flask"
@@ -46,7 +51,9 @@ def test_setup_reader_read_first_level_setup_call_with_direct_types(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-def test_setup_reader_read_first_level_setup_call_with_variables(setup):
+def test_setup_reader_read_first_level_setup_call_with_variables(
+    setup: Callable[[str], str]
+):
     result = SetupReader.read_from_directory(setup("requests"))
 
     expected_name = None
@@ -71,7 +78,9 @@ def test_setup_reader_read_first_level_setup_call_with_variables(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-def test_setup_reader_read_sub_level_setup_call_with_direct_types(setup):
+def test_setup_reader_read_sub_level_setup_call_with_direct_types(
+    setup: Callable[[str], str]
+):
     result = SetupReader.read_from_directory(setup("sqlalchemy"))
 
     expected_name = "SQLAlchemy"
@@ -95,7 +104,7 @@ def test_setup_reader_read_sub_level_setup_call_with_direct_types(setup):
     assert result["python_requires"] is None
 
 
-def test_setup_reader_read_setup_cfg(setup):
+def test_setup_reader_read_setup_cfg(setup: Callable[[str], str]):
     result = SetupReader.read_from_directory(setup("with-setup-cfg"))
 
     expected_name = "with-setup-cfg"
@@ -114,12 +123,12 @@ def test_setup_reader_read_setup_cfg(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-def test_setup_reader_read_setup_cfg_with_attr(setup):
+def test_setup_reader_read_setup_cfg_with_attr(setup: Callable[[str], str]):
     with pytest.raises(InvalidVersion):
         SetupReader.read_from_directory(setup("with-setup-cfg-attr"))
 
 
-def test_setup_reader_read_setup_kwargs(setup):
+def test_setup_reader_read_setup_kwargs(setup: Callable[[str], str]):
     result = SetupReader.read_from_directory(setup("pendulum"))
 
     expected_name = "pendulum"
@@ -135,7 +144,7 @@ def test_setup_reader_read_setup_kwargs(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-def test_setup_reader_read_setup_call_in_main(setup):
+def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], str]):
     result = SetupReader.read_from_directory(setup("pyyaml"))
 
     expected_name = "PyYAML"
@@ -151,7 +160,7 @@ def test_setup_reader_read_setup_call_in_main(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-def test_setup_reader_read_extras_require_with_variables(setup):
+def test_setup_reader_read_extras_require_with_variables(setup: Callable[[str], str]):
     result = SetupReader.read_from_directory(setup("extras_require_with_vars"))
 
     expected_name = "extras_require_with_vars"
@@ -167,7 +176,7 @@ def test_setup_reader_read_extras_require_with_variables(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-def test_setup_reader_setuptools(setup):
+def test_setup_reader_setuptools(setup: Callable[[str], str]):
     result = SetupReader.read_from_directory(setup("setuptools_setup"))
 
     expected_name = "my_package"

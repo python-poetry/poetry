@@ -30,12 +30,12 @@ to activate one explicitly, see [Switching environments](#switching-between-envi
 To easily switch between Python versions, it is recommended to
 use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
 
-For instance, if your project is Python 2.7 only, a standard workflow
-would be:
+For instance, if your project requires a newer Python than is available with
+your system, a standard workflow would be:
 
 ```bash
-pyenv install 2.7.15
-pyenv local 2.7.15  # Activate Python 2.7 for the current project
+pyenv install 3.9.8
+pyenv local 3.9.8  # Activate Python 3.9 for the current project
 poetry install
 ```
 {{% /note %}}
@@ -127,6 +127,15 @@ poetry env remove /full/path/to/python
 poetry env remove python3.7
 poetry env remove 3.7
 poetry env remove test-O3eWbxRl-py3.7
+```
+
+You can delete more than one environment at a time.
+```bash
+poetry env remove python3.6 python3.7 python3.8
+```
+Use the `--all` option to delete all virtual environments at once.
+```bash
+poetry env remove --all
 ```
 
 If you remove the currently activated virtual environment, it will be automatically deactivated.

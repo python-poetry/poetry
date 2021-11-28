@@ -123,9 +123,19 @@ Defaults to one of the following directories:
 Use parallel execution when using the new (`>=1.1.0`) installer.
 Defaults to `true`.
 
+### `installer.max-workers`
+
+**Type**: int
+
+Set the maximum number of workers while using the parallel installer. Defaults to `number_of_cores + 4`.
+The `number_of_cores` is determined by `os.cpu_count()`.
+If this raises a `NotImplentedError` exception `number_of_cores` is assumed to be 1.
+
+If this configuration parameter is set to a value greater than `number_of_cores + 4`,
+the number of maximum workers is still limited at `number_of_cores + 4`.
+
 {{% note %}}
-This configuration will be ignored, and parallel execution disabled when running
-Python 2.7 under Windows.
+This configuration will be ignored when `installer.parallel` is set to false.
 {{% /note %}}
 
 ### `virtualenvs.create`

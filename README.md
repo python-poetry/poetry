@@ -5,12 +5,14 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 2.7 and 3.5+.
+It supports Python 3.6+.
 
-**Note**: Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
-You should consider updating your Python version to a supported one.
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
+[![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)](https://pypi.org/project/poetry/)
+[![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=alpha&include_prereleases&sort=semver)](https://pypi.org/project/poetry/#history)
+[![Downloads](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
+[![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)](https://discord.com/invite/awxPgve)
 
 The [complete documentation](https://python-poetry.org/docs/) is available on the [official website](https://python-poetry.org).
 
@@ -21,11 +23,11 @@ from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
 **Warning**: The previous `get-poetry.py` installer is now deprecated, if you are currently using it
@@ -122,24 +124,17 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Bash (Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
-
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
-
-# Fish (Homebrew)
-poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
 
-# Zsh (Homebrew)
-poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
-
 # Zsh (Oh-My-Zsh)
 mkdir $ZSH_CUSTOM/plugins/poetry
 poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
+rm ~/.zcompdump*
+# add `poetry` in the `plugins` list (https://github.com/ohmyzsh/ohmyzsh#enabling-plugins)
 
 # Zsh (prezto)
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
@@ -208,7 +203,7 @@ There are some things we can notice here:
 * It will try to enforce [semantic versioning](<http://semver.org>) as the best practice in version naming.
 * You can specify the readme, included and excluded files: no more `MANIFEST.in`.
 `poetry` will also use VCS ignore files (like `.gitignore`) to populate the `exclude` section.
-* Keywords (up to 5) can be specified and will act as tags on the packaging site.
+* Keywords can be specified and will act as tags on the packaging site.
 * The dependencies sections support caret, tilde, wildcard, inequality and multiple requirements.
 * You must specify the python versions for which your package is compatible.
 
