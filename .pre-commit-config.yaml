@@ -84,6 +84,6 @@ repos:
           - types-requests
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v2.13.0
+    rev: v2.15.0
     hooks:
       - id: validate_manifest
