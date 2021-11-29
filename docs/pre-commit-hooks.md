@@ -11,8 +11,8 @@ menu:
 
 # pre-commit hooks
 
-`pre-commit` is a tool which manages running of
-[git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) scripts.
+pre-commit is a framework for building and running
+[git hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks).
 See the official documentation for more information: [pre-commit.com](https://pre-commit.com/)
 
 This document provides a list of available pre-commit hooks provided by Poetry.
