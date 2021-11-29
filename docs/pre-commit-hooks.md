@@ -61,7 +61,7 @@ It is recommended to run the [`poetry-lock`](#poetry-lock) hook prior to this on
 The hook takes the same arguments as the poetry command.
 For more information see the [export command](/docs/cli#export).
 
-`args: ["-f", "requirements.txt", "-o", "requirements.txt"]` are the default arguments
+The default arguments are `args: ["-f", "requirements.txt", "-o", "requirements.txt"]`,
 which will create/update the requirements.txt file in the current working directory.
 
 You may add `verbose: true` in your `.pre-commit-config.yaml` in order to output to the
