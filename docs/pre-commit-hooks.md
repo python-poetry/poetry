@@ -87,7 +87,7 @@ hooks:
 
 For more information on how to use pre-commit please see the [official documentation](https://pre-commit.com/).
 
-Example `.pre-commit-config.yaml` file:
+A full `.pre-commit-config.yaml` example:
 
 ```yaml
 repos:
