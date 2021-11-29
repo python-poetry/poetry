@@ -15,7 +15,7 @@ menu:
 [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) scripts.
 See the official documentation for more information: [pre-commit.com](https://pre-commit.com/)
 
-Below you can see the available `pre-commit` hooks you can use.
+This document provides a list of available pre-commit hooks provided by Poetry.
 
 
 {{% note %}}
