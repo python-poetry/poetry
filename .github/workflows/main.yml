@@ -83,4 +83,4 @@ jobs:
         run: poetry run pip install pytest-github-actions-annotate-failures
 
       - name: Run pytest
-        run: poetry run pytest -p no:clarity -p no:sugar
+        run: poetry run pytest -p no:clarity -p no:sugar --color=yes
