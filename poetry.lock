@@ -576,6 +576,17 @@ toml = "*"
 testing = ["fields", "hunter", "process-tests", "six", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-github-actions-annotate-failures"
+version = "0.1.5"
+description = "pytest plugin to annotate failed tests with a workflow command for GitHub Actions"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pytest = ">=4.0.0"
+
+[[package]]
 name = "pytest-mock"
 version = "3.6.1"
 description = "Thin-wrapper around the mock package for easier use with pytest"
@@ -805,7 +816,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "9d2e32899df46f2c63018e9a3f5e95dbbeb1ec41291c31289cff40f6f2d935a4"
+content-hash = "cddb2a624e773eb88d793857486457c3a5b7759b905fc4ae86945c58b7dc2f06"
 
 [metadata.files]
 atomicwrites = [
@@ -1151,6 +1162,10 @@ pytest-clarity = [
 pytest-cov = [
     {file = "pytest-cov-2.12.1.tar.gz", hash = "sha256:261ceeb8c227b726249b376b8526b600f38667ee314f910353fa318caa01f4d7"},
     {file = "pytest_cov-2.12.1-py2.py3-none-any.whl", hash = "sha256:261bb9e47e65bd099c89c3edf92972865210c36813f80ede5277dceb77a4a62a"},
+]
+pytest-github-actions-annotate-failures = [
+    {file = "pytest-github-actions-annotate-failures-0.1.5.tar.gz", hash = "sha256:42a7e58c583f69a0a85302c04c04c060881ed170bcffcc57be2b6b8673b8a879"},
+    {file = "pytest_github_actions_annotate_failures-0.1.5-py2.py3-none-any.whl", hash = "sha256:5ab85c83e1a4a5143e4d3cf0d53b7c33938ac384e19b79ce7363244a4e1811f6"},
 ]
 pytest-mock = [
     {file = "pytest-mock-3.6.1.tar.gz", hash = "sha256:40217a058c52a63f1042f0784f62009e976ba824c418cced42e88d5f40ab0e62"},

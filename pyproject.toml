@@ -54,7 +54,10 @@ tomlkit = ">=0.7.0,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.ci.dependencies]
+pytest-github-actions-annotate-failures = "^0.1.5"
+
+[tool.poetry.group.dev.dependencies]
 tox = "^3.18"
 pytest = "^6.2"
 pytest-cov = "^2.8"

@@ -51,8 +51,7 @@ jobs:
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
       - name: Bootstrap poetry
-        run: |
-          curl -sL https://install.python-poetry.org | python - -y ${{ matrix.bootstrap-args }}
+        run: curl -sL https://install.python-poetry.org | python - -y --git https://github.com/python-poetry/poetry
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
@@ -77,10 +76,7 @@ jobs:
         run: timeout 10s poetry run pip --version || rm -rf .venv
 
       - name: Install dependencies
-        run: poetry install
-
-      - name: Install pytest plugin
-        run: poetry run pip install pytest-github-actions-annotate-failures
+        run: poetry install --with=dev,ci
 
       - name: Run pytest
         run: poetry run pytest -p no:clarity -p no:sugar --color=yes
