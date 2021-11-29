@@ -82,3 +82,8 @@ repos:
         additional_dependencies:
           - types-dataclasses
           - types-requests
+
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v2.13.0
+    hooks:
+      - id: validate_manifest
