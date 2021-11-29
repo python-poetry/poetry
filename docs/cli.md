@@ -357,7 +357,7 @@ If the package(s) you want to install provide extras, you can specify them
 when adding the package:
 
 ```bash
-poetry add requests[security,socks]
+poetry add "requests[security,socks]"
 poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
