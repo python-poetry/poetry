@@ -363,7 +363,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
 {{% warning %}}
-Be aware that some shells (in particular Mac Zsh) may not recognise the package name without quotes - for example `poetry add requests[security,socks]`. In this case try instead with quotes `poetry add "requests[security,socks]"`
+Some shells may treat square braces (`[` and `]`) as special characters. It is suggested to always quote arguments containing these characters to prevent unexpected shell expansion.
 {{% /warning %}}
 
 If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
