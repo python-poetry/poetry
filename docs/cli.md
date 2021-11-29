@@ -551,7 +551,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 {{% note %}}
 By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
-This command is also available as a `pre-commit` hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
 {{% /note %}}
 
 ```bash
