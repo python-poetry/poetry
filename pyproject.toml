@@ -124,6 +124,11 @@ module = [
 ignore_errors = true
 
 
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
