@@ -64,8 +64,8 @@ For more information see the [export command](/docs/cli#export).
 `args: ["-f", "requirements.txt", "-o", "requirements.txt"]` are the default arguments
 which will create/update the requirements.txt file in the current working directory.
 
-For output to the console change the arguments and add `verbose: true` to `poetry-export`
-in your `.pre-commit-config.yaml` file like so:
+You may add `verbose: true` in your `.pre-commit-config.yaml` in order to output to the
+console:
 
 ```yaml
 hooks:
