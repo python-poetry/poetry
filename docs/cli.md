@@ -600,7 +600,7 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 Only the `requirements.txt` format is currently supported.
-This command is also available as a `pre-commit` hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
 {{% /note %}}
 
 ### Options
