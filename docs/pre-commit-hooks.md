@@ -74,7 +74,7 @@ hooks:
     verbose: true
 ```
 
-Or to put the `dev` dependencies into the `requirements.txt` also use this:
+Also, `--dev` can be added to `args` to write dev-dependencies to `requirements.txt`:
 
 ```yaml
 hooks:
