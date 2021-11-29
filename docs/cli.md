@@ -530,7 +530,7 @@ The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
 {{% note %}}
-This command is also available as a `pre-commit` hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
 {{% /note %}}
 
 ```bash
