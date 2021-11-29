@@ -60,10 +60,11 @@ pytest-github-actions-annotate-failures = "^0.1.5"
 [tool.poetry.group.dev.dependencies]
 tox = "^3.18"
 pytest = "^6.2"
-pytest-cov = "^2.8"
+pytest-cov = "^3.0"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
 pytest-clarity = { version = "^1.0.1", python = "^3.6.2" }
+coverage = { version = "^6.1.2", extras = ["toml"] }
 pre-commit = { version = "^2.6", python = "^3.6.1" }
 deepdiff = "^5.0"
 httpretty = "^1.0"
@@ -129,9 +130,12 @@ ignore_errors = true
 
 
 [tool.pytest.ini_options]
-addopts = "-vv"
+addopts = "-vv --cov"
 testpaths = ["tests"]
 
+
+[tool.coverage.run]
+source = ["src/poetry"]
 
 [tool.coverage.report]
 exclude_lines = [
