@@ -4,7 +4,7 @@ freebsd_instance:
   memory: 4G
 
 test_task:
-  name: "Tests / FreeBSD / "
+  name: "CI / FreeBSD / "
   only_if: $CIRRUS_TAG == ''
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
@@ -28,7 +28,7 @@ test_task:
     - poetry config virtualenvs.in-project true
   test_script:
     - poetry install --with=dev,ci
-    - poetry run pytest -p no:clarity -p no:sugar --junitxml=junit.xml
+    - poetry run pytest -p no:clarity -p no:sugar --junitxml=junit.xml --no-cov
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml

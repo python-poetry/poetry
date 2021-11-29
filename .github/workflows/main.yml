@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -80,3 +80,31 @@ jobs:
 
       - name: Run pytest
         run: poetry run pytest -p no:clarity -p no:sugar --color=yes
+
+      - name: Generate covarage.xml
+        run: poetry run coverage xml
+
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-${{ matrix.os }}-${{ matrix.python-version }}.xml
+          path: coverage.xml
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v2
+        with: { fetch-depth: 0 } # Shallow clones reduce analysis quality.
+
+      - name: Download coverage.xml reports
+        uses: actions/download-artifact@v2
+        with:
+          path: coverage-reports
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
