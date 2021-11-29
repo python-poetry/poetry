@@ -19,9 +19,9 @@ This document provides a list of available pre-commit hooks provided by Poetry.
 
 
 {{% note %}}
-If you specify the `args:` section for a hook in your pre-commit config
-the default `args:` are overwritten. So if you want to add arguments
-you need to specify the default ones in your config also.
+If you specify the `args:` for a hook in your `.pre-commit-config.yaml`,
+the defaults are overwritten. You must fully specify all arguments for
+your hook if you make use of `args:`.
 {{% /note %}}
 
 
