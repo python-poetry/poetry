@@ -1,8 +1,11 @@
+import contextlib
 import logging
 import re
+import subprocess
 
 from contextlib import suppress
 from importlib import import_module
+from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -21,6 +24,8 @@ from poetry.core.utils._compat import PY37
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
+from poetry.utils._compat import decode
+from poetry.utils._compat import list_to_shell_command
 
 
 if TYPE_CHECKING:
@@ -281,9 +286,18 @@ class Application(BaseApplication):
 
         io = event.io
         poetry = command.poetry
+        executable = None
+
+        with contextlib.suppress(CalledProcessError):
+            executable = decode(
+                subprocess.check_output(
+                    list_to_shell_command(["pyenv", "which", "python"]),
+                    shell=True,
+                ).strip()
+            )
 
         env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(io)
+        env = env_manager.create_venv(io, executable=executable)
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
