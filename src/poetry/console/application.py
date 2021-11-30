@@ -286,18 +286,30 @@ class Application(BaseApplication):
 
         io = event.io
         poetry = command.poetry
-        executable = None
 
+        executable = None
+        find_compatible = None
+
+        # add on option to trigger this
         with contextlib.suppress(CalledProcessError):
             executable = decode(
                 subprocess.check_output(
-                    list_to_shell_command(["pyenv", "which", "python"]),
+                    list_to_shell_command(
+                        [
+                            "python",
+                            "-c",
+                            '"import sys; print(sys.executable)"',
+                        ]
+                    ),
                     shell=True,
                 ).strip()
             )
+            find_compatible = True
 
         env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(io, executable=executable)
+        env = env_manager.create_venv(
+            io, executable=executable, find_compatible=find_compatible
+        )
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
