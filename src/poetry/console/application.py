@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import re
 import subprocess
@@ -19,6 +18,7 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
+from cleo.io.outputs.output import Verbosity
 from poetry.core.utils._compat import PY37
 
 from poetry.__version__ import __version__
@@ -229,6 +229,30 @@ class Application(BaseApplication):
 
         return super()._configure_io(io)
 
+    def _detect_active_python(self, io: "IO") -> str:
+        executable = None
+
+        try:
+            io.write_line(
+                "Trying to detect current active python executable as specified in the config.",
+                verbosity=Verbosity.VERBOSE,
+            )
+            executable = decode(
+                subprocess.check_output(
+                    list_to_shell_command(
+                        ["python", "-c", '"import sys; print(sys.executable)"']
+                    ),
+                    shell=True,
+                ).strip()
+            )
+            io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+        except CalledProcessError:
+            io.write_line(
+                "Unable to detect the current active python executable. Falling back to default.",
+                verbosity=Verbosity.VERBOSE,
+            )
+        return executable
+
     def register_command_loggers(
         self, event: "ConsoleCommandEvent", event_name: str, _: Any
     ) -> None:
@@ -287,28 +311,17 @@ class Application(BaseApplication):
         io = event.io
         poetry = command.poetry
 
-        executable = None
-        find_compatible = None
-
-        # add on option to trigger this
-        with contextlib.suppress(CalledProcessError):
-            executable = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            "python",
-                            "-c",
-                            '"import sys; print(sys.executable)"',
-                        ]
-                    ),
-                    shell=True,
-                ).strip()
-            )
-            find_compatible = True
+        executable = (
+            self._detect_active_python(io)
+            if poetry.config.get("virtualenvs.prefer-shell-python")
+            else None
+        )
 
         env_manager = EnvManager(poetry)
         env = env_manager.create_venv(
-            io, executable=executable, find_compatible=find_compatible
+            io,
+            executable=executable,
+            find_compatible=True if executable else None,
         )
 
         if env.is_venv() and io.is_verbose():

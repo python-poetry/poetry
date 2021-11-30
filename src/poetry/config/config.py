@@ -38,6 +38,7 @@ class Config:
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
             "options": {"always-copy": False, "system-site-packages": False},
+            "prefer-shell-python": False,
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True, "max-workers": None},
@@ -138,6 +139,7 @@ class Config:
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
+            "virtualenvs.options.prefer-shell-python",
             "experimental.new-installer",
             "installer.parallel",
         }:
