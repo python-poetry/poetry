@@ -763,6 +763,7 @@ class EnvManager:
         name: Optional[str] = None,
         executable: Optional[str] = None,
         force: bool = False,
+        find_compatible: Optional[bool] = None,
     ) -> Union["SystemEnv", "VirtualEnv"]:
         if self._env is not None and not force:
             return self._env
@@ -812,7 +813,7 @@ class EnvManager:
             # If an executable has been specified, we stop there
             # and notify the user of the incompatibility.
             # Otherwise, we try to find a compatible Python version.
-            if executable:
+            if executable and not find_compatible:
                 raise NoCompatiblePythonVersionFound(
                     self._poetry.package.python_versions, python_patch
                 )
