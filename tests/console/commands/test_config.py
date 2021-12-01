@@ -56,7 +56,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-shell-python = false
+virtualenvs.prefer-active-python = false
 """
 
     assert expected == tester.io.fetch_output()
@@ -80,7 +80,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-shell-python = false
+virtualenvs.prefer-active-python = false
 """
 
     assert config.set_config_source.call_count == 0
@@ -128,7 +128,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-shell-python = false
+virtualenvs.prefer-active-python = false
 """
 
     assert config.set_config_source.call_count == 1

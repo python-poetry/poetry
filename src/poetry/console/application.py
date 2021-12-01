@@ -1,10 +1,8 @@
 import logging
 import re
-import subprocess
 
 from contextlib import suppress
 from importlib import import_module
-from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -18,14 +16,11 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
-from cleo.io.outputs.output import Verbosity
 from poetry.core.utils._compat import PY37
 
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
-from poetry.utils._compat import decode
-from poetry.utils._compat import list_to_shell_command
 
 
 if TYPE_CHECKING:
@@ -229,30 +224,6 @@ class Application(BaseApplication):
 
         return super()._configure_io(io)
 
-    def _detect_active_python(self, io: "IO") -> str:
-        executable = None
-
-        try:
-            io.write_line(
-                "Trying to detect current active python executable as specified in the config.",
-                verbosity=Verbosity.VERBOSE,
-            )
-            executable = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        ["python", "-c", '"import sys; print(sys.executable)"']
-                    ),
-                    shell=True,
-                ).strip()
-            )
-            io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
-        except CalledProcessError:
-            io.write_line(
-                "Unable to detect the current active python executable. Falling back to default.",
-                verbosity=Verbosity.VERBOSE,
-            )
-        return executable
-
     def register_command_loggers(
         self, event: "ConsoleCommandEvent", event_name: str, _: Any
     ) -> None:
@@ -311,18 +282,8 @@ class Application(BaseApplication):
         io = event.io
         poetry = command.poetry
 
-        executable = (
-            self._detect_active_python(io)
-            if poetry.config.get("virtualenvs.prefer-shell-python")
-            else None
-        )
-
         env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(
-            io,
-            executable=executable,
-            find_compatible=True if executable else None,
-        )
+        env = env_manager.create_venv(io)
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")

@@ -27,8 +27,9 @@ to find one that is and use it. If it's unable to do so then you will be prompte
 to activate one explicitly, see [Switching environments](#switching-between-environments).
 
 {{% note %}}
-To easily switch between Python versions, it is recommended to
-use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
+If you use a tool like [pyenv](https://github.com/pyenv/pyenv) to manage different Python versions,
+you can set the experimental `virtualenvs.prefer-active-python` option to `true`. Poetry
+than will try to find the current `python` of your shell.
 
 For instance, if your project requires a newer Python than is available with
 your system, a standard workflow would be:
@@ -38,7 +39,6 @@ pyenv install 3.9.8
 pyenv local 3.9.8  # Activate Python 3.9 for the current project
 poetry install
 ```
-This requires setting the `virtualenvs.prefer-shell-python` option to `true`.
 {{% /note %}}
 
 ## Switching between environments
