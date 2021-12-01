@@ -30,6 +30,7 @@ import packaging.tags
 import tomlkit
 import virtualenv
 
+from cleo.io.outputs.output import Verbosity
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
@@ -464,6 +465,30 @@ class EnvManager:
     def __init__(self, poetry: "Poetry") -> None:
         self._poetry = poetry
 
+    def _detect_active_python(self, io: "IO") -> str:
+        executable = None
+
+        try:
+            io.write_line(
+                "Trying to detect current active python executable as specified in the config.",
+                verbosity=Verbosity.VERBOSE,
+            )
+            executable = decode(
+                subprocess.check_output(
+                    list_to_shell_command(
+                        ["python", "-c", '"import sys; print(sys.executable)"']
+                    ),
+                    shell=True,
+                ).strip()
+            )
+            io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+        except CalledProcessError:
+            io.write_line(
+                "Unable to detect the current active python executable. Falling back to default.",
+                verbosity=Verbosity.VERBOSE,
+            )
+        return executable
+
     def activate(self, python: str, io: "IO") -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -763,7 +788,6 @@ class EnvManager:
         name: Optional[str] = None,
         executable: Optional[str] = None,
         force: bool = False,
-        find_compatible: Optional[bool] = None,
     ) -> Union["SystemEnv", "VirtualEnv"]:
         if self._env is not None and not force:
             return self._env
@@ -781,6 +805,12 @@ class EnvManager:
         create_venv = self._poetry.config.get("virtualenvs.create")
         root_venv = self._poetry.config.get("virtualenvs.in-project")
         venv_path = self._poetry.config.get("virtualenvs.path")
+        prefer_active_python = self._poetry.config.get(
+            "virtualenvs.prefer-active-python"
+        )
+
+        if not executable and prefer_active_python:
+            executable = self._detect_active_python(io)
 
         if root_venv:
             venv_path = cwd / ".venv"
@@ -813,7 +843,7 @@ class EnvManager:
             # If an executable has been specified, we stop there
             # and notify the user of the incompatibility.
             # Otherwise, we try to find a compatible Python version.
-            if executable and not find_compatible:
+            if executable and not prefer_active_python:
                 raise NoCompatiblePythonVersionFound(
                     self._poetry.package.python_versions, python_patch
                 )

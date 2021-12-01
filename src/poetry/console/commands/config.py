@@ -78,7 +78,7 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: str(Path(val)),
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
-            "virtualenvs.prefer-shell-python": (
+            "virtualenvs.prefer-active-python": (
                 boolean_validator,
                 boolean_normalizer,
                 False,
