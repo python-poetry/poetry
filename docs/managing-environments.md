@@ -18,13 +18,28 @@ To achieve this, it will first check if it's currently running inside a virtual 
 If it is, it will use it directly without creating a new one. But if it's not, it will use
 one that it has already created or create a brand new one for you.
 
-By default, Poetry will try to use the currently activated Python version
+By default, Poetry will try to use the Python version used during Poetry's installation
 to create the virtual environment for the current project.
 
 However, for various reasons, this Python version might not be compatible
 with the `python` requirement of the project. In this case, Poetry will try
 to find one that is and use it. If it's unable to do so then you will be prompted
 to activate one explicitly, see [Switching environments](#switching-between-environments).
+
+{{% note %}}
+To easily switch between Python versions, it is recommended to
+use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
+
+For instance, if your project requires a newer Python than is available with
+your system, a standard workflow would be:
+
+```bash
+pyenv install 3.9.8
+pyenv local 3.9.8  # Activate Python 3.9 for the current project
+poetry install
+```
+This requires setting the `virtualenvs.prefer-shell-python` option to `true`.
+{{% /note %}}
 
 ## Switching between environments
 
