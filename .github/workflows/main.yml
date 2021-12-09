@@ -1,86 +1,86 @@
-name: Tests
+# name: Tests
 
-on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - '.cirrus.yml'
-    branches:
-      - master
-      - develop
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '.cirrus.yml'
-    branches:
-      - '**'
+# on:
+#   push:
+#     paths-ignore:
+#       - 'docs/**'
+#       - '.cirrus.yml'
+#     branches:
+#       - master
+#       - develop
+#   pull_request:
+#     paths-ignore:
+#       - 'docs/**'
+#       - '.cirrus.yml'
+#     branches:
+#       - '**'
 
-jobs:
-  tests:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}-latest
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      matrix:
-        os: [Ubuntu, MacOS, Windows]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        experimental: [false]
-        bootstrap-args: [""]
-        include:
-          - os: Ubuntu
-            python-version: "3.10.0-alpha - 3.10.0"
-            experimental: true
-            bootstrap-args: "--git https://github.com/python-poetry/poetry.git"
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v2
+# jobs:
+#   tests:
+#     name: ${{ matrix.os }} / ${{ matrix.python-version }}
+#     runs-on: ${{ matrix.os }}-latest
+#     continue-on-error: ${{ matrix.experimental }}
+#     strategy:
+#       matrix:
+#         os: [Ubuntu, MacOS, Windows]
+#         python-version: [3.6, 3.7, 3.8, 3.9]
+#         experimental: [false]
+#         bootstrap-args: [""]
+#         include:
+#           - os: Ubuntu
+#             python-version: "3.10.0-alpha - 3.10.0"
+#             experimental: true
+#             bootstrap-args: "--git https://github.com/python-poetry/poetry.git"
+#       fail-fast: false
+#     steps:
+#       - uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+#       - name: Set up Python ${{ matrix.python-version }}
+#         uses: actions/setup-python@v2
+#         with:
+#           python-version: ${{ matrix.python-version }}
 
-      - name: Get full Python version
-        id: full-python-version
-        shell: bash
-        run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
+#       - name: Get full Python version
+#         id: full-python-version
+#         shell: bash
+#         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
-      - name: Bootstrap poetry
-        shell: bash
-        run: |
-          curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
-            | python - -y ${{ matrix.bootstrap-args }}
+#       - name: Bootstrap poetry
+#         shell: bash
+#         run: |
+#           curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
+#             | python - -y ${{ matrix.bootstrap-args }}
 
-      - name: Update PATH
-        if: ${{ matrix.os != 'Windows' }}
-        shell: bash
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+#       - name: Update PATH
+#         if: ${{ matrix.os != 'Windows' }}
+#         shell: bash
+#         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Update Path for Windows
-        if: ${{ matrix.os == 'Windows' }}
-        shell: bash
-        run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
+#       - name: Update Path for Windows
+#         if: ${{ matrix.os == 'Windows' }}
+#         shell: bash
+#         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
-      - name: Configure poetry
-        shell: bash
-        run: poetry config virtualenvs.in-project true
+#       - name: Configure poetry
+#         shell: bash
+#         run: poetry config virtualenvs.in-project true
 
-      - name: Set up cache
-        uses: actions/cache@v2
-        id: cache
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+#       - name: Set up cache
+#         uses: actions/cache@v2
+#         id: cache
+#         with:
+#           path: .venv
+#           key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Ensure cache is healthy
-        if: steps.cache.outputs.cache-hit == 'true'
-        shell: bash
-        run: timeout 10s poetry run pip --version || rm -rf .venv
+#       - name: Ensure cache is healthy
+#         if: steps.cache.outputs.cache-hit == 'true'
+#         shell: bash
+#         run: timeout 10s poetry run pip --version || rm -rf .venv
 
-      - name: Install dependencies
-        shell: bash
-        run: poetry install
+#       - name: Install dependencies
+#         shell: bash
+#         run: poetry install
 
-      - name: Run pytest
-        shell: bash
-        run: poetry run python -m pytest -p no:sugar -q tests/
+#       - name: Run pytest
+#         shell: bash
+#         run: poetry run python -m pytest -p no:sugar -q tests/
