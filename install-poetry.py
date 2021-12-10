@@ -274,9 +274,9 @@ class VirtualEnvironment:
     def __init__(self, path: Path) -> None:
         self._path = path
         # str is required for compatibility with subprocess run on CPython <= 3.7 on Windows
-        self._python = str(
+        self._python = os.path.realpath(str(
             self._path.joinpath("Scripts/python.exe" if WINDOWS else "bin/python")
-        )
+        ))
 
     @property
     def path(self):
