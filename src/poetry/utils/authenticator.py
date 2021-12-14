@@ -2,7 +2,6 @@ import logging
 import time
 import urllib.parse
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -21,6 +20,8 @@ from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io.io import IO
 
     from poetry.config.config import Config
@@ -191,7 +192,7 @@ class Authenticator:
 
         return credentials
 
-    def get_certs_for_url(self, url: str) -> Dict[str, Path]:
+    def get_certs_for_url(self, url: str) -> Dict[str, "Path"]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
@@ -237,8 +238,8 @@ class Authenticator:
 
         return None
 
-    def _get_certs_for_netloc_from_config(self, netloc: str) -> Dict[str, Path]:
-        certs = dict(cert=None, verify=None)
+    def _get_certs_for_netloc_from_config(self, netloc: str) -> Dict[str, "Path"]:
+        certs = {"cert": None, "verify": None}
 
         for (repository_name, repository_netloc) in self._get_repository_netlocs():
             if netloc == repository_netloc:
