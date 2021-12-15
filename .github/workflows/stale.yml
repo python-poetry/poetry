@@ -1,0 +1,16 @@
+name: "Stale issue handler"
+on:
+  workflow_dispatch:
+    schedule:
+      - cron: "0 0 * * *"
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4.1.0
+        with:
+          days-before-stale: 30
+          days-before-close: 10
+          stale-issue-message: "This issue is stale because it has been open 30 days with no activity. Remove `stale` label or comment or it will be closed in 10 days"
+          stale-pr-message: "This pull request is stale because it has been open 30 days with no activity. Remove `stale` label or comment or it will be closed in 10 days"
