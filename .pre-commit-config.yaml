@@ -21,8 +21,36 @@ repos:
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:
-      - id: python-check-blanket-type-ignore
       - id: python-check-mock-methods
+      - id: python-use-type-annotations
+      - id: python-check-blanket-type-ignore
+      - id: python-check-blanket-noqa
+
+  - repo: https://github.com/asottile/yesqa
+    rev: v1.3.0
+    hooks:
+      - id: yesqa
+        additional_dependencies: &flake8_deps
+          - flake8-annotations==2.7.0
+          - flake8-broken-line==0.4.0
+          - flake8-bugbear==21.9.2
+          - flake8-comprehensions==3.7.0
+          - flake8-eradicate==1.2.0
+          - flake8-no-pep420==1.2.0
+          - flake8-quotes==3.3.1
+          - flake8-simplify==0.14.2
+          - flake8-tidy-imports==4.5.0
+          - flake8-type-checking==1.1.0
+          - flake8-typing-imports==1.11.0
+          - flake8-use-fstring==1.3
+          - pep8-naming==0.12.1
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.29.1
+    hooks:
+      - id: pyupgrade
+        args: [--py36-plus]
+        exclude: '^(install|get)-poetry.py$'
 
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
@@ -36,7 +64,7 @@ repos:
         args: [--lines-after-imports, "-1"]
 
   - repo: https://github.com/psf/black
-    rev: 21.10b0
+    rev: 21.12b0
     hooks:
       - id: black
 
@@ -44,8 +72,7 @@ repos:
     rev: 4.0.1
     hooks:
       - id: flake8
-        additional_dependencies:
-          - flake8-bugbear
+        additional_dependencies: *flake8_deps
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.910-1
@@ -55,3 +82,8 @@ repos:
         additional_dependencies:
           - types-dataclasses
           - types-requests
+
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v2.16.0
+    hooks:
+      - id: validate_manifest

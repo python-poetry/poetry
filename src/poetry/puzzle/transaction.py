@@ -6,6 +6,7 @@ from typing import Tuple
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
+
     from poetry.installation.operations import OperationTypes
 
 
@@ -33,7 +34,7 @@ class Transaction:
         from poetry.installation.operations.uninstall import Uninstall
         from poetry.installation.operations.update import Update
 
-        operations = []
+        operations: List["OperationTypes"] = []
 
         for result_package, priority in self._result_packages:
             installed = False
@@ -42,14 +43,13 @@ class Transaction:
                 if result_package.name == installed_package.name:
                     installed = True
 
-                    if result_package.version != installed_package.version:
-                        operations.append(
-                            Update(installed_package, result_package, priority=priority)
+                    if result_package.version != installed_package.version or (
+                        (
+                            installed_package.source_type
+                            or result_package.source_type != "legacy"
                         )
-                    elif (
-                        installed_package.source_type
-                        or result_package.source_type != "legacy"
-                    ) and not result_package.is_same_package_as(installed_package):
+                        and not result_package.is_same_package_as(installed_package)
+                    ):
                         operations.append(
                             Update(installed_package, result_package, priority=priority)
                         )

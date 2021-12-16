@@ -13,9 +13,8 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
-    from tomlkit.items import InlineTable
-
     from poetry.core.pyproject.toml import PyProjectTOML
+    from tomlkit.items import InlineTable
 
 
 POETRY_DEFAULT = """\
@@ -47,7 +46,7 @@ class Layout:
         description: str = "",
         readme_format: str = "md",
         author: Optional[str] = None,
-        license: Optional[str] = None,  # noqa
+        license: Optional[str] = None,
         python: str = "*",
         dependencies: Optional[Dict[str, str]] = None,
         dev_dependencies: Optional[Dict[str, str]] = None,
@@ -62,10 +61,9 @@ class Layout:
 
         self._readme_format = readme_format.lower()
         if self._readme_format not in self.ACCEPTED_README_FORMATS:
+            accepted_readme_formats = ", ".join(self.ACCEPTED_README_FORMATS)
             raise ValueError(
-                "Invalid readme format '{}', use one of {}.".format(
-                    readme_format, ", ".join(self.ACCEPTED_README_FORMATS)
-                )
+                f"Invalid readme format '{readme_format}', use one of {accepted_readme_formats}."
             )
 
         self._license = license
@@ -102,7 +100,7 @@ class Layout:
 
         return package
 
-    def create(self, path: "Path", with_tests: bool = True) -> None:
+    def create(self, path: Path, with_tests: bool = True) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
@@ -131,7 +129,7 @@ class Layout:
         else:
             poetry_content.remove("license")
 
-        poetry_content["readme"] = "README.{}".format(self._readme_format)
+        poetry_content["readme"] = f"README.{self._readme_format}"
         packages = self.get_package_include()
         if packages:
             poetry_content["packages"].append(packages)
@@ -174,27 +172,27 @@ class Layout:
 
         return content
 
-    def _create_default(self, path: "Path", src: bool = True) -> None:
+    def _create_default(self, path: Path, src: bool = True) -> None:
         package_path = path / self.package_path
         package_path.mkdir(parents=True)
 
         package_init = package_path / "__init__.py"
         package_init.touch()
 
-    def _create_readme(self, path: "Path") -> "Path":
-        readme_file = path.joinpath("README.{}".format(self._readme_format))
+    def _create_readme(self, path: Path) -> Path:
+        readme_file = path.joinpath(f"README.{self._readme_format}")
         readme_file.touch()
         return readme_file
 
     @staticmethod
-    def _create_tests(path: "Path") -> None:
+    def _create_tests(path: Path) -> None:
         tests = path / "tests"
         tests.mkdir()
 
         tests_init = tests / "__init__.py"
         tests_init.touch(exist_ok=False)
 
-    def _write_poetry(self, path: "Path") -> None:
+    def _write_poetry(self, path: Path) -> None:
         content = self.generate_poetry_content()
 
         poetry = path / "pyproject.toml"

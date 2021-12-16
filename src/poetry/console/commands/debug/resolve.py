@@ -5,7 +5,7 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
 
-from ..init import InitCommand
+from poetry.console.commands.init import InitCommand
 
 
 if TYPE_CHECKING:
@@ -37,8 +37,8 @@ class DebugResolveCommand(InitCommand):
 
     def handle(self) -> Optional[int]:
         from cleo.io.null_io import NullIO
-
         from poetry.core.packages.project_package import ProjectPackage
+
         from poetry.factory import Factory
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
@@ -93,7 +93,7 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: ShowCommand = self.application.find("show")
+            show_command: "ShowCommand" = self.application.find("show")
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
@@ -131,8 +131,8 @@ class DebugResolveCommand(InitCommand):
 
             pkg = op.package
             row = [
-                "<c1>{}</c1>".format(pkg.complete_name),
-                "<b>{}</b>".format(pkg.version),
+                f"<c1>{pkg.complete_name}</c1>",
+                f"<b>{pkg.version}</b>",
             ]
 
             if not pkg.marker.is_any():

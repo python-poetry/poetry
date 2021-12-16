@@ -1,22 +1,23 @@
 import logging
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 from typing import Union
 
-from ..utils.authenticator import Authenticator
-from ..utils.helpers import get_cert
-from ..utils.helpers import get_client_cert
-from .uploader import Uploader
+from poetry.publishing.uploader import Uploader
+from poetry.utils.authenticator import Authenticator
+from poetry.utils.helpers import get_cert
+from poetry.utils.helpers import get_client_cert
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io import BufferedIO
     from cleo.io import ConsoleIO
 
-    from ..poetry import Poetry
+    from poetry.poetry import Poetry
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class Publisher:
         self._authenticator = Authenticator(poetry.config, self._io)
 
     @property
-    def files(self) -> List[Path]:
+    def files(self) -> List["Path"]:
         return self._uploader.files
 
     def publish(
@@ -42,8 +43,8 @@ class Publisher:
         repository_name: Optional[str],
         username: Optional[str],
         password: Optional[str],
-        cert: Optional[Path] = None,
-        client_cert: Optional[Path] = None,
+        cert: Optional["Path"] = None,
+        client_cert: Optional["Path"] = None,
         dry_run: bool = False,
     ) -> None:
         if not repository_name:
@@ -66,9 +67,7 @@ class Publisher:
                 auth = self._authenticator.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
-                        "Found authentication information for {}.".format(
-                            repository_name
-                        )
+                        f"Found authentication information for {repository_name}."
                     )
                     username = auth["username"]
                     password = auth["password"]
@@ -87,13 +86,11 @@ class Publisher:
 
         self._uploader.auth(username, password)
 
+        if repository_name == "pypi":
+            repository_name = "PyPI"
         self._io.write_line(
-            "Publishing <c1>{}</c1> (<c2>{}</c2>) "
-            "to <info>{}</info>".format(
-                self._package.pretty_name,
-                self._package.pretty_version,
-                "PyPI" if repository_name == "pypi" else repository_name,
-            )
+            f"Publishing <c1>{self._package.pretty_name}</c1> (<c2>{self._package.pretty_version}</c2>) "
+            f"to <info>{repository_name}</info>"
         )
 
         self._uploader.upload(

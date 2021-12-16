@@ -1,13 +1,18 @@
+from typing import TYPE_CHECKING
 from typing import Optional
 
 from cleo.helpers import argument
 from tomlkit import nl
 from tomlkit import table
 from tomlkit.items import AoT
-from tomlkit.items import Table
 
-from poetry.config.source import Source
 from poetry.console.commands.command import Command
+
+
+if TYPE_CHECKING:
+    from tomlkit.items import Table
+
+    from poetry.config.source import Source
 
 
 class SourceRemoveCommand(Command):
@@ -23,8 +28,8 @@ class SourceRemoveCommand(Command):
     ]
 
     @staticmethod
-    def source_to_table(source: Source) -> Table:
-        source_table: Table = table()
+    def source_to_table(source: "Source") -> "Table":
+        source_table: "Table" = table()
         for key, value in source.to_dict().items():
             source_table.add(key, value)
         source_table.add(nl())

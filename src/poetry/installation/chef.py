@@ -8,8 +8,8 @@ from typing import Optional
 
 from poetry.core.packages.utils.link import Link
 
-from .chooser import InvalidWheelName
-from .chooser import Wheel
+from poetry.installation.chooser import InvalidWheelName
+from poetry.installation.chooser import Wheel
 
 
 if TYPE_CHECKING:

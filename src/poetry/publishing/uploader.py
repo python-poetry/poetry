@@ -1,7 +1,6 @@
 import hashlib
 import io
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -12,6 +11,10 @@ from typing import Union
 
 import requests
 
+from poetry.core.masonry.metadata import Metadata
+from poetry.core.masonry.utils.helpers import escape_name
+from poetry.core.masonry.utils.helpers import escape_version
+from poetry.core.utils.helpers import normalize_version
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -21,14 +24,12 @@ from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
-from poetry.core.masonry.metadata import Metadata
-from poetry.core.masonry.utils.helpers import escape_name
-from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io.null_io import NullIO
 
     from poetry.poetry import Poetry
@@ -76,7 +77,7 @@ class Uploader:
         return adapters.HTTPAdapter(max_retries=retry)
 
     @property
-    def files(self) -> List[Path]:
+    def files(self) -> List["Path"]:
         dist = self._poetry.file.parent / "dist"
         version = normalize_version(self._package.version.text)
 
@@ -114,8 +115,8 @@ class Uploader:
     def upload(
         self,
         url: str,
-        cert: Optional[Path] = None,
-        client_cert: Optional[Path] = None,
+        cert: Optional["Path"] = None,
+        client_cert: Optional["Path"] = None,
         dry_run: bool = False,
     ) -> None:
         session = self.make_session()
@@ -131,7 +132,7 @@ class Uploader:
         finally:
             session.close()
 
-    def post_data(self, file: Path) -> Dict[str, Any]:
+    def post_data(self, file: "Path") -> Dict[str, Any]:
         meta = Metadata.from_package(self._package)
 
         file_type = self._get_type(file)
@@ -220,7 +221,7 @@ class Uploader:
         self,
         session: requests.Session,
         url: str,
-        file: Path,
+        file: "Path",
         dry_run: Optional[bool] = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
@@ -327,11 +328,11 @@ class Uploader:
 
         return data_to_send
 
-    def _get_type(self, file: Path) -> str:
+    def _get_type(self, file: "Path") -> str:
         exts = file.suffixes
         if exts[-1] == ".whl":
             return "bdist_wheel"
         elif len(exts) >= 2 and "".join(exts[-2:]) == ".tar.gz":
             return "sdist"
 
-        raise ValueError("Unknown distribution format {}".format("".join(exts)))
+        raise ValueError("Unknown distribution format " + "".join(exts))

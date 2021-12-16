@@ -1,4 +1,4 @@
-from .builder_formatter import BuilderLogFormatter
+from poetry.console.logging.formatters.builder_formatter import BuilderLogFormatter
 
 
 FORMATTERS = {

@@ -1,1 +1,1 @@
-from .publisher import Publisher
+from poetry.publishing.publisher import Publisher

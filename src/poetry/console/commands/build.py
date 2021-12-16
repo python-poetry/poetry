@@ -1,6 +1,6 @@
 from cleo.helpers import option
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 class BuildCommand(EnvCommand):
@@ -27,9 +27,7 @@ class BuildCommand(EnvCommand):
 
         package = self.poetry.package
         self.line(
-            "Building <c1>{}</c1> (<c2>{}</c2>)".format(
-                package.pretty_name, package.version
-            )
+            f"Building <c1>{package.pretty_name}</c1> (<c2>{package.version}</c2>)"
         )
 
         builder = Builder(self.poetry)

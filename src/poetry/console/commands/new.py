@@ -1,9 +1,11 @@
 import sys
 
+from contextlib import suppress
+
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .command import Command
+from poetry.console.commands.command import Command
 
 
 class NewCommand(Command):
@@ -27,6 +29,7 @@ class NewCommand(Command):
         from pathlib import Path
 
         from poetry.core.vcs.git import GitConfig
+
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
@@ -44,13 +47,11 @@ class NewCommand(Command):
         if not name:
             name = path.name
 
-        if path.exists():
-            if list(path.glob("*")):
-                # Directory is not empty. Aborting.
-                raise RuntimeError(
-                    "Destination <fg=yellow>{}</> "
-                    "exists and is not empty".format(path)
-                )
+        if path.exists() and list(path.glob("*")):
+            # Directory is not empty. Aborting.
+            raise RuntimeError(
+                f"Destination <fg=yellow>{path}</> " "exists and is not empty"
+            )
 
         readme_format = self.option("readme") or "md"
 
@@ -60,12 +61,10 @@ class NewCommand(Command):
             author = config["user.name"]
             author_email = config.get("user.email")
             if author_email:
-                author += " <{}>".format(author_email)
+                author += f" <{author_email}>"
 
         current_env = SystemEnv(Path(sys.executable))
-        default_python = "^{}".format(
-            ".".join(str(v) for v in current_env.version_info[:2])
-        )
+        default_python = "^" + ".".join(str(v) for v in current_env.version_info[:2])
 
         layout_ = layout_(
             name,
@@ -78,13 +77,9 @@ class NewCommand(Command):
 
         path = path.resolve()
 
-        try:
+        with suppress(ValueError):
             path = path.relative_to(Path.cwd())
-        except ValueError:
-            pass
 
         self.line(
-            "Created package <info>{}</> in <fg=blue>{}</>".format(
-                layout_._package_name, path.as_posix()  # noqa
-            )
+            f"Created package <info>{layout_._package_name}</> in <fg=blue>{path.as_posix()}</>"
         )

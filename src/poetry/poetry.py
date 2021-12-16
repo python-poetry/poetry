@@ -1,20 +1,22 @@
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
+from poetry.core.poetry import Poetry as BasePoetry
+
 from poetry.__version__ import __version__
 from poetry.config.source import Source
-from poetry.core.poetry import Poetry as BasePoetry
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.core.packages.project_package import ProjectPackage
 
-    from .config.config import Config
-    from .packages.locker import Locker
-    from .plugins.plugin_manager import PluginManager
-    from .repositories.pool import Pool
+    from poetry.config.config import Config
+    from poetry.packages.locker import Locker
+    from poetry.plugins.plugin_manager import PluginManager
+    from poetry.repositories.pool import Pool
 
 
 class Poetry(BasePoetry):
@@ -23,20 +25,20 @@ class Poetry(BasePoetry):
 
     def __init__(
         self,
-        file: Path,
+        file: "Path",
         local_config: dict,
         package: "ProjectPackage",
         locker: "Locker",
         config: "Config",
     ):
-        from .repositories.pool import Pool  # noqa
+        from poetry.repositories.pool import Pool
 
-        super(Poetry, self).__init__(file, local_config, package)
+        super().__init__(file, local_config, package)
 
         self._locker = locker
         self._config = config
         self._pool = Pool()
-        self._plugin_manager: Optional[PluginManager] = None
+        self._plugin_manager: Optional["PluginManager"] = None
 
     @property
     def locker(self) -> "Locker":

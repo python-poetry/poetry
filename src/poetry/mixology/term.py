@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING
 from typing import Optional
 
-from poetry.core.packages.dependency import Dependency
-
-from .set_relation import SetRelation
+from poetry.mixology.set_relation import SetRelation
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.semver.helpers import VersionTypes
 
 
@@ -18,7 +17,7 @@ class Term:
     See https://github.com/dart-lang/pub/tree/master/doc/solver.md#term.
     """
 
-    def __init__(self, dependency: Dependency, is_positive: bool) -> None:
+    def __init__(self, dependency: "Dependency", is_positive: bool) -> None:
         self._dependency = dependency
         self._positive = is_positive
 
@@ -27,7 +26,7 @@ class Term:
         return Term(self._dependency, not self.is_positive())
 
     @property
-    def dependency(self) -> Dependency:
+    def dependency(self) -> "Dependency":
         return self._dependency
 
     @property
@@ -163,7 +162,8 @@ class Term:
         return Term(self.dependency.with_constraint(constraint), is_positive)
 
     def __str__(self) -> str:
-        return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
+        prefix = "not " if not self.is_positive() else ""
+        return f"{prefix}{self._dependency}"
 
     def __repr__(self) -> str:
-        return "<Term {}>".format(str(self))
+        return f"<Term {self!s}>"

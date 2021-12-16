@@ -8,22 +8,23 @@ from typing import Tuple
 from typing import Union
 
 from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 
-from .failure import SolveFailure
-from .incompatibility import Incompatibility
-from .incompatibility_cause import ConflictCause
-from .incompatibility_cause import NoVersionsCause
-from .incompatibility_cause import PackageNotFoundCause
-from .incompatibility_cause import RootCause
-from .partial_solution import PartialSolution
-from .result import SolverResult
-from .set_relation import SetRelation
-from .term import Term
+from poetry.mixology.failure import SolveFailure
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import ConflictCause
+from poetry.mixology.incompatibility_cause import NoVersionsCause
+from poetry.mixology.incompatibility_cause import PackageNotFoundCause
+from poetry.mixology.incompatibility_cause import RootCause
+from poetry.mixology.partial_solution import PartialSolution
+from poetry.mixology.result import SolverResult
+from poetry.mixology.set_relation import SetRelation
+from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.puzzle.provider import Provider
 
 
@@ -41,9 +42,9 @@ class VersionSolver:
 
     def __init__(
         self,
-        root: ProjectPackage,
+        root: "ProjectPackage",
         provider: "Provider",
-        locked: Dict[str, Package] = None,
+        locked: Dict[str, "Package"] = None,
         use_latest: List[str] = None,
     ):
         self._root = root
@@ -86,10 +87,8 @@ class VersionSolver:
             raise
         finally:
             self._log(
-                "Version solving took {:.3f} seconds.\n"
-                "Tried {} solutions.".format(
-                    time.time() - start, self._solution.attempted_solutions
-                )
+                f"Version solving took {time.time() - start:.3f} seconds.\n"
+                f"Tried {self._solution.attempted_solutions} solutions."
             )
 
     def _propagate(self, package: str) -> None:
@@ -171,11 +170,8 @@ class VersionSolver:
         if unsatisfied is None:
             return _conflict
 
-        self._log(
-            "derived: {}{}".format(
-                "not " if unsatisfied.is_positive() else "", unsatisfied.dependency
-            )
-        )
+        adverb = "not " if unsatisfied.is_positive() else ""
+        self._log(f"derived: {adverb}{unsatisfied.dependency}")
 
         self._solution.derive(
             unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
@@ -303,14 +299,11 @@ class VersionSolver:
             new_incompatibility = True
 
             partially = "" if difference is None else " partially"
-            bang = "!"
             self._log(
-                "{} {} is{} satisfied by {}".format(
-                    bang, most_recent_term, partially, most_recent_satisfier
-                )
+                f"! {most_recent_term} is{partially} satisfied by {most_recent_satisfier}"
             )
-            self._log(f'{bang} which is caused by "{most_recent_satisfier.cause}"')
-            self._log(f"{bang} thus: {incompatibility}")
+            self._log(f'! which is caused by "{most_recent_satisfier.cause}"')
+            self._log(f"! thus: {incompatibility}")
 
         raise SolveFailure(incompatibility)
 
@@ -411,9 +404,7 @@ class VersionSolver:
         if not conflict:
             self._solution.decide(version)
             self._log(
-                "selecting {} ({})".format(
-                    version.complete_name, version.full_pretty_version
-                )
+                f"selecting {version.complete_name} ({version.full_pretty_version})"
             )
 
         return dependency.complete_name
@@ -447,7 +438,7 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency: Dependency) -> Optional[Package]:
+    def _get_locked(self, dependency: Dependency) -> Optional["Package"]:
         if dependency.name in self._use_latest:
             return None
 

@@ -1,12 +1,15 @@
 from typing import TYPE_CHECKING
 from typing import Optional
+from typing import TypeVar
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
+T = TypeVar("T", bound="Operation")
 
-class Operation(object):
+
+class Operation:
     def __init__(self, reason: Optional[str] = None, priority: int = 0) -> None:
         self._reason = reason
 
@@ -41,13 +44,13 @@ class Operation(object):
     def format_version(self, package: "Package") -> str:
         return package.full_pretty_version
 
-    def skip(self, reason: str) -> "Operation":
+    def skip(self: T, reason: str) -> T:
         self._skipped = True
         self._skip_reason = reason
 
         return self
 
-    def unskip(self) -> "Operation":
+    def unskip(self: T) -> T:
         self._skipped = False
         self._skip_reason = None
 

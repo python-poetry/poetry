@@ -13,40 +13,38 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from cleo.io.io import IO
-
-from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
-from poetry.repositories import Pool
-from poetry.repositories import Repository
-from poetry.utils.env import Env
-
-from .exceptions import OverrideNeeded
-from .exceptions import SolverProblemError
-from .provider import Provider
+from poetry.puzzle.exceptions import OverrideNeeded
+from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
 
-    from .transaction import Transaction
+    from poetry.puzzle.transaction import Transaction
+    from poetry.repositories import Pool
+    from poetry.repositories import Repository
+    from poetry.utils.env import Env
 
 
 class Solver:
     def __init__(
         self,
-        package: ProjectPackage,
-        pool: Pool,
-        installed: Repository,
-        locked: Repository,
-        io: IO,
+        package: "ProjectPackage",
+        pool: "Pool",
+        installed: "Repository",
+        locked: "Repository",
+        io: "IO",
         provider: Optional[Provider] = None,
     ):
         self._package = package
@@ -59,19 +57,19 @@ class Solver:
             provider = Provider(self._package, self._pool, self._io)
 
         self._provider = provider
-        self._overrides = []
+        self._overrides: List[Dict] = []
 
     @property
     def provider(self) -> Provider:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env: Env) -> Iterator[None]:
+    def use_environment(self, env: "Env") -> Iterator[None]:
         with self.provider.use_environment(env):
             yield
 
     def solve(self, use_latest: List[str] = None) -> "Transaction":
-        from .transaction import Transaction
+        from poetry.puzzle.transaction import Transaction
 
         with self._provider.progress():
             start = time.time()
@@ -80,9 +78,7 @@ class Solver:
 
             if len(self._overrides) > 1:
                 self._provider.debug(
-                    "Complete version solving took {:.3f} seconds with {} overrides".format(
-                        end - start, len(self._overrides)
-                    )
+                    f"Complete version solving took {end - start:.3f} seconds with {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
                     f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
@@ -96,7 +92,7 @@ class Solver:
         )
 
     def solve_in_compatibility_mode(
-        self, overrides: Tuple[Dict], use_latest: List[str] = None
+        self, overrides: Tuple[Dict, ...], use_latest: List[str] = None
     ) -> Tuple[List["Package"], List[int]]:
         locked = {}
         for package in self._locked.packages:
@@ -127,7 +123,7 @@ class Solver:
 
         return packages, depths
 
-    def _solve(self, use_latest: List[str] = None) -> Tuple[List[Package], List[int]]:
+    def _solve(self, use_latest: List[str] = None) -> Tuple[List["Package"], List[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
@@ -180,10 +176,11 @@ class Solver:
         return final_packages, depths
 
 
+DFSNodeID = Tuple[str, FrozenSet[str], bool]
+
+
 class DFSNode:
-    def __init__(
-        self, id: Tuple[str, FrozenSet[str], bool], name: str, base_name: str
-    ) -> None:
+    def __init__(self, id: DFSNodeID, name: str, base_name: str) -> None:
         self.id = id
         self.name = name
         self.base_name = base_name
@@ -206,10 +203,10 @@ class VisitedState(enum.Enum):
 
 def depth_first_search(
     source: "PackageNode", aggregator: Callable
-) -> List[Tuple[Package, int]]:
-    back_edges = defaultdict(list)
-    visited = {}
-    topo_sorted_nodes = []
+) -> List[Tuple["Package", int]]:
+    back_edges: Dict[DFSNodeID, List["PackageNode"]] = defaultdict(list)
+    visited: Dict[DFSNodeID, VisitedState] = {}
+    topo_sorted_nodes: List["PackageNode"] = []
 
     dfs_visit(source, back_edges, visited, topo_sorted_nodes)
 
@@ -235,8 +232,8 @@ def depth_first_search(
 
 def dfs_visit(
     node: "PackageNode",
-    back_edges: Dict[str, List["PackageNode"]],
-    visited: Dict[str, VisitedState],
+    back_edges: Dict[DFSNodeID, List["PackageNode"]],
+    visited: Dict[DFSNodeID, VisitedState],
     sorted_nodes: List["PackageNode"],
 ) -> bool:
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
@@ -260,9 +257,9 @@ def dfs_visit(
 class PackageNode(DFSNode):
     def __init__(
         self,
-        package: Package,
-        packages: List[Package],
-        seen: List[Package],
+        package: "Package",
+        packages: List["Package"],
+        seen: List["Package"],
         previous: Optional["PackageNode"] = None,
         previous_dep: Optional[
             Union[
@@ -294,12 +291,14 @@ class PackageNode(DFSNode):
 
         if not previous:
             self.category = "dev"
-            self.groups = frozenset()
+            self.groups: FrozenSet[str] = frozenset()
             self.optional = True
-        else:
+        elif dep:
             self.category = "main" if "default" in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
+        else:
+            raise ValueError("Both previous and dep must be passed")
 
         super().__init__(
             (package.complete_name, self.groups, self.optional),
@@ -317,7 +316,8 @@ class PackageNode(DFSNode):
             self.seen.append(self.package)
 
         if (
-            self.previous_dep
+            self.dep
+            and self.previous_dep
             and self.previous_dep is not self.dep
             and self.previous_dep.name == self.dep.name
         ):
@@ -361,7 +361,7 @@ class PackageNode(DFSNode):
 
         return children
 
-    def visit(self, parents: "PackageNode") -> None:
+    def visit(self, parents: List["PackageNode"]) -> None:
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
         self.depth = 1 + max(
@@ -375,10 +375,10 @@ class PackageNode(DFSNode):
 
 def aggregate_package_nodes(
     nodes: List[PackageNode], children: List[PackageNode]
-) -> Tuple[Package, int]:
+) -> Tuple["Package", int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
-    groups = []
+    groups: List[str] = []
     for node in nodes:
         groups.extend(node.groups)
 

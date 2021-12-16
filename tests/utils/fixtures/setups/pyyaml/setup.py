@@ -18,7 +18,7 @@ AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "MIT"
 PLATFORMS = "Any"
 URL = "http://pyyaml.org/wiki/PyYAML"
-DOWNLOAD_URL = "http://pyyaml.org/download/pyyaml/%s-%s.tar.gz" % (NAME, VERSION)
+DOWNLOAD_URL = f"http://pyyaml.org/download/pyyaml/{NAME}-{VERSION}.tar.gz"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -185,7 +185,7 @@ class build_ext(_build_ext):
                 filenames.append(filename)
                 base = os.path.splitext(filename)[0]
                 for ext in ["c", "h", "pyx", "pxd"]:
-                    filename = "%s.%s" % (base, ext)
+                    filename = f"{base}.{ext}"
                     if filename not in filenames and os.path.isfile(filename):
                         filenames.append(filename)
         return filenames

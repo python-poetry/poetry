@@ -8,24 +8,25 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
 
-from cleo.io.io import IO
-
 from poetry.core.pyproject.toml import PyProjectTOML
+
 from poetry.installation.base_installer import BaseInstaller
 from poetry.utils._compat import encode
-from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
     from poetry.core.packages.package import Package
+
     from poetry.repositories.pool import Pool
+    from poetry.utils.env import Env
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env: Env, io: IO, pool: "Pool") -> None:
+    def __init__(self, env: "Env", io: "IO", pool: "Pool") -> None:
         self._env = env
         self._io = io
         self._pool = pool
@@ -51,9 +52,7 @@ class PipInstaller(BaseInstaller):
             parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
                 self._io.write_error(
-                    "    <warning>Installing from unsecure host: {}</warning>".format(
-                        parsed.hostname
-                    )
+                    f"    <warning>Installing from unsecure host: {parsed.hostname}</warning>"
                 )
                 args += ["--trusted-host", parsed.hostname]
 
@@ -66,12 +65,14 @@ class PipInstaller(BaseInstaller):
             index_url = repository.authenticated_url
 
             args += ["--index-url", index_url]
-            if self._pool.has_default():
-                if repository.name != self._pool.repositories[0].name:
-                    args += [
-                        "--extra-index-url",
-                        self._pool.repositories[0].authenticated_url,
-                    ]
+            if (
+                self._pool.has_default()
+                and repository.name != self._pool.repositories[0].name
+            ):
+                args += [
+                    "--extra-index-url",
+                    self._pool.repositories[0].authenticated_url,
+                ]
 
         if update:
             args.append("-U")
@@ -158,9 +159,7 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "git":
-            req = "git+{}@{}#egg={}".format(
-                package.source_url, package.source_reference, package.name
-            )
+            req = f"git+{package.source_url}@{package.source_reference}#egg={package.name}"
 
             if package.develop:
                 req = ["-e", req]

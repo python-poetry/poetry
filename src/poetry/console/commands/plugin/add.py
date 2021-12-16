@@ -1,6 +1,5 @@
 import os
 
-from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import cast
@@ -8,12 +7,9 @@ from typing import cast
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from ..init import InitCommand
-
-
-if TYPE_CHECKING:
-    from poetry.console.application import Application  # noqa
-    from poetry.console.commands.update import UpdateCommand  # noqa
+from poetry.console.application import Application
+from poetry.console.commands.init import InitCommand
+from poetry.console.commands.update import UpdateCommand
 
 
 class PluginAddCommand(InitCommand):
@@ -61,9 +57,9 @@ You can specify a package in the following forms:
 
         from cleo.io.inputs.string_input import StringInput
         from cleo.io.io import IO
-
         from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.semver.helpers import parse_constraint
+
         from poetry.factory import Factory
         from poetry.packages.project_package import ProjectPackage
         from poetry.repositories.installed_repository import InstalledRepository
@@ -153,10 +149,8 @@ You can specify a package in the following forms:
         # From this point forward, all the logic will be deferred to
         # the update command, by using the previously created `pyproject.toml`
         # file.
-        application = cast("Application", self.application)
-        update_command: "UpdateCommand" = cast(
-            "UpdateCommand", application.find("update")
-        )
+        application = cast(Application, self.application)
+        update_command: UpdateCommand = cast(UpdateCommand, application.find("update"))
         # We won't go through the event dispatching done by the application
         # so we need to configure the command manually
         update_command.set_poetry(Factory().create_poetry(env_dir))
@@ -193,7 +187,7 @@ You can specify a package in the following forms:
             "<c2>pyproject.toml</c2> file and will be skipped:\n"
         )
         for name in existing_packages:
-            self.line("  • <c1>{name}</c1>".format(name=name))
+            self.line(f"  • <c1>{name}</c1>")
 
         self.line(
             "\nIf you want to update it to the latest compatible version, "

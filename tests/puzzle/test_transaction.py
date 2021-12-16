@@ -1,15 +1,27 @@
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import List
+
 from poetry.core.packages.package import Package
+
 from poetry.puzzle.transaction import Transaction
 
 
-def check_operations(ops, expected):
+if TYPE_CHECKING:
+    from poetry.installation.operations import OperationTypes
+
+
+def check_operations(
+    ops: List["OperationTypes"], expected: List[Dict[str, Any]]
+) -> None:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
 
     result = []
     for op in ops:
-        if "update" == op.job_type:
+        if op.job_type == "update":
             result.append(
                 {
                     "job": "update",

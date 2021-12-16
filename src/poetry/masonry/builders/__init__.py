@@ -1,1 +1,1 @@
-from .editable import EditableBuilder
+from poetry.masonry.builders.editable import EditableBuilder

@@ -1,1 +1,1 @@
-from .installer import Installer
+from poetry.installation.installer import Installer

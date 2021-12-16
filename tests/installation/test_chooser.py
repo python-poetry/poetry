@@ -1,17 +1,30 @@
 import re
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import Union
 
 import pytest
 
 from packaging.tags import Tag
-
 from poetry.core.packages.package import Package
+
 from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils.env import MockEnv
+
+
+if TYPE_CHECKING:
+    import httpretty
+
+    from httpretty.core import HTTPrettyRequest
 
 
 JSON_FIXTURES = (
@@ -22,7 +35,7 @@ LEGACY_FIXTURES = Path(__file__).parent.parent / "repositories" / "fixtures" / "
 
 
 @pytest.fixture()
-def env():
+def env() -> MockEnv:
     return MockEnv(
         supported_tags=[
             Tag("cp37", "cp37", "macosx_10_15_x86_64"),
@@ -32,8 +45,10 @@ def env():
 
 
 @pytest.fixture()
-def mock_pypi(http):
-    def callback(request, uri, headers):
+def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
+    def callback(
+        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
+    ) -> Optional[List[Union[int, Dict[str, Any], str]]]:
         parts = uri.rsplit("/")
 
         name = parts[-3]
@@ -57,8 +72,10 @@ def mock_pypi(http):
 
 
 @pytest.fixture()
-def mock_legacy(http):
-    def callback(request, uri, headers):
+def mock_legacy(http: Type["httpretty.httpretty"]) -> None:
+    def callback(
+        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
+    ) -> List[Union[int, Dict[str, Any], str]]:
         parts = uri.rsplit("/")
         name = parts[-2]
 
@@ -75,7 +92,7 @@ def mock_legacy(http):
 
 
 @pytest.fixture()
-def pool():
+def pool() -> Pool:
     pool = Pool()
 
     pool.add_repository(PyPiRepository(disable_cache=True))
@@ -88,7 +105,7 @@ def pool():
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_universal_wheel_link_if_available(
-    env, mock_pypi, mock_legacy, source_type, pool
+    env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
 ):
     chooser = Chooser(pool, env)
 
@@ -104,12 +121,12 @@ def test_chooser_chooses_universal_wheel_link_if_available(
 
     link = chooser.choose_for(package)
 
-    assert "pytest-3.5.0-py2.py3-none-any.whl" == link.filename
+    assert link.filename == "pytest-3.5.0-py2.py3-none-any.whl"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
-    env, mock_pypi, mock_legacy, source_type, pool
+    env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
 ):
     chooser = Chooser(pool, env)
 
@@ -125,12 +142,12 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
 
     link = chooser.choose_for(package)
 
-    assert "isort-4.3.4-py3-none-any.whl" == link.filename
+    assert link.filename == "isort-4.3.4-py3-none-any.whl"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_system_specific_wheel_link_if_available(
-    mock_pypi, mock_legacy, source_type, pool
+    mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
 ):
     env = MockEnv(
         supported_tags=[Tag("cp37", "cp37m", "win32"), Tag("py3", "none", "any")]
@@ -149,16 +166,16 @@ def test_chooser_chooses_system_specific_wheel_link_if_available(
 
     link = chooser.choose_for(package)
 
-    assert "PyYAML-3.13-cp37-cp37m-win32.whl" == link.filename
+    assert link.filename == "PyYAML-3.13-cp37-cp37m-win32.whl"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
-    env,
-    mock_pypi,
-    mock_legacy,
-    source_type,
-    pool,
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: Pool,
 ):
     chooser = Chooser(pool, env)
 
@@ -174,16 +191,16 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
 
     link = chooser.choose_for(package)
 
-    assert "PyYAML-3.13.tar.gz" == link.filename
+    assert link.filename == "PyYAML-3.13.tar.gz"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_distributions_that_match_the_package_hashes(
-    env,
-    mock_pypi,
-    mock_legacy,
-    source_type,
-    pool,
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: Pool,
 ):
     chooser = Chooser(pool, env)
 
@@ -207,16 +224,16 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
 
     link = chooser.choose_for(package)
 
-    assert "isort-4.3.4.tar.gz" == link.filename
+    assert link.filename == "isort-4.3.4.tar.gz"
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_throws_an_error_if_package_hashes_do_not_match(
-    env,
-    mock_pypi,
-    mock_legacy,
-    source_type,
-    pool,
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: None,
+    pool: Pool,
 ):
     chooser = Chooser(pool, env)
 

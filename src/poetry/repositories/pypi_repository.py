@@ -16,7 +16,6 @@ from cachecontrol.caches.file_cache import FileCache
 from cachecontrol.controller import logger as cache_control_logger
 from cachy import CacheManager
 from html5lib.html5parser import parse
-
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
@@ -25,14 +24,14 @@ from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 from poetry.core.version.exceptions import InvalidVersion
 from poetry.core.version.markers import parse_marker
+
 from poetry.locations import REPOSITORY_CACHE_DIR
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.remote_repository import RemoteRepository
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
-
-from .exceptions import PackageNotFound
-from .remote_repository import RemoteRepository
 
 
 cache_control_logger.setLevel(logging.ERROR)
@@ -98,20 +97,19 @@ class PyPiRepository(RemoteRepository):
             constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange):
-            if (
-                constraint.max is not None
-                and constraint.max.is_unstable()
-                or constraint.min is not None
-                and constraint.min.is_unstable()
-            ):
-                allow_prereleases = True
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
 
         try:
             info = self.get_package_info(dependency.name)
         except PackageNotFound:
             self._log(
-                "No packages found for {} {}".format(dependency.name, str(constraint)),
+                f"No packages found for {dependency.name} {constraint!s}",
                 level="debug",
             )
             return []
@@ -123,9 +121,7 @@ class PyPiRepository(RemoteRepository):
             if not release:
                 # Bad release
                 self._log(
-                    "No release information found for {}-{}, skipping".format(
-                        dependency.name, version
-                    ),
+                    f"No release information found for {dependency.name}-{version}, skipping",
                     level="debug",
                 )
                 continue
@@ -134,9 +130,7 @@ class PyPiRepository(RemoteRepository):
                 package = Package(info["info"]["name"], version)
             except InvalidVersion:
                 self._log(
-                    'Unable to parse version "{}" for the {} package, skipping'.format(
-                        version, dependency.name
-                    ),
+                    f'Unable to parse version "{version}" for the {dependency.name} package, skipping',
                     level="debug",
                 )
                 continue
@@ -151,9 +145,7 @@ class PyPiRepository(RemoteRepository):
                 packages.append(package)
 
         self._log(
-            "{} packages found for {} {}".format(
-                len(packages), dependency.name, str(constraint)
-            ),
+            f"{len(packages)} packages found for {dependency.name} {constraint!s}",
             level="debug",
         )
 
@@ -191,9 +183,7 @@ class PyPiRepository(RemoteRepository):
                 results.append(result)
             except InvalidVersion:
                 self._log(
-                    'Unable to parse version "{}" for the {} package, skipping'.format(
-                        version, name
-                    ),
+                    f'Unable to parse version "{version}" for the {name} package, skipping',
                     level="debug",
                 )
 
@@ -256,7 +246,7 @@ class PyPiRepository(RemoteRepository):
 
         links = []
         for url in json_data["urls"]:
-            h = "sha256={}".format(url["digests"]["sha256"])
+            h = f"sha256={url['digests']['sha256']}"
             links.append(Link(url["url"] + "#" + h))
 
         return links
@@ -414,7 +404,7 @@ class PyPiRepository(RemoteRepository):
                         )
                         requires_dist.append(dep.to_pep_508())
 
-                    info.requires_dist = sorted(list(set(requires_dist)))
+                    info.requires_dist = sorted(set(requires_dist))
 
             if info:
                 return info

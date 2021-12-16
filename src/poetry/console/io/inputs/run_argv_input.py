@@ -1,14 +1,20 @@
+from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 from typing import Union
 
 from cleo.io.inputs.argv_input import ArgvInput
-from cleo.io.inputs.definition import Definition
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.definition import Definition
 
 
 class RunArgvInput(ArgvInput):
     def __init__(
-        self, argv: Optional[List[str]] = None, definition: Optional[Definition] = None
+        self,
+        argv: Optional[List[str]] = None,
+        definition: Optional["Definition"] = None,
     ) -> None:
         super().__init__(argv, definition=definition)
 

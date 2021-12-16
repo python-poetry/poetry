@@ -2,7 +2,7 @@ import logging
 
 from typing import TYPE_CHECKING
 
-from .formatters import FORMATTERS
+from poetry.console.logging.formatters import FORMATTERS
 
 
 if TYPE_CHECKING:
@@ -26,8 +26,8 @@ class IOFormatter(logging.Formatter):
             if record.name in FORMATTERS:
                 msg = FORMATTERS[record.name].format(msg)
             elif level in self._colors:
-                msg = "<{}>{}</>".format(self._colors[level], msg)
+                msg = f"<{self._colors[level]}>{msg}</>"
 
             return msg
 
-        return super(IOFormatter, self).format(record)
+        return super().format(record)

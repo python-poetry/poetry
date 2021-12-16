@@ -1,31 +1,28 @@
 import logging
 import os
 import re
+import tempfile
 import time
 import urllib.parse
 
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import mkdtemp
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
-
-from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.package import Package
-from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.version import Version
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
+
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.mixology.incompatibility import Incompatibility
@@ -35,11 +32,20 @@ from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
-from poetry.repositories import Pool
-from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.helpers import temporary_directory
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
+
+    from poetry.repositories import Pool
+    from poetry.utils.env import Env
 
 
 logger = logging.getLogger(__name__)
@@ -54,25 +60,25 @@ class Indicator(ProgressIndicator):
 
 class Provider:
 
-    UNSAFE_PACKAGES = set()
+    UNSAFE_PACKAGES: Set[str] = set()
 
     def __init__(
-        self, package: Package, pool: Pool, io: Any, env: Optional[Env] = None
+        self, package: "Package", pool: "Pool", io: Any, env: Optional["Env"] = None
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._search_for = {}
+        self._search_for: Dict["Dependency", List["Package"]] = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
-        self._overrides = {}
-        self._deferred_cache = {}
+        self._overrides: Dict = {}
+        self._deferred_cache: Dict["Dependency", "Package"] = {}
         self._load_deferred = True
 
     @property
-    def pool(self) -> Pool:
+    def pool(self) -> "Pool":
         return self._pool
 
     def is_debugging(self) -> bool:
@@ -85,7 +91,7 @@ class Provider:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_environment(self, env: Env) -> Iterator["Provider"]:
+    def use_environment(self, env: "Env") -> Iterator["Provider"]:
         original_env = self._env
         original_python_constraint = self._python_constraint
 
@@ -100,13 +106,13 @@ class Provider:
     def search_for(
         self,
         dependency: Union[
-            Dependency,
-            VCSDependency,
-            FileDependency,
-            DirectoryDependency,
-            URLDependency,
+            "Dependency",
+            "VCSDependency",
+            "FileDependency",
+            "DirectoryDependency",
+            "URLDependency",
         ],
-    ) -> List[DependencyPackage]:
+    ) -> List["DependencyPackage"]:
         """
         Search for the specifications that match the given dependency.
 
@@ -161,7 +167,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
+    def search_for_vcs(self, dependency: "VCSDependency") -> List["Package"]:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -206,13 +212,12 @@ class Provider:
         tag: Optional[str] = None,
         rev: Optional[str] = None,
         name: Optional[str] = None,
-    ) -> Package:
+    ) -> "Package":
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
-        tmp_dir = Path(
-            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
-        )
+        suffix = url.split("/")[-1].rstrip(".git")
+        tmp_dir = Path(mkdtemp(prefix=f"pypoetry-git-{suffix}"))
 
         try:
             git = Git()
@@ -237,7 +242,7 @@ class Provider:
 
         return package
 
-    def search_for_file(self, dependency: FileDependency) -> List[Package]:
+    def search_for_file(self, dependency: "FileDependency") -> List["Package"]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -253,9 +258,7 @@ class Provider:
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, package.name
-                )
+                f"The dependency name for {dependency.name} does not match the actual package's name: {package.name}"
             )
 
         if dependency.base is not None:
@@ -268,7 +271,7 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_file(cls, file_path: Path) -> Package:
+    def get_package_from_file(cls, file_path: Path) -> "Package":
         try:
             package = PackageInfo.from_path(path=file_path).to_package(
                 root_dir=file_path
@@ -280,7 +283,9 @@ class Provider:
 
         return package
 
-    def search_for_directory(self, dependency: DirectoryDependency) -> List[Package]:
+    def search_for_directory(
+        self, dependency: "DirectoryDependency"
+    ) -> List["Package"]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -305,7 +310,7 @@ class Provider:
     @classmethod
     def get_package_from_directory(
         cls, directory: Path, name: Optional[str] = None
-    ) -> Package:
+    ) -> "Package":
         package = PackageInfo.from_directory(path=directory).to_package(
             root_dir=directory
         )
@@ -313,14 +318,12 @@ class Provider:
         if name and name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    name, package.name
-                )
+                f"The dependency name for {name} does not match the actual package's name: {package.name}"
             )
 
         return package
 
-    def search_for_url(self, dependency: URLDependency) -> List[Package]:
+    def search_for_url(self, dependency: "URLDependency") -> List["Package"]:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
@@ -329,9 +332,7 @@ class Provider:
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, package.name
-                )
+                f"The dependency name for {dependency.name} does not match the actual package's name: {package.name}"
             )
 
         for extra in dependency.extras:
@@ -350,13 +351,12 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
-        with temporary_directory() as temp_dir:
-            temp_dir = Path(temp_dir)
-            file_name = os.path.basename(urllib.parse.urlparse(url).path)
-            download_file(url, str(temp_dir / file_name))
-
-            package = cls.get_package_from_file(temp_dir / file_name)
+    def get_package_from_url(cls, url: str) -> "Package":
+        file_name = os.path.basename(urllib.parse.urlparse(url).path)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dest = Path(temp_dir) / file_name
+            download_file(url, str(dest))
+            package = cls.get_package_from_file(dest)
 
         package._source_type = "url"
         package._source_url = url
@@ -501,12 +501,14 @@ class Provider:
             if self._env and not dep.marker.validate(self._env.marker_env):
                 continue
 
-            if not package.is_root():
-                if (dep.is_optional() and dep.name not in optional_dependencies) or (
+            if not package.is_root() and (
+                (dep.is_optional() and dep.name not in optional_dependencies)
+                or (
                     dep.in_extras
                     and not set(dep.in_extras).intersection(package.dependency.extras)
-                ):
-                    continue
+                )
+            ):
+                continue
 
             _dependencies.append(dep)
 
@@ -543,7 +545,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates = dict()
+        duplicates: Dict[str, List["Dependency"]] = {}
         for dep in dependencies:
             if dep.complete_name not in duplicates:
                 duplicates[dep.complete_name] = []
@@ -559,7 +561,7 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
-            by_constraint = dict()
+            by_constraint: Dict[str, List["Dependency"]] = {}
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []
@@ -587,9 +589,7 @@ class Provider:
                 continue
 
             if len(by_constraint) == 1:
-                self.debug(
-                    "<debug>Merging requirements for {}</debug>".format(str(deps[0]))
-                )
+                self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
                 dependencies.append(list(by_constraint.values())[0][0])
                 continue
 
@@ -626,28 +626,19 @@ class Provider:
             # with the following overrides:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
-            markers = []
-            for deps in by_constraint.values():
-                markers.append(deps[0].marker)
-
             _deps = [_dep[0] for _dep in by_constraint.values()]
-            self.debug(
-                "<warning>Different requirements found for {}.</warning>".format(
-                    ", ".join(
-                        "<c1>{}</c1> <fg=default>(<c2>{}</c2>)</> with markers <b>{}</b>".format(
-                            d.name,
-                            d.pretty_constraint,
-                            d.marker if not d.marker.is_any() else "*",
-                        )
-                        for d in _deps[:-1]
-                    )
-                    + " and "
-                    + "<c1>{}</c1> <fg=default>(<c2>{}</c2>)</> with markers <b>{}</b>".format(
-                        _deps[-1].name,
-                        _deps[-1].pretty_constraint,
-                        _deps[-1].marker if not _deps[-1].marker.is_any() else "*",
-                    )
+
+            def fmt_warning(d: "Dependency") -> str:
+                marker = d.marker if not d.marker.is_any() else "*"
+                return (
+                    f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</> "
+                    f"with markers <b>{marker}</b>"
                 )
+
+            warnings = ", ".join(fmt_warning(d) for d in _deps[:-1])
+            warnings += f" and {fmt_warning(_deps[-1])}"
+            self.debug(
+                f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
             # We need to check if one of the duplicate dependencies
@@ -659,6 +650,14 @@ class Provider:
             #   - ipython (1.2.4) ; implementation_name == "pypy"
             #
             # the marker for `ipython` will become `implementation_name != "pypy"`.
+            #
+            # Further, we have to merge the constraints of the requirements
+            # without markers into the constraints of the requirements with markers.
+            # for instance, if we have the following dependencies:
+            #   - foo (>= 1.2)
+            #   - foo (!= 1.2.1) ; python == 3.10
+            #
+            # the constraint for the second entry will become (!= 1.2.1, >= 1.2)
             any_markers_dependencies = [d for d in _deps if d.marker.is_any()]
             other_markers_dependencies = [d for d in _deps if not d.marker.is_any()]
 
@@ -667,9 +666,16 @@ class Provider:
                 for other_dep in other_markers_dependencies[1:]:
                     marker = marker.union(other_dep.marker)
 
-                for i, d in enumerate(_deps):
-                    if d.marker.is_any():
-                        _deps[i].marker = marker.invert()
+                inverted_marker = marker.invert()
+                for dep_any in any_markers_dependencies:
+                    dep_any.marker = inverted_marker
+                    for dep_other in other_markers_dependencies:
+                        dep_other.set_constraint(
+                            dep_other.constraint.intersect(dep_any.constraint)
+                        )
+                        # TODO: Setting _pretty_constraint can be removed once the following issue has been fixed
+                        # https://github.com/python-poetry/poetry/issues/4589
+                        dep_other._pretty_constraint = str(dep_other.constraint)
 
             overrides = []
             for _dep in _deps:
@@ -725,19 +731,19 @@ class Provider:
         if message.startswith("fact:"):
             if "depends on" in message:
                 m = re.match(r"fact: (.+?) depends on (.+?) \((.+?)\)", message)
+                if m is None:
+                    raise ValueError(f"Unable to parse fact: {message}")
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<c2>{}</c2>)".format(m2.group(2))
+                    version = f" (<c2>{m2.group(2)}</c2>)"
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
-                    "<fg=blue>fact</>: <c1>{}</c1>{} "
-                    "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
-                        name, version, m.group(2), m.group(3)
-                    )
+                    f"<fg=blue>fact</>: <c1>{name}</c1>{version} "
+                    f"depends on <c1>{m.group(2)}</c1> (<c2>{m.group(3)}</c2>)"
                 )
             elif " is " in message:
                 message = re.sub(
@@ -749,7 +755,7 @@ class Provider:
                 message = re.sub(
                     r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<c2>\\2</c2>)", message
                 )
-                message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
+                message = f"<fg=blue>fact</>: {message.split('fact: ')[1]}"
         elif message.startswith("selecting "):
             message = re.sub(
                 r"selecting (.+?) \((.+?)\)",
@@ -759,12 +765,10 @@ class Provider:
         elif message.startswith("derived:"):
             m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
-                message = "<fg=blue>derived</>: <c1>{}</c1> (<c2>{}</c2>)".format(
-                    m.group(1), m.group(2)
-                )
+                message = f"<fg=blue>derived</>: <c1>{m.group(1)}</c1> (<c2>{m.group(2)}</c2>)"
             else:
-                message = "<fg=blue>derived</>: <c1>{}</c1>".format(
-                    message.split("derived: ")[1]
+                message = (
+                    f"<fg=blue>derived</>: <c1>{message.split('derived: ')[1]}</c1>"
                 )
         elif message.startswith("conflict:"):
             m = re.match(r"conflict: (.+?) depends on (.+?) \((.+?)\)", message)
@@ -772,21 +776,17 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<c2>{}</c2>)".format(m2.group(2))
+                    version = f" (<c2>{m2.group(2)}</c2>)"
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
-                    "<fg=red;options=bold>conflict</>: <c1>{}</c1>{} "
-                    "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
-                        name, version, m.group(2), m.group(3)
-                    )
+                    f"<fg=red;options=bold>conflict</>: <c1>{name}</c1>{version} "
+                    f"depends on <c1>{m.group(2)}</c1> (<c2>{m.group(3)}</c2>)"
                 )
             else:
-                message = "<fg=red;options=bold>conflict</>: {}".format(
-                    message.split("conflict: ")[1]
-                )
+                message = f"<fg=red;options=bold>conflict</>: {message.split('conflict: ')[1]}"
 
         message = message.replace("! ", "<error>!</error> ")
 
@@ -795,7 +795,7 @@ class Provider:
             debug_info = (
                 "\n".join(
                     [
-                        "<debug>{}:</debug> {}".format(str(depth).rjust(4), s)
+                        f"<debug>{str(depth).rjust(4)}:</debug> {s}"
                         for s in debug_info.split("\n")
                     ]
                 )

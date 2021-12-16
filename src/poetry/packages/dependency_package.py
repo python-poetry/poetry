@@ -1,22 +1,25 @@
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import List
 from typing import Union
 
-from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.package import Package
+
+if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
 
 class DependencyPackage:
-    def __init__(self, dependency: Dependency, package: Package) -> None:
+    def __init__(self, dependency: "Dependency", package: "Package") -> None:
         self._dependency = dependency
         self._package = package
 
     @property
-    def dependency(self) -> Dependency:
+    def dependency(self) -> "Dependency":
         return self._dependency
 
     @property
-    def package(self) -> Package:
+    def package(self) -> "Package":
         return self._package
 
     def clone(self) -> "DependencyPackage":
@@ -46,7 +49,7 @@ class DependencyPackage:
     def __hash__(self) -> int:
         return hash(self._package)
 
-    def __eq__(self, other: Union[Package, "DependencyPackage"]) -> bool:
+    def __eq__(self, other: Union["Package", "DependencyPackage"]) -> bool:
         if isinstance(other, DependencyPackage):
             other = other.package
 

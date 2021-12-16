@@ -1,6 +1,6 @@
 from cleo.helpers import argument
 
-from .command import Command
+from poetry.console.commands.command import Command
 
 
 class SearchCommand(Command):
@@ -17,11 +17,11 @@ class SearchCommand(Command):
 
         for result in results:
             self.line("")
-            name = "<info>{}</>".format(result.name)
+            name = f"<info>{result.name}</>"
 
-            name += " (<comment>{}</>)".format(result.version)
+            name += f" (<comment>{result.version}</>)"
 
             self.line(name)
 
             if result.description:
-                self.line(" {}".format(result.description))
+                self.line(f" {result.description}")

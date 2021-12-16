@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from typing import Optional
 
-from .operation import Operation
+from poetry.installation.operations.operation import Operation
 
 
 if TYPE_CHECKING:
@@ -12,7 +12,7 @@ class Install(Operation):
     def __init__(
         self, package: "Package", reason: Optional[str] = None, priority: int = 0
     ) -> None:
-        super(Install, self).__init__(reason, priority=priority)
+        super().__init__(reason, priority=priority)
 
         self._package = package
 
@@ -25,11 +25,7 @@ class Install(Operation):
         return "install"
 
     def __str__(self) -> str:
-        return "Installing {} ({})".format(
-            self.package.pretty_name, self.format_version(self.package)
-        )
+        return f"Installing {self.package.pretty_name} ({self.format_version(self.package)})"
 
     def __repr__(self) -> str:
-        return "<Install {} ({})>".format(
-            self.package.pretty_name, self.format_version(self.package)
-        )
+        return f"<Install {self.package.pretty_name} ({self.format_version(self.package)})>"

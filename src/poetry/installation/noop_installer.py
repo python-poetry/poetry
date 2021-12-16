@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from typing import List
 
-from .base_installer import BaseInstaller
+from poetry.installation.base_installer import BaseInstaller
 
 
 if TYPE_CHECKING:

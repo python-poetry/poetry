@@ -9,12 +9,13 @@ from typing import TYPE_CHECKING
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from ..command import Command
+from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.semver.version import Version
+
     from poetry.repositories.pool import Pool
 
 
@@ -84,9 +85,10 @@ class SelfUpdateCommand(Command):
         return pool
 
     def handle(self) -> int:
-        from poetry.__version__ import __version__
         from poetry.core.packages.dependency import Dependency
         from poetry.core.semver.version import Version
+
+        from poetry.__version__ import __version__
 
         version = self.argument("version")
         if not version:
@@ -130,16 +132,14 @@ class SelfUpdateCommand(Command):
             self.line("You are using the latest version")
             return 0
 
-        self.line("Updating <c1>Poetry</c1> to <c2>{}</c2>".format(release.version))
+        self.line(f"Updating <c1>Poetry</c1> to <c2>{release.version}</c2>")
         self.line("")
 
         self.update(release)
 
         self.line("")
         self.line(
-            "<c1>Poetry</c1> (<c2>{}</c2>) is installed now. Great!".format(
-                release.version
-            )
+            f"<c1>Poetry</c1> (<c2>{release.version}</c2>) is installed now. Great!"
         )
 
         return 0
@@ -167,9 +167,10 @@ class SelfUpdateCommand(Command):
         self._make_bin()
 
     def _update(self, version: "Version") -> None:
-        from poetry.config.config import Config
         from poetry.core.packages.dependency import Dependency
         from poetry.core.packages.project_package import ProjectPackage
+
+        from poetry.config.config import Config
         from poetry.installation.installer import Installer
         from poetry.packages.locker import NullLocker
         from poetry.repositories.installed_repository import InstalledRepository

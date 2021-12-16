@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from typing import Optional
 
-from .operation import Operation
+from poetry.installation.operations.operation import Operation
 
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ class Uninstall(Operation):
         reason: Optional[str] = None,
         priority: int = float("inf"),
     ) -> None:
-        super(Uninstall, self).__init__(reason, priority=priority)
+        super().__init__(reason, priority=priority)
 
         self._package = package
 
@@ -28,11 +28,7 @@ class Uninstall(Operation):
         return "uninstall"
 
     def __str__(self) -> str:
-        return "Uninstalling {} ({})".format(
-            self.package.pretty_name, self.format_version(self._package)
-        )
+        return f"Uninstalling {self.package.pretty_name} ({self.format_version(self._package)})"
 
     def __repr__(self) -> str:
-        return "<Uninstall {} ({})>".format(
-            self.package.pretty_name, self.format_version(self.package)
-        )
+        return f"<Uninstall {self.package.pretty_name} ({self.format_version(self.package)})>"

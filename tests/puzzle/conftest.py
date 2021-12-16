@@ -1,6 +1,7 @@
 import shutil
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,8 +11,12 @@ try:
 except ImportError:
     import urlparse
 
+if TYPE_CHECKING:
+    from poetry.core.vcs import Git
+    from pytest_mock import MockerFixture
 
-def mock_clone(self, source, dest):
+
+def mock_clone(self: "Git", source: str, dest: Path) -> None:
     # Checking source to determine which folder we need to copy
     parts = urlparse.urlparse(source)
 
@@ -28,11 +33,9 @@ def mock_clone(self, source, dest):
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker):
+def setup(mocker: "MockerFixture") -> None:
     # Patch git module to not actually clone projects
     mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
     mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
     p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-
-    yield

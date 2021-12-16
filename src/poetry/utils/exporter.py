@@ -1,15 +1,21 @@
 import urllib.parse
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Sequence
 from typing import Union
 
-from cleo.io.io import IO
-
 from poetry.core.packages.utils.utils import path_to_url
-from poetry.poetry import Poetry
+
 from poetry.utils._compat import decode
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from cleo.io.io import IO
+
+    from poetry.poetry import Poetry
 
 
 class Exporter:
@@ -22,14 +28,14 @@ class Exporter:
     ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(self, poetry: Poetry) -> None:
+    def __init__(self, poetry: "Poetry") -> None:
         self._poetry = poetry
 
     def export(
         self,
         fmt: str,
-        cwd: Path,
-        output: Union[IO, str],
+        cwd: "Path",
+        output: Union["IO", str],
         with_hashes: bool = True,
         dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
@@ -39,7 +45,7 @@ class Exporter:
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError(f"Invalid export format: {fmt}")
 
-        getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
+        getattr(self, "_export_" + fmt.replace(".", "_"))(
             cwd,
             output,
             with_hashes=with_hashes,
@@ -51,8 +57,8 @@ class Exporter:
 
     def _export_requirements_txt(
         self,
-        cwd: Path,
-        output: Union[IO, str],
+        cwd: "Path",
+        output: Union["IO", str],
         with_hashes: bool = True,
         dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
@@ -88,11 +94,10 @@ class Exporter:
             else:
                 line = f"{package.name}=={package.version}"
 
-            if not is_direct_remote_reference:
-                if ";" in requirement:
-                    markers = requirement.split(";", 1)[1].strip()
-                    if markers:
-                        line += f" ; {markers}"
+            if not is_direct_remote_reference and ";" in requirement:
+                markers = requirement.split(";", 1)[1].strip()
+                if markers:
+                    line += f" ; {markers}"
 
             if (
                 not is_direct_remote_reference
@@ -115,11 +120,8 @@ class Exporter:
                     hashes.append(f"{algorithm}:{h}")
 
                 if hashes:
-                    line += " \\\n"
-                    for i, h in enumerate(hashes):
-                        line += "    --hash={}{}".format(
-                            h, " \\\n" if i < len(hashes) - 1 else ""
-                        )
+                    sep = " \\\n"
+                    line += sep + sep.join(f"    --hash={h}" for h in hashes)
             dependency_lines.add(line)
 
         content += "\n".join(sorted(dependency_lines))
@@ -161,7 +163,7 @@ class Exporter:
 
         self._output(content, cwd, output)
 
-    def _output(self, content: str, cwd: Path, output: Union[IO, str]) -> None:
+    def _output(self, content: str, cwd: "Path", output: Union["IO", str]) -> None:
         decoded = decode(content)
         try:
             output.write(decoded)

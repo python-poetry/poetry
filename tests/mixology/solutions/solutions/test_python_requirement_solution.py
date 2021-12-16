@@ -1,6 +1,6 @@
 from cleo.io.buffered_io import BufferedIO
-
 from poetry.core.packages.dependency import Dependency
+
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import PythonCause

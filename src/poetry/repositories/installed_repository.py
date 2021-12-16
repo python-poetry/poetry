@@ -2,6 +2,7 @@ import itertools
 import json
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -10,10 +11,13 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import canonicalize_name
 from poetry.core.utils.helpers import module_name
-from poetry.utils._compat import metadata
-from poetry.utils.env import Env
 
-from .repository import Repository
+from poetry.repositories.repository import Repository
+from poetry.utils._compat import metadata
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env import Env
 
 
 _VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
@@ -27,7 +31,7 @@ except NameError:
 
 class InstalledRepository(Repository):
     @classmethod
-    def get_package_paths(cls, env: Env, name: str) -> Set[Path]:
+    def get_package_paths(cls, env: "Env", name: str) -> Set[Path]:
         """
         Process a .pth file within the site-packages directories, and return any valid
         paths. We skip executable .pth files as there is no reliable means to do this
@@ -83,7 +87,7 @@ class InstalledRepository(Repository):
         return "git", url, revision
 
     @classmethod
-    def is_vcs_package(cls, package: Union[Path, Package], env: Env) -> bool:
+    def is_vcs_package(cls, package: Union[Path, Package], env: "Env") -> bool:
         # A VCS dependency should have been installed
         # in the src directory.
         src = env.path / "src"
@@ -217,7 +221,7 @@ class InstalledRepository(Repository):
         return package
 
     @classmethod
-    def load(cls, env: Env, with_dependencies: bool = False) -> "InstalledRepository":
+    def load(cls, env: "Env", with_dependencies: bool = False) -> "InstalledRepository":
         """
         Load installed packages.
         """

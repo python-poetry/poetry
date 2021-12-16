@@ -1,11 +1,20 @@
+from typing import TYPE_CHECKING
+
 from poetry.factory import Factory
+from tests.helpers import get_package
+from tests.mixology.helpers import add_to_repo
+from tests.mixology.helpers import check_solver_result
 
-from ...helpers import get_package
-from ..helpers import add_to_repo
-from ..helpers import check_solver_result
+
+if TYPE_CHECKING:
+    from poetry.packages.project_package import ProjectPackage
+    from poetry.repositories import Repository
+    from tests.mixology.version_solver.conftest import Provider
 
 
-def test_with_compatible_locked_dependencies(root, provider, repo):
+def test_with_compatible_locked_dependencies(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -23,7 +32,9 @@ def test_with_compatible_locked_dependencies(root, provider, repo):
     )
 
 
-def test_with_incompatible_locked_dependencies(root, provider, repo):
+def test_with_incompatible_locked_dependencies(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", ">1.0.1"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -41,7 +52,9 @@ def test_with_incompatible_locked_dependencies(root, provider, repo):
     )
 
 
-def test_with_unrelated_locked_dependencies(root, provider, repo):
+def test_with_unrelated_locked_dependencies(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -61,7 +74,7 @@ def test_with_unrelated_locked_dependencies(root, provider, repo):
 
 
 def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_statisfied(
-    root, provider, repo
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("newdep", "2.0.0"))
@@ -95,7 +108,9 @@ def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_st
     )
 
 
-def test_with_compatible_locked_dependencies_use_latest(root, provider, repo):
+def test_with_compatible_locked_dependencies_use_latest(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("baz", "*"))
 

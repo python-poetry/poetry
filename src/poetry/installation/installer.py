@@ -5,42 +5,42 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
-from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 
-from poetry.config.config import Config
-from poetry.core.packages.project_package import ProjectPackage
-from poetry.packages import Locker
+from poetry.installation.executor import Executor
+from poetry.installation.operations import Install
+from poetry.installation.operations import Uninstall
+from poetry.installation.operations import Update
+from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
-
-from .base_installer import BaseInstaller
-from .executor import Executor
-from .operations import Install
-from .operations import Uninstall
-from .operations import Update
-from .operations.operation import Operation
-from .pip_installer import PipInstaller
+from poetry.utils.helpers import pluralize
 
 
 if TYPE_CHECKING:
-    from poetry.utils.env import Env
+    from cleo.io.io import IO
+    from poetry.core.packages.project_package import ProjectPackage
 
-    from .operations import OperationTypes
+    from poetry.config.config import Config
+    from poetry.installation.base_installer import BaseInstaller
+    from poetry.installation.operations import OperationTypes
+    from poetry.installation.operations.operation import Operation
+    from poetry.packages import Locker
+    from poetry.utils.env import Env
 
 
 class Installer:
     def __init__(
         self,
-        io: IO,
+        io: "IO",
         env: "Env",
-        package: ProjectPackage,
-        locker: Locker,
+        package: "ProjectPackage",
+        locker: "Locker",
         pool: Pool,
-        config: Config,
+        config: "Config",
         installed: Union[Repository, None] = None,
         executor: Optional[Executor] = None,
     ):
@@ -83,15 +83,15 @@ class Installer:
         return self._executor
 
     @property
-    def installer(self) -> BaseInstaller:
+    def installer(self) -> "BaseInstaller":
         return self._installer
 
-    def set_package(self, package: ProjectPackage) -> "Installer":
+    def set_package(self, package: "ProjectPackage") -> "Installer":
         self._package = package
 
         return self
 
-    def set_locker(self, locker: Locker) -> "Installer":
+    def set_locker(self, locker: "Locker") -> "Installer":
         self._locker = locker
 
         return self
@@ -386,23 +386,13 @@ class Installer:
                     uninstalls += 1
 
             self._io.write_line("")
-            self._io.write_line(
-                "Package operations: "
-                "<info>{}</> install{}, "
-                "<info>{}</> update{}, "
-                "<info>{}</> removal{}"
-                "{}".format(
-                    installs,
-                    "" if installs == 1 else "s",
-                    updates,
-                    "" if updates == 1 else "s",
-                    uninstalls,
-                    "" if uninstalls == 1 else "s",
-                    f", <info>{skipped}</> skipped"
-                    if skipped and self.is_verbose()
-                    else "",
-                )
-            )
+            self._io.write("Package operations: ")
+            self._io.write(f"<info>{installs}</> install{pluralize(installs)}, ")
+            self._io.write(f"<info>{updates}</> update{pluralize(updates)}, ")
+            self._io.write(f"<info>{uninstalls}</> removal{pluralize(uninstalls)}")
+            if skipped and self.is_verbose():
+                self._io.write(f", <info>{skipped}</> skipped")
+            self._io.write_line("")
 
         self._io.write_line("")
 
@@ -411,7 +401,7 @@ class Installer:
 
         return 0
 
-    def _execute_operation(self, operation: Operation) -> None:
+    def _execute_operation(self, operation: "Operation") -> None:
         """
         Execute a given operation.
         """
@@ -420,23 +410,18 @@ class Installer:
         getattr(self, f"_execute_{method}")(operation)
 
     def _execute_install(self, operation: Install) -> None:
+        target = operation.package
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
-                        operation.package.pretty_name,
-                        operation.package.full_pretty_version,
-                        operation.skip_reason,
-                    )
+                    f"  - Skipping <c1>{target.pretty_name}</c1> (<c2>{target.full_pretty_version}</c2>) {operation.skip_reason}"
                 )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
-                    operation.package.pretty_name, operation.package.full_pretty_version
-                )
+                f"  - Installing <c1>{target.pretty_name}</c1> (<c2>{target.full_pretty_version}</c2>)"
             )
 
         if not self._execute_operations:
@@ -451,22 +436,16 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
-                        target.pretty_name,
-                        target.full_pretty_version,
-                        operation.skip_reason,
-                    )
+                    f"  - Skipping <c1>{target.pretty_name}</c1> "
+                    f"(<c2>{target.full_pretty_version}</c2>) {operation.skip_reason}"
                 )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <c1>{}</c1> (<c2>{}</c2> -> <c2>{}</c2>)".format(
-                    target.pretty_name,
-                    source.full_pretty_version,
-                    target.full_pretty_version,
-                )
+                f"  - Updating <c1>{target.pretty_name}</c1> "
+                f"(<c2>{source.full_pretty_version}</c2> -> <c2>{target.full_pretty_version}</c2>)"
             )
 
         if not self._execute_operations:
@@ -475,23 +454,18 @@ class Installer:
         self._installer.update(source, target)
 
     def _execute_uninstall(self, operation: Uninstall) -> None:
+        target = operation.package
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Not removing <c1>{}</c1> (<c2>{}</c2>) {}".format(
-                        operation.package.pretty_name,
-                        operation.package.full_pretty_version,
-                        operation.skip_reason,
-                    )
+                    f"  - Not removing <c1>{target.pretty_name}</c1> (<c2>{target.pretty_version}</c2>) {operation.skip_reason}"
                 )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Removing <c1>{}</c1> (<c2>{}</c2>)".format(
-                    operation.package.pretty_name, operation.package.full_pretty_version
-                )
+                f"  - Removing <c1>{target.pretty_name}</c1> (<c2>{target.pretty_version}</c2>)"
             )
 
         if not self._execute_operations:
@@ -500,7 +474,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_local_repo(
-        self, local_repo: Repository, ops: Sequence[Operation]
+        self, local_repo: Repository, ops: Sequence["Operation"]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
@@ -515,7 +489,7 @@ class Installer:
 
     def _get_operations_from_lock(
         self, locked_repository: Repository
-    ) -> Sequence[Operation]:
+    ) -> Sequence["Operation"]:
         installed_repo = self._installed_repository
         ops = []
 
@@ -544,7 +518,7 @@ class Installer:
 
         return ops
 
-    def _filter_operations(self, ops: Sequence[Operation], repo: Repository) -> None:
+    def _filter_operations(self, ops: Sequence["Operation"], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):
@@ -570,9 +544,8 @@ class Installer:
 
             # If a package is optional and not requested
             # in any extra we skip it
-            if package.optional:
-                if package.name not in extra_packages:
-                    op.skip("Not required")
+            if package.optional and package.name not in extra_packages:
+                op.skip("Not required")
 
     def _get_extra_packages(self, repo: Repository) -> List[str]:
         """
@@ -587,7 +560,7 @@ class Installer:
 
         return list(get_extra_package_names(repo.packages, extras, self._extras))
 
-    def _get_installer(self) -> BaseInstaller:
+    def _get_installer(self) -> "BaseInstaller":
         return PipInstaller(self._env, self._io, self._pool)
 
     def _get_installed(self) -> InstalledRepository:

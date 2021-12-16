@@ -5,6 +5,7 @@ import tarfile
 import zipfile
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -16,14 +17,18 @@ import pkginfo
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
+
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages.project_package import ProjectPackage
 
 
 logger = logging.getLogger(__name__)
@@ -44,9 +49,7 @@ class PackageInfoError(ValueError):
     def __init__(
         self, path: Union[Path, str], *reasons: Union[BaseException, str]
     ) -> None:
-        reasons = (
-            "Unable to determine package info for path: {}".format(str(path)),
-        ) + reasons
+        reasons = (f"Unable to determine package info for path: {path!s}",) + reasons
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
 
@@ -175,8 +178,8 @@ class PackageInfo:
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 self._log(
-                    "Invalid constraint ({}) found in {}-{} dependencies, "
-                    "skipping".format(req, package.name, package.version),
+                    f"Invalid constraint ({req}) found in {package.name}-{package.version} dependencies, "
+                    "skipping",
                     level="warning",
                 )
                 continue
@@ -428,7 +431,7 @@ class PackageInfo:
         )
 
     @staticmethod
-    def _get_poetry_package(path: Path) -> Optional[ProjectPackage]:
+    def _get_poetry_package(path: Path) -> Optional["ProjectPackage"]:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
@@ -457,6 +460,10 @@ class PackageInfo:
             dest_dir = venv.path.parent / "dist"
             dest_dir.mkdir()
 
+            pep517_meta_build_script = PEP517_META_BUILD.format(
+                source=path.as_posix(), dest=dest_dir.as_posix()
+            )
+
             try:
                 venv.run_pip(
                     "install",
@@ -467,9 +474,7 @@ class PackageInfo:
                 venv.run(
                     "python",
                     "-",
-                    input_=PEP517_META_BUILD.format(
-                        source=path.as_posix(), dest=dest_dir.as_posix()
-                    ),
+                    input_=pep517_meta_build_script,
                 )
                 return cls.from_metadata(dest_dir)
             except EnvCommandError as e:

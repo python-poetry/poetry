@@ -15,31 +15,30 @@ from typing import List
 from typing import Optional
 from urllib.parse import quote
 
-import requests
 import requests.auth
+import requests.exceptions
 
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
-
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
+
+from poetry.config.config import Config
+from poetry.inspection.info import PackageInfo
 from poetry.locations import REPOSITORY_CACHE_DIR
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import RepositoryError
+from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
-
-from ..config.config import Config
-from ..inspection.info import PackageInfo
-from ..utils.authenticator import Authenticator
-from .exceptions import PackageNotFound
-from .exceptions import RepositoryError
-from .pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
@@ -146,7 +145,7 @@ class Page:
         """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
         the link, it will be rewritten to %20 (while not over-quoting
         % or other characters)."""
-        return self._clean_re.sub(lambda match: "%%%2x" % ord(match.group(0)), url)
+        return self._clean_re.sub(lambda match: f"%{match.group(0):2x}", url)
 
 
 # TODO: revisit whether the LegacyRepository should inherit from PyPiRepository.
@@ -218,14 +217,10 @@ class LegacyRepository(PyPiRepository):
             return self.url
 
         parsed = urllib.parse.urlparse(self.url)
+        username = quote(self._session.auth.username, safe="")
+        password = quote(self._session.auth.password, safe="")
 
-        return "{scheme}://{username}:{password}@{netloc}{path}".format(
-            scheme=parsed.scheme,
-            username=quote(self._session.auth.username, safe=""),
-            password=quote(self._session.auth.password, safe=""),
-            netloc=parsed.netloc,
-            path=parsed.path,
-        )
+        return f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
 
     def find_packages(self, dependency: "Dependency") -> List[Package]:
         packages = []
@@ -238,25 +233,24 @@ class LegacyRepository(PyPiRepository):
             constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange):
-            if (
-                constraint.max is not None
-                and constraint.max.is_unstable()
-                or constraint.min is not None
-                and constraint.min.is_unstable()
-            ):
-                allow_prereleases = True
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
 
         key = dependency.name
         if not constraint.is_any():
-            key = "{}:{}".format(key, str(constraint))
+            key = f"{key}:{constraint!s}"
 
         ignored_pre_release_versions = []
 
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get_page("/{}/".format(dependency.name.replace(".", "-")))
+            page = self._get_page(f"/{dependency.name.replace('.', '-')}/")
             if page is None:
                 return []
 
@@ -286,9 +280,7 @@ class LegacyRepository(PyPiRepository):
                 packages.append(package)
 
             self._log(
-                "{} packages found for {} {}".format(
-                    len(packages), dependency.name, str(constraint)
-                ),
+                f"{len(packages)} packages found for {dependency.name} {constraint!s}",
                 level="debug",
             )
 
@@ -325,14 +317,14 @@ class LegacyRepository(PyPiRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> List[Link]:
-        page = self._get_page("/{}/".format(package.name.replace(".", "-")))
+        page = self._get_page(f"/{package.name.replace('.', '-')}/")
         if page is None:
             return []
 
         return list(page.links_for_version(package.version))
 
     def _get_release_info(self, name: str, version: str) -> dict:
-        page = self._get_page("/{}/".format(canonicalize_name(name).replace(".", "-")))
+        page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
@@ -350,9 +342,7 @@ class LegacyRepository(PyPiRepository):
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
             raise PackageNotFound(
-                'No valid distribution links found for package: "{}" version: "{}"'.format(
-                    name, version
-                )
+                f'No valid distribution links found for package: "{name}" version: "{version}"'
             )
         urls = defaultdict(list)
         files = []
@@ -390,9 +380,7 @@ class LegacyRepository(PyPiRepository):
                             required_hash.update(chunk)
 
                     if not known_hash or known_hash.hexdigest() == link.hash:
-                        file_hash = "{}:{}".format(
-                            required_hash.name, required_hash.hexdigest()
-                        )
+                        file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
 
             files.append({"file": link.filename, "hash": file_hash})
 
@@ -419,18 +407,16 @@ class LegacyRepository(PyPiRepository):
             if response.status_code == 404:
                 return None
             response.raise_for_status()
-        except requests.HTTPError as e:
+        except requests.exceptions.HTTPError as e:
             raise RepositoryError(e)
 
         if response.url != url:
             self._log(
-                "Response URL {response_url} differs from request URL {url}".format(
-                    response_url=response.url, url=url
-                ),
+                f"Response URL {response.url} differs from request URL {url}",
                 level="debug",
             )
 
         return Page(response.url, response.content, response.headers)
 
-    def _download(self, url, dest):  # type: (str, str) -> None
+    def _download(self, url: str, dest: str) -> None:
         return download_file(url, dest, session=self.session)

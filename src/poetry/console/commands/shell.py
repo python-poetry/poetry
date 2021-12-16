@@ -3,7 +3,7 @@ import sys
 from distutils.util import strtobool
 from os import environ
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 class ShellCommand(EnvCommand):
@@ -25,13 +25,12 @@ If one doesn't exist yet, it will be created.
         ) == str(self.env.path)
         if venv_activated:
             self.line(
-                "Virtual environment already activated: "
-                "<info>{}</>".format(self.env.path)
+                f"Virtual environment already activated: <info>{self.env.path}</>"
             )
 
             return
 
-        self.line("Spawning shell within <info>{}</>".format(self.env.path))
+        self.line(f"Spawning shell within <info>{self.env.path}</>")
 
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"

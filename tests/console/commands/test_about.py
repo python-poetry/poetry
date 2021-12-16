@@ -1,12 +1,20 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("about")
 
 
-def test_about(tester):
+def test_about(tester: "CommandTester"):
     tester.execute()
     expected = """\
 Poetry - Package Management for Python

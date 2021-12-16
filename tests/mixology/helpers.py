@@ -1,11 +1,29 @@
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import List
+from typing import Optional
+
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.version_solver import VersionSolver
 from poetry.packages import DependencyPackage
 
 
-def add_to_repo(repository, name, version, deps=None, python=None):
+if TYPE_CHECKING:
+    from poetry.packages.project_package import ProjectPackage
+    from poetry.repositories import Repository
+    from tests.mixology.version_solver.conftest import Provider
+
+
+def add_to_repo(
+    repository: "Repository",
+    name: str,
+    version: str,
+    deps: Optional[Dict[str, str]] = None,
+    python: Optional[str] = None,
+) -> None:
     package = Package(name, version)
     if python:
         package.python_versions = python
@@ -18,8 +36,14 @@ def add_to_repo(repository, name, version, deps=None, python=None):
 
 
 def check_solver_result(
-    root, provider, result=None, error=None, tries=None, locked=None, use_latest=None
-):
+    root: "ProjectPackage",
+    provider: "Provider",
+    result: Optional[Dict[str, str]] = None,
+    error: Optional[str] = None,
+    tries: Optional[int] = None,
+    locked: Optional[Dict[str, Package]] = None,
+    use_latest: Optional[List[str]] = None,
+) -> None:
     if locked is not None:
         locked = {k: DependencyPackage(l.to_dependency(), l) for k, l in locked.items()}
 

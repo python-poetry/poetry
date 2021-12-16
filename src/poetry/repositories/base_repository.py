@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class BaseRepository:
     def __init__(self) -> None:
-        self._packages: List[Package] = []
+        self._packages: List["Package"] = []
 
     @property
     def packages(self) -> List["Package"]:

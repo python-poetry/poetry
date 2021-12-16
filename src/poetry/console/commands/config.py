@@ -11,7 +11,7 @@ from typing import Tuple
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .command import Command
+from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
@@ -52,6 +52,7 @@ To remove a repository (repo is a short alias for repositories):
 
         from poetry.config.config import boolean_normalizer
         from poetry.config.config import boolean_validator
+        from poetry.config.config import int_normalizer
         from poetry.locations import CACHE_DIR
 
         unique_config_values = {
@@ -87,6 +88,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 True,
             ),
+            "installer.max-workers": (
+                lambda val: int(val) > 0,
+                int_normalizer,
+                None,
+            ),
         }
 
         return unique_config_values
@@ -94,9 +100,10 @@ To remove a repository (repo is a short alias for repositories):
     def handle(self) -> Optional[int]:
         from pathlib import Path
 
-        from poetry.config.file_config_source import FileConfigSource
         from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.core.toml.file import TOMLFile
+
+        from poetry.config.file_config_source import FileConfigSource
         from poetry.factory import Factory
         from poetry.locations import CONFIG_DIR
 
@@ -138,11 +145,9 @@ To remove a repository (repo is a short alias for repositories):
                     if config.get("repositories") is not None:
                         value = config.get("repositories")
                 else:
-                    repo = config.get("repositories.{}".format(m.group(1)))
+                    repo = config.get(f"repositories.{m.group(1)}")
                     if repo is None:
-                        raise ValueError(
-                            "There is no {} repository defined".format(m.group(1))
-                        )
+                        raise ValueError(f"There is no {m.group(1)} repository defined")
 
                     value = repo
 
@@ -150,7 +155,7 @@ To remove a repository (repo is a short alias for repositories):
             else:
                 values = self.unique_config_values
                 if setting_key not in values:
-                    raise ValueError("There is no {} setting.".format(setting_key))
+                    raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
 
@@ -183,24 +188,18 @@ To remove a repository (repo is a short alias for repositories):
                 raise ValueError("You cannot remove the [repositories] section")
 
             if self.option("unset"):
-                repo = config.get("repositories.{}".format(m.group(1)))
+                repo = config.get(f"repositories.{m.group(1)}")
                 if repo is None:
-                    raise ValueError(
-                        "There is no {} repository defined".format(m.group(1))
-                    )
+                    raise ValueError(f"There is no {m.group(1)} repository defined")
 
-                config.config_source.remove_property(
-                    "repositories.{}".format(m.group(1))
-                )
+                config.config_source.remove_property(f"repositories.{m.group(1)}")
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                config.config_source.add_property(
-                    "repositories.{}.url".format(m.group(1)), url
-                )
+                config.config_source.add_property(f"repositories.{m.group(1)}.url", url)
 
                 return 0
 
@@ -231,7 +230,7 @@ To remove a repository (repo is a short alias for repositories):
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "
-                        "(username, password), got {}".format(len(values))
+                        f"(username, password), got {len(values)}"
                     )
                 else:
                     username = values[0]
@@ -241,7 +240,7 @@ To remove a repository (repo is a short alias for repositories):
             elif m.group(1) == "pypi-token":
                 if len(values) != 1:
                     raise ValueError(
-                        "Expected only one argument (token), got {}".format(len(values))
+                        f"Expected only one argument (token), got {len(values)}"
                     )
 
                 token = values[0]
@@ -257,21 +256,21 @@ To remove a repository (repo is a short alias for repositories):
         if m:
             if self.option("unset"):
                 config.auth_config_source.remove_property(
-                    "certificates.{}.{}".format(m.group(1), m.group(2))
+                    f"certificates.{m.group(1)}.{m.group(2)}"
                 )
 
                 return 0
 
             if len(values) == 1:
                 config.auth_config_source.add_property(
-                    "certificates.{}.{}".format(m.group(1), m.group(2)), values[0]
+                    f"certificates.{m.group(1)}.{m.group(2)}", values[0]
                 )
             else:
                 raise ValueError("You must pass exactly 1 value")
 
             return 0
 
-        raise ValueError("Setting {} does not exist".format(self.argument("key")))
+        raise ValueError(f"Setting {self.argument('key')} does not exist")
 
     def _handle_single_value(
         self,
@@ -287,7 +286,7 @@ To remove a repository (repo is a short alias for repositories):
 
         value = values[0]
         if not validator(value):
-            raise RuntimeError('"{}" is an invalid value for {}'.format(value, key))
+            raise RuntimeError(f'"{value}" is an invalid value for {key}')
 
         source.add_property(key, normalizer(value))
 
@@ -302,28 +301,25 @@ To remove a repository (repo is a short alias for repositories):
             raw_val = raw.get(key)
 
             if isinstance(value, dict):
-                k += "{}.".format(key)
+                k += f"{key}."
                 self._list_configuration(value, raw_val, k=k)
                 k = orig_k
 
                 continue
             elif isinstance(value, list):
-                value = [
+                value = ", ".join(
                     json.dumps(val) if isinstance(val, list) else val for val in value
-                ]
-
-                value = "[{}]".format(", ".join(value))
+                )
+                value = f"[{value}]"
 
             if k.startswith("repositories."):
-                message = "<c1>{}</c1> = <c2>{}</c2>".format(
-                    k + key, json.dumps(raw_val)
-                )
+                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>"
             elif isinstance(raw_val, str) and raw_val != value:
-                message = "<c1>{}</c1> = <c2>{}</c2>  # {}".format(
-                    k + key, json.dumps(raw_val), value
+                message = (
+                    f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>  # {value}"
                 )
             else:
-                message = "<c1>{}</c1> = <c2>{}</c2>".format(k + key, json.dumps(value))
+                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
 
             self.line(message)
 
@@ -362,12 +358,11 @@ To remove a repository (repo is a short alias for repositories):
                     continue
 
                 if isinstance(value, list):
-                    value = [
+                    value = ", ".join(
                         json.dumps(val) if isinstance(val, list) else val
                         for val in value
-                    ]
-
-                    value = "[{}]".format(", ".join(value))
+                    )
+                    value = f"[{value}]"
 
                 value = json.dumps(value)
 

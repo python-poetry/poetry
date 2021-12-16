@@ -3,16 +3,23 @@ import shutil
 
 from io import BytesIO
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Optional
 
 import pytest
 
+from poetry.core.packages.dependency import Dependency
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import encode
+
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 class MockRepository(PyPiRepository):
@@ -20,12 +27,10 @@ class MockRepository(PyPiRepository):
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
-    def __init__(self, fallback=False):
-        super(MockRepository, self).__init__(
-            url="http://foo.bar", disable_cache=True, fallback=fallback
-        )
+    def __init__(self, fallback: bool = False):
+        super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
-    def _get(self, url):
+    def _get(self, url: str) -> Optional[Dict]:
         parts = url.split("/")[1:]
         name = parts[0]
         if len(parts) == 3:
@@ -46,7 +51,7 @@ class MockRepository(PyPiRepository):
         with fixture.open(encoding="utf-8") as f:
             return json.loads(f.read())
 
-    def _download(self, url, dest):
+    def _download(self, url: str, dest: Path) -> None:
         filename = url.split("/")[-1]
 
         fixture = self.DIST_FIXTURES / filename
@@ -75,8 +80,10 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed():
     assert len(packages) == 1
 
 
-@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
-def test_find_packages_only_prereleases(constraint, count):
+@pytest.mark.parametrize(
+    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+)
+def test_find_packages_only_prereleases(constraint: str, count: int):
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
@@ -111,7 +118,7 @@ def test_fallback_on_downloading_packages():
     assert package.name == "jupyter"
     assert len(package.requires) == 6
 
-    dependency_names = sorted([dep.name for dep in package.requires])
+    dependency_names = sorted(dep.name for dep in package.requires)
     assert dependency_names == [
         "ipykernel",
         "ipywidgets",
@@ -163,9 +170,9 @@ def test_pypi_repository_supports_reading_bz2_files():
     package = repo.package("twisted", "18.9.0")
 
     assert package.name == "twisted"
-    assert 71 == len(package.requires)
+    assert len(package.requires) == 71
     assert sorted(
-        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+        (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
         Dependency("attrs", ">=17.4.0"),
         Dependency("Automat", ">=0.3.0"),
@@ -206,7 +213,7 @@ def test_invalid_versions_ignored():
     assert len(packages) == 1
 
 
-def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
+def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: "MockerFixture"):
     delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
 
     response = Response()
@@ -225,8 +232,8 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
 def test_urls():
     repository = PyPiRepository()
 
-    assert "https://pypi.org/simple/" == repository.url
-    assert "https://pypi.org/simple/" == repository.authenticated_url
+    assert repository.url == "https://pypi.org/simple/"
+    assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
 def test_use_pypi_pretty_name():

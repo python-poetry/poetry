@@ -1,20 +1,26 @@
 import os
 import sys
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Union
 
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path
+
 from poetry.exceptions import PoetryException
-from poetry.utils.env import Env
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from poetry.utils.env import Env
+
+
 def pip_install(
-    path: Union[Path, Link],
-    environment: Env,
+    path: Union["Path", Link],
+    environment: "Env",
     editable: bool = False,
     deps: bool = False,
     upgrade: bool = False,
@@ -63,7 +69,7 @@ def pip_install(
 
 
 def pip_editable_install(
-    directory: Union[Path, Link], environment: Env
+    directory: Union["Path", Link], environment: "Env"
 ) -> Union[int, str]:
     return pip_install(
         path=directory, environment=environment, editable=True, deps=False, upgrade=True

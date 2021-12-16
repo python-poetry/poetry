@@ -1,5 +1,6 @@
 import logging
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
@@ -60,9 +61,7 @@ class KeyRing:
             keyring.set_password(name, username, password)
         except (RuntimeError, keyring.errors.KeyringError) as e:
             raise KeyRingError(
-                "Unable to store the password for {} in the key ring: {}".format(
-                    name, str(e)
-                )
+                f"Unable to store the password for {name} in the key ring: {e}"
             )
 
     def delete_password(self, name: str, username: str) -> None:
@@ -88,7 +87,7 @@ class KeyRing:
         try:
             import keyring
         except Exception as e:
-            logger.debug("An error occurred while importing keyring: {}".format(str(e)))
+            logger.debug(f"An error occurred while importing keyring: {e!s}")
             self._is_available = False
 
             return
@@ -185,9 +184,7 @@ class PasswordManager:
         if not auth or "username" not in auth:
             return
 
-        try:
+        with suppress(KeyRingError):
             self.keyring.delete_password(name, auth["username"])
-        except KeyRingError:
-            pass
 
         self._config.auth_config_source.remove_property(f"http-basic.{name}")

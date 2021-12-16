@@ -1,11 +1,12 @@
 import logging
 
+from typing import Any
 from typing import List
 
 import entrypoints
 
-from .application_plugin import ApplicationPlugin
-from .plugin import Plugin
+from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.plugins.plugin import Plugin
 
 
 logger = logging.getLogger(__name__)
@@ -16,12 +17,12 @@ class PluginManager:
     This class registers and activates plugins.
     """
 
-    def __init__(self, type, disable_plugins=False):  # type: (str, bool) -> None
+    def __init__(self, type: str, disable_plugins: bool = False) -> None:
         self._type = type
         self._disable_plugins = disable_plugins
         self._plugins: List[Plugin] = []
 
-    def load_plugins(self):  # type: () -> None
+    def load_plugins(self) -> None:
         if self._disable_plugins:
             return
 
@@ -33,7 +34,7 @@ class PluginManager:
     def get_plugin_entry_points(self) -> List[entrypoints.EntryPoint]:
         return entrypoints.get_group_all(f"poetry.{self._type}")
 
-    def add_plugin(self, plugin):  # type: (Plugin) -> None
+    def add_plugin(self, plugin: Plugin) -> None:
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):
             raise ValueError(
                 "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
@@ -41,13 +42,11 @@ class PluginManager:
 
         self._plugins.append(plugin)
 
-    def activate(self, *args, **kwargs):
+    def activate(self, *args: Any, **kwargs: Any) -> None:
         for plugin in self._plugins:
             plugin.activate(*args, **kwargs)
 
-    def _load_plugin_entrypoint(
-        self, entrypoint
-    ):  # type: (entrypoints.EntryPoint) -> None
+    def _load_plugin_entrypoint(self, entrypoint: entrypoints.EntryPoint) -> None:
         logger.debug(f"Loading the {entrypoint.name} plugin")
 
         plugin = entrypoint.load()

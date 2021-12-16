@@ -4,13 +4,12 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from cleo.io.io import IO
 from cleo.io.null_io import NullIO
+from poetry.core.factory import Factory as BaseFactory
+from poetry.core.toml.file import TOMLFile
 
 from poetry.config.config import Config
 from poetry.config.file_config_source import FileConfigSource
-from poetry.core.factory import Factory as BaseFactory
-from poetry.core.toml.file import TOMLFile
 from poetry.locations import CONFIG_DIR
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
@@ -19,7 +18,9 @@ from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
-    from .repositories.legacy_repository import LegacyRepository
+    from cleo.io.io import IO
+
+    from poetry.repositories.legacy_repository import LegacyRepository
 
 
 class Factory(BaseFactory):
@@ -30,13 +31,13 @@ class Factory(BaseFactory):
     def create_poetry(
         self,
         cwd: Optional[Path] = None,
-        io: Optional[IO] = None,
+        io: Optional["IO"] = None,
         disable_plugins: bool = False,
     ) -> Poetry:
         if io is None:
             io = NullIO()
 
-        base_poetry = super(Factory, self).create_poetry(cwd)
+        base_poetry = super().create_poetry(cwd)
 
         locker = Locker(
             base_poetry.file.parent / "poetry.lock", base_poetry.local_config
@@ -49,9 +50,7 @@ class Factory(BaseFactory):
         local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
-                io.write_line(
-                    "Loading configuration file {}".format(local_config_file.path)
-                )
+                io.write_line(f"Loading configuration file {local_config_file.path}")
 
             config.merge(local_config_file.read())
 
@@ -61,9 +60,8 @@ class Factory(BaseFactory):
         for source in base_poetry.pyproject.poetry_config.get("source", []):
             name = source.get("name")
             url = source.get("url")
-            if name and url:
-                if name not in existing_repositories:
-                    repositories[name] = {"url": url}
+            if name and url and name not in existing_repositories:
+                repositories[name] = {"url": url}
 
         config.merge({"repositories": repositories})
 
@@ -92,7 +90,7 @@ class Factory(BaseFactory):
         return ProjectPackage(name, version, version)
 
     @classmethod
-    def create_config(cls, io: Optional[IO] = None) -> Config:
+    def create_config(cls, io: Optional["IO"] = None) -> Config:
         if io is None:
             io = NullIO()
 
@@ -102,9 +100,7 @@ class Factory(BaseFactory):
         if config_file.exists():
             if io.is_debug():
                 io.write_line(
-                    "<debug>Loading configuration file {}</debug>".format(
-                        config_file.path
-                    )
+                    f"<debug>Loading configuration file {config_file.path}</debug>"
                 )
 
             config.merge(config_file.read())
@@ -116,9 +112,7 @@ class Factory(BaseFactory):
         if auth_config_file.exists():
             if io.is_debug():
                 io.write_line(
-                    "<debug>Loading configuration file {}</debug>".format(
-                        auth_config_file.path
-                    )
+                    f"<debug>Loading configuration file {auth_config_file.path}</debug>"
                 )
 
             config.merge(auth_config_file.read())
@@ -129,16 +123,14 @@ class Factory(BaseFactory):
 
     @classmethod
     def configure_sources(
-        cls, poetry: "Poetry", sources: List[Dict[str, str]], config: "Config", io: "IO"
+        cls, poetry: Poetry, sources: List[Dict[str, str]], config: Config, io: "IO"
     ) -> None:
         for source in sources:
             repository = cls.create_legacy_repository(source, config)
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
             if io.is_debug():
-                message = "Adding repository {} ({})".format(
-                    repository.name, repository.url
-                )
+                message = f"Adding repository {repository.name} ({repository.url})"
                 if is_default:
                     message += " and setting it as the default one"
                 elif is_secondary:
@@ -164,9 +156,9 @@ class Factory(BaseFactory):
     def create_legacy_repository(
         cls, source: Dict[str, str], auth_config: Config
     ) -> "LegacyRepository":
-        from .repositories.legacy_repository import LegacyRepository
-        from .utils.helpers import get_cert
-        from .utils.helpers import get_client_cert
+        from poetry.repositories.legacy_repository import LegacyRepository
+        from poetry.utils.helpers import get_cert
+        from poetry.utils.helpers import get_client_cert
 
         if "url" in source:
             # PyPI-like repository
@@ -187,9 +179,7 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_pyproject_from_package(
-        cls, package: "ProjectPackage", path: "Path"
-    ) -> None:
+    def create_pyproject_from_package(cls, package: ProjectPackage, path: Path) -> None:
         import tomlkit
 
         from poetry.layouts.layout import POETRY_DEFAULT
@@ -221,7 +211,7 @@ class Factory(BaseFactory):
                 constraint["markers"] = str(dep.marker)
 
             if dep.extras:
-                constraint["extras"] = list(sorted(dep.extras))
+                constraint["extras"] = sorted(dep.extras)
 
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]

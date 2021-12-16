@@ -1,9 +1,13 @@
 import re
 
+from typing import TYPE_CHECKING
 from typing import List
 
 from crashtest.contracts.has_solutions_for_exception import HasSolutionsForException
-from crashtest.contracts.solution import Solution
+
+
+if TYPE_CHECKING:
+    from crashtest.contracts.solution import Solution
 
 
 class PythonRequirementSolutionProvider(HasSolutionsForException):
@@ -24,7 +28,9 @@ class PythonRequirementSolutionProvider(HasSolutionsForException):
 
         return True
 
-    def get_solutions(self, exception: Exception) -> List[Solution]:
-        from ..solutions.python_requirement_solution import PythonRequirementSolution
+    def get_solutions(self, exception: Exception) -> List["Solution"]:
+        from poetry.mixology.solutions.solutions.python_requirement_solution import (
+            PythonRequirementSolution,
+        )
 
         return [PythonRequirementSolution(exception)]

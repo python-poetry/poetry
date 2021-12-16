@@ -2,15 +2,16 @@ from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 
-from .assignment import Assignment
-from .incompatibility import Incompatibility
-from .set_relation import SetRelation
-from .term import Term
+from poetry.mixology.assignment import Assignment
+from poetry.mixology.set_relation import SetRelation
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+
+    from poetry.mixology.incompatibility import Incompatibility
+    from poetry.mixology.term import Term
 
 
 class PartialSolution:
@@ -28,13 +29,13 @@ class PartialSolution:
         self._assignments: List[Assignment] = []
 
         # The decisions made for each package.
-        self._decisions: Dict[str, "Package"] = dict()
+        self._decisions: Dict[str, "Package"] = {}
 
         # The intersection of all positive Assignments for each package, minus any
         # negative Assignments that refer to that package.
         #
         # This is derived from self._assignments.
-        self._positive: Dict[str, Term] = dict()
+        self._positive: Dict[str, "Term"] = {}
 
         # The union of all negative Assignments for each package.
         #
@@ -42,7 +43,7 @@ class PartialSolution:
         # map.
         #
         # This is derived from self._assignments.
-        self._negative: Dict[str, Dict[str, Term]] = dict()
+        self._negative: Dict[str, Dict[str, "Term"]] = {}
 
         # The number of distinct solutions that have been attempted so far.
         self._attempted_solutions = 1
@@ -90,7 +91,7 @@ class PartialSolution:
         )
 
     def derive(
-        self, dependency: "Dependency", is_positive: bool, cause: Incompatibility
+        self, dependency: "Dependency", is_positive: bool, cause: "Incompatibility"
     ) -> None:
         """
         Adds an assignment of package as a derivation.
@@ -168,7 +169,7 @@ class PartialSolution:
 
             self._negative[name][ref] = term
 
-    def satisfier(self, term: Term) -> Assignment:
+    def satisfier(self, term: "Term") -> Assignment:
         """
         Returns the first Assignment in this solution such that the sublist of
         assignments up to and including that entry collectively satisfies term.
@@ -201,10 +202,10 @@ class PartialSolution:
 
         raise RuntimeError(f"[BUG] {term} is not satisfied.")
 
-    def satisfies(self, term: Term) -> bool:
+    def satisfies(self, term: "Term") -> bool:
         return self.relation(term) == SetRelation.SUBSET
 
-    def relation(self, term: Term) -> int:
+    def relation(self, term: "Term") -> int:
         positive = self._positive.get(term.dependency.complete_name)
         if positive is not None:
             return positive.relation(term)

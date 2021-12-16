@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import ContextManager
 from typing import Dict
@@ -29,19 +30,16 @@ import packaging.tags
 import tomlkit
 import virtualenv
 
-from cleo.io.io import IO
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-from virtualenv.seed.wheels.embed import get_embed_wheel
-
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
-from poetry.core.version.markers import BaseMarker
+from virtualenv.seed.wheels.embed import get_embed_wheel
+
 from poetry.locations import CACHE_DIR
-from poetry.poetry import Poetry
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
@@ -49,6 +47,13 @@ from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import temporary_directory
+
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO
+    from poetry.core.version.markers import BaseMarker
+
+    from poetry.poetry import Poetry
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -78,7 +83,6 @@ def interpreter_version():
 
 
 def _version_nodot(version):
-    # type: (PythonVersion) -> str
     if any(v >= 10 for v in version):
         sep = "_"
     else:
@@ -161,7 +165,7 @@ import json
 import site
 import sysconfig
 
-from distutils.command.install import SCHEME_KEYS  # noqa
+from distutils.command.install import SCHEME_KEYS
 from distutils.core import Distribution
 
 d = Distribution()
@@ -250,19 +254,16 @@ class SitePackages:
                 except ValueError:
                     pass
             else:
+                site_type = "writable " if writable_only else ""
                 raise ValueError(
-                    "{} is not relative to any discovered {}sites".format(
-                        path, "writable " if writable_only else ""
-                    )
+                    f"{path} is not relative to any discovered {site_type}sites"
                 )
 
         results = [candidate / path for candidate in candidates if candidate]
 
         if not results and strict:
             raise RuntimeError(
-                'Unable to find a suitable destination for "{}" in {}'.format(
-                    str(path), paths_csv(self._candidates)
-                )
+                f'Unable to find a suitable destination for "{path}" in {paths_csv(self._candidates)}'
             )
 
         return results
@@ -275,10 +276,8 @@ class SitePackages:
                 str, self._candidates if not writable_only else self.writable_candidates
             )
         )
-        for distribution in metadata.PathDistribution.discover(
-            name=name, path=path
-        ):  # type: metadata.PathDistribution
-            yield distribution
+
+        yield from metadata.PathDistribution.discover(name=name, path=path)
 
     def find_distribution(
         self, name: str, writable_only: bool = False
@@ -376,7 +375,7 @@ class SitePackages:
         if results:
             return results
 
-        raise OSError("Unable to access any of {}".format(paths_csv(candidates)))
+        raise OSError(f"Unable to access any of {paths_csv(candidates)}")
 
     def write_text(self, path: Union[str, Path], *args: Any, **kwargs: Any) -> Path:
         return self._path_method_wrapper(path, "write_text", *args, **kwargs)[0]
@@ -419,9 +418,7 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: Optional[str] = None) -> None:
         self.e = e
 
-        message = "Command {} errored with the following return code {}, and output: \n{}".format(
-            e.cmd, e.returncode, decode(e.output)
-        )
+        message = f"Command {e.cmd} errored with the following return code {e.returncode}, and output: \n{decode(e.output)}"
         if input:
             message += f"input was : {input}"
         super().__init__(message)
@@ -431,11 +428,11 @@ class NoCompatiblePythonVersionFound(EnvError):
     def __init__(self, expected: str, given: Optional[str] = None) -> None:
         if given:
             message = (
-                "The specified Python version ({}) "
-                "is not supported by the project ({}).\n"
+                f"The specified Python version ({given}) "
+                f"is not supported by the project ({expected}).\n"
                 "Please choose a compatible version "
                 "or loosen the python constraint specified "
-                "in the pyproject.toml file.".format(given, expected)
+                "in the pyproject.toml file."
             )
         else:
             message = (
@@ -456,10 +453,10 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry) -> None:
+    def __init__(self, poetry: "Poetry") -> None:
         self._poetry = poetry
 
-    def activate(self, python: str, io: IO) -> "Env":
+    def activate(self, python: str, io: "IO") -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -556,7 +553,7 @@ class EnvManager:
 
         return self.get(reload=True)
 
-    def deactivate(self, io: IO) -> None:
+    def deactivate(self, io: "IO") -> None:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -571,11 +568,8 @@ class EnvManager:
             envs = envs_file.read()
             env = envs.get(name)
             if env is not None:
-                io.write_line(
-                    "Deactivating virtualenv: <comment>{}</comment>".format(
-                        venv_path / (name + "-py{}".format(env["minor"]))
-                    )
-                )
+                venv = venv_path / f"{name}-py{env['minor']}"
+                io.write_line(f"Deactivating virtualenv: <comment>{venv}</comment>")
                 del envs[name]
 
                 envs_file.write(envs)
@@ -613,11 +607,14 @@ class EnvManager:
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if self._poetry.config.get("virtualenvs.in-project") is not False:
-                if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
-                    venv = cwd / ".venv"
+            if (
+                self._poetry.config.get("virtualenvs.in-project") is not False
+                and (cwd / ".venv").exists()
+                and (cwd / ".venv").is_dir()
+            ):
+                venv = cwd / ".venv"
 
-                    return VirtualEnv(venv)
+                return VirtualEnv(venv)
 
             create_venv = self._poetry.config.get("virtualenvs.create", True)
 
@@ -766,7 +763,7 @@ class EnvManager:
 
     def create_venv(
         self,
-        io: IO,
+        io: "IO",
         name: Optional[str] = None,
         executable: Optional[str] = None,
         force: bool = False,
@@ -829,18 +826,15 @@ class EnvManager:
                 )
 
             io.write_line(
-                "<warning>The currently activated Python version {} "
-                "is not supported by the project ({}).\n"
-                "Trying to find and use a compatible version.</warning> ".format(
-                    python_patch, self._poetry.package.python_versions
-                )
+                f"<warning>The currently activated Python version {python_patch} "
+                f"is not supported by the project ({self._poetry.package.python_versions}).\n"
+                "Trying to find and use a compatible version.</warning> "
             )
 
-            for python_to_try in reversed(
-                sorted(
-                    self._poetry.package.AVAILABLE_PYTHONS,
-                    key=lambda v: (v.startswith("3"), -len(v), v),
-                )
+            for python_to_try in sorted(
+                self._poetry.package.AVAILABLE_PYTHONS,
+                key=lambda v: (v.startswith("3"), -len(v), v),
+                reverse=True,
             ):
                 if len(python_to_try) == 1:
                     if not parse_constraint(f"^{python_to_try}.0").allows_any(
@@ -906,21 +900,15 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_line(
-                "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
-            )
+            io.write_line(f"Creating virtualenv <c1>{name}</> in {venv_path!s}")
         else:
             create_venv = False
             if force:
                 if not env.is_sane():
                     io.write_line(
-                        "<warning>The virtual environment found in {} seems to be broken.</warning>".format(
-                            env.path
-                        )
+                        f"<warning>The virtual environment found in {env.path} seems to be broken.</warning>"
                     )
-                io.write_line(
-                    "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
-                )
+                io.write_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
                 self.remove_venv(venv)
                 create_venv = True
             elif io.is_very_verbose():
@@ -1072,7 +1060,8 @@ class EnvManager:
     def generate_env_name(cls, name: str, cwd: str) -> str:
         name = name.lower()
         sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
-        h = hashlib.sha256(encode(cwd)).digest()
+        normalized_cwd = os.path.normcase(cwd)
+        h = hashlib.sha256(encode(normalized_cwd)).digest()
         h = base64.urlsafe_b64encode(h).decode()[:8]
 
         return f"{sanitized_name}-{h}"
@@ -1148,11 +1137,9 @@ class Env:
 
     def find_executables(self) -> None:
         python_executables = sorted(
-            [
-                p.name
-                for p in self._bin_dir.glob("python*")
-                if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-            ]
+            p.name
+            for p in self._bin_dir.glob("python*")
+            if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
             executable = python_executables[0]
@@ -1162,11 +1149,9 @@ class Env:
             self._executable = executable
 
         pip_executables = sorted(
-            [
-                p.name
-                for p in self._bin_dir.glob("pip*")
-                if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-            ]
+            p.name
+            for p in self._bin_dir.glob("pip*")
+            if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if pip_executables:
             pip_executable = pip_executables[0]
@@ -1175,9 +1160,9 @@ class Env:
 
             self._pip_executable = pip_executable
 
-    def get_embedded_wheel(self, distribution):
+    def get_embedded_wheel(self, distribution: str) -> Path:
         return get_embed_wheel(
-            distribution, "{}.{}".format(self.version_info[0], self.version_info[1])
+            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         ).path
 
     @property
@@ -1221,7 +1206,7 @@ class Env:
                 self.purelib,
                 self.platlib,
                 fallbacks,
-                skip_write_checks=False if fallbacks else True,
+                skip_write_checks=not fallbacks,
             )
         return self._site_packages
 
@@ -1313,7 +1298,7 @@ class Env:
     def get_paths(self) -> Dict[str, str]:
         raise NotImplementedError()
 
-    def is_valid_for_marker(self, marker: BaseMarker) -> bool:
+    def is_valid_for_marker(self, marker: "BaseMarker") -> bool:
         return marker.validate(self.marker_env)
 
     def is_sane(self) -> bool:
@@ -1468,7 +1453,7 @@ class SystemEnv(Env):
         # to get the proper ones.
         import site
 
-        from distutils.command.install import SCHEME_KEYS  # noqa
+        from distutils.command.install import SCHEME_KEYS
         from distutils.core import Distribution
 
         d = Distribution()
@@ -1496,7 +1481,7 @@ class SystemEnv(Env):
     def get_marker_env(self) -> Dict[str, Any]:
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
-            iver = "{0.major}.{0.minor}.{0.micro}".format(info)
+            iver = f"{info.major}.{info.minor}.{info.micro}"
             kind = info.releaselevel
             if kind != "final":
                 iver += kind[0] + str(info.serial)
@@ -1558,7 +1543,7 @@ class VirtualEnv(Env):
     def get_version_info(self) -> Tuple[int]:
         output = self.run_python_script(GET_PYTHON_VERSION)
 
-        return tuple([int(s) for s in output.strip().split(".")])
+        return tuple(int(s) for s in output.strip().split("."))
 
     def get_python_implementation(self) -> str:
         return self.marker_env["platform_python_implementation"]
@@ -1681,13 +1666,13 @@ class GenericEnv(VirtualEnv):
         patterns = [("python*", "pip*")]
 
         if self._child_env:
-            minor_version = "{}.{}".format(
-                self._child_env.version_info[0], self._child_env.version_info[1]
+            minor_version = (
+                f"{self._child_env.version_info[0]}.{self._child_env.version_info[1]}"
             )
-            major_version = "{}".format(self._child_env.version_info[0])
+            major_version = f"{self._child_env.version_info[0]}"
             patterns = [
-                ("python{}".format(minor_version), "pip{}".format(minor_version)),
-                ("python{}".format(major_version), "pip{}".format(major_version)),
+                (f"python{minor_version}", f"pip{minor_version}"),
+                (f"python{major_version}", f"pip{major_version}"),
             ]
 
         python_executable = None
@@ -1699,11 +1684,9 @@ class GenericEnv(VirtualEnv):
 
             if not python_executable:
                 python_executables = sorted(
-                    [
-                        p.name
-                        for p in self._bin_dir.glob(python_pattern)
-                        if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                    ]
+                    p.name
+                    for p in self._bin_dir.glob(python_pattern)
+                    if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
                 )
 
                 if python_executables:
@@ -1715,18 +1698,14 @@ class GenericEnv(VirtualEnv):
 
             if not pip_executable:
                 pip_executables = sorted(
-                    [
-                        p.name
-                        for p in self._bin_dir.glob(pip_pattern)
-                        if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                    ]
+                    p.name
+                    for p in self._bin_dir.glob(pip_pattern)
+                    if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
                 )
                 if pip_executables:
                     pip_executable = pip_executables[0]
                     if pip_executable.endswith(".exe"):
                         pip_executable = pip_executable[:-4]
-
-                    pip_executable = pip_executable
 
             if python_executable:
                 self._executable = python_executable
@@ -1796,7 +1775,7 @@ class NullEnv(SystemEnv):
 
 @contextmanager
 def ephemeral_environment(
-    executable=None,
+    executable: Optional[Union[str, Path]] = None,
     flags: Dict[str, bool] = None,
     with_pip: bool = False,
     with_wheel: Optional[bool] = None,

@@ -3,6 +3,7 @@ import signal
 import sys
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Optional
 
@@ -12,8 +13,11 @@ from cleo.terminal import Terminal
 from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
-from ._compat import WINDOWS
-from .env import VirtualEnv
+from poetry.utils._compat import WINDOWS
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env import VirtualEnv
 
 
 class Shell:
@@ -62,7 +66,7 @@ class Shell:
 
         return cls._shell
 
-    def activate(self, env: VirtualEnv) -> Optional[int]:
+    def activate(self, env: "VirtualEnv") -> Optional[int]:
         if WINDOWS:
             return env.execute(self.path)
 
@@ -80,9 +84,7 @@ class Shell:
         activate_script = self._get_activate_script()
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script
-        c.sendline(
-            "{} {}".format(self._get_source_command(), shlex.quote(str(activate_path)))
-        )
+        c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
 
         def resize(sig: Any, data: Any) -> None:
             terminal = Terminal()
@@ -97,11 +99,9 @@ class Shell:
         sys.exit(c.exitstatus)
 
     def _get_activate_script(self) -> str:
-        if "fish" == self._name:
+        if self._name == "fish":
             suffix = ".fish"
-        elif "csh" == self._name:
-            suffix = ".csh"
-        elif "tcsh" == self._name:
+        elif self._name in ("csh", "tcsh"):
             suffix = ".csh"
         else:
             suffix = ""
@@ -109,13 +109,8 @@ class Shell:
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if "fish" == self._name:
+        if self._name in ("fish", "csh", "tcsh"):
             return "source"
-        elif "csh" == self._name:
-            return "source"
-        elif "tcsh" == self._name:
-            return "source"
-
         return "."
 
     def __repr__(self) -> str:

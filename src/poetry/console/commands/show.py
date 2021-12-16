@@ -6,14 +6,14 @@ from typing import Union
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
-    from cleo.io.io import IO  # noqa
-
+    from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+
     from poetry.packages.project_package import ProjectPackage
     from poetry.repositories import Repository
     from poetry.repositories.installed_repository import InstalledRepository
@@ -163,7 +163,7 @@ lists all packages available."""
         with solver.use_environment(self.env):
             ops = solver.solve().calculate_operations()
 
-        required_locked_packages = set([op.package for op in ops if not op.skipped])
+        required_locked_packages = {op.package for op in ops if not op.skipped}
 
         if package:
             pkg = None
@@ -173,7 +173,7 @@ lists all packages available."""
                     break
 
             if not pkg:
-                raise ValueError("Package {} not found".format(package))
+                raise ValueError(f"Package {package} not found")
 
             if self.option("tree"):
                 self.display_package_tree(self.io, pkg, locked_repo)
@@ -188,9 +188,9 @@ lists all packages available."""
                     required_by[locked.pretty_name] = dependencies[pkg.name]
 
             rows = [
-                ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
-                ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
-                ["<info>description</>", " : {}".format(pkg.description)],
+                ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
+                ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
+                ["<info>description</>", f" : {pkg.description}"],
             ]
 
             table.add_rows(rows)
@@ -201,18 +201,14 @@ lists all packages available."""
                 self.line("<info>dependencies</info>")
                 for dependency in pkg.requires:
                     self.line(
-                        " - <c1>{}</c1> <b>{}</b>".format(
-                            dependency.pretty_name, dependency.pretty_constraint
-                        )
+                        f" - <c1>{dependency.pretty_name}</c1> <b>{dependency.pretty_constraint}</b>"
                     )
 
             if required_by:
                 self.line("")
                 self.line("<info>required by</info>")
                 for parent, requires_version in required_by.items():
-                    self.line(
-                        " - <c1>{}</c1> <b>{}</b>".format(parent, requires_version)
-                    )
+                    self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
 
             return 0
 
@@ -305,16 +301,12 @@ lists all packages available."""
             ):
                 continue
 
-            line = "<fg={}>{:{}}{}</>".format(
-                color, name, name_length - len(install_marker), install_marker
-            )
+            line = f"<fg={color}>{name:{name_length - len(install_marker)}}{install_marker}</>"
             if write_version:
-                line += " <b>{:{}}</b>".format(
-                    get_package_version_display_string(
-                        locked, root=self.poetry.file.parent
-                    ),
-                    version_length,
+                version = get_package_version_display_string(
+                    locked, root=self.poetry.file.parent
                 )
+                line += f" <b>{version:{version_length}}</b>"
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
                 update_status = latest_statuses[locked.pretty_name]
@@ -326,13 +318,10 @@ lists all packages available."""
                     elif update_status == "update-possible":
                         color = "yellow"
 
-                    line += " <fg={}>{:{}}</>".format(
-                        color,
-                        get_package_version_display_string(
-                            latest, root=self.poetry.file.parent
-                        ),
-                        latest_length,
+                    version = get_package_version_display_string(
+                        latest, root=self.poetry.file.parent
                     )
+                    line += f" <fg={color}>{version:{latest_length}}</>"
 
             if write_description:
                 description = locked.description
@@ -351,31 +340,24 @@ lists all packages available."""
     def display_package_tree(
         self, io: "IO", package: "Package", installed_repo: "Repository"
     ) -> None:
-        io.write("<c1>{}</c1>".format(package.pretty_name))
+        io.write(f"<c1>{package.pretty_name}</c1>")
         description = ""
         if package.description:
             description = " " + package.description
 
-        io.write_line(" <b>{}</b>{}".format(package.pretty_version, description))
+        io.write_line(f" <b>{package.pretty_version}</b>{description}")
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
         tree_bar = "├"
-        j = 0
         total = len(dependencies)
-        for dependency in dependencies:
-            j += 1
-            if j == total:
+        for i, dependency in enumerate(dependencies, 1):
+            if i == total:
                 tree_bar = "└"
 
             level = 1
             color = self.colors[level]
-            info = "{tree_bar}── <{color}>{name}</{color}> {constraint}".format(
-                tree_bar=tree_bar,
-                color=color,
-                name=dependency.name,
-                constraint=dependency.pretty_constraint,
-            )
+            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint}"
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
@@ -405,10 +387,8 @@ lists all packages available."""
 
         dependencies = sorted(dependencies, key=lambda x: x.name)
         tree_bar = previous_tree_bar + "   ├"
-        i = 0
         total = len(dependencies)
-        for dependency in dependencies:
-            i += 1
+        for i, dependency in enumerate(dependencies, 1):
             current_tree = packages_in_tree
             if i == total:
                 tree_bar = previous_tree_bar + "   └"
@@ -420,13 +400,7 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = "(circular dependency aborted here)"
 
-            info = "{tree_bar}── <{color}>{name}</{color}> {constraint} {warn}".format(
-                tree_bar=tree_bar,
-                color=color,
-                name=dependency.name,
-                constraint=dependency.pretty_constraint,
-                warn=circular_warn,
-            )
+            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint} {circular_warn}"
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
@@ -481,7 +455,7 @@ lists all packages available."""
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
-        return selector.find_best_candidate(name, ">={}".format(package.pretty_version))
+        return selector.find_best_candidate(name, f">={package.pretty_version}")
 
     def get_update_status(self, latest: "Package", package: "Package") -> str:
         from poetry.core.semver.helpers import parse_constraint

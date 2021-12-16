@@ -1,17 +1,13 @@
 import os
 
-from typing import TYPE_CHECKING
 from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from poetry.console.application import Application
 from poetry.console.commands.command import Command
-
-
-if TYPE_CHECKING:
-    from poetry.console.application import Application  # noqa
-    from poetry.console.commands.remove import RemoveCommand
+from poetry.console.commands.remove import RemoveCommand
 
 
 class PluginRemoveCommand(Command):
@@ -50,10 +46,8 @@ class PluginRemoveCommand(Command):
 
         # From this point forward, all the logic will be deferred to
         # the remove command, by using the global `pyproject.toml` file.
-        application = cast("Application", self.application)
-        remove_command: "RemoveCommand" = cast(
-            "RemoveCommand", application.find("remove")
-        )
+        application = cast(Application, self.application)
+        remove_command: RemoveCommand = cast(RemoveCommand, application.find("remove"))
         # We won't go through the event dispatching done by the application
         # so we need to configure the command manually
         remove_command.set_poetry(Factory().create_poetry(env_dir))

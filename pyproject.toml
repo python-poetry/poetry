@@ -35,35 +35,37 @@ generate-setup-file = false
 python = "^3.6"
 
 poetry-core = "^1.1.0a6"
+cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
+cachy = "^0.3.0"
 cleo = "^1.0.0a4"
 crashtest = "^0.3.0"
-requests = "^2.18"
-cachy = "^0.3.0"
-requests-toolbelt = "^0.9.1"
-cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
-pkginfo = "^1.5"
+dataclasses = { version = "^0.8", python = "<3.7" }
+entrypoints = "^0.3"
 html5lib = "^1.0"
+importlib-metadata = { version = "^1.6.0", python = "<3.8" }
+keyring = ">=21.2.0"
+packaging = "^20.4"
+pexpect = "^4.7.0"
+pkginfo = "^1.5"
+requests = "^2.18"
+requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
-pexpect = "^4.7.0"
-packaging = "^20.4"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
-keyring = ">=21.2.0"
-entrypoints = "^0.3"
-importlib-metadata = {version = "^1.6.0", python = "<3.8"}
-dataclasses = {version = "^0.8", python = "~3.6"}
 
 [tool.poetry.dev-dependencies]
+tox = "^3.18"
 pytest = "^6.2"
 pytest-cov = "^2.8"
 pytest-mock = "^3.5"
-pre-commit = { version = "^2.6", python = "^3.6.1" }
-tox = "^3.18"
 pytest-sugar = "^0.9"
-httpretty = "^1.0"
-zipp = { version = "^3.4", python = "<3.8"}
+pre-commit = { version = "^2.6", python = "^3.6.1" }
 deepdiff = "^5.0"
+httpretty = "^1.0"
+typing-extensions = { version = "^4.0.0", python = "<3.8" }
+zipp = { version = "^3.4", python = "<3.8" }
+flatdict = "^4.0.1"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
@@ -93,7 +95,6 @@ force-exclude = '''
 
 
 [tool.mypy]
-python_version = "3.6"
 check_untyped_defs = true
 ignore_missing_imports = true
 warn_redundant_casts = true
@@ -109,7 +110,6 @@ files = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.poetry',
   'poetry.config.file_config_source',
   'poetry.console.*',
   'poetry.factory.*',
@@ -118,7 +118,6 @@ module = [
   'poetry.layouts.*',
   'poetry.mixology.*',
   'poetry.packages.locker',
-  'poetry.puzzle.*',
   'poetry.repositories.installed_repository',
   'poetry.utils.*'
 ]

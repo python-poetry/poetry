@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .command import Command
+from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
@@ -55,12 +55,10 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             )
 
             if self.option("short"):
-                self.line("{}".format(version))
+                self.line(version.to_string())
             else:
                 self.line(
-                    "Bumping version from <b>{}</> to <fg=green>{}</>".format(
-                        self.poetry.package.pretty_version, version
-                    )
+                    f"Bumping version from <b>{self.poetry.package.pretty_version}</> to <fg=green>{version}</>"
                 )
 
             content = self.poetry.file.read()
@@ -70,12 +68,10 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             self.poetry.file.write(content)
         else:
             if self.option("short"):
-                self.line("{}".format(self.poetry.package.pretty_version))
+                self.line(self.poetry.package.pretty_version)
             else:
                 self.line(
-                    "<comment>{}</> <info>{}</>".format(
-                        self.poetry.package.name, self.poetry.package.pretty_version
-                    )
+                    f"<comment>{self.poetry.package.name}</> <info>{self.poetry.package.pretty_version}</>"
                 )
 
     def increment_version(self, version: str, rule: str) -> "Version":

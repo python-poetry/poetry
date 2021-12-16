@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
-from .base_repository import BaseRepository
+from poetry.repositories.base_repository import BaseRepository
 
 
 if TYPE_CHECKING:
@@ -52,14 +52,13 @@ class Repository(BaseRepository):
             constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange):
-            if (
-                constraint.max is not None
-                and constraint.max.is_unstable()
-                or constraint.min is not None
-                and constraint.min.is_unstable()
-            ):
-                allow_prereleases = True
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
 
         for package in self.packages:
             if dependency.name == package.name:
@@ -85,12 +84,9 @@ class Repository(BaseRepository):
 
     def has_package(self, package: "Package") -> bool:
         package_id = package.unique_name
-
-        for repo_package in self.packages:
-            if package_id == repo_package.unique_name:
-                return True
-
-        return False
+        return any(
+            package_id == repo_package.unique_name for repo_package in self.packages
+        )
 
     def add_package(self, package: "Package") -> None:
         self._packages.append(package)

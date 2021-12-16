@@ -35,11 +35,7 @@ class Authenticator:
 
     def _log(self, message: str, level: str = "debug") -> None:
         if self._io is not None:
-            self._io.write_line(
-                "<{level:s}>{message:s}</{level:s}>".format(
-                    message=message, level=level
-                )
-            )
+            self._io.write_line(f"<{level}>{message}</{level}>")
         else:
             getattr(logger, level, logger.debug)(message)
 

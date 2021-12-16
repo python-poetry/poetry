@@ -2,14 +2,14 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Optional
 
-from .term import Term
+from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
-    from .incompatibility import Incompatibility
+    from poetry.mixology.incompatibility import Incompatibility
 
 
 class Assignment(Term):

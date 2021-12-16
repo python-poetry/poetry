@@ -1,7 +1,16 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Type
 
 import pytest
 
+
+if TYPE_CHECKING:
+    import httpretty
+
+    from cleo.testers.command_tester import CommandTester
+
+    from tests.types import CommandTesterFactory
 
 TESTS_DIRECTORY = Path(__file__).parent.parent.parent
 FIXTURES_DIRECTORY = (
@@ -10,20 +19,17 @@ FIXTURES_DIRECTORY = (
 
 
 @pytest.fixture(autouse=True)
-def mock_search_http_response(http):
+def mock_search_http_response(http: Type["httpretty.httpretty"]) -> None:
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
         http.register_uri("GET", "https://pypi.org/search", f.read())
 
 
 @pytest.fixture
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("search")
 
 
-def test_search(
-    tester,
-    http,
-):
+def test_search(tester: "CommandTester", http: Type["httpretty.httpretty"]):
     tester.execute("sqlalchemy")
 
     expected = """

@@ -5,10 +5,10 @@ from collections import OrderedDict
 
 from setuptools import setup
 
-with io.open("README.rst", "rt", encoding="utf8") as f:
+with open("README.rst", encoding="utf8") as f:
     readme = f.read()
 
-with io.open("flask/__init__.py", "rt", encoding="utf8") as f:
+with open("flask/__init__.py", encoding="utf8") as f:
     version = re.search(r"__version__ = \'(.*?)\'", f.read()).group(1)
 
 setup(

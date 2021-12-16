@@ -1,3 +1,6 @@
+from typing import Dict
+from typing import Optional
+
 import pytest
 
 from poetry.utils import patterns
@@ -32,7 +35,7 @@ from poetry.utils import patterns
         ),
     ],
 )
-def test_wheel_file_re(filename, expected):
+def test_wheel_file_re(filename: str, expected: Dict[str, Optional[str]]):
     match = patterns.wheel_file_re.match(filename)
     groups = match.groupdict()
 

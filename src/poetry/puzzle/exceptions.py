@@ -18,5 +18,5 @@ class OverrideNeeded(Exception):
         self._overrides = overrides
 
     @property
-    def overrides(self) -> Tuple[Dict]:
+    def overrides(self) -> Tuple[Dict, ...]:
         return self._overrides

@@ -6,13 +6,12 @@ from typing import Iterator
 from tomlkit import document
 from tomlkit import table
 
-from .config_source import ConfigSource
+from poetry.config.config_source import ConfigSource
 
 
 if TYPE_CHECKING:
-    from tomlkit.toml_document import TOMLDocument
-
     from poetry.core.toml.file import TOMLFile
+    from tomlkit.toml_document import TOMLDocument
 
 
 class FileConfigSource(ConfigSource):

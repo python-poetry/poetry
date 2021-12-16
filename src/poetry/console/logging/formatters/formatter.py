@@ -1,6 +1,10 @@
-import logging
+from typing import TYPE_CHECKING
 
 
-class Formatter(object):
-    def format(self, record: logging.LogRecord) -> str:
+if TYPE_CHECKING:
+    import logging
+
+
+class Formatter:
+    def format(self, record: "logging.LogRecord") -> str:
         raise NotImplementedError()

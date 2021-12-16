@@ -1,6 +1,8 @@
 import os
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Iterator
 
 import pytest
 
@@ -17,20 +19,35 @@ from tests.helpers import TestLocker
 from tests.helpers import mock_clone
 
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from poetry.poetry import Poetry
+    from poetry.repositories import Repository
+    from tests.conftest import Config
+    from tests.helpers import TestRepository
+
+
 @pytest.fixture()
-def installer():
+def installer() -> NoopInstaller:
     return NoopInstaller()
 
 
 @pytest.fixture
-def env(tmp_dir):
+def env(tmp_dir: str) -> MockEnv:
     path = Path(tmp_dir) / ".venv"
     path.mkdir(parents=True)
     return MockEnv(path=path, is_venv=True)
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed, config, env):
+def setup(
+    mocker: "MockerFixture",
+    installer: NoopInstaller,
+    installed: "Repository",
+    config: "Config",
+    env: MockEnv,
+) -> Iterator[None]:
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -69,12 +86,14 @@ def setup(mocker, installer, installed, config, env):
 
 
 @pytest.fixture
-def project_directory():
+def project_directory() -> str:
     return "simple_project"
 
 
 @pytest.fixture
-def poetry(repo, project_directory, config):
+def poetry(
+    repo: "TestRepository", project_directory: str, config: "Config"
+) -> "Poetry":
     p = Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / project_directory
     )
@@ -96,22 +115,22 @@ def poetry(repo, project_directory, config):
 
 
 @pytest.fixture
-def app(poetry):
+def app(poetry: "Poetry") -> PoetryTestApplication:
     app_ = PoetryTestApplication(poetry)
 
     return app_
 
 
 @pytest.fixture
-def app_tester(app):
+def app_tester(app: PoetryTestApplication) -> ApplicationTester:
     return ApplicationTester(app)
 
 
 @pytest.fixture
-def new_installer_disabled(config):
+def new_installer_disabled(config: "Config") -> None:
     config.merge({"experimental": {"new-installer": False}})
 
 
 @pytest.fixture()
-def executor(poetry, config, env):
+def executor(poetry: "Poetry", config: "Config", env: MockEnv) -> TestExecutor:
     return TestExecutor(env, poetry.pool, config, NullIO())

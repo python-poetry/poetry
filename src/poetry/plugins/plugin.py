@@ -1,4 +1,12 @@
-from .base_plugin import BasePlugin
+from typing import TYPE_CHECKING
+
+from poetry.plugins.base_plugin import BasePlugin
+
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO
+
+    from poetry.poetry import Poetry
 
 
 class Plugin(BasePlugin):
@@ -10,5 +18,5 @@ class Plugin(BasePlugin):
 
     type = "plugin"
 
-    def activate(self, poetry, io):
+    def activate(self, poetry: "Poetry", io: "IO") -> None:
         raise NotImplementedError()

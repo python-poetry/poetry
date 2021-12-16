@@ -1,7 +1,7 @@
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from ..command import Command
+from poetry.console.commands.command import Command
 
 
 class EnvRemoveCommand(Command):
@@ -38,8 +38,8 @@ class EnvRemoveCommand(Command):
         # TODO: refactor env.py to allow removal with one loop
         for python in pythons:
             venv = manager.remove(python)
-            self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))
+            self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
         if all:
             for venv in manager.list():
                 manager.remove_venv(venv.path)
-                self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))
+                self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")

@@ -4,8 +4,8 @@ from typing import List
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .init import InitCommand
-from .installer_command import InstallerCommand
+from poetry.console.commands.init import InitCommand
+from poetry.console.commands.installer_command import InstallerCommand
 
 
 class AddCommand(InstallerCommand, InitCommand):
@@ -76,11 +76,11 @@ class AddCommand(InstallerCommand, InitCommand):
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
+        from poetry.core.semver.helpers import parse_constraint
         from tomlkit import inline_table
         from tomlkit import parse as parse_toml
         from tomlkit import table
 
-        from poetry.core.semver.helpers import parse_constraint
         from poetry.factory import Factory
 
         packages = self.argument("name")
@@ -247,7 +247,7 @@ class AddCommand(InstallerCommand, InitCommand):
             "The following packages are already present in the pyproject.toml and will be skipped:\n"
         )
         for name in existing_packages:
-            self.line("  • <c1>{name}</c1>".format(name=name))
+            self.line(f"  • <c1>{name}</c1>")
         self.line(
             "\nIf you want to update it to the latest compatible version, you can use `poetry update package`.\n"
             "If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.\n"

@@ -1,6 +1,6 @@
 from cleo.helpers import argument
 
-from ..command import Command
+from poetry.console.commands.command import Command
 
 
 class EnvUseCommand(Command):
@@ -22,4 +22,4 @@ class EnvUseCommand(Command):
 
         env = manager.activate(self.argument("python"), self._io)
 
-        self.line("Using virtualenv: <comment>{}</>".format(env.path))
+        self.line(f"Using virtualenv: <comment>{env.path}</>")

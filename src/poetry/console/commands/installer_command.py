@@ -1,21 +1,21 @@
 from typing import TYPE_CHECKING
+from typing import Optional
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
     from poetry.installation.installer import Installer
-    from poetry.installation.installer import Optional
 
 
 class InstallerCommand(EnvCommand):
     def __init__(self) -> None:
         self._installer: Optional["Installer"] = None
 
-        super(InstallerCommand, self).__init__()
+        super().__init__()
 
     def reset_poetry(self) -> None:
-        super(InstallerCommand, self).reset_poetry()
+        super().reset_poetry()
 
         self._installer.set_package(self.poetry.package)
         self._installer.set_locker(self.poetry.locker)

@@ -1,8 +1,7 @@
 from cleo.helpers import option
 
+from poetry.console.commands.command import Command
 from poetry.utils.exporter import Exporter
-
-from .command import Command
 
 
 class ExportCommand(Command):
@@ -40,7 +39,7 @@ class ExportCommand(Command):
         fmt = self.option("format")
 
         if fmt not in Exporter.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
+            raise ValueError(f"Invalid export format: {fmt}")
 
         output = self.option("output")
 

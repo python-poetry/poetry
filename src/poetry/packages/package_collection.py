@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Union
 
-from .dependency_package import DependencyPackage
+from poetry.packages.dependency_package import DependencyPackage
 
 
 if TYPE_CHECKING:

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .command import Command
+from poetry.console.commands.command import Command
 
 
 class CheckCommand(Command):
@@ -10,6 +10,7 @@ class CheckCommand(Command):
 
     def handle(self) -> int:
         from poetry.core.pyproject.toml import PyProjectTOML
+
         from poetry.factory import Factory
 
         # Load poetry config and display errors, if any
@@ -22,9 +23,9 @@ class CheckCommand(Command):
             return 0
 
         for error in check_result["errors"]:
-            self.line("<error>Error: {}</error>".format(error))
+            self.line(f"<error>Error: {error}</error>")
 
         for error in check_result["warnings"]:
-            self.line("<warning>Warning: {}</warning>".format(error))
+            self.line(f"<warning>Warning: {error}</warning>")
 
         return 1

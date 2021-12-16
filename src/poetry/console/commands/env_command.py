@@ -1,19 +1,22 @@
+from typing import TYPE_CHECKING
 from typing import Optional
 
-from poetry.utils.env import Env
+from poetry.console.commands.command import Command
 
-from .command import Command
+
+if TYPE_CHECKING:
+    from poetry.utils.env import Env
 
 
 class EnvCommand(Command):
     def __init__(self) -> None:
         self._env = None
 
-        super(EnvCommand, self).__init__()
+        super().__init__()
 
     @property
-    def env(self) -> Optional[Env]:
+    def env(self) -> Optional["Env"]:
         return self._env
 
-    def set_env(self, env: Env) -> None:
+    def set_env(self, env: "Env") -> None:
         self._env = env

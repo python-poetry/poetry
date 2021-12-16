@@ -15,8 +15,8 @@ from typing import Union
 from cleo.helpers import option
 from tomlkit import inline_table
 
-from .command import Command
-from .env_command import EnvCommand
+from poetry.console.commands.command import Command
+from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 """
 
     def __init__(self) -> None:
-        super(InitCommand, self).__init__()
+        super().__init__()
 
         self._pool = None
 
@@ -67,6 +67,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
+
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
@@ -99,19 +100,19 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             name = Path.cwd().name.lower()
 
             question = self.create_question(
-                "Package name [<comment>{}</comment>]: ".format(name), default=name
+                f"Package name [<comment>{name}</comment>]: ", default=name
             )
             name = self.ask(question)
 
         version = "0.1.0"
         question = self.create_question(
-            "Version [<comment>{}</comment>]: ".format(version), default=version
+            f"Version [<comment>{version}</comment>]: ", default=version
         )
         version = self.ask(question)
 
         description = self.option("description") or ""
         question = self.create_question(
-            "Description [<comment>{}</comment>]: ".format(description),
+            f"Description [<comment>{description}</comment>]: ",
             default=description,
         )
         description = self.ask(question)
@@ -121,10 +122,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
-                author += " <{}>".format(author_email)
+                author += f" <{author_email}>"
 
         question = self.create_question(
-            "Author [<comment>{}</comment>, n to skip]: ".format(author), default=author
+            f"Author [<comment>{author}</comment>, n to skip]: ", default=author
         )
         question.set_validator(lambda v: self._validate_author(v, author))
         author = self.ask(question)
@@ -137,7 +138,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         license = self.option("license") or ""
 
         question = self.create_question(
-            "License [<comment>{}</comment>]: ".format(license), default=license
+            f"License [<comment>{license}</comment>]: ", default=license
         )
         question.set_validator(self._validate_license)
         license = self.ask(question)
@@ -145,13 +146,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         python = self.option("python")
         if not python:
             current_env = SystemEnv(Path(sys.executable))
-            default_python = "^{}".format(
-                ".".join(str(v) for v in current_env.version_info[:2])
+            default_python = "^" + ".".join(
+                str(v) for v in current_env.version_info[:2]
             )
             question = self.create_question(
-                "Compatible Python versions [<comment>{}</comment>]: ".format(
-                    default_python
-                ),
+                f"Compatible Python versions [<comment>{default_python}</comment>]: ",
                 default=default_python,
             )
             python = self.ask(question)
@@ -252,7 +251,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     or "path" in constraint
                     or "version" in constraint
                 ):
-                    self.line("Adding <info>{}</info>".format(package))
+                    self.line(f"Adding <info>{package}</info>")
                     requires.append(constraint)
                     package = self.ask("\nAdd a package:")
                     continue
@@ -281,9 +280,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         choices.append(found_package.pretty_name)
 
                     self.line(
-                        "Found <info>{}</info> packages matching <c1>{}</c1>".format(
-                            len(matches), package
-                        )
+                        f"Found <info>{len(matches)}</info> packages matching <c1>{package}</c1>"
                     )
 
                     package = self.choice(
@@ -313,9 +310,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         )
 
                         self.line(
-                            "Using version <b>{}</b> for <c1>{}</c1>".format(
-                                package_constraint, package
-                            )
+                            f"Using version <b>{package_constraint}</b> for <c1>{package}</c1>"
                         )
 
                     constraint["version"] = package_constraint
@@ -344,9 +339,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 requirement["version"] = version
                 requirement["name"] = name
 
-                self.line(
-                    "Using version <b>{}</b> for <c1>{}</c1>".format(version, name)
-                )
+                self.line(f"Using version <b>{version}</b> for <c1>{name}</c1>")
             else:
                 # check that the specified version/constraint exists
                 # before we proceed
@@ -379,14 +372,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         if not package:
             # TODO: find similar
-            raise ValueError(
-                "Could not find a matching version of package {}".format(name)
-            )
+            raise ValueError(f"Could not find a matching version of package {name}")
 
         return package.pretty_name, selector.find_recommended_require_version(package)
 
     def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
         from poetry.core.pyproject.exceptions import PyProjectException
+
         from poetry.puzzle.provider import Provider
 
         result = []
@@ -414,7 +406,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
 
-                    pair = dict([("name", parsed.name), ("git", url.url)])
+                    pair = {"name": parsed.name, "git": url.url}
                     if parsed.rev:
                         pair["rev"] = url.revision
 
@@ -431,7 +423,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 elif url_parsed.scheme in ["http", "https"]:
                     package = Provider.get_package_from_url(requirement)
 
-                    pair = dict([("name", package.name), ("url", package.source_url)])
+                    pair = {"name": package.name, "url": package.source_url}
                     if extras:
                         pair["extras"] = extras
 
@@ -475,7 +467,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             pair = pair.strip()
 
-            require = dict()
+            require = {}
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)

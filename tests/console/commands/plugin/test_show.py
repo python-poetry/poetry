@@ -1,15 +1,28 @@
+from typing import TYPE_CHECKING
+from typing import Type
+
 import pytest
 
 from entrypoints import EntryPoint as _EntryPoint
-
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from poetry.plugins.base_plugin import BasePlugin
+    from poetry.repositories import Repository
+    from tests.helpers import PoetryTestApplication
+    from tests.types import CommandTesterFactory
+
+
 class EntryPoint(_EntryPoint):
-    def load(self):
+    def load(self) -> Type["BasePlugin"]:
         if "ApplicationPlugin" in self.object_name:
             return ApplicationPlugin
 
@@ -17,11 +30,16 @@ class EntryPoint(_EntryPoint):
 
 
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("plugin show")
 
 
-def test_show_displays_installed_plugins(app, tester, installed, mocker):
+def test_show_displays_installed_plugins(
+    app: "PoetryTestApplication",
+    tester: "CommandTester",
+    installed: "Repository",
+    mocker: "MockerFixture",
+):
     mocker.patch(
         "entrypoints.get_group_all",
         side_effect=[
@@ -55,7 +73,10 @@ def test_show_displays_installed_plugins(app, tester, installed, mocker):
 
 
 def test_show_displays_installed_plugins_with_multiple_plugins(
-    app, tester, installed, mocker
+    app: "PoetryTestApplication",
+    tester: "CommandTester",
+    installed: "Repository",
+    mocker: "MockerFixture",
 ):
     mocker.patch(
         "entrypoints.get_group_all",
@@ -100,7 +121,10 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
 
 
 def test_show_displays_installed_plugins_with_dependencies(
-    app, tester, installed, mocker
+    app: "PoetryTestApplication",
+    tester: "CommandTester",
+    installed: "Repository",
+    mocker: "MockerFixture",
 ):
     mocker.patch(
         "entrypoints.get_group_all",

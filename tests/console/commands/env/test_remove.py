@@ -1,16 +1,33 @@
+from typing import TYPE_CHECKING
+from typing import List
+
 import pytest
 
 from poetry.core.semver.version import Version
+
 from tests.console.commands.env.helpers import check_output_wrapper
 
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("env remove")
 
 
 def test_remove_by_python_version(
-    mocker, tester, venvs_in_cache_dirs, venv_name, venv_cache
+    mocker: "MockerFixture",
+    tester: "CommandTester",
+    venvs_in_cache_dirs: List[str],
+    venv_name: str,
+    venv_cache: "Path",
 ):
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -20,15 +37,18 @@ def test_remove_by_python_version(
     tester.execute("3.6")
 
     assert check_output.called
-    assert not (venv_cache / "{}-py3.6".format(venv_name)).exists()
+    assert not (venv_cache / f"{venv_name}-py3.6").exists()
 
-    expected = "Deleted virtualenv: {}\n".format(
-        (venv_cache / "{}-py3.6".format(venv_name))
-    )
+    expected = f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
     assert expected == tester.io.fetch_output()
 
 
-def test_remove_by_name(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+def test_remove_by_name(
+    tester: "CommandTester",
+    venvs_in_cache_dirs: List[str],
+    venv_name: str,
+    venv_cache: "Path",
+):
     expected = ""
 
     for name in venvs_in_cache_dirs:
@@ -36,37 +56,52 @@ def test_remove_by_name(tester, venvs_in_cache_dirs, venv_name, venv_cache):
 
         assert not (venv_cache / name).exists()
 
-        expected += "Deleted virtualenv: {}\n".format((venv_cache / name))
+        expected += f"Deleted virtualenv: {venv_cache / name}\n"
 
     assert expected == tester.io.fetch_output()
 
 
-def test_remove_all(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+def test_remove_all(
+    tester: "CommandTester",
+    venvs_in_cache_dirs: List[str],
+    venv_name: str,
+    venv_cache: "Path",
+):
     expected = {""}
     tester.execute("--all")
     for name in venvs_in_cache_dirs:
         assert not (venv_cache / name).exists()
-        expected.add("Deleted virtualenv: {}".format((venv_cache / name)))
+        expected.add(f"Deleted virtualenv: {venv_cache / name}")
     assert expected == set(tester.io.fetch_output().split("\n"))
 
 
-def test_remove_all_and_version(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+def test_remove_all_and_version(
+    tester: "CommandTester",
+    venvs_in_cache_dirs: List[str],
+    venv_name: str,
+    venv_cache: "Path",
+):
     expected = {""}
-    tester.execute("--all {}".format(venvs_in_cache_dirs[0]))
+    tester.execute(f"--all {venvs_in_cache_dirs[0]}")
     for name in venvs_in_cache_dirs:
         assert not (venv_cache / name).exists()
-        expected.add("Deleted virtualenv: {}".format((venv_cache / name)))
+        expected.add(f"Deleted virtualenv: {venv_cache / name}")
     assert expected == set(tester.io.fetch_output().split("\n"))
 
 
-def test_remove_multiple(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+def test_remove_multiple(
+    tester: "CommandTester",
+    venvs_in_cache_dirs: List[str],
+    venv_name: str,
+    venv_cache: "Path",
+):
     expected = {""}
     removed_envs = venvs_in_cache_dirs[0:2]
     remaining_envs = venvs_in_cache_dirs[2:]
     tester.execute(" ".join(removed_envs))
     for name in removed_envs:
         assert not (venv_cache / name).exists()
-        expected.add("Deleted virtualenv: {}".format((venv_cache / name)))
+        expected.add(f"Deleted virtualenv: {venv_cache / name}")
     for name in remaining_envs:
         assert (venv_cache / name).exists()
     assert expected == set(tester.io.fetch_output().split("\n"))

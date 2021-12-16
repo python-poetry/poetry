@@ -1,17 +1,34 @@
+from typing import TYPE_CHECKING
+
 import pytest
 import tomlkit
 
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from poetry.repositories import Repository
+    from tests.helpers import PoetryTestApplication
+    from tests.helpers import TestRepository
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("remove")
 
 
 def test_remove_without_specific_group_removes_from_all_groups(
-    tester, app, repo, command_tester_factory, installed
+    tester: "CommandTester",
+    app: "PoetryTestApplication",
+    repo: "TestRepository",
+    command_tester_factory: "CommandTesterFactory",
+    installed: "Repository",
 ):
     """
     Removing without specifying a group removes packages from all groups.
@@ -62,7 +79,11 @@ baz = "^1.0.0"
 
 
 def test_remove_without_specific_group_removes_from_specific_groups(
-    tester, app, repo, command_tester_factory, installed
+    tester: "CommandTester",
+    app: "PoetryTestApplication",
+    repo: "TestRepository",
+    command_tester_factory: "CommandTesterFactory",
+    installed: "Repository",
 ):
     """
     Removing with a specific group given removes packages only from this group.
@@ -113,7 +134,11 @@ baz = "^1.0.0"
 
 
 def test_remove_does_not_live_empty_groups(
-    tester, app, repo, command_tester_factory, installed
+    tester: "CommandTester",
+    app: "PoetryTestApplication",
+    repo: "TestRepository",
+    command_tester_factory: "CommandTesterFactory",
+    installed: "Repository",
 ):
     """
     Empty groups are automatically discarded after package removal.
@@ -157,7 +182,11 @@ baz = "^1.0.0"
 
 
 def test_remove_command_should_not_write_changes_upon_installer_errors(
-    tester, app, repo, command_tester_factory, mocker
+    tester: "CommandTester",
+    app: "PoetryTestApplication",
+    repo: "TestRepository",
+    command_tester_factory: "CommandTesterFactory",
+    mocker: "MockerFixture",
 ):
     repo.add_package(Package("foo", "2.0.0"))
 

@@ -15,13 +15,12 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 
-from poetry.config.config import Config
-
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
     from requests import Session
 
-    from poetry.core.packages.package import Package
+    from poetry.config.config import Config
 
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -49,7 +48,7 @@ def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
     shutil.rmtree(name, onerror=_del_ro)
 
 
-def get_cert(config: Config, repository_name: str) -> Optional[Path]:
+def get_cert(config: "Config", repository_name: str) -> Optional[Path]:
     cert = config.get(f"certificates.{repository_name}.cert")
     if cert:
         return Path(cert)
@@ -57,7 +56,7 @@ def get_cert(config: Config, repository_name: str) -> Optional[Path]:
         return None
 
 
-def get_client_cert(config: Config, repository_name: str) -> Optional[Path]:
+def get_client_cert(config: "Config", repository_name: str) -> Optional[Path]:
     client_cert = config.get(f"certificates.{repository_name}.client-cert")
     if client_cert:
         return Path(client_cert)
@@ -111,16 +110,14 @@ def get_package_version_display_string(
     package: "Package", root: Optional[Path] = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
-        return "{} {}".format(
-            package.version,
-            Path(os.path.relpath(package.source_url, root.as_posix())).as_posix(),
-        )
+        path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
+        return f"{package.version} {path}"
 
     return package.full_pretty_version
 
 
 def paths_csv(paths: List[Path]) -> str:
-    return ", ".join('"{}"'.format(str(c)) for c in paths)
+    return ", ".join(f'"{c!s}"' for c in paths)
 
 
 def is_dir_writable(path: Path, create: bool = False) -> bool:
@@ -136,3 +133,9 @@ def is_dir_writable(path: Path, create: bool = False) -> bool:
         return False
     else:
         return True
+
+
+def pluralize(count: int, word: str = "") -> str:
+    if count == 1:
+        return word
+    return word + "s"
