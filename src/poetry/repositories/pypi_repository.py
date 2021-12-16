@@ -424,14 +424,14 @@ class PyPiRepository(RemoteRepository):
 
     @staticmethod
     def _helper_filename(url: str) -> str:
-        "Extract the basename of a file at a url, properly dealing with terminal slash."
+        """Extract the basename of file at a url, dealing with terminal slash."""
         return PurePath(urllib.parse.urlparse(url).path).name
 
     def _get_info_from_wheel(self, url: str) -> "PackageInfo":
         from poetry.inspection.info import PackageInfo
 
         self._log(
-            "Downloading wheel: {}".format(url),
+            f"Downloading wheel: {url}",
             level="debug",
         )
 
@@ -445,7 +445,7 @@ class PyPiRepository(RemoteRepository):
         from poetry.inspection.info import PackageInfo
 
         self._log(
-            "Downloading sdist: {}".format(url),
+            f"Downloading sdist: {url}",
             level="debug",
         )
 
