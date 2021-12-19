@@ -20,3 +20,13 @@ def data_dir() -> Path:
         return Path(poetry_home).expanduser()
 
     return Path(user_data_dir("pypoetry", roaming=True))
+
+
+def home_dir() -> Path:
+    poetry_home = os.getenv("POETRY_HOME")
+    if poetry_home:
+        return Path(poetry_home).expanduser()
+
+    from poetry.utils.env import EnvManager
+
+    return EnvManager.get_system_env(True).path

@@ -1,10 +1,9 @@
-import os
-
 from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
+from poetry.locations import home_dir
 
 
 class PluginRemoveCommand(Command, PluginCommandMixin):
@@ -26,8 +25,6 @@ class PluginRemoveCommand(Command, PluginCommandMixin):
     ]
 
     def handle(self) -> int:
-        from pathlib import Path
-
         import tomlkit
 
         from poetry.utils.env import EnvManager
@@ -36,9 +33,7 @@ class PluginRemoveCommand(Command, PluginCommandMixin):
         plugins = self.argument("plugins")
 
         system_env = EnvManager.get_system_env(naive=True)
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
-        )
+        env_dir = home_dir()
 
         existing_plugins = {}
         if env_dir.joinpath("plugins.toml").exists():

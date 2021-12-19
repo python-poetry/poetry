@@ -1,5 +1,3 @@
-import os
-
 from cleo.helpers import argument
 from cleo.helpers import option
 
@@ -46,13 +44,12 @@ You can specify a package in the following forms:
 """
 
     def handle(self) -> int:
-        from pathlib import Path
-
         import tomlkit
 
         from poetry.core.semver.helpers import parse_constraint
 
         from poetry.factory import Factory
+        from poetry.locations import home_dir
         from poetry.utils.env import EnvManager
         from poetry.utils.helpers import canonicalize_name
 
@@ -61,9 +58,7 @@ You can specify a package in the following forms:
         # Plugins should be installed in the system env to be globally available
         system_env = EnvManager.get_system_env(naive=True)
 
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
-        )
+        env_dir = home_dir()
 
         existing_plugins = {}
         if env_dir.joinpath("plugins.toml").exists():

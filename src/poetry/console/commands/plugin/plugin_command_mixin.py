@@ -1,8 +1,7 @@
-import os
-
 from typing import TYPE_CHECKING
 from typing import List
 
+from poetry.locations import home_dir
 from poetry.packages.locker import BaseLocker
 from poetry.utils.helpers import canonicalize_name
 
@@ -85,15 +84,11 @@ class PluginCommandMixin:
         io: "IO",
         whitelist: List[str],
     ) -> int:
-        from pathlib import Path
-
         from poetry.factory import Factory
         from poetry.installation.installer import Installer
         from poetry.repositories.installed_repository import InstalledRepository
 
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else env.path
-        )
+        env_dir = home_dir()
 
         locker = BaseLocker(env_dir, {})
 
