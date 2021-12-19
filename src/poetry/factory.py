@@ -83,7 +83,6 @@ class Factory(BaseFactory):
             }
         )
 
-        # Configuring sources
         poetry.set_pool(self.create_pool(config, io))
 
         plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
@@ -130,7 +129,7 @@ class Factory(BaseFactory):
         return config
 
     @classmethod
-    def create_pool(cls, config: "Config", io: Optional["IO"] = None) -> "Pool":
+    def create_pool(cls, config: Config, io: Optional["IO"] = None) -> "Pool":
         from poetry.repositories.pool import Pool
 
         if io is None:
@@ -138,7 +137,7 @@ class Factory(BaseFactory):
 
         pool = Pool()
 
-        for source_name, source in config.get("sources", {}).items():
+        for _, source in config.get("sources", {}).items():
             repository = cls.create_legacy_repository(source, config)
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)

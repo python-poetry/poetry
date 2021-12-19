@@ -11,7 +11,6 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -449,7 +448,7 @@ class BaseLocker:
 
         return content_hash
 
-    def _verify_lock_data(self, lock_data: dict) -> NoReturn:
+    def _verify_lock_data(self, lock_data: dict) -> None:
         lock_version = Version.parse(lock_data["metadata"].get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
         # We expect the locker to be able to read lock files

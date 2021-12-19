@@ -3,8 +3,6 @@ import os
 from typing import TYPE_CHECKING
 from typing import List
 
-import tomlkit
-
 from poetry.packages.locker import BaseLocker
 from poetry.utils.helpers import canonicalize_name
 
@@ -12,8 +10,8 @@ from poetry.utils.helpers import canonicalize_name
 if TYPE_CHECKING:
     from cleo.io.io import IO
     from entrypoints import EntryPoint
-
     from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.utils.env import Env
 
 
@@ -22,6 +20,7 @@ class PluginCommandMixin:
         self, env: "Env", existing_plugins: dict
     ) -> "ProjectPackage":
         from poetry.core.packages.project_package import ProjectPackage
+
         from poetry.factory import Factory
         from poetry.repositories.installed_repository import InstalledRepository
 
@@ -53,14 +52,10 @@ class PluginCommandMixin:
 
             entry_points.add(entry_point.distro.name)
 
-            found = False
-            for dependency in root_package.requires:
-                if canonicalize_name(entry_point.distro.name) == dependency.name:
-                    found = True
-
-                    break
-
-            if found:
+            if any(
+                canonicalize_name(entry_point.distro.name) == dependency.name
+                for dependency in root_package.requires
+            ):
                 continue
 
             version = entry_point.distro.version
@@ -90,8 +85,6 @@ class PluginCommandMixin:
         io: "IO",
         whitelist: List[str],
     ) -> int:
-        import os
-
         from pathlib import Path
 
         from poetry.factory import Factory

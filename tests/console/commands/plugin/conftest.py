@@ -12,6 +12,8 @@ from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from poetry.repositories import Repository
     from poetry.utils.env import MockEnv
     from tests.helpers import TestRepository
@@ -28,7 +30,10 @@ def installed() -> InstalledRepository:
 
 @pytest.fixture(autouse=True)
 def setup_mocks(
-    mocker, env: "MockEnv", repo: "TestRepository", installed: "Repository"
+    mocker: "MockerFixture",
+    env: "MockEnv",
+    repo: "TestRepository",
+    installed: "Repository",
 ) -> None:
     pool = Pool()
     pool.add_repository(repo)

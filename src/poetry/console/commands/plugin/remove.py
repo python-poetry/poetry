@@ -1,17 +1,10 @@
 import os
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
-
-from .plugin_command_mixin import PluginCommandMixin
-
-
-if TYPE_CHECKING:
-    from poetry.console.application import Application  # noqa
+from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
 
 
 class PluginRemoveCommand(Command, PluginCommandMixin):
@@ -60,18 +53,13 @@ class PluginRemoveCommand(Command, PluginCommandMixin):
         removed_plugins = []
         for plugin in plugins:
             plugin = canonicalize_name(plugin)
-            is_plugin = False
-            installed = False
-            for entrypoint in entrypoints:
-                if canonicalize_name(entrypoint.distro.name) == plugin:
-                    is_plugin = True
-                    break
-
-            for i, dependency in enumerate(root_package.requires):
-                if dependency.name == plugin:
-                    installed = True
-
-                    break
+            is_plugin = any(
+                canonicalize_name(entrypoint.distro.name) == plugin
+                for entrypoint in entrypoints
+            )
+            installed = any(
+                dependency.name == plugin for dependency in root_package.requires
+            )
 
             if not installed:
                 self.line_error(f"<warning>Plugin {plugin} is not installed.</warning>")
@@ -92,15 +80,14 @@ class PluginRemoveCommand(Command, PluginCommandMixin):
         if not removed_plugins:
             return 1
 
-        _root_package = root_package
-        root_package = root_package.with_dependency_groups([], only=True)
-        for dependency in _root_package.requires:
+        bare_root_package = root_package.with_dependency_groups([], only=True)
+        for dependency in root_package.requires:
             if dependency.name not in removed_plugins:
-                root_package.add_dependency(dependency)
+                bare_root_package.add_dependency(dependency)
 
         return_code = self.update(
             system_env,
-            root_package,
+            bare_root_package,
             self._io,
             whitelist=removed_plugins,
         )

@@ -6,8 +6,7 @@ from typing import List
 from typing import Union
 
 from poetry.console.commands.command import Command
-
-from .plugin_command_mixin import PluginCommandMixin
+from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
 
 
 if TYPE_CHECKING:

@@ -27,7 +27,7 @@ from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.packages.locker import Locker as BaseLocker
+from poetry.packages.locker import Locker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -102,7 +102,7 @@ class CustomInstalledRepository(InstalledRepository):
         return cls()
 
 
-class Locker(BaseLocker):
+class MockLocker(Locker):
     def __init__(self, lock_path: Union[str, Path]):
         self._lock = TOMLFile(lock_path.joinpath("poetry.lock"))
         self._root = self._lock.path.parent
@@ -116,13 +116,13 @@ class Locker(BaseLocker):
     def written_data(self) -> Optional[Dict]:
         return self._written_data
 
-    def set_lock_path(self, lock: Union[str, Path]) -> "Locker":
+    def set_lock_path(self, lock: Union[str, Path]) -> "MockLocker":
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
         self._root = self._lock.path.parent
 
         return self
 
-    def locked(self, is_locked: bool = True) -> "Locker":
+    def locked(self, is_locked: bool = True) -> "MockLocker":
         self._locked = is_locked
 
         return self
@@ -176,7 +176,7 @@ def installed() -> CustomInstalledRepository:
 
 @pytest.fixture()
 def locker(project_root: Path) -> Locker:
-    return Locker(lock_path=project_root)
+    return MockLocker(lock_path=project_root)
 
 
 @pytest.fixture()
@@ -311,7 +311,11 @@ def test_run_update_after_removing_dependencies(
 
 
 def test_run_update_should_not_remove_existing_but_non_locked_packages(
-    installer, locker, repo, package, installed
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -375,9 +379,9 @@ def test_run_update_should_not_remove_existing_but_non_locked_packages(
     installer.whitelist(["c"])
     installer.run()
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
 def _configure_run_install_dev(

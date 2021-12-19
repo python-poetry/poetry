@@ -1,17 +1,10 @@
 import os
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
-
-
-if TYPE_CHECKING:
-    from poetry.console.application import Application  # noqa
-    from poetry.console.commands.update import UpdateCommand  # noqa
 
 
 class PluginAddCommand(InitCommand, PluginCommandMixin):

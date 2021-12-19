@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installed, repo):
+def setup(mocker: "MockerFixture", installed: InstalledRepository, repo: "Repository"):
     mocker.patch.object(InstalledRepository, "load", return_value=installed)
     mocker.patch.object(PluginCommandMixin, "get_plugin_entry_points", return_value=[])
     repo.add_package(installed.packages[0])

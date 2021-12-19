@@ -7,10 +7,9 @@ import tomlkit
 
 from entrypoints import Distribution
 from entrypoints import EntryPoint
-
-from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
 from poetry.core.packages.package import Package
 
+from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 

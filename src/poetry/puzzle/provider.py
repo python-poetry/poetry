@@ -189,8 +189,6 @@ class Provider:
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
-        dependency._source_resolved_reference = package.source_resolved_reference
-
         dependency._source_reference = package.source_reference
         dependency._source_resolved_reference = package.source_resolved_reference
 
