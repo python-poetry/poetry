@@ -29,7 +29,12 @@ def get_options_based_on_normalizer(normalizer: Callable) -> str:
 
 
 @pytest.mark.parametrize(
-    ("name", "value"), [("installer.parallel", True), ("virtualenvs.create", True)]
+    ("name", "value"),
+    [
+        ("dependencies.sort", False),
+        ("installer.parallel", True),
+        ("virtualenvs.create", True),
+    ],
 )
 def test_config_get_default_value(config: Config, name: str, value: bool):
     assert config.get(name) is value

@@ -107,6 +107,7 @@ _default_config: Config | None = None
 class Config:
     default_config: dict[str, Any] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
+        "dependencies": {"sort": False},
         "virtualenvs": {
             "create": True,
             "in-project": None,
@@ -260,6 +261,7 @@ class Config:
     @staticmethod
     def _get_normalizer(name: str) -> Callable[[str], Any]:
         if name in {
+            "dependencies.sort",
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",

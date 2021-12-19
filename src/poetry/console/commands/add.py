@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 
+from collections import OrderedDict
 from typing import Any
 
 from cleo.helpers import argument
@@ -229,6 +230,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     root_dir=self.poetry.file.parent,
                 )
             )
+
+        if self.poetry.config.get("dependencies.sort") is True:
+            sorted_dependencies = OrderedDict(sorted(section.items()))
+            if sorted_dependencies.get("python"):
+                sorted_dependencies.move_to_end("python", last=False)
+            if group == "default":
+                poetry_content["dependencies"] = sorted_dependencies
+            else:
+                poetry_content["group"][group]["dependencies"] = sorted_dependencies
 
         # Refresh the locker
         self.poetry.set_locker(

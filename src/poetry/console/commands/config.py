@@ -59,6 +59,7 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: str(Path(val)),
                 str(DEFAULT_CACHE_DIR / "virtualenvs"),
             ),
+            "dependencies.sort": (boolean_validator, boolean_normalizer, False),
             "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
             "virtualenvs.options.always-copy": (

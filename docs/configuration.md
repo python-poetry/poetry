@@ -171,6 +171,14 @@ If you encounter any problems with it, set to `true` to use the system git backe
 
 Defaults to `false`.
 
+### `dependencies.sort`
+
+**Type**: boolean
+
+Sort dependencies alphabetically when adding.
+
+Defaults to `false`.
+
 ### `installer.parallel`
 
 **Type**: boolean

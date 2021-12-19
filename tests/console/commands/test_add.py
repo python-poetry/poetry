@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
 import sys
 
+from collections import OrderedDict
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -816,6 +818,63 @@ Package operations: 1 install, 0 updates, 0 removals
         "version": "0.2.0",
         "platform": platform,
     }
+
+
+@pytest.mark.parametrize("group", ("default", "dev", "test"))
+@pytest.mark.parametrize("sort_config_value", ("true", "false", None))
+def test_add_constraint_with_sort(
+    group: str,
+    sort_config_value: str | None,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+):
+    if sort_config_value:
+        os.environ["POETRY_DEPENDENCIES_SORT"] = sort_config_value
+    group_option = f" --group {group}" if group != "default" else ""
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+
+    tester.execute(f"pendulum=1.4.4 cachy=0.2.0 cleo=0.6.5{group_option}")
+
+    expected_output = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 3 installs, 0 updates, 0 removals
+
+  • Installing pendulum (1.4.4)
+  • Installing cachy (0.2.0)
+  • Installing cleo (0.6.5)
+"""
+
+    expected_set = set(expected_output.splitlines())
+    output_set = set(tester.io.fetch_output().splitlines())
+    assert expected_set == output_set
+    assert tester.command.installer.executor.installations_count == 3
+
+    expected_content = (
+        OrderedDict(cachy="0.2.0", cleo="0.6.5", pendulum="1.4.4")
+        if sort_config_value == "true"
+        else OrderedDict(pendulum="1.4.4", cachy="0.2.0", cleo="0.6.5")
+    )
+    if group == "default":
+        expected_content.update(python="~2.7 || ^3.4")
+        expected_content.move_to_end("python", last=False)
+        poetry_content = OrderedDict(
+            app.poetry.file.read()["tool"]["poetry"]["dependencies"]
+        )
+    else:
+        poetry_content = OrderedDict(
+            app.poetry.file.read()["tool"]["poetry"]["group"][group]["dependencies"]
+        )
+
+    assert expected_content == poetry_content
 
 
 def test_add_constraint_with_source(
