@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "project-with-git-subdir-dependency"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+homepage = "https://python-poetry.org"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+example = { git = "https://github.com/demo/subdir.git", rev = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24", subdirectory = "example" }
+
+[tool.poetry.dev-dependencies]
+pytest = "~3.4"

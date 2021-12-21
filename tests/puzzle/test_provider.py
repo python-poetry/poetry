@@ -508,3 +508,20 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
+
+
+@pytest.fixture(autouse=True)
+def pep517_metadata_mock():
+    pass
+
+
+def test_search_for_vcs_hyphenated_name(provider: Provider):
+    dependency = DirectoryDependency(
+        "project-with-git-subdir-dependency",
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "project_with_git_subdir_dependency",
+    )
+
+    package = provider.search_for_directory(dependency)[0]
+    req = provider.search_for_vcs(package.requires[0])
