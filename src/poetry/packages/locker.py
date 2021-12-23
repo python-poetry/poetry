@@ -237,16 +237,16 @@ class Locker:
             if locked_package:
                 # create dependency from locked package to retain dependency metadata
                 # if this is not done, we can end-up with incorrect nested dependencies
+                constraint = requirement.constraint
+                pretty_constraint = requirement.pretty_constraint
                 marker = requirement.marker
                 requirement = locked_package.to_dependency()
                 requirement.marker = requirement.marker.intersect(marker)
 
-                key = (requirement.name, requirement.pretty_constraint)
+                key = (requirement.name, pretty_constraint)
 
-                if pinned_versions:
-                    requirement.set_constraint(
-                        locked_package.to_dependency().constraint
-                    )
+                if not pinned_versions:
+                    requirement.set_constraint(constraint)
 
                 for require in locked_package.requires:
                     if require.marker.is_empty():

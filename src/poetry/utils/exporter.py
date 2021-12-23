@@ -1,3 +1,4 @@
+import itertools
 import urllib.parse
 
 from typing import TYPE_CHECKING
@@ -69,13 +70,21 @@ class Exporter:
         content = ""
         dependency_lines = set()
 
-        for dependency_package in self._poetry.locker.get_project_dependency_packages(
-            project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
+        for package, groups in itertools.groupby(
+            self._poetry.locker.get_project_dependency_packages(
+                project_requires=self._poetry.package.all_requires,
+                dev=dev,
+                extras=extras,
+            ),
+            lambda dependency_package: dependency_package.package,
         ):
             line = ""
-
-            dependency = dependency_package.dependency
-            package = dependency_package.package
+            dependency_packages = list(groups)
+            dependency = dependency_packages[0].dependency
+            marker = dependency.marker
+            for dep_package in dependency_packages[1:]:
+                marker = marker.union(dep_package.dependency.marker)
+            dependency.marker = marker
 
             if package.develop:
                 line += "-e "
