@@ -94,7 +94,7 @@ def pool() -> Pool:
 
     pool.add_repository(PyPiRepository(disable_cache=True))
     pool.add_repository(
-        LegacyRepository("foo", "https://foo.bar/simple/", disable_cache=True)
+        LegacyRepository("foo", "https://user1:password1@foo.bar/simple/", disable_cache=True)
     )
 
     return pool
@@ -113,7 +113,7 @@ def test_chooser_chooses_universal_wheel_link_if_available(
             package.version.text,
             source_type="legacy",
             source_reference="foo",
-            source_url="https://foo.bar/simple/",
+            source_url="https://user1:password1@foo.bar/simple/",
         )
 
     link = chooser.choose_for(package)

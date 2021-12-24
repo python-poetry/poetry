@@ -188,12 +188,6 @@ class LegacyRepository(PyPiRepository):
             self._authenticator.session, cache=FileCache(str(self._cache_dir / "_http"))
         )
 
-        username, password = self._authenticator.get_credentials_for_url(self._url)
-        if username is not None and password is not None:
-            self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
-                username, password
-            )
-
         if self._cert:
             self._authenticator.session.verify = str(self._cert)
 
@@ -212,9 +206,19 @@ class LegacyRepository(PyPiRepository):
 
     @property
     def authenticated_url(self) -> str:
-        if not self._session.auth:
-            return self.url
+        """
+        Set authentication credentials and return a URL with basic auth
 
+        Use self._set_authentication_creds() and self.session.get() directly
+        if you want to send a request to the repository server.
+        This function is only usefull if you need the string representation
+        of the basic auth URL. Be aware that it contains the credential in
+        plain text.
+        """
+        try:
+            self._set_authentication_creds()
+        except ValueError:
+            return self.url
         parsed = urllib.parse.urlparse(self.url)
         username = quote(self._session.auth.username, safe="")
         password = quote(self._session.auth.password, safe="")
@@ -394,9 +398,18 @@ class LegacyRepository(PyPiRepository):
 
         return data.asdict()
 
+    def _set_authentication_creds(self) -> None:
+        username, password = self._authenticator.get_credentials_for_url(self._url)
+        if username is None or password is None:
+            raise ValueError
+        self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
+            username, password
+        )
+
     def _get_page(self, endpoint: str) -> Page | None:
         url = self._url + endpoint
         try:
+            self._set_authentication_creds()
             response = self.session.get(url)
             if response.status_code in (401, 403):
                 self._log(

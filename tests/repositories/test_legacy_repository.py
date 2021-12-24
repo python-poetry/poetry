@@ -331,7 +331,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 class MockHttpRepository(LegacyRepository):
     def __init__(self, endpoint_responses: dict, http: type[httpretty.httpretty]):
-        base_url = "http://legacy.foo.bar"
+        base_url = "http://testuser1:password1@legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
         for endpoint, response in endpoint_responses.items():
