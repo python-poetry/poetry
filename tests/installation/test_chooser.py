@@ -94,7 +94,9 @@ def pool() -> Pool:
 
     pool.add_repository(PyPiRepository(disable_cache=True))
     pool.add_repository(
-        LegacyRepository("foo", "https://user1:password1@foo.bar/simple/", disable_cache=True)
+        LegacyRepository(
+            "foo", "https://user1:password1@foo.bar/simple/", disable_cache=True
+        )
     )
 
     return pool
