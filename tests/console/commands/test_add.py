@@ -67,6 +67,53 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
+def test_add_replace_by_constraint(
+    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing cachy (0.2.0)
+"""
+    assert tester.io.fetch_output() == expected
+    assert tester.command.installer.executor.installations_count == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == "^0.2.0"
+
+    tester.execute("cachy@0.1.0")
+    expected = """
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing cachy (0.1.0)
+"""
+    assert tester.io.fetch_output() == expected
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == "0.1.0"
+
+
 def test_add_no_constraint_editable_error(
     app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
 ):
