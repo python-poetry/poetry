@@ -14,7 +14,6 @@ from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
-    from _pytest.monkeypatch import MonkeyPatch
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
