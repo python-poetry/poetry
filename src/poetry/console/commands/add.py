@@ -1,3 +1,5 @@
+import contextlib
+
 from typing import Dict
 from typing import List
 
@@ -196,6 +198,12 @@ class AddCommand(InstallerCommand, InitCommand):
                 constraint = constraint["version"]
 
             section[_constraint["name"]] = constraint
+
+            with contextlib.suppress(ValueError):
+                self.poetry.package.dependency_group(group).remove_dependency(
+                    _constraint["name"]
+                )
+
             self.poetry.package.add_dependency(
                 Factory.create_dependency(
                     _constraint["name"],
