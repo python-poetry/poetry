@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Dict
 
 import pytest
 
@@ -35,7 +36,11 @@ def installed() -> InstalledRepository:
 
 def configure_sources_factory(repo: "TestRepository") -> "SourcesFactory":
     def _configure_sources(
-        poetry: "Poetry", sources: "Source", config: "Config", io: "IO"
+        poetry: "Poetry",
+        sources: "Source",
+        config: "Config",
+        io: "IO",
+        global_sources: Dict[str, Dict[str, str]],
     ) -> None:
         pool = Pool()
         pool.add_repository(repo)

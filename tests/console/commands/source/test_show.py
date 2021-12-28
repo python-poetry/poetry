@@ -6,6 +6,7 @@ import pytest
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
+    from poetry.config.config import Config
     from poetry.config.source import Source
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
@@ -89,3 +90,46 @@ def test_source_show_error(tester: "CommandTester"):
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "No source found with name(s): error"
     assert tester.status_code == 1
+
+
+def test_source_show_global(tester: "CommandTester", config_with_source: "Config"):
+    tester.execute("-g")
+    expected = """\
+name       : existing_global
+url        : https://existing_global.com
+default    : no
+secondary  : no
+""".splitlines()
+    assert (
+        list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
+        == expected
+    )
+
+
+def test_source_show_all(tester: "CommandTester", config_with_source: "Config"):
+    tester.execute("-a")
+    expected = """\
+name       : existing
+url        : https://existing.com
+default    : no
+secondary  : no
+
+name       : one
+url        : https://one.com
+default    : no
+secondary  : no
+
+name       : two
+url        : https://two.com
+default    : no
+secondary  : no
+
+name       : existing_global
+url        : https://existing_global.com
+default    : no
+secondary  : no
+""".splitlines()
+    assert (
+        list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
+        == expected
+    )

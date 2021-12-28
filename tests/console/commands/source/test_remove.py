@@ -5,7 +5,9 @@ import pytest
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
+    from poetry.config.config import Config
     from poetry.config.source import Source
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
@@ -40,7 +42,23 @@ def test_source_remove_simple(
     assert tester.status_code == 0
 
 
-def test_source_remove_error(tester: "CommandTester"):
-    tester.execute("error")
+@pytest.mark.parametrize("is_global", [True, False])
+def test_source_remove_error(is_global: bool, tester: "CommandTester"):
+    args = "error"
+    if is_global:
+        args = f"-g {args}"
+    tester.execute(args)
     assert tester.io.fetch_error().strip() == "Source with name error was not found."
     assert tester.status_code == 1
+
+
+def test_source_remove_global(
+    tester: "CommandTester",
+    config_with_source: "Config",
+    source_existing_global: "Source",
+    mocker: "MockerFixture",
+):
+    patch = mocker.patch.object(config_with_source.config_source, "remove_property")
+    tester.execute(f"-g {source_existing_global.name}")
+    assert tester.status_code == 0
+    assert patch.call_args[0] == (f"sources.{source_existing_global.name}",)

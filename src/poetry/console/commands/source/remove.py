@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 from typing import Optional
 
 from cleo.helpers import argument
+from cleo.helpers import option
 from tomlkit import nl
 from tomlkit import table
 from tomlkit.items import AoT
@@ -27,6 +28,8 @@ class SourceRemoveCommand(Command):
         ),
     ]
 
+    options = [option("global", "g", "Remove from global list")]
+
     @staticmethod
     def source_to_table(source: "Source") -> "Table":
         source_table: "Table" = table()
@@ -37,24 +40,34 @@ class SourceRemoveCommand(Command):
 
     def handle(self) -> Optional[int]:
         name = self.argument("name")
+        is_global = self.option("global")
+        if is_global:
+            global_sources = self.poetry.config.get("sources", {})
+            if name not in global_sources:
+                self.line_error(
+                    f"<error>Source with name <c1>{name}</c1> was not found.</error>"
+                )
+                return 1
+            self.line(f"Removing source with name <c1>{name}</c1>.")
+            self.poetry.config.config_source.remove_property(f"sources.{name}")
+        else:
+            sources = AoT([])
+            removed = False
 
-        sources = AoT([])
-        removed = False
+            for source in self.poetry.get_sources():
+                if source.name == name:
+                    self.line(f"Removing source with name <c1>{source.name}</c1>.")
+                    removed = True
+                    continue
+                sources.append(self.source_to_table(source))
 
-        for source in self.poetry.get_sources():
-            if source.name == name:
-                self.line(f"Removing source with name <c1>{source.name}</c1>.")
-                removed = True
-                continue
-            sources.append(self.source_to_table(source))
+            if not removed:
+                self.line_error(
+                    f"<error>Source with name <c1>{name}</c1> was not found.</error>"
+                )
+                return 1
 
-        if not removed:
-            self.line_error(
-                f"<error>Source with name <c1>{name}</c1> was not found.</error>"
-            )
-            return 1
-
-        self.poetry.pyproject.poetry_config["source"] = sources
-        self.poetry.pyproject.save()
+            self.poetry.pyproject.poetry_config["source"] = sources
+            self.poetry.pyproject.save()
 
         return 0

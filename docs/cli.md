@@ -722,6 +722,7 @@ You cannot use the name `pypi` as it is reserved for use by the default PyPI sou
 
 * `--default`: Set this source as the [default]({{< relref "repositories#disabling-the-pypi-repository" >}}) (disable PyPI).
 * `--secondary`: Set this source as a [secondary]({{< relref "repositories#install-dependencies-from-a-private-repository" >}}) source.
+* `--global`: Set this source to be global in the [poetry config]({{< relref "repositories#using-poetry-config" >}}).
 
 {{% note %}}
 You cannot set a source as both `default` and `secondary`.
@@ -741,8 +742,12 @@ Optionally, you can show information of one or more sources by specifying their 
 poetry source show pypi-test
 ```
 
+#### Options
+* `--global`: Show only sources set in poetry config
+* `--all`: Show sources in poetry config and `pyproject.toml`
+
 {{% note %}}
-This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+By default, this command will only show sources configured via the `pyproject.toml` and does not include PyPI.
 {{% /note %}}
 
 ### `source remove`
@@ -752,3 +757,6 @@ The `source remove` command removes a configured source from your `pyproject.tom
 ```bash
 poetry source remove pypi-test
 ```
+
+#### Options
+* `--global`: Remove the source from the poetry config.

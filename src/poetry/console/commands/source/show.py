@@ -1,7 +1,9 @@
 from typing import Optional
 
 from cleo.helpers import argument
+from cleo.helpers import option
 
+from poetry.config.source import Source
 from poetry.console.commands.command import Command
 
 
@@ -17,10 +19,23 @@ class SourceShowCommand(Command):
             multiple=True,
         ),
     ]
+    options = [
+        option("global", "g", "Show global sources"),
+        option("all", "a", "Show all sources for project"),
+    ]
 
     def handle(self) -> Optional[int]:
-        sources = self.poetry.get_sources()
         names = self.argument("source")
+        is_global = self.option("global")
+        show_all = self.option("all")
+        sources = []
+        if not is_global or show_all:
+            sources.extend(self.poetry.get_sources())
+
+        if is_global or show_all:
+            global_sources = self.poetry.config.get("sources", {})
+            for name, source in global_sources.items():
+                sources.append(Source(name=name, **source))
 
         if not sources:
             self.line("No sources configured for this project.")

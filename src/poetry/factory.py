@@ -1,3 +1,4 @@
+from copy import copy
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
@@ -63,6 +64,13 @@ class Factory(BaseFactory):
             if name and url and name not in existing_repositories:
                 repositories[name] = {"url": url}
 
+        # Load global sources
+        global_sources = config.get("sources", {})
+        for name, source in global_sources.items():
+            url = source.get("url")
+            if name and url and name not in existing_repositories:
+                repositories["name"] = {"url": url}
+
         config.merge({"repositories": repositories})
 
         poetry = Poetry(
@@ -75,7 +83,7 @@ class Factory(BaseFactory):
 
         # Configuring sources
         self.configure_sources(
-            poetry, poetry.local_config.get("source", []), config, io
+            poetry, poetry.local_config.get("source", []), config, io, global_sources
         )
 
         plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
@@ -122,23 +130,41 @@ class Factory(BaseFactory):
         return config
 
     @classmethod
+    def configure_source(
+        cls, poetry: Poetry, source: Dict[str, str], config: Config, io: "IO"
+    ) -> None:
+        repository = cls.create_legacy_repository(source, config)
+        is_default = source.get("default", False)
+        is_secondary = source.get("secondary", False)
+
+        if io.is_debug():
+            message = f"Adding repository {repository.name} ({repository.url})"
+            if is_default:
+                message += " and setting it as the default one"
+            elif is_secondary:
+                message += " and setting it as secondary"
+
+            io.write_line(message)
+
+        poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+
+    @classmethod
     def configure_sources(
-        cls, poetry: Poetry, sources: List[Dict[str, str]], config: Config, io: "IO"
+        cls,
+        poetry: Poetry,
+        sources: List[Dict[str, str]],
+        config: Config,
+        io: "IO",
+        global_sources: Dict[str, Dict[str, str]],
     ) -> None:
         for source in sources:
-            repository = cls.create_legacy_repository(source, config)
-            is_default = source.get("default", False)
-            is_secondary = source.get("secondary", False)
-            if io.is_debug():
-                message = f"Adding repository {repository.name} ({repository.url})"
-                if is_default:
-                    message += " and setting it as the default one"
-                elif is_secondary:
-                    message += " and setting it as secondary"
+            cls.configure_source(poetry, source, config, io)
 
-                io.write_line(message)
-
-            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+        for name, source in global_sources.items():
+            # normalize the source so it matches pyproject.toml format
+            source = copy(source)
+            source["name"] = name
+            cls.configure_source(poetry, source, config, io)
 
         # Put PyPI last to prefer private repositories
         # unless we have no default source AND no primary sources

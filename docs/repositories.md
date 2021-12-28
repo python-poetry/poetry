@@ -125,12 +125,17 @@ poetry config certificates.foo.client-cert /path/to/client.pem
 Now that you can publish to your private repository, you need to be able to
 install dependencies from it.
 
-For that, you have to edit your `pyproject.toml` file, like so
+For that, you have to edit your `pyproject.toml` or `poetry config`
 
+#### Using pyproject.toml
 ```toml
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
+```
+Alternatively, you can use the source command to update the `pyproject.toml`:
+```bash
+poetry source add foo "https://foo.bar/simple/"
 ```
 
 From now on, Poetry will also look for packages in your private repository.
@@ -156,6 +161,25 @@ a custom certificate authority or client certificates, similarly refer to the ex
 `certificates` section. Poetry will use these values to authenticate to your private repository when downloading or
 looking for packages.
 
+#### Using Poetry Config
+By adding the source to the poetry config, you can avoid having to add the
+same source to every project on a single machine.
+
+The following command will use foo system-wide and also disable PyPI.
+```bash
+poetry source add --global --default foo "https://foo.bar/simple/"
+```
+Sources listed in the config follow the same logic as updating your `pyproject.toml`.
+At run time, poetry will merge global, local and pypi accordingly. 
+
+{{% warning %}}
+
+Errors because of conflicting settings between config and `pyproject.toml` sources
+generated on the next run of poetry.  
+
+An example error would be having a default source globally and locally.
+
+{{% /warning %}}
 
 ### Disabling the PyPI repository
 

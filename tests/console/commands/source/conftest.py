@@ -6,6 +6,7 @@ from poetry.config.source import Source
 
 
 if TYPE_CHECKING:
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import ProjectFactory
@@ -37,6 +38,11 @@ _existing_source = Source(name="existing", url="https://existing.com")
 @pytest.fixture
 def source_existing() -> Source:
     return _existing_source
+
+
+@pytest.fixture
+def source_existing_global() -> Source:
+    return Source(name="existing_global", url="https://existing_global.com")
 
 
 PYPROJECT_WITH_SOURCES = f"""
@@ -72,3 +78,19 @@ def add_multiple_sources(
     add = command_tester_factory("source add", poetry=poetry_with_source)
     for source in [source_one, source_two]:
         add.execute(f"{source.name} {source.url}")
+
+
+@pytest.fixture
+def config_with_source(config: "Config", source_existing_global: Source) -> "Config":
+    config.merge(
+        {
+            "sources": {
+                source_existing_global.name: {
+                    "url": source_existing_global.url,
+                    "default": source_existing_global.default,
+                    "secondary": source_existing_global.secondary,
+                }
+            }
+        }
+    )
+    return config

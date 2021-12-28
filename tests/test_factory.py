@@ -14,9 +14,11 @@ from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
 
@@ -309,3 +311,80 @@ def test_create_poetry_with_plugins(mocker: "MockerFixture"):
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
     assert poetry.package.version.text == "9.9.9"
+
+
+@pytest.fixture
+def config_with_global_default(config: "Config") -> None:
+    config.merge(
+        {
+            "sources": {
+                "global_default": {"url": "http://existing_global.com", "default": True}
+            }
+        }
+    )
+
+
+@pytest.fixture
+def config_with_global_source(config: "Config") -> None:
+    config.merge({"sources": {"global_source": {"url": "http://global_source.com"}}})
+
+
+@pytest.fixture
+def config_with_global_secondary(config: "Config") -> None:
+    config.merge(
+        {
+            "sources": {
+                "global_secondary": {
+                    "url": "http://global_secondary.com",
+                    "secondary": True,
+                }
+            }
+        }
+    )
+
+
+def test_poetry_with_local_and_global_defaults(config_with_global_default: "Config"):
+    with pytest.raises(ValueError) as e:
+        Factory().create_poetry(fixtures_dir / "with_default_source")
+    assert str(e.value) == "Only one repository can be the default"
+
+
+def test_poetry_with_global_default(config_with_global_default: "Config"):
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+    assert len(poetry.pool.repositories) == 1
+    assert poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "global_default"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
+
+
+def test_poetry_with_global_source(config_with_global_source: "Config"):
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+    assert len(poetry.pool.repositories) == 2
+    assert not poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "global_source"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
+    assert poetry.pool.repositories[1].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[1], PyPiRepository)
+
+
+def test_poetry_with_global_secondary(config_with_global_secondary: "Config"):
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+    assert len(poetry.pool.repositories) == 2
+    assert poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[0], PyPiRepository)
+    assert poetry.pool.repositories[1].name == "global_secondary"
+    assert isinstance(poetry.pool.repositories[1], LegacyRepository)
+
+
+def test_poetry_with_global_and_local(config_with_global_source: "Config"):
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
+    assert len(poetry.pool.repositories) == 3
+    assert not poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "global_source"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
+    assert poetry.pool.repositories[1].name == "foo"
+    assert isinstance(poetry.pool.repositories[1], LegacyRepository)
+    assert poetry.pool.repositories[2].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[2], PyPiRepository)

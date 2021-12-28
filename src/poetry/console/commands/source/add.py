@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import TYPE_CHECKING
 from typing import Optional
 
@@ -38,6 +39,7 @@ class SourceAddCommand(Command):
             "you add other sources.",
         ),
         option("secondary", "s", "Set this source as secondary."),
+        option("global", "g", "Set this source to be global"),
     ]
 
     @staticmethod
@@ -56,6 +58,7 @@ class SourceAddCommand(Command):
         url = self.argument("url")
         is_default = self.option("default")
         is_secondary = self.option("secondary")
+        is_global = self.option("global")
 
         if is_default and is_secondary:
             self.line_error(
@@ -67,41 +70,54 @@ class SourceAddCommand(Command):
         new_source = Source(
             name=name, url=url, default=is_default, secondary=is_secondary
         )
-        existing_sources = self.poetry.get_sources()
+        existing_global_sources = deepcopy(self.poetry.config.get("sources", {}))
+        existing_local_sources = self.poetry.get_sources()
+        if is_global:
+            existing_sources = [
+                Source(name=name, **source)
+                for name, source in existing_global_sources.items()
+            ]
+        else:
+            existing_sources = existing_local_sources
 
-        sources = AoT([])
-
+        sources_updated = []
         for source in existing_sources:
-            if source == new_source:
+            if new_source == source:
                 self.line(
-                    f"Source with name <c1>{name}</c1> already exists. Skipping"
-                    " addition."
+                    f"Identical source with name <c1>{name}</c1> already exists. "
+                    f"Skipping addition."
                 )
                 return 0
-            elif source.default and is_default:
-                self.line_error(
-                    f"<error>Source with name <c1>{source.name}</c1> is already set to"
-                    " default. Only one default source can be configured at a"
-                    " time.</error>"
-                )
-                return 1
 
-            if source.name == name:
+            if name == source.name:
                 self.line(f"Source with name <c1>{name}</c1> already exists. Updating.")
                 source = new_source
                 new_source = None
-
-            sources.append(self.source_to_table(source))
-
+            elif source.default and new_source.default:
+                self.line_error(
+                    f"<error>Source with name <c1>{name}</c1> is already set to default. "
+                    f"Only one default source can be configured at a time.</error>"
+                )
+                return 1
+            sources_updated.append(source)
         if new_source is not None:
-            self.line(f"Adding source with name <c1>{name}</c1>.")
-            sources.append(self.source_to_table(new_source))
+            self.line(f"Adding source with name <c1>{new_source.name}</c1>.")
+            sources_updated.append(new_source)
 
-        # ensure new source is valid. eg: invalid name etc.
+        global_sources = {}
+        local_sources = AoT([])
+        if is_global:
+            for source in sources_updated:
+                global_sources[source.name] = source.to_dict()
+                global_sources[source.name].pop("name")
+        else:
+            for source in sources_updated:
+                local_sources.append(self.source_to_table(source))
+
         self.poetry._pool = Pool()
         try:
             Factory.configure_sources(
-                self.poetry, sources, self.poetry.config, NullIO()
+                self.poetry, local_sources, self.poetry.config, NullIO(), global_sources
             )
             self.poetry.pool.repository(name)
         except ValueError as e:
@@ -110,7 +126,17 @@ class SourceAddCommand(Command):
             )
             return 1
 
-        self.poetry.pyproject.poetry_config["source"] = sources
-        self.poetry.pyproject.save()
+        if is_global:
+            # only add/update new values
+            self.poetry.config.config_source.add_property(f"sources.{name}.url", url)
+            self.poetry.config.config_source.add_property(
+                f"sources.{name}.default", is_default
+            )
+            self.poetry.config.config_source.add_property(
+                f"sources.{name}.secondary", is_secondary
+            )
+        else:
+            self.poetry.pyproject.poetry_config["source"] = local_sources
+            self.poetry.pyproject.save()
 
         return 0
