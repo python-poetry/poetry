@@ -170,14 +170,13 @@ The following command will use foo system-wide and also disable PyPI.
 poetry source add --global --default foo "https://foo.bar/simple/"
 ```
 Sources listed in the config follow the same logic as updating your `pyproject.toml`.
-At run time, poetry will merge global, local and pypi accordingly. 
+At run time, poetry will merge global, local and pypi accordingly.
 
 {{% warning %}}
 
 Errors because of conflicting settings between config and `pyproject.toml` sources
-generated on the next run of poetry.  
-
-An example error would be having a default source globally and locally.
+generated on the next run of poetry. An example error would be having a
+default source globally and locally.
 
 {{% /warning %}}
 
