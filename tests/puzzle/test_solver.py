@@ -1414,6 +1414,49 @@ def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_inters
     )
 
 
+def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_intersection2(
+    solver: Solver, repo: Repository, package: Package
+):
+    """
+    Empty intersection between top level dependency and transient dependency.
+    """
+    package.add_dependency(Factory.create_dependency("A", {"version": "1.0"}))
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": ">=2.0", "python": ">=3.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "python": "<3.7"})
+    )
+
+    package_a10 = get_package("A", "1.0")
+    package_a10.add_dependency(
+        Factory.create_dependency("B", {"version": ">=2.0", "python": ">=3.7"})
+    )
+    package_a10.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "python": "<3.7"})
+    )
+
+    package_b10 = get_package("B", "1.0")
+    package_b10.python_versions = "<3.7"
+    package_b20 = get_package("B", "2.0")
+    package_b20.python_versions = ">=3.7"
+
+    repo.add_package(package_a10)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a10},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_sub_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
