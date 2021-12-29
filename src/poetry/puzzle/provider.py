@@ -663,8 +663,9 @@ class Provider:
                         dep_other.set_constraint(
                             dep_other.constraint.intersect(dep_any.constraint)
                         )
-            else:
-                # if there is no any marker dependency,
+            elif not inverted_marker.is_empty():
+                # if there is no any marker dependency
+                # and the inverted marker is not empty,
                 # a dependency with the inverted union of all markers is required
                 # in order to not miss other dependencies later, for instance:
                 #   - foo (1.0) ; python == 3.7
@@ -680,10 +681,11 @@ class Provider:
 
             overrides = []
             overrides_marker_intersection = AnyMarker()
-            for _dep in self._overrides.get(package, {}).values():
-                overrides_marker_intersection = overrides_marker_intersection.intersect(
-                    _dep.marker
-                )
+            for dep_overrides in self._overrides.values():
+                for _dep in dep_overrides.values():
+                    overrides_marker_intersection = (
+                        overrides_marker_intersection.intersect(_dep.marker)
+                    )
             for _dep in _deps:
                 if not overrides_marker_intersection.intersect(_dep.marker).is_empty():
                     current_overrides = self._overrides.copy()
