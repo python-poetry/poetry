@@ -76,7 +76,7 @@ class Provider:
         self._overrides: Dict = {}
         self._deferred_cache: Dict["Dependency", "Package"] = {}
         self._load_deferred = True
-        self._markers_to_filter = None
+        self._markers_to_filter: Dict = {}
 
     @property
     def pool(self) -> "Pool":
@@ -92,7 +92,7 @@ class Provider:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_markers_filter(self,markers: "Dict") -> Iterator["Provider"]:
+    def use_markers_filter(self, markers: Dict) -> Iterator["Provider"]:
         old_markers_to_filter = self._markers_to_filter
 
         self._markers_to_filter = markers
@@ -511,8 +511,12 @@ class Provider:
             if self._env and not dep.marker.validate(self._env.marker_env):
                 continue
 
-            if self._markers_to_filter and not dep.marker.validate(self._markers_to_filter):
-                self.debug(f"<warning>Removing {dep} due to markers {dep.marker} not matching the target platform</warning>")
+            if self._markers_to_filter and not dep.marker.validate(
+                self._markers_to_filter
+            ):
+                self.debug(
+                    f"<warning>Removing {dep} due to markers {dep.marker} not matching the target platform</warning>"
+                )
                 continue
 
             if not package.is_root() and (

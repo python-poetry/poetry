@@ -73,7 +73,7 @@ class InstallCommand(InstallerCommand):
             "List of environment markers to be matched early, to speed up resolving dependencies (see PEP 508).",
             flag=False,
             multiple=True,
-        )
+        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from

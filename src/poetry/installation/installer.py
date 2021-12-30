@@ -192,7 +192,7 @@ class Installer:
 
         return self
 
-    def match_markers(self,markers: list) -> "Installer":
+    def match_markers(self, markers: list) -> "Installer":
         self._match_markers = markers
 
         return self
@@ -256,7 +256,11 @@ class Installer:
                 self._io,
             )
 
-            markers_to_filter = {k:v for k,v in self._env.marker_env.items() if k in self._match_markers}
+            markers_to_filter = {
+                k: v
+                for k, v in self._env.marker_env.items()
+                if k in self._match_markers
+            }
             with solver.use_markers_filter(markers_to_filter):
                 ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:

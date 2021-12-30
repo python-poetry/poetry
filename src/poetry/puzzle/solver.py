@@ -64,7 +64,7 @@ class Solver:
         return self._provider
 
     @contextmanager
-    def use_markers_filter(self,markers: "Dict") -> Iterator[None]:
+    def use_markers_filter(self, markers: Dict) -> Iterator[None]:
         with self.provider.use_markers_filter(markers):
             yield
 
