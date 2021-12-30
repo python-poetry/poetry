@@ -66,6 +66,8 @@ class Installer:
 
         self._extras = []
 
+        self._match_markers = []
+
         if executor is None:
             executor = Executor(self._env, self._pool, config, self._io)
 
@@ -190,6 +192,11 @@ class Installer:
 
         return self
 
+    def match_markers(self,markers: list) -> "Installer":
+        self._match_markers = markers
+
+        return self
+
     def use_executor(self, use_executor: bool = True) -> "Installer":
         self._use_executor = use_executor
 
@@ -249,7 +256,9 @@ class Installer:
                 self._io,
             )
 
-            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+            markers_to_filter = {k:v for k,v in self._env.marker_env.items() if k in self._match_markers}
+            with solver.use_markers_filter(markers_to_filter):
+                ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
