@@ -231,8 +231,8 @@ lines.
 
 ## Optimizing by environment pre-filtering
 
-Poetry may take long to build a lock when it considers exponentially many combinations of downstream packages.
-This happens when there are branches for different OS, platform architecture, Python versions and so on.
+Poetry may take long to build a lock when they are exponentially many combinations of downstream packages, due to different variants of OS, platform architecture, Python versions and so on.
+
 With this [PR 4956 ](https://github.com/python-poetry/poetry/pull/4956) we can narrow down the search space in the beginning.
 
 As a real use-case consider Azure packages
