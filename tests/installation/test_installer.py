@@ -992,7 +992,7 @@ def test_run_prefilter_with_optional_and_platform_restricted_dependencies(
     package: ProjectPackage,
     mocker: "MockerFixture",
 ):
-    mocker.patch("sys.platform", "win32")
+    mocker.patch("sys.platform", "windows")
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
@@ -1016,11 +1016,12 @@ def test_run_prefilter_with_optional_and_platform_restricted_dependencies(
     )
     package.add_dependency(
         Factory.create_dependency(
-            "C", {"version": "^1.0", "markers": "sys_platform=='win32'"}
+            "C", {"version": "^1.0", "markers": "sys_platform=='windows'"}
         )
     )
 
-    installer.match_markers(["sys_platform"])
+    locker._local_config = {"target_env": {"sys_platform": "windows"}}
+    installer._locker = locker
     installer.run()
 
     # expect to filter out B from the lock (incompatible on sys_platform)

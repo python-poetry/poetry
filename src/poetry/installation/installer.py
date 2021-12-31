@@ -256,11 +256,11 @@ class Installer:
                 self._io,
             )
 
-            markers_to_filter = {
-                k: v
-                for k, v in self._env.marker_env.items()
-                if k in self._match_markers
-            }
+            if hasattr(self._locker, "_local_config"):
+                markers_to_filter = self._locker._local_config.get("target_env")
+            else:
+                markers_to_filter = {}
+
             with solver.use_markers_filter(markers_to_filter):
                 ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
