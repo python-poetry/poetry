@@ -326,9 +326,7 @@ class PyPiRepository(RemoteRepository):
         if json_response.status_code == 404:
             return None
 
-        json_data = json_response.json()
-
-        return json_data
+        return json_response.json()
 
     def _get_info_from_urls(self, urls: Dict[str, List[str]]) -> "PackageInfo":
         # Checking wheels first as they are more likely to hold

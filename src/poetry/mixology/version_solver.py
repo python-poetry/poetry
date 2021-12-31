@@ -96,9 +96,7 @@ class VersionSolver:
         Performs unit propagation on incompatibilities transitively
         related to package to derive new assignments for _solution.
         """
-        changed = set()
-        changed.add(package)
-
+        changed = {package}
         while changed:
             package = changed.pop()
 
@@ -269,10 +267,9 @@ class VersionSolver:
             # true (that is, we know for sure no solution will satisfy the
             # incompatibility) while also approximating the intuitive notion of the
             # "root cause" of the conflict.
-            new_terms = []
-            for term in incompatibility.terms:
-                if term != most_recent_term:
-                    new_terms.append(term)
+            new_terms = [
+                term for term in incompatibility.terms if term != most_recent_term
+            ]
 
             for term in most_recent_satisfier.cause.terms:
                 if term.dependency != most_recent_satisfier.dependency:

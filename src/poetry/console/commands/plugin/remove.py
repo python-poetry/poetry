@@ -40,9 +40,7 @@ class PluginRemoveCommand(Command):
         plugins = self.argument("plugins")
 
         system_env = EnvManager.get_system_env(naive=True)
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
-        )
+        env_dir = Path(os.getenv("POETRY_HOME") or system_env.path)
 
         # From this point forward, all the logic will be deferred to
         # the remove command, by using the global `pyproject.toml` file.

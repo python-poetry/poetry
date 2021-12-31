@@ -108,17 +108,14 @@ class EditableBuilder(Builder):
                 os.remove(str(setup))
 
     def _add_pth(self) -> List[Path]:
-        paths = set()
-        for include in self._module.includes:
-            if isinstance(include, PackageInclude) and (
-                include.is_module() or include.is_package()
-            ):
-                paths.add(include.base.resolve().as_posix())
+        paths = {
+            include.base.resolve().as_posix()
+            for include in self._module.includes
+            if isinstance(include, PackageInclude)
+            and (include.is_module() or include.is_package())
+        }
 
-        content = ""
-        for path in paths:
-            content += decode(path + os.linesep)
-
+        content = "".join(decode(path + os.linesep) for path in paths)
         pth_file = Path(self._module.name).with_suffix(".pth")
 
         # remove any pre-existing pth files for this package

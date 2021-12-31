@@ -85,14 +85,13 @@ class Chooser:
         return chosen
 
     def _get_links(self, package: "Package") -> List["Link"]:
-        if not package.source_type:
-            if not self._pool.has_repository("pypi"):
-                repository = self._pool.repositories[0]
-            else:
-                repository = self._pool.repository("pypi")
-        else:
+        if package.source_type:
             repository = self._pool.repository(package.source_reference)
 
+        elif not self._pool.has_repository("pypi"):
+            repository = self._pool.repositories[0]
+        else:
+            repository = self._pool.repository("pypi")
         links = repository.find_links_for_package(package)
 
         hashes = [f["hash"] for f in package.files]
@@ -142,7 +141,6 @@ class Chooser:
               comparison operators, but then different sdist links
               with the same version, would have to be considered equal
         """
-        support_num = len(self._env.supported_tags)
         build_tag = ()
         binary_preference = 0
         if link.is_wheel:
@@ -160,6 +158,7 @@ class Chooser:
                 build_tag_groups = match.groups()
                 build_tag = (int(build_tag_groups[0]), build_tag_groups[1])
         else:  # sdist
+            support_num = len(self._env.supported_tags)
             pri = -support_num
 
         has_allowed_hash = int(self._is_link_hash_allowed_for_package(link, package))
