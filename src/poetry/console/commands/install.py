@@ -68,7 +68,7 @@ class InstallCommand(InstallerCommand):
             multiple=True,
         ),
         option(
-            "match_marker",
+            "match-marker",
             None,
             "List of environment markers to be matched early, to speed up resolving dependencies (see PEP 508).",
             flag=False,
