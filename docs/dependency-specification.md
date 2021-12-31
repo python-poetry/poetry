@@ -249,7 +249,7 @@ azureml-dataset-runtime = {version="1.37.0"}
 ```
 
 Installing with debugging `poetry install --dry-run -vv` reveals that poetry considers many package combinations for Windows.
-However, after adding the section `tool.poetry.dependencies` and specifying environment markers there is no branching anymore.
+However, after adding the section `tool.poetry.dependencies` and specifying [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers) there is no branching anymore.
 
 ```
 [tool.poetry.target_env]
