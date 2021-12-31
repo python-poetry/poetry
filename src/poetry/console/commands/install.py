@@ -101,7 +101,7 @@ dependencies and not including the current project, run the command with the
             self.poetry.config.get("experimental.new-installer", False)
         )
 
-        markers_to_filter = self.option("match_marker")
+        markers_to_filter = self.option("match-marker")
         if markers_to_filter:
             self._installer.match_markers(markers_to_filter)
 
