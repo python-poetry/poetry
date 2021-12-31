@@ -37,6 +37,14 @@ class Factory(BaseFactory):
         if io is None:
             io = NullIO()
 
+        # redirect to the extended schema (from poetry, not from poetry-core)
+        import os
+
+        import poetry.core.json
+
+        poetry.core.json.SCHEMA_DIR = os.path.join(
+            os.path.dirname(__file__), "json/schemas/extended"
+        )
         base_poetry = super().create_poetry(cwd)
 
         locker = Locker(
