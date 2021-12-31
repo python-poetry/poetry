@@ -70,6 +70,7 @@ class VersionSolver:
         """
         start = time.time()
         root_dependency = Dependency(self._root.name, self._root.version)
+        root_dependency.python_versions = self._root.python_versions
         root_dependency.is_root = True
 
         self._add_incompatibility(

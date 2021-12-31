@@ -420,6 +420,30 @@ def test_solver_fails_if_mismatch_root_python_versions(
         solver.solve()
 
 
+def test_solver_ignores_python_restricted_if_mismatch_root_package_python_versions(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    solver.provider.set_package_python_versions("~3.8")
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "1.0", "python": "<3.8"})
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "1.0", "markers": "python_version < '3.8'"}
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(transaction, [])
+
+
 def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
