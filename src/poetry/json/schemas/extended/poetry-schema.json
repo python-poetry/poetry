@@ -115,6 +115,10 @@
       "type": "array",
       "description": "A list of files and folders to exclude."
     },
+    "target_env": {
+      "type": "object",
+      "description": "Markers of the target environment used to pre-filter dependencies."
+    },
     "dependencies": {
       "type": "object",
       "description": "This is a hash of package name (keys) and version constraints (values) that are required to run this package.",
