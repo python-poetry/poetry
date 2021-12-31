@@ -256,8 +256,16 @@ class Installer:
                 self._io,
             )
 
-            if hasattr(self._locker, "_local_config"):
-                markers_to_filter = self._locker._local_config.get("target_env")
+            if (
+                hasattr(self._locker, "_local_config")
+                and "target_env" in self._locker._local_config
+            ):
+                # load and format as VirtualEnv from poetry.utils.env
+                markers_to_filter = self._locker._local_config["target_env"]
+                if markers_to_filter:
+                    version_info = markers_to_filter.get("version_info")
+                    if version_info:
+                        markers_to_filter["version_info"] = tuple(version_info)
             else:
                 markers_to_filter = {}
 
