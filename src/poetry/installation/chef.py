@@ -44,7 +44,7 @@ class Chef:
     def get_cached_archive_for_link(self, link: Link) -> Optional[Link]:
         # If the archive is already a wheel, there is no need to cache it.
         if link.is_wheel:
-            pass
+            return
 
         archives = self.get_cached_archives_for_link(link)
 
