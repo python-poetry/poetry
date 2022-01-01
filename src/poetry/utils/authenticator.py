@@ -115,14 +115,10 @@ class Authenticator:
                 # behaves if more than one @ is present (which can be checked using
                 # the password attribute of urlsplit()'s return value).
                 auth, netloc = netloc.rsplit("@", 1)
-                if ":" in auth:
-                    # Split from the left because that's how urllib.parse.urlsplit()
-                    # behaves if more than one : is present (which again can be checked
-                    # using the password attribute of the return value)
-                    credentials = auth.split(":", 1)
-                else:
-                    credentials = auth, None
-
+                # Split from the left because that's how urllib.parse.urlsplit()
+                # behaves if more than one : is present (which again can be checked
+                # using the password attribute of the return value)
+                credentials = auth.split(":", 1) if ":" in auth else (auth, None)
                 credentials = tuple(
                     None if x is None else urllib.parse.unquote(x) for x in credentials
                 )
@@ -166,8 +162,6 @@ class Authenticator:
     def _get_credentials_for_netloc(
         self, netloc: str
     ) -> Tuple[Optional[str], Optional[str]]:
-        credentials = (None, None)
-
         for repository_name in self._config.get("repositories", []):
             auth = self._get_http_auth(repository_name, netloc)
 
@@ -176,7 +170,7 @@ class Authenticator:
 
             return auth["username"], auth["password"]
 
-        return credentials
+        return None, None
 
     def _get_credentials_for_netloc_from_keyring(
         self, url: str, netloc: str, username: Optional[str]

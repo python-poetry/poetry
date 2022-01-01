@@ -70,9 +70,7 @@ You can specify a package in the following forms:
         # Plugins should be installed in the system env to be globally available
         system_env = EnvManager.get_system_env(naive=True)
 
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
-        )
+        env_dir = Path(os.getenv("POETRY_HOME") or system_env.path)
 
         # We check for the plugins existence first.
         if env_dir.joinpath("pyproject.toml").exists():

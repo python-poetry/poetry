@@ -23,10 +23,7 @@ class PythonRequirementSolutionProvider(HasSolutionsForException):
             str(exception),
         )
 
-        if not m:
-            return False
-
-        return True
+        return bool(m)
 
     def get_solutions(self, exception: Exception) -> List["Solution"]:
         from poetry.mixology.solutions.solutions.python_requirement_solution import (

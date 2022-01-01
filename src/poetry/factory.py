@@ -160,13 +160,12 @@ class Factory(BaseFactory):
         from poetry.utils.helpers import get_cert
         from poetry.utils.helpers import get_client_cert
 
-        if "url" in source:
-            # PyPI-like repository
-            if "name" not in source:
-                raise RuntimeError("Missing [name] in source.")
-        else:
+        if "url" not in source:
             raise RuntimeError("Unsupported source specified")
 
+        # PyPI-like repository
+        if "name" not in source:
+            raise RuntimeError("Missing [name] in source.")
         name = source["name"]
         url = source["url"]
 

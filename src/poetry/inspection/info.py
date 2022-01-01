@@ -322,10 +322,7 @@ class PackageInfo:
         if python_requires is None:
             python_requires = "*"
 
-        requires = ""
-        for dep in result["install_requires"]:
-            requires += dep + "\n"
-
+        requires = "".join(dep + "\n" for dep in result["install_requires"])
         if result["extras_require"]:
             requires += "\n"
 

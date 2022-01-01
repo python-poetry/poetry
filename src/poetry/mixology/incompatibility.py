@@ -36,15 +36,12 @@ class Incompatibility:
                 if not term.is_positive() or not term.dependency.is_root
             ]
 
-        if (
-            len(terms) == 1
+        if len(terms) != 1 and (
             # Short-circuit in the common case of a two-term incompatibility with
             # two different packages (for example, a dependency).
-            or len(terms) == 2
-            and terms[0].dependency.complete_name != terms[-1].dependency.complete_name
+            len(terms) != 2
+            or terms[0].dependency.complete_name == terms[-1].dependency.complete_name
         ):
-            pass
-        else:
             # Coalesce multiple terms about the same package if possible.
             by_name: Dict[str, Dict[str, "Term"]] = {}
             for term in terms:
@@ -178,21 +175,21 @@ class Incompatibility:
             term2 = self._terms[1]
 
             if term1.is_positive() == term2.is_positive():
-                if term1.is_positive():
-                    package1 = (
-                        term1.dependency.name
-                        if term1.constraint.is_any()
-                        else self._terse(term1)
-                    )
-                    package2 = (
-                        term2.dependency.name
-                        if term2.constraint.is_any()
-                        else self._terse(term2)
-                    )
-
-                    return f"{package1} is incompatible with {package2}"
-                else:
+                if not term1.is_positive():
                     return f"either {self._terse(term1)} or {self._terse(term2)}"
+
+                package1 = (
+                    term1.dependency.name
+                    if term1.constraint.is_any()
+                    else self._terse(term1)
+                )
+                package2 = (
+                    term2.dependency.name
+                    if term2.constraint.is_any()
+                    else self._terse(term2)
+                )
+
+                return f"{package1} is incompatible with {package2}"
 
         positive = []
         negative = []
@@ -204,12 +201,11 @@ class Incompatibility:
                 negative.append(self._terse(term))
 
         if positive and negative:
-            if len(positive) == 1:
-                positive_term = [term for term in self._terms if term.is_positive()][0]
-
-                return f"{self._terse(positive_term, allow_every=True)} requires {' or '.join(negative)}"
-            else:
+            if len(positive) != 1:
                 return f"if {' and '.join(positive)} then {' or '.join(negative)}"
+
+            positive_term = [term for term in self._terms if term.is_positive()][0]
+            return f"{self._terse(positive_term, allow_every=True)} requires {' or '.join(negative)}"
         elif positive:
             return f"one of {' or '.join(positive)} must be false"
         else:

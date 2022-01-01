@@ -94,9 +94,6 @@ class Solver:
     def solve_in_compatibility_mode(
         self, overrides: Tuple[Dict, ...], use_latest: List[str] = None
     ) -> Tuple[List["Package"], List[int]]:
-        locked = {}
-        for package in self._locked.packages:
-            locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         packages = []
         depths = []
@@ -127,9 +124,10 @@ class Solver:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
-        locked = {}
-        for package in self._locked.packages:
-            locked[package.name] = DependencyPackage(package.to_dependency(), package)
+        locked = {
+            package.name: DependencyPackage(package.to_dependency(), package)
+            for package in self._locked.packages
+        }
 
         try:
             result = resolve_version(
@@ -218,16 +216,16 @@ def depth_first_search(
         name_children[node.name].extend(node.reachable())
         combined_nodes[node.name].append(node)
 
-    combined_topo_sorted_nodes = []
-    for node in topo_sorted_nodes:
-        if node.name in combined_nodes:
-            combined_topo_sorted_nodes.append(combined_nodes.pop(node.name))
+    combined_topo_sorted_nodes = [
+        combined_nodes.pop(node.name)
+        for node in topo_sorted_nodes
+        if node.name in combined_nodes
+    ]
 
-    results = [
+    return [
         aggregator(nodes, name_children[nodes[0].name])
         for nodes in combined_topo_sorted_nodes
     ]
-    return results
 
 
 def dfs_visit(
@@ -333,21 +331,20 @@ class PackageNode(DFSNode):
                 continue
 
             for pkg in self.packages:
-                if pkg.complete_name == dependency.complete_name and (
-                    dependency.constraint.allows(pkg.version)
-                    or dependency.allows_prereleases()
-                    and pkg.version.is_unstable()
-                    and dependency.constraint.allows(pkg.version.stable)
-                ):
-                    # If there is already a child with this name
-                    # we merge the requirements
-                    if any(
+                if (
+                    pkg.complete_name == dependency.complete_name
+                    and (
+                        dependency.constraint.allows(pkg.version)
+                        or dependency.allows_prereleases()
+                        and pkg.version.is_unstable()
+                        and dependency.constraint.allows(pkg.version.stable)
+                    )
+                    and not any(
                         child.package.name == pkg.name
                         and child.groups == dependency.groups
                         for child in children
-                    ):
-                        continue
-
+                    )
+                ):
                     children.append(
                         PackageNode(
                             pkg,

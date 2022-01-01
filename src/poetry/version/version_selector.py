@@ -37,7 +37,7 @@ class VersionSelector:
             },
         )
         candidates = self._pool.find_packages(dependency)
-        only_prereleases = all([c.version.is_unstable() for c in candidates])
+        only_prereleases = all(c.version.is_unstable() for c in candidates)
 
         if not candidates:
             return False

@@ -50,11 +50,10 @@ list of installed packages
 
         if group is None:
             removed = []
-            group_sections = []
-            for group_name, group_section in poetry_content.get("group", {}).items():
-                group_sections.append(
-                    (group_name, group_section.get("dependencies", {}))
-                )
+            group_sections = [
+                (group_name, group_section.get("dependencies", {}))
+                for group_name, group_section in poetry_content.get("group", {}).items()
+            ]
 
             for group_name, section in [
                 ("default", poetry_content["dependencies"])

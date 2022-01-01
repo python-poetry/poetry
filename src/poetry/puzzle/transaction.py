@@ -65,12 +65,10 @@ class Transaction:
 
         if with_uninstalls:
             for current_package in self._current_packages:
-                found = False
-                for result_package, _ in self._result_packages:
-                    if current_package.name == result_package.name:
-                        found = True
-
-                        break
+                found = any(
+                    current_package.name == result_package.name
+                    for result_package, _ in self._result_packages
+                )
 
                 if not found:
                     for installed_package in self._installed_packages:

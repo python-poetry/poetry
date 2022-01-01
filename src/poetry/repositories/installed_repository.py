@@ -146,19 +146,18 @@ class InstalledRepository(Repository):
                         if is_editable_package:
                             source_type = "directory"
                             source_url = paths.pop().as_posix()
+        elif cls.is_vcs_package(path, env):
+            (
+                source_type,
+                source_url,
+                source_reference,
+            ) = cls.get_package_vcs_properties_from_path(
+                env.path / "src" / canonicalize_name(distribution.metadata["name"])
+            )
         else:
-            if cls.is_vcs_package(path, env):
-                (
-                    source_type,
-                    source_url,
-                    source_reference,
-                ) = cls.get_package_vcs_properties_from_path(
-                    env.path / "src" / canonicalize_name(distribution.metadata["name"])
-                )
-            else:
-                # If not, it's a path dependency
-                source_type = "directory"
-                source_url = str(path.parent)
+            # If not, it's a path dependency
+            source_type = "directory"
+            source_url = str(path.parent)
 
         package = Package(
             distribution.metadata["name"],

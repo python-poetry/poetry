@@ -201,12 +201,10 @@ class _Writer:
                 derived_cause: ConflictCause = derived.cause
                 if isinstance(derived_cause.conflict.cause, ConflictCause):
                     collapsed_derived = derived_cause.conflict
+                    collapsed_ext = derived_cause.other
                 else:
                     collapsed_derived = derived_cause.other
 
-                if isinstance(derived_cause.conflict.cause, ConflictCause):
-                    collapsed_ext = derived_cause.other
-                else:
                     collapsed_ext = derived_cause.conflict
 
                 details_for_cause = {}

@@ -253,11 +253,10 @@ class SitePackages:
                     return [path]
                 except ValueError:
                     pass
-            else:
-                site_type = "writable " if writable_only else ""
-                raise ValueError(
-                    f"{path} is not relative to any discovered {site_type}sites"
-                )
+            site_type = "writable " if writable_only else ""
+            raise ValueError(
+                f"{path} is not relative to any discovered {site_type}sites"
+            )
 
         results = [candidate / path for candidate in candidates if candidate]
 
@@ -284,8 +283,7 @@ class SitePackages:
     ) -> Optional[metadata.PathDistribution]:
         for distribution in self.distributions(name=name, writable_only=writable_only):
             return distribution
-        else:
-            return None
+        return None
 
     def find_distribution_files_with_suffix(
         self, distribution_name: str, suffix: str, writable_only: bool = False
@@ -1333,7 +1331,7 @@ class Env:
         """
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
-        env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
+        env = kwargs.pop("env", dict(os.environ))
 
         try:
             if self._is_windows:
@@ -1364,14 +1362,14 @@ class Env:
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         command = self.get_command_from_bin(bin) + list(args)
-        env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
+        env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
-        else:
-            exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
-            exe.communicate()
-            return exe.returncode
+
+        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe.communicate()
+        return exe.returncode
 
     def is_venv(self) -> bool:
         raise NotImplementedError()
@@ -1501,12 +1499,9 @@ class SystemEnv(Env):
             "platform_version": platform.version(),
             "python_full_version": platform.python_version(),
             "platform_python_implementation": platform.python_implementation(),
-            "python_version": ".".join(
-                v for v in platform.python_version().split(".")[:2]
-            ),
+            "python_version": ".".join(platform.python_version().split(".")[:2]),
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
-            # Extra information
             "interpreter_name": interpreter_name(),
             "interpreter_version": interpreter_version(),
         }
@@ -1720,15 +1715,15 @@ class GenericEnv(VirtualEnv):
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         command = self.get_command_from_bin(bin) + list(args)
-        env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
+        env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
-        else:
-            exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
-            exe.communicate()
 
-            return exe.returncode
+        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe.communicate()
+
+        return exe.returncode
 
     def _run(self, cmd: List[str], **kwargs: Any) -> Optional[int]:
         return super(VirtualEnv, self)._run(cmd, **kwargs)
