@@ -1331,7 +1331,7 @@ class Env:
         """
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
-        env = kwargs.pop("env", dict(os.environ.items()))
+        env = kwargs.pop("env", dict(os.environ))
 
         try:
             if self._is_windows:
@@ -1362,10 +1362,11 @@ class Env:
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         command = self.get_command_from_bin(bin) + list(args)
-        env = kwargs.pop("env", dict(os.environ.items()))
+        env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
+
         exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
         exe.communicate()
         return exe.returncode
@@ -1714,10 +1715,11 @@ class GenericEnv(VirtualEnv):
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         command = self.get_command_from_bin(bin) + list(args)
-        env = kwargs.pop("env", dict(os.environ.items()))
+        env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
+
         exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
         exe.communicate()
 

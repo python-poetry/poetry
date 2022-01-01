@@ -190,6 +190,7 @@ class Incompatibility:
                 )
 
                 return f"{package1} is incompatible with {package2}"
+
         positive = []
         negative = []
 
@@ -202,8 +203,8 @@ class Incompatibility:
         if positive and negative:
             if len(positive) != 1:
                 return f"if {' and '.join(positive)} then {' or '.join(negative)}"
-            positive_term = [term for term in self._terms if term.is_positive()][0]
 
+            positive_term = [term for term in self._terms if term.is_positive()][0]
             return f"{self._terse(positive_term, allow_every=True)} requires {' or '.join(negative)}"
         elif positive:
             return f"one of {' or '.join(positive)} must be false"
