@@ -25,6 +25,13 @@ def patches(mocker: "MockerFixture", env: "MockEnv") -> None:
 def test_run_passes_all_args(app_tester: "ApplicationTester", env: "MockEnv"):
     app_tester.execute("run python -V")
     assert [["python", "-V"]] == env.executed
+    
+def test_run_fails_no_args(app_tester: "ApplicationTester", env: "MockEnv"):
+    with pytest.raises(ValueError) as e:
+        app_tester.execute("run")
+    
+    assert str(e.value) == "Missing arguments; try `poetry run python your_script.py`"
+
 
 
 def test_run_keeps_options_passed_before_command(

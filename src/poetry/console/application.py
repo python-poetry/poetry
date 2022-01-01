@@ -201,6 +201,10 @@ class Application(BaseApplication):
 
             input = cast(ArgvInput, io.input)
             run_input = RunArgvInput([self._name or ""] + input._tokens)
+            
+            if 1 == len(input._tokens):
+                raise ValueError("Missing arguments; try `poetry run python your_script.py`")
+            
             # For the run command reset the definition
             # with only the set options (i.e. the options given before the command)
             for option_name, value in input.options.items():
