@@ -1,8 +1,11 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Union
+from warnings import warn
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
@@ -21,6 +24,13 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
 
     from poetry.repositories.legacy_repository import LegacyRepository
+
+    from poetry.core.packages.types import DependencyTypes
+
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class Factory(BaseFactory):
@@ -221,3 +231,154 @@ class Factory(BaseFactory):
         path.joinpath("pyproject.toml").write_text(
             pyproject.as_string(), encoding="utf-8"
         )
+
+    @classmethod
+    def create_dependency(
+        cls,
+        name: str,
+        constraint: Union[str, Dict[str, Any]],
+        groups: Optional[List[str]] = None,
+        root_dir: Optional[Path] = None,
+    ) -> "DependencyTypes":
+        # NOTE: moved and adapted from poetry-core, to fix the issue with ignored python versions
+        from poetry.core.packages.constraints import (
+            parse_constraint as parse_generic_constraint,
+        )
+        from poetry.core.packages.dependency import Dependency
+        from poetry.core.packages.directory_dependency import DirectoryDependency
+        from poetry.core.packages.file_dependency import FileDependency
+        from poetry.core.packages.url_dependency import URLDependency
+        from poetry.core.packages.utils.utils import create_nested_marker
+        from poetry.core.packages.vcs_dependency import VCSDependency
+        from poetry.core.version.markers import AnyMarker
+        from poetry.core.version.markers import parse_marker
+
+        if groups is None:
+            groups = ["default"]
+
+        if constraint is None:
+            constraint = "*"
+
+        if isinstance(constraint, dict):
+            optional = constraint.get("optional", False)
+            python_versions = constraint.get("python")
+            platform = constraint.get("platform")
+            markers = constraint.get("markers")
+            if "allows-prereleases" in constraint:
+                message = (
+                    f'The "{name}" dependency specifies '
+                    'the "allows-prereleases" property, which is deprecated. '
+                    'Use "allow-prereleases" instead.'
+                )
+                warn(message, DeprecationWarning)
+                logger.warning(message)
+
+            allows_prereleases = constraint.get(
+                "allow-prereleases", constraint.get("allows-prereleases", False)
+            )
+
+            if "git" in constraint:
+                # VCS dependency
+                dependency = VCSDependency(
+                    name,
+                    "git",
+                    constraint["git"],
+                    branch=constraint.get("branch", None),
+                    tag=constraint.get("tag", None),
+                    rev=constraint.get("rev", None),
+                    groups=groups,
+                    optional=optional,
+                    develop=constraint.get("develop", False),
+                    extras=constraint.get("extras", []),
+                )
+            elif "file" in constraint:
+                file_path = Path(constraint["file"])
+
+                dependency = FileDependency(
+                    name,
+                    file_path,
+                    groups=groups,
+                    base=root_dir,
+                    extras=constraint.get("extras", []),
+                )
+            elif "path" in constraint:
+                path = Path(constraint["path"])
+
+                if root_dir:
+                    is_file = root_dir.joinpath(path).is_file()
+                else:
+                    is_file = path.is_file()
+
+                if is_file:
+                    dependency = FileDependency(
+                        name,
+                        path,
+                        groups=groups,
+                        optional=optional,
+                        base=root_dir,
+                        extras=constraint.get("extras", []),
+                    )
+                else:
+                    dependency = DirectoryDependency(
+                        name,
+                        path,
+                        groups=groups,
+                        optional=optional,
+                        base=root_dir,
+                        develop=constraint.get("develop", False),
+                        extras=constraint.get("extras", []),
+                    )
+            elif "url" in constraint:
+                dependency = URLDependency(
+                    name,
+                    constraint["url"],
+                    groups=groups,
+                    optional=optional,
+                    extras=constraint.get("extras", []),
+                )
+            else:
+                version = constraint["version"]
+
+                dependency = Dependency(
+                    name,
+                    version,
+                    optional=optional,
+                    groups=groups,
+                    allows_prereleases=allows_prereleases,
+                    extras=constraint.get("extras", []),
+                )
+
+            if not markers:
+                marker = AnyMarker()
+                if python_versions:
+                    dependency.python_versions = python_versions
+                    marker = marker.intersect(
+                        parse_marker(
+                            create_nested_marker(
+                                "python_version", dependency.python_constraint
+                            )
+                        )
+                    )
+
+                if platform:
+                    marker = marker.intersect(
+                        parse_marker(
+                            create_nested_marker(
+                                "sys_platform", parse_generic_constraint(platform)
+                            )
+                        )
+                    )
+            else:
+                marker = parse_marker(markers)
+                # patch to not ignore python versions with markers
+                if python_versions:
+                    dependency.python_versions = python_versions
+
+            if not marker.is_any():
+                dependency.marker = marker
+
+            dependency.source_name = constraint.get("source")
+        else:
+            dependency = Dependency(name, constraint, groups=groups)
+
+        return dependency

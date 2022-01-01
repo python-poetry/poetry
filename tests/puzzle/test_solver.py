@@ -3076,3 +3076,28 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
             {"job": "install", "package": virtualenv},
         ],
     )
+
+
+def test_collect_python_constraint_when_markers_appear(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    solver.provider.set_package_python_versions("3.8")
+
+    package_a = get_package("a", "2.0")
+    package_b = get_package("a", "1.0")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    package.add_dependency(
+        Factory.create_dependency(
+            "a", {"version": "2.0", "python": "3.9", "markers": "sys_platform=='linux'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency("a", {"version": "1.0", "python": "3.8"})
+    )
+
+    # expect: ignore a, install b
+    transaction = solver.solve()
+    packages = [p for (p, _) in transaction._result_packages]
+    expected_packages = [package_b]
+    assert packages == expected_packages
