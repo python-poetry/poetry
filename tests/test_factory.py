@@ -308,3 +308,13 @@ def test_create_poetry_with_plugins(mocker: "MockerFixture"):
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
     assert poetry.package.version.text == "9.9.9"
+
+
+def test_create_dependency_python_constraint_populated_from_markers():
+    constraint = {
+        "version": "1.2.3.",
+        "markers": 'python_version=="3.6" and sys_platform=="linux"',
+    }
+    dependency = Factory().create_dependency("a", constraint)
+
+    assert str(dependency._python_constraint) == ">=3.6,<3.7"
