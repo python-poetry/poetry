@@ -33,7 +33,7 @@ generate-setup-file = false
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
-poetry-core = {git="https://github.com/python-poetry/poetry-core.git#v1.1.0a6"}
+poetry-core = {git="https://github.com/python-poetry/poetry-core.git",tag="1.1.0a6",rev="af08f1c"}
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a4"
@@ -71,7 +71,7 @@ poetry = "poetry.console.application:main"
 
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 
