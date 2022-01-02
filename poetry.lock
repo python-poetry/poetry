@@ -425,8 +425,8 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 [package.source]
 type = "git"
 url = "https://github.com/python-poetry/poetry-core.git"
-reference = "1.1.0a6"
-resolved_reference = "52b7cdcba04549f40aac7bc430ec410b6d2c7e6a"
+reference = "af08f1c"
+resolved_reference = "af08f1ce720da467c9bf3d43eed3d9ebaf4ad7fb"
 
 [[package]]
 name = "pre-commit"
@@ -738,7 +738,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "5d4d794b8a90fabf195b440c66acd8e16a72f06b33a3168615b9e2811b24e976"
+content-hash = "1326ed0ef8da5b151f1387d06b1be6457e037b80471293da8518bd31d216ab12"
 
 [metadata.files]
 atomicwrites = [

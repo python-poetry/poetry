@@ -33,7 +33,7 @@ generate-setup-file = false
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
-poetry-core = {git="https://github.com/python-poetry/poetry-core.git",tag="1.1.0a6",rev="af08f1c"}
+poetry-core = {git="https://github.com/python-poetry/poetry-core.git",rev="af08f1c"}
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a4"
