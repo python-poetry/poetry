@@ -495,10 +495,6 @@ class Provider:
             if not self._python_constraint.allows_any(dep.python_constraint):
                 continue
 
-            marker_python_constraint = get_python_constraint_from_marker(dep.marker)
-            if not self._python_constraint.allows_any(marker_python_constraint):
-                continue
-
             if dep.name in self.UNSAFE_PACKAGES:
                 continue
 
