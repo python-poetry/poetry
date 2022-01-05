@@ -107,7 +107,7 @@ curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
 curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
 ```
 
-You can also install Poetry for a `git` repository by using the `--git` option:
+You can also install Poetry from a `git` repository by using the `--git` option:
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
