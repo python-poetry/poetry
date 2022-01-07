@@ -386,8 +386,10 @@ def test_show_latest_decorated(
     tester.execute("--latest", decorated=True)
 
     expected = """\
-\033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m \033[33m0.2.0\033[39m Cachy package
-\033[36mpendulum\033[39m \033[39;1m2.0.0\033[39;22m \033[31m2.0.1\033[39m Pendulum package
+\033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m\
+ \033[33m0.2.0\033[39m Cachy package
+\033[36mpendulum\033[39m \033[39;1m2.0.0\033[39;22m\
+ \033[31m2.0.1\033[39m Pendulum package
 """
 
     assert expected == tester.io.fetch_output()

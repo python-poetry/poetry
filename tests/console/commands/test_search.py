@@ -67,7 +67,8 @@ sqlalchemy-wrap (2.1.7)
  Python wrapper for the CircleCI API
 
 sqlalchemy-nav (0.0.2)
- SQLAlchemy-Nav provides SQLAlchemy Mixins for creating navigation bars compatible with Bootstrap
+ SQLAlchemy-Nav provides SQLAlchemy Mixins for creating navigation bars compatible with\
+ Bootstrap
 
 sqlalchemy-repr (0.0.1)
  Automatically generates pretty repr of a SQLAlchemy model.

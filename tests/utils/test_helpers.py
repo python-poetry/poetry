@@ -27,7 +27,8 @@ msgpack-python>=0.5.0.0,<0.6.0.0
 pyparsing>=2.2.0.0,<3.0.0.0
 requests-toolbelt>=0.8.0.0,<0.9.0.0
 
-[:(python_version >= "2.7.0.0" and python_version < "2.8.0.0") or (python_version >= "3.4.0.0" and python_version < "3.5.0.0")]
+[:(python_version >= "2.7.0.0" and python_version < "2.8.0.0")\
+ or (python_version >= "3.4.0.0" and python_version < "3.5.0.0")]
 typing>=3.6.0.0,<4.0.0.0
 
 [:python_version >= "2.7.0.0" and python_version < "2.8.0.0"]
