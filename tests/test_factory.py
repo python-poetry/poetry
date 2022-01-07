@@ -294,6 +294,7 @@ def test_create_poetry_with_local_config(fixture_dir: "FixtureDirGetter"):
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
 
     assert not poetry.config.get("virtualenvs.in-project")
+    assert not poetry.config.get("virtualenvs.path-independent_naming")
     assert not poetry.config.get("virtualenvs.create")
     assert not poetry.config.get("virtualenvs.options.always-copy")
     assert not poetry.config.get("virtualenvs.options.system-site-packages")

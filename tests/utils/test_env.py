@@ -189,7 +189,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
     env = manager.activate("python3.7", NullIO())
-    venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
@@ -1231,10 +1231,19 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     )
 
 
-def test_generate_env_name_ignores_case_for_case_insensitive_fs(tmp_dir: str):
-    venv_name1 = EnvManager.generate_env_name("simple-project", "MyDiR")
-    venv_name2 = EnvManager.generate_env_name("simple-project", "mYdIr")
+def test_generate_env_name_ignores_case_for_case_insensitive_fs(
+    tmp_dir: str, manager: EnvManager
+):
+    venv_name1 = manager.generate_env_name("simple-project", "MyDiR")
+    venv_name2 = manager.generate_env_name("simple-project", "mYdIr")
     if sys.platform == "win32":
         assert venv_name1 == venv_name2
     else:
         assert venv_name1 != venv_name2
+
+
+def test_generate_env_name_without_path_hash(manager: EnvManager, config: "Config"):
+    config.merge({"virtualenvs": {"path-independent_naming": True}})
+    venv_name = manager.generate_env_name("simple-project", "PathName")
+
+    assert venv_name == "simple-project"

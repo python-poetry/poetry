@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def venv_name(app: "PoetryTestApplication") -> str:
-    return EnvManager.generate_env_name("simple-project", str(app.poetry.file.parent))
+    return EnvManager(app.poetry).generate_env_name(
+        "simple-project", str(app.poetry.file.parent)
+    )
 
 
 @pytest.fixture

@@ -943,6 +943,18 @@ class EnvManager:
 
         return VirtualEnv(venv)
 
+    def generate_env_name(self, name: str, cwd: str) -> str:
+        name = name.lower()
+        sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
+        skip_hash = self._poetry.config.get("virtualenvs.path-independent_naming")
+        if skip_hash:
+            return sanitized_name
+        normalized_cwd = os.path.normcase(cwd)
+        h = hashlib.sha256(encode(normalized_cwd)).digest()
+        h = base64.urlsafe_b64encode(h).decode()[:8]
+
+        return f"{sanitized_name}-{h}"
+
     @classmethod
     def build_venv(
         cls,
@@ -1053,16 +1065,6 @@ class EnvManager:
             return Path(sys.base_prefix)
 
         return Path(sys.prefix)
-
-    @classmethod
-    def generate_env_name(cls, name: str, cwd: str) -> str:
-        name = name.lower()
-        sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
-        normalized_cwd = os.path.normcase(cwd)
-        h = hashlib.sha256(encode(normalized_cwd)).digest()
-        h = base64.urlsafe_b64encode(h).decode()[:8]
-
-        return f"{sanitized_name}-{h}"
 
 
 class Env:
