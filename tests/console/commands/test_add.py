@@ -590,7 +590,8 @@ def test_add_url_constraint_wheel_with_extras(
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
     tester.execute(
-        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
+        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "[foo,bar]"
     )
 
     expected = """\
@@ -1530,7 +1531,8 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
     old_tester.execute(
-        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
+        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "[foo,bar]"
     )
 
     expected = """\
