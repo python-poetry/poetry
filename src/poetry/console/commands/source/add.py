@@ -59,7 +59,8 @@ class SourceAddCommand(Command):
 
         if is_default and is_secondary:
             self.line_error(
-                "Cannot configure a source as both <c1>default</c1> and <c1>secondary</c1>."
+                "Cannot configure a source as both <c1>default</c1> and"
+                " <c1>secondary</c1>."
             )
             return 1
 
@@ -73,13 +74,15 @@ class SourceAddCommand(Command):
         for source in existing_sources:
             if source == new_source:
                 self.line(
-                    f"Source with name <c1>{name}</c1> already exits. Skipping addition."
+                    f"Source with name <c1>{name}</c1> already exits. Skipping"
+                    " addition."
                 )
                 return 0
             elif source.default and is_default:
                 self.line_error(
-                    f"<error>Source with name <c1>{source.name}</c1> is already set to default. "
-                    f"Only one default source can be configured at a time.</error>"
+                    f"<error>Source with name <c1>{source.name}</c1> is already set to"
+                    " default. Only one default source can be configured at a"
+                    " time.</error>"
                 )
                 return 1
 

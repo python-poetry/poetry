@@ -262,7 +262,8 @@ class SitePackages:
 
         if not results and strict:
             raise RuntimeError(
-                f'Unable to find a suitable destination for "{path}" in {paths_csv(self._candidates)}'
+                f'Unable to find a suitable destination for "{path}" in'
+                f" {paths_csv(self._candidates)}"
             )
 
         return results
@@ -416,7 +417,10 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: Optional[str] = None) -> None:
         self.e = e
 
-        message = f"Command {e.cmd} errored with the following return code {e.returncode}, and output: \n{decode(e.output)}"
+        message = (
+            f"Command {e.cmd} errored with the following return code {e.returncode},"
+            f" and output: \n{decode(e.output)}"
+        )
         if input:
             message += f"input was : {input}"
         super().__init__(message)
@@ -481,7 +485,8 @@ class EnvManager:
                         [
                             python,
                             "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                            "\"import sys; print('.'.join([str(s) for s in"
+                            ' sys.version_info[:3]]))"',
                         ]
                     ),
                     shell=True,
@@ -727,7 +732,8 @@ class EnvManager:
                         [
                             python,
                             "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                            "\"import sys; print('.'.join([str(s) for s in"
+                            ' sys.version_info[:3]]))"',
                         ]
                     ),
                     shell=True,
@@ -802,7 +808,8 @@ class EnvManager:
                         [
                             executable,
                             "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                            "\"import sys; print('.'.join([str(s) for s in"
+                            ' sys.version_info[:3]]))"',
                         ]
                     ),
                     shell=True,
@@ -824,9 +831,10 @@ class EnvManager:
                 )
 
             io.write_line(
-                f"<warning>The currently activated Python version {python_patch} "
-                f"is not supported by the project ({self._poetry.package.python_versions}).\n"
-                "Trying to find and use a compatible version.</warning> "
+                f"<warning>The currently activated Python version {python_patch} is not"
+                " supported by the project"
+                f" ({self._poetry.package.python_versions}).\nTrying to find and use a"
+                " compatible version.</warning> "
             )
 
             for python_to_try in sorted(
@@ -856,7 +864,8 @@ class EnvManager:
                                 [
                                     python,
                                     "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                                    "\"import sys; print('.'.join([str(s) for s in"
+                                    ' sys.version_info[:3]]))"',
                                 ]
                             ),
                             stderr=subprocess.STDOUT,
@@ -904,7 +913,8 @@ class EnvManager:
             if force:
                 if not env.is_sane():
                     io.write_line(
-                        f"<warning>The virtual environment found in {env.path} seems to be broken.</warning>"
+                        f"<warning>The virtual environment found in {env.path} seems to"
+                        " be broken.</warning>"
                     )
                 io.write_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
                 self.remove_venv(venv)

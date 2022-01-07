@@ -52,7 +52,8 @@ class PipInstaller(BaseInstaller):
             parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
                 self._io.write_error(
-                    f"    <warning>Installing from unsecure host: {parsed.hostname}</warning>"
+                    "    <warning>Installing from unsecure host:"
+                    f" {parsed.hostname}</warning>"
                 )
                 args += ["--trusted-host", parsed.hostname]
 

@@ -78,10 +78,12 @@ class Solver:
 
             if len(self._overrides) > 1:
                 self._provider.debug(
-                    f"Complete version solving took {end - start:.3f} seconds with {len(self._overrides)} overrides"
+                    f"Complete version solving took {end - start:.3f} seconds with"
+                    f" {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
-                    f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
+                    "Resolved with overrides:"
+                    f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
         return Transaction(

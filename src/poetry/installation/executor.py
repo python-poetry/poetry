@@ -230,7 +230,8 @@ class Executor:
                     with self._lock:
                         self._sections[id(operation)] = self._io.section()
                         self._sections[id(operation)].write_line(
-                            f"  <fg=blue;options=bold>•</> {op_message}: <fg=blue>Pending...</>"
+                            f"  <fg=blue;options=bold>•</> {op_message}:"
+                            " <fg=blue>Pending...</>"
                         )
             else:
                 if self._should_write_operation(operation):
@@ -266,7 +267,11 @@ class Executor:
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
-                    message = f"  <error>•</error> {self.get_operation_message(operation, error=True)}: <error>Failed</error>"
+                    message = (
+                        "  <error>•</error>"
+                        f" {self.get_operation_message(operation, error=True)}:"
+                        " <error>Failed</error>"
+                    )
                     self._write(operation, message)
                     io = self._sections.get(id(operation), self._io)
 
@@ -279,7 +284,11 @@ class Executor:
                     self._shutdown = True
         except KeyboardInterrupt:
             try:
-                message = f"  <warning>•</warning> {self.get_operation_message(operation, warning=True)}: <warning>Cancelled</warning>"
+                message = (
+                    "  <warning>•</warning>"
+                    f" {self.get_operation_message(operation, warning=True)}:"
+                    " <warning>Cancelled</warning>"
+                )
                 if not self.supports_fancy_output():
                     self._io.write_line(message)
                 else:
@@ -376,19 +385,22 @@ class Executor:
 
         if operation.job_type == "install":
             return (
-                f"<{base_tag}>Installing <{package_color}>{operation.package.name}</{package_color}> "
-                f"(<{operation_color}>{operation.package.full_pretty_version}</>)</>"
+                f"<{base_tag}>Installing"
+                f" <{package_color}>{operation.package.name}</{package_color}>"
+                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
         if operation.job_type == "uninstall":
             return (
-                f"<{base_tag}>Removing <{package_color}>{operation.package.name}</{package_color}> "
-                f"(<{operation_color}>{operation.package.full_pretty_version}</>)</>"
+                f"<{base_tag}>Removing"
+                f" <{package_color}>{operation.package.name}</{package_color}>"
+                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
         if operation.job_type == "update":
             return (
-                f"<{base_tag}>Updating <{package_color}>{operation.initial_package.name}</{package_color}> "
+                f"<{base_tag}>Updating"
+                f" <{package_color}>{operation.initial_package.name}</{package_color}> "
                 f"(<{source_operation_color}>{operation.initial_package.full_pretty_version}</{source_operation_color}> "
                 f"-> <{operation_color}>{operation.target_package.full_pretty_version}</>)</>"
             )
@@ -464,7 +476,10 @@ class Executor:
             archive = self._download(operation)
 
         operation_message = self.get_operation_message(operation)
-        message = f"  <fg=blue;options=bold>•</> {operation_message}: <info>Installing...</info>"
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            " <info>Installing...</info>"
+        )
         self._write(operation, message)
         return self.pip_install(archive, upgrade=operation.job_type == "update")
 
@@ -492,7 +507,10 @@ class Executor:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = f"  <fg=blue;options=bold>•</> {operation_message}: <info>Preparing...</info>"
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            " <info>Preparing...</info>"
+        )
         self._write(operation, message)
 
         archive = Path(package.source_url)
@@ -509,7 +527,10 @@ class Executor:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = f"  <fg=blue;options=bold>•</> {operation_message}: <info>Building...</info>"
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            " <info>Building...</info>"
+        )
         self._write(operation, message)
 
         if package.root_dir:
@@ -644,7 +665,8 @@ class Executor:
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
-                f"Hash for {package} from archive {archive_path.name} not found in known hashes (was: {archive_hash})"
+                f"Hash for {package} from archive {archive_path.name} not found in"
+                f" known hashes (was: {archive_hash})"
             )
 
         return archive_hash

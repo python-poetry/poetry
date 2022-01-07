@@ -178,8 +178,8 @@ class PackageInfo:
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 self._log(
-                    f"Invalid constraint ({req}) found in {package.name}-{package.version} dependencies, "
-                    "skipping",
+                    f"Invalid constraint ({req}) found in"
+                    f" {package.name}-{package.version} dependencies, skipping",
                     level="warning",
                 )
                 continue

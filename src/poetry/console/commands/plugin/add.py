@@ -26,7 +26,8 @@ class PluginAddCommand(InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables --verbose).",
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         )
     ]
 

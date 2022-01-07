@@ -482,9 +482,10 @@ class Locker:
         lock_version_allowed = accepted_versions.allows(lock_version)
         if lock_version_allowed and current_version < lock_version:
             logger.warning(
-                "The lock file might not be compatible with the current version of Poetry.\n"
-                "Upgrade Poetry to ensure the lock file is read properly or, alternatively, "
-                "regenerate the lock file with the `poetry lock` command."
+                "The lock file might not be compatible with the current version of"
+                " Poetry.\nUpgrade Poetry to ensure the lock file is read properly or,"
+                " alternatively, regenerate the lock file with the `poetry lock`"
+                " command."
             )
         elif not lock_version_allowed:
             raise RuntimeError(

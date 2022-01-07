@@ -76,13 +76,15 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
                 self.line(
-                    "<error>A pyproject.toml file with a poetry section already exists.</error>"
+                    "<error>A pyproject.toml file with a poetry section already"
+                    " exists.</error>"
                 )
                 return 1
 
             if pyproject.data.get("build-system"):
                 self.line(
-                    "<error>A pyproject.toml file with a defined build-system already exists.</error>"
+                    "<error>A pyproject.toml file with a defined build-system already"
+                    " exists.</error>"
                 )
                 return 1
 
@@ -91,7 +93,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if self.io.is_interactive():
             self.line("")
             self.line(
-                "This command will guide you through creating your <info>pyproject.toml</> config."
+                "This command will guide you through creating your"
+                " <info>pyproject.toml</> config."
             )
             self.line("")
 
@@ -166,14 +169,15 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         question = "Would you like to define your main dependencies interactively?"
         help_message = (
-            "You can specify a package in the following forms:\n"
-            "  - A single name (<b>requests</b>)\n"
-            "  - A name and a constraint (<b>requests@^2.23.0</b>)\n"
-            "  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n"
-            "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
-            "  - A file path (<b>../my-package/my-package.whl</b>)\n"
-            "  - A directory (<b>../my-package/</b>)\n"
-            "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
+            "You can specify a package in the following forms:\n  - A single name"
+            " (<b>requests</b>)\n  - A name and a constraint"
+            " (<b>requests@^2.23.0</b>)\n  - A git url"
+            " (<b>git+https://github.com/python-poetry/poetry.git</b>)\n  - A git url"
+            " with a revision"
+            " (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n  - A"
+            " file path (<b>../my-package/my-package.whl</b>)\n  - A directory"
+            " (<b>../my-package/</b>)\n  - A url"
+            " (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
         )
         help_displayed = False
         if self.confirm(question, True):
@@ -280,11 +284,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         choices.append(found_package.pretty_name)
 
                     self.line(
-                        f"Found <info>{len(matches)}</info> packages matching <c1>{package}</c1>"
+                        f"Found <info>{len(matches)}</info> packages matching"
+                        f" <c1>{package}</c1>"
                     )
 
                     package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it is not listed",
+                        "\nEnter package # to add, or the complete package name if it"
+                        " is not listed",
                         choices,
                         attempts=3,
                     )
@@ -310,7 +316,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         )
 
                         self.line(
-                            f"Using version <b>{package_constraint}</b> for <c1>{package}</c1>"
+                            f"Using version <b>{package_constraint}</b> for"
+                            f" <c1>{package}</c1>"
                         )
 
                     constraint["version"] = package_constraint

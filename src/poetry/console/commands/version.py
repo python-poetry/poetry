@@ -58,7 +58,8 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.line(version.to_string())
             else:
                 self.line(
-                    f"Bumping version from <b>{self.poetry.package.pretty_version}</> to <fg=green>{version}</>"
+                    f"Bumping version from <b>{self.poetry.package.pretty_version}</>"
+                    f" to <fg=green>{version}</>"
                 )
 
             content = self.poetry.file.read()
@@ -71,7 +72,8 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.line(self.poetry.package.pretty_version)
             else:
                 self.line(
-                    f"<comment>{self.poetry.package.name}</> <info>{self.poetry.package.pretty_version}</>"
+                    f"<comment>{self.poetry.package.name}</>"
+                    f" <info>{self.poetry.package.pretty_version}</>"
                 )
 
     def increment_version(self, version: str, rule: str) -> "Version":

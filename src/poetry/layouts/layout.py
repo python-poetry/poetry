@@ -63,7 +63,8 @@ class Layout:
         if self._readme_format not in self.ACCEPTED_README_FORMATS:
             accepted_readme_formats = ", ".join(self.ACCEPTED_README_FORMATS)
             raise ValueError(
-                f"Invalid readme format '{readme_format}', use one of {accepted_readme_formats}."
+                f"Invalid readme format '{readme_format}', use one of"
+                f" {accepted_readme_formats}."
             )
 
         self._license = license

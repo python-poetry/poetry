@@ -258,7 +258,8 @@ class Provider:
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual package's name: {package.name}"
+                f"The dependency name for {dependency.name} does not match the actual"
+                f" package's name: {package.name}"
             )
 
         if dependency.base is not None:
@@ -318,7 +319,8 @@ class Provider:
         if name and name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                f"The dependency name for {name} does not match the actual package's name: {package.name}"
+                f"The dependency name for {name} does not match the actual package's"
+                f" name: {package.name}"
             )
 
         return package
@@ -332,7 +334,8 @@ class Provider:
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual package's name: {package.name}"
+                f"The dependency name for {dependency.name} does not match the actual"
+                f" package's name: {package.name}"
             )
 
         for extra in dependency.extras:
@@ -631,8 +634,8 @@ class Provider:
             def fmt_warning(d: "Dependency") -> str:
                 marker = d.marker if not d.marker.is_any() else "*"
                 return (
-                    f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</> "
-                    f"with markers <b>{marker}</b>"
+                    f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</>"
+                    f" with markers <b>{marker}</b>"
                 )
 
             warnings = ", ".join(fmt_warning(d) for d in _deps[:-1])
@@ -765,7 +768,10 @@ class Provider:
         elif message.startswith("derived:"):
             m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
-                message = f"<fg=blue>derived</>: <c1>{m.group(1)}</c1> (<c2>{m.group(2)}</c2>)"
+                message = (
+                    f"<fg=blue>derived</>: <c1>{m.group(1)}</c1>"
+                    f" (<c2>{m.group(2)}</c2>)"
+                )
             else:
                 message = (
                     f"<fg=blue>derived</>: <c1>{message.split('derived: ')[1]}</c1>"
@@ -786,7 +792,10 @@ class Provider:
                     f"depends on <c1>{m.group(2)}</c1> (<c2>{m.group(3)}</c2>)"
                 )
             else:
-                message = f"<fg=red;options=bold>conflict</>: {message.split('conflict: ')[1]}"
+                message = (
+                    "<fg=red;options=bold>conflict</>:"
+                    f" {message.split('conflict: ')[1]}"
+                )
 
         message = message.replace("! ", "<error>!</error> ")
 

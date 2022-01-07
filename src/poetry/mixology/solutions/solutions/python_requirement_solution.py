@@ -26,14 +26,16 @@ class PythonRequirementSolution(Solution):
                 constraint = parse_constraint(incompatibility.cause.python_version)
 
                 version_solutions.append(
-                    f"For <fg=default;options=bold>{incompatibility.terms[0].dependency.name}</>, "
-                    "a possible solution would be to set the `<fg=default;options=bold>python</>` "
-                    f'property to <fg=yellow>"{root_constraint.intersect(constraint)}"</>'
+                    f"For <fg=default;options=bold>{incompatibility.terms[0].dependency.name}</>,"
+                    " a possible solution would be to set the"
+                    " `<fg=default;options=bold>python</>` property to"
+                    f' <fg=yellow>"{root_constraint.intersect(constraint)}"</>'
                 )
 
         description = (
-            "The Python requirement can be specified via the `<fg=default;options=bold>python</>` "
-            "or `<fg=default;options=bold>markers</>` properties"
+            "The Python requirement can be specified via the"
+            " `<fg=default;options=bold>python</>` or"
+            " `<fg=default;options=bold>markers</>` properties"
         )
         if version_solutions:
             description += "\n\n" + "\n".join(version_solutions)

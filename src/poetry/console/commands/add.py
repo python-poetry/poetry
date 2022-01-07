@@ -54,23 +54,26 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables --verbose).",
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
     help = (
-        "The add command adds required packages to your <comment>pyproject.toml</> and installs them.\n\n"
-        "If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.\n\n"
-        "You can specify a package in the following forms:\n"
-        "  - A single name (<b>requests</b>)\n"
-        "  - A name and a constraint (<b>requests@^2.23.0</b>)\n"
-        "  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n"
-        "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
-        "  - A git SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)\n"
-        "  - A git SSH url with a revision (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)\n"
-        "  - A file path (<b>../my-package/my-package.whl</b>)\n"
-        "  - A directory (<b>../my-package/</b>)\n"
-        "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
+        "The add command adds required packages to your <comment>pyproject.toml</> and"
+        " installs them.\n\nIf you do not specify a version constraint, poetry will"
+        " choose a suitable one based on the available package versions.\n\nYou can"
+        " specify a package in the following forms:\n  - A single name"
+        " (<b>requests</b>)\n  - A name and a constraint (<b>requests@^2.23.0</b>)\n  -"
+        " A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n  - A git"
+        " url with a revision"
+        " (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n  - A git"
+        " SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)\n  - A git SSH"
+        " url with a revision"
+        " (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)\n  - A file"
+        " path (<b>../my-package/my-package.whl</b>)\n  - A directory"
+        " (<b>../my-package/</b>)\n  - A url"
+        " (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
     )
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
@@ -244,11 +247,13 @@ class AddCommand(InstallerCommand, InitCommand):
 
     def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
         self.line(
-            "The following packages are already present in the pyproject.toml and will be skipped:\n"
+            "The following packages are already present in the pyproject.toml and will"
+            " be skipped:\n"
         )
         for name in existing_packages:
             self.line(f"  • <c1>{name}</c1>")
         self.line(
-            "\nIf you want to update it to the latest compatible version, you can use `poetry update package`.\n"
-            "If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.\n"
+            "\nIf you want to update it to the latest compatible version, you can use"
+            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
+            " available version, you can use `poetry add package@latest`.\n"
         )
