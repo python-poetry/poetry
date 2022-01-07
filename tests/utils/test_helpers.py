@@ -39,7 +39,7 @@ zipfile36>=0.1.0.0,<0.2.0.0
 
 [dev]
 isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort
-"""
+"""  # noqa: E501
     result = parse_requires(requires)
     expected = [
         "jsonschema>=2.6.0.0,<3.0.0.0",
@@ -64,7 +64,7 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
         'zipfile36>=0.1.0.0,<0.2.0.0 ; python_version >= "3.4.0.0" and python_version <'
         ' "3.6.0.0"',
         "isort@"
-        " git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort"
+        " git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort"  # noqa: E501
         ' ; extra == "dev"',
     ]
     assert result == expected

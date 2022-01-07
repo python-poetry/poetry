@@ -55,6 +55,6 @@ class PythonRequirementSolution(Solution):
     @property
     def documentation_links(self) -> List[str]:
         return [
-            "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",
-            "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",
+            "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",  # noqa: E501
+            "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",  # noqa: E501
         ]

@@ -554,7 +554,7 @@ def test_executor_should_use_cached_link_and_hash(
     package.files = [
         {
             "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
         }
     ]
 

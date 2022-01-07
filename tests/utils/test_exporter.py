@@ -1159,7 +1159,7 @@ def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
                     "python-versions": "*",
                     "source": {
                         "type": "directory",
-                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar",
+                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar",  # noqa: E501
                         "reference": "",
                     },
                 },
@@ -1171,7 +1171,7 @@ def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
                     "python-versions": "*",
                     "source": {
                         "type": "directory",
-                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar/..",
+                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar/..",  # noqa: E501
                         "reference": "",
                     },
                 },
