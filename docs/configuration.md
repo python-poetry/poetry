@@ -45,10 +45,10 @@ which will give you something similar to this:
 cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = null
-virtualenvs.path-independent_naming = null
 virtualenvs.options.always-copy = true
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
+virtualenvs.path-independent_naming = null
 ```
 
 ## Displaying a single configuration setting
