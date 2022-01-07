@@ -180,13 +180,14 @@ class VersionSolver:
     def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
         Given an incompatibility that's satisfied by _solution,
-        The `conflict resolution`_ constructs a new incompatibility that encapsulates the root
-        cause of the conflict and backtracks _solution until the new
+        The `conflict resolution`_ constructs a new incompatibility that encapsulates
+        the root cause of the conflict and backtracks _solution until the new
         incompatibility will allow _propagate() to deduce new assignments.
 
         Adds the new incompatibility to _incompatibilities and returns it.
 
-        .. _conflict resolution: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
+        .. _conflict resolution:
+        https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
         """
         self._log(f"conflict: {incompatibility}")
 

@@ -112,7 +112,8 @@ class PackageInfo:
         """
         Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
 
-        :param data: Data to load. This is expected to be a `dict` object output by `asdict()`.
+        :param data: Data to load. This is expected to be a `dict` object output by
+            `asdict()`.
         """
         cache_version = data.pop("_cache_version", None)
         return cls(cache_version=cache_version, **data)
@@ -129,12 +130,14 @@ class PackageInfo:
         root_dir: Optional[Path] = None,
     ) -> Package:
         """
-        Create a new `poetry.core.packages.package.Package` instance using metadata from this instance.
+        Create a new `poetry.core.packages.package.Package` instance using metadata from
+        this instance.
 
-        :param name: Name to use for the package, if not specified name from this instance is used.
+        :param name: Name to use for the package, if not specified name from this
+            instance is used.
         :param extras: Extras to activate for this package.
-        :param root_dir:  Optional root directory to use for the package. If set, dependency strings
-            will be parsed relative to this directory.
+        :param root_dir:  Optional root directory to use for the package. If set,
+            dependency strings will be parsed relative to this directory.
         """
         name = name or self.name
 
@@ -208,7 +211,8 @@ class PackageInfo:
         cls, dist: Union[pkginfo.BDist, pkginfo.SDist, pkginfo.Wheel]
     ) -> "PackageInfo":
         """
-        Helper method to parse package information from a `pkginfo.Distribution` instance.
+        Helper method to parse package information from a `pkginfo.Distribution`
+        instance.
 
         :param dist: The distribution instance to parse information from.
         """
@@ -239,9 +243,9 @@ class PackageInfo:
     @classmethod
     def _from_sdist_file(cls, path: Path) -> "PackageInfo":
         """
-        Helper method to parse package information from an sdist file. We attempt to first inspect the
-        file using `pkginfo.SDist`. If this does not provide us with package requirements, we extract the
-        source and handle it as a directory.
+        Helper method to parse package information from an sdist file. We attempt to
+        first inspect the file using `pkginfo.SDist`. If this does not provide us with
+        package requirements, we extract the source and handle it as a directory.
 
         :param path: The sdist file to parse information from.
         """
@@ -304,9 +308,10 @@ class PackageInfo:
     @classmethod
     def from_setup_files(cls, path: Path) -> "PackageInfo":
         """
-        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses the implementation
-        at `poetry.utils.setup_reader.SetupReader` in order to parse the file. This is not reliable for
-        complex setup files and should only attempted as a fallback.
+        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses
+        the implementation at `poetry.utils.setup_reader.SetupReader` in order to parse
+        the file. This is not reliable for complex setup files and should only attempted
+        as a fallback.
 
         :param path: Path to `setup.py` file
         """
@@ -510,13 +515,14 @@ class PackageInfo:
     @classmethod
     def from_directory(cls, path: Path, disable_build: bool = False) -> "PackageInfo":
         """
-        Generate package information from a package source directory. If `disable_build` is not `True` and
-        introspection of all available metadata fails, the package is attempted to be build in an isolated
-        environment so as to generate required metadata.
+        Generate package information from a package source directory. If `disable_build`
+        is not `True` and introspection of all available metadata fails, the package is
+        attempted to be built in an isolated environment so as to generate required
+        metadata.
 
         :param path: Path to generate package information from.
-        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated build is attempted in
-            order to gather metadata.
+        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated
+            build is attempted in order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
         if project_package:
