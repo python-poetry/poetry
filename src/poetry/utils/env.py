@@ -834,9 +834,8 @@ class EnvManager:
 
             io.write_line(
                 f"<warning>The currently activated Python version {python_patch} is not"
-                " supported by the project"
-                f" ({self._poetry.package.python_versions}).\nTrying to find and use a"
-                " compatible version.</warning> "
+                f" supported by the project ({self._poetry.package.python_versions}).\n"
+                "Trying to find and use a compatible version.</warning> "
             )
 
             for python_to_try in sorted(

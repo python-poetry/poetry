@@ -1836,9 +1836,7 @@ def test_solver_git_dependencies_short_hash_update_skipped(
                     source_type="git",
                     source_url="https://github.com/demo/demo.git",
                     source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                    source_resolved_reference=(
-                        "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                    ),
+                    source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",  # noqa: E501
                 ),
                 "skipped": True,
             },
