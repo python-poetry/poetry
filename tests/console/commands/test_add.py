@@ -1798,7 +1798,7 @@ If you prefer to upgrade it to the latest available version, you can use `poetry
     assert expected in old_tester.io.fetch_output()
 
 
-def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(
+def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(  # noqa: E501
     app: "PoetryTestApplication",
     repo: "TestRepository",
     installer: "NoopInstaller",

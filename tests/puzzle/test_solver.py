@@ -964,7 +964,7 @@ def test_solver_with_dependency_in_both_default_and_dev_dependencies(
     assert a.category == "main"
 
 
-def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(
+def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
@@ -1466,7 +1466,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
     assert op.package.source_resolved_reference.startswith("9cf87a2")
 
 
-def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
+def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
@@ -1484,7 +1484,7 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
     check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
-def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(
+def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
@@ -1516,7 +1516,7 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
     )
 
 
-def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(
+def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
@@ -1533,7 +1533,7 @@ def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_wit
         solver.solve()
 
 
-def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
@@ -1555,7 +1555,7 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
     check_solver_result(transaction, [{"job": "install", "package": package_a100}])
 
 
-def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
+def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
     dep1 = Dependency.create_from_pep_508('B (>=1.0); extra == "foo"')

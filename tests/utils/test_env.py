@@ -795,7 +795,7 @@ def test_call_no_input_with_called_process_error(
     subprocess.call.assert_called_once()
 
 
-def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
+def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(  # noqa: E501
     manager: EnvManager,
     poetry: "Poetry",
     config: "Config",

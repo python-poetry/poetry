@@ -571,7 +571,7 @@ foo==1.2.3 \\
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_disabled(
+def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_disabled(  # noqa: E501
     tmp_dir: str, poetry: "Poetry"
 ):
     poetry.locker.mock_lock_data(

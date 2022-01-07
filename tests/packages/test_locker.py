@@ -514,7 +514,7 @@ A = []
     assert expected == content
 
 
-def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
+def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
     locker: Locker, caplog: "LogCaptureFixture"
 ):
     current_version = Version.parse(Locker._VERSION)

@@ -73,7 +73,7 @@ def test_with_unrelated_locked_dependencies(
     )
 
 
-def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_statisfied(
+def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_satisfied(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))

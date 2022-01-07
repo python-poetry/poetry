@@ -497,7 +497,7 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
     assert installer.executor.removals_count == 0
 
 
-def test_run_install_removes_locked_packages_if_installed_and_synchronization_is_required(
+def test_run_install_removes_locked_packages_if_installed_and_synchronization_is_required(  # noqa: E501
     installer: Installer,
     locker: Locker,
     repo: Repository,
@@ -1873,7 +1873,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
 @pytest.mark.skip(
     "This is not working at the moment due to limitations in the resolver"
 )
-def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     installer: Installer,
     locker: Locker,
     repo: Repository,
@@ -1901,7 +1901,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
     assert installer.executor.installations_count == 1
 
 
-def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(  # noqa: E501
     installer: Installer,
     locker: Locker,
     repo: Repository,
@@ -1968,7 +1968,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     assert installer.executor.removals_count == 0
 
 
-def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(  # noqa: E501
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
