@@ -276,8 +276,8 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir: str, poetry: "Poet
         content = f.read()
 
     # The dependency graph:
-    # junit-xml 1.9 Creates JUnit XML test result documents that can be read by tools such as Jenkins
-    # └── six *
+    # junit-xml 1.9 Creates JUnit XML test result documents that can be read by tools
+    # └── six *     such as Jenkins
     # poetry 1.1.4 Python dependency management and packaging made easy.
     # ├── keyring >=21.2.0,<22.0.0
     # │   ├── importlib-metadata >=1
@@ -364,11 +364,12 @@ def test_exporter_can_export_requirements_txt_pyinstaller(
         content = f.read()
 
     # Rationale for the results:
-    #  * PyInstaller has an explicit dependency on altgraph, so it must always be installed.
+    #  * PyInstaller has an explicit dependency on altgraph, so it must always be
+    #    installed.
     #  * PyInstaller requires macholib on Darwin, which in turn requires altgraph.
     # The dependency graph:
-    # pyinstaller 4.0 PyInstaller bundles a Python application and all its dependencies into a single package.
-    # ├── altgraph *
+    # pyinstaller 4.0     PyInstaller bundles a Python application and all its
+    # ├── altgraph *      dependencies into a single package.
     # ├── macholib >=1.8 -- only on Darwin
     # │   └── altgraph >=0.15
     expected = {
