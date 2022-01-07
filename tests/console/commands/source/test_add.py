@@ -90,7 +90,7 @@ def test_source_add_existing(
     tester.execute(f"--default {source_existing.name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()
-        == f"Source with name {source_existing.name} already exits. Updating."
+        == f"Source with name {source_existing.name} already exists. Updating."
     )
 
     poetry_with_source.pyproject.reload()

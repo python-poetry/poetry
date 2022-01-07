@@ -74,7 +74,7 @@ class SourceAddCommand(Command):
         for source in existing_sources:
             if source == new_source:
                 self.line(
-                    f"Source with name <c1>{name}</c1> already exits. Skipping"
+                    f"Source with name <c1>{name}</c1> already exists. Skipping"
                     " addition."
                 )
                 return 0
@@ -87,7 +87,7 @@ class SourceAddCommand(Command):
                 return 1
 
             if source.name == name:
-                self.line(f"Source with name <c1>{name}</c1> already exits. Updating.")
+                self.line(f"Source with name <c1>{name}</c1> already exists. Updating.")
                 source = new_source
                 new_source = None
 
