@@ -1693,7 +1693,8 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Dependency.create_from_pep_508(
-            'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
+            'B (<2.0); platform_python_implementation == "PyPy" and python_full_version'
+            ' < "2.7.9"'
         )
     )
 
@@ -1835,7 +1836,9 @@ def test_solver_git_dependencies_short_hash_update_skipped(
                     source_type="git",
                     source_url="https://github.com/demo/demo.git",
                     source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                    source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                    source_resolved_reference=(
+                        "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+                    ),
                 ),
                 "skipped": True,
             },

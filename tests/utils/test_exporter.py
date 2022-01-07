@@ -453,7 +453,8 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
             "c==7.8.9 ; sys_platform == 'win32' and python_version < '3.7'"
         ),
         "d": Dependency.create_from_pep_508(
-            "d==0.0.1 ; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
+            "d==0.0.1 ; platform_system == 'Windows' and python_version < '3.7' or"
+            " sys_platform == 'win32' and python_version < '3.7'"
         ),
     }
 

@@ -617,7 +617,9 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        "url": (
+            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        ),
         "extras": ["foo", "bar"],
     }
 
@@ -1554,7 +1556,9 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        "url": (
+            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        ),
         "extras": ["foo", "bar"],
     }
 
