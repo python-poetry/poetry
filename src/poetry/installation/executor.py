@@ -401,8 +401,10 @@ class Executor:
             return (
                 f"<{base_tag}>Updating"
                 f" <{package_color}>{operation.initial_package.name}</{package_color}> "
-                f"(<{source_operation_color}>{operation.initial_package.full_pretty_version}</{source_operation_color}> "
-                f"-> <{operation_color}>{operation.target_package.full_pretty_version}</>)</>"
+                f"(<{source_operation_color}>"
+                f"{operation.initial_package.full_pretty_version}"
+                f"</{source_operation_color}> -> <{operation_color}>"
+                f"{operation.target_package.full_pretty_version}</>)</>"
             )
         return ""
 

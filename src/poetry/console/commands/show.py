@@ -305,7 +305,10 @@ lists all packages available."""
             ):
                 continue
 
-            line = f"<fg={color}>{name:{name_length - len(install_marker)}}{install_marker}</>"
+            line = (
+                f"<fg={color}>"
+                f"{name:{name_length - len(install_marker)}}{install_marker}</>"
+            )
             if write_version:
                 version = get_package_version_display_string(
                     locked, root=self.poetry.file.parent

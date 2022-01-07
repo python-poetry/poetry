@@ -160,7 +160,10 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "git":
-            req = f"git+{package.source_url}@{package.source_reference}#egg={package.name}"
+            req = (
+                f"git+{package.source_url}@{package.source_reference}"
+                f"#egg={package.name}"
+            )
 
             if package.develop:
                 req = ["-e", req]

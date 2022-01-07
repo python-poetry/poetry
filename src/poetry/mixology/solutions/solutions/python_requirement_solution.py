@@ -26,7 +26,8 @@ class PythonRequirementSolution(Solution):
                 constraint = parse_constraint(incompatibility.cause.python_version)
 
                 version_solutions.append(
-                    f"For <fg=default;options=bold>{incompatibility.terms[0].dependency.name}</>,"
+                    "For <fg=default;options=bold>"
+                    f"{incompatibility.terms[0].dependency.name}</>,"
                     " a possible solution would be to set the"
                     " `<fg=default;options=bold>python</>` property to"
                     f' <fg=yellow>"{root_constraint.intersect(constraint)}"</>'

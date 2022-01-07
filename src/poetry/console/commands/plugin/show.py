@@ -82,8 +82,8 @@ class PluginShowCommand(Command):
                 self.line("      <info>Dependencies</info>")
                 for dependency in package.requires:
                     self.line(
-                        "        -"
-                        f" {dependency.pretty_name} (<c2>{dependency.pretty_constraint}</c2>)"
+                        f"        - {dependency.pretty_name}"
+                        f" (<c2>{dependency.pretty_constraint}</c2>)"
                     )
 
         return 0
