@@ -54,7 +54,8 @@ class InitCommand(Command):
     ]
 
     help = """\
-The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the current directory.
+The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the\
+ current directory.
 """
 
     def __init__(self) -> None:

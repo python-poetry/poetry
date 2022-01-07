@@ -117,7 +117,9 @@ env = {
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
     # Extra information
-    "interpreter_name": INTERPRETER_SHORT_NAMES.get(implementation_name, implementation_name),
+    "interpreter_name": INTERPRETER_SHORT_NAMES.get(
+        implementation_name, implementation_name
+    ),
     "interpreter_version": interpreter_version(),
 }
 
