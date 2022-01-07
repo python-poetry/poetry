@@ -40,7 +40,8 @@ class NewCommand(Command):
 
         path = Path(self.argument("path"))
         if not path.is_absolute():
-            # we do not use resolve here due to compatibility issues for path.resolve(strict=False)
+            # we do not use resolve here due to compatibility issues
+            # for path.resolve(strict=False)
             path = Path.cwd().joinpath(path)
 
         name = self.option("name")

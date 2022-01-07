@@ -28,9 +28,10 @@ def pip_install(
     path = url_to_path(path.url) if isinstance(path, Link) else path
     is_wheel = path.suffix == ".whl"
 
-    # We disable version check here as we are already pinning to version available in either the
-    # virtual environment or the virtualenv package embedded wheel. Version checks are a wasteful
-    # network call that adds a lot of wait time when installing a lot of packages.
+    # We disable version check here as we are already pinning to version available in
+    # either the virtual environment or the virtualenv package embedded wheel. Version
+    # checks are a wasteful network call that adds a lot of wait time when installing a
+    # lot of packages.
     args = ["install", "--disable-pip-version-check", "--prefix", str(environment.path)]
 
     if not is_wheel:
@@ -55,8 +56,9 @@ def pip_install(
         return environment.run_pip(*args)
     except EnvCommandError as e:
         if sys.version_info < (3, 7) and not is_wheel:
-            # Under certain Python3.6 installs vendored pip wheel does not contain zip-safe
-            # pep517 lib. In this cases we create an isolated ephemeral virtual environment.
+            # Under certain Python3.6 installs vendored pip wheel does not contain
+            # zip-safe pep517 lib. In this cases we create an isolated ephemeral virtual
+            # environment.
             with ephemeral_environment(
                 executable=environment.python, with_pip=True, with_setuptools=True
             ) as env:

@@ -975,7 +975,8 @@ class EnvManager:
             else flags.pop("no-setuptools", True)
         )
 
-        # we want wheels to be enabled when pip is required and it has not been explicitly disabled
+        # we want wheels to be enabled when pip is required and it has not been
+        # explicitly disabled
         flags["no-wheel"] = (
             not with_wheel
             if with_wheel is not None
@@ -1184,7 +1185,8 @@ class Env:
         """
         Path to current pip executable
         """
-        # we do not use as_posix() here due to issues with windows pathlib2 implementation
+        # we do not use as_posix() here due to issues with windows pathlib2
+        # implementation
         path = self._bin(self._pip_executable)
         if not Path(path).exists():
             return str(self.pip_embedded)

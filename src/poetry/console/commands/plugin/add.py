@@ -96,8 +96,9 @@ You can specify a package in the following forms:
         # We retrieve the packages installed in the system environment.
         # We assume that this environment will be a self contained virtual environment
         # built by the official installer or by pipx.
-        # If not, it might lead to side effects since other installed packages
-        # might not be required by Poetry but still taken into account when resolving dependencies.
+        # If not, it might lead to side effects since other installed packages might not
+        # be required by Poetry but still be taken into account when resolving
+        # dependencies.
         installed_repository = InstalledRepository.load(
             system_env, with_dependencies=True
         )

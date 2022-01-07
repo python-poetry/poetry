@@ -54,11 +54,11 @@ class Incompatibility:
                 if ref in by_ref:
                     by_ref[ref] = by_ref[ref].intersect(term)
 
-                    # If we have two terms that refer to the same package but have a null
-                    # intersection, they're mutually exclusive, making this incompatibility
-                    # irrelevant, since we already know that mutually exclusive version
-                    # ranges are incompatible. We should never derive an irrelevant
-                    # incompatibility.
+                    # If we have two terms that refer to the same package but have a
+                    # null intersection, they're mutually exclusive, making this
+                    # incompatibility irrelevant, since we already know that mutually
+                    # exclusive version ranges are incompatible. We should never derive
+                    # an irrelevant incompatibility.
                     assert by_ref[ref] is not None
                 else:
                     by_ref[ref] = term

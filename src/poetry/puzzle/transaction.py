@@ -79,9 +79,9 @@ class Transaction:
                 current_package_names = {
                     current_package.name for current_package in self._current_packages
                 }
-                # We preserve pip/setuptools/wheel when not managed by poetry, this is done
-                # to avoid externally managed virtual environments causing unnecessary
-                # removals.
+                # We preserve pip/setuptools/wheel when not managed by poetry, this is
+                # done to avoid externally managed virtual environments causing
+                # unnecessary removals.
                 preserved_package_names = {
                     "pip",
                     "setuptools",

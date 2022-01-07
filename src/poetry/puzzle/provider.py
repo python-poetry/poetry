@@ -676,7 +676,8 @@ class Provider:
                         dep_other.set_constraint(
                             dep_other.constraint.intersect(dep_any.constraint)
                         )
-                        # TODO: Setting _pretty_constraint can be removed once the following issue has been fixed
+                        # TODO: Setting _pretty_constraint can be removed once the
+                        # following issue has been fixed:
                         # https://github.com/python-poetry/poetry/issues/4589
                         dep_other._pretty_constraint = str(dep_other.constraint)
 

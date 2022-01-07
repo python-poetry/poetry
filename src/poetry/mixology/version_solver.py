@@ -109,8 +109,8 @@ class VersionSolver:
 
                 if result is _conflict:
                     # If the incompatibility is satisfied by the solution, we use
-                    # _resolve_conflict() to determine the root cause of the conflict as a
-                    # new incompatibility.
+                    # _resolve_conflict() to determine the root cause of the conflict as
+                    # a new incompatibility.
                     #
                     # It also backjumps to a point in the solution
                     # where that incompatibility will allow us to derive new assignments

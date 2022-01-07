@@ -179,7 +179,8 @@ class Locker:
 
                 root_dir = self._lock.path.parent
                 if package.source_type == "directory":
-                    # root dir should be the source of the package relative to the lock path
+                    # root dir should be the source of the package relative to the lock
+                    # path
                     root_dir = Path(package.source_url)
 
                 if isinstance(constraint, list):
@@ -290,7 +291,8 @@ class Locker:
         pinned_versions: bool = False,
         with_nested: bool = False,
     ) -> Iterable[Dependency]:
-        # group packages entries by name, this is required because requirement might use different constraints
+        # group packages entries by name, this is required because requirement might use
+        # different constraints
         packages_by_name = {}
         for pkg in locked_packages:
             if pkg.name not in packages_by_name:

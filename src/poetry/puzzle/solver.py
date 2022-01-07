@@ -142,7 +142,8 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
-        # NOTE passing explicit empty array for seen to reset between invocations during update + install cycle
+        # NOTE passing explicit empty array for seen to reset between invocations during
+        # update + install cycle
         results = dict(
             depth_first_search(
                 PackageNode(self._package, packages, seen=[]), aggregate_package_nodes

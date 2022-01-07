@@ -139,7 +139,8 @@ class PackageInfo:
         name = name or self.name
 
         if not self.version:
-            # The version could not be determined, so we raise an error since it is mandatory.
+            # The version could not be determined, so we raise an error since it is
+            # mandatory.
             raise RuntimeError(f"Unable to retrieve the package version for {name}")
 
         package = Package(
@@ -155,8 +156,8 @@ class PackageInfo:
         package.files = self.files
 
         if root_dir or (self._source_type in {"directory"} and self._source_url):
-            # this is a local poetry project, this means we can extract "richer" requirement information
-            # eg: development requirements etc.
+            # this is a local poetry project, this means we can extract "richer"
+            # requirement information, eg: development requirements etc.
             poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
             if poetry_package:
                 package.extras = poetry_package.extras
@@ -188,7 +189,8 @@ class PackageInfo:
                 # this dependency is required by an extra package
                 for extra in dependency.in_extras:
                     if extra not in package.extras:
-                        # this is the first time we encounter this extra for this package
+                        # this is the first time we encounter this extra for this
+                        # package
                         package.extras[extra] = []
 
                     package.extras[extra].append(dependency)
@@ -361,9 +363,9 @@ class PackageInfo:
         :param path: Path to search.
         """
         pattern = "**/*.*-info"
-        # Sometimes pathlib will fail on recursive symbolic links, so we need to workaround it
-        # and use the glob module instead. Note that this does not happen with pathlib2
-        # so it's safe to use it for Python < 3.4.
+        # Sometimes pathlib will fail on recursive symbolic links, so we need to work
+        # around it and use the glob module instead. Note that this does not happen with
+        # pathlib2 so it's safe to use it for Python < 3.4.
         directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
 
         for d in directories:
