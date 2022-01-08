@@ -685,7 +685,8 @@ class Installer:
                 return executable
 
             if fallback is None:
-                # keep this one as the fallback; it was the first valid executable we found.
+                # keep this one as the fallback; it was the first valid executable we
+                # found.
                 fallback = executable
 
         if fallback is None:

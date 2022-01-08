@@ -273,7 +273,8 @@ class PoetryInstallationError(RuntimeError):
 class VirtualEnvironment:
     def __init__(self, path: Path) -> None:
         self._path = path
-        # str is required for compatibility with subprocess run on CPython <= 3.7 on Windows
+        # str is required for compatibility with subprocess run on CPython <= 3.7 on
+        # Windows
         self._python = str(
             self._path.joinpath("Scripts/python.exe" if WINDOWS else "bin/python")
         )
@@ -313,7 +314,8 @@ class VirtualEnvironment:
 
         env = cls(target)
 
-        # we do this here to ensure that outdated system default pip does not trigger older bugs
+        # we do this here to ensure that outdated system default pip does not trigger
+        # older bugs
         env.pip("install", "--disable-pip-version-check", "--upgrade", "pip")
 
         return env
@@ -480,7 +482,8 @@ class Installer:
             mx = self.VERSION_REGEX.match(x)
 
             if mx is None:
-                # the version is not semver, perhaps scm or file, we assume upgrade is supported
+                # the version is not semver, perhaps scm or file, we assume upgrade is
+                # supported
                 return True
 
             vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
@@ -884,7 +887,10 @@ def main():
                 text=True,
             )
             installer._write(colorize("error", f"See {path} for error logs."))
-            text = f"{e.log}\nTraceback:\n\n{''.join(traceback.format_tb(e.__traceback__))}"
+            text = (
+                f"{e.log}\n"
+                f"Traceback:\n\n{''.join(traceback.format_tb(e.__traceback__))}"
+            )
             Path(path).write_text(text)
 
         return e.return_code
