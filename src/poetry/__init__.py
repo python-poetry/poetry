@@ -1,4 +1,1 @@
-__path__ = __import__("pkgutil").extend_path(
-    __path__,  # type: ignore[has-type]
-    __name__,
-)
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)  # type: ignore[has-type]  # noqa: E501
