@@ -900,7 +900,9 @@ def test_show_outdated_git_dev_dependency(
                     "source": {
                         "type": "git",
                         "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                        "resolved_reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",  # noqa: E501
+                        "resolved_reference": (
+                            "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+                        ),
                         "url": "https://github.com/demo/demo.git",
                     },
                 },

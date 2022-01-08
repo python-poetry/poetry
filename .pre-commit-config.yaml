@@ -67,6 +67,8 @@ repos:
     rev: 21.12b0
     hooks:
       - id: black
+        args: [--experimental-string-processing]
+        exclude: '^(install|get)-poetry.py$'
 
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
