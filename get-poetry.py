@@ -458,11 +458,11 @@ class Installer:
             print(
                 colorize(
                     "error",
-                    "Version {version} does not support this installation method. Please specify a version prior to "
-                    "1.2.0a1 explicitly using the '--version' option.\n"
-                    "Please see "
-                    "https://python-poetry.org/blog/announcing-poetry-1-2-0a1.html#deprecation-of-the-get-poetry-py-script "
-                    "for more information.".format(version=version),
+                    "Version {version} does not support this installation method."
+                    " Please specify a version prior to 1.2.0a1 explicitly using the"
+                    " '--version' option.\nPlease see"
+                    " https://python-poetry.org/blog/announcing-poetry-1-2-0a1.html#deprecation-of-the-get-poetry-py-script"
+                    " for more information.".format(version=version),
                 )
             )
             return None, None
@@ -470,9 +470,9 @@ class Installer:
         print(
             colorize(
                 "warning",
-                "This installer is deprecated. "
-                "Poetry versions installed using this script will not be able to use 'self update' command to upgrade to "
-                "1.2.0a1 or later.",
+                "This installer is deprecated. Poetry versions installed using this"
+                " script will not be able to use 'self update' command to upgrade to"
+                " 1.2.0a1 or later.",
             )
         )
 
@@ -773,7 +773,8 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "\nUnable to get the PATH value. It will not be updated automatically.",
+                    "\nUnable to get the PATH value. It will not be updated"
+                    " automatically.",
                 )
             )
             self._modify_path = False
@@ -808,7 +809,8 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "Unable to get the PATH value. It will not be updated automatically",
+                    "Unable to get the PATH value. It will not be updated"
+                    " automatically",
                 )
             )
             self._modify_path = False
@@ -1074,8 +1076,10 @@ def main():
         "--file",
         dest="file",
         action="store",
-        help="Install from a local file instead of fetching the latest version "
-        "of Poetry available online.",
+        help=(
+            "Install from a local file instead of fetching the latest version "
+            "of Poetry available online."
+        ),
     )
 
     args = parser.parse_args()
