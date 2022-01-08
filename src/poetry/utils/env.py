@@ -1073,6 +1073,7 @@ class Env:
     def __init__(self, path: Path, base: Optional[Path] = None) -> None:
         self._is_windows = sys.platform == "win32"
         self._is_mingw = sysconfig.get_platform().startswith("mingw")
+        self._is_conda = bool(os.environ.get("CONDA_DEFAULT_ENV"))
 
         if not self._is_windows or self._is_mingw:
             bin_dir = "bin"
@@ -1133,10 +1134,15 @@ class Env:
     def parent_env(self) -> "GenericEnv":
         return GenericEnv(self.base, child_env=self)
 
-    def find_executables(self) -> None:
+    def _find_python_executable(self) -> None:
+        bin_dir = self._bin_dir
+
+        if self._is_windows and self._is_conda:
+            bin_dir = self._path
+
         python_executables = sorted(
             p.name
-            for p in self._bin_dir.glob("python*")
+            for p in bin_dir.glob("python*")
             if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
@@ -1146,6 +1152,7 @@ class Env:
 
             self._executable = executable
 
+    def _find_pip_executable(self) -> None:
         pip_executables = sorted(
             p.name
             for p in self._bin_dir.glob("pip*")
@@ -1157,6 +1164,10 @@ class Env:
                 pip_executable = pip_executable[:-4]
 
             self._pip_executable = pip_executable
+
+    def find_executables(self) -> None:
+        self._find_python_executable()
+        self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
         return get_embed_wheel(
@@ -1402,7 +1413,7 @@ class Env:
             # the root of the env path.
             if self._is_windows:
                 if not bin.endswith(".exe"):
-                    bin_path = self._bin_dir / (bin + ".exe")
+                    bin_path = self._path / (bin + ".exe")
                 else:
                     bin_path = self._path / bin
 
