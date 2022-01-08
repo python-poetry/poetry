@@ -924,11 +924,13 @@ class Env(object):
     def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
         self._is_windows = sys.platform == "win32"
         self._is_mingw = sysconfig.get_platform().startswith("mingw")
+        self._is_conda = bool(os.environ.get("CONDA_DEFAULT_ENV"))
 
         if not self._is_windows or self._is_mingw:
             bin_dir = "bin"
         else:
             bin_dir = "Scripts"
+
         self._path = path
         self._bin_dir = self._path / bin_dir
 
@@ -1079,13 +1081,16 @@ class Env(object):
 
         return sys.prefix
 
-    def find_executables(self):  # type: () -> None
+    def _find_python_executable(self):  # type: () -> None
+        bin_dir = self._bin_dir
+
+        if self._is_windows and self._is_conda:
+            bin_dir = self._path
+
         python_executables = sorted(
-            [
-                p.name
-                for p in self._bin_dir.glob("python*")
-                if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-            ]
+            p.name
+            for p in bin_dir.glob("python*")
+            if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
             executable = python_executables[0]
@@ -1094,12 +1099,11 @@ class Env(object):
 
             self._executable = executable
 
+    def _find_pip_executable(self):  # type: () -> None
         pip_executables = sorted(
-            [
-                p.name
-                for p in self._bin_dir.glob("pip*")
-                if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-            ]
+            p.name
+            for p in self._bin_dir.glob("pip*")
+            if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if pip_executables:
             pip_executable = pip_executables[0]
@@ -1107,6 +1111,10 @@ class Env(object):
                 pip_executable = pip_executable[:-4]
 
             self._pip_executable = pip_executable
+
+    def find_executables(self):  # type: () -> None
+        self._find_python_executable()
+        self._find_pip_executable()
 
     def get_version_info(self):  # type: () -> Tuple[int]
         raise NotImplementedError()
@@ -1235,7 +1243,7 @@ class Env(object):
             # a base Python install.
             if self._is_windows:
                 if not bin.endswith(".exe"):
-                    bin_path = self._bin_dir / (bin + ".exe")
+                    bin_path = self._path / (bin + ".exe")
                 else:
                     bin_path = self._path / bin
 
