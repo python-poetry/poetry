@@ -89,8 +89,9 @@ extend_skip = ["setup.py"]
 
 [tool.black]
 target-version = ['py36']
+experimental_string_processing = true
 force-exclude = '''
-.*/setup\.py$
+.*/setup\.py$|^/(install|get)-poetry.py$
 '''
 
 
