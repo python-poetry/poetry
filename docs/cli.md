@@ -97,6 +97,13 @@ my-package
     └── __init__.py
 ```
 
+### Options
+
+* `--name`: Set the resulting package name.
+* `--src`: Use the src layout for the project.
+* `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
+
+
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
