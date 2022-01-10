@@ -144,6 +144,10 @@ import sys
 print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
 
+GET_PYTHON_VERSION_ONELINER = (
+    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
+)
+
 GET_SYS_PATH = """\
 import json
 import sys
@@ -483,14 +487,7 @@ class EnvManager:
         try:
             python_version = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in"
-                            ' sys.version_info[:3]]))"',
-                        ]
-                    ),
+                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
                     shell=True,
                 )
             )
@@ -730,14 +727,7 @@ class EnvManager:
         try:
             python_version = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in"
-                            ' sys.version_info[:3]]))"',
-                        ]
-                    ),
+                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
                     shell=True,
                 )
             )
@@ -807,12 +797,7 @@ class EnvManager:
             python_patch = decode(
                 subprocess.check_output(
                     list_to_shell_command(
-                        [
-                            executable,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in"
-                            ' sys.version_info[:3]]))"',
-                        ]
+                        [executable, "-c", GET_PYTHON_VERSION_ONELINER]
                     ),
                     shell=True,
                 ).strip()
@@ -862,12 +847,7 @@ class EnvManager:
                     python_patch = decode(
                         subprocess.check_output(
                             list_to_shell_command(
-                                [
-                                    python,
-                                    "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in"
-                                    ' sys.version_info[:3]]))"',
-                                ]
+                                [python, "-c", GET_PYTHON_VERSION_ONELINER]
                             ),
                             stderr=subprocess.STDOUT,
                             shell=True,
