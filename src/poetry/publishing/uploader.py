@@ -83,7 +83,8 @@ class Uploader:
 
         wheels = list(
             dist.glob(
-                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}-*.whl"
+                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}"
+                "-*.whl"
             )
         )
         tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
@@ -295,7 +296,7 @@ class Uploader:
         dist = self._poetry.file.parent / "dist"
         file = (
             dist
-            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"
+            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"  # noqa: E501
         )
 
         if not file.exists():

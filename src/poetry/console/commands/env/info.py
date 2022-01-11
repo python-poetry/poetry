@@ -40,12 +40,15 @@ class EnvInfoCommand(Command):
         listing = [
             f"<info>Python</info>:         <comment>{env_python_version}</>",
             f"<info>Implementation</info>: <comment>{env.python_implementation}</>",
-            f"<info>Path</info>:           <comment>{env.path if env.is_venv() else 'NA'}</>",
-            f"<info>Executable</info>:     <comment>{env.python if env.is_venv() else 'NA'}</>",
+            "<info>Path</info>:          "
+            f" <comment>{env.path if env.is_venv() else 'NA'}</>",
+            "<info>Executable</info>:    "
+            f" <comment>{env.python if env.is_venv() else 'NA'}</>",
         ]
         if env.is_venv():
             listing.append(
-                f"<info>Valid</info>:          <{'comment' if env.is_sane() else 'error'}>{env.is_sane()}</>"
+                "<info>Valid</info>:         "
+                f" <{'comment' if env.is_sane() else 'error'}>{env.is_sane()}</>"
             )
         self.line("\n".join(listing))
 

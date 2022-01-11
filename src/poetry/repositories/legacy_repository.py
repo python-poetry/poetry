@@ -342,7 +342,8 @@ class LegacyRepository(PyPiRepository):
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
             raise PackageNotFound(
-                f'No valid distribution links found for package: "{name}" version: "{version}"'
+                f'No valid distribution links found for package: "{name}" version:'
+                f' "{version}"'
             )
         urls = defaultdict(list)
         files = []

@@ -78,10 +78,12 @@ class Solver:
 
             if len(self._overrides) > 1:
                 self._provider.debug(
-                    f"Complete version solving took {end - start:.3f} seconds with {len(self._overrides)} overrides"
+                    f"Complete version solving took {end - start:.3f} seconds with"
+                    f" {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
-                    f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
+                    "Resolved with overrides:"
+                    f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
         return Transaction(
@@ -140,7 +142,8 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
-        # NOTE passing explicit empty array for seen to reset between invocations during update + install cycle
+        # NOTE passing explicit empty array for seen to reset between invocations during
+        # update + install cycle
         results = dict(
             depth_first_search(
                 PackageNode(self._package, packages, seen=[]), aggregate_package_nodes

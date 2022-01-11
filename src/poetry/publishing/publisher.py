@@ -89,8 +89,9 @@ class Publisher:
         if repository_name == "pypi":
             repository_name = "PyPI"
         self._io.write_line(
-            f"Publishing <c1>{self._package.pretty_name}</c1> (<c2>{self._package.pretty_version}</c2>) "
-            f"to <info>{repository_name}</info>"
+            f"Publishing <c1>{self._package.pretty_name}</c1>"
+            f" (<c2>{self._package.pretty_version}</c2>) to"
+            f" <info>{repository_name}</info>"
         )
 
         self._uploader.upload(

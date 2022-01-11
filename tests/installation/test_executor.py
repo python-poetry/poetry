@@ -251,13 +251,16 @@ def test_execute_works_with_ansi_output(
     )
     env._run.assert_called_once()
 
+    # fmt: off
     expected = [
-        "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.2\x1b[39m\x1b[39m)\x1b[39m",  # finished
+        "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",  # noqa: E501
+        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.2\x1b[39m\x1b[39m)\x1b[39m",  # finished  # noqa: E501
     ]
+    # fmt: on
+
     output = io_decorated.fetch_output()
     # hint: use print(repr(output)) if you need to debug this
 
@@ -542,7 +545,7 @@ def test_executor_should_use_cached_link_and_hash(
     package.files = [
         {
             "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
         }
     ]
 

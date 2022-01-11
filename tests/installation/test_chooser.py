@@ -207,7 +207,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     package = Package("isort", "4.3.4")
     files = [
         {
-            "hash": "sha256:b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8",
+            "hash": "sha256:b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8",  # noqa: E501
             "filename": "isort-4.3.4.tar.gz",
         }
     ]
@@ -240,7 +240,7 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     package = Package("isort", "4.3.4")
     files = [
         {
-            "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",  # noqa: E501
             "filename": "isort-4.3.4.tar.gz",
         }
     ]

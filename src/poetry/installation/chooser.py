@@ -112,7 +112,8 @@ class Chooser:
 
         if links and not selected_links:
             raise RuntimeError(
-                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock metadata {hashes}"
+                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock"
+                f" metadata {hashes}"
             )
 
         return selected_links

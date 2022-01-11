@@ -54,11 +54,11 @@ class Incompatibility:
                 if ref in by_ref:
                     by_ref[ref] = by_ref[ref].intersect(term)
 
-                    # If we have two terms that refer to the same package but have a null
-                    # intersection, they're mutually exclusive, making this incompatibility
-                    # irrelevant, since we already know that mutually exclusive version
-                    # ranges are incompatible. We should never derive an irrelevant
-                    # incompatibility.
+                    # If we have two terms that refer to the same package but have a
+                    # null intersection, they're mutually exclusive, making this
+                    # incompatibility irrelevant, since we already know that mutually
+                    # exclusive version ranges are incompatible. We should never derive
+                    # an irrelevant incompatibility.
                     assert by_ref[ref] is not None
                 else:
                     by_ref[ref] = term
@@ -127,7 +127,10 @@ class Incompatibility:
             assert depender.is_positive()
             assert not dependee.is_positive()
 
-            return f"{self._terse(depender, allow_every=True)} depends on {self._terse(dependee)}"
+            return (
+                f"{self._terse(depender, allow_every=True)} depends on"
+                f" {self._terse(dependee)}"
+            )
         elif isinstance(self._cause, PythonCause):
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
@@ -150,7 +153,10 @@ class Incompatibility:
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
 
-            return f"no versions of {self._terms[0].dependency.name} match {self._terms[0].constraint}"
+            return (
+                f"no versions of {self._terms[0].dependency.name} match"
+                f" {self._terms[0].constraint}"
+            )
         elif isinstance(self._cause, PackageNotFoundCause):
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
@@ -161,7 +167,10 @@ class Incompatibility:
             assert not self._terms[0].is_positive()
             assert self._terms[0].dependency.is_root
 
-            return f"{self._terms[0].dependency.name} is {self._terms[0].dependency.constraint}"
+            return (
+                f"{self._terms[0].dependency.name} is"
+                f" {self._terms[0].dependency.constraint}"
+            )
         elif self.is_failure():
             return "version solving failed"
 
@@ -205,7 +214,10 @@ class Incompatibility:
                 return f"if {' and '.join(positive)} then {' or '.join(negative)}"
 
             positive_term = [term for term in self._terms if term.is_positive()][0]
-            return f"{self._terse(positive_term, allow_every=True)} requires {' or '.join(negative)}"
+            return (
+                f"{self._terse(positive_term, allow_every=True)} requires"
+                f" {' or '.join(negative)}"
+            )
         elif positive:
             return f"one of {' or '.join(positive)} must be false"
         else:

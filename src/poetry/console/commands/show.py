@@ -36,7 +36,8 @@ class ShowCommand(EnvCommand):
         option(
             "with",
             None,
-            "Show the information of the specified optional groups' dependencies as well.",
+            "Show the information of the specified optional groups' dependencies as"
+            " well.",
             flag=False,
             multiple=True,
         ),
@@ -46,7 +47,8 @@ class ShowCommand(EnvCommand):
         option(
             "only",
             None,
-            "Only show the information of dependencies belonging to the specified groups.",
+            "Only show the information of dependencies belonging to the specified"
+            " groups.",
             flag=False,
             multiple=True,
         ),
@@ -97,8 +99,9 @@ lists all packages available."""
         only_groups = []
         if self.option("no-dev"):
             self.line(
-                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated, "
-                "use the `<fg=yellow;options=bold>--without dev</>` notation instead.</warning>"
+                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is"
+                " deprecated, use the `<fg=yellow;options=bold>--without dev</>`"
+                " notation instead.</warning>"
             )
             excluded_groups.append("dev")
 
@@ -201,7 +204,8 @@ lists all packages available."""
                 self.line("<info>dependencies</info>")
                 for dependency in pkg.requires:
                     self.line(
-                        f" - <c1>{dependency.pretty_name}</c1> <b>{dependency.pretty_constraint}</b>"
+                        f" - <c1>{dependency.pretty_name}</c1>"
+                        f" <b>{dependency.pretty_constraint}</b>"
                     )
 
             if required_by:
@@ -301,7 +305,10 @@ lists all packages available."""
             ):
                 continue
 
-            line = f"<fg={color}>{name:{name_length - len(install_marker)}}{install_marker}</>"
+            line = (
+                f"<fg={color}>"
+                f"{name:{name_length - len(install_marker)}}{install_marker}</>"
+            )
             if write_version:
                 version = get_package_version_display_string(
                     locked, root=self.poetry.file.parent
@@ -357,7 +364,10 @@ lists all packages available."""
 
             level = 1
             color = self.colors[level]
-            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint}"
+            info = (
+                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
+                f" {dependency.pretty_constraint}"
+            )
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
@@ -400,7 +410,10 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = "(circular dependency aborted here)"
 
-            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint} {circular_warn}"
+            info = (
+                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
+                f" {dependency.pretty_constraint} {circular_warn}"
+            )
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")

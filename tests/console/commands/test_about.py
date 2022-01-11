@@ -19,7 +19,8 @@ def test_about(tester: "CommandTester"):
     expected = """\
 Poetry - Package Management for Python
 
-Poetry is a dependency manager tracking local dependencies of your projects and libraries.
+Poetry is a dependency manager tracking local dependencies of your projects and\
+ libraries.
 See https://github.com/python-poetry/poetry for more information.
 """
 

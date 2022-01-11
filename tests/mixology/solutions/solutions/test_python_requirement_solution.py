@@ -24,8 +24,8 @@ The Python requirement can be specified via the `python` or `markers` properties
 For foo, a possible solution would be to set the `python` property to ">=3.6,<4.0"\
 """
     links = [
-        "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",
-        "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",
+        "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",  # noqa: E501
+        "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",  # noqa: E501
     ]
 
     assert title == solution.solution_title

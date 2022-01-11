@@ -121,7 +121,8 @@ class PyPiRepository(RemoteRepository):
             if not release:
                 # Bad release
                 self._log(
-                    f"No release information found for {dependency.name}-{version}, skipping",
+                    f"No release information found for {dependency.name}-{version},"
+                    " skipping",
                     level="debug",
                 )
                 continue
@@ -130,7 +131,8 @@ class PyPiRepository(RemoteRepository):
                 package = Package(info["info"]["name"], version)
             except InvalidVersion:
                 self._log(
-                    f'Unable to parse version "{version}" for the {dependency.name} package, skipping',
+                    f'Unable to parse version "{version}" for the'
+                    f" {dependency.name} package, skipping",
                     level="debug",
                 )
                 continue
@@ -183,7 +185,8 @@ class PyPiRepository(RemoteRepository):
                 results.append(result)
             except InvalidVersion:
                 self._log(
-                    f'Unable to parse version "{version}" for the {name} package, skipping',
+                    f'Unable to parse version "{version}" for the {name} package,'
+                    " skipping",
                     level="debug",
                 )
 

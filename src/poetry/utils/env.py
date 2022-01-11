@@ -117,7 +117,9 @@ env = {
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
     # Extra information
-    "interpreter_name": INTERPRETER_SHORT_NAMES.get(implementation_name, implementation_name),
+    "interpreter_name": INTERPRETER_SHORT_NAMES.get(
+        implementation_name, implementation_name
+    ),
     "interpreter_version": interpreter_version(),
 }
 
@@ -141,6 +143,10 @@ import sys
 
 print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
+
+GET_PYTHON_VERSION_ONELINER = (
+    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
+)
 
 GET_SYS_PATH = """\
 import json
@@ -262,7 +268,8 @@ class SitePackages:
 
         if not results and strict:
             raise RuntimeError(
-                f'Unable to find a suitable destination for "{path}" in {paths_csv(self._candidates)}'
+                f'Unable to find a suitable destination for "{path}" in'
+                f" {paths_csv(self._candidates)}"
             )
 
         return results
@@ -416,7 +423,10 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: Optional[str] = None) -> None:
         self.e = e
 
-        message = f"Command {e.cmd} errored with the following return code {e.returncode}, and output: \n{decode(e.output)}"
+        message = (
+            f"Command {e.cmd} errored with the following return code {e.returncode},"
+            f" and output: \n{decode(e.output)}"
+        )
         if input:
             message += f"input was : {input}"
         super().__init__(message)
@@ -477,13 +487,7 @@ class EnvManager:
         try:
             python_version = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
+                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
                     shell=True,
                 )
             )
@@ -723,13 +727,7 @@ class EnvManager:
         try:
             python_version = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
+                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
                     shell=True,
                 )
             )
@@ -799,11 +797,7 @@ class EnvManager:
             python_patch = decode(
                 subprocess.check_output(
                     list_to_shell_command(
-                        [
-                            executable,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
+                        [executable, "-c", GET_PYTHON_VERSION_ONELINER]
                     ),
                     shell=True,
                 ).strip()
@@ -824,8 +818,8 @@ class EnvManager:
                 )
 
             io.write_line(
-                f"<warning>The currently activated Python version {python_patch} "
-                f"is not supported by the project ({self._poetry.package.python_versions}).\n"
+                f"<warning>The currently activated Python version {python_patch} is not"
+                f" supported by the project ({self._poetry.package.python_versions}).\n"
                 "Trying to find and use a compatible version.</warning> "
             )
 
@@ -853,11 +847,7 @@ class EnvManager:
                     python_patch = decode(
                         subprocess.check_output(
                             list_to_shell_command(
-                                [
-                                    python,
-                                    "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                                ]
+                                [python, "-c", GET_PYTHON_VERSION_ONELINER]
                             ),
                             stderr=subprocess.STDOUT,
                             shell=True,
@@ -904,7 +894,8 @@ class EnvManager:
             if force:
                 if not env.is_sane():
                     io.write_line(
-                        f"<warning>The virtual environment found in {env.path} seems to be broken.</warning>"
+                        f"<warning>The virtual environment found in {env.path} seems to"
+                        " be broken.</warning>"
                     )
                 io.write_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
                 self.remove_venv(venv)
@@ -965,7 +956,8 @@ class EnvManager:
             else flags.pop("no-setuptools", True)
         )
 
-        # we want wheels to be enabled when pip is required and it has not been explicitly disabled
+        # we want wheels to be enabled when pip is required and it has not been
+        # explicitly disabled
         flags["no-wheel"] = (
             not with_wheel
             if with_wheel is not None
@@ -1174,7 +1166,8 @@ class Env:
         """
         Path to current pip executable
         """
-        # we do not use as_posix() here due to issues with windows pathlib2 implementation
+        # we do not use as_posix() here due to issues with windows pathlib2
+        # implementation
         path = self._bin(self._pip_executable)
         if not Path(path).exists():
             return str(self.pip_embedded)

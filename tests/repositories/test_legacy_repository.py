@@ -283,11 +283,11 @@ def test_get_package_retrieves_non_sha256_hashes():
     expected = [
         {
             "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",
+            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",  # noqa: E501
         },
         {
             "file": "ipython-7.5.0.tar.gz",
-            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",  # noqa: E501
         },
     ]
 
@@ -306,11 +306,11 @@ def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
         },
         {
             "file": "ipython-5.7.0-py3-none-any.whl",
-            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",
+            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",  # noqa: E501
         },
         {
             "file": "ipython-5.7.0.tar.gz",
-            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",
+            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",  # noqa: E501
         },
     ]
 
@@ -325,7 +325,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
     assert [
         {
             "file": "jupyter-1.0.0.tar.gz",
-            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",
+            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
         }
     ] == package.files
 
