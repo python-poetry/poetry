@@ -9,7 +9,6 @@ test_task:
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
-      - PYTHON: python3.6
       - PYTHON: python3.7
       - PYTHON: python3.8
       - PYTHON: python3.9
