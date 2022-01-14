@@ -414,14 +414,16 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    f"  - Skipping <c1>{target.pretty_name}</c1> (<c2>{target.full_pretty_version}</c2>) {operation.skip_reason}"
+                    f"  - Skipping <c1>{target.pretty_name}</c1>"
+                    f" (<c2>{target.full_pretty_version}</c2>) {operation.skip_reason}"
                 )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                f"  - Installing <c1>{target.pretty_name}</c1> (<c2>{target.full_pretty_version}</c2>)"
+                f"  - Installing <c1>{target.pretty_name}</c1>"
+                f" (<c2>{target.full_pretty_version}</c2>)"
             )
 
         if not self._execute_operations:
@@ -444,8 +446,9 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                f"  - Updating <c1>{target.pretty_name}</c1> "
-                f"(<c2>{source.full_pretty_version}</c2> -> <c2>{target.full_pretty_version}</c2>)"
+                f"  - Updating <c1>{target.pretty_name}</c1>"
+                f" (<c2>{source.full_pretty_version}</c2> ->"
+                f" <c2>{target.full_pretty_version}</c2>)"
             )
 
         if not self._execute_operations:
@@ -458,14 +461,16 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    f"  - Not removing <c1>{target.pretty_name}</c1> (<c2>{target.pretty_version}</c2>) {operation.skip_reason}"
+                    f"  - Not removing <c1>{target.pretty_name}</c1>"
+                    f" (<c2>{target.pretty_version}</c2>) {operation.skip_reason}"
                 )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                f"  - Removing <c1>{target.pretty_name}</c1> (<c2>{target.pretty_version}</c2>)"
+                f"  - Removing <c1>{target.pretty_name}</c1>"
+                f" (<c2>{target.pretty_version}</c2>)"
             )
 
         if not self._execute_operations:

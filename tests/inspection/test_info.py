@@ -90,7 +90,7 @@ def demo_setup_complex(source_dir: Path) -> Path:
 def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
     pyproject_toml.write_text(
-        decode("[build-system]\n" 'requires = ["setuptools", "wheel"]')
+        decode('[build-system]\nrequires = ["setuptools", "wheel"]')
     )
     return demo_setup_complex
 

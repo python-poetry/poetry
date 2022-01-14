@@ -40,7 +40,8 @@ class NewCommand(Command):
 
         path = Path(self.argument("path"))
         if not path.is_absolute():
-            # we do not use resolve here due to compatibility issues for path.resolve(strict=False)
+            # we do not use resolve here due to compatibility issues
+            # for path.resolve(strict=False)
             path = Path.cwd().joinpath(path)
 
         name = self.option("name")
@@ -50,7 +51,7 @@ class NewCommand(Command):
         if path.exists() and list(path.glob("*")):
             # Directory is not empty. Aborting.
             raise RuntimeError(
-                f"Destination <fg=yellow>{path}</> " "exists and is not empty"
+                f"Destination <fg=yellow>{path}</> exists and is not empty"
             )
 
         readme_format = self.option("readme") or "md"
@@ -81,5 +82,6 @@ class NewCommand(Command):
             path = path.relative_to(Path.cwd())
 
         self.line(
-            f"Created package <info>{layout_._package_name}</> in <fg=blue>{path.as_posix()}</>"
+            f"Created package <info>{layout_._package_name}</> in"
+            f" <fg=blue>{path.as_posix()}</>"
         )

@@ -42,9 +42,12 @@ def test_no_version_that_matches_combined_constraints(
 
     error = """\
 Because foo (1.0.0) depends on shared (>=2.0.0 <3.0.0)
- and no versions of shared match >=2.9.0,<3.0.0, foo (1.0.0) requires shared (>=2.0.0,<2.9.0).
-And because bar (1.0.0) depends on shared (>=2.9.0 <4.0.0), bar (1.0.0) is incompatible with foo (1.0.0).
-So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving failed."""
+ and no versions of shared match >=2.9.0,<3.0.0,\
+ foo (1.0.0) requires shared (>=2.0.0,<2.9.0).
+And because bar (1.0.0) depends on shared (>=2.9.0 <4.0.0),\
+ bar (1.0.0) is incompatible with foo (1.0.0).
+So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving failed.\
+"""
 
     check_solver_result(root, provider, error=error)
 
@@ -62,8 +65,10 @@ def test_disjoint_constraints(
 
     error = """\
 Because bar (1.0.0) depends on shared (>3.0.0)
- and foo (1.0.0) depends on shared (<=2.0.0), bar (1.0.0) is incompatible with foo (1.0.0).
-So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving failed."""
+ and foo (1.0.0) depends on shared (<=2.0.0),\
+ bar (1.0.0) is incompatible with foo (1.0.0).
+So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving failed.\
+"""
 
     check_solver_result(root, provider, error=error)
     check_solver_result(root, provider, error=error)

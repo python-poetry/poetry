@@ -77,7 +77,8 @@ def test_add_no_constraint_editable_error(
     tester.execute("-e cachy")
 
     expected = """
-Failed to add packages. Only vcs/path dependencies support editable installs. cachy is neither.
+Failed to add packages. Only vcs/path dependencies support editable installs.\
+ cachy is neither.
 
 No changes were applied.
 """
@@ -565,7 +566,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+  • Installing demo\
+ (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
     assert expected == tester.io.fetch_output()
@@ -590,7 +592,8 @@ def test_add_url_constraint_wheel_with_extras(
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
     tester.execute(
-        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
+        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "[foo,bar]"
     )
 
     expected = """\
@@ -605,7 +608,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing cleo (0.6.5)
   • Installing pendulum (1.4.4)
   • Installing tomlkit (0.5.5)
-  • Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+  • Installing demo\
+ (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
     # Order might be different, split into lines and compare the overall output.
     expected = set(expected.splitlines())
@@ -617,7 +621,9 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        "url": (
+            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        ),
         "extras": ["foo", "bar"],
     }
 
@@ -873,8 +879,10 @@ The following packages are already present in the pyproject.toml and will be ski
 
   • foo
 
-If you want to update it to the latest compatible version, you can use `poetry update package`.
-If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
+If you want to update it to the latest compatible version,\
+ you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry add package@latest`.
 """
 
     assert expected in tester.io.fetch_output()
@@ -1502,7 +1510,8 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+  - Installing demo\
+ (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
     assert expected == old_tester.io.fetch_output()
@@ -1528,7 +1537,8 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
     old_tester.execute(
-        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
+        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "[foo,bar]"
     )
 
     expected = """\
@@ -1543,7 +1553,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing cleo (0.6.5)
   - Installing pendulum (1.4.4)
   - Installing tomlkit (0.5.5)
-  - Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+  - Installing demo\
+ (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
     assert expected == old_tester.io.fetch_output()
@@ -1554,7 +1565,9 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        "url": (
+            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        ),
         "extras": ["foo", "bar"],
     }
 
@@ -1791,14 +1804,16 @@ The following packages are already present in the pyproject.toml and will be ski
 
   • foo
 
-If you want to update it to the latest compatible version, you can use `poetry update package`.
-If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
+If you want to update it to the latest compatible version,\
+ you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry add package@latest`.
 """
 
     assert expected in old_tester.io.fetch_output()
 
 
-def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(
+def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(  # noqa: E501
     app: "PoetryTestApplication",
     repo: "TestRepository",
     installer: "NoopInstaller",

@@ -26,7 +26,8 @@ class PluginAddCommand(InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables --verbose).",
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         )
     ]
 
@@ -35,16 +36,19 @@ The <c1>plugin add</c1> command installs Poetry plugins globally.
 
 It works similarly to the <c1>add</c1> command:
 
-If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
+If you do not specify a version constraint, poetry will choose a suitable one based on\
+ the available package versions.
 
 You can specify a package in the following forms:
 
   - A single name (<b>requests</b>)
   - A name and a constraint (<b>requests@^2.23.0</b>)
   - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
-  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
+  - A git url with a revision\
+ (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
   - A git SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)
-  - A git SSH url with a revision (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)
+  - A git SSH url with a revision\
+ (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)
   - A file path (<b>../my-package/my-package.whl</b>)
   - A directory (<b>../my-package/</b>)
   - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\
@@ -95,8 +99,9 @@ You can specify a package in the following forms:
         # We retrieve the packages installed in the system environment.
         # We assume that this environment will be a self contained virtual environment
         # built by the official installer or by pipx.
-        # If not, it might lead to side effects since other installed packages
-        # might not be required by Poetry but still taken into account when resolving dependencies.
+        # If not, it might lead to side effects since other installed packages might not
+        # be required by Poetry but still be taken into account when resolving
+        # dependencies.
         installed_repository = InstalledRepository.load(
             system_env, with_dependencies=True
         )

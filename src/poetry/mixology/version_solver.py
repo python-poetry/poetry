@@ -109,8 +109,8 @@ class VersionSolver:
 
                 if result is _conflict:
                     # If the incompatibility is satisfied by the solution, we use
-                    # _resolve_conflict() to determine the root cause of the conflict as a
-                    # new incompatibility.
+                    # _resolve_conflict() to determine the root cause of the conflict as
+                    # a new incompatibility.
                     #
                     # It also backjumps to a point in the solution
                     # where that incompatibility will allow us to derive new assignments
@@ -180,13 +180,14 @@ class VersionSolver:
     def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
         Given an incompatibility that's satisfied by _solution,
-        The `conflict resolution`_ constructs a new incompatibility that encapsulates the root
-        cause of the conflict and backtracks _solution until the new
+        The `conflict resolution`_ constructs a new incompatibility that encapsulates
+        the root cause of the conflict and backtracks _solution until the new
         incompatibility will allow _propagate() to deduce new assignments.
 
         Adds the new incompatibility to _incompatibilities and returns it.
 
-        .. _conflict resolution: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
+        .. _conflict resolution:
+        https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
         """
         self._log(f"conflict: {incompatibility}")
 
@@ -286,7 +287,8 @@ class VersionSolver:
             # the incompatibility as well, See the `algorithm documentation`_ for
             # details.
             #
-            # .. _algorithm documentation: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
+            # .. _algorithm documentation:
+            # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
             if difference is not None:
                 new_terms.append(difference.inverse)
 
@@ -297,7 +299,8 @@ class VersionSolver:
 
             partially = "" if difference is None else " partially"
             self._log(
-                f"! {most_recent_term} is{partially} satisfied by {most_recent_satisfier}"
+                f"! {most_recent_term} is{partially} satisfied by"
+                f" {most_recent_satisfier}"
             )
             self._log(f'! which is caused by "{most_recent_satisfier.cause}"')
             self._log(f"! thus: {incompatibility}")

@@ -104,7 +104,8 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert dist_info.joinpath("INSTALLER").read_text() == "poetry"
     assert (
         dist_info.joinpath("entry_points.txt").read_text()
-        == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
+        == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n"
+        "fox=fuz.foo:bar.baz\n\n"
     )
 
     metadata = """\

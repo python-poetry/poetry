@@ -192,12 +192,15 @@ poetry-plugin = "^1.2.3"
     tester.execute("poetry-plugin")
 
     expected = """\
-The following plugins are already present in the pyproject.toml file and will be skipped:
+The following plugins are already present in the pyproject.toml file and will be\
+ skipped:
 
   • poetry-plugin
 
-If you want to update it to the latest compatible version, you can use `poetry plugin update package`.
-If you prefer to upgrade it to the latest available version, you can use `poetry plugin add package@latest`.
+If you want to update it to the latest compatible version,\
+ you can use `poetry plugin update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry plugin add package@latest`.
 
 """
 

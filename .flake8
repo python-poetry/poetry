@@ -12,8 +12,6 @@ enable-extensions = TC, TC2
 type-checking-exempt-modules = typing, typing-extensions
 eradicate-whitelist-extend = ^-.*;
 extend-ignore =
-    # E501: Line too long (FIXME: long string constants)
-    E501,
     # E203: Whitespace before ':' (pycqa/pycodestyle#373)
     E203,
     # SIM106: Handle error-cases first

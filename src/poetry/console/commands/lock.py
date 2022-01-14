@@ -15,14 +15,15 @@ class LockCommand(InstallerCommand):
         option(
             "check",
             None,
-            "Check that the <comment>poetry.lock</> file corresponds to the current version "
-            "of <comment>pyproject.toml</>.",
+            "Check that the <comment>poetry.lock</> file corresponds to the current"
+            " version of <comment>pyproject.toml</>.",
         ),
     ]
 
     help = """
 The <info>lock</info> command reads the <comment>pyproject.toml</> file from the
-current directory, processes it, and locks the dependencies in the <comment>poetry.lock</>
+current directory, processes it, and locks the dependencies in the\
+ <comment>poetry.lock</>
 file.
 
 <info>poetry lock</info>

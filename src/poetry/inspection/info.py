@@ -112,7 +112,8 @@ class PackageInfo:
         """
         Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
 
-        :param data: Data to load. This is expected to be a `dict` object output by `asdict()`.
+        :param data: Data to load. This is expected to be a `dict` object output by
+            `asdict()`.
         """
         cache_version = data.pop("_cache_version", None)
         return cls(cache_version=cache_version, **data)
@@ -129,17 +130,20 @@ class PackageInfo:
         root_dir: Optional[Path] = None,
     ) -> Package:
         """
-        Create a new `poetry.core.packages.package.Package` instance using metadata from this instance.
+        Create a new `poetry.core.packages.package.Package` instance using metadata from
+        this instance.
 
-        :param name: Name to use for the package, if not specified name from this instance is used.
+        :param name: Name to use for the package, if not specified name from this
+            instance is used.
         :param extras: Extras to activate for this package.
-        :param root_dir:  Optional root directory to use for the package. If set, dependency strings
-            will be parsed relative to this directory.
+        :param root_dir:  Optional root directory to use for the package. If set,
+            dependency strings will be parsed relative to this directory.
         """
         name = name or self.name
 
         if not self.version:
-            # The version could not be determined, so we raise an error since it is mandatory.
+            # The version could not be determined, so we raise an error since it is
+            # mandatory.
             raise RuntimeError(f"Unable to retrieve the package version for {name}")
 
         package = Package(
@@ -155,8 +159,8 @@ class PackageInfo:
         package.files = self.files
 
         if root_dir or (self._source_type in {"directory"} and self._source_url):
-            # this is a local poetry project, this means we can extract "richer" requirement information
-            # eg: development requirements etc.
+            # this is a local poetry project, this means we can extract "richer"
+            # requirement information, eg: development requirements etc.
             poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
             if poetry_package:
                 package.extras = poetry_package.extras
@@ -178,8 +182,8 @@ class PackageInfo:
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 self._log(
-                    f"Invalid constraint ({req}) found in {package.name}-{package.version} dependencies, "
-                    "skipping",
+                    f"Invalid constraint ({req}) found in"
+                    f" {package.name}-{package.version} dependencies, skipping",
                     level="warning",
                 )
                 continue
@@ -188,7 +192,8 @@ class PackageInfo:
                 # this dependency is required by an extra package
                 for extra in dependency.in_extras:
                     if extra not in package.extras:
-                        # this is the first time we encounter this extra for this package
+                        # this is the first time we encounter this extra for this
+                        # package
                         package.extras[extra] = []
 
                     package.extras[extra].append(dependency)
@@ -206,7 +211,8 @@ class PackageInfo:
         cls, dist: Union[pkginfo.BDist, pkginfo.SDist, pkginfo.Wheel]
     ) -> "PackageInfo":
         """
-        Helper method to parse package information from a `pkginfo.Distribution` instance.
+        Helper method to parse package information from a `pkginfo.Distribution`
+        instance.
 
         :param dist: The distribution instance to parse information from.
         """
@@ -237,9 +243,9 @@ class PackageInfo:
     @classmethod
     def _from_sdist_file(cls, path: Path) -> "PackageInfo":
         """
-        Helper method to parse package information from an sdist file. We attempt to first inspect the
-        file using `pkginfo.SDist`. If this does not provide us with package requirements, we extract the
-        source and handle it as a directory.
+        Helper method to parse package information from an sdist file. We attempt to
+        first inspect the file using `pkginfo.SDist`. If this does not provide us with
+        package requirements, we extract the source and handle it as a directory.
 
         :param path: The sdist file to parse information from.
         """
@@ -302,9 +308,10 @@ class PackageInfo:
     @classmethod
     def from_setup_files(cls, path: Path) -> "PackageInfo":
         """
-        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses the implementation
-        at `poetry.utils.setup_reader.SetupReader` in order to parse the file. This is not reliable for
-        complex setup files and should only attempted as a fallback.
+        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses
+        the implementation at `poetry.utils.setup_reader.SetupReader` in order to parse
+        the file. This is not reliable for complex setup files and should only attempted
+        as a fallback.
 
         :param path: Path to `setup.py` file
         """
@@ -361,9 +368,9 @@ class PackageInfo:
         :param path: Path to search.
         """
         pattern = "**/*.*-info"
-        # Sometimes pathlib will fail on recursive symbolic links, so we need to workaround it
-        # and use the glob module instead. Note that this does not happen with pathlib2
-        # so it's safe to use it for Python < 3.4.
+        # Sometimes pathlib will fail on recursive symbolic links, so we need to work
+        # around it and use the glob module instead. Note that this does not happen with
+        # pathlib2 so it's safe to use it for Python < 3.4.
         directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
 
         for d in directories:
@@ -508,13 +515,14 @@ class PackageInfo:
     @classmethod
     def from_directory(cls, path: Path, disable_build: bool = False) -> "PackageInfo":
         """
-        Generate package information from a package source directory. If `disable_build` is not `True` and
-        introspection of all available metadata fails, the package is attempted to be build in an isolated
-        environment so as to generate required metadata.
+        Generate package information from a package source directory. If `disable_build`
+        is not `True` and introspection of all available metadata fails, the package is
+        attempted to be built in an isolated environment so as to generate required
+        metadata.
 
         :param path: Path to generate package information from.
-        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated build is attempted in
-            order to gather metadata.
+        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated
+            build is attempted in order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
         if project_package:

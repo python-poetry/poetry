@@ -78,7 +78,8 @@ def test_source_add_error_pypi(tester: "CommandTester"):
     tester.execute("pypi https://test.pypi.org/simple/")
     assert (
         tester.io.fetch_error().strip()
-        == "Failed to validate addition of pypi: The name [pypi] is reserved for repositories"
+        == "Failed to validate addition of pypi: The name [pypi] is reserved for"
+        " repositories"
     )
     assert tester.status_code == 1
 
@@ -89,7 +90,7 @@ def test_source_add_existing(
     tester.execute(f"--default {source_existing.name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()
-        == f"Source with name {source_existing.name} already exits. Updating."
+        == f"Source with name {source_existing.name} already exists. Updating."
     )
 
     poetry_with_source.pyproject.reload()
