@@ -103,6 +103,8 @@ class Shell:
             suffix = ".fish"
         elif self._name in ("csh", "tcsh"):
             suffix = ".csh"
+        elif self._name == "pwsh":
+            suffix = ".ps1"
         else:
             suffix = ""
 
