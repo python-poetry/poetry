@@ -176,7 +176,7 @@ class SelfUpdateCommand(Command):
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.utils.env import EnvManager
 
-        env = EnvManager.get_system_env()
+        env = EnvManager.get_system_env(naive=True)
         installed = InstalledRepository.load(env)
 
         root = ProjectPackage("poetry-updater", "0.0.0")
