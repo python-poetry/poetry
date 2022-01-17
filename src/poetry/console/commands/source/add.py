@@ -51,7 +51,12 @@ class SourceAddCommand(Command):
         return source_table
 
     def handle(self) -> Optional[int]:
+        from pathlib import Path
+
+        from poetry.core.toml.file import TOMLFile
+
         from poetry.factory import Factory
+        from poetry.locations import CONFIG_DIR
         from poetry.repositories import Pool
 
         name = self.argument("name")
@@ -127,6 +132,12 @@ class SourceAddCommand(Command):
             return 1
 
         if is_global:
+            # create system config file if needed.
+            config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
+            if not config_file.exists():
+                config_file.path.parent.mkdir(parents=True, exist_ok=True)
+                config_file.path.touch(mode=0o0600)
+
             # only add/update new values
             self.poetry.config.config_source.add_property(f"sources.{name}.url", url)
             self.poetry.config.config_source.add_property(
