@@ -172,6 +172,11 @@ poetry source add --global --default foo "https://foo.bar/simple/"
 Sources listed in the config follow the same logic as updating your `pyproject.toml`.
 At run time, poetry will merge global, local and pypi accordingly.
 
+Sources can be removed using remove command
+```bash
+poetry source remove --global foo
+```
+
 {{% warning %}}
 
 Errors because of conflicting settings between config and `pyproject.toml` sources
