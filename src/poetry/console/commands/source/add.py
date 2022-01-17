@@ -90,7 +90,7 @@ class SourceAddCommand(Command):
             if new_source == source:
                 self.line(
                     f"Identical source with name <c1>{name}</c1> already exists. "
-                    f"Skipping addition."
+                    "Skipping addition."
                 )
                 return 0
 
@@ -100,8 +100,9 @@ class SourceAddCommand(Command):
                 new_source = None
             elif source.default and new_source.default:
                 self.line_error(
-                    f"<error>Source with name <c1>{name}</c1> is already set to default. "
-                    f"Only one default source can be configured at a time.</error>"
+                    f"<error>Source with name <c1>{name}</c1> is already set to"
+                    " default. Only one default source can be configured at a"
+                    " time.</error>"
                 )
                 return 1
             sources_updated.append(source)
