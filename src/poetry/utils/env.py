@@ -470,7 +470,8 @@ class EnvManager:
 
         try:
             io.write_line(
-                "Trying to detect current active python executable as specified in the config.",
+                "Trying to detect current active python executable as specified in the"
+                " config.",
                 verbosity=Verbosity.VERBOSE,
             )
             executable = decode(
@@ -484,7 +485,8 @@ class EnvManager:
             io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         except CalledProcessError:
             io.write_line(
-                "Unable to detect the current active python executable. Falling back to default.",
+                "Unable to detect the current active python executable. Falling back to"
+                " default.",
                 verbosity=Verbosity.VERBOSE,
             )
         return executable
