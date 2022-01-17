@@ -1,5 +1,6 @@
 import os
 import signal
+import subprocess
 import sys
 
 from pathlib import Path
@@ -67,8 +68,20 @@ class Shell:
         return cls._shell
 
     def activate(self, env: "VirtualEnv") -> Optional[int]:
+        activate_script = self._get_activate_script()
+        bin_dir = "Scripts" if WINDOWS else "bin"
+        activate_path = env.path / bin_dir / activate_script
+
         if WINDOWS:
-            return env.execute(self.path)
+            if self._name == "powershell":
+                args = ["-NoExit", "-File", str(activate_path)]
+            else:
+                # /K will execute the bat file and
+                # keep the cmd process from terminating
+                args = ["/K", str(activate_path)]
+            proc = subprocess.Popen([self.path] + args)
+            proc.communicate()
+            return proc.returncode
 
         import shlex
 
@@ -81,9 +94,6 @@ class Shell:
         if self._name == "zsh":
             c.setecho(False)
 
-        activate_script = self._get_activate_script()
-        bin_dir = "Scripts" if WINDOWS else "bin"
-        activate_path = env.path / bin_dir / activate_script
         c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
 
         def resize(sig: Any, data: Any) -> None:
@@ -103,6 +113,10 @@ class Shell:
             suffix = ".fish"
         elif self._name in ("csh", "tcsh"):
             suffix = ".csh"
+        elif self._name == "powershell":
+            suffix = ".ps1"
+        elif self._name == "cmd":
+            suffix = ".bat"
         else:
             suffix = ""
 
