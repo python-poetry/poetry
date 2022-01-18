@@ -60,7 +60,7 @@ pytest = "^6.2"
 pytest-cov = "^2.8"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
-pre-commit = { version = "^2.6", python = "^3.6.1" }
+pre-commit = { version = "^2.6", python = "^3.7" }
 deepdiff = "^5.0"
 httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
