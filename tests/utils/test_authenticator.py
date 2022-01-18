@@ -1,6 +1,7 @@
 import re
 import uuid
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -13,7 +14,6 @@ import pytest
 import requests
 
 from cleo.io.null_io import NullIO
-from dataclasses import dataclass
 
 from poetry.utils.authenticator import Authenticator
 

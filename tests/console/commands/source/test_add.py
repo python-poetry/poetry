@@ -1,6 +1,7 @@
+import dataclasses
+
 from typing import TYPE_CHECKING
 
-import dataclasses
 import pytest
 
 
