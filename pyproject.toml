@@ -32,7 +32,7 @@ generate-setup-file = false
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 
 poetry-core = "^1.1.0a6"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
