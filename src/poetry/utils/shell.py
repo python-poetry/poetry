@@ -73,15 +73,14 @@ class Shell:
         activate_path = env.path / bin_dir / activate_script
 
         if WINDOWS:
-            if self._name == "powershell":
+            if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
             else:
                 # /K will execute the bat file and
                 # keep the cmd process from terminating
                 args = ["/K", str(activate_path)]
-            proc = subprocess.Popen([self.path] + args)
-            proc.communicate()
-            return proc.returncode
+            completed_proc = subprocess.run([self.path] + args)
+            return completed_proc.returncode
 
         import shlex
 
@@ -113,7 +112,7 @@ class Shell:
             suffix = ".fish"
         elif self._name in ("csh", "tcsh"):
             suffix = ".csh"
-        elif self._name == "powershell":
+        elif self._name in ("powershell", "pwsh"):
             suffix = ".ps1"
         elif self._name == "cmd":
             suffix = ".bat"
