@@ -80,7 +80,6 @@ repos:
       - id: mypy
         pass_filenames: false
         additional_dependencies:
-          - types-dataclasses
           - types-requests
 
   - repo: https://github.com/pre-commit/pre-commit
