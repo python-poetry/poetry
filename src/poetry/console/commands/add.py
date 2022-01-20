@@ -1,3 +1,5 @@
+import contextlib
+
 from typing import Dict
 from typing import List
 
@@ -203,6 +205,12 @@ You can specify a package in the following forms:
                 constraint = constraint["version"]
 
             section[_constraint["name"]] = constraint
+
+            with contextlib.suppress(ValueError):
+                self.poetry.package.dependency_group(group).remove_dependency(
+                    _constraint["name"]
+                )
+
             self.poetry.package.add_dependency(
                 Factory.create_dependency(
                     _constraint["name"],

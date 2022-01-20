@@ -56,8 +56,11 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+<<<<<<< HEAD
 virtualenvs.path-independent_naming = null
+=======
 virtualenvs.prefer-active-python = false
+>>>>>>> a358be7d4cfff6d0823d4e18f867654724b11596
 """
 
     assert expected == tester.io.fetch_output()
@@ -81,8 +84,11 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+<<<<<<< HEAD
 virtualenvs.path-independent_naming = null
+=======
 virtualenvs.prefer-active-python = false
+>>>>>>> a358be7d4cfff6d0823d4e18f867654724b11596
 """
 
     assert config.set_config_source.call_count == 0
@@ -130,8 +136,11 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+<<<<<<< HEAD
 virtualenvs.path-independent_naming = null
+=======
 virtualenvs.prefer-active-python = false
+>>>>>>> a358be7d4cfff6d0823d4e18f867654724b11596
 """
 
     assert config.set_config_source.call_count == 1
