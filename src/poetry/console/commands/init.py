@@ -18,6 +18,7 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
@@ -275,10 +276,14 @@ You can specify a package in the following forms:
                 else:
                     choices = []
                     matches_names = [p.name for p in matches]
-                    exact_match = constraint["name"] in matches_names
+                    exact_match = canonicalize_name(constraint["name"]) in matches_names
                     if exact_match:
                         choices.append(
-                            matches[matches_names.index(constraint["name"])].pretty_name
+                            matches[
+                                matches_names.index(
+                                    canonicalize_name(constraint["name"])
+                                )
+                            ].pretty_name
                         )
 
                     for found_package in matches:
