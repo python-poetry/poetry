@@ -415,11 +415,18 @@ version = "1.1.0a6"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = false
 
 [package.dependencies]
 dataclasses = {version = ">=0.8", markers = "python_version >= \"3.6\" and python_version < \"3.7\""}
 importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry-core.git"
+reference = "master"
+resolved_reference = "af08f1ce720da467c9bf3d43eed3d9ebaf4ad7fb"
 
 [[package]]
 name = "pre-commit"
@@ -731,7 +738,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "9d2e32899df46f2c63018e9a3f5e95dbbeb1ec41291c31289cff40f6f2d935a4"
+content-hash = "dc81b9b70af914c2dd2f1a5c9d0810b7943f671685bbb5bdd4caffa072b99f6a"
 
 [metadata.files]
 atomicwrites = [
@@ -1022,10 +1029,7 @@ pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
-poetry-core = [
-    {file = "poetry-core-1.1.0a6.tar.gz", hash = "sha256:e22c8897216216f6344b3d57167a8cd5485a1403934817d7efaf7fb8f6bcffc9"},
-    {file = "poetry_core-1.1.0a6-py3-none-any.whl", hash = "sha256:4093226d89e1b79f16c917fba766461c01b184d3184d7cad4b7be8426c0cb4be"},
-]
+poetry-core = []
 pre-commit = [
     {file = "pre_commit-2.16.0-py2.py3-none-any.whl", hash = "sha256:758d1dc9b62c2ed8881585c254976d66eae0889919ab9b859064fc2fe3c7743e"},
     {file = "pre_commit-2.16.0.tar.gz", hash = "sha256:fe9897cac830aa7164dbd02a4e7b90cae49630451ce88464bca73db486ba9f65"},
