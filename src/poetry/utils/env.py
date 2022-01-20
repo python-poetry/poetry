@@ -30,6 +30,7 @@ import packaging.tags
 import tomlkit
 import virtualenv
 
+from cleo.io.outputs.output import Verbosity
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
@@ -464,6 +465,32 @@ class EnvManager:
     def __init__(self, poetry: "Poetry") -> None:
         self._poetry = poetry
 
+    def _detect_active_python(self, io: "IO") -> str:
+        executable = None
+
+        try:
+            io.write_line(
+                "Trying to detect current active python executable as specified in the"
+                " config.",
+                verbosity=Verbosity.VERBOSE,
+            )
+            executable = decode(
+                subprocess.check_output(
+                    list_to_shell_command(
+                        ["python", "-c", '"import sys; print(sys.executable)"']
+                    ),
+                    shell=True,
+                ).strip()
+            )
+            io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+        except CalledProcessError:
+            io.write_line(
+                "Unable to detect the current active python executable. Falling back to"
+                " default.",
+                verbosity=Verbosity.VERBOSE,
+            )
+        return executable
+
     def activate(self, python: str, io: "IO") -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -780,6 +807,12 @@ class EnvManager:
         create_venv = self._poetry.config.get("virtualenvs.create")
         root_venv = self._poetry.config.get("virtualenvs.in-project")
         venv_path = self._poetry.config.get("virtualenvs.path")
+        prefer_active_python = self._poetry.config.get(
+            "virtualenvs.prefer-active-python"
+        )
+
+        if not executable and prefer_active_python:
+            executable = self._detect_active_python(io)
 
         if root_venv:
             venv_path = cwd / ".venv"
@@ -812,7 +845,7 @@ class EnvManager:
             # If an executable has been specified, we stop there
             # and notify the user of the incompatibility.
             # Otherwise, we try to find a compatible Python version.
-            if executable:
+            if executable and not prefer_active_python:
                 raise NoCompatiblePythonVersionFound(
                     self._poetry.package.python_versions, python_patch
                 )
@@ -1067,6 +1100,7 @@ class Env:
     def __init__(self, path: Path, base: Optional[Path] = None) -> None:
         self._is_windows = sys.platform == "win32"
         self._is_mingw = sysconfig.get_platform().startswith("mingw")
+        self._is_conda = bool(os.environ.get("CONDA_DEFAULT_ENV"))
 
         if not self._is_windows or self._is_mingw:
             bin_dir = "bin"
@@ -1127,10 +1161,15 @@ class Env:
     def parent_env(self) -> "GenericEnv":
         return GenericEnv(self.base, child_env=self)
 
-    def find_executables(self) -> None:
+    def _find_python_executable(self) -> None:
+        bin_dir = self._bin_dir
+
+        if self._is_windows and self._is_conda:
+            bin_dir = self._path
+
         python_executables = sorted(
             p.name
-            for p in self._bin_dir.glob("python*")
+            for p in bin_dir.glob("python*")
             if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
@@ -1140,6 +1179,7 @@ class Env:
 
             self._executable = executable
 
+    def _find_pip_executable(self) -> None:
         pip_executables = sorted(
             p.name
             for p in self._bin_dir.glob("pip*")
@@ -1151,6 +1191,10 @@ class Env:
                 pip_executable = pip_executable[:-4]
 
             self._pip_executable = pip_executable
+
+    def find_executables(self) -> None:
+        self._find_python_executable()
+        self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
         return get_embed_wheel(
@@ -1397,7 +1441,7 @@ class Env:
             # the root of the env path.
             if self._is_windows:
                 if not bin.endswith(".exe"):
-                    bin_path = self._bin_dir / (bin + ".exe")
+                    bin_path = self._path / (bin + ".exe")
                 else:
                     bin_path = self._path / bin
 

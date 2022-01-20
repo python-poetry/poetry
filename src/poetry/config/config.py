@@ -39,6 +39,7 @@ class Config:
             "path-independent_naming": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
             "options": {"always-copy": False, "system-site-packages": False},
+            "prefer-active-python": False,
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True, "max-workers": None},
@@ -140,6 +141,7 @@ class Config:
             "virtualenvs.path-independent_naming",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
+            "virtualenvs.options.prefer-active-python",
             "experimental.new-installer",
             "installer.parallel",
         }:

@@ -48,8 +48,11 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
+<<<<<<< HEAD
 virtualenvs.path-independent_naming = null
+=======
 virtualenvs.prefer-active-python = false
+>>>>>>> a358be7d4cfff6d0823d4e18f867654724b11596
 ```
 
 ## Displaying a single configuration setting
