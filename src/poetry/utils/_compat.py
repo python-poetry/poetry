@@ -5,11 +5,11 @@ from typing import List
 from typing import Optional
 
 
-try:
-    from importlib import metadata
-except ImportError:
+if sys.version_info < (3, 8):
     # compatibility for python <3.8
-    import importlib_metadata as metadata  # noqa: F401, TC002
+    import importlib_metadata as metadata
+else:
+    from importlib import metadata  # noqa: F401, TC002
 
 WINDOWS = sys.platform == "win32"
 
