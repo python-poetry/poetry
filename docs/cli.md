@@ -463,8 +463,8 @@ It can also build the package if you pass it the `--build` option.
 
 ### Options
 
-* `--repository (-r)`: The repository to register the package to (default: `pypi`).
-Should match a repository name set by the [`config`](#config) command.
+* `--repository (-r)`: The repository name or url to register the package to (default: `pypi`).
+If repository name is passed, then it should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
 * `--dry-run`: Perform all actions except upload the package.

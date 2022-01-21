@@ -176,3 +176,53 @@ def test_publish_read_from_environment_variable(
         ("https://foo.bar",),
         {"cert": None, "client_cert": None, "dry_run": False},
     ] == uploader_upload.call_args
+
+
+def test_build_poetry_with_repository_as_url(
+    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
+):
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+
+    pyproject_config = poetry.local_config
+    io = BufferedIO()
+    publisher = Publisher(poetry, io)
+
+    netloc_part = "custom.repo"
+    given_arg_repository_url = "http://" + netloc_part
+    given_arg_username = "foo"
+    given_arg_password = "bar"
+    publisher.publish(given_arg_repository_url, given_arg_username, given_arg_password)
+
+    assert [(given_arg_username, given_arg_password)] == uploader_auth.call_args
+    assert [
+        (given_arg_repository_url,),
+        {"cert": None, "client_cert": None, "dry_run": False},
+    ] == uploader_upload.call_args
+    assert (
+        f"Publishing {pyproject_config.get('name')} ({pyproject_config.get('version')})"
+        f" to {netloc_part}"
+        in io.fetch_output()
+    )
+
+
+def test_build_poetry_with_repository_as_url_invalid_url(
+    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
+):
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+
+    io = BufferedIO()
+    publisher = Publisher(poetry, io)
+
+    # No url scheme
+    given_arg_repository_url = "custom.repo"
+    given_arg_username = "foo"
+    given_arg_password = "bar"
+
+    with pytest.raises(RuntimeError) as e:
+        publisher.publish(
+            given_arg_repository_url, given_arg_username, given_arg_password
+        )
+
+    assert "invalid url" in str(e.value)
