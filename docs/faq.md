@@ -62,7 +62,7 @@ And use a `tox.ini` configuration file similar to this:
 ```INI
 [tox]
 isolated_build = true
-envlist = py27, py36
+envlist = py27, py37
 
 [testenv]
 allowlist_externals = poetry
