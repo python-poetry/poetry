@@ -37,11 +37,13 @@ file.
         )
 
         if self.option("check"):
-            return (
-                0
-                if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh()
-                else 1
+            if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
+                self.line("poetry.lock is up to date")
+                return 0
+            self.line(
+                "Error: poetry.lock is out of date. Run `poetry update` to fix it"
             )
+            return 1
 
         self._installer.lock(update=not self.option("no-update"))
 
