@@ -104,7 +104,10 @@ class Publisher:
         )
 
     def ask(
-        self, question: Union[str, "Question"], default: Optional[Any] = None, hidden: bool = False,
+        self,
+        question: Union[str, "Question"],
+        default: Optional[Any] = None,
+        hidden: bool = False,
     ) -> Any:
         """
         Prompt the user for input.
