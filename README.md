@@ -5,7 +5,7 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 3.6+.
+It supports Python 3.7+.
 
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
