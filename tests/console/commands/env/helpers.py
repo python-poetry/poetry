@@ -25,6 +25,8 @@ def check_output_wrapper(
             return version.text
         elif "sys.version_info[:2]" in cmd:
             return f"{version.major}.{version.minor}"
+        elif '-c "import sys; print(sys.executable)"' in cmd:
+            return f"/usr/bin/{cmd.split()[0]}"
         else:
             return str(Path("/prefix"))
 

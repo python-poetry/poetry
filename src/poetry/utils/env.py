@@ -465,6 +465,21 @@ class EnvManager:
     def __init__(self, poetry: "Poetry") -> None:
         self._poetry = poetry
 
+    def _full_python_path(self, python: str) -> str:
+        try:
+            executable = decode(
+                subprocess.check_output(
+                    list_to_shell_command(
+                        [python, "-c", '"import sys; print(sys.executable)"']
+                    ),
+                    shell=True,
+                ).strip()
+            )
+        except CalledProcessError as e:
+            raise EnvCommandError(e)
+
+        return executable
+
     def _detect_active_python(self, io: "IO") -> str:
         executable = None
 
@@ -474,14 +489,7 @@ class EnvManager:
                 " config.",
                 verbosity=Verbosity.VERBOSE,
             )
-            executable = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        ["python", "-c", '"import sys; print(sys.executable)"']
-                    ),
-                    shell=True,
-                ).strip()
-            )
+            executable = self._full_python_path("python")
             io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         except CalledProcessError:
             io.write_line(
@@ -510,6 +518,8 @@ class EnvManager:
         except ValueError:
             # Executable in PATH or full executable path
             pass
+
+        python = self._full_python_path(python)
 
         try:
             python_version = decode(

@@ -154,12 +154,14 @@ VERSION_3_7_1 = Version.parse("3.7.1")
 
 def check_output_wrapper(
     version: Version = VERSION_3_7_1,
-) -> Callable[[List[str], Any, Any], str]:
-    def check_output(cmd: List[str], *args: Any, **kwargs: Any) -> str:
+) -> Callable[[str, Any, Any], str]:
+    def check_output(cmd: str, *args: Any, **kwargs: Any) -> str:
         if "sys.version_info[:3]" in cmd:
             return version.text
         elif "sys.version_info[:2]" in cmd:
             return f"{version.major}.{version.minor}"
+        elif '-c "import sys; print(sys.executable)"' in cmd:
+            return f"/usr/bin/{cmd.split()[0]}"
         else:
             return str(Path("/prefix"))
 
@@ -193,7 +195,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
-        executable="python3.7",
+        executable="/usr/bin/python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -328,7 +330,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
 
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.6",
-        executable="python3.6",
+        executable="/usr/bin/python3.6",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -389,7 +391,7 @@ def test_activate_activates_recreates_for_different_patch(
 
     build_venv_m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
-        executable="python3.7",
+        executable="/usr/bin/python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -1022,7 +1024,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     m.assert_called_with(
         poetry.file.parent / ".venv",
-        executable="python3.7",
+        executable="/usr/bin/python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
