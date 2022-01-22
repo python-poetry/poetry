@@ -79,7 +79,7 @@ class Shell:
                 # /K will execute the bat file and
                 # keep the cmd process from terminating
                 args = ["/K", str(activate_path)]
-            completed_proc = subprocess.run([self.path] + args)
+            completed_proc = subprocess.run([self.path, *args])
             return completed_proc.returncode
 
         import shlex
