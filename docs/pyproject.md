@@ -233,7 +233,7 @@ is compatible is mandatory:
 
 ```toml
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 ```
 {{% /note %}}
 
