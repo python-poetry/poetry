@@ -20,6 +20,7 @@ or if you wish to accomplish something with Poetry in a way that is not desired 
 
 In these cases you could consider creating a plugin to handle your specific logic.
 
+> Note: The plugin interface is available in Poetry 1.2 or newer.
 
 ## Creating a plugin
 
@@ -39,7 +40,7 @@ version = "1.0.0"
 # ...
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.7"
-poetry = "^1.0"
+poetry = "^1.2"
 
 [tool.poetry.plugins."poetry.plugin"]
 demo = "poetry_demo_plugin.plugin:MyPlugin"
