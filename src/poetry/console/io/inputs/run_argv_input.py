@@ -18,7 +18,7 @@ class RunArgvInput(ArgvInput):
     ) -> None:
         super().__init__(argv, definition=definition)
 
-        self._parameter_options = []
+        self._parameter_options: List[str] = []
 
     @property
     def first_argument(self) -> Optional[str]:
