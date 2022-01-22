@@ -111,7 +111,7 @@ def test_execute_executes_a_batch_of_operations(
     env: MockEnv,
 ):
     pip_editable_install = mocker.patch(
-        "poetry.installation.executor.pip_editable_install", unsafe=not PY37
+        "poetry.installation.executor.pip_editable_install"
     )
 
     config.merge({"cache-dir": tmp_dir})
