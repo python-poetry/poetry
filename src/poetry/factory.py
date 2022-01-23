@@ -127,8 +127,8 @@ class Factory(BaseFactory):
     ) -> None:
         for source in sources:
             repository = cls.create_legacy_repository(source, config)
-            is_default = source.get("default", False)
-            is_secondary = source.get("secondary", False)
+            is_default = bool(source.get("default", False))
+            is_secondary = bool(source.get("secondary", False))
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
                 if is_default:
