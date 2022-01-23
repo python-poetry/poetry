@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from typing import Optional
+from typing import Union
 
 from poetry.installation.operations.operation import Operation
 
@@ -13,7 +14,7 @@ class Uninstall(Operation):
         self,
         package: "Package",
         reason: Optional[str] = None,
-        priority: int = float("inf"),
+        priority: Union[float, int] = float("inf"),
     ) -> None:
         super().__init__(reason, priority=priority)
 
