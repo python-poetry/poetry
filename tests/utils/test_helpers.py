@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from poetry.core.utils.helpers import parse_requires
 
+from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
 
@@ -79,3 +80,17 @@ def test_get_client_cert(config: "Config"):
     config.merge({"certificates": {"foo": {"client-cert": client_cert}}})
 
     assert get_client_cert(config, "foo") == Path(client_cert)
+
+
+def test_canonicalize_name():
+    names = ["flask", "Flask", "FLASK", "FlAsK", "fLaSk57", "flask-57"]
+    canonicalized_names = [canonicalize_name(name) for name in names]
+
+    assert canonicalized_names == [
+        "flask",
+        "flask",
+        "flask",
+        "flask",
+        "flask57",
+        "flask-57",
+    ]

@@ -255,7 +255,7 @@ You can specify a package in the following forms:
             package = self.ask(
                 "Search for package to add (or leave blank to continue):"
             )
-            while package is not None:
+            while package:
                 constraint = self._parse_requirements([package])[0]
                 if (
                     "git" in constraint
@@ -268,15 +268,14 @@ You can specify a package in the following forms:
                     package = self.ask("\nAdd a package:")
                     continue
 
-                matches = self._get_pool().search(constraint["name"])
-
+                canonicalized_name = canonicalize_name(constraint["name"])
+                matches = self._get_pool().search(canonicalized_name)
                 if not matches:
                     self.line("<error>Unable to find package</error>")
                     package = False
                 else:
                     choices = []
                     matches_names = [p.name for p in matches]
-                    canonicalized_name = canonicalize_name(constraint["name"])
                     exact_match = canonicalized_name in matches_names
                     if exact_match:
                         choices.append(
@@ -287,7 +286,7 @@ You can specify a package in the following forms:
                         if len(choices) >= 10:
                             break
 
-                        if found_package.name.lower() == constraint["name"].lower():
+                        if found_package.name.lower() == canonicalized_name:
                             continue
 
                         choices.append(found_package.pretty_name)

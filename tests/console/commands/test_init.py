@@ -123,6 +123,7 @@ def test_interactive_with_dependencies(tester: CommandTester, repo: "TestReposit
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
+    repo.add_package(get_package("flask", "2.0.0"))
 
     inputs = [
         "my-package",  # Package name
@@ -135,6 +136,9 @@ def test_interactive_with_dependencies(tester: CommandTester, repo: "TestReposit
         "pendulu",  # Search for package
         "1",  # Second option is pendulum
         "",  # Do not set constraint
+        "Flask",
+        "0",
+        "",
         "",  # Stop searching for packages
         "",  # Interactive dev packages
         "pytest",  # Search for package
@@ -158,6 +162,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
+flask = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
