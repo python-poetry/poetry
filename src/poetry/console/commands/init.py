@@ -22,6 +22,7 @@ from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
     from poetry.repositories import Pool
@@ -243,6 +244,26 @@ You can specify a package in the following forms:
 
         return 0
 
+    def _generate_choice_list(
+        self, matches: List["Package"], canonicalized_name: str
+    ) -> List[str]:
+        choices = []
+        matches_names = [p.name for p in matches]
+        exact_match = canonicalized_name in matches_names
+        if exact_match:
+            choices.append(matches[matches_names.index(canonicalized_name)].pretty_name)
+
+        for found_package in matches:
+            if len(choices) >= 10:
+                break
+
+            if found_package.name.lower() == canonicalized_name:
+                continue
+
+            choices.append(found_package.pretty_name)
+
+        return choices
+
     def _determine_requirements(
         self,
         requires: List[str],
@@ -274,22 +295,7 @@ You can specify a package in the following forms:
                     self.line("<error>Unable to find package</error>")
                     package = False
                 else:
-                    choices = []
-                    matches_names = [p.name for p in matches]
-                    exact_match = canonicalized_name in matches_names
-                    if exact_match:
-                        choices.append(
-                            matches[matches_names.index(canonicalized_name)].pretty_name
-                        )
-
-                    for found_package in matches:
-                        if len(choices) >= 10:
-                            break
-
-                        if found_package.name.lower() == canonicalized_name:
-                            continue
-
-                        choices.append(found_package.pretty_name)
+                    choices = self._generate_choice_list(matches, canonicalized_name)
 
                     self.line(
                         f"Found <info>{len(matches)}</info> packages matching"
