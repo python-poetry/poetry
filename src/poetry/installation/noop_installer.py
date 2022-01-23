@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 class NoopInstaller(BaseInstaller):
     def __init__(self) -> None:
-        self._installs = []
-        self._updates = []
-        self._removals = []
+        self._installs: List["Package"] = []
+        self._updates: List["Package"] = []
+        self._removals: List["Package"] = []
 
     @property
     def installs(self) -> List["Package"]:

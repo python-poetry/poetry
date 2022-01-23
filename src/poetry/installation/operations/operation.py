@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 from typing import Optional
 from typing import TypeVar
+from typing import Union
 
 
 if TYPE_CHECKING:
@@ -10,11 +11,13 @@ T = TypeVar("T", bound="Operation")
 
 
 class Operation:
-    def __init__(self, reason: Optional[str] = None, priority: int = 0) -> None:
+    def __init__(
+        self, reason: Optional[str] = None, priority: Union[int, float] = 0
+    ) -> None:
         self._reason = reason
 
         self._skipped = False
-        self._skip_reason = None
+        self._skip_reason: Optional[str] = None
         self._priority = priority
 
     @property
@@ -22,7 +25,7 @@ class Operation:
         raise NotImplementedError
 
     @property
-    def reason(self) -> str:
+    def reason(self) -> Optional[str]:
         return self._reason
 
     @property
@@ -34,7 +37,7 @@ class Operation:
         return self._skip_reason
 
     @property
-    def priority(self) -> int:
+    def priority(self) -> Union[float, int]:
         return self._priority
 
     @property
