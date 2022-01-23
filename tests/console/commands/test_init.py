@@ -12,6 +12,7 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
+from poetry.utils.helpers import canonicalize_name
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
@@ -245,6 +246,24 @@ pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
+
+
+@pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
+def test_generate_choice_list(tester: CommandTester, package_name: str):
+    init_command = tester.command
+
+    packages = [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+    ]
+
+    choices = init_command._generate_choice_list(
+        packages, canonicalize_name(package_name)
+    )
+
+    assert choices[0] == "Flask"
 
 
 def test_interactive_with_git_dependencies_with_reference(
