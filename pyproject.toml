@@ -137,7 +137,6 @@ module = [
   'poetry.console.commands.source.add',
   'poetry.console.commands.update',
   'poetry.console.commands.version',
-  'poetry.factory.*',
   'poetry.inspection.*',
   'poetry.installation.*',
   'poetry.layouts.*',
