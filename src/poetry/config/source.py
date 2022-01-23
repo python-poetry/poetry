@@ -1,7 +1,7 @@
+import dataclasses
+
 from typing import Dict
 from typing import Union
-
-import dataclasses
 
 
 @dataclasses.dataclass(order=True, eq=True)

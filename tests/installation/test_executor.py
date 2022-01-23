@@ -17,7 +17,6 @@ from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.utils._compat import PY36
 
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
@@ -111,7 +110,7 @@ def test_execute_executes_a_batch_of_operations(
     env: MockEnv,
 ):
     pip_editable_install = mocker.patch(
-        "poetry.installation.executor.pip_editable_install", unsafe=not PY36
+        "poetry.installation.executor.pip_editable_install"
     )
 
     config.merge({"cache-dir": tmp_dir})

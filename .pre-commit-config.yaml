@@ -49,7 +49,7 @@ repos:
     rev: v2.31.0
     hooks:
       - id: pyupgrade
-        args: [--py36-plus]
+        args: [--py37-plus]
         exclude: '^(install|get)-poetry.py$'
 
   - repo: https://github.com/pycqa/isort
@@ -80,7 +80,6 @@ repos:
       - id: mypy
         pass_filenames: false
         additional_dependencies:
-          - types-dataclasses
           - types-requests
 
   - repo: https://github.com/pre-commit/pre-commit

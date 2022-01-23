@@ -1,6 +1,3 @@
-import os
-import sys
-
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -9,7 +6,6 @@ from poetry.core.packages.utils.utils import url_to_path
 
 from poetry.exceptions import PoetryException
 from poetry.utils.env import EnvCommandError
-from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
@@ -55,18 +51,6 @@ def pip_install(
     try:
         return environment.run_pip(*args)
     except EnvCommandError as e:
-        if sys.version_info < (3, 7) and not is_wheel:
-            # Under certain Python3.6 installs vendored pip wheel does not contain
-            # zip-safe pep517 lib. In this cases we create an isolated ephemeral virtual
-            # environment.
-            with ephemeral_environment(
-                executable=environment.python, with_pip=True, with_setuptools=True
-            ) as env:
-                return environment.run(
-                    *env.get_pip_command(),
-                    *args,
-                    env={**os.environ, "PYTHONPATH": str(env.purelib)},
-                )
         raise PoetryException(f"Failed to install {path.as_posix()}") from e
 
 

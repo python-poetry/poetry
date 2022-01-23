@@ -1,5 +1,5 @@
 [flake8]
-min_python_version = 3.6.0
+min_python_version = 3.7.0
 max-line-length = 88
 ban-relative-imports = true
 # flake8-use-fstring: https://github.com/MichaelKim0407/flake8-use-fstring#--percent-greedy-and---format-greedy
