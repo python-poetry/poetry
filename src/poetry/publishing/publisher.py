@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
     from cleo.io import BufferedIO
     from cleo.io import ConsoleIO
-    from cleo.ui.question import Question
 
     from poetry.poetry import Poetry
 
@@ -49,6 +48,8 @@ class Publisher:
         client_cert: Optional["Path"] = None,
         dry_run: bool = False,
     ) -> None:
+        from cleo.ui.question import Question
+
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"
@@ -80,11 +81,11 @@ class Publisher:
         # Requesting missing credentials but only if there is not a client cert defined.
         if not resolved_client_cert:
             if username is None:
-                username = self.ask("Username:")
+                username = Question("Username:").ask()
 
             # skip password input if no username is provided, assume unauthenticated
             if username and password is None:
-                password = self.ask("Password:", hidden=True)
+                password = Question("Password:", hidden=True).ask()
 
         self._uploader.auth(username, password)
 
@@ -102,20 +103,3 @@ class Publisher:
             client_cert=resolved_client_cert,
             dry_run=dry_run,
         )
-
-    def ask(
-        self,
-        question: Union[str, "Question"],
-        default: Optional[Any] = None,
-        hidden: bool = False,
-    ) -> Any:
-        """
-        Prompt the user for input.
-        """
-        from cleo.ui.question import Question
-
-        if not isinstance(question, Question):
-            question = Question(question, default=default)
-            question.hide(hidden)
-
-        return question.ask(self._io)
