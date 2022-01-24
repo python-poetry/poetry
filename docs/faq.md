@@ -95,8 +95,8 @@ Assume you have this is in the `pyproject.toml`:
 python = "^3.7"
 ```
 
-This means, your project aims to be compatible to any Python version >=3.7,<4.0. Whenever you try to add a dependency,
-whose Python requirement doesn't match the whole range, Poetry will tell you this, e.g.:
+This means your project aims to be compatible with any Python version >=3.7,<4.0. Whenever you try to add a dependency
+whose Python requirement doesn't match the whole range Poetry will tell you this, e.g.:
 
 ```
 The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
