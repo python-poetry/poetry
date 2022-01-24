@@ -83,7 +83,7 @@ In this case, you can disable this feature by setting the `virtualenvs.create` s
 poetry config virtualenvs.create false
 ```
 
-### Why Poetry is telling me that the current project's Python requirement is not compatible with one or more packages' Python requirements?
+### Why is Poetry telling me that the current project's Python requirement is not compatible with one or more packages' Python requirements?
 
 Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
 is resolvable within the given Python version range in the `pyproject.toml`.
