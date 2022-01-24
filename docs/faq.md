@@ -96,7 +96,7 @@ python = "^3.7"
 ```
 
 This means, your project aims to be compatible to any Python version >=3.7,<4.0. Whenever you try to add a dependency,
-whose python requirement doesn't match the whole range Poetry will tell you this, e.g.:
+whose Python requirement doesn't match the whole range, Poetry will tell you this, e.g.:
 
 ```
 The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
