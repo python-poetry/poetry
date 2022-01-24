@@ -85,7 +85,7 @@ poetry config virtualenvs.create false
 
 ### Why Poetry is telling me, that the current project's Python requirement is not compatible with some of the required packages Python requirement?
 
-Unlike `pip` Poetry doesn't care about your Python in the current environment. Instead it makes sure, that a dependency
+Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
 is resolvable within the given Python version range in the `pyproject.toml`.
 
 Assume you have this is in the `pyproject.toml`:
