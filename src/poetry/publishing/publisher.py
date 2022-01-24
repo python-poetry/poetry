@@ -81,11 +81,13 @@ class Publisher:
         # Requesting missing credentials but only if there is not a client cert defined.
         if not resolved_client_cert:
             if username is None:
-                username = Question("Username:").ask()
+                username = Question("Username:").ask(self._io)
 
             # skip password input if no username is provided, assume unauthenticated
             if username and password is None:
-                password = Question("Password:", hidden=True).ask()
+                password_question = Question("Password:")
+                password_question.hide()
+                password = password_question.ask(self._io)
 
         self._uploader.auth(username, password)
 
