@@ -103,6 +103,6 @@ The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with
     - scipy requires Python >=3.7,<3.11, so it will not be satisfied for Python >=3.11,<4.0.0
 ```
 
-Usually you want to cap the Python requirement of your project to the upper boundary of the failing dependency.
+Usually, you will want to match the Python requirement of your project with the upper bounds of the failing dependency.
 Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions](/docs/dependency-specification/#multiple-constraints-dependencies),
 if you know that it's not needed in all versions.
