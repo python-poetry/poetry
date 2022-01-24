@@ -88,7 +88,7 @@ poetry config virtualenvs.create false
 Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
 is resolvable within the given Python version range in the `pyproject.toml`.
 
-Assume you have this is in the `pyproject.toml`:
+Assume you have the following `pyproject.toml`:
 
 ```toml
 [tool.poetry.dependencies]
