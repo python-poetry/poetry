@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import List
 
 import pytest
 
@@ -18,6 +19,8 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureRequest
+    from poetry.core.packages.package import Package
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -248,22 +251,49 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-@pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
-def test_generate_choice_list(tester: CommandTester, package_name: str):
-    init_command = tester.command
-
-    packages = [
+_generate_choice_list_packages_params: List[List["Package"]] = [
+    [
         get_package("flask-blacklist", "1.0.0"),
         get_package("Flask-Shelve", "1.0.0"),
         get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask-test2", "1.0.0"),
+        get_package("Flask-test3", "1.0.0"),
+        get_package("Flask-test4", "1.0.0"),
+        get_package("Flask-test5", "1.0.0"),
         get_package("Flask", "1.0.0"),
-    ]
+        get_package("Flask-test6", "1.0.0"),
+        get_package("Flask-test7", "1.0.0"),
+    ],
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+    ],
+]
 
+
+@pytest.fixture(params=_generate_choice_list_packages_params)
+def _generate_choice_list_packages(request: "FixtureRequest") -> List["Package"]:
+    return request.param
+
+
+@pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
+def test_generate_choice_list(
+    tester: CommandTester,
+    package_name: str,
+    _generate_choice_list_packages: List["Package"],
+):
+    init_command = tester.command
+
+    packages = _generate_choice_list_packages
     choices = init_command._generate_choice_list(
         packages, canonicalize_name(package_name)
     )
 
-    assert choices[0] == "Flask"
+    assert choices[0] == "Flask" and len(choices) <= 10
 
 
 def test_interactive_with_git_dependencies_with_reference(

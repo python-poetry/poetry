@@ -257,7 +257,7 @@ You can specify a package in the following forms:
             if len(choices) >= 10:
                 break
 
-            if found_package.name.lower() == canonicalized_name:
+            if found_package.name == canonicalized_name:
                 continue
 
             choices.append(found_package.pretty_name)

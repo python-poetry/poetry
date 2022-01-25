@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+
 from poetry.core.utils.helpers import parse_requires
 
 from poetry.utils.helpers import canonicalize_name
@@ -82,15 +84,17 @@ def test_get_client_cert(config: "Config"):
     assert get_client_cert(config, "foo") == Path(client_cert)
 
 
-def test_canonicalize_name():
-    names = ["flask", "Flask", "FLASK", "FlAsK", "fLaSk57", "flask-57"]
-    canonicalized_names = [canonicalize_name(name) for name in names]
+test_canonicalize_name_cases = [
+    ("flask", "flask"),
+    ("Flask", "flask"),
+    ("FLASK", "flask"),
+    ("FlAsK", "flask"),
+    ("fLaSk57", "flask57"),
+    ("flask-57", "flask-57"),
+]
 
-    assert canonicalized_names == [
-        "flask",
-        "flask",
-        "flask",
-        "flask",
-        "flask57",
-        "flask-57",
-    ]
+
+@pytest.mark.parametrize("test, expected", test_canonicalize_name_cases)
+def test_canonicalize_name(test: str, expected: str):
+    canonicalized_name = canonicalize_name(test)
+    assert canonicalized_name == expected
