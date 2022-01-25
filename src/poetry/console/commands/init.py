@@ -245,16 +245,20 @@ You can specify a package in the following forms:
         return 0
 
     def _generate_choice_list(
-        self, matches: List["Package"], canonicalized_name: str
-    ) -> List[str]:
+        self, matches: List["Package"], canonicalized_name: str, raw_name: str
+    ) -> Tuple[List[str], str]:
         choices = []
         matches_names = [p.name for p in matches]
         exact_match = canonicalized_name in matches_names
+        info_string: str = (
+            f"Found <info>{len(matches)}</info> packages matching <c1>{raw_name}</c1>"
+        )
         if exact_match:
             choices.append(matches[matches_names.index(canonicalized_name)].pretty_name)
 
         for found_package in matches:
             if len(choices) >= 10:
+                info_string += "\nNOTE: Output has been truncated for readability"
                 break
 
             if found_package.name == canonicalized_name:
@@ -262,7 +266,7 @@ You can specify a package in the following forms:
 
             choices.append(found_package.pretty_name)
 
-        return choices
+        return choices, info_string
 
     def _determine_requirements(
         self,
@@ -295,12 +299,11 @@ You can specify a package in the following forms:
                     self.line("<error>Unable to find package</error>")
                     package = False
                 else:
-                    choices = self._generate_choice_list(matches, canonicalized_name)
-
-                    self.line(
-                        f"Found <info>{len(matches)}</info> packages matching"
-                        f" <c1>{package}</c1>"
+                    choices, choice_list_info_string = self._generate_choice_list(
+                        matches, canonicalized_name, package
                     )
+
+                    self.line(choice_list_info_string)
 
                     package = self.choice(
                         "\nEnter package # to add, or the complete package name if it"

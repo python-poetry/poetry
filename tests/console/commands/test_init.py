@@ -289,11 +289,26 @@ def test_generate_choice_list(
     init_command = tester.command
 
     packages = _generate_choice_list_packages
-    choices = init_command._generate_choice_list(
-        packages, canonicalize_name(package_name)
+    choices, choice_list_info_string = init_command._generate_choice_list(
+        packages, canonicalize_name(package_name), package_name
     )
 
-    assert choices[0] == "Flask" and len(choices) <= 10
+    if len(packages) >= 10:
+        passed = (
+            choices[0] == "Flask"
+            and len(choices) == 10
+            and "\nNOTE: Output has been truncated for readability"
+            in choice_list_info_string
+        )
+        assert passed
+
+    else:
+        passed = (
+            choices[0] == "Flask"
+            and "\nNOTE: Output has been truncated for readability"
+            not in choice_list_info_string
+        )
+        assert passed
 
 
 def test_interactive_with_git_dependencies_with_reference(
