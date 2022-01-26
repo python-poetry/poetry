@@ -69,7 +69,7 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 
@@ -90,7 +90,7 @@ def test_authenticator_uses_username_only_credentials(
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo001@foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo001@foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 
@@ -108,7 +108,9 @@ def test_authenticator_uses_password_only_credentials(
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://:bar002@foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request(
+        "get", "https://:bar002@foo.bar/simple/files/foo-0.1.0.tar.gz"
+    )
 
     request = http.last_request()
 
@@ -129,7 +131,7 @@ def test_authenticator_uses_empty_strings_as_default_password(
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 
@@ -147,7 +149,7 @@ def test_authenticator_uses_empty_strings_as_default_username(
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 
@@ -172,7 +174,7 @@ def test_authenticator_falls_back_to_keyring_url(
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 
@@ -195,7 +197,7 @@ def test_authenticator_falls_back_to_keyring_netloc(
     dummy_keyring.set_password("foo.bar", None, SimpleCredential(None, "bar"))
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 
@@ -303,7 +305,7 @@ def test_authenticator_uses_env_provided_credentials(
     config.merge({"repositories": {"foo": {"url": "https://foo.bar/simple/"}}})
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("get", "https://foo.bar/simple/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
 

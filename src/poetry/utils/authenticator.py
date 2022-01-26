@@ -103,7 +103,7 @@ class Authenticator:
     def get_credentials_for_url(self, url: str) -> Tuple[Optional[str], Optional[str]]:
         parsed_url = urllib.parse.urlsplit(url)
 
-        netloc = parsed_url.netloc
+        netloc = parsed_url.netloc + parsed_url.path
 
         credentials = self._credentials.get(netloc, (None, None))
 
@@ -148,7 +148,7 @@ class Authenticator:
 
         parsed_url = urllib.parse.urlsplit(url)
 
-        if netloc is None or netloc == parsed_url.netloc:
+        if netloc is None or netloc.startswith(parsed_url.netloc + parsed_url.path):
             auth = self._password_manager.get_http_auth(name)
 
             if auth is None or auth["password"] is None:
