@@ -83,8 +83,8 @@ list of installed packages
         if "group" in poetry_content and not poetry_content["group"]:
             del poetry_content["group"]
 
-        removed = set(removed)
-        not_found = set(packages).difference(removed)
+        removed_ = set(removed)
+        not_found = set(packages).difference(removed_)
         if not_found:
             raise ValueError(
                 "The following packages were not found: " + ", ".join(sorted(not_found))
@@ -104,7 +104,7 @@ list of installed packages
         self._installer.dry_run(self.option("dry-run"))
         self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
-        self._installer.whitelist(removed)
+        self._installer.whitelist(removed_)
 
         status = self._installer.run()
 

@@ -64,7 +64,7 @@ class SourceAddCommand(Command):
             )
             return 1
 
-        new_source = Source(
+        new_source: Optional[Source] = Source(
             name=name, url=url, default=is_default, secondary=is_secondary
         )
         existing_sources = self.poetry.get_sources()
@@ -86,7 +86,7 @@ class SourceAddCommand(Command):
                 )
                 return 1
 
-            if source.name == name:
+            if new_source and source.name == name:
                 self.line(f"Source with name <c1>{name}</c1> already exists. Updating.")
                 source = new_source
                 new_source = None

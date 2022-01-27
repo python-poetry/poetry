@@ -112,8 +112,10 @@ You can specify a package in the following forms:
                 root_package = ProjectPackage(package.name, package.version)
                 for dependency in package.requires:
                     root_package.add_dependency(dependency)
-
                 break
+
+        if not root_package:
+            raise RuntimeError("Failed to find Poetry package")
 
         root_package.python_versions = ".".join(
             str(v) for v in system_env.version_info[:3]

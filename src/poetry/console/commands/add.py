@@ -2,6 +2,7 @@ import contextlib
 
 from typing import Dict
 from typing import List
+from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -236,7 +237,7 @@ You can specify a package in the following forms:
         if self.option("lock"):
             self._installer.lock()
 
-        self._installer.whitelist([r["name"] for r in requirements])
+        self._installer.whitelist([cast(str, r["name"]) for r in requirements])
 
         status = self._installer.run()
 

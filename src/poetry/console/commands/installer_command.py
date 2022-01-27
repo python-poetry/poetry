@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from poetry.console.commands.env_command import EnvCommand
 
@@ -10,7 +9,8 @@ if TYPE_CHECKING:
 
 class InstallerCommand(EnvCommand):
     def __init__(self) -> None:
-        self._installer: Optional["Installer"] = None
+        # Set in poetry.console.application.Application.configure_installer
+        self._installer: "Installer" = None  # type: ignore[assignment]
 
         super().__init__()
 

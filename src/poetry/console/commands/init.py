@@ -5,6 +5,7 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Mapping
@@ -20,6 +21,8 @@ from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
+    from tomlkit.items import InlineTable
+
     from poetry.repositories import Pool
 
 
@@ -61,7 +64,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def __init__(self) -> None:
         super().__init__()
 
-        self._pool = None
+        self._pool: Optional["Pool"] = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -192,7 +195,7 @@ You can specify a package in the following forms:
             if self.io.is_interactive():
                 self.line("")
 
-        dev_requirements = {}
+        dev_requirements: Dict[str, str] = {}
         if self.option("dev-dependency"):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
@@ -236,6 +239,8 @@ You can specify a package in the following forms:
 
         with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
             f.write(content)
+
+        return 0
 
     def _determine_requirements(
         self,
@@ -385,7 +390,7 @@ You can specify a package in the following forms:
 
         return package.pretty_name, selector.find_recommended_require_version(package)
 
-    def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
+    def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException
 
         from poetry.puzzle.provider import Provider
@@ -476,7 +481,7 @@ You can specify a package in the following forms:
             )
             pair = pair.strip()
 
-            require = {}
+            require: Dict[str, str] = {}
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
@@ -521,6 +526,7 @@ You can specify a package in the following forms:
         requires = {}
         for requirement in requirements:
             name = requirement.pop("name")
+            constraint: Union[str, "InlineTable"]
             if "version" in requirement and len(requirement) == 1:
                 constraint = requirement["version"]
             else:
