@@ -112,18 +112,19 @@ You can specify a package in the following forms:
                 root_package = ProjectPackage(package.name, package.version)
                 for dependency in package.requires:
                     root_package.add_dependency(dependency)
+
                 break
 
-        if not root_package:
-            raise RuntimeError("Failed to find Poetry package")
-
-        root_package.python_versions = ".".join(
+        root_package.python_versions = ".".join(  # type: ignore[union-attr]
             str(v) for v in system_env.version_info[:3]
         )
         # We create a `pyproject.toml` file based on all the information
         # we have about the current environment.
         if not env_dir.joinpath("pyproject.toml").exists():
-            Factory.create_pyproject_from_package(root_package, env_dir)
+            Factory.create_pyproject_from_package(
+                root_package,  # type: ignore[arg-type]
+                env_dir,
+            )
 
         # We add the plugins to the dependencies section of the previously
         # created `pyproject.toml` file

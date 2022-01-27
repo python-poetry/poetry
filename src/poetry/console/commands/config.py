@@ -7,6 +7,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 from typing import cast
 
 from cleo.helpers import argument
@@ -145,6 +146,7 @@ To remove a repository (repo is a short alias for repositories):
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+            value: Union[str, Dict[str, Any]]
             if m:
                 if not m.group(1):
                     value = {}
@@ -165,9 +167,9 @@ To remove a repository (repo is a short alias for repositories):
                 value = config.get(setting_key)
 
                 if not isinstance(value, str):
-                    self.line(json.dumps(value))
-                else:
-                    self.line(value)
+                    value = json.dumps(value)
+
+                self.line(value)
 
             return 0
 

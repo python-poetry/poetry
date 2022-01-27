@@ -17,7 +17,6 @@ If one doesn't exist yet, it will be created.
 """
 
     def handle(self) -> None:
-        from poetry.utils.env import VirtualEnv
         from poetry.utils.shell import Shell
 
         # Check if it's already activated or doesn't exist and won't be created
@@ -33,11 +32,8 @@ If one doesn't exist yet, it will be created.
 
         self.line(f"Spawning shell within <info>{self.env.path}</>")
 
-        if not isinstance(self.env, VirtualEnv):
-            raise RuntimeError("Failed to find virtual environment to activate")
-
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"
         shell = Shell.get()
-        shell.activate(self.env)
+        shell.activate(self.env)  # type: ignore[arg-type]
         environ.pop("POETRY_ACTIVE")
