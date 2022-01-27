@@ -34,9 +34,9 @@ class NewCommand(Command):
         from poetry.utils.env import SystemEnv
 
         if self.option("src"):
-            layout_ = layout("src")
+            layout_cls = layout("src")
         else:
-            layout_ = layout("standard")
+            layout_cls = layout("standard")
 
         path = Path(self.argument("path"))
         if not path.is_absolute():
@@ -67,7 +67,7 @@ class NewCommand(Command):
         current_env = SystemEnv(Path(sys.executable))
         default_python = "^" + ".".join(str(v) for v in current_env.version_info[:2])
 
-        layout_ = layout_(
+        layout_ = layout_cls(
             name,
             "0.1.0",
             author=author,

@@ -115,13 +115,16 @@ You can specify a package in the following forms:
 
                 break
 
-        root_package.python_versions = ".".join(
+        root_package.python_versions = ".".join(  # type: ignore[union-attr]
             str(v) for v in system_env.version_info[:3]
         )
         # We create a `pyproject.toml` file based on all the information
         # we have about the current environment.
         if not env_dir.joinpath("pyproject.toml").exists():
-            Factory.create_pyproject_from_package(root_package, env_dir)
+            Factory.create_pyproject_from_package(
+                root_package,  # type: ignore[arg-type]
+                env_dir,
+            )
 
         # We add the plugins to the dependencies section of the previously
         # created `pyproject.toml` file

@@ -57,8 +57,9 @@ class SelfUpdateCommand(Command):
 
         from poetry.utils._compat import WINDOWS
 
-        if os.getenv("POETRY_HOME"):
-            return Path(os.getenv("POETRY_HOME"), "bin").expanduser()
+        home = os.getenv("POETRY_HOME")
+        if home:
+            return Path(home, "bin").expanduser()
 
         user_base = site.getuserbase()
 
@@ -102,13 +103,12 @@ class SelfUpdateCommand(Command):
             self.line("No release found for the specified version")
             return 1
 
-        packages.sort(
-            key=cmp_to_key(
-                lambda x, y: 0
-                if x.version == y.version
-                else int(x.version < y.version or -1)
-            )
-        )
+        def cmp(x: "Package", y: "Package") -> int:
+            if x.version == y.version:
+                return 0
+            return int(x.version < y.version or -1)
+
+        packages.sort(key=cmp_to_key(cmp))
 
         release = None
         for package in packages:

@@ -7,6 +7,8 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
+from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -144,6 +146,7 @@ To remove a repository (repo is a short alias for repositories):
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+            value: Union[str, Dict[str, Any]]
             if m:
                 if not m.group(1):
                     value = {}
@@ -158,8 +161,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 self.line(str(value))
             else:
-                values = self.unique_config_values
-                if setting_key not in values:
+                if setting_key not in self.unique_config_values:
                     raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
@@ -171,7 +173,7 @@ To remove a repository (repo is a short alias for repositories):
 
             return 0
 
-        values = self.argument("value")
+        values: List[str] = self.argument("value")
 
         unique_config_values = self.unique_config_values
         if setting_key in unique_config_values:
@@ -297,7 +299,9 @@ To remove a repository (repo is a short alias for repositories):
 
         return 0
 
-    def _list_configuration(self, config: Dict, raw: Dict, k: str = "") -> None:
+    def _list_configuration(
+        self, config: Dict[str, Any], raw: Dict[str, Any], k: str = ""
+    ) -> None:
         orig_k = k
         for key, value in sorted(config.items()):
             if k + key in self.LIST_PROHIBITED_SETTINGS:
@@ -307,7 +311,7 @@ To remove a repository (repo is a short alias for repositories):
 
             if isinstance(value, dict):
                 k += f"{key}."
-                self._list_configuration(value, raw_val, k=k)
+                self._list_configuration(value, cast(dict, raw_val), k=k)
                 k = orig_k
 
                 continue
@@ -356,7 +360,7 @@ To remove a repository (repo is a short alias for repositories):
                         setting = ".".join(setting.split(".")[1:])
 
                     values += self._get_setting(
-                        value, k=k, setting=setting, default=default
+                        cast(dict, value), k=k, setting=setting, default=default
                     )
                     k = orig_k
 

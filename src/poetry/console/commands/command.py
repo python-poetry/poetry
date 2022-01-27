@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import List
 from typing import Optional
 
 from cleo.commands.command import Command as BaseCommand
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Command(BaseCommand):
-    loggers = []
+    loggers: List[str] = []
 
     _poetry: Optional["Poetry"] = None
 
