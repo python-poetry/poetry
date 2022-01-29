@@ -297,7 +297,7 @@ You can specify a package in the following forms:
                 else:
                     choices = self._generate_choice_list(matches, canonicalized_name)
 
-                    info_string: str = (
+                    info_string = (
                         f"Found <info>{len(matches)}</info> packages matching"
                         f" <c1>{package}</c1>"
                     )
