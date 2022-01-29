@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import List
 
 import pytest
 
@@ -12,11 +13,14 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
+from poetry.utils.helpers import canonicalize_name
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureRequest
+    from poetry.core.packages.package import Package
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -123,6 +127,7 @@ def test_interactive_with_dependencies(tester: CommandTester, repo: "TestReposit
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
+    repo.add_package(get_package("flask", "2.0.0"))
 
     inputs = [
         "my-package",  # Package name
@@ -135,6 +140,9 @@ def test_interactive_with_dependencies(tester: CommandTester, repo: "TestReposit
         "pendulu",  # Search for package
         "1",  # Second option is pendulum
         "",  # Do not set constraint
+        "Flask",
+        "0",
+        "",
         "",  # Stop searching for packages
         "",  # Interactive dev packages
         "pytest",  # Search for package
@@ -158,6 +166,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
+flask = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -240,6 +249,51 @@ pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
+
+
+_generate_choice_list_packages_params: List[List["Package"]] = [
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask-test2", "1.0.0"),
+        get_package("Flask-test3", "1.0.0"),
+        get_package("Flask-test4", "1.0.0"),
+        get_package("Flask-test5", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+        get_package("Flask-test6", "1.0.0"),
+        get_package("Flask-test7", "1.0.0"),
+    ],
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+    ],
+]
+
+
+@pytest.fixture(params=_generate_choice_list_packages_params)
+def _generate_choice_list_packages(request: "FixtureRequest") -> List["Package"]:
+    return request.param
+
+
+@pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
+def test_generate_choice_list(
+    tester: CommandTester,
+    package_name: str,
+    _generate_choice_list_packages: List["Package"],
+):
+    init_command = tester.command
+
+    packages = _generate_choice_list_packages
+    choices = init_command._generate_choice_list(
+        packages, canonicalize_name(package_name)
+    )
+
+    assert choices[0] == "Flask"
 
 
 def test_interactive_with_git_dependencies_with_reference(

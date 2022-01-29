@@ -18,9 +18,11 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
     from poetry.repositories import Pool
@@ -242,6 +244,26 @@ You can specify a package in the following forms:
 
         return 0
 
+    def _generate_choice_list(
+        self, matches: List["Package"], canonicalized_name: str
+    ) -> List[str]:
+        choices = []
+        matches_names = [p.name for p in matches]
+        exact_match = canonicalized_name in matches_names
+        if exact_match:
+            choices.append(matches[matches_names.index(canonicalized_name)].pretty_name)
+
+        for found_package in matches:
+            if len(choices) >= 10:
+                break
+
+            if found_package.name == canonicalized_name:
+                continue
+
+            choices.append(found_package.pretty_name)
+
+        return choices
+
     def _determine_requirements(
         self,
         requires: List[str],
@@ -254,7 +276,7 @@ You can specify a package in the following forms:
             package = self.ask(
                 "Search for package to add (or leave blank to continue):"
             )
-            while package is not None:
+            while package:
                 constraint = self._parse_requirements([package])[0]
                 if (
                     "git" in constraint
@@ -267,33 +289,23 @@ You can specify a package in the following forms:
                     package = self.ask("\nAdd a package:")
                     continue
 
-                matches = self._get_pool().search(constraint["name"])
-
+                canonicalized_name = canonicalize_name(constraint["name"])
+                matches = self._get_pool().search(canonicalized_name)
                 if not matches:
                     self.line("<error>Unable to find package</error>")
                     package = False
                 else:
-                    choices = []
-                    matches_names = [p.name for p in matches]
-                    exact_match = constraint["name"] in matches_names
-                    if exact_match:
-                        choices.append(
-                            matches[matches_names.index(constraint["name"])].pretty_name
-                        )
+                    choices = self._generate_choice_list(matches, canonicalized_name)
 
-                    for found_package in matches:
-                        if len(choices) >= 10:
-                            break
-
-                        if found_package.name.lower() == constraint["name"].lower():
-                            continue
-
-                        choices.append(found_package.pretty_name)
-
-                    self.line(
+                    info_string = (
                         f"Found <info>{len(matches)}</info> packages matching"
                         f" <c1>{package}</c1>"
                     )
+
+                    if len(matches) > 10:
+                        info_string += "\nShowing the first 10 matches"
+
+                    self.line(info_string)
 
                     package = self.choice(
                         "\nEnter package # to add, or the complete package name if it"
