@@ -110,3 +110,13 @@ Thus, b is forbidden.
 So, because myapp depends on b (*), version solving failed."""
 
     check_solver_result(root, provider, error=error, tries=2)
+
+
+def test_package_with_the_same_name_gives_clear_error_message(
+    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+):
+    pkg_name = "a"
+    root.add_dependency(Factory.create_dependency(pkg_name, "*"))
+    add_to_repo(repo, pkg_name, "1.0.0", deps={pkg_name: "1.0.0"})
+    error = f"Package '{pkg_name}' is listed as a dependency of itself."
+    check_solver_result(root, provider, error=error)

@@ -59,7 +59,8 @@ class Incompatibility:
                     # incompatibility irrelevant, since we already know that mutually
                     # exclusive version ranges are incompatible. We should never derive
                     # an irrelevant incompatibility.
-                    assert by_ref[ref] is not None
+                    err_msg = f"Package '{ref}' is listed as a dependency of itself."
+                    assert by_ref[ref] is not None, err_msg
                 else:
                     by_ref[ref] = term
 
