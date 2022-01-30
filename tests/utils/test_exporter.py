@@ -1,4 +1,5 @@
 import sys
+import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -1040,13 +1041,26 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-bar==7.8.9 ; platform_system != "Windows" or platform_system == "Windows"
-baz==10.11.13 ; platform_system == "Windows"
-foo==1.2.3
-"""
+    expected = (
+        # expectation for poetry-core <= 1.1.0a6
+        textwrap.dedent(
+            """\
+            bar==7.8.9 ; platform_system != "Windows" or platform_system == "Windows"
+            baz==10.11.13 ; platform_system == "Windows"
+            foo==1.2.3
+            """
+        ),
+        # expectation for poetry-core > 1.1.0a6
+        textwrap.dedent(
+            """\
+            bar==7.8.9
+            baz==10.11.13 ; platform_system == "Windows"
+            foo==1.2.3
+            """
+        ),
+    )
 
-    assert expected == content
+    assert content in expected
 
 
 def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
