@@ -38,10 +38,13 @@ file.
 
         if self.option("check"):
             if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
-                self.line("poetry.lock is up to date")
+                self.line("poetry.lock is consistent with pyproject.toml")
                 return 0
             self.line(
-                "Error: poetry.lock is out of date. Run `poetry update` to fix it"
+                "<error>"
+                "Error: poetry.lock is not consistent with pyproject.toml. "
+                "Run `poetry lock [--no-update]` to fix it."
+                "</error>"
             )
             return 1
 
