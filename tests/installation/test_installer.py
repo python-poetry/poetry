@@ -741,7 +741,7 @@ def test_run_install_with_synchronization(
         *managed_reserved_package_names,
     }
 
-    assert expected_removals == {r.name for r in installer.executor.removals}
+    assert {r.name for r in installer.executor.removals} == expected_removals
 
 
 def test_run_whitelist_add(
@@ -2153,21 +2153,21 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
     installer.update(True)
     installer.run()
 
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
     locker.mock_lock_data(locker.written_data)
 
     installer.update(True)
     installer.run()
 
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
     locker.mock_lock_data(locker.written_data)
 
     installer.update(True)
     installer.run()
 
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
 
 def test_installer_can_install_dependencies_from_forced_source(

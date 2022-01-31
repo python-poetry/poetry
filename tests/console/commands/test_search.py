@@ -95,4 +95,4 @@ sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected

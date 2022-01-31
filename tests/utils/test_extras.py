@@ -65,6 +65,7 @@ def test_get_extra_package_names(
     extra_names: List[str],
     expected_extra_package_names: List[str],
 ):
-    assert expected_extra_package_names == list(
-        get_extra_package_names(packages, extras, extra_names)
+    assert (
+        list(get_extra_package_names(packages, extras, extra_names))
+        == expected_extra_package_names
     )

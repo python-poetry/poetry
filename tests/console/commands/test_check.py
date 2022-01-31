@@ -23,7 +23,7 @@ def test_check_valid(tester: "CommandTester"):
 All set!
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_check_invalid(mocker: "MockerFixture", tester: "CommandTester"):
@@ -45,4 +45,4 @@ Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
  which is deprecated. Use "allow-prereleases" instead.
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected

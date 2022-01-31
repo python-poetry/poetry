@@ -120,7 +120,7 @@ def check_solver_result(
 
             result.append({"job": job, "package": op.package, "skipped": op.skipped})
 
-    assert expected == result
+    assert result == expected
 
     return ops
 

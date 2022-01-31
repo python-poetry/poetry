@@ -576,8 +576,8 @@ def test_list(tmp_dir: str, manager: EnvManager, poetry: "Poetry", config: "Conf
     venvs = manager.list()
 
     assert len(venvs) == 2
-    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venvs[0].path
-    assert (Path(tmp_dir) / f"{venv_name}-py3.7") == venvs[1].path
+    assert venvs[0].path == (Path(tmp_dir) / f"{venv_name}-py3.6")
+    assert venvs[1].path == (Path(tmp_dir) / f"{venv_name}-py3.7")
 
 
 def test_remove_by_python_version(
@@ -600,8 +600,9 @@ def test_remove_by_python_version(
 
     venv = manager.remove("3.6")
 
-    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venv.path
-    assert not (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
+    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    assert venv.path == expected_venv_path
+    assert not expected_venv_path.exists()
 
 
 def test_remove_by_name(
@@ -624,8 +625,9 @@ def test_remove_by_name(
 
     venv = manager.remove(f"{venv_name}-py3.6")
 
-    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venv.path
-    assert not (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
+    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    assert venv.path == expected_venv_path
+    assert not expected_venv_path.exists()
 
 
 def test_remove_also_deactivates(
@@ -653,8 +655,9 @@ def test_remove_also_deactivates(
 
     venv = manager.remove("python3.6")
 
-    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venv.path
-    assert not (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
+    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    assert venv.path == expected_venv_path
+    assert not expected_venv_path.exists()
 
     envs = envs_file.read()
     assert venv_name not in envs
@@ -884,7 +887,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
         'via the "env use" command.'
     )
 
-    assert expected_message == str(e.value)
+    assert str(e.value) == expected_message
     assert m.call_count == 0
 
 
@@ -910,7 +913,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
         "specified in the pyproject.toml file."
     )
 
-    assert expected_message == str(e.value)
+    assert str(e.value) == expected_message
     assert m.call_count == 0
 
 

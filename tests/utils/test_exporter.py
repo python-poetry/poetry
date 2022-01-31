@@ -133,7 +133,7 @@ bar==4.5.6
 foo==1.2.3
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers(
@@ -189,7 +189,7 @@ baz==7.8.9 ; sys_platform == "win32"
 foo==1.2.3 ; python_version < "3.7"
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_poetry(tmp_dir: str, poetry: "Poetry"):
@@ -571,7 +571,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_disabled(  # noqa: E501
@@ -618,7 +618,7 @@ bar==4.5.6
 foo==1.2.3
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
@@ -663,7 +663,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
@@ -710,7 +710,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_without_optional_packages(
@@ -755,7 +755,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 @pytest.mark.parametrize(
@@ -867,7 +867,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(
 foo @ git+https://github.com/foo/foo.git@123456
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_nested_packages(
@@ -918,7 +918,7 @@ bar==4.5.6
 foo @ git+https://github.com/foo/foo.git@123456
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_nested_packages_cyclic(
@@ -974,7 +974,7 @@ baz==7.8.9
 foo==1.2.3
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_markers(
@@ -1103,7 +1103,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
 foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages(
@@ -1145,7 +1145,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
 foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
@@ -1213,7 +1213,7 @@ baz @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local
 foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages_and_markers(
@@ -1257,7 +1257,7 @@ foo @ {working_directory.as_uri()}/tests/fixtures/sample_project\
  ; python_version < "3.7"
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages(
@@ -1299,7 +1299,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
 foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
@@ -1343,7 +1343,7 @@ foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.g
  ; python_version < "3.7"
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages(
@@ -1403,7 +1403,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_with_url_false(
@@ -1463,7 +1463,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
@@ -1514,7 +1514,7 @@ bar==4.5.6 \\
     --hash=sha256:67890
 """
 
-    assert expected == content
+    assert content == expected
 
 
 @pytest.mark.parametrize(
@@ -1662,7 +1662,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
@@ -1731,7 +1731,7 @@ foo==1.2.3 \\
     --hash=sha256:12345
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_exporter_exports_requirements_txt_to_standard_output(

@@ -43,7 +43,7 @@ msgpack-python 0.5.3
 cachy          0.2.0
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_debug_resolve_tree_option_gives_the_dependency_tree(tester: "CommandTester"):
@@ -58,7 +58,7 @@ cachy 0.2.0
 └── msgpack-python >=0.5 <0.6
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_debug_resolve_git_dependency(tester: "CommandTester"):
@@ -73,4 +73,4 @@ pendulum 2.0.3
 demo     0.1.2
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
