@@ -72,7 +72,7 @@ class Shell:
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script
 
-        if WINDOWS:
+        if sys.platform == "win32":
             if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
             else:
