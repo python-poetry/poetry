@@ -57,13 +57,12 @@ class ExportCommand(Command):
             self.call("lock", " ".join(options))
 
         if not locker.is_fresh():
-            self.line_error(
-                "<warning>"
-                "Warning: The lock file is not up to date with "
-                "the latest changes in pyproject.toml. "
-                "You may be getting outdated dependencies. "
-                "Run update to update them."
-                "</warning>"
+            self._io.write_line(
+                "<error>"
+                "Error: poetry.lock is not consistent with pyproject.toml. "
+                "You may be getting improper dependencies. "
+                "Run `poetry update` to fix it."
+                "</error>"
             )
 
         exporter = Exporter(self.poetry)

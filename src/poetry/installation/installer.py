@@ -257,12 +257,11 @@ class Installer:
 
             if not self._locker.is_fresh():
                 self._io.write_line(
-                    "<warning>"
-                    "Warning: The lock file is not up to date with "
-                    "the latest changes in pyproject.toml. "
-                    "You may be getting outdated dependencies. "
-                    "Run update to update them."
-                    "</warning>"
+                    "<error>"
+                    "Error: poetry.lock is not consistent with pyproject.toml. "
+                    "You may be getting improper dependencies. "
+                    "Run `poetry update` to fix it."
+                    "</error>"
                 )
 
             for extra in self._extras:
