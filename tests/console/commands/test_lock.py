@@ -107,7 +107,7 @@ def test_lock_check_up_to_date(
 
     tester = command_tester_factory("lock", poetry=poetry_with_up_to_date_lockfile)
     status_code = tester.execute("--check")
-    expected = "poetry.lock is consistent with pyproject.toml\n"
+    expected = "poetry.lock is consistent with pyproject.toml.\n"
     assert tester.io.fetch_output() == expected
 
     # exit with an error

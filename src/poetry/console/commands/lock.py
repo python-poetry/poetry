@@ -38,7 +38,7 @@ file.
 
         if self.option("check"):
             if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
-                self.line("poetry.lock is consistent with pyproject.toml")
+                self.line("poetry.lock is consistent with pyproject.toml.")
                 return 0
             self.line(
                 "<error>"
