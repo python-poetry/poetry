@@ -1,7 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Union
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -76,7 +75,7 @@ lists all packages available."""
 
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from cleo.io.null_io import NullIO
         from cleo.terminal import Terminal
 
@@ -345,7 +344,7 @@ lists all packages available."""
         return None
 
     def display_package_tree(
-        self, io: "IO", package: "Package", installed_repo: "Repository"
+        self, io: IO, package: Package, installed_repo: Repository
     ) -> None:
         io.write(f"<c1>{package.pretty_name}</c1>")
         description = ""
@@ -379,10 +378,10 @@ lists all packages available."""
 
     def _display_tree(
         self,
-        io: "IO",
-        dependency: "Dependency",
-        installed_repo: "Repository",
-        packages_in_tree: List[str],
+        io: IO,
+        dependency: Dependency,
+        installed_repo: Repository,
+        packages_in_tree: list[str],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
@@ -425,7 +424,7 @@ lists all packages available."""
                     io, dependency, installed_repo, current_tree, tree_bar, level + 1
                 )
 
-    def _write_tree_line(self, io: "IO", line: str) -> None:
+    def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():
             line = line.replace("└", "`-")
             line = line.replace("├", "|-")
@@ -434,7 +433,7 @@ lists all packages available."""
 
         io.write_line(line)
 
-    def init_styles(self, io: "IO") -> None:
+    def init_styles(self, io: IO) -> None:
         from cleo.formatters.style import Style
 
         for color in self.colors:
@@ -443,8 +442,8 @@ lists all packages available."""
             io.error_output.formatter.set_style(color, style)
 
     def find_latest_package(
-        self, package: "Package", root: "ProjectPackage"
-    ) -> Union["Package", bool]:
+        self, package: Package, root: ProjectPackage
+    ) -> Package | bool:
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.provider import Provider
@@ -470,7 +469,7 @@ lists all packages available."""
 
         return selector.find_best_candidate(name, f">={package.pretty_version}")
 
-    def get_update_status(self, latest: "Package", package: "Package") -> str:
+    def get_update_status(self, latest: Package, package: Package) -> str:
         from poetry.core.semver.helpers import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
@@ -486,7 +485,7 @@ lists all packages available."""
         return "update-possible"
 
     def get_installed_status(
-        self, locked: "Package", installed_repo: "InstalledRepository"
+        self, locked: Package, installed_repo: InstalledRepository
     ) -> str:
         for package in installed_repo.packages:
             if locked.name == package.name:

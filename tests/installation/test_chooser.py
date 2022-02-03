@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
 
 import pytest
 
@@ -45,10 +42,10 @@ def env() -> MockEnv:
 
 
 @pytest.fixture()
-def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
+def mock_pypi(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> Optional[List[Union[int, Dict[str, Any], str]]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str] | None:
         parts = uri.rsplit("/")
 
         name = parts[-3]
@@ -72,10 +69,10 @@ def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
 
 
 @pytest.fixture()
-def mock_legacy(http: Type["httpretty.httpretty"]) -> None:
+def mock_legacy(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> List[Union[int, Dict[str, Any], str]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str]:
         parts = uri.rsplit("/")
         name = parts[-2]
 

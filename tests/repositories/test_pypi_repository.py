@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 import json
 import shutil
 
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 import pytest
 
@@ -30,7 +30,7 @@ class MockRepository(PyPiRepository):
     def __init__(self, fallback: bool = False):
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
-    def _get(self, url: str) -> Optional[Dict]:
+    def _get(self, url: str) -> dict | None:
         parts = url.split("/")[1:]
         name = parts[0]
         if len(parts) == 3:
@@ -214,7 +214,7 @@ def test_invalid_versions_ignored():
     assert len(packages) == 1
 
 
-def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: "MockerFixture"):
+def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: MockerFixture):
     delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
 
     response = Response()

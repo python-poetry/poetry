@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Union
 
 from cleo.helpers import argument
 
@@ -32,7 +32,7 @@ class RunCommand(EnvCommand):
         return self.env.execute(*args)
 
     @property
-    def _module(self) -> "Module":
+    def _module(self) -> Module:
         from poetry.core.masonry.utils.module import Module
 
         poetry = self.poetry
@@ -42,7 +42,7 @@ class RunCommand(EnvCommand):
 
         return module
 
-    def run_script(self, script: Union[str, Dict[str, str]], args: str) -> Any:
+    def run_script(self, script: str | dict[str, str], args: str) -> Any:
         if isinstance(script, dict):
             script = script["callable"]
 

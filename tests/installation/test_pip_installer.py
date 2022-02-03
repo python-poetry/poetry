@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import shutil
 
@@ -186,7 +188,7 @@ def test_requirement_git_develop_true(installer: PipInstaller, package_git: Pack
 
 
 def test_uninstall_git_package_nspkg_pth_cleanup(
-    mocker: "MockerFixture", tmp_venv: "VirtualEnv", pool: Pool
+    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: Pool
 ):
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)

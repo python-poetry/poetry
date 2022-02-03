@@ -2,12 +2,12 @@
 This code was taken from https://github.com/ActiveState/appdirs and modified
 to suit our purposes.
 """
+from __future__ import annotations
+
 import os
 import sys
 
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Union
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 
-def expanduser(path: Union[str, "Path"]) -> str:
+def expanduser(path: str | Path) -> str:
     """
     Expand ~ and ~user constructions.
 
@@ -143,7 +143,7 @@ def user_config_dir(appname: str, roaming: bool = True) -> str:
 
 # for the discussion regarding site_config_dirs locations
 # see <https://github.com/pypa/pip/issues/1733>
-def site_config_dirs(appname: str) -> List[str]:
+def site_config_dirs(appname: str) -> list[str]:
     r"""Return a list of potential user-shared config dirs for this application.
 
         "appname" is the name of application.

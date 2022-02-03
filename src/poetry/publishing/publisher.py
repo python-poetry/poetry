@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 import logging
 
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Union
 
 from poetry.publishing.uploader import Uploader
 from poetry.utils.authenticator import Authenticator
@@ -27,7 +26,7 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry: "Poetry", io: Union["BufferedIO", "ConsoleIO"]) -> None:
+    def __init__(self, poetry: Poetry, io: BufferedIO | ConsoleIO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -35,16 +34,16 @@ class Publisher:
         self._authenticator = Authenticator(poetry.config, self._io)
 
     @property
-    def files(self) -> List["Path"]:
+    def files(self) -> list[Path]:
         return self._uploader.files
 
     def publish(
         self,
-        repository_name: Optional[str],
-        username: Optional[str],
-        password: Optional[str],
-        cert: Optional["Path"] = None,
-        client_cert: Optional["Path"] = None,
+        repository_name: str | None,
+        username: str | None,
+        password: str | None,
+        cert: Path | None = None,
+        client_cert: Path | None = None,
         dry_run: bool = False,
     ) -> None:
         if not repository_name:

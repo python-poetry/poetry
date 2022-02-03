@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -7,15 +9,9 @@ from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Set
-from typing import Tuple
-from typing import Union
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -49,7 +45,7 @@ class Locker:
 
     _relevant_keys = ["dependencies", "group", "source", "extras"]
 
-    def __init__(self, lock: Union[str, Path], local_config: dict) -> None:
+    def __init__(self, lock: str | Path, local_config: dict) -> None:
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
@@ -60,7 +56,7 @@ class Locker:
         return self._lock
 
     @property
-    def lock_data(self) -> "TOMLDocument":
+    def lock_data(self) -> TOMLDocument:
         if self._lock_data is None:
             self._lock_data = self._get_lock_data()
 
@@ -87,7 +83,7 @@ class Locker:
 
         return False
 
-    def locked_repository(self, with_dev_reqs: bool = False) -> "Repository":
+    def locked_repository(self, with_dev_reqs: bool = False) -> Repository:
         """
         Searches and returns a repository of locked packages.
         """
@@ -204,8 +200,8 @@ class Locker:
 
     @staticmethod
     def __get_locked_package(
-        _dependency: Dependency, packages_by_name: Dict[str, List[Package]]
-    ) -> Optional[Package]:
+        _dependency: Dependency, packages_by_name: dict[str, list[Package]]
+    ) -> Package | None:
         """
         Internal helper to identify corresponding locked package using dependency
         version constraints.
@@ -218,13 +214,13 @@ class Locker:
     @classmethod
     def __walk_dependency_level(
         cls,
-        dependencies: List[Dependency],
+        dependencies: list[Dependency],
         level: int,
         pinned_versions: bool,
-        packages_by_name: Dict[str, List[Package]],
-        project_level_dependencies: Set[str],
-        nested_dependencies: Dict[Tuple[str, str], Dependency],
-    ) -> Dict[Tuple[str, str], Dependency]:
+        packages_by_name: dict[str, list[Package]],
+        project_level_dependencies: set[str],
+        nested_dependencies: dict[tuple[str, str], Dependency],
+    ) -> dict[tuple[str, str], Dependency]:
         if not dependencies:
             return nested_dependencies
 
@@ -286,8 +282,8 @@ class Locker:
     @classmethod
     def get_project_dependencies(
         cls,
-        project_requires: List[Dependency],
-        locked_packages: List[Package],
+        project_requires: list[Dependency],
+        locked_packages: list[Package],
         pinned_versions: bool = False,
         with_nested: bool = False,
     ) -> Iterable[Dependency]:
@@ -346,9 +342,9 @@ class Locker:
 
     def get_project_dependency_packages(
         self,
-        project_requires: List[Dependency],
+        project_requires: list[Dependency],
         dev: bool = False,
-        extras: Optional[Union[bool, Sequence[str]]] = None,
+        extras: bool | Sequence[str] | None = None,
     ) -> Iterator[DependencyPackage]:
         repository = self.locked_repository(with_dev_reqs=dev)
 
@@ -397,7 +393,7 @@ class Locker:
 
             yield DependencyPackage(dependency=dependency, package=package)
 
-    def set_lock_data(self, root: Package, packages: List[Package]) -> bool:
+    def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
         files = table()
         packages = self._lock_packages(packages)
         # Retrieving hashes
@@ -440,7 +436,7 @@ class Locker:
 
         return False
 
-    def _write_lock_data(self, data: "TOMLDocument") -> None:
+    def _write_lock_data(self, data: TOMLDocument) -> None:
         self.lock.write(data)
 
         # Checking lock file data consistency
@@ -465,7 +461,7 @@ class Locker:
 
         return content_hash
 
-    def _get_lock_data(self) -> "TOMLDocument":
+    def _get_lock_data(self) -> TOMLDocument:
         if not self._lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
@@ -498,7 +494,7 @@ class Locker:
 
         return lock_data
 
-    def _lock_packages(self, packages: List[Package]) -> list:
+    def _lock_packages(self, packages: list[Package]) -> list:
         locked = []
 
         for package in sorted(packages, key=lambda x: x.name):
@@ -619,5 +615,5 @@ class Locker:
 
 
 class NullLocker(Locker):
-    def set_lock_data(self, root: Package, packages: List[Package]) -> bool:
+    def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
         pass

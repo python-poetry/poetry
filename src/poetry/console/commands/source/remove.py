@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import argument
 from tomlkit import nl
@@ -28,14 +29,14 @@ class SourceRemoveCommand(Command):
     ]
 
     @staticmethod
-    def source_to_table(source: "Source") -> "Table":
-        source_table: "Table" = table()
+    def source_to_table(source: Source) -> Table:
+        source_table: Table = table()
         for key, value in source.to_dict().items():
             source_table.add(key, value)
         source_table.add(nl())
         return source_table
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         name = self.argument("name")
 
         sources = AoT([])

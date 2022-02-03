@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import os
 import shutil
@@ -5,7 +7,6 @@ import shutil
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
@@ -39,7 +40,7 @@ WINDOWS_CMD_TEMPLATE = """\
 
 
 class EditableBuilder(Builder):
-    def __init__(self, poetry: "Poetry", env: "Env", io: "IO") -> None:
+    def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 
         self._env = env
@@ -109,7 +110,7 @@ class EditableBuilder(Builder):
             if not has_setup:
                 os.remove(str(setup))
 
-    def _add_pth(self) -> List[Path]:
+    def _add_pth(self) -> list[Path]:
         paths = {
             include.base.resolve().as_posix()
             for include in self._module.includes
@@ -147,7 +148,7 @@ class EditableBuilder(Builder):
             )
             return []
 
-    def _add_scripts(self) -> List[Path]:
+    def _add_scripts(self) -> list[Path]:
         added = []
         entry_points = self.convert_entry_points()
 
@@ -202,7 +203,7 @@ class EditableBuilder(Builder):
 
         return added
 
-    def _add_dist_info(self, added_files: List[Path]) -> None:
+    def _add_dist_info(self, added_files: list[Path]) -> None:
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]

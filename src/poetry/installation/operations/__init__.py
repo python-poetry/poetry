@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Union
 
 from poetry.installation.operations.install import Install

@@ -1,7 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 
 if TYPE_CHECKING:
@@ -13,10 +12,10 @@ if TYPE_CHECKING:
 class Transaction:
     def __init__(
         self,
-        current_packages: List["Package"],
-        result_packages: List[Tuple["Package", int]],
-        installed_packages: Optional[List["Package"]] = None,
-        root_package: Optional["Package"] = None,
+        current_packages: list[Package],
+        result_packages: list[tuple[Package, int]],
+        installed_packages: list[Package] | None = None,
+        root_package: Package | None = None,
     ) -> None:
         self._current_packages = current_packages
         self._result_packages = result_packages
@@ -29,12 +28,12 @@ class Transaction:
 
     def calculate_operations(
         self, with_uninstalls: bool = True, synchronize: bool = False
-    ) -> List["OperationTypes"]:
+    ) -> list[OperationTypes]:
         from poetry.installation.operations.install import Install
         from poetry.installation.operations.uninstall import Uninstall
         from poetry.installation.operations.update import Update
 
-        operations: List["OperationTypes"] = []
+        operations: list[OperationTypes] = []
 
         for result_package, priority in self._result_packages:
             installed = False

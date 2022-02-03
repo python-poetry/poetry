@@ -8,7 +8,7 @@ inline-quotes = double
 # Allow omission of a return type hint for __init__ if at least one argument is annotated
 # used by flake8-annotations
 mypy-init-return = true
-enable-extensions = TC, TC2
+enable-extensions = TC, TC1
 type-checking-exempt-modules = typing, typing-extensions
 eradicate-whitelist-extend = ^-.*;
 extend-ignore =

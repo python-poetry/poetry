@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from poetry.plugins.base_plugin import BasePlugin
@@ -14,5 +16,5 @@ class ApplicationPlugin(BasePlugin):
 
     type = "application.plugin"
 
-    def activate(self, application: "Application") -> None:
+    def activate(self, application: Application) -> None:
         raise NotImplementedError()

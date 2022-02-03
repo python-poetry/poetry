@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
 
 import pytest
 
@@ -37,7 +38,7 @@ class MyPlugin(Plugin):
 
 class MyCommandPlugin(ApplicationPlugin):
     @property
-    def commands(self) -> List[str]:
+    def commands(self) -> list[str]:
         return []
 
 
@@ -48,7 +49,7 @@ class InvalidPlugin:
 
 
 @pytest.fixture()
-def poetry(tmp_dir: str, config: "Config") -> Poetry:
+def poetry(tmp_dir: str, config: Config) -> Poetry:
     poetry = Poetry(
         CWD / "pyproject.toml",
         {},
@@ -82,7 +83,7 @@ def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     manager = manager_factory()
 
@@ -104,7 +105,7 @@ def test_load_plugins_with_invalid_plugin(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     manager = manager_factory()
 
@@ -125,7 +126,7 @@ def test_load_plugins_with_plugins_disabled(
     no_plugin_manager: PluginManager,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",

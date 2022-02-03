@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -10,11 +12,11 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("about")
 
 
-def test_about(tester: "CommandTester"):
+def test_about(tester: CommandTester):
     tester.execute()
     expected = """\
 Poetry - Package Management for Python

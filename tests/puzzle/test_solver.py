@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
 
 import pytest
 
@@ -93,10 +91,10 @@ def solver(
 
 
 def check_solver_result(
-    transaction: "Transaction",
-    expected: List[Dict[str, Any]],
+    transaction: Transaction,
+    expected: list[dict[str, Any]],
     synchronize: bool = False,
-) -> List["OperationTypes"]:
+) -> list[OperationTypes]:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
@@ -523,7 +521,7 @@ def test_solver_returns_extras_only_requested(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    enabled_extra: Optional[bool],
+    enabled_extra: bool | None,
 ):
     extras = [enabled_extra] if enabled_extra is not None else []
 
@@ -585,7 +583,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    enabled_extra: Optional[bool],
+    enabled_extra: bool | None,
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -634,7 +632,7 @@ def test_solver_returns_extras_only_requested_nested(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    enabled_extra: Optional[bool],
+    enabled_extra: bool | None,
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -1432,7 +1430,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(
     ids=["branch", "tag", "rev"],
 )
 def test_solver_can_resolve_git_dependencies_with_ref(
-    solver: Solver, repo: Repository, package: Package, ref: Dict[str, str]
+    solver: Solver, repo: Repository, package: Package, ref: dict[str, str]
 ):
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
@@ -2771,7 +2769,7 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     solver: Solver,
     repo: Repository,
     package: Package,
-    http: Type["httpretty.httpretty"],
+    http: type[httpretty.httpretty],
 ):
     path = (
         Path(__file__).parent.parent

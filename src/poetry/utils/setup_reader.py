@@ -1,14 +1,11 @@
+from __future__ import annotations
+
 import ast
 
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
-from typing import Dict
 from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
 
 from poetry.core.semver.version import Version
 
@@ -29,9 +26,7 @@ class SetupReader:
     FILES = ["setup.py", "setup.cfg"]
 
     @classmethod
-    def read_from_directory(
-        cls, directory: Union[str, Path]
-    ) -> Dict[str, Union[List, Dict]]:
+    def read_from_directory(cls, directory: str | Path) -> dict[str, list | dict]:
         if isinstance(directory, str):
             directory = Path(directory)
 
@@ -50,7 +45,7 @@ class SetupReader:
 
         return result
 
-    def read_setup_py(self, filepath: Union[str, Path]) -> Dict[str, Union[List, Dict]]:
+    def read_setup_py(self, filepath: str | Path) -> dict[str, list | dict]:
         if isinstance(filepath, str):
             filepath = Path(filepath)
 
@@ -76,9 +71,7 @@ class SetupReader:
 
         return result
 
-    def read_setup_cfg(
-        self, filepath: Union[str, Path]
-    ) -> Dict[str, Union[List, Dict]]:
+    def read_setup_cfg(self, filepath: str | Path) -> dict[str, list | dict]:
         parser = ConfigParser()
 
         parser.read(str(filepath))
@@ -126,8 +119,8 @@ class SetupReader:
         }
 
     def _find_setup_call(
-        self, elements: List[Any]
-    ) -> Tuple[Optional[ast.Call], Optional[List[Any]]]:
+        self, elements: list[Any]
+    ) -> tuple[ast.Call | None, list[Any] | None]:
         funcdefs = []
         for i, element in enumerate(elements):
             if isinstance(element, ast.If) and i == len(elements) - 1:
@@ -175,8 +168,8 @@ class SetupReader:
         return self._find_sub_setup_call(funcdefs)
 
     def _find_sub_setup_call(
-        self, elements: List[Any]
-    ) -> Tuple[Optional[ast.Call], Optional[List[Any]]]:
+        self, elements: list[Any]
+    ) -> tuple[ast.Call | None, list[Any] | None]:
         for element in elements:
             if not isinstance(element, (ast.FunctionDef, ast.If)):
                 continue
@@ -191,7 +184,7 @@ class SetupReader:
 
         return None, None
 
-    def _find_install_requires(self, call: ast.Call, body: Iterable[Any]) -> List[str]:
+    def _find_install_requires(self, call: ast.Call, body: Iterable[Any]) -> list[str]:
         install_requires = []
         value = self._find_in_call(call, "install_requires")
         if value is None:
@@ -233,7 +226,7 @@ class SetupReader:
 
     def _find_extras_require(
         self, call: ast.Call, body: Iterable[Any]
-    ) -> Dict[str, List]:
+    ) -> dict[str, list]:
         extras_require = {}
         value = self._find_in_call(call, "extras_require")
         if value is None:
@@ -284,8 +277,8 @@ class SetupReader:
         return extras_require
 
     def _find_single_string(
-        self, call: ast.Call, body: List[Any], name: str
-    ) -> Optional[str]:
+        self, call: ast.Call, body: list[Any], name: str
+    ) -> str | None:
         value = self._find_in_call(call, name)
         if value is None:
             # Trying to find in kwargs
@@ -320,13 +313,13 @@ class SetupReader:
             if variable is not None and isinstance(variable, ast.Str):
                 return variable.s
 
-    def _find_in_call(self, call: ast.Call, name: str) -> Optional[Any]:
+    def _find_in_call(self, call: ast.Call, name: str) -> Any | None:
         for keyword in call.keywords:
             if keyword.arg == name:
                 return keyword.value
         return None
 
-    def _find_call_kwargs(self, call: ast.Call) -> Optional[Any]:
+    def _find_call_kwargs(self, call: ast.Call) -> Any | None:
         kwargs = None
         for keyword in call.keywords:
             if keyword.arg is None:
@@ -334,7 +327,7 @@ class SetupReader:
 
         return kwargs
 
-    def _find_variable_in_body(self, body: Iterable[Any], name: str) -> Optional[Any]:
+    def _find_variable_in_body(self, body: Iterable[Any], name: str) -> Any | None:
         found = None
         for elem in body:
             if found:
@@ -350,9 +343,7 @@ class SetupReader:
                 if target.id == name:
                     return elem.value
 
-    def _find_in_dict(
-        self, dict_: Union[ast.Dict, ast.Call], name: str
-    ) -> Optional[Any]:
+    def _find_in_dict(self, dict_: ast.Dict | ast.Call, name: str) -> Any | None:
         for key, val in zip(dict_.keys, dict_.values):
             if isinstance(key, ast.Str) and key.s == name:
                 return val

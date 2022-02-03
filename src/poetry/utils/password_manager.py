@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 import logging
 
 from contextlib import suppress
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 
 if TYPE_CHECKING:
@@ -32,7 +32,7 @@ class KeyRing:
     def is_available(self) -> bool:
         return self._is_available
 
-    def get_password(self, name: str, username: str) -> Optional[str]:
+    def get_password(self, name: str, username: str) -> str | None:
         if not self.is_available():
             return None
 
@@ -119,12 +119,12 @@ class KeyRing:
 
 
 class PasswordManager:
-    def __init__(self, config: "Config") -> None:
+    def __init__(self, config: Config) -> None:
         self._config = config
         self._keyring = None
 
     @property
-    def keyring(self) -> Optional[KeyRing]:
+    def keyring(self) -> KeyRing | None:
         if self._keyring is None:
             self._keyring = KeyRing("poetry-repository")
             if not self._keyring.is_available():
@@ -152,7 +152,7 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
+    def get_http_auth(self, name: str) -> dict[str, str] | None:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
 
 
 if TYPE_CHECKING:
@@ -10,8 +11,8 @@ if TYPE_CHECKING:
 class SolverResult:
     def __init__(
         self,
-        root: "ProjectPackage",
-        packages: List["Package"],
+        root: ProjectPackage,
+        packages: list[Package],
         attempted_solutions: int,
     ) -> None:
         self._root = root
@@ -19,7 +20,7 @@ class SolverResult:
         self._attempted_solutions = attempted_solutions
 
     @property
-    def packages(self) -> List["Package"]:
+    def packages(self) -> list[Package]:
         return self._packages
 
     @property

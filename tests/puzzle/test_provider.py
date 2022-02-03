@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -98,7 +100,7 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider):
     }
 
 
-def test_search_for_vcs_read_setup(provider: Provider, mocker: "MockerFixture"):
+def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
@@ -119,7 +121,7 @@ def test_search_for_vcs_read_setup(provider: Provider, mocker: "MockerFixture"):
 
 
 def test_search_for_vcs_read_setup_with_extras(
-    provider: Provider, mocker: "MockerFixture"
+    provider: Provider, mocker: MockerFixture
 ):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
@@ -139,7 +141,7 @@ def test_search_for_vcs_read_setup_with_extras(
 
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(
-    provider: Provider, mocker: "MockerFixture"
+    provider: Provider, mocker: MockerFixture
 ):
     mocker.patch(
         "poetry.inspection.info.PackageInfo._pep517_metadata",
@@ -248,7 +250,7 @@ def test_search_for_directory_setup_with_base(provider: Provider, directory: str
 
 
 def test_search_for_directory_setup_read_setup(
-    provider: Provider, mocker: "MockerFixture"
+    provider: Provider, mocker: MockerFixture
 ):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
@@ -278,7 +280,7 @@ def test_search_for_directory_setup_read_setup(
 
 
 def test_search_for_directory_setup_read_setup_with_extras(
-    provider: Provider, mocker: "MockerFixture"
+    provider: Provider, mocker: MockerFixture
 ):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 

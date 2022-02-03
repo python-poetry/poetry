@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 
 from typing import TYPE_CHECKING
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def repository_cache_dir(monkeypatch: "MonkeyPatch", tmpdir: "Path") -> "Path":
+def repository_cache_dir(monkeypatch: MonkeyPatch, tmpdir: Path) -> Path:
     from pathlib import Path
 
     import poetry.locations
@@ -37,19 +39,19 @@ def repository_two() -> str:
 
 @pytest.fixture
 def mock_caches(
-    repository_cache_dir: "Path", repository_one: str, repository_two: str
+    repository_cache_dir: Path, repository_one: str, repository_two: str
 ) -> None:
     (repository_cache_dir / repository_one).mkdir()
     (repository_cache_dir / repository_two).mkdir()
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("cache list")
 
 
 def test_cache_list(
-    tester: "CommandTester", mock_caches: None, repository_one: str, repository_two: str
+    tester: CommandTester, mock_caches: None, repository_one: str, repository_two: str
 ):
     tester.execute()
 
@@ -61,7 +63,7 @@ def test_cache_list(
     assert tester.io.fetch_output() == expected
 
 
-def test_cache_list_empty(tester: "CommandTester", repository_cache_dir: "Path"):
+def test_cache_list_empty(tester: CommandTester, repository_cache_dir: Path):
     tester.execute()
 
     expected = """\

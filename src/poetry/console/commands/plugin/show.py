@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from typing import TYPE_CHECKING
 from typing import DefaultDict
-from typing import Dict
-from typing import List
-from typing import Union
 
 from poetry.console.commands.command import Command
 
@@ -26,7 +25,7 @@ class PluginShowCommand(Command):
         from poetry.utils.helpers import canonicalize_name
         from poetry.utils.helpers import pluralize
 
-        plugins: DefaultDict[str, Dict[str, Union["Package", List[str]]]] = defaultdict(
+        plugins: DefaultDict[str, dict[str, Package | list[str]]] = defaultdict(
             lambda: {
                 "package": None,
                 "plugins": [],

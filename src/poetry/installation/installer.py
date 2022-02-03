@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import Iterable
-from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Union
 
 from cleo.io.null_io import NullIO
 
@@ -35,14 +34,14 @@ if TYPE_CHECKING:
 class Installer:
     def __init__(
         self,
-        io: "IO",
-        env: "Env",
-        package: "ProjectPackage",
-        locker: "Locker",
+        io: IO,
+        env: Env,
+        package: ProjectPackage,
+        locker: Locker,
         pool: Pool,
-        config: "Config",
-        installed: Union[Repository, None] = None,
-        executor: Optional[Executor] = None,
+        config: Config,
+        installed: Repository | None = None,
+        executor: Executor | None = None,
     ):
         self._io = io
         self._env = env
@@ -83,15 +82,15 @@ class Installer:
         return self._executor
 
     @property
-    def installer(self) -> "BaseInstaller":
+    def installer(self) -> BaseInstaller:
         return self._installer
 
-    def set_package(self, package: "ProjectPackage") -> "Installer":
+    def set_package(self, package: ProjectPackage) -> Installer:
         self._package = package
 
         return self
 
-    def set_locker(self, locker: "Locker") -> "Installer":
+    def set_locker(self, locker: Locker) -> Installer:
         self._locker = locker
 
         return self
@@ -114,7 +113,7 @@ class Installer:
 
         return self._do_install(local_repo)
 
-    def dry_run(self, dry_run: bool = True) -> "Installer":
+    def dry_run(self, dry_run: bool = True) -> Installer:
         self._dry_run = dry_run
         self._executor.dry_run(dry_run)
 
@@ -125,12 +124,12 @@ class Installer:
 
     def requires_synchronization(
         self, requires_synchronization: bool = True
-    ) -> "Installer":
+    ) -> Installer:
         self._requires_synchronization = requires_synchronization
 
         return self
 
-    def verbose(self, verbose: bool = True) -> "Installer":
+    def verbose(self, verbose: bool = True) -> Installer:
         self._verbose = verbose
         self._executor.verbose(verbose)
 
@@ -139,27 +138,27 @@ class Installer:
     def is_verbose(self) -> bool:
         return self._verbose
 
-    def without_groups(self, groups: List[str]) -> "Installer":
+    def without_groups(self, groups: list[str]) -> Installer:
         self._without_groups = groups
 
         return self
 
-    def with_groups(self, groups: List[str]) -> "Installer":
+    def with_groups(self, groups: list[str]) -> Installer:
         self._with_groups = groups
 
         return self
 
-    def only_groups(self, groups: List[str]) -> "Installer":
+    def only_groups(self, groups: list[str]) -> Installer:
         self._only_groups = groups
 
         return self
 
-    def update(self, update: bool = True) -> "Installer":
+    def update(self, update: bool = True) -> Installer:
         self._update = update
 
         return self
 
-    def lock(self, update: bool = True) -> "Installer":
+    def lock(self, update: bool = True) -> Installer:
         """
         Prepare the installer for locking only.
         """
@@ -172,7 +171,7 @@ class Installer:
     def is_updating(self) -> bool:
         return self._update
 
-    def execute_operations(self, execute: bool = True) -> "Installer":
+    def execute_operations(self, execute: bool = True) -> Installer:
         self._execute_operations = execute
 
         if not execute:
@@ -180,17 +179,17 @@ class Installer:
 
         return self
 
-    def whitelist(self, packages: Iterable[str]) -> "Installer":
+    def whitelist(self, packages: Iterable[str]) -> Installer:
         self._whitelist = [canonicalize_name(p) for p in packages]
 
         return self
 
-    def extras(self, extras: list) -> "Installer":
+    def extras(self, extras: list) -> Installer:
         self._extras = extras
 
         return self
 
-    def use_executor(self, use_executor: bool = True) -> "Installer":
+    def use_executor(self, use_executor: bool = True) -> Installer:
         self._use_executor = use_executor
 
         return self
@@ -362,7 +361,7 @@ class Installer:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
 
-    def _execute(self, operations: List["OperationTypes"]) -> int:
+    def _execute(self, operations: list[OperationTypes]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
 
@@ -400,7 +399,7 @@ class Installer:
 
         return 0
 
-    def _execute_operation(self, operation: "Operation") -> None:
+    def _execute_operation(self, operation: Operation) -> None:
         """
         Execute a given operation.
         """
@@ -478,7 +477,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_local_repo(
-        self, local_repo: Repository, ops: Sequence["Operation"]
+        self, local_repo: Repository, ops: Sequence[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
@@ -493,7 +492,7 @@ class Installer:
 
     def _get_operations_from_lock(
         self, locked_repository: Repository
-    ) -> Sequence["Operation"]:
+    ) -> Sequence[Operation]:
         installed_repo = self._installed_repository
         ops = []
 
@@ -522,7 +521,7 @@ class Installer:
 
         return ops
 
-    def _filter_operations(self, ops: Sequence["Operation"], repo: Repository) -> None:
+    def _filter_operations(self, ops: Sequence[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):
@@ -551,7 +550,7 @@ class Installer:
             if package.optional and package.name not in extra_packages:
                 op.skip("Not required")
 
-    def _get_extra_packages(self, repo: Repository) -> List[str]:
+    def _get_extra_packages(self, repo: Repository) -> list[str]:
         """
         Returns all package names required by extras.
 
@@ -564,7 +563,7 @@ class Installer:
 
         return list(get_extra_package_names(repo.packages, extras, self._extras))
 
-    def _get_installer(self) -> "BaseInstaller":
+    def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._env, self._io, self._pool)
 
     def _get_installed(self) -> InstalledRepository:

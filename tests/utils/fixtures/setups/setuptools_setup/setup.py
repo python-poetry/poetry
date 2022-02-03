@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import setuptools
+
 
 setuptools.setup(
     name="my_package",
