@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import os.path
@@ -9,8 +11,10 @@ from collections import defaultdict
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
+
 try:
-    from setuptools import setup, find_packages
+    from setuptools import find_packages
+    from setuptools import setup
     from setuptools.command.build_py import build_py as BuildPy
     from setuptools.command.install_lib import install_lib as InstallLib
     from setuptools.command.install_scripts import install_scripts as InstallScripts
@@ -24,7 +28,8 @@ except ImportError:
     sys.exit(1)
 
 sys.path.insert(0, os.path.abspath("lib"))
-from ansible.release import __version__, __author__
+from ansible.release import __author__
+from ansible.release import __version__
 
 
 SYMLINK_CACHE = "SYMLINK_CACHE.json"

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 
@@ -6,8 +8,6 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Optional
-from typing import Type
 from typing import cast
 
 from cleo.application import Application as BaseApplication
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def load_command(name: str) -> Callable:
-    def _load() -> Type[Command]:
+    def _load() -> type[Command]:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
@@ -94,7 +94,7 @@ class Application(BaseApplication):
         super().__init__("poetry", __version__)
 
         self._poetry = None
-        self._io: Optional["IO"] = None
+        self._io: IO | None = None
         self._disable_plugins = False
         self._plugins_loaded = False
 
@@ -108,7 +108,7 @@ class Application(BaseApplication):
         self.set_command_loader(command_loader)
 
     @property
-    def poetry(self) -> "Poetry":
+    def poetry(self) -> Poetry:
         from pathlib import Path
 
         from poetry.factory import Factory
@@ -131,10 +131,10 @@ class Application(BaseApplication):
 
     def create_io(
         self,
-        input: Optional["Input"] = None,
-        output: Optional["Output"] = None,
-        error_output: Optional["Output"] = None,
-    ) -> "IO":
+        input: Input | None = None,
+        output: Output | None = None,
+        error_output: Output | None = None,
+    ) -> IO:
         io = super().create_io(input, output, error_output)
 
         # Set our own CLI styles
@@ -159,21 +159,21 @@ class Application(BaseApplication):
 
         return io
 
-    def render_error(self, error: Exception, io: "IO") -> None:
+    def render_error(self, error: Exception, io: IO) -> None:
         # We set the solution provider repository here to load providers
         # only when an error occurs
         self.set_solution_provider_repository(self._get_solution_provider_repository())
 
         super().render_error(error, io)
 
-    def _run(self, io: "IO") -> int:
+    def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
 
         self._load_plugins(io)
 
         return super()._run(io)
 
-    def _configure_io(self, io: "IO") -> None:
+    def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
         # is the "run" command.
         definition = self.definition
@@ -210,7 +210,7 @@ class Application(BaseApplication):
         return super()._configure_io(io)
 
     def register_command_loggers(
-        self, event: "ConsoleCommandEvent", event_name: str, _: Any
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.logging.io_formatter import IOFormatter
         from poetry.console.logging.io_handler import IOHandler
@@ -251,7 +251,7 @@ class Application(BaseApplication):
             logger.setLevel(level)
 
     def configure_env(
-        self, event: "ConsoleCommandEvent", event_name: str, _: Any
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.env_command import EnvCommand
 
@@ -276,11 +276,11 @@ class Application(BaseApplication):
         command.set_env(env)
 
     def configure_installer(
-        self, event: "ConsoleCommandEvent", event_name: str, _: Any
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.installer_command import InstallerCommand
 
-        command: "InstallerCommand" = cast(InstallerCommand, event.command)
+        command: InstallerCommand = cast(InstallerCommand, event.command)
         if not isinstance(command, InstallerCommand):
             return
 
@@ -291,7 +291,7 @@ class Application(BaseApplication):
 
         self._configure_installer(command, event.io)
 
-    def _configure_installer(self, command: "InstallerCommand", io: "IO") -> None:
+    def _configure_installer(self, command: InstallerCommand, io: IO) -> None:
         from poetry.installation.installer import Installer
 
         poetry = command.poetry
@@ -306,7 +306,7 @@ class Application(BaseApplication):
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
 
-    def _load_plugins(self, io: "IO") -> None:
+    def _load_plugins(self, io: IO) -> None:
         if self._plugins_loaded:
             return
 
@@ -322,7 +322,7 @@ class Application(BaseApplication):
         self._plugins_loaded = True
 
     @property
-    def _default_definition(self) -> "Definition":
+    def _default_definition(self) -> Definition:
         from cleo.io.inputs.option import Option
 
         definition = super()._default_definition
@@ -333,7 +333,7 @@ class Application(BaseApplication):
 
         return definition
 
-    def _get_solution_provider_repository(self) -> "SolutionProviderRepository":
+    def _get_solution_provider_repository(self) -> SolutionProviderRepository:
         from crashtest.solution_providers.solution_provider_repository import (
             SolutionProviderRepository,
         )

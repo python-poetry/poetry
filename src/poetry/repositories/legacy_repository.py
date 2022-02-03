@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import cgi
 import hashlib
 import re
@@ -9,10 +11,7 @@ from html import unescape
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Iterator
-from typing import List
-from typing import Optional
 from urllib.parse import quote
 
 import requests.auth
@@ -62,7 +61,7 @@ class Page:
         ".tar",
     ]
 
-    def __init__(self, url: str, content: str, headers: Dict[str, Any]) -> None:
+    def __init__(self, url: str, content: str, headers: dict[str, Any]) -> None:
         if not url.endswith("/"):
             url += "/"
 
@@ -120,7 +119,7 @@ class Page:
             if self.link_version(link) == version:
                 yield link
 
-    def link_version(self, link: Link) -> Optional[Version]:
+    def link_version(self, link: Link) -> Version | None:
         m = wheel_file_re.match(link.filename)
         if m:
             version = m.group("ver")
@@ -155,10 +154,10 @@ class LegacyRepository(PyPiRepository):
         self,
         name: str,
         url: str,
-        config: Optional[Config] = None,
+        config: Config | None = None,
         disable_cache: bool = False,
-        cert: Optional[Path] = None,
-        client_cert: Optional[Path] = None,
+        cert: Path | None = None,
+        client_cert: Path | None = None,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
@@ -204,11 +203,11 @@ class LegacyRepository(PyPiRepository):
         self._disable_cache = disable_cache
 
     @property
-    def cert(self) -> Optional[Path]:
+    def cert(self) -> Path | None:
         return self._cert
 
     @property
-    def client_cert(self) -> Optional[Path]:
+    def client_cert(self) -> Path | None:
         return self._client_cert
 
     @property
@@ -222,7 +221,7 @@ class LegacyRepository(PyPiRepository):
 
         return f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
 
-    def find_packages(self, dependency: "Dependency") -> List[Package]:
+    def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
 
         constraint = dependency.constraint
@@ -291,7 +290,7 @@ class LegacyRepository(PyPiRepository):
         return packages
 
     def package(
-        self, name: str, version: str, extras: Optional[List[str]] = None
+        self, name: str, version: str, extras: list[str] | None = None
     ) -> Package:
         """
         Retrieve the release information.
@@ -316,7 +315,7 @@ class LegacyRepository(PyPiRepository):
 
             return package
 
-    def find_links_for_package(self, package: Package) -> List[Link]:
+    def find_links_for_package(self, package: Package) -> list[Link]:
         page = self._get_page(f"/{package.name.replace('.', '-')}/")
         if page is None:
             return []
@@ -395,7 +394,7 @@ class LegacyRepository(PyPiRepository):
 
         return data.asdict()
 
-    def _get_page(self, endpoint: str) -> Optional[Page]:
+    def _get_page(self, endpoint: str) -> Page | None:
         url = self._url + endpoint
         try:
             response = self.session.get(url)

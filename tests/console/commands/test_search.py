@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Type
 
 import pytest
 
@@ -19,17 +20,17 @@ FIXTURES_DIRECTORY = (
 
 
 @pytest.fixture(autouse=True)
-def mock_search_http_response(http: Type["httpretty.httpretty"]) -> None:
+def mock_search_http_response(http: type[httpretty.httpretty]) -> None:
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
         http.register_uri("GET", "https://pypi.org/search", f.read())
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("search")
 
 
-def test_search(tester: "CommandTester", http: Type["httpretty.httpretty"]):
+def test_search(tester: CommandTester, http: type[httpretty.httpretty]):
     tester.execute("sqlalchemy")
 
     expected = """

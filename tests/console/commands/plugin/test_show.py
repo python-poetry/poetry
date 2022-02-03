@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Type
 
 import pytest
 
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class EntryPoint(_EntryPoint):
-    def load(self) -> Type["BasePlugin"]:
+    def load(self) -> type[BasePlugin]:
         if "ApplicationPlugin" in self.object_name:
             return ApplicationPlugin
 
@@ -30,15 +31,15 @@ class EntryPoint(_EntryPoint):
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("plugin show")
 
 
 def test_show_displays_installed_plugins(
-    app: "PoetryTestApplication",
-    tester: "CommandTester",
-    installed: "Repository",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    tester: CommandTester,
+    installed: Repository,
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",
@@ -73,10 +74,10 @@ def test_show_displays_installed_plugins(
 
 
 def test_show_displays_installed_plugins_with_multiple_plugins(
-    app: "PoetryTestApplication",
-    tester: "CommandTester",
-    installed: "Repository",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    tester: CommandTester,
+    installed: Repository,
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",
@@ -121,10 +122,10 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
 
 
 def test_show_displays_installed_plugins_with_dependencies(
-    app: "PoetryTestApplication",
-    tester: "CommandTester",
-    installed: "Repository",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    tester: CommandTester,
+    installed: Repository,
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",

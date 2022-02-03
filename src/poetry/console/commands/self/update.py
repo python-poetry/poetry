@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 import site
@@ -73,7 +75,7 @@ class SelfUpdateCommand(Command):
         return self._bin_dir
 
     @property
-    def pool(self) -> "Pool":
+    def pool(self) -> Pool:
         if self._pool is not None:
             return self._pool
 
@@ -103,7 +105,7 @@ class SelfUpdateCommand(Command):
             self.line("No release found for the specified version")
             return 1
 
-        def cmp(x: "Package", y: "Package") -> int:
+        def cmp(x: Package, y: Package) -> int:
             if x.version == y.version:
                 return 0
             return int(x.version < y.version or -1)
@@ -144,7 +146,7 @@ class SelfUpdateCommand(Command):
 
         return 0
 
-    def update(self, release: "Package") -> None:
+    def update(self, release: Package) -> None:
         from poetry.utils.env import EnvManager
 
         version = release.version
@@ -166,7 +168,7 @@ class SelfUpdateCommand(Command):
         self._update(version)
         self._make_bin()
 
-    def _update(self, version: "Version") -> None:
+    def _update(self, version: Version) -> None:
         from poetry.core.packages.dependency import Dependency
         from poetry.core.packages.project_package import ProjectPackage
 

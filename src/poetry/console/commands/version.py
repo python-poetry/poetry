@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from cleo.helpers import argument
@@ -76,7 +78,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                     f" <info>{self.poetry.package.pretty_version}</>"
                 )
 
-    def increment_version(self, version: str, rule: str) -> "Version":
+    def increment_version(self, version: str, rule: str) -> Version:
         from poetry.core.semver.version import Version
 
         try:

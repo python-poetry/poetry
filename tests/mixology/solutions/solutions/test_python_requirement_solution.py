@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.io.buffered_io import BufferedIO
 from poetry.core.packages.dependency import Dependency
 

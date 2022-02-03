@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import os
 
-from typing import Dict
-from typing import List
 from typing import cast
 
 from cleo.helpers import argument
@@ -176,8 +176,8 @@ You can specify a package in the following forms:
         )
 
     def get_existing_packages_from_input(
-        self, packages: List[str], poetry_content: Dict, target_section: str
-    ) -> List[str]:
+        self, packages: list[str], poetry_content: dict, target_section: str
+    ) -> list[str]:
         existing_packages = []
 
         for name in packages:
@@ -187,7 +187,7 @@ You can specify a package in the following forms:
 
         return existing_packages
 
-    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
+    def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(
             "The following plugins are already present in the "
             "<c2>pyproject.toml</c2> file and will be skipped:\n"

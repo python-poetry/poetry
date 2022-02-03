@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,7 +19,7 @@ def command() -> VersionCommand:
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("version")
 
 
@@ -53,21 +55,21 @@ def test_increment_version(
     assert command.increment_version(version, rule).text == expected
 
 
-def test_version_show(tester: "CommandTester"):
+def test_version_show(tester: CommandTester):
     tester.execute()
     assert tester.io.fetch_output() == "simple-project 1.2.3\n"
 
 
-def test_short_version_show(tester: "CommandTester"):
+def test_short_version_show(tester: CommandTester):
     tester.execute("--short")
     assert tester.io.fetch_output() == "1.2.3\n"
 
 
-def test_version_update(tester: "CommandTester"):
+def test_version_update(tester: CommandTester):
     tester.execute("2.0.0")
     assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
 
 
-def test_short_version_update(tester: "CommandTester"):
+def test_short_version_update(tester: CommandTester):
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"

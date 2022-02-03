@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import itertools
 import json
@@ -10,10 +12,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
@@ -49,10 +47,10 @@ if TYPE_CHECKING:
 class Executor:
     def __init__(
         self,
-        env: "Env",
-        pool: "Pool",
-        config: "Config",
-        io: "IO",
+        env: Env,
+        pool: Pool,
+        config: Config,
+        io: IO,
         parallel: bool = None,
     ) -> None:
         self._env = env
@@ -82,7 +80,7 @@ class Executor:
         self._sections = {}
         self._lock = threading.Lock()
         self._shutdown = False
-        self._hashes: Dict[str, str] = {}
+        self._hashes: dict[str, str] = {}
 
     @property
     def installations_count(self) -> int:
@@ -99,23 +97,23 @@ class Executor:
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
 
-    def disable(self) -> "Executor":
+    def disable(self) -> Executor:
         self._enabled = False
 
         return self
 
-    def dry_run(self, dry_run: bool = True) -> "Executor":
+    def dry_run(self, dry_run: bool = True) -> Executor:
         self._dry_run = dry_run
 
         return self
 
-    def verbose(self, verbose: bool = True) -> "Executor":
+    def verbose(self, verbose: bool = True) -> Executor:
         self._verbose = verbose
 
         return self
 
     def pip_install(
-        self, req: Union[Path, Link], upgrade: bool = False, editable: bool = False
+        self, req: Path | Link, upgrade: bool = False, editable: bool = False
     ) -> int:
         func = pip_install
         if editable:
@@ -134,7 +132,7 @@ class Executor:
 
         return 0
 
-    def execute(self, operations: List["OperationTypes"]) -> int:
+    def execute(self, operations: list[OperationTypes]) -> int:
         self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
@@ -188,7 +186,7 @@ class Executor:
         return 1 if self._shutdown else 0
 
     @staticmethod
-    def _get_max_workers(desired_max_workers: Optional[int] = None) -> int:
+    def _get_max_workers(desired_max_workers: int | None = None) -> int:
         # This should be directly handled by ThreadPoolExecutor
         # however, on some systems the number of CPUs cannot be determined
         # (it raises a NotImplementedError), so, in this case, we assume
@@ -202,7 +200,7 @@ class Executor:
             return default_max_workers
         return min(default_max_workers, desired_max_workers)
 
-    def _write(self, operation: "OperationTypes", line: str) -> None:
+    def _write(self, operation: OperationTypes, line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
             operation
         ):
@@ -220,7 +218,7 @@ class Executor:
             section.clear()
             section.write(line)
 
-    def _execute_operation(self, operation: "OperationTypes") -> None:
+    def _execute_operation(self, operation: OperationTypes) -> None:
         try:
             op_message = self.get_operation_message(operation)
             if self.supports_fancy_output():
@@ -297,7 +295,7 @@ class Executor:
                 with self._lock:
                     self._shutdown = True
 
-    def _do_execute_operation(self, operation: "OperationTypes") -> int:
+    def _do_execute_operation(self, operation: OperationTypes) -> int:
         method = operation.job_type
 
         operation_message = self.get_operation_message(operation)
@@ -334,7 +332,7 @@ class Executor:
         return result
 
     def _increment_operations_count(
-        self, operation: "OperationTypes", executed: bool
+        self, operation: OperationTypes, executed: bool
     ) -> None:
         with self._lock:
             if executed:
@@ -360,7 +358,7 @@ class Executor:
 
     def get_operation_message(
         self,
-        operation: "OperationTypes",
+        operation: OperationTypes,
         done: bool = False,
         error: bool = False,
         warning: bool = False,
@@ -408,7 +406,7 @@ class Executor:
             )
         return ""
 
-    def _display_summary(self, operations: List["OperationTypes"]) -> None:
+    def _display_summary(self, operations: list[OperationTypes]) -> None:
         installs = 0
         updates = 0
         uninstalls = 0
@@ -441,28 +439,28 @@ class Executor:
         self._io.write_line("")
         self._io.write_line("")
 
-    def _execute_install(self, operation: Union["Install", "Update"]) -> int:
+    def _execute_install(self, operation: Install | Update) -> int:
         status_code = self._install(operation)
 
         self._save_url_reference(operation)
 
         return status_code
 
-    def _execute_update(self, operation: Union["Install", "Update"]) -> int:
+    def _execute_update(self, operation: Install | Update) -> int:
         status_code = self._update(operation)
 
         self._save_url_reference(operation)
 
         return status_code
 
-    def _execute_uninstall(self, operation: "Uninstall") -> int:
+    def _execute_uninstall(self, operation: Uninstall) -> int:
         op_msg = self.get_operation_message(operation)
         message = f"  <fg=blue;options=bold>•</> {op_msg}: <info>Removing...</info>"
         self._write(operation, message)
 
         return self._remove(operation)
 
-    def _install(self, operation: Union["Install", "Update"]) -> int:
+    def _install(self, operation: Install | Update) -> int:
         package = operation.package
         if package.source_type == "directory":
             return self._install_directory(operation)
@@ -485,10 +483,10 @@ class Executor:
         self._write(operation, message)
         return self.pip_install(archive, upgrade=operation.job_type == "update")
 
-    def _update(self, operation: Union["Install", "Update"]) -> int:
+    def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
-    def _remove(self, operation: "Uninstall") -> int:
+    def _remove(self, operation: Uninstall) -> int:
         package = operation.package
 
         # If we have a VCS package, remove its source directory
@@ -505,7 +503,7 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Union["Install", "Update"]) -> Path:
+    def _prepare_file(self, operation: Install | Update) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -523,7 +521,7 @@ class Executor:
 
         return archive
 
-    def _install_directory(self, operation: Union["Install", "Update"]) -> int:
+    def _install_directory(self, operation: Install | Update) -> int:
         from poetry.factory import Factory
 
         package = operation.package
@@ -582,7 +580,7 @@ class Executor:
 
         return self.pip_install(req, upgrade=True)
 
-    def _install_git(self, operation: Union["Install", "Update"]) -> int:
+    def _install_git(self, operation: Install | Update) -> int:
         from poetry.core.vcs import Git
 
         package = operation.package
@@ -618,12 +616,12 @@ class Executor:
 
         return status_code
 
-    def _download(self, operation: Union["Install", "Update"]) -> Link:
+    def _download(self, operation: Install | Update) -> Link:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation: Union["Install", "Update"], link: Link) -> Link:
+    def _download_link(self, operation: Install | Update, link: Link) -> Link:
         package = operation.package
 
         archive = self._chef.get_cached_archive_for_link(link)
@@ -654,7 +652,7 @@ class Executor:
         return archive
 
     @staticmethod
-    def _validate_archive_hash(archive: Union[Path, Link], package: "Package") -> str:
+    def _validate_archive_hash(archive: Path | Link, package: Package) -> str:
         archive_path = (
             url_to_path(archive.url) if isinstance(archive, Link) else archive
         )
@@ -673,9 +671,7 @@ class Executor:
 
         return archive_hash
 
-    def _download_archive(
-        self, operation: Union["Install", "Update"], link: Link
-    ) -> Path:
+    def _download_archive(self, operation: Install | Update, link: Link) -> Path:
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
@@ -722,10 +718,10 @@ class Executor:
 
         return archive
 
-    def _should_write_operation(self, operation: "Operation") -> bool:
+    def _should_write_operation(self, operation: Operation) -> bool:
         return not operation.skipped or self._dry_run or self._verbose
 
-    def _save_url_reference(self, operation: "OperationTypes") -> None:
+    def _save_url_reference(self, operation: OperationTypes) -> None:
         """
         Create and store a PEP-610 `direct_url.json` file, if needed.
         """
@@ -787,8 +783,8 @@ class Executor:
                         )
 
     def _create_git_url_reference(
-        self, package: "Package"
-    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        self, package: Package
+    ) -> dict[str, str | dict[str, str]]:
         reference = {
             "url": package.source_url,
             "vcs_info": {
@@ -801,8 +797,8 @@ class Executor:
         return reference
 
     def _create_url_url_reference(
-        self, package: "Package"
-    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        self, package: Package
+    ) -> dict[str, str | dict[str, str]]:
         archive_info = {}
 
         if package.name in self._hashes:
@@ -813,8 +809,8 @@ class Executor:
         return reference
 
     def _create_file_url_reference(
-        self, package: "Package"
-    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        self, package: Package
+    ) -> dict[str, str | dict[str, str]]:
         archive_info = {}
 
         if package.name in self._hashes:
@@ -828,8 +824,8 @@ class Executor:
         return reference
 
     def _create_directory_url_reference(
-        self, package: "Package"
-    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        self, package: Package
+    ) -> dict[str, str | dict[str, str]]:
         dir_info = {}
 
         if package.develop:

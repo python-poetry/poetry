@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Optional
 
 from poetry.mixology.term import Term
 
@@ -19,11 +20,11 @@ class Assignment(Term):
 
     def __init__(
         self,
-        dependency: "Dependency",
+        dependency: Dependency,
         is_positive: bool,
         decision_level: int,
         index: int,
-        cause: Optional["Incompatibility"] = None,
+        cause: Incompatibility | None = None,
     ) -> None:
         super().__init__(dependency, is_positive)
 
@@ -40,13 +41,11 @@ class Assignment(Term):
         return self._index
 
     @property
-    def cause(self) -> "Incompatibility":
+    def cause(self) -> Incompatibility:
         return self._cause
 
     @classmethod
-    def decision(
-        cls, package: "Package", decision_level: int, index: int
-    ) -> "Assignment":
+    def decision(cls, package: Package, decision_level: int, index: int) -> Assignment:
         return cls(package.to_dependency(), True, decision_level, index)
 
     @classmethod
@@ -54,10 +53,10 @@ class Assignment(Term):
         cls,
         dependency: Any,
         is_positive: bool,
-        cause: "Incompatibility",
+        cause: Incompatibility,
         decision_level: int,
         index: int,
-    ) -> "Assignment":
+    ) -> Assignment:
         return cls(dependency, is_positive, decision_level, index, cause)
 
     def is_decision(self) -> bool:

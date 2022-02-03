@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 try:
     import zipp
 except ImportError:

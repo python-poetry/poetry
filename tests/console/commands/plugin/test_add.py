@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Union
 
 import pytest
 
@@ -22,20 +22,20 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("plugin add")
 
 
 def assert_plugin_add_result(
-    tester: "CommandTester",
-    app: "PoetryTestApplication",
-    env: "MockEnv",
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    env: MockEnv,
     expected: str,
-    constraint: Union[str, Dict[str, str]],
+    constraint: str | dict[str, str],
 ) -> None:
     assert tester.io.fetch_output() == expected
 
-    update_command: "UpdateCommand" = app.find("update")
+    update_command: UpdateCommand = app.find("update")
     assert update_command.poetry.file.parent == env.path
     assert update_command.poetry.locker.lock.parent == env.path
     assert update_command.poetry.locker.lock.exists()
@@ -46,11 +46,11 @@ def assert_plugin_add_result(
 
 
 def test_add_no_constraint(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
@@ -71,11 +71,11 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_with_constraint(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
@@ -97,11 +97,11 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_with_git_constraint(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     repo.add_package(Package("pendulum", "2.0.5"))
 
@@ -125,11 +125,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_with_git_constraint_with_extras(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
@@ -162,11 +162,11 @@ Package operations: 3 installs, 0 updates, 0 removals
 
 
 def test_add_existing_plugin_warns_about_no_operation(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     env.path.joinpath("pyproject.toml").write_text(
         """\
@@ -206,18 +206,18 @@ If you prefer to upgrade it to the latest available version,\
 
     assert tester.io.fetch_output() == expected
 
-    update_command: "UpdateCommand" = app.find("update")
+    update_command: UpdateCommand = app.find("update")
     # The update command should not have been called
     assert update_command.poetry.file.parent != env.path
 
 
 def test_add_existing_plugin_updates_if_requested(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
+    mocker: MockerFixture,
 ):
     env.path.joinpath("pyproject.toml").write_text(
         """\
@@ -259,11 +259,11 @@ Package operations: 0 installs, 1 update, 0 removals
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
-    installed: "Repository",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))

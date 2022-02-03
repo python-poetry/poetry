@@ -1,8 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 from poetry.core.semver.helpers import parse_constraint
 
@@ -15,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class SolveFailure(Exception):
-    def __init__(self, incompatibility: "Incompatibility") -> None:
+    def __init__(self, incompatibility: Incompatibility) -> None:
         self._incompatibility = incompatibility
 
     @property
@@ -27,11 +25,11 @@ class SolveFailure(Exception):
 
 
 class _Writer:
-    def __init__(self, root: "Incompatibility") -> None:
+    def __init__(self, root: Incompatibility) -> None:
         self._root = root
-        self._derivations: Dict["Incompatibility", int] = {}
-        self._lines: List[Tuple[str, Optional[int]]] = []
-        self._line_numbers: Dict["Incompatibility", int] = {}
+        self._derivations: dict[Incompatibility, int] = {}
+        self._lines: list[tuple[str, int | None]] = []
+        self._line_numbers: dict[Incompatibility, int] = {}
 
         self._count_derivations(self._root)
 
@@ -97,7 +95,7 @@ class _Writer:
         return "\n".join(buffer)
 
     def _write(
-        self, incompatibility: "Incompatibility", message: str, numbered: bool = False
+        self, incompatibility: Incompatibility, message: str, numbered: bool = False
     ) -> None:
         if numbered:
             number = len(self._line_numbers) + 1
@@ -108,8 +106,8 @@ class _Writer:
 
     def _visit(
         self,
-        incompatibility: "Incompatibility",
-        details_for_incompatibility: Dict,
+        incompatibility: Incompatibility,
+        details_for_incompatibility: dict,
         conclusion: bool = False,
     ) -> None:
         numbered = conclusion or self._derivations[incompatibility] > 1
@@ -237,7 +235,7 @@ class _Writer:
                 numbered=numbered,
             )
 
-    def _is_collapsible(self, incompatibility: "Incompatibility") -> bool:
+    def _is_collapsible(self, incompatibility: Incompatibility) -> bool:
         if self._derivations[incompatibility] > 1:
             return False
 
@@ -265,7 +263,7 @@ class _Writer:
             cause.other.cause, ConflictCause
         )
 
-    def _count_derivations(self, incompatibility: "Incompatibility") -> None:
+    def _count_derivations(self, incompatibility: Incompatibility) -> None:
         if incompatibility in self._derivations:
             self._derivations[incompatibility] += 1
         else:

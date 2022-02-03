@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -20,12 +22,12 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("plugin remove")
 
 
 @pytest.fixture()
-def pyproject(env: "MockEnv") -> None:
+def pyproject(env: MockEnv) -> None:
     pyproject = tomlkit.loads(POETRY_DEFAULT)
     content = pyproject["tool"]["poetry"]
 
@@ -43,7 +45,7 @@ def pyproject(env: "MockEnv") -> None:
 
 
 @pytest.fixture(autouse=True)
-def install_plugin(env: "MockEnv", installed: "Repository", pyproject: None) -> None:
+def install_plugin(env: MockEnv, installed: Repository, pyproject: None) -> None:
     lock_content = {
         "package": [
             {
@@ -84,7 +86,7 @@ def install_plugin(env: "MockEnv", installed: "Repository", pyproject: None) -> 
 
 
 def test_remove_installed_package(
-    app: "PoetryTestApplication", tester: "CommandTester", env: "MockEnv"
+    app: PoetryTestApplication, tester: CommandTester, env: MockEnv
 ):
     tester.execute("poetry-plugin")
 
@@ -101,7 +103,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
     assert tester.io.fetch_output() == expected
 
-    remove_command: "RemoveCommand" = app.find("remove")
+    remove_command: RemoveCommand = app.find("remove")
     assert remove_command.poetry.file.parent == env.path
     assert remove_command.poetry.locker.lock.parent == env.path
     assert remove_command.poetry.locker.lock.exists()
@@ -112,7 +114,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
 
 def test_remove_installed_package_dry_run(
-    app: "PoetryTestApplication", tester: "CommandTester", env: "MockEnv"
+    app: PoetryTestApplication, tester: CommandTester, env: MockEnv
 ):
     tester.execute("poetry-plugin --dry-run")
 
@@ -130,7 +132,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
     assert tester.io.fetch_output() == expected
 
-    remove_command: "RemoveCommand" = app.find("remove")
+    remove_command: RemoveCommand = app.find("remove")
     assert remove_command.poetry.file.parent == env.path
     assert remove_command.poetry.locker.lock.parent == env.path
     assert remove_command.poetry.locker.lock.exists()

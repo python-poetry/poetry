@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from poetry.console.commands.command import Command
 
 

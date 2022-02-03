@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import tempfile
 
@@ -428,7 +430,7 @@ A = []
 
 
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
-    locker: Locker, caplog: "LogCaptureFixture"
+    locker: Locker, caplog: LogCaptureFixture
 ):
     version = ".".join(Version.parse(Locker._VERSION).next_minor().text.split(".")[:2])
     content = f"""\
@@ -459,7 +461,7 @@ regenerate the lock file with the `poetry lock` command.\
 
 
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
-    locker: Locker, caplog: "LogCaptureFixture"
+    locker: Locker, caplog: LogCaptureFixture
 ):
     content = """\
 [metadata]
@@ -515,7 +517,7 @@ A = []
 
 
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
-    locker: Locker, caplog: "LogCaptureFixture"
+    locker: Locker, caplog: LogCaptureFixture
 ):
     current_version = Version.parse(Locker._VERSION)
     older_version = ".".join(
@@ -606,7 +608,7 @@ A = []
 
 
 def test_locked_repository_uses_root_dir_of_package(
-    locker: Locker, mocker: "MockerFixture"
+    locker: Locker, mocker: MockerFixture
 ):
     content = """\
 [[package]]

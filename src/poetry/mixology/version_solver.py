@@ -1,11 +1,8 @@
+from __future__ import annotations
+
 import time
 
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
 
 from poetry.core.packages.dependency import Dependency
 
@@ -42,10 +39,10 @@ class VersionSolver:
 
     def __init__(
         self,
-        root: "ProjectPackage",
-        provider: "Provider",
-        locked: Dict[str, "Package"] = None,
-        use_latest: List[str] = None,
+        root: ProjectPackage,
+        provider: Provider,
+        locked: dict[str, Package] = None,
+        use_latest: list[str] = None,
     ):
         self._root = root
         self._provider = provider
@@ -56,7 +53,7 @@ class VersionSolver:
 
         self._use_latest = use_latest
 
-        self._incompatibilities: Dict[str, List[Incompatibility]] = {}
+        self._incompatibilities: dict[str, list[Incompatibility]] = {}
         self._solution = PartialSolution()
 
     @property
@@ -128,7 +125,7 @@ class VersionSolver:
 
     def _propagate_incompatibility(
         self, incompatibility: Incompatibility
-    ) -> Union[str, object, None]:
+    ) -> str | object | None:
         """
         If incompatibility is almost satisfied by _solution, adds the
         negation of the unsatisfied term to _solution.
@@ -307,7 +304,7 @@ class VersionSolver:
 
         raise SolveFailure(incompatibility)
 
-    def _choose_package_version(self) -> Optional[str]:
+    def _choose_package_version(self) -> str | None:
         """
         Tries to select a version of a required package.
 
@@ -321,7 +318,7 @@ class VersionSolver:
 
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency: Dependency) -> Tuple[bool, int]:
+        def _get_min(dependency: Dependency) -> tuple[bool, int]:
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
@@ -438,7 +435,7 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency: Dependency) -> Optional["Package"]:
+    def _get_locked(self, dependency: Dependency) -> Package | None:
         if dependency.name in self._use_latest:
             return None
 
