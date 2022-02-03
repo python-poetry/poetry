@@ -72,7 +72,9 @@ class Shell:
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script
 
-        if WINDOWS:
+        # mypy requires using sys.platform instead of WINDOWS constant
+        # in if statements to properly type check on Windows
+        if sys.platform == "win32":
             if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
             else:
