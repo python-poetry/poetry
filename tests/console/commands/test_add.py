@@ -58,7 +58,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -130,7 +130,7 @@ Failed to add packages. Only vcs/path dependencies support editable installs.\
 No changes were applied.
 """
     assert tester.status_code == 1
-    assert expected == tester.io.fetch_error()
+    assert tester.io.fetch_error() == expected
     assert tester.command.installer.executor.installations_count == 0
     assert content == app.poetry.file.read()["tool"]["poetry"]
 
@@ -155,7 +155,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.1.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
 
@@ -179,7 +179,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
 
@@ -210,7 +210,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing cachy (0.1.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -240,7 +240,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -270,7 +270,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -306,7 +306,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -339,7 +339,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected.strip() == tester.io.fetch_output().strip()
+    assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 4
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -380,7 +380,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -427,7 +427,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -468,7 +468,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -500,7 +500,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -538,7 +538,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -576,7 +576,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -617,7 +617,7 @@ Package operations: 2 installs, 0 updates, 0 removals
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -661,7 +661,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     # Order might be different, split into lines and compare the overall output.
     expected = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
-    assert expected == output
+    assert output == expected
     assert tester.command.installer.executor.installations_count == 4
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -697,7 +697,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -734,7 +734,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -769,7 +769,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -831,7 +831,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -872,7 +872,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -902,7 +902,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing pyyaml (3.13)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -1032,7 +1032,7 @@ Resolving dependencies...
 Writing lock file
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
@@ -1060,7 +1060,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1093,7 +1093,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.1.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1121,7 +1121,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1156,7 +1156,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing cachy (0.1.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1190,7 +1190,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1219,7 +1219,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1254,7 +1254,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1286,7 +1286,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 4
 
@@ -1323,7 +1323,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1365,7 +1365,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1403,7 +1403,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1436,7 +1436,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1476,7 +1476,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1518,7 +1518,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1561,7 +1561,7 @@ Package operations: 2 installs, 0 updates, 0 removals
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1604,7 +1604,7 @@ Package operations: 4 installs, 0 updates, 0 removals
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 4
 
@@ -1644,7 +1644,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1683,7 +1683,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1722,7 +1722,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1788,7 +1788,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1822,7 +1822,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing pyyaml (3.13)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1968,7 +1968,7 @@ Resolving dependencies...
 Writing lock file
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
 
 def test_add_keyboard_interrupt_restore_content(

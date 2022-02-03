@@ -59,7 +59,7 @@ virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_list_displays_set_get_setting(
@@ -84,7 +84,7 @@ virtualenvs.prefer-active-python = false
 """
 
     assert config.set_config_source.call_count == 0
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_display_single_setting(tester: "CommandTester", config: "Config"):
@@ -93,7 +93,7 @@ def test_display_single_setting(tester: "CommandTester", config: "Config"):
     expected = """true
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_display_single_local_setting(
@@ -107,7 +107,7 @@ def test_display_single_local_setting(
     expected = """false
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_list_displays_set_get_local_setting(
@@ -132,7 +132,7 @@ virtualenvs.prefer-active-python = false
 """
 
     assert config.set_config_source.call_count == 1
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_set_pypi_token(

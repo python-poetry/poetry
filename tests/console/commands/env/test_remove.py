@@ -40,7 +40,7 @@ def test_remove_by_python_version(
     assert not (venv_cache / f"{venv_name}-py3.6").exists()
 
     expected = f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_remove_by_name(
@@ -58,7 +58,7 @@ def test_remove_by_name(
 
         expected += f"Deleted virtualenv: {venv_cache / name}\n"
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_remove_all(
@@ -72,7 +72,7 @@ def test_remove_all(
     for name in venvs_in_cache_dirs:
         assert not (venv_cache / name).exists()
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
-    assert expected == set(tester.io.fetch_output().split("\n"))
+    assert set(tester.io.fetch_output().split("\n")) == expected
 
 
 def test_remove_all_and_version(
@@ -86,7 +86,7 @@ def test_remove_all_and_version(
     for name in venvs_in_cache_dirs:
         assert not (venv_cache / name).exists()
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
-    assert expected == set(tester.io.fetch_output().split("\n"))
+    assert set(tester.io.fetch_output().split("\n")) == expected
 
 
 def test_remove_multiple(
@@ -104,4 +104,4 @@ def test_remove_multiple(
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
     for name in remaining_envs:
         assert (venv_cache / name).exists()
-    assert expected == set(tester.io.fetch_output().split("\n"))
+    assert set(tester.io.fetch_output().split("\n")) == expected

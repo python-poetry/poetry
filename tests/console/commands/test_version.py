@@ -50,7 +50,7 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
 def test_increment_version(
     version: str, rule: str, expected: str, command: VersionCommand
 ):
-    assert expected == command.increment_version(version, rule).text
+    assert command.increment_version(version, rule).text == expected
 
 
 def test_version_show(tester: "CommandTester"):

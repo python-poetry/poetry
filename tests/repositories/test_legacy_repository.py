@@ -235,7 +235,7 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
         Dependency("win-unicode-console", ">=0.5"),
     ]
     required = [r for r in package.requires if not r.is_optional()]
-    assert expected == required
+    assert required == expected
 
     assert str(required[1].marker) == 'python_version == "2.7"'
     assert (
@@ -272,7 +272,7 @@ def test_get_package_with_dist_and_universal_py3_wheel():
         Dependency("win-unicode-console", ">=0.5"),
     ]
     required = [r for r in package.requires if not r.is_optional()]
-    assert expected == sorted(required, key=lambda dep: dep.name)
+    assert sorted(required, key=lambda dep: dep.name) == expected
 
 
 def test_get_package_retrieves_non_sha256_hashes():
@@ -291,7 +291,7 @@ def test_get_package_retrieves_non_sha256_hashes():
         },
     ]
 
-    assert expected == package.files
+    assert package.files == expected
 
 
 def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
@@ -314,7 +314,7 @@ def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
         },
     ]
 
-    assert expected == package.files
+    assert package.files == expected
 
 
 def test_get_package_retrieves_packages_with_no_hashes():

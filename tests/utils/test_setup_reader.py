@@ -44,11 +44,11 @@ def test_setup_reader_read_first_level_setup_call_with_direct_types(
     }
     expected_python_requires = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
-    assert expected_python_requires == result["python_requires"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
 
 
 def test_setup_reader_read_first_level_setup_call_with_variables(
@@ -71,11 +71,11 @@ def test_setup_reader_read_first_level_setup_call_with_variables(
     }
     expected_python_requires = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
-    assert expected_python_requires == result["python_requires"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
 
 
 def test_setup_reader_read_sub_level_setup_call_with_direct_types(
@@ -97,10 +97,10 @@ def test_setup_reader_read_sub_level_setup_call_with_direct_types(
         "mssql_pymssql": ["pymssql"],
     }
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
     assert result["python_requires"] is None
 
 
@@ -116,11 +116,11 @@ def test_setup_reader_read_setup_cfg(setup: Callable[[str], str]):
     }
     expected_python_requires = ">=2.6,!=3.0,!=3.1,!=3.2,!=3.3"
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
-    assert expected_python_requires == result["python_requires"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
 
 
 def test_setup_reader_read_setup_cfg_with_attr(setup: Callable[[str], str]):
@@ -137,11 +137,11 @@ def test_setup_reader_read_setup_kwargs(setup: Callable[[str], str]):
     expected_extras_require = {':python_version < "3.5"': ["typing>=3.6,<4.0"]}
     expected_python_requires = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
-    assert expected_python_requires == result["python_requires"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
 
 
 def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], str]):
@@ -153,11 +153,11 @@ def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], str]):
     expected_extras_require = {}
     expected_python_requires = None
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
-    assert expected_python_requires == result["python_requires"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
 
 
 def test_setup_reader_read_extras_require_with_variables(setup: Callable[[str], str]):
@@ -169,11 +169,11 @@ def test_setup_reader_read_extras_require_with_variables(setup: Callable[[str], 
     expected_extras_require = {"test": ["pytest"]}
     expected_python_requires = None
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
-    assert expected_install_requires == result["install_requires"]
-    assert expected_extras_require == result["extras_require"]
-    assert expected_python_requires == result["python_requires"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
 
 
 def test_setup_reader_setuptools(setup: Callable[[str], str]):
@@ -182,5 +182,5 @@ def test_setup_reader_setuptools(setup: Callable[[str], str]):
     expected_name = "my_package"
     expected_version = "0.1.2"
 
-    assert expected_name == result["name"]
-    assert expected_version == result["version"]
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version

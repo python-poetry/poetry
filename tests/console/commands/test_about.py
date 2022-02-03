@@ -24,4 +24,4 @@ Poetry is a dependency manager tracking local dependencies of your projects and\
 See https://github.com/python-poetry/poetry for more information.
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected

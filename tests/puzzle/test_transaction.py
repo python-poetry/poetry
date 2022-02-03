@@ -37,7 +37,7 @@ def check_operations(
 
             result.append({"job": job, "package": op.package, "skipped": op.skipped})
 
-    assert expected == result
+    assert result == expected
 
 
 def test_it_should_calculate_operations_in_correct_order():

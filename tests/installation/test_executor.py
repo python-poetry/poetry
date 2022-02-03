@@ -173,7 +173,7 @@ Package operations: 4 installs, 1 update, 1 removal
 
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
-    assert expected == output
+    assert output == expected
     assert len(env.executed) == 5
     assert return_code == 0
     pip_editable_install.assert_called_once()
@@ -199,7 +199,7 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 
   • Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
 """
-    assert expected == io.fetch_output()
+    assert io.fetch_output() == expected
     assert len(env.executed) == 0
 
 
@@ -299,7 +299,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
     expected = set(expected.splitlines())
     output = set(io_not_decorated.fetch_output().splitlines())
-    assert expected == output
+    assert output == expected
     assert return_code == 0
 
 
@@ -321,7 +321,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing clikit (0.2.3): Cancelled
 """
 
-    assert expected == io.fetch_output()
+    assert io.fetch_output() == expected
 
 
 def test_execute_should_gracefully_handle_io_error(

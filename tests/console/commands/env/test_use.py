@@ -87,7 +87,7 @@ Creating virtualenv {venv_py37.name} in {venv_py37.parent}
 Using virtualenv: {venv_py37}
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
@@ -115,7 +115,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 Using virtualenv: {venv_dir}
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
@@ -150,4 +150,4 @@ Creating virtualenv {venv_dir.name} in {venv_dir.parent}
 Using virtualenv: {venv_dir}
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected

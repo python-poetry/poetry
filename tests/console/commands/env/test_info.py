@@ -49,7 +49,7 @@ Path:       {Path('/base/prefix')}
 Executable: python
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_env_info_displays_path_only(tester: "CommandTester"):

@@ -87,4 +87,4 @@ def test_get_cache_directory_for_link(config: "Config", config_cache_dir: Path):
         "283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648"
     )
 
-    assert expected == directory
+    assert directory == expected
