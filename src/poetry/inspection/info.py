@@ -32,15 +32,26 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 PEP517_META_BUILD = """\
-import pep517.build
-import pep517.meta
+import build
+import build.env
+import pep517
 
-path='{source}'
-system=pep517.build.compat_system(path)
-pep517.meta.build(source_dir=path, dest='{dest}', system=system)
+source = '{source}'
+dest = '{dest}'
+
+with build.env.IsolatedEnvBuilder() as env:
+    builder = build.ProjectBuilder(
+        srcdir=source,
+        scripts_dir=env.scripts_dir,
+        python_executable=env.executable,
+        runner=pep517.quiet_subprocess_runner,
+    )
+    env.install(builder.build_system_requires)
+    env.install(builder.get_requires_for_build('wheel'))
+    builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["pep517===0.8.2", "toml==0.10.1"]
+PEP517_META_BUILD_DEPS = ["build===0.7.0", "pep517==0.12.0"]
 
 
 class PackageInfoError(ValueError):
