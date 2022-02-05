@@ -1775,3 +1775,111 @@ foo==1.2.3
 """
 
     assert out == expected
+
+
+def test_exporter_doesnt_confuse_repeated_packages(
+    tmp_dir: str, poetry: "Poetry", capsys: "CaptureFixture"
+):
+    # Testcase derived from <https://github.com/python-poetry/poetry/issues/5141>.
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "celery",
+                    "version": "5.1.2",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "<3.7",
+                    "dependencies": {
+                        "click": ">=7.0,<8.0",
+                        "click-didyoumean": ">=0.0.3",
+                        "click-plugins": ">=1.1.1",
+                    },
+                },
+                {
+                    "name": "celery",
+                    "version": "5.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": ">=3.7",
+                    "dependencies": {
+                        "click": ">=8.0.3,<9.0",
+                        "click-didyoumean": ">=0.0.3",
+                        "click-plugins": ">=1.1.1",
+                    },
+                },
+                {
+                    "name": "click",
+                    "version": "7.1.2",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": (
+                        ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+                    ),
+                },
+                {
+                    "name": "click",
+                    "version": "8.0.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": ">=3.6",
+                    "dependencies": {},
+                },
+                {
+                    "name": "click-didyoumean",
+                    "version": "0.0.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"click": "*"},
+                },
+                {
+                    "name": "click-didyoumean",
+                    "version": "0.3.0",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": ">=3.6.2,<4.0.0",
+                    "dependencies": {"click": ">=7"},
+                },
+                {
+                    "name": "click-plugins",
+                    "version": "1.1.1",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"click": ">=4.0"},
+                },
+            ],
+            "metadata": {
+                "lock-version": "1.1",
+                "python-versions": "^3.6",
+                "content-hash": (
+                    "832b13a88e5020c27cbcd95faa577bf0dbf054a65c023b45dc9442b640d414e6"
+                ),
+                "hashes": {
+                    "celery": [],
+                    "click-didyoumean": [],
+                    "click-plugins": [],
+                    "click": [],
+                },
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
+
+    out, err = capsys.readouterr()
+    expected = (
+        'celery==5.1.2 ; python_version < "3.7"\n'
+        'celery==5.2.3 ; python_version >= "3.7"\n'
+        "click-didyoumean==0.0.3\n"
+        'click-didyoumean==0.3.0 ; python_full_version >= "3.6.2" and python_full_version < "4.0.0"\n'  # noqa: E501
+        "click-plugins==1.1.1\n"
+        'click==7.1.2 ; python_version >= "2.7" and python_full_version < "3.0.0" and python_version < "3.7" or python_full_version >= "3.5.0" and python_version < "3.7" or python_full_version >= "3.6.2" and python_full_version < "4.0.0" or python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"\n'  # noqa: E501
+        'click==8.0.3 ; python_version >= "3.6"\n'
+    )
+
+    assert out == expected

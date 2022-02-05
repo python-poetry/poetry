@@ -342,7 +342,7 @@ class Locker:
                     requirement.marker
                 )
 
-        return sorted(nested_dependencies.values(), key=lambda x: x.name.lower())
+        return nested_dependencies.values()
 
     def get_project_dependency_packages(
         self,

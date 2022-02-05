@@ -1,7 +1,9 @@
-import itertools
 import urllib.parse
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Union
@@ -15,6 +17,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from cleo.io.io import IO
+    from poetry.core.packages.dependency_package import DependencyPackage
+    from poetry.core.packages.package import Package
 
     from poetry.poetry import Poetry
 
@@ -70,14 +74,18 @@ class Exporter:
         content = ""
         dependency_lines = set()
 
-        for package, groups in itertools.groupby(
-            self._poetry.locker.get_project_dependency_packages(
-                project_requires=self._poetry.package.all_requires,
-                dev=dev,
-                extras=extras,
-            ),
-            lambda dependency_package: dependency_package.package,
+        # Group by package.
+        dependency_packages: Dict["Package", List["DependencyPackage"]] = defaultdict(
+            list
+        )
+        for dependency_package in self._poetry.locker.get_project_dependency_packages(
+            project_requires=self._poetry.package.all_requires,
+            dev=dev,
+            extras=extras,
         ):
+            dependency_packages[dependency_package.package].append(dependency_package)
+
+        for package, groups in dependency_packages.items():
             line = ""
             dependency_packages = list(groups)
             dependency = dependency_packages[0].dependency
