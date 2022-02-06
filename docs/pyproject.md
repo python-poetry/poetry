@@ -69,9 +69,21 @@ This is a list of maintainers and should be distinct from authors. Maintainers m
 
 ## readme
 
-The readme file of the package. **Optional**
+The path to the readme file of the package. **Optional**
 
-The file can be either `README.rst` or `README.md`.
+The file should be in either Markdown (.md) or reStructuredText (.rst)
+format. The path is relative to the directory containing the
+`pyproject.toml`.
+
+The file contents becomes the
+[Description field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
+in a PyPI build (similar to `long_description` in setuptools).
+
+```toml
+[tool.poetry]
+# ...
+readme = "./README.md"
+```
 
 ## homepage
 
