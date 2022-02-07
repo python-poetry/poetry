@@ -23,6 +23,6 @@ body:
     id: description
     attributes:
       label: Description
-      description: "Now feel free to write your issue, but please be descriptive! Thanks again \U0001F64C ❤️\n"
+      description: "Now feel free to write your issue, but please be descriptive! Thanks again \U0001F64C ❤️"
     validations:
       required: true

@@ -28,6 +28,6 @@ body:
     id: description
     attributes:
       label: Description
-      description: "Now feel free to write your idea for improvement. Thanks again \U0001F64C ❤️\n"
+      description: "Now feel free to write your idea for improvement. Thanks again \U0001F64C ❤️"
     validations:
       required: true
