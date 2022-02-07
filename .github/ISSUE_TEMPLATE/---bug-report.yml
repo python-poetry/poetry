@@ -1,0 +1,63 @@
+name: "\U0001F41E Bug Report"
+description: Did you find a bug?
+labels:
+  - Bug
+  - Triage
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: First Check
+      description: |
+        Hi there! Thank you for discovering and submitting an issue.
+        Before you submit this; let's make sure of a few things.
+        Please make sure the following boxes are ticked if they are correct.
+        If not, please try and fulfill these first.
+      options:
+        - label: >-
+            I am on the
+            [latest](https://github.com/python-poetry/poetry/releases/latest)
+            Poetry version.
+          required: true
+        - label: >-
+            I have searched the
+            [issues](https://github.com/python-poetry/poetry/issues) of this
+            repo and believe that this is not a duplicate.
+          required: true
+        - label: >-
+            If an exception occurs when executing a command, I executed it again
+            in debug mode (`-vvv` option).
+          required: true
+  - type: input
+    id: OS-version
+    attributes:
+      label: OS version
+      description: OS version and name
+      placeholder: Replace with version + name
+    validations:
+      required: true
+  - type: input
+    id: poetry-version
+    attributes:
+      label: Poetry version
+      description: |
+        poetry version: `poetry --version`
+      placeholder: Replace with version
+    validations:
+      required: true
+  - type: input
+    id: gist
+    attributes:
+      label: Gist
+      description: >
+        Link of a [Gist](https://gist.github.com/) with the contents of your
+        pyproject.toml file
+      placeholder: |
+        Gist Link Here
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Now feel free to write your issue, but please be descriptive! Thanks again \U0001F64C ❤️        \n"
+    validations:
+      required: true
