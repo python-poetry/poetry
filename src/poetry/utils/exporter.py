@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import itertools
 import urllib.parse
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 from typing import Sequence
 
@@ -70,21 +70,23 @@ class Exporter:
         content = ""
         dependency_lines = set()
 
-        for package, groups in itertools.groupby(
-            self._poetry.locker.get_project_dependency_packages(
-                project_requires=self._poetry.package.all_requires,
-                dev=dev,
-                extras=extras,
-            ),
-            lambda dependency_package: dependency_package.package,
+        # Get project dependencies, and add the project-wide marker to them.
+        groups = ["dev"] if dev else []
+        root_package = self._poetry.package.with_dependency_groups(groups)
+        project_requires = []
+        for require in root_package.all_requires:
+            require = deepcopy(require)
+            require.marker = require.marker.intersect(root_package.python_marker)
+            project_requires.append(require)
+
+        for dependency_package in self._poetry.locker.get_project_dependency_packages(
+            project_requires=project_requires,
+            dev=dev,
+            extras=extras,
         ):
             line = ""
-            dependency_packages = list(groups)
-            dependency = dependency_packages[0].dependency
-            marker = dependency.marker
-            for dep_package in dependency_packages[1:]:
-                marker = marker.union(dep_package.dependency.marker)
-            dependency.marker = marker
+            dependency = dependency_package.dependency
+            package = dependency_package.package
 
             if package.develop:
                 line += "-e "

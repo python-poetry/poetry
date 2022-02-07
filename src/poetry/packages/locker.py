@@ -32,6 +32,7 @@ from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
+    from poetry.core.version.markers import BaseMarker
     from tomlkit.items import InlineTable
     from tomlkit.toml_document import TOMLDocument
 
@@ -203,69 +204,80 @@ class Locker:
 
     @staticmethod
     def __get_locked_package(
-        _dependency: Dependency, packages_by_name: dict[str, list[Package]]
+        dependency: Dependency,
+        packages_by_name: dict[str, list[Package]],
+        decided: dict[Package, Dependency] | None = None,
     ) -> Package | None:
         """
         Internal helper to identify corresponding locked package using dependency
         version constraints.
         """
-        for _package in packages_by_name.get(_dependency.name, []):
-            if _dependency.constraint.allows(_package.version):
-                return _package
-        return None
+        decided = decided or {}
+
+        # Get the packages that are consistent with this dependency.
+        packages = [
+            package
+            for package in packages_by_name.get(dependency.name, [])
+            if package.python_constraint.allows_all(dependency.python_constraint)
+            and dependency.constraint.allows(package.version)
+        ]
+
+        # If we've previously made a choice that is compatible with the current
+        # requirement, stick with it.
+        for package in packages:
+            old_decision = decided.get(package)
+            if (
+                old_decision is not None
+                and not old_decision.marker.intersect(dependency.marker).is_empty()
+            ):
+                return package
+
+        return next(iter(packages), None)
 
     @classmethod
-    def __walk_dependency_level(
+    def __walk_dependencies(
         cls,
         dependencies: list[Dependency],
-        level: int,
-        pinned_versions: bool,
         packages_by_name: dict[str, list[Package]],
-        project_level_dependencies: set[str],
-        nested_dependencies: dict[tuple[str, str], Dependency],
-    ) -> dict[tuple[str, str], Dependency]:
-        if not dependencies:
-            return nested_dependencies
+    ) -> dict[Package, Dependency]:
+        nested_dependencies: dict[Package, Dependency] = {}
 
-        next_level_dependencies = []
-
-        for requirement in dependencies:
-            key = (requirement.name, requirement.pretty_constraint)
-            locked_package = cls.__get_locked_package(requirement, packages_by_name)
-
-            if locked_package:
-                # create dependency from locked package to retain dependency metadata
-                # if this is not done, we can end-up with incorrect nested dependencies
-                constraint = requirement.constraint
-                pretty_constraint = requirement.pretty_constraint
-                marker = requirement.marker
-                requirement = locked_package.to_dependency()
-                requirement.marker = requirement.marker.intersect(marker)
-
-                key = (requirement.name, pretty_constraint)
-
-                if not pinned_versions:
-                    requirement.set_constraint(constraint)
-
-                for require in locked_package.requires:
-                    if require.marker.is_empty():
-                        require.marker = requirement.marker
-                    else:
-                        require.marker = require.marker.intersect(requirement.marker)
-
-                    require.marker = require.marker.intersect(locked_package.marker)
-
-                    if key not in nested_dependencies:
-                        next_level_dependencies.append(require)
-
-            if requirement.name in project_level_dependencies and level == 0:
-                # project level dependencies take precedence
+        visited: set[tuple[Dependency, BaseMarker]] = set()
+        while dependencies:
+            requirement = dependencies.pop(0)
+            if (requirement, requirement.marker) in visited:
                 continue
+            visited.add((requirement, requirement.marker))
+
+            locked_package = cls.__get_locked_package(
+                requirement, packages_by_name, nested_dependencies
+            )
 
             if not locked_package:
-                # we make a copy to avoid any side-effects
-                requirement = deepcopy(requirement)
+                raise RuntimeError(f"Dependency walk failed at {requirement}")
 
+            # create dependency from locked package to retain dependency metadata
+            # if this is not done, we can end-up with incorrect nested dependencies
+            constraint = requirement.constraint
+            marker = requirement.marker
+            extras = requirement.extras
+            requirement = locked_package.to_dependency()
+            requirement.marker = requirement.marker.intersect(marker)
+
+            requirement.set_constraint(constraint)
+
+            for require in locked_package.requires:
+                if require.in_extras and extras.isdisjoint(require.in_extras):
+                    continue
+
+                require = deepcopy(require)
+                require.marker = require.marker.intersect(
+                    requirement.marker.without_extras()
+                )
+                if not require.marker.is_empty():
+                    dependencies.append(require)
+
+            key = locked_package
             if key not in nested_dependencies:
                 nested_dependencies[key] = requirement
             else:
@@ -273,75 +285,32 @@ class Locker:
                     requirement.marker
                 )
 
-        return cls.__walk_dependency_level(
-            dependencies=next_level_dependencies,
-            level=level + 1,
-            pinned_versions=pinned_versions,
-            packages_by_name=packages_by_name,
-            project_level_dependencies=project_level_dependencies,
-            nested_dependencies=nested_dependencies,
-        )
+        return nested_dependencies
 
     @classmethod
     def get_project_dependencies(
         cls,
         project_requires: list[Dependency],
         locked_packages: list[Package],
-        pinned_versions: bool = False,
-        with_nested: bool = False,
-    ) -> Iterable[Dependency]:
+    ) -> Iterable[tuple[Package, Dependency]]:
         # group packages entries by name, this is required because requirement might use
-        # different constraints
+        # different constraints.
         packages_by_name: dict[str, list[Package]] = {}
         for pkg in locked_packages:
             if pkg.name not in packages_by_name:
                 packages_by_name[pkg.name] = []
             packages_by_name[pkg.name].append(pkg)
 
-        project_level_dependencies = set()
-        dependencies = []
+        # Put higher versions first so that we prefer them.
+        for packages in packages_by_name.values():
+            packages.sort(key=lambda package: package.version, reverse=True)
 
-        for dependency in project_requires:
-            dependency = deepcopy(dependency)
-            locked_package = cls.__get_locked_package(dependency, packages_by_name)
-            if locked_package:
-                locked_dependency = locked_package.to_dependency()
-                locked_dependency.marker = dependency.marker.intersect(
-                    locked_package.marker
-                )
-
-                if not pinned_versions:
-                    locked_dependency.set_constraint(dependency.constraint)
-
-                dependency = locked_dependency
-
-            project_level_dependencies.add(dependency.name)
-            dependencies.append(dependency)
-
-        if not with_nested:
-            # return only with project level dependencies
-            return dependencies
-
-        nested_dependencies = cls.__walk_dependency_level(
-            dependencies=dependencies,
-            level=0,
-            pinned_versions=pinned_versions,
+        nested_dependencies = cls.__walk_dependencies(
+            dependencies=project_requires,
             packages_by_name=packages_by_name,
-            project_level_dependencies=project_level_dependencies,
-            nested_dependencies={},
         )
 
-        # Merge same dependencies using marker union
-        for requirement in dependencies:
-            key = (requirement.name, requirement.pretty_constraint)
-            if key not in nested_dependencies:
-                nested_dependencies[key] = requirement
-            else:
-                nested_dependencies[key].marker = nested_dependencies[key].marker.union(
-                    requirement.marker
-                )
-
-        return sorted(nested_dependencies.values(), key=lambda x: x.name.lower())
+        return nested_dependencies.items()
 
     def get_project_dependency_packages(
         self,
@@ -379,16 +348,10 @@ class Locker:
 
             selected.append(dependency)
 
-        for dependency in self.get_project_dependencies(
+        for package, dependency in self.get_project_dependencies(
             project_requires=selected,
             locked_packages=repository.packages,
-            with_nested=True,
         ):
-            try:
-                package = repository.find_packages(dependency=dependency)[0]
-            except IndexError:
-                continue
-
             for extra in dependency.extras:
                 package.requires_extras.append(extra)
 
