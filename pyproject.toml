@@ -66,7 +66,8 @@ importlib-metadata = {version = "^1.6.0", python = "<3.8"}
 [tool.poetry.dev-dependencies]
 pytest = [
     {version = "^4.1", python = "<3.5"},
-    {version = "^5.4.3", python = ">=3.5"}
+    {version = "^5.4.3", python = "~3.5"},
+    {version = "^6.2.5", python = ">=3.6"}
 ]
 pytest-cov = "^2.5"
 pytest-mock = "^1.9"
