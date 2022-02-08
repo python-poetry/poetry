@@ -190,7 +190,7 @@ def test_info_setup_complex(demo_setup_complex):
 def test_info_setup_complex_pep517_error(mocker, demo_setup_complex):
     mocker.patch(
         "poetry.utils.env.VirtualEnv.run",
-        auto_spec=True,
+        autospec=True,
         side_effect=EnvCommandError(CalledProcessError(1, "mock", output="mock")),
     )
 
