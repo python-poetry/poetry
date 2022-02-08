@@ -57,9 +57,9 @@ class ExportCommand(Command):
             self.call("lock", " ".join(options))
 
         if not locker.is_fresh():
-            self._io.write_line(
+            self.line_error(
                 "<warning>"
-                "Error: poetry.lock is not consistent with pyproject.toml. "
+                "Warning: poetry.lock is not consistent with pyproject.toml. "
                 "You may be getting improper dependencies. "
                 "Run `poetry update` to fix it."
                 "</warning>"
