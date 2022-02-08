@@ -61,7 +61,7 @@ class ExportCommand(Command):
                 "<warning>"
                 "Warning: poetry.lock is not consistent with pyproject.toml. "
                 "You may be getting improper dependencies. "
-                "Run `poetry update` to fix it."
+                "Run `poetry lock [--no-update]` to fix it."
                 "</warning>"
             )
 
