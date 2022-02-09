@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 import tempfile
+import time
 
 from collections.abc import Mapping
 from contextlib import contextmanager
@@ -45,7 +46,7 @@ def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
 
     yield name
 
-    shutil.rmtree(name, onerror=_del_ro)
+    robust_rmtree(name, onerror=_del_ro)
 
 
 def get_cert(config: "Config", repository_name: str) -> Optional[Path]:
@@ -72,11 +73,32 @@ def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
     func(path)
 
 
+def robust_rmtree(path: str, onerror=None, max_timeout=1) -> None:
+    """
+    Robustly tries to delete paths.
+    Retries several times if an OSError occurs.
+    If the final attempt fails, the Exception is propagated
+    to the caller.
+    """
+    timeout = 0.001
+    while timeout < max_timeout:
+        try:
+            shutil.rmtree(path)
+            return  # Only hits this on success
+        except OSError:
+            # Increase the timeout and try again
+            time.sleep(timeout)
+            timeout *= 2
+
+    # Final attempt, pass any Exceptions up to caller.
+    shutil.rmtree(path, onerror=onerror)
+
+
 def safe_rmtree(path: str) -> None:
     if Path(path).is_symlink():
         return os.unlink(str(path))
 
-    shutil.rmtree(path, onerror=_on_rm_error)
+    shutil.rmtree(path, onerror=_on_rm_error)  # maybe we could call robust_rmtree here just in case ?
 
 
 def merge_dicts(d1: Dict, d2: Dict) -> None:

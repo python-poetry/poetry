@@ -1,9 +1,11 @@
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
 from poetry.core.utils.helpers import parse_requires
+from src.poetry.utils.helpers import robust_rmtree
 
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import get_cert
@@ -12,6 +14,24 @@ from poetry.utils.helpers import get_client_cert
 
 if TYPE_CHECKING:
     from tests.conftest import Config
+
+
+def test_robust_rmtree(mocker):
+    mocked_rmtree = mocker.patch('shutil.rmtree')
+
+    # this should work after an initial exception
+    name = tempfile.mkdtemp()
+    mocked_rmtree.side_effect = [OSError("Couldn't delete file yet, waiting for references to clear", "mocked path"), None]
+    robust_rmtree(name)
+
+    # this should give up after retrying multiple times
+    name = tempfile.mkdtemp()
+    mocked_rmtree.side_effect = OSError("Couldn't delete file yet, this error won't go away after first attempt")
+    with pytest.raises(OSError):
+        robust_rmtree(name, max_timeout=0.04)
+
+    # clear the side effect (breaks the tear-down otherwise)
+    mocked_rmtree.side_effect = None
 
 
 def test_parse_requires():
