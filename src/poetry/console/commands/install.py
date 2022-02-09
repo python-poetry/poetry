@@ -95,10 +95,10 @@ dependencies and not including the current project, run the command with the
     _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
+        from poetry.core.masonry.builders.sdist import SdistBuilder
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
         from poetry.masonry.builders import EditableBuilder
-        from poetry.core.masonry.builders.sdist import SdistBuilder
         from poetry.utils.pip import pip_install
 
         self._installer.use_executor(
