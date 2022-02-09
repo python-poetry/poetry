@@ -243,3 +243,9 @@ def test_use_pypi_pretty_name():
     package = repo.find_packages(Factory.create_dependency("twisted", "*"))
     assert len(package) == 1
     assert package[0].pretty_name == "Twisted"
+
+
+def test_search():
+    repository = PyPiRepository()
+
+    assert repository._search_url() == "https://pypi.org/search"

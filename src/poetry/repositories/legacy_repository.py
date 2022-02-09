@@ -166,6 +166,7 @@ class LegacyRepository(PyPiRepository):
         self._packages = []
         self._name = name
         self._url = url.rstrip("/")
+        self._base_url = self._url + "/"
         self._client_cert = client_cert
         self._cert = cert
         self._cache_dir = REPOSITORY_CACHE_DIR / name

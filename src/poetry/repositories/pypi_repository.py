@@ -166,7 +166,7 @@ class PyPiRepository(RemoteRepository):
 
         search = {"q": query}
 
-        response = requests.session().get(self._base_url + "search", params=search)
+        response = requests.session().get(self._search_url(), params=search)
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
             name = result.find("h3/*[@class='package-snippet__name']").text
@@ -454,3 +454,6 @@ class PyPiRepository(RemoteRepository):
 
     def _log(self, msg: str, level: str = "info") -> None:
         getattr(logger, level)(f"<debug>{self._name}:</debug> {msg}")
+
+    def _search_url(self) -> str:
+        return self._base_url + "search"

@@ -374,3 +374,9 @@ def test_get_redirected_response_url(
 
     monkeypatch.setattr(repo.session, "get", get_mock)
     assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+
+
+def test_search(http: Type["httpretty.httpretty"]):
+    repository = MockHttpRepository({"/foo": 200}, http)
+
+    assert repository._search_url() == "http://legacy.foo.bar/search"
