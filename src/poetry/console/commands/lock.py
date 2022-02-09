@@ -37,11 +37,16 @@ file.
         )
 
         if self.option("check"):
-            return (
-                0
-                if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh()
-                else 1
+            if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
+                self.line("poetry.lock is consistent with pyproject.toml.")
+                return 0
+            self.line(
+                "<error>"
+                "Error: poetry.lock is not consistent with pyproject.toml. "
+                "Run `poetry lock [--no-update]` to fix it."
+                "</error>"
             )
+            return 1
 
         self._installer.lock(update=not self.option("no-update"))
 
