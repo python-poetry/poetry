@@ -70,6 +70,12 @@ class InstallCommand(InstallerCommand):
             flag=False,
             multiple=True,
         ),
+        option(
+            "--no-editable",
+            None,
+            "Do not install the root package in editable mode.",
+            flag=True,
+        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -92,6 +98,8 @@ dependencies and not including the current project, run the command with the
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
         from poetry.masonry.builders import EditableBuilder
+        from poetry.core.masonry.builders.sdist import SdistBuilder
+        from poetry.utils.pip import pip_install
 
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
@@ -174,13 +182,17 @@ dependencies and not including the current project, run the command with the
         if self.option("no-root") or self.option("only"):
             return 0
 
-        try:
-            builder = EditableBuilder(self.poetry, self._env, self._io)
-        except ModuleOrPackageNotFound:
-            # This is likely due to the fact that the project is an application
-            # not following the structure expected by Poetry
-            # If this is a true error it will be picked up later by build anyway.
-            return 0
+        if self.option("no-editable"):
+            builder = SdistBuilder(self.poetry)
+        else:
+            try:
+                builder = EditableBuilder(self.poetry, self._env, self._io)
+            except ModuleOrPackageNotFound:
+                # This is likely due to the fact that the project is an
+                # application not following the structure expected by Poetry
+                # If this is a true error it will be picked up later by build
+                # anyway.
+                return 0
 
         log_install = (
             "<b>Installing</> the current project:"
@@ -197,7 +209,16 @@ dependencies and not including the current project, run the command with the
             self.line("")
             return 0
 
-        builder.build()
+        if self.option("no-editable"):
+            with builder.setup_py():
+                pip_install(
+                    path=self.poetry.package.root_dir,
+                    environment=self._env,
+                    deps=False,
+                    upgrade=True,
+                )
+        else:
+            builder.build()
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))
