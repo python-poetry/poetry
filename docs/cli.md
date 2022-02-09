@@ -213,6 +213,12 @@ poetry install --no-root
 Installation of your project's package is also skipped when the `--only`
 option is used.
 
+If you do not want to install the current project in [editable](https://pip.pypa.io/en/stable/cli/pip_install/#install-editable) mode, run the `install` command with the `--no-editable` flag:
+
+```bash
+poetry install --no-editable
+```
+
 ### Options
 
 * `--without`: The dependency groups to ignore for installation.
@@ -223,6 +229,7 @@ option is used.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--no-editable`: Do not install the root package in editable mode.
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**)
 * `--dev-only`: Only install dev dependencies. (**Deprecated**)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
