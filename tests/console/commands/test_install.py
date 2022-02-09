@@ -43,17 +43,11 @@ def test_sync_option_is_passed_to_the_installer(
     assert tester.command.installer._requires_synchronization
 
 
-def test_no_editable_option(
-    tester: "CommandTester", mocker: "MockerFixture"
-):
+def test_no_editable_option(tester: "CommandTester", mocker: "MockerFixture"):
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     pip_install_mock = mocker.patch("poetry.utils.pip.pip_install")
-    builder_mock = mocker.patch(
-        "poetry.core.masonry.builders.sdist.SdistBuilder"
-    )
-    editable_builder_mock = mocker.patch(
-        "poetry.masonry.builders.EditableBuilder"
-    )
+    builder_mock = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
+    editable_builder_mock = mocker.patch("poetry.masonry.builders.EditableBuilder")
 
     tester.execute("--no-editable")
 
