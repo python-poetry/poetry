@@ -14,6 +14,8 @@ from clikit.api.formatter import Style
 
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
+VENDOR_ONLY = "VENDOR_ONLY" in os.environ
+VENDOR_REUSE = "VENDOR_REUSE" in os.environ
 
 
 class MakeReleaseCommand(Command):
@@ -69,17 +71,27 @@ class MakeReleaseCommand(Command):
         pool.add_repository(project.locker.locked_repository(with_dev_reqs=True))
 
         vcs = get_vcs(Path(__file__).parent)
+        poetry_vendor_relative = os.path.join("poetry", "_vendor")
+
         if vcs:
-            vcs_excluded = [str(f) for f in vcs.get_ignored_files()]
+            # if vendor reuse is enabled do not exclude these files
+            vcs_excluded = [
+                str(f)
+                for f in vcs.get_ignored_files()
+                if not (VENDOR_REUSE and str(f).startswith(poetry_vendor_relative))
+            ]
         else:
             vcs_excluded = []
 
         created_files = []
+        poetry_dir_src = os.path.join(os.path.dirname(__file__), "poetry")
+        poetry_vendor_src = os.path.join(poetry_dir_src, "_vendor")
+
         with temporary_directory() as tmp_dir:
             # Copy poetry to tmp dir
             poetry_dir = os.path.join(tmp_dir, "poetry")
             shutil.copytree(
-                os.path.join(os.path.dirname(__file__), "poetry"),
+                poetry_dir_src,
                 poetry_dir,
                 ignore=lambda dir_, names: set(vcs_excluded).intersection(
                     set([os.path.join(dir_, name) for name in names])
@@ -128,6 +140,16 @@ class MakeReleaseCommand(Command):
                     ]
 
                 self.line("")
+
+            if VENDOR_ONLY:
+                self.line("<info>Preserving generated vendor directory</info>")
+                shutil.copytree(
+                    os.path.join(poetry_dir, "_vendor"),
+                    poetry_vendor_src,
+                    dirs_exist_ok=True,
+                )
+                self.line("<info>Skipping packaging</info>")
+                return
 
             self.line("<info>Packaging files</info>")
             with temporary_directory() as tmp_dir2:
