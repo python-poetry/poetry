@@ -23,7 +23,7 @@ jobs:
     - name: Get tag
       id: tag
       run: |
-        if [[ ${GITHUB_EVENT_NAME} == "tag" ]]; then
+        if [[ ${GITHUB_REF} == /refs/tags* ]]; then
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
         else
           echo ::set-output name=tag::${GITHUB_SHA::7}
@@ -50,7 +50,7 @@ jobs:
     - name: Get tag
       id: tag
       run: |
-        if [[ ${GITHUB_EVENT_NAME} == "tag" ]]; then
+        if [[ ${GITHUB_REF} == /refs/tags* ]]; then
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
         else
           echo ::set-output name=tag::${GITHUB_SHA::7}
@@ -107,7 +107,7 @@ jobs:
       id: tag
       shell: bash
       run: |
-        if [[ ${GITHUB_EVENT_NAME} == "tag" ]]; then
+        if [[ ${GITHUB_REF} == /refs/tags* ]]; then
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
         else
           echo ::set-output name=tag::${GITHUB_SHA::7}
@@ -166,7 +166,7 @@ jobs:
   Release:
     needs: [Linux, MacOS, Windows]
     runs-on: ubuntu-latest
-    if: github.event_name == 'tag'
+    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
       - name: Checkout code
