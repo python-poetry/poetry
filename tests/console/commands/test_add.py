@@ -857,9 +857,11 @@ def test_add_to_dev_section_deprecated(
 
     tester.execute("cachy --dev")
 
-    expected = """\
+    warning = """\
 The --dev option is deprecated, use the `--group dev` notation instead.
+"""
 
+    expected = """\
 Using version ^0.2.0 for cachy
 
 Updating dependencies
@@ -872,6 +874,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
+    assert tester.io.fetch_error() == warning
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 

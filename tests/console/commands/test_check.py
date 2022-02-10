@@ -45,4 +45,4 @@ Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
  which is deprecated. Use "allow-prereleases" instead.
 """
 
-    assert tester.io.fetch_output() == expected
+    assert tester.io.fetch_error() == expected

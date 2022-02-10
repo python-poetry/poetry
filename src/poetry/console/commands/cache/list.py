@@ -20,5 +20,5 @@ class CacheListCommand(Command):
                     self.line(f"<info>{cache.name}</>")
                 return 0
 
-        self.line("<warning>No caches found</>")
+        self.line_error("<warning>No caches found</>")
         return None
