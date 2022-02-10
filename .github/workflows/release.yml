@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - '*.*.*'
+  pull_request:
+    paths:
+      - '!**'
+      - '.github/workflows/release.yml'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'sonnet'
+      - 'make-nix-release.sh'
 
 jobs:
 
@@ -15,20 +23,24 @@ jobs:
     - name: Get tag
       id: tag
       run: |
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        if [[ ${GITHUB_EVENT_NAME} == "tag" ]]; then
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        else
+          echo ::set-output name=tag::${GITHUB_SHA::7}
+        fi
     - name: Building release
       run: |
         make linux_release
     - name: Upload release file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
+        path: releases/poetry-*-linux.tar.gz
     - name: Upload checksum file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
+        path: releases/poetry-*-linux.sha256sum
 
   MacOS:
     runs-on: macos-latest
@@ -38,7 +50,11 @@ jobs:
     - name: Get tag
       id: tag
       run: |
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        if [[ ${GITHUB_EVENT_NAME} == "tag" ]]; then
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        else
+          echo ::set-output name=tag::${GITHUB_SHA::7}
+        fi
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
@@ -72,15 +88,15 @@ jobs:
         source $HOME/.poetry/env
         poetry run python sonnet make release --ansi -P "2.7:python-2.7.18/bin/python" -P "3.5:python-3.5.9/bin/python" -P "3.6:python-3.6.8/bin/python" -P "3.7:python-3.7.6/bin/python" -P "3.8:python-3.8.3/bin/python" -P "3.9:python-3.9.5/bin/python" -P "3.10:python-3.10.2/bin/python"
     - name: Upload release file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
+        path: releases/poetry-*-darwin.tar.gz
     - name: Upload checksum file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
+        path: releases/poetry-*-darwin.sha256sum
 
   Windows:
     runs-on: windows-latest
@@ -91,7 +107,11 @@ jobs:
       id: tag
       shell: bash
       run: |
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        if [[ ${GITHUB_EVENT_NAME} == "tag" ]]; then
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        else
+          echo ::set-output name=tag::${GITHUB_SHA::7}
+        fi
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
@@ -132,19 +152,20 @@ jobs:
         $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry run python sonnet make release --ansi -P "2.7:python-2.7.17\python.exe" -P "3.5:python-3.5.4\python.exe" -P "3.6:python-3.6.8\python.exe" -P "3.7:python-3.7.6\python.exe" -P "3.8:python-3.8.3\python.exe" -P "3.9:python-3.9.5\python.exe" -P "3.10:python-3.10.2\python.exe"
     - name: Upload release file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
+        path: releases/poetry-*-win32.tar.gz
     - name: Upload checksum file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
+        path: releases/poetry-*-win32.sha256sum
 
   Release:
     needs: [Linux, MacOS, Windows]
     runs-on: ubuntu-latest
+    if: github.event_name == 'tag'
 
     steps:
       - name: Checkout code
