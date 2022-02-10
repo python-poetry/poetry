@@ -23,7 +23,7 @@ jobs:
     - name: Get tag
       id: tag
       run: |
-        if [[ ${GITHUB_REF} == /refs/tags* ]]; then
+        if [[ ${GITHUB_REF} == refs/tags/* ]]; then
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
         else
           echo ::set-output name=tag::${GITHUB_SHA::7}
@@ -50,7 +50,7 @@ jobs:
     - name: Get tag
       id: tag
       run: |
-        if [[ ${GITHUB_REF} == /refs/tags* ]]; then
+        if [[ ${GITHUB_REF} == refs/tags/* ]]; then
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
         else
           echo ::set-output name=tag::${GITHUB_SHA::7}
@@ -107,7 +107,7 @@ jobs:
       id: tag
       shell: bash
       run: |
-        if [[ ${GITHUB_REF} == /refs/tags* ]]; then
+        if [[ ${GITHUB_REF} == refs/tags/* ]]; then
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
         else
           echo ::set-output name=tag::${GITHUB_SHA::7}
