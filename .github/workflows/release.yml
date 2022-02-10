@@ -146,6 +146,7 @@ jobs:
         7z x python-3.6.8.tar
         7z x python-3.7.6.tar
         7z x python-3.8.3.tar
+        7z x python-3.9.5.tar
         7z x python-3.10.2.tar
     - name: Build specific release
       run: |
