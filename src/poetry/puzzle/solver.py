@@ -64,6 +64,11 @@ class Solver:
         return self._provider
 
     @contextmanager
+    def use_markers_filter(self, markers: Dict) -> Iterator[None]:
+        with self.provider.use_markers_filter(markers):
+            yield
+
+    @contextmanager
     def use_environment(self, env: "Env") -> Iterator[None]:
         with self.provider.use_environment(env):
             yield

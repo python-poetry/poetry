@@ -251,3 +251,31 @@ markers = "platform_python_implementation == 'CPython'"
 The same information is still present, and ends up providing the exact
 same specification. It's simply split into multiple, slightly more readable,
 lines.
+
+## Optimizing by environment pre-filtering
+
+Poetry may take long to build a lock when they are exponentially many combinations of downstream packages, due to different variants of OS, platform architecture, Python versions and so on.
+
+With this [PR 4956 ](https://github.com/python-poetry/poetry/pull/4956) we can narrow down the search space in the beginning.
+
+As a real use-case consider Azure packages
+```
+[tool.poetry]
+name = "test"
+version = "0.1.0"
+description = "demonstrates that poetry triggers overrides to easily (can be early pruned?)"
+authors = ["Maciej Skorski <maciej.skorski@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.8"
+azureml-dataset-runtime = {version="1.37.0"}
+```
+
+Installing with debugging `poetry install --dry-run -vv` reveals that poetry considers many package combinations for Windows.
+However, after adding the section `tool.poetry.dependencies` and specifying [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers) there is no branching anymore.
+
+```
+[tool.poetry.target_env]
+sys_platform = "linux"
+platform_system = "Linux"
+```

@@ -985,6 +985,58 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     assert installer.executor.installations[1].name == "c"
 
 
+def test_run_prefilter_with_optional_and_platform_restricted_dependencies(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: "MockerFixture",
+):
+    mocker.patch("sys.platform", "windows")
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c12 = get_package("C", "1.2")
+    package_c13 = get_package("C", "1.3")
+    package_d = get_package("D", "1.4")
+    package_c13.add_dependency(Factory.create_dependency("D", "^1.2"))
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c12)
+    repo.add_package(package_c13)
+    repo.add_package(package_d)
+
+    package.extras = {"foo": [get_dependency("A", "~1.0")]}
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "~1.0", "optional": True})
+    )
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "^1.0", "platform": "linux"})
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "^1.0", "markers": "sys_platform=='windows'"}
+        )
+    )
+
+    locker._local_config = {"target_env": {"sys_platform": "windows"}}
+    installer._locker = locker
+    installer.run()
+
+    # expect to filter out B from the lock (incompatible on sys_platform)
+    expected = fixture("with-platform-dependencies")
+    expected["metadata"]["files"].pop("B")
+    expected["package"] = [d for d in expected["package"] if d.get("name") != "B"]
+
+    assert locker.written_data == expected
+
+    # install only C,D as A is optional
+    assert installer.executor.installations_count == 2
+    assert installer.executor.installations[0].name == "d"
+    assert installer.executor.installations[1].name == "c"
+
+
 def test_run_with_dependencies_extras(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):

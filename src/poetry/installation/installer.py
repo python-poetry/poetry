@@ -66,6 +66,8 @@ class Installer:
 
         self._extras = []
 
+        self._match_markers = []
+
         if executor is None:
             executor = Executor(self._env, self._pool, config, self._io)
 
@@ -190,6 +192,11 @@ class Installer:
 
         return self
 
+    def match_markers(self, markers: list) -> "Installer":
+        self._match_markers = markers
+
+        return self
+
     def use_executor(self, use_executor: bool = True) -> "Installer":
         self._use_executor = use_executor
 
@@ -249,7 +256,21 @@ class Installer:
                 self._io,
             )
 
-            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+            if (
+                hasattr(self._locker, "_local_config")
+                and "target_env" in self._locker._local_config
+            ):
+                # load and format as VirtualEnv from poetry.utils.env
+                markers_to_filter = self._locker._local_config["target_env"]
+                if markers_to_filter:
+                    version_info = markers_to_filter.get("version_info")
+                    if version_info:
+                        markers_to_filter["version_info"] = tuple(version_info)
+            else:
+                markers_to_filter = {}
+
+            with solver.use_markers_filter(markers_to_filter):
+                ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 

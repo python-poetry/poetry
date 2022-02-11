@@ -70,6 +70,13 @@ class InstallCommand(InstallerCommand):
             flag=False,
             multiple=True,
         ),
+        option(
+            "match-marker",
+            None,
+            "List of environment markers to be matched early, to speed up resolving dependencies (see PEP 508).",
+            flag=False,
+            multiple=True,
+        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -96,6 +103,10 @@ dependencies and not including the current project, run the command with the
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
+
+        markers_to_filter = self.option("match-marker")
+        if markers_to_filter:
+            self._installer.match_markers(markers_to_filter)
 
         extras = []
         for extra in self.option("extras"):
