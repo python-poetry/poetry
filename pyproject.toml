@@ -52,6 +52,7 @@ shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
+urllib3 = "^1.26.0"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
