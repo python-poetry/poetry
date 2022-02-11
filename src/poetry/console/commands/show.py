@@ -98,7 +98,7 @@ lists all packages available."""
         included_groups = []
         only_groups = []
         if self.option("no-dev"):
-            self.line(
+            self.line_error(
                 "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is"
                 " deprecated, use the `<fg=yellow;options=bold>--without dev</>`"
                 " notation instead.</warning>"

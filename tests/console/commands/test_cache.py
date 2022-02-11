@@ -68,4 +68,4 @@ def test_cache_list_empty(tester: "CommandTester", repository_cache_dir: "Path")
 No caches found
 """
 
-    assert tester.io.fetch_output() == expected
+    assert tester.io.fetch_error() == expected

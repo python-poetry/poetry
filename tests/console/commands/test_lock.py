@@ -86,7 +86,7 @@ def test_lock_check_outdated(
         "Run `poetry lock [--no-update]` to fix it.\n"
     )
 
-    assert tester.io.fetch_output() == expected
+    assert tester.io.fetch_error() == expected
 
     # exit with an error
     assert status_code == 1
