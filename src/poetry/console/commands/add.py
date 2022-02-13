@@ -95,11 +95,10 @@ You can specify a package in the following forms:
 
         packages = self.argument("name")
         if self.option("dev"):
-            self.line(
+            self.line_error(
                 "<warning>The --dev option is deprecated, "
                 "use the `--group dev` notation instead.</warning>"
             )
-            self.line("")
             group = "dev"
         else:
             group = self.option("group")

@@ -81,14 +81,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
-                self.line(
+                self.line_error(
                     "<error>A pyproject.toml file with a poetry section already"
                     " exists.</error>"
                 )
                 return 1
 
             if pyproject.data.get("build-system"):
-                self.line(
+                self.line_error(
                     "<error>A pyproject.toml file with a defined build-system already"
                     " exists.</error>"
                 )
@@ -235,7 +235,7 @@ You can specify a package in the following forms:
             self.line("")
 
         if not self.confirm("Do you confirm generation?", True):
-            self.line("<error>Command aborted</error>")
+            self.line_error("<error>Command aborted</error>")
 
             return 1
 
@@ -292,7 +292,7 @@ You can specify a package in the following forms:
                 canonicalized_name = canonicalize_name(constraint["name"])
                 matches = self._get_pool().search(canonicalized_name)
                 if not matches:
-                    self.line("<error>Unable to find package</error>")
+                    self.line_error("<error>Unable to find package</error>")
                     package = False
                 else:
                     choices = self._generate_choice_list(matches, canonicalized_name)

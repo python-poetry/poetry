@@ -860,7 +860,7 @@ class EnvManager:
                     self._poetry.package.python_versions, python_patch
                 )
 
-            io.write_line(
+            io.write_error_line(
                 f"<warning>The currently activated Python version {python_patch} is not"
                 f" supported by the project ({self._poetry.package.python_versions}).\n"
                 "Trying to find and use a compatible version.</warning> "
@@ -936,7 +936,7 @@ class EnvManager:
             create_venv = False
             if force:
                 if not env.is_sane():
-                    io.write_line(
+                    io.write_error_line(
                         f"<warning>The virtual environment found in {env.path} seems to"
                         " be broken.</warning>"
                     )
