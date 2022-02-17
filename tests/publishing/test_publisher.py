@@ -176,3 +176,12 @@ def test_publish_read_from_environment_variable(
         ("https://foo.bar",),
         {"cert": None, "client_cert": None, "dry_run": False},
     ] == uploader_upload.call_args
+
+
+def test_publish_fails_for_source(fixture_dir: "FixtureDirGetter", config: "Config"):
+    poetry = Factory().create_poetry(fixture_dir("with_default_source"))
+    publisher = Publisher(poetry, NullIO())
+
+    with pytest.raises(RuntimeError) as error:
+        publisher.publish("foo", None, None)
+    assert error.value.args[0] == "foo is a source and cannot be published to"

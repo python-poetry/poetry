@@ -33,10 +33,10 @@ repository.
 Adding a new repository is easy with the `config` command.
 
 ```bash
-poetry config repositories.foo https://foo.bar/simple/
+poetry config repositories.foo https://foo.bar/
 ```
 
-This will set the url for repository `foo` to `https://foo.bar/simple/`.
+This will set the url for repository `foo` to `https://foo.bar/`.
 
 ### Configuring credentials
 
@@ -134,6 +134,16 @@ url = "https://foo.bar/simple/"
 ```
 
 From now on, Poetry will also look for packages in your private repository.
+
+{{% note %}}
+Repositories use different urls for downloading and publishing packages.
+Poetry uses the repositories listed in the `config` for publishing
+and the sources in the `pyproject.toml` for downloading.
+Attempting to mix them causes unsupported/undefined behavior.
+
+For example, the `pypi` source url is `https://pypi.org/simple/`
+and the publishing url is `https://upload.pypi.org/legacy/`
+{{% /note %}}
 
 {{% note %}}
 Any custom repository will have precedence over PyPI.

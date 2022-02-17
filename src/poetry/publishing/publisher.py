@@ -55,6 +55,18 @@ class Publisher:
             url = self._poetry.config.get(f"repositories.{repository_name}.url")
             if url is None:
                 raise RuntimeError(f"Repository {repository_name} is not defined")
+            is_publishable = self._poetry.config.get(
+                f"repositories.{repository_name}.publish"
+            )
+
+            if is_publishable is False:
+                self._io.write_line(
+                    f"<error>{repository_name} is not a publishable repository. "
+                    "Configure one using the poetry config command</error>"
+                )
+                raise RuntimeError(
+                    f"{repository_name} is a source and cannot be published to"
+                )
 
         if not (username and password):
             # Check if we have a token first

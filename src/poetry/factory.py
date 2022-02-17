@@ -61,7 +61,7 @@ class Factory(BaseFactory):
             name = source.get("name")
             url = source.get("url")
             if name and url and name not in existing_repositories:
-                repositories[name] = {"url": url}
+                repositories[name] = {"url": url, "publish": False}
 
         config.merge({"repositories": repositories})
 
