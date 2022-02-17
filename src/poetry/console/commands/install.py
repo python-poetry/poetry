@@ -171,7 +171,10 @@ dependencies and not including the current project, run the command with the
         if return_code != 0:
             return return_code
 
-        if self.option("no-root") or self.option("only"):
+        no_root = self.option("no-root") or self.poetry.config.get(
+            "virtualenvs.no-root", False
+        )
+        if no_root or self.option("only"):
             return 0
 
         try:

@@ -167,6 +167,16 @@ If not set explicitly (default), `poetry` will use the virtualenv from the `.ven
 directory when one is available. If set to `false`, `poetry` will ignore any
 existing `.venv` directory.
 
+### `virtualenvs.no-root`
+
+**Type**: boolean
+
+Do not install the root package.
+Equivalent to `--no-root` option in `install` command.
+Defaults to `False`.
+
+If the `install` `--no-root` option is set, it overrides the config's default value.
+
 ### `virtualenvs.path`
 
 **Type**: string

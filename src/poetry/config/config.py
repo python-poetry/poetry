@@ -137,6 +137,7 @@ class Config:
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",
+            "virtualenvs.no-root",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",

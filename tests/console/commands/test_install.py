@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
+    from tests.conftest import Config
     from tests.types import CommandTesterFactory
 
 
@@ -41,3 +42,24 @@ def test_sync_option_is_passed_to_the_installer(
     tester.execute("--sync")
 
     assert tester.command.installer._requires_synchronization
+
+
+def test_no_root(tester: "CommandTester", mocker: "MockerFixture"):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+    from poetry.masonry.builders import EditableBuilder
+
+    mock = mocker.patch.object(EditableBuilder, "__init__")
+    tester.execute("--no-root")
+    mock.assert_not_called()
+
+
+def test_no_root_config(
+    tester: "CommandTester", mocker: "MockerFixture", config: "Config"
+):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+    from poetry.masonry.builders import EditableBuilder
+
+    mock = mocker.patch.object(EditableBuilder, "__init__")
+    config.merge({"virtualenvs": {"no-root": True}})
+    tester.execute("")
+    mock.assert_not_called()
