@@ -41,7 +41,7 @@ cleo = "^1.0.0a4"
 crashtest = "^0.3.0"
 entrypoints = "^0.3"
 html5lib = "^1.0"
-importlib-metadata = { version = "^1.6.0", python = "<3.8" }
+importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
 keyring = ">=21.2.0"
 packaging = "^20.4"
 pexpect = "^4.7.0"
