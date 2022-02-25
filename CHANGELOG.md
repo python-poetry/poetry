@@ -4,7 +4,7 @@
 
 ## Fixed
 
-- Fixed an issue where envs in MSYS2 always reported as broken ([#4942](9https://github.com/python-poetry/poetry/pull/4942))
+- Fixed an issue where envs in MSYS2 always reported as broken ([#4942](https://github.com/python-poetry/poetry/pull/4942))
 - Fixed an issue where conda envs in windows are always reported as broken([#5008](https://github.com/python-poetry/poetry/pull/5008))
 - Fixed an issue where Poetry doesn't find its own venv on `poetry self update` ([#5048](https://github.com/python-poetry/poetry/pull/5048))
 
