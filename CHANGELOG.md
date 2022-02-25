@@ -2,7 +2,7 @@
 
 ## [1.1.13] - 2022-02-09
 
-## Fixed
+### Fixed
 
 - Fixed an issue where envs in MSYS2 always reported as broken ([#4942](https://github.com/python-poetry/poetry/pull/4942))
 - Fixed an issue where conda envs in windows are always reported as broken([#5008](https://github.com/python-poetry/poetry/pull/5008))
