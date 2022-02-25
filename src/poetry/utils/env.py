@@ -828,7 +828,7 @@ class EnvManager:
             )
             if not self._poetry.package.python_constraint.allows(current_python):
                 raise InvalidCurrentPythonVersionError(
-                    self._poetry.package.python_versions, current_python
+                    self._poetry.package.python_versions, str(current_python)
                 )
             return env
 
