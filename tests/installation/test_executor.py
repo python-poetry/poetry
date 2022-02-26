@@ -172,7 +172,8 @@ Package operations: 4 installs, 1 update, 1 removal
     assert len(env.executed) == 1
     assert return_code == 0
     assert pip_install.call_count == 5
-    assert pip_install.call_args.kwargs == {"upgrade": True, "editable": True}
+    assert pip_install.call_args.kwargs.get("upgrade", False)
+    assert pip_install.call_args.kwargs.get("editable", False)
 
 
 def test_execute_shows_skipped_operations_if_verbose(
