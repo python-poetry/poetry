@@ -53,9 +53,3 @@ def pip_install(
         return environment.run_pip(*args)
     except EnvCommandError as e:
         raise PoetryException(f"Failed to install {path.as_posix()}") from e
-
-
-def pip_editable_install(directory: Path | Link, environment: Env) -> int | str:
-    return pip_install(
-        path=directory, environment=environment, editable=True, deps=False, upgrade=True
-    )

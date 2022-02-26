@@ -106,9 +106,7 @@ def test_execute_executes_a_batch_of_operations(
     mock_file_downloads: None,
     env: MockEnv,
 ):
-    pip_editable_install = mocker.patch(
-        "poetry.installation.executor.pip_editable_install"
-    )
+    pip_install = mocker.patch("poetry.installation.executor.pip_install")
 
     config.merge({"cache-dir": tmp_dir})
 
@@ -171,9 +169,10 @@ Package operations: 4 installs, 1 update, 1 removal
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
     assert output == expected
-    assert len(env.executed) == 5
+    assert len(env.executed) == 1
     assert return_code == 0
-    pip_editable_install.assert_called_once()
+    assert pip_install.call_count == 5
+    assert pip_install.call_args.kwargs == {"upgrade": True, "editable": True}
 
 
 def test_execute_shows_skipped_operations_if_verbose(

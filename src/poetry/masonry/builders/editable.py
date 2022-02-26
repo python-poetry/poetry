@@ -16,7 +16,7 @@ from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
-from poetry.utils.pip import pip_editable_install
+from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
@@ -93,14 +93,14 @@ class EditableBuilder(Builder):
 
         try:
             if self._env.pip_version < Version.from_parts(19, 0):
-                pip_editable_install(self._path, self._env)
+                pip_install(self._path, self._env, upgrade=True, editable=True)
             else:
                 # Temporarily rename pyproject.toml
                 shutil.move(
                     str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
                 )
                 try:
-                    pip_editable_install(self._path, self._env)
+                    pip_install(self._path, self._env, upgrade=True, editable=True)
                 finally:
                     shutil.move(
                         str(self._poetry.file.with_suffix(".tmp")),

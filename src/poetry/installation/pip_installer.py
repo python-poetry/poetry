@@ -14,7 +14,6 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.installation.base_installer import BaseInstaller
 from poetry.utils._compat import encode
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.pip import pip_editable_install
 from poetry.utils.pip import pip_install
 
 
@@ -231,15 +230,20 @@ class PipInstaller(BaseInstaller):
 
                 with builder.setup_py():
                     if package.develop:
-                        return pip_editable_install(
-                            directory=req, environment=self._env
+                        return pip_install(
+                            directory=req,
+                            environment=self._env,
+                            upgrade=True,
+                            editable=True,
                         )
                     return pip_install(
                         path=req, environment=self._env, deps=False, upgrade=True
                     )
 
         if package.develop:
-            return pip_editable_install(directory=req, environment=self._env)
+            return pip_install(
+                directory=req, environment=self._env, upgrade=True, editable=True
+            )
         return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 
     def install_git(self, package: Package) -> None:
