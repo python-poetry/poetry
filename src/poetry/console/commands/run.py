@@ -29,7 +29,11 @@ class RunCommand(EnvCommand):
         if scripts and script in scripts:
             return self.run_script(scripts[script], args)
 
-        return self.env.execute(*args)
+        try:
+            return self.env.execute(*args)
+        except FileNotFoundError:
+            self.line_error(f"<error>Command not found: <c1>{script}</c1></error>")
+            return 1
 
     @property
     def _module(self) -> "Module":
