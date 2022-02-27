@@ -13,7 +13,10 @@ class PublishCommand(Command):
 
     options = [
         option(
-            "repository", "r", "The repository to publish the package to.", flag=False
+            "repository",
+            "r",
+            "The repository name or url to publish the package to.",
+            flag=False,
         ),
         option("username", "u", "The username to access the repository.", flag=False),
         option("password", "p", "The password to access the repository.", flag=False),

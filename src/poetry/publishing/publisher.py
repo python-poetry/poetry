@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 from typing import Union
+from urllib.parse import urlparse
 
 from poetry.publishing.uploader import Uploader
 from poetry.utils.authenticator import Authenticator
@@ -51,10 +52,25 @@ class Publisher:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"
         else:
-            # Retrieving config information
+            # Retrieving config information from env vars or global config
             url = self._poetry.config.get(f"repositories.{repository_name}.url")
             if url is None:
-                raise RuntimeError(f"Repository {repository_name} is not defined")
+                logger.debug(
+                    f"Repository {repository_name} was not found in config, check if"
+                    " it's an url"
+                )
+                parsed_url = urlparse(repository_name)
+
+                if parsed_url.scheme and parsed_url.netloc:
+                    url = parsed_url.geturl()
+                    # Avoiding printing secrets in case they have passed in url
+                    repository_name = parsed_url.netloc
+                else:
+                    logger.debug(f"{repository_name} is invalid url")
+                    raise RuntimeError(
+                        f"Repository {repository_name} is not defined in config or is"
+                        " invalid url"
+                    )
 
         if not (username and password):
             # Check if we have a token first
