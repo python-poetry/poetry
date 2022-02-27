@@ -130,6 +130,13 @@ lists all packages available."""
         if self.option("default"):
             only_groups.append("default")
 
+        if not self.poetry.locker.is_locked():
+            self.line_error(
+                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
+                " it.</error>"
+            )
+            return 1
+
         locked_repo = self.poetry.locker.locked_repository(True)
 
         if only_groups:
