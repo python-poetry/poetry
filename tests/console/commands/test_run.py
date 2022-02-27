@@ -37,3 +37,14 @@ def test_run_keeps_options_passed_before_command(
         app_tester.application.long_version + "\n"
     )
     assert [] == env.executed
+
+
+def test_run_has_helpful_error_when_command_not_found(
+    app_tester: "ApplicationTester", env: "MockEnv"
+):
+    env._execute = True
+    app_tester.execute("run nonexistent-command")
+
+    assert env.executed == [["nonexistent-command"]]
+    assert app_tester.status_code == 1
+    assert app_tester.io.fetch_error() == "Command not found: nonexistent-command\n"
