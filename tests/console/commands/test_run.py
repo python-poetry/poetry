@@ -42,7 +42,7 @@ def test_run_keeps_options_passed_before_command(
 
 
 def test_run_has_helpful_error_when_command_not_found(
-    app_tester: "ApplicationTester", env: "MockEnv"
+    app_tester: ApplicationTester, env: MockEnv
 ):
     env._execute = True
     app_tester.execute("run nonexistent-command")
