@@ -94,7 +94,7 @@ class KeyRing:
 
         backend = keyring.get_keyring()
         name = backend.name.split(" ")[0]
-        if name == "fail":
+        if name in ("fail", "null"):
             logger.debug("No suitable keyring backend found")
             self._is_available = False
         elif "plaintext" in backend.name.lower():
@@ -107,7 +107,7 @@ class KeyRing:
                 backends = keyring.backend.get_all_keyring()
 
                 self._is_available = any(
-                    b.name.split(" ")[0] not in ["chainer", "fail"]
+                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
                     and "plaintext" not in b.name.lower()
                     for b in backends
                 )
