@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
-from typing import Type
 
 import pytest
 import requests
@@ -36,7 +35,7 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint: str) -> Optional[Page]:
+    def _get_page(self, endpoint: str) -> Page | None:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -331,7 +330,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 class MockHttpRepository(LegacyRepository):
-    def __init__(self, endpoint_responses: Dict, http: Type["httpretty.httpretty"]):
+    def __init__(self, endpoint_responses: dict, http: type[httpretty.httpretty]):
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
@@ -340,20 +339,20 @@ class MockHttpRepository(LegacyRepository):
             http.register_uri(http.GET, url, status=response)
 
 
-def test_get_200_returns_page(http: Type["httpretty.httpretty"]):
+def test_get_200_returns_page(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 200}, http)
 
     assert repo._get_page("/foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
-def test_get_40x_and_returns_none(http: Type["httpretty.httpretty"], status_code: int):
+def test_get_40x_and_returns_none(http: type[httpretty.httpretty], status_code: int):
     repo = MockHttpRepository({"/foo": status_code}, http)
 
     assert repo._get_page("/foo") is None
 
 
-def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
+def test_get_5xx_raises(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 500}, http)
 
     with pytest.raises(RepositoryError):
@@ -361,7 +360,7 @@ def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
 
 
 def test_get_redirected_response_url(
-    http: Type["httpretty.httpretty"], monkeypatch: "MonkeyPatch"
+    http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
 ):
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from poetry.plugins.base_plugin import BasePlugin
@@ -18,5 +20,5 @@ class Plugin(BasePlugin):
 
     type = "plugin"
 
-    def activate(self, poetry: "Poetry", io: "IO") -> None:
+    def activate(self, poetry: Poetry, io: IO) -> None:
         raise NotImplementedError()

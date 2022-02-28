@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import Callable
-from typing import Dict
 from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Union
 
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import DependencyCause
@@ -21,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class Incompatibility:
-    def __init__(self, terms: List["Term"], cause: "IncompatibilityCause") -> None:
+    def __init__(self, terms: list[Term], cause: IncompatibilityCause) -> None:
         # Remove the root package from generated incompatibilities, since it will
         # always be satisfied. This makes error reporting clearer, and may also
         # make solving more efficient.
@@ -43,7 +41,7 @@ class Incompatibility:
             or terms[0].dependency.complete_name == terms[-1].dependency.complete_name
         ):
             # Coalesce multiple terms about the same package if possible.
-            by_name: Dict[str, Dict[str, "Term"]] = {}
+            by_name: dict[str, dict[str, Term]] = {}
             for term in terms:
                 if term.dependency.complete_name not in by_name:
                     by_name[term.dependency.complete_name] = {}
@@ -81,27 +79,27 @@ class Incompatibility:
         self._cause = cause
 
     @property
-    def terms(self) -> List["Term"]:
+    def terms(self) -> list[Term]:
         return self._terms
 
     @property
     def cause(
         self,
-    ) -> Union[
-        RootCause,
-        NoVersionsCause,
-        DependencyCause,
-        ConflictCause,
-        PythonCause,
-        PlatformCause,
-        PackageNotFoundCause,
-    ]:
+    ) -> (
+        RootCause
+        | NoVersionsCause
+        | DependencyCause
+        | ConflictCause
+        | PythonCause
+        | PlatformCause
+        | PackageNotFoundCause
+    ):
         return self._cause
 
     @property
     def external_incompatibilities(
         self,
-    ) -> Iterator[Union[ConflictCause, "Incompatibility"]]:
+    ) -> Iterator[ConflictCause | Incompatibility]:
         """
         Returns all external incompatibilities in this incompatibility's
         derivation graph.
@@ -226,10 +224,10 @@ class Incompatibility:
 
     def and_to_string(
         self,
-        other: "Incompatibility",
+        other: Incompatibility,
         details: dict,
-        this_line: Optional[int],
-        other_line: Optional[int],
+        this_line: int | None,
+        other_line: int | None,
     ) -> str:
         requires_both = self._try_requires_both(other, details, this_line, other_line)
         if requires_both is not None:
@@ -260,11 +258,11 @@ class Incompatibility:
 
     def _try_requires_both(
         self,
-        other: "Incompatibility",
+        other: Incompatibility,
         details: dict,
-        this_line: Optional[int],
-        other_line: Optional[int],
-    ) -> Optional[str]:
+        this_line: int | None,
+        other_line: int | None,
+    ) -> str | None:
         if len(self._terms) == 1 or len(other.terms) == 1:
             return None
 
@@ -309,8 +307,8 @@ class Incompatibility:
         return "".join(buffer)
 
     def _try_requires_through(
-        self, other: "Incompatibility", details: dict, this_line: int, other_line: int
-    ) -> Optional[str]:
+        self, other: Incompatibility, details: dict, this_line: int, other_line: int
+    ) -> str | None:
         if len(self._terms) == 1 or len(other.terms) == 1:
             return None
 
@@ -387,8 +385,8 @@ class Incompatibility:
         return "".join(buffer)
 
     def _try_requires_forbidden(
-        self, other: "Incompatibility", details: dict, this_line: int, other_line: int
-    ) -> Optional[str]:
+        self, other: Incompatibility, details: dict, this_line: int, other_line: int
+    ) -> str | None:
         if len(self._terms) != 1 and len(other.terms) != 1:
             return None
 
@@ -442,7 +440,7 @@ class Incompatibility:
 
         return "".join(buffer)
 
-    def _terse(self, term: "Term", allow_every: bool = False) -> str:
+    def _terse(self, term: Term, allow_every: bool = False) -> str:
         if allow_every and term.constraint.is_any():
             return f"every version of {term.dependency.complete_name}"
 
@@ -451,9 +449,7 @@ class Incompatibility:
 
         return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
 
-    def _single_term_where(
-        self, callable: Callable[["Term"], bool]
-    ) -> Optional["Term"]:
+    def _single_term_where(self, callable: Callable[[Term], bool]) -> Term | None:
         found = None
         for term in self._terms:
             if not callable(term):

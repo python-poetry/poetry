@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,12 +13,12 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("install")
 
 
 def test_group_options_are_passed_to_the_installer(
-    tester: "CommandTester", mocker: "MockerFixture"
+    tester: CommandTester, mocker: MockerFixture
 ):
     """
     Group options are passed properly to the installer.
@@ -31,7 +33,7 @@ def test_group_options_are_passed_to_the_installer(
 
 
 def test_sync_option_is_passed_to_the_installer(
-    tester: "CommandTester", mocker: "MockerFixture"
+    tester: CommandTester, mocker: MockerFixture
 ):
     """
     The --sync option is passed properly to the installer.

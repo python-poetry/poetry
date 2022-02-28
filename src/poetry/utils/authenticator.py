@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import logging
 import time
 import urllib.parse
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Tuple
 
 import requests
 import requests.auth
@@ -26,7 +25,7 @@ logger = logging.getLogger()
 
 
 class Authenticator:
-    def __init__(self, config: "Config", io: Optional["IO"] = None) -> None:
+    def __init__(self, config: Config, io: IO | None = None) -> None:
         self._config = config
         self._io = io
         self._session = None
@@ -100,7 +99,7 @@ class Authenticator:
         # this should never really be hit under any sane circumstance
         raise PoetryException("Failed HTTP {} request", method.upper())
 
-    def get_credentials_for_url(self, url: str) -> Tuple[Optional[str], Optional[str]]:
+    def get_credentials_for_url(self, url: str) -> tuple[str | None, str | None]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
@@ -133,12 +132,10 @@ class Authenticator:
     def get_pypi_token(self, name: str) -> str:
         return self._password_manager.get_pypi_token(name)
 
-    def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
+    def get_http_auth(self, name: str) -> dict[str, str] | None:
         return self._get_http_auth(name, None)
 
-    def _get_http_auth(
-        self, name: str, netloc: Optional[str]
-    ) -> Optional[Dict[str, str]]:
+    def _get_http_auth(self, name: str, netloc: str | None) -> dict[str, str] | None:
         if name == "pypi":
             url = "https://upload.pypi.org/legacy/"
         else:
@@ -159,9 +156,7 @@ class Authenticator:
 
             return auth
 
-    def _get_credentials_for_netloc(
-        self, netloc: str
-    ) -> Tuple[Optional[str], Optional[str]]:
+    def _get_credentials_for_netloc(self, netloc: str) -> tuple[str | None, str | None]:
         for repository_name in self._config.get("repositories", []):
             auth = self._get_http_auth(repository_name, netloc)
 
@@ -173,8 +168,8 @@ class Authenticator:
         return None, None
 
     def _get_credentials_for_netloc_from_keyring(
-        self, url: str, netloc: str, username: Optional[str]
-    ) -> Optional[Dict[str, str]]:
+        self, url: str, netloc: str, username: str | None
+    ) -> dict[str, str] | None:
         import keyring
 
         cred = keyring.get_credential(url, username)

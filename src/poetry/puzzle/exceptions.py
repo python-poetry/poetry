@@ -1,5 +1,4 @@
-from typing import Dict
-from typing import Tuple
+from __future__ import annotations
 
 
 class SolverProblemError(Exception):
@@ -14,9 +13,9 @@ class SolverProblemError(Exception):
 
 
 class OverrideNeeded(Exception):
-    def __init__(self, *overrides: Dict) -> None:
+    def __init__(self, *overrides: dict) -> None:
         self._overrides = overrides
 
     @property
-    def overrides(self) -> Tuple[Dict, ...]:
+    def overrides(self) -> tuple[dict, ...]:
         return self._overrides

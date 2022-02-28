@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
 
 import pytest
 
@@ -18,16 +19,16 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("env remove")
 
 
 def test_remove_by_python_version(
-    mocker: "MockerFixture",
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    mocker: MockerFixture,
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -44,10 +45,10 @@ def test_remove_by_python_version(
 
 
 def test_remove_by_name(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = ""
 
@@ -62,10 +63,10 @@ def test_remove_by_name(
 
 
 def test_remove_all(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = {""}
     tester.execute("--all")
@@ -76,10 +77,10 @@ def test_remove_all(
 
 
 def test_remove_all_and_version(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = {""}
     tester.execute(f"--all {venvs_in_cache_dirs[0]}")
@@ -90,10 +91,10 @@ def test_remove_all_and_version(
 
 
 def test_remove_multiple(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = {""}
     removed_envs = venvs_in_cache_dirs[0:2]

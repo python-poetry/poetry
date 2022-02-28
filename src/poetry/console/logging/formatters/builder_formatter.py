@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 from poetry.console.logging.formatters.formatter import Formatter

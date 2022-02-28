@@ -1,7 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Union
 
 from cleo.io.inputs.argv_input import ArgvInput
 
@@ -13,22 +12,22 @@ if TYPE_CHECKING:
 class RunArgvInput(ArgvInput):
     def __init__(
         self,
-        argv: Optional[List[str]] = None,
-        definition: Optional["Definition"] = None,
+        argv: list[str] | None = None,
+        definition: Definition | None = None,
     ) -> None:
         super().__init__(argv, definition=definition)
 
-        self._parameter_options: List[str] = []
+        self._parameter_options: list[str] = []
 
     @property
-    def first_argument(self) -> Optional[str]:
+    def first_argument(self) -> str | None:
         return "run"
 
     def add_parameter_option(self, name: str) -> None:
         self._parameter_options.append(name)
 
     def has_parameter_option(
-        self, values: Union[str, List[str]], only_params: bool = False
+        self, values: str | list[str], only_params: bool = False
     ) -> bool:
         if not isinstance(values, list):
             values = [values]

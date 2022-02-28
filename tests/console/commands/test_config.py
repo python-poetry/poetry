@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 
@@ -24,12 +26,12 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("config")
 
 
 def test_show_config_with_local_config_file_empty(
-    tester: "CommandTester", mocker: "MockerFixture"
+    tester: CommandTester, mocker: MockerFixture
 ):
     mocker.patch(
         "poetry.factory.Factory.create_poetry",
@@ -41,7 +43,7 @@ def test_show_config_with_local_config_file_empty(
 
 
 def test_list_displays_default_value_if_not_set(
-    tester: "CommandTester", config: "Config", config_cache_dir: "Path"
+    tester: CommandTester, config: Config, config_cache_dir: Path
 ):
     tester.execute("--list")
 
@@ -63,7 +65,7 @@ virtualenvs.prefer-active-python = false
 
 
 def test_list_displays_set_get_setting(
-    tester: "CommandTester", config: "Config", config_cache_dir: "Path"
+    tester: CommandTester, config: Config, config_cache_dir: Path
 ):
     tester.execute("virtualenvs.create false")
 
@@ -87,7 +89,7 @@ virtualenvs.prefer-active-python = false
     assert tester.io.fetch_output() == expected
 
 
-def test_display_single_setting(tester: "CommandTester", config: "Config"):
+def test_display_single_setting(tester: CommandTester, config: Config):
     tester.execute("virtualenvs.create")
 
     expected = """true
@@ -97,7 +99,7 @@ def test_display_single_setting(tester: "CommandTester", config: "Config"):
 
 
 def test_display_single_local_setting(
-    command_tester_factory: "CommandTesterFactory", fixture_dir: "FixtureDirGetter"
+    command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
 ):
     tester = command_tester_factory(
         "config", poetry=Factory().create_poetry(fixture_dir("with_local_config"))
@@ -111,7 +113,7 @@ def test_display_single_local_setting(
 
 
 def test_list_displays_set_get_local_setting(
-    tester: "CommandTester", config: "Config", config_cache_dir: "Path"
+    tester: CommandTester, config: Config, config_cache_dir: Path
 ):
     tester.execute("virtualenvs.create false --local")
 
@@ -135,9 +137,7 @@ virtualenvs.prefer-active-python = false
     assert tester.io.fetch_output() == expected
 
 
-def test_set_pypi_token(
-    tester: "CommandTester", auth_config_source: "DictConfigSource"
-):
+def test_set_pypi_token(tester: CommandTester, auth_config_source: DictConfigSource):
     tester.execute("pypi-token.pypi mytoken")
     tester.execute("--list")
 
@@ -145,9 +145,9 @@ def test_set_pypi_token(
 
 
 def test_set_client_cert(
-    tester: "CommandTester",
-    auth_config_source: "DictConfigSource",
-    mocker: "MockerFixture",
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
 ):
     mocker.spy(ConfigSource, "__init__")
 
@@ -160,9 +160,9 @@ def test_set_client_cert(
 
 
 def test_set_cert(
-    tester: "CommandTester",
-    auth_config_source: "DictConfigSource",
-    mocker: "MockerFixture",
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
 ):
     mocker.spy(ConfigSource, "__init__")
 
@@ -172,7 +172,7 @@ def test_set_cert(
 
 
 def test_config_installer_parallel(
-    tester: "CommandTester", command_tester_factory: "CommandTesterFactory"
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
 ):
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"

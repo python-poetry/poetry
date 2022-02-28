@@ -1,8 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
 
 import pytest
 
@@ -46,14 +45,14 @@ INSTALLED_RESULTS = [
 
 class MockEnv(BaseMockEnv):
     @property
-    def paths(self) -> Dict[str, Path]:
+    def paths(self) -> dict[str, Path]:
         return {
             "purelib": SITE_PURELIB,
             "platlib": SITE_PLATLIB,
         }
 
     @property
-    def sys_path(self) -> List[Path]:
+    def sys_path(self) -> list[Path]:
         return [ENV_DIR, SITE_PLATLIB, SITE_PURELIB]
 
 
@@ -63,7 +62,7 @@ def env() -> MockEnv:
 
 
 @pytest.fixture
-def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
+def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -85,7 +84,7 @@ def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
 
 def get_package_from_repository(
     name: str, repository: InstalledRepository
-) -> Optional["Package"]:
+) -> Package | None:
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg

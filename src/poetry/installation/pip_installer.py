@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import tempfile
 import urllib.parse
@@ -6,7 +8,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Union
 
 from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -26,12 +27,12 @@ if TYPE_CHECKING:
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env: "Env", io: "IO", pool: "Pool") -> None:
+    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
         self._env = env
         self._io = io
         self._pool = pool
 
-    def install(self, package: "Package", update: bool = False) -> None:
+    def install(self, package: Package, update: bool = False) -> None:
         if package.source_type == "directory":
             self.install_directory(package)
 
@@ -101,7 +102,7 @@ class PipInstaller(BaseInstaller):
 
             self.run(*args)
 
-    def update(self, package: "Package", target: "Package") -> None:
+    def update(self, package: Package, target: Package) -> None:
         if package.source_type != target.source_type:
             # If the source type has changed, we remove the current
             # package to avoid perpetual updates in some cases
@@ -109,7 +110,7 @@ class PipInstaller(BaseInstaller):
 
         self.install(target, update=True)
 
-    def remove(self, package: "Package") -> None:
+    def remove(self, package: Package) -> None:
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -133,7 +134,7 @@ class PipInstaller(BaseInstaller):
     def run(self, *args: Any, **kwargs: Any) -> str:
         return self._env.run_pip(*args, **kwargs)
 
-    def requirement(self, package: "Package", formatted: bool = False) -> str:
+    def requirement(self, package: Package, formatted: bool = False) -> str:
         if formatted and not package.source_type:
             req = f"{package.name}=={package.version}"
             for f in package.files:
@@ -175,7 +176,7 @@ class PipInstaller(BaseInstaller):
 
         return f"{package.name}=={package.version}"
 
-    def create_temporary_requirement(self, package: "Package") -> str:
+    def create_temporary_requirement(self, package: Package) -> str:
         fd, name = tempfile.mkstemp("reqs.txt", f"{package.name}-{package.version}")
 
         try:
@@ -185,7 +186,7 @@ class PipInstaller(BaseInstaller):
 
         return name
 
-    def install_directory(self, package: "Package") -> Union[str, int]:
+    def install_directory(self, package: Package) -> str | int:
         from cleo.io.null_io import NullIO
 
         from poetry.factory import Factory
@@ -241,7 +242,7 @@ class PipInstaller(BaseInstaller):
             return pip_editable_install(directory=req, environment=self._env)
         return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 
-    def install_git(self, package: "Package") -> None:
+    def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package
         from poetry.core.vcs.git import Git
 

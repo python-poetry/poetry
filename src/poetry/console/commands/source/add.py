@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -41,14 +42,14 @@ class SourceAddCommand(Command):
     ]
 
     @staticmethod
-    def source_to_table(source: Source) -> "Table":
-        source_table: "Table" = table()
+    def source_to_table(source: Source) -> Table:
+        source_table: Table = table()
         for key, value in source.to_dict().items():
             source_table.add(key, value)
         source_table.add(nl())
         return source_table
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from poetry.factory import Factory
         from poetry.repositories import Pool
 
@@ -64,7 +65,7 @@ class SourceAddCommand(Command):
             )
             return 1
 
-        new_source: Optional[Source] = Source(
+        new_source: Source | None = Source(
             name=name, url=url, default=is_default, secondary=is_secondary
         )
         existing_sources = self.poetry.get_sources()

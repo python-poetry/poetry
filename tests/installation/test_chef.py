@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,7 +16,7 @@ if TYPE_CHECKING:
     from tests.conftest import Config
 
 
-def test_get_cached_archive_for_link(config: "Config", mocker: "MockerFixture"):
+def test_get_cached_archive_for_link(config: Config, mocker: MockerFixture):
     chef = Chef(
         config,
         MockEnv(
@@ -45,7 +47,7 @@ def test_get_cached_archive_for_link(config: "Config", mocker: "MockerFixture"):
     assert Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl") == archive
 
 
-def test_get_cached_archives_for_link(config: "Config", mocker: "MockerFixture"):
+def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
     chef = Chef(
         config,
         MockEnv(
@@ -70,7 +72,7 @@ def test_get_cached_archives_for_link(config: "Config", mocker: "MockerFixture")
     }
 
 
-def test_get_cache_directory_for_link(config: "Config", config_cache_dir: Path):
+def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
     chef = Chef(
         config,
         MockEnv(

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def test_with_compatible_locked_dependencies(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
@@ -33,7 +35,7 @@ def test_with_compatible_locked_dependencies(
 
 
 def test_with_incompatible_locked_dependencies(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", ">1.0.1"))
 
@@ -53,7 +55,7 @@ def test_with_incompatible_locked_dependencies(
 
 
 def test_with_unrelated_locked_dependencies(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
@@ -74,7 +76,7 @@ def test_with_unrelated_locked_dependencies(
 
 
 def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_satisfied(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("newdep", "2.0.0"))
@@ -109,7 +111,7 @@ def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_sa
 
 
 def test_with_compatible_locked_dependencies_use_latest(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("baz", "*"))

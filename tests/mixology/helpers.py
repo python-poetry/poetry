@@ -1,7 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
 
 from poetry.core.packages.package import Package
 
@@ -18,11 +17,11 @@ if TYPE_CHECKING:
 
 
 def add_to_repo(
-    repository: "Repository",
+    repository: Repository,
     name: str,
     version: str,
-    deps: Optional[Dict[str, str]] = None,
-    python: Optional[str] = None,
+    deps: dict[str, str] | None = None,
+    python: str | None = None,
 ) -> None:
     package = Package(name, version)
     if python:
@@ -36,13 +35,13 @@ def add_to_repo(
 
 
 def check_solver_result(
-    root: "ProjectPackage",
-    provider: "Provider",
-    result: Optional[Dict[str, str]] = None,
-    error: Optional[str] = None,
-    tries: Optional[int] = None,
-    locked: Optional[Dict[str, Package]] = None,
-    use_latest: Optional[List[str]] = None,
+    root: ProjectPackage,
+    provider: Provider,
+    result: dict[str, str] | None = None,
+    error: str | None = None,
+    tries: int | None = None,
+    locked: dict[str, Package] | None = None,
+    use_latest: list[str] | None = None,
 ) -> None:
     if locked is not None:
         locked = {k: DependencyPackage(l.to_dependency(), l) for k, l in locked.items()}

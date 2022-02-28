@@ -50,7 +50,7 @@ repos:
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
-        exclude: '^(install|get)-poetry.py$'
+        exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
@@ -58,6 +58,8 @@ repos:
       - id: isort
         name: "isort (python)"
         types: [python]
+        args: [--add-import, from __future__ import annotations]
+        exclude: ^(install|get)-poetry.py$
       - id: isort
         name: "isort (pyi)"
         types: [pyi]

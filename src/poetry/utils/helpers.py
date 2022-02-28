@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 import shutil
@@ -10,10 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import Iterator
-from typing import List
-from typing import Optional
 
 
 if TYPE_CHECKING:
@@ -48,7 +47,7 @@ def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
     shutil.rmtree(name, onerror=_del_ro)
 
 
-def get_cert(config: "Config", repository_name: str) -> Optional[Path]:
+def get_cert(config: Config, repository_name: str) -> Path | None:
     cert = config.get(f"certificates.{repository_name}.cert")
     if cert:
         return Path(cert)
@@ -56,7 +55,7 @@ def get_cert(config: "Config", repository_name: str) -> Optional[Path]:
         return None
 
 
-def get_client_cert(config: "Config", repository_name: str) -> Optional[Path]:
+def get_client_cert(config: Config, repository_name: str) -> Path | None:
     client_cert = config.get(f"certificates.{repository_name}.client-cert")
     if client_cert:
         return Path(client_cert)
@@ -79,7 +78,7 @@ def safe_rmtree(path: str) -> None:
     shutil.rmtree(path, onerror=_on_rm_error)
 
 
-def merge_dicts(d1: Dict, d2: Dict) -> None:
+def merge_dicts(d1: dict, d2: dict) -> None:
     for k in d2.keys():
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
@@ -90,7 +89,7 @@ def merge_dicts(d1: Dict, d2: Dict) -> None:
 def download_file(
     url: str,
     dest: str,
-    session: Optional["Session"] = None,
+    session: Session | None = None,
     chunk_size: int = 1024,
 ) -> None:
     import requests
@@ -107,7 +106,7 @@ def download_file(
 
 
 def get_package_version_display_string(
-    package: "Package", root: Optional[Path] = None
+    package: Package, root: Path | None = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
         path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
@@ -116,7 +115,7 @@ def get_package_version_display_string(
     return package.full_pretty_version
 
 
-def paths_csv(paths: List[Path]) -> str:
+def paths_csv(paths: list[Path]) -> str:
     return ", ".join(f'"{c!s}"' for c in paths)
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 import shutil
@@ -5,11 +7,6 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
 
 import pytest
 
@@ -82,10 +79,10 @@ def pool() -> Pool:
 
 
 @pytest.fixture()
-def mock_file_downloads(http: Type["httpretty.httpretty"]) -> None:
+def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> List[Union[int, Dict[str, Any], str]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str]:
         fixture = Path(__file__).parent.parent.joinpath(
             "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
         )
@@ -101,8 +98,8 @@ def mock_file_downloads(http: Type["httpretty.httpretty"]) -> None:
 
 
 def test_execute_executes_a_batch_of_operations(
-    mocker: "MockerFixture",
-    config: "Config",
+    mocker: MockerFixture,
+    config: Config,
     pool: Pool,
     io: BufferedIO,
     tmp_dir: str,
@@ -180,7 +177,7 @@ Package operations: 4 installs, 1 update, 1 removal
 
 
 def test_execute_shows_skipped_operations_if_verbose(
-    config: "Config", pool: Pool, io: BufferedIO, config_cache_dir: Path, env: MockEnv
+    config: Config, pool: Pool, io: BufferedIO, config_cache_dir: Path, env: MockEnv
 ):
     config.merge({"cache-dir": config_cache_dir.as_posix()})
 
@@ -204,7 +201,7 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 
 
 def test_execute_should_show_errors(
-    config: "Config", pool: Pool, mocker: "MockerFixture", io: BufferedIO, env: MockEnv
+    config: Config, pool: Pool, mocker: MockerFixture, io: BufferedIO, env: MockEnv
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -227,8 +224,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_works_with_ansi_output(
-    mocker: "MockerFixture",
-    config: "Config",
+    mocker: MockerFixture,
+    config: Config,
     pool: Pool,
     io_decorated: BufferedIO,
     tmp_dir: str,
@@ -269,8 +266,8 @@ def test_execute_works_with_ansi_output(
 
 
 def test_execute_works_with_no_ansi_output(
-    mocker: "MockerFixture",
-    config: "Config",
+    mocker: MockerFixture,
+    config: Config,
     pool: Pool,
     io_not_decorated: BufferedIO,
     tmp_dir: str,
@@ -304,7 +301,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
-    config: "Config", pool: Pool, mocker: "MockerFixture", io: BufferedIO, env: MockEnv
+    config: Config, pool: Pool, mocker: MockerFixture, io: BufferedIO, env: MockEnv
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -325,7 +322,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_gracefully_handle_io_error(
-    config: "Config", pool: Pool, mocker: "MockerFixture", io: BufferedIO, env: MockEnv
+    config: Config, pool: Pool, mocker: MockerFixture, io: BufferedIO, env: MockEnv
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -352,10 +349,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_executor_should_delete_incomplete_downloads(
-    config: "Config",
+    config: Config,
     io: BufferedIO,
     tmp_dir: str,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
     pool: Pool,
     mock_file_downloads: None,
     env: MockEnv,
@@ -389,7 +386,7 @@ def test_executor_should_delete_incomplete_downloads(
 
 
 def verify_installed_distribution(
-    venv: "VirtualEnv", package: Package, url_reference: Optional[Dict[str, Any]] = None
+    venv: VirtualEnv, package: Package, url_reference: dict[str, Any] | None = None
 ):
     distributions = list(venv.site_packages.distributions(name=package.name))
     assert len(distributions) == 1
@@ -415,7 +412,7 @@ def verify_installed_distribution(
 
 
 def test_executor_should_write_pep610_url_references_for_files(
-    tmp_venv: "VirtualEnv", pool: Pool, config: "Config", io: BufferedIO
+    tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
 ):
     url = (
         Path(__file__)
@@ -434,7 +431,7 @@ def test_executor_should_write_pep610_url_references_for_files(
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
-    tmp_venv: "VirtualEnv", pool: Pool, config: "Config", io: BufferedIO
+    tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
 ):
     url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
     package = Package(
@@ -449,7 +446,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
-    tmp_venv: "VirtualEnv", pool: Pool, config: "Config", io: BufferedIO
+    tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
 ):
     url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
     package = Package(
@@ -468,9 +465,9 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
 
 
 def test_executor_should_write_pep610_url_references_for_urls(
-    tmp_venv: "VirtualEnv",
+    tmp_venv: VirtualEnv,
     pool: Pool,
-    config: "Config",
+    config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
 ):
@@ -489,9 +486,9 @@ def test_executor_should_write_pep610_url_references_for_urls(
 
 
 def test_executor_should_write_pep610_url_references_for_git(
-    tmp_venv: "VirtualEnv",
+    tmp_venv: VirtualEnv,
     pool: Pool,
-    config: "Config",
+    config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
 ):
@@ -521,12 +518,12 @@ def test_executor_should_write_pep610_url_references_for_git(
 
 
 def test_executor_should_use_cached_link_and_hash(
-    tmp_venv: "VirtualEnv",
+    tmp_venv: VirtualEnv,
     pool: Pool,
-    config: "Config",
+    config: Config,
     io: BufferedIO,
-    mocker: "MockerFixture",
-    fixture_dir: "FixtureDirGetter",
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
 ):
     # Produce a file:/// URI that is a valid link
     link_cached = Link(
@@ -568,14 +565,14 @@ def test_executor_should_use_cached_link_and_hash(
     ],
 )
 def test_executor_should_be_initialized_with_correct_workers(
-    tmp_venv: "VirtualEnv",
+    tmp_venv: VirtualEnv,
     pool: Pool,
-    config: "Config",
+    config: Config,
     io: BufferedIO,
-    mocker: "MockerFixture",
-    max_workers: Optional[int],
-    cpu_count: Optional[int],
-    side_effect: Optional[Exception],
+    mocker: MockerFixture,
+    max_workers: int | None,
+    cpu_count: int | None,
+    side_effect: Exception | None,
     expected_workers: int,
 ):
     config.merge({"installer": {"max-workers": max_workers}})

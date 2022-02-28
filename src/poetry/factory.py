@@ -1,8 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
@@ -30,8 +29,8 @@ class Factory(BaseFactory):
 
     def create_poetry(
         self,
-        cwd: Optional[Path] = None,
-        io: Optional["IO"] = None,
+        cwd: Path | None = None,
+        io: IO | None = None,
         disable_plugins: bool = False,
     ) -> Poetry:
         if io is None:
@@ -90,7 +89,7 @@ class Factory(BaseFactory):
         return ProjectPackage(name, version, version)
 
     @classmethod
-    def create_config(cls, io: Optional["IO"] = None) -> Config:
+    def create_config(cls, io: IO | None = None) -> Config:
         if io is None:
             io = NullIO()
 
@@ -123,7 +122,7 @@ class Factory(BaseFactory):
 
     @classmethod
     def configure_sources(
-        cls, poetry: Poetry, sources: List[Dict[str, str]], config: Config, io: "IO"
+        cls, poetry: Poetry, sources: list[dict[str, str]], config: Config, io: IO
     ) -> None:
         for source in sources:
             repository = cls.create_legacy_repository(source, config)
@@ -154,8 +153,8 @@ class Factory(BaseFactory):
 
     @classmethod
     def create_legacy_repository(
-        cls, source: Dict[str, str], auth_config: Config
-    ) -> "LegacyRepository":
+        cls, source: dict[str, str], auth_config: Config
+    ) -> LegacyRepository:
         from poetry.repositories.legacy_repository import LegacyRepository
         from poetry.utils.helpers import get_cert
         from poetry.utils.helpers import get_client_cert

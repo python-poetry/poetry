@@ -1,8 +1,7 @@
+from __future__ import annotations
+
 from contextlib import suppress
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
 
 from poetry.repositories.base_repository import BaseRepository
 from poetry.repositories.exceptions import PackageNotFound
@@ -18,17 +17,17 @@ if TYPE_CHECKING:
 class Pool(BaseRepository):
     def __init__(
         self,
-        repositories: Optional[List["Repository"]] = None,
+        repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
         if repositories is None:
             repositories = []
 
-        self._lookup: Dict[Optional[str], int] = {}
-        self._repositories: List["Repository"] = []
+        self._lookup: dict[str | None, int] = {}
+        self._repositories: list[Repository] = []
         self._default = False
         self._has_primary_repositories = False
-        self._secondary_start_idx: Optional[int] = None
+        self._secondary_start_idx: int | None = None
 
         for repository in repositories:
             self.add_repository(repository)
@@ -38,7 +37,7 @@ class Pool(BaseRepository):
         super().__init__()
 
     @property
-    def repositories(self) -> List["Repository"]:
+    def repositories(self) -> list[Repository]:
         return self._repositories
 
     def has_default(self) -> bool:
@@ -52,7 +51,7 @@ class Pool(BaseRepository):
 
         return name in self._lookup
 
-    def repository(self, name: str) -> "Repository":
+    def repository(self, name: str) -> Repository:
         if name is not None:
             name = name.lower()
 
@@ -62,8 +61,8 @@ class Pool(BaseRepository):
         raise ValueError(f'Repository "{name}" does not exist.')
 
     def add_repository(
-        self, repository: "Repository", default: bool = False, secondary: bool = False
-    ) -> "Pool":
+        self, repository: Repository, default: bool = False, secondary: bool = False
+    ) -> Pool:
         """
         Adds a repository to the pool.
         """
@@ -110,7 +109,7 @@ class Pool(BaseRepository):
 
         return self
 
-    def remove_repository(self, repository_name: str) -> "Pool":
+    def remove_repository(self, repository_name: str) -> Pool:
         if repository_name is not None:
             repository_name = repository_name.lower()
 
@@ -120,12 +119,12 @@ class Pool(BaseRepository):
 
         return self
 
-    def has_package(self, package: "Package") -> bool:
+    def has_package(self, package: Package) -> bool:
         raise NotImplementedError()
 
     def package(
-        self, name: str, version: str, extras: List[str] = None, repository: str = None
-    ) -> "Package":
+        self, name: str, version: str, extras: list[str] = None, repository: str = None
+    ) -> Package:
         if repository is not None:
             repository = repository.lower()
 
@@ -153,7 +152,7 @@ class Pool(BaseRepository):
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")
 
-    def find_packages(self, dependency: "Dependency") -> List["Package"]:
+    def find_packages(self, dependency: Dependency) -> list[Package]:
         repository = dependency.source_name
         if repository is not None:
             repository = repository.lower()
@@ -174,7 +173,7 @@ class Pool(BaseRepository):
 
         return packages
 
-    def search(self, query: str) -> List["Package"]:
+    def search(self, query: str) -> list[Package]:
         from poetry.repositories.legacy_repository import LegacyRepository
 
         results = []

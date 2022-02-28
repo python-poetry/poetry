@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Type
 
 import pytest
 
@@ -19,12 +20,12 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def uploader(fixture_dir: "FixtureDirGetter") -> Uploader:
+def uploader(fixture_dir: FixtureDirGetter) -> Uploader:
     return Uploader(Factory().create_poetry(fixture_dir("simple_project")), NullIO())
 
 
 def test_uploader_properly_handles_400_errors(
-    http: Type["httpretty.httpretty"], uploader: Uploader
+    http: type[httpretty.httpretty], uploader: Uploader
 ):
     http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
 
@@ -35,7 +36,7 @@ def test_uploader_properly_handles_400_errors(
 
 
 def test_uploader_properly_handles_403_errors(
-    http: Type["httpretty.httpretty"], uploader: Uploader
+    http: type[httpretty.httpretty], uploader: Uploader
 ):
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
 
@@ -46,7 +47,7 @@ def test_uploader_properly_handles_403_errors(
 
 
 def test_uploader_properly_handles_301_redirects(
-    http: Type["httpretty.httpretty"], uploader: Uploader
+    http: type[httpretty.httpretty], uploader: Uploader
 ):
     http.register_uri(http.POST, "https://foo.com", status=301, body="Redirect")
 
@@ -60,7 +61,7 @@ def test_uploader_properly_handles_301_redirects(
 
 
 def test_uploader_registers_for_appropriate_400_errors(
-    mocker: "MockerFixture", http: Type["httpretty.httpretty"], uploader: Uploader
+    mocker: MockerFixture, http: type[httpretty.httpretty], uploader: Uploader
 ):
     register = mocker.patch("poetry.publishing.uploader.Uploader._register")
     http.register_uri(

@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import Any
-from typing import Dict
-from typing import List
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -113,8 +113,8 @@ list of installed packages
         return status
 
     def _remove_packages(
-        self, packages: List[str], section: Dict[str, Any], group_name: str
-    ) -> List[str]:
+        self, packages: list[str], section: dict[str, Any], group_name: str
+    ) -> list[str]:
         removed = []
         group = self.poetry.package.dependency_group(group_name)
         section_keys = list(section.keys())
