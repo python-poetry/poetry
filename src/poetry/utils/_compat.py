@@ -7,7 +7,7 @@ from contextlib import suppress
 
 if sys.version_info < (3, 8):
     # compatibility for python <3.8
-    import importlib_metadata as metadata
+    import importlib_metadata as metadata  # nopycln: import
 else:
     from importlib import metadata
 
