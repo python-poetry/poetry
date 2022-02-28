@@ -84,5 +84,3 @@ jobs:
 
       - name: Run pytest
         run: poetry run python -m pytest -p no:sugar -q tests/
-        env:
-          POETRY_VIRTUALENVS_IN_PROJECT: true
