@@ -1,0 +1,33 @@
+name: "\U0001F381 Feature Request"
+description: Do you have ideas for new features and improvements?
+labels:
+  - Feature
+  - Triage
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: First Check
+      description: |
+        Hi there! Thank you for wanting to make Poetry better.
+
+        Before you submit this; let's make sure of a few things.
+        Please make sure the following boxes are ticked if they are correct.
+        If not, please try and fulfill these first.
+      options:
+        - label: >-
+            I have searched the
+            [issues](https://github.com/python-poetry/poetry/issues) of this
+            repo and believe that this is not a duplicate.
+          required: true
+        - label: >-
+            I have searched the [documentation](https://python-poetry.org/docs/)
+            and believe that my question is not covered.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Now feel free to write your idea for improvement. Thanks again \U0001F64C ❤️"
+    validations:
+      required: true
