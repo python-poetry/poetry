@@ -1587,3 +1587,13 @@ required by
 """.splitlines()
     actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
     assert actual == expected
+
+
+def test_show_errors_without_lock_file(tester: "CommandTester", poetry: "Poetry"):
+    assert not poetry.locker.lock.exists()
+
+    tester.execute()
+
+    expected = "Error: poetry.lock not found. Run `poetry lock` to create it.\n"
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
