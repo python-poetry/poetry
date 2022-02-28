@@ -1589,7 +1589,7 @@ required by
     assert actual == expected
 
 
-def test_show_errors_without_lock_file(tester: "CommandTester", poetry: "Poetry"):
+def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry):
     assert not poetry.locker.lock.exists()
 
     tester.execute()
