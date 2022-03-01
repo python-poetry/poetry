@@ -111,7 +111,6 @@ files = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.config.file_config_source',
   'poetry.console.application',
   'poetry.console.logging.formatters.builder_formatter',
   'poetry.console.commands.init',
@@ -129,7 +128,6 @@ module = [
   'poetry.mixology.solutions.solutions.python_requirement_solution',
   'poetry.mixology.term',
   'poetry.mixology.version_solver',
-  'poetry.packages.locker',
   'poetry.repositories.installed_repository',
   'poetry.utils.appdirs',
   'poetry.utils.authenticator',
