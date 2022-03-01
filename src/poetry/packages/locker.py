@@ -32,6 +32,7 @@ from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
+    from tomlkit.items import InlineTable
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories import Repository
@@ -147,6 +148,8 @@ class Locker:
                         except InvalidRequirement:
                             # handle lock files with invalid PEP 508
                             m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)
+                            if not m:
+                                raise
                             dep_name = m.group(1)
                             extras = m.group(2) or ""
                             constraint = m.group(3) or "*"
@@ -289,7 +292,7 @@ class Locker:
     ) -> Iterable[Dependency]:
         # group packages entries by name, this is required because requirement might use
         # different constraints
-        packages_by_name = {}
+        packages_by_name: dict[str, list[Package]] = {}
         for pkg in locked_packages:
             if pkg.name not in packages_by_name:
                 packages_by_name[pkg.name] = []
@@ -349,11 +352,9 @@ class Locker:
         repository = self.locked_repository(with_dev_reqs=dev)
 
         # Build a set of all packages required by our selected extras
-        extra_package_names = (
-            None if (isinstance(extras, bool) and extras is True) else ()
-        )
+        extra_package_names: set[str] | None = None
 
-        if extra_package_names is not None:
+        if extras is not True:
             extra_package_names = set(
                 get_extra_package_names(
                     repository.packages,
@@ -505,7 +506,7 @@ class Locker:
         return locked
 
     def _dump_package(self, package: Package) -> dict:
-        dependencies = {}
+        dependencies: dict[str, list[InlineTable]] = {}
         for dependency in sorted(package.requires, key=lambda d: d.name):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
