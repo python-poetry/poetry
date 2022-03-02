@@ -131,7 +131,6 @@ module = [
   'poetry.mixology.version_solver',
   'poetry.packages.locker',
   'poetry.repositories.installed_repository',
-  'poetry.utils.appdirs',
   'poetry.utils.authenticator',
   'poetry.utils.env',
   'poetry.utils.exporter',

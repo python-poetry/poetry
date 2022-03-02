@@ -7,17 +7,11 @@ from __future__ import annotations
 import os
 import sys
 
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 
-def expanduser(path: str | Path) -> str:
+def expanduser(path: str) -> str:
     """
     Expand ~ and ~user constructions.
 
@@ -214,14 +208,14 @@ def _get_win_folder_with_ctypes(csidl_name: str) -> str:
     }[csidl_name]
 
     buf = ctypes.create_unicode_buffer(1024)
-    ctypes.windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)
+    ctypes.windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)  # type: ignore[attr-defined]  # noqa: E501
 
     # Downgrade to short path name if have highbit chars. See
     # <http://bugs.activestate.com/show_bug.cgi?id=85099>.
     has_high_char = any(ord(c) > 255 for c in buf)
     if has_high_char:
         buf2 = ctypes.create_unicode_buffer(1024)
-        if ctypes.windll.kernel32.GetShortPathNameW(buf.value, buf2, 1024):
+        if ctypes.windll.kernel32.GetShortPathNameW(buf.value, buf2, 1024):  # type: ignore[attr-defined]  # noqa: E501
             buf = buf2
 
     return buf.value
