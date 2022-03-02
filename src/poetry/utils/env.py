@@ -1106,13 +1106,31 @@ class Env:
         self._is_windows = sys.platform == "win32"
         self._is_mingw = sysconfig.get_platform().startswith("mingw")
         self._is_conda = bool(os.environ.get("CONDA_DEFAULT_ENV"))
+        self._is_venv = bool(os.environ.get("VIRTUAL_ENV"))
+        self._is_ms_version_python = 'AppData' in path.parts
 
+        # on none-windows os, the python, pip executables are in `bin` directory of root whether it is in venv or not
+        # on windows and venv, the python, pip executables are in `Scripts` of root
+        # on windows ms-python, the python, pip executables are in root
+        # on windows and none venv, the python is in root while pip is in `Scripts`
         if not self._is_windows or self._is_mingw:
             bin_dir = "bin"
-        else:
+            pip_bin_dir = "bin"
+        elif self._is_windows and self._is_venv:
             bin_dir = "Scripts"
-        self._path = path
+            pip_bin_dir = "Scripts"
+        elif self._is_windows and self._is_ms_version_python:
+            bin_dir = ""
+            pip_bin_dir = ""
+        else:
+            bin_dir = ""
+            pip_bin_dir = "Scripts"
+
+        # the path is the python executable path
+        # make self._path to the dirname of python executable path.
+        self._path = path.parent
         self._bin_dir = self._path / bin_dir
+        self._pip_bin_dir = self._path / pip_bin_dir
 
         self._executable = "python"
         self._pip_executable = "pip"
@@ -1167,14 +1185,9 @@ class Env:
         return GenericEnv(self.base, child_env=self)
 
     def _find_python_executable(self) -> None:
-        bin_dir = self._bin_dir
-
-        if self._is_windows and self._is_conda:
-            bin_dir = self._path
-
         python_executables = sorted(
             p.name
-            for p in bin_dir.glob("python*")
+            for p in self._pip_bin_dir.glob("python*")
             if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
@@ -1187,7 +1200,7 @@ class Env:
     def _find_pip_executable(self) -> None:
         pip_executables = sorted(
             p.name
-            for p in self._bin_dir.glob("pip*")
+            for p in self._pip_bin_dir.glob("pip*")
             if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if pip_executables:
