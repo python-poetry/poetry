@@ -121,10 +121,10 @@ class KeyRing:
 class PasswordManager:
     def __init__(self, config: Config) -> None:
         self._config = config
-        self._keyring = None
+        self._keyring: KeyRing | None = None
 
     @property
-    def keyring(self) -> KeyRing | None:
+    def keyring(self) -> KeyRing:
         if self._keyring is None:
             self._keyring = KeyRing("poetry-repository")
             if not self._keyring.is_available():
@@ -141,14 +141,15 @@ class PasswordManager:
             self.keyring.set_password(name, "__token__", token)
 
     def get_pypi_token(self, name: str) -> str:
-        if not self.keyring.is_available():
-            return self._config.get(f"pypi-token.{name}")
-
-        return self.keyring.get_password(name, "__token__")
+        token = self.keyring.get_password(name, "__token__")
+        if token is not None:
+            return token
+        return self._config.get(f"pypi-token.{name}")
 
     def delete_pypi_token(self, name: str) -> None:
         if not self.keyring.is_available():
-            return self._config.auth_config_source.remove_property(f"pypi-token.{name}")
+            self._config.auth_config_source.remove_property(f"pypi-token.{name}")
+            return
 
         self.keyring.delete_password(name, "__token__")
 

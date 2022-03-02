@@ -133,7 +133,6 @@ module = [
   'poetry.repositories.installed_repository',
   'poetry.utils.authenticator',
   'poetry.utils.env',
-  'poetry.utils.password_manager',
   'poetry.utils.setup_reader',
 ]
 ignore_errors = true
