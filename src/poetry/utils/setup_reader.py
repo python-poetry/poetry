@@ -312,6 +312,7 @@ class SetupReader:
 
             if variable is not None and isinstance(variable, ast.Str):
                 return variable.s
+        return None
 
     def _find_in_call(self, call: ast.Call, name: str) -> Any | None:
         for keyword in call.keywords:
@@ -342,8 +343,9 @@ class SetupReader:
 
                 if target.id == name:
                     return elem.value
+        return None
 
-    def _find_in_dict(self, dict_: ast.Dict | ast.Call, name: str) -> Any | None:
+    def _find_in_dict(self, dict_: ast.Dict, name: str) -> Any | None:
         for key, val in zip(dict_.keys, dict_.values):
             if isinstance(key, ast.Str) and key.s == name:
                 return val
