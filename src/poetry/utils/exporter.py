@@ -6,15 +6,15 @@ import urllib.parse
 from typing import TYPE_CHECKING
 from typing import Sequence
 
+from cleo.io.io import IO
 from poetry.core.packages.utils.utils import path_to_url
 
+from poetry.repositories.remote_repository import RemoteRepository
 from poetry.utils._compat import decode
 
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -143,7 +143,7 @@ class Exporter:
                 repositories = [
                     r
                     for r in self._poetry.pool.repositories
-                    if r.url == index.rstrip("/")
+                    if (isinstance(r, RemoteRepository) and r.url == index.rstrip("/"))
                 ]
                 if not repositories:
                     continue
@@ -151,6 +151,7 @@ class Exporter:
                 if (
                     self._poetry.pool.has_default()
                     and repository is self._poetry.pool.repositories[0]
+                    and isinstance(repository, RemoteRepository)
                 ):
                     url = (
                         repository.authenticated_url
@@ -174,9 +175,9 @@ class Exporter:
 
     def _output(self, content: str, cwd: Path, output: IO | str) -> None:
         decoded = decode(content)
-        try:
+        if isinstance(output, IO):
             output.write(decoded)
-        except AttributeError:
+        else:
             filepath = cwd / output
             with filepath.open("w", encoding="utf-8") as f:
                 f.write(decoded)
