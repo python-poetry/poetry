@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
 
     from poetry.config.config import Config
+    from poetry.utils.types import Auth
 
 
 logger = logging.getLogger()
@@ -28,8 +29,8 @@ class Authenticator:
     def __init__(self, config: Config, io: IO | None = None) -> None:
         self._config = config
         self._io = io
-        self._session = None
-        self._credentials = {}
+        self._session: requests.Session | None = None
+        self._credentials: dict[str, tuple[str | None, str | None]] = {}
         self._password_manager = PasswordManager(self._config)
 
     def _log(self, message: str, level: str = "debug") -> None:
@@ -69,7 +70,7 @@ class Authenticator:
         )
 
         # Send the request.
-        send_kwargs = {
+        send_kwargs: Any = {
             "timeout": kwargs.get("timeout"),
             "allow_redirects": kwargs.get("allow_redirects", True),
         }
@@ -117,10 +118,13 @@ class Authenticator:
                 # Split from the left because that's how urllib.parse.urlsplit()
                 # behaves if more than one : is present (which again can be checked
                 # using the password attribute of the return value)
-                credentials = auth.split(":", 1) if ":" in auth else (auth, None)
-                credentials = tuple(
-                    None if x is None else urllib.parse.unquote(x) for x in credentials
+                credentials_tmp = auth.split(":", 1) if ":" in auth else (auth, None)
+                credentials_tmp = tuple(
+                    None if x is None else urllib.parse.unquote(x)
+                    for x in credentials_tmp
                 )
+
+                credentials = credentials_tmp[0], credentials_tmp[1]
 
         if credentials[0] is not None or credentials[1] is not None:
             credentials = (credentials[0] or "", credentials[1] or "")
@@ -132,10 +136,10 @@ class Authenticator:
     def get_pypi_token(self, name: str) -> str:
         return self._password_manager.get_pypi_token(name)
 
-    def get_http_auth(self, name: str) -> dict[str, str] | None:
+    def get_http_auth(self, name: str) -> Auth | None:
         return self._get_http_auth(name, None)
 
-    def _get_http_auth(self, name: str, netloc: str | None) -> dict[str, str] | None:
+    def _get_http_auth(self, name: str, netloc: str | None) -> Auth | None:
         if name == "pypi":
             url = "https://upload.pypi.org/legacy/"
         else:
@@ -155,6 +159,7 @@ class Authenticator:
                 )
 
             return auth
+        return None
 
     def _get_credentials_for_netloc(self, netloc: str) -> tuple[str | None, str | None]:
         for repository_name in self._config.get("repositories", []):
@@ -169,7 +174,7 @@ class Authenticator:
 
     def _get_credentials_for_netloc_from_keyring(
         self, url: str, netloc: str, username: str | None
-    ) -> dict[str, str] | None:
+    ) -> Auth | None:
         import keyring
 
         cred = keyring.get_credential(url, username)

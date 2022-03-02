@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from poetry.config.config import Config
+    from poetry.utils.types import Auth
+
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +155,7 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> dict[str, str] | None:
+    def get_http_auth(self, name: str) -> Auth | None:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
@@ -182,7 +184,7 @@ class PasswordManager:
 
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
-        if not auth or "username" not in auth:
+        if auth is None or "username" not in auth:
             return
 
         with suppress(KeyRingError):

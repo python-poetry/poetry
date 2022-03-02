@@ -14,13 +14,9 @@ from poetry.utils._compat import decode
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Protocol
 
     from poetry.poetry import Poetry
-
-    class Writer(Protocol):
-        def write(self, text: str) -> None:
-            pass
+    from poetry.utils.types import Writer
 
 
 class Exporter:
