@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import contextlib
 import itertools
 import urllib.parse
 
 from typing import TYPE_CHECKING
 from typing import Sequence
 
-from cleo.io.io import IO
 from poetry.core.packages.utils.utils import path_to_url
 
 from poetry.repositories.remote_repository import RemoteRepository
@@ -15,6 +15,8 @@ from poetry.utils._compat import decode
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -175,9 +177,11 @@ class Exporter:
 
     def _output(self, content: str, cwd: Path, output: IO | str) -> None:
         decoded = decode(content)
-        if isinstance(output, IO):
-            output.write(decoded)
-        else:
+        if isinstance(output, str):
             filepath = cwd / output
             with filepath.open("w", encoding="utf-8") as f:
                 f.write(decoded)
+            return
+        with contextlib.suppress(AttributeError):
+            # FIXME
+            output.write(decoded)
