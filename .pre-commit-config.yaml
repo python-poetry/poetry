@@ -87,7 +87,6 @@ repos:
         pass_filenames: false
         additional_dependencies:
           - types-requests
-          - typed-ast
 
   - repo: https://github.com/pre-commit/pre-commit
     rev: v2.17.0
