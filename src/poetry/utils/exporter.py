@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import itertools
 import urllib.parse
 
@@ -15,10 +14,13 @@ from poetry.utils._compat import decode
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from cleo.io.io import IO
+    from typing import Protocol
 
     from poetry.poetry import Poetry
+
+    class Writer(Protocol):
+        def write(self, text: str) -> None:
+            pass
 
 
 class Exporter:
@@ -38,7 +40,7 @@ class Exporter:
         self,
         fmt: str,
         cwd: Path,
-        output: IO | str,
+        output: Writer | str,
         with_hashes: bool = True,
         dev: bool = False,
         extras: bool | Sequence[str] | None = None,
@@ -61,7 +63,7 @@ class Exporter:
     def _export_requirements_txt(
         self,
         cwd: Path,
-        output: IO | str,
+        output: Writer | str,
         with_hashes: bool = True,
         dev: bool = False,
         extras: bool | Sequence[str] | None = None,
@@ -173,15 +175,13 @@ class Exporter:
 
             content = indexes_header + "\n" + content
 
-        self._output(content, cwd, output)
+        self._write(content, cwd, output)
 
-    def _output(self, content: str, cwd: Path, output: IO | str) -> None:
+    def _write(self, content: str, cwd: Path, output: Writer | str) -> None:
         decoded = decode(content)
         if isinstance(output, str):
             filepath = cwd / output
             with filepath.open("w", encoding="utf-8") as f:
                 f.write(decoded)
             return
-        with contextlib.suppress(AttributeError):
-            # FIXME
-            output.write(decoded)
+        output.write(decoded)
