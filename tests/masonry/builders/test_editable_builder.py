@@ -192,15 +192,13 @@ if __name__ == '__main__':
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     mocker: MockerFixture, extended_poetry: Poetry, tmp_dir: str
 ):
-    pip_editable_install = mocker.patch(
-        "poetry.masonry.builders.editable.pip_editable_install"
-    )
+    pip_install = mocker.patch("poetry.masonry.builders.editable.pip_install")
     env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
-    pip_editable_install.assert_called_once_with(
-        extended_poetry.pyproject.file.path.parent, env
+    pip_install.assert_called_once_with(
+        extended_poetry.pyproject.file.path.parent, env, upgrade=True, editable=True
     )
     assert [] == env.executed
 

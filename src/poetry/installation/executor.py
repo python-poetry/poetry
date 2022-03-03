@@ -26,7 +26,6 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.pip import pip_editable_install
 from poetry.utils.pip import pip_install
 
 
@@ -115,12 +114,8 @@ class Executor:
     def pip_install(
         self, req: Path | Link, upgrade: bool = False, editable: bool = False
     ) -> int:
-        func = pip_install
-        if editable:
-            func = pip_editable_install
-
         try:
-            func(req, self._env, upgrade=upgrade)
+            pip_install(req, self._env, upgrade=upgrade, editable=editable)
         except EnvCommandError as e:
             output = decode(e.e.output)
             if (
@@ -572,11 +567,11 @@ class Executor:
 
                 with builder.setup_py():
                     if package.develop:
-                        return self.pip_install(req, editable=True)
+                        return self.pip_install(req, upgrade=True, editable=True)
                     return self.pip_install(req, upgrade=True)
 
         if package.develop:
-            return self.pip_install(req, editable=True)
+            return self.pip_install(req, upgrade=True, editable=True)
 
         return self.pip_install(req, upgrade=True)
 
