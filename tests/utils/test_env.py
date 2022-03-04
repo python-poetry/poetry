@@ -24,6 +24,7 @@ from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv
+from poetry.utils.env import InvalidCurrentPythonVersionError
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -991,6 +992,33 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         with_setuptools=True,
         with_wheel=True,
     )
+
+
+def test_create_venv_fails_if_current_python_version_is_not_supported(
+    manager: EnvManager, poetry: "Poetry"
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    manager.create_venv(NullIO())
+
+    current_version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    next_version = ".".join(
+        str(c) for c in (current_version.major, current_version.minor + 1, 0)
+    )
+    package_version = "~" + next_version
+    poetry.package.python_versions = package_version
+
+    with pytest.raises(InvalidCurrentPythonVersionError) as e:
+        manager.create_venv(NullIO())
+
+    expected_message = (
+        f"Current Python version ({current_version}) is not allowed by the project"
+        f' ({package_version}).\nPlease change python executable via the "env use"'
+        " command."
+    )
+
+    assert expected_message == str(e.value)
 
 
 def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
