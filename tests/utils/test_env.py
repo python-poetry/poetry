@@ -995,7 +995,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
 
 
 def test_create_venv_fails_if_current_python_version_is_not_supported(
-    manager: EnvManager, poetry: "Poetry"
+    manager: EnvManager, poetry: Poetry
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
