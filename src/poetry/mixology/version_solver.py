@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
@@ -365,12 +366,21 @@ class VersionSolver:
                 )
                 return dependency.complete_name
 
-            try:
-                version = packages[0]
-            except IndexError:
-                version = None
+            package = None
+            if dependency.name not in self._use_latest:
+                # prefer locked version of compatible (not exact same) dependency;
+                # required in order to not unnecessarily update dependencies with
+                # extras, e.g. "coverage" vs. "coverage[toml]"
+                locked = self._locked.get(dependency.name, None)
+            if locked is not None:
+                package = next(
+                    (p for p in packages if p.version == locked.version), None
+                )
+            if package is None:
+                with suppress(IndexError):
+                    package = packages[0]
 
-            if version is None:
+            if package is None:
                 # If there are no versions that satisfy the constraint,
                 # add an incompatibility that indicates that.
                 self._add_incompatibility(
@@ -379,12 +389,12 @@ class VersionSolver:
 
                 return dependency.complete_name
         else:
-            version = locked
+            package = locked
 
-        version = self._provider.complete_package(version)
+        package = self._provider.complete_package(package)
 
         conflict = False
-        for incompatibility in self._provider.incompatibilities_for(version):
+        for incompatibility in self._provider.incompatibilities_for(package):
             self._add_incompatibility(incompatibility)
 
             # If an incompatibility is already satisfied, then selecting version
@@ -399,9 +409,9 @@ class VersionSolver:
             )
 
         if not conflict:
-            self._solution.decide(version)
+            self._solution.decide(package)
             self._log(
-                f"selecting {version.complete_name} ({version.full_pretty_version})"
+                f"selecting {package.complete_name} ({package.full_pretty_version})"
             )
 
         return dependency.complete_name
