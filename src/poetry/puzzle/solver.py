@@ -140,11 +140,12 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
-        # NOTE passing explicit empty array for seen to reset between invocations during
+        # NOTE passing explicit empty set for seen to reset between invocations during
         # update + install cycle
         results = dict(
             depth_first_search(
-                PackageNode(self._package, packages, seen=[]), aggregate_package_nodes
+                PackageNode(self._package, packages, seen=set()),
+                aggregate_package_nodes,
             )
         )
 
@@ -258,7 +259,7 @@ class PackageNode(DFSNode):
         self,
         package: Package,
         packages: list[Package],
-        seen: list[Package],
+        seen: set[Package],
         previous: PackageNode | None = None,
         previous_dep: None
         | (
@@ -309,8 +310,8 @@ class PackageNode(DFSNode):
         # skip already traversed packages
         if self.package in self.seen:
             return []
-        else:
-            self.seen.append(self.package)
+
+        self.seen.add(self.package)
 
         if (
             self.dep
