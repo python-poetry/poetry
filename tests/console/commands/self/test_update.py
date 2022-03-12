@@ -14,6 +14,7 @@ from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
+from poetry.utils._compat import metadata
 from poetry.utils.env import EnvManager
 
 
@@ -47,19 +48,28 @@ def test_self_update_can_update_from_recommended_installation(
     command._data_dir = tmp_venv.path.parent
 
     new_version = Version.parse(__version__).next_minor().text
+    core_version = metadata.version("poetry-core")
 
     old_poetry = Package("poetry", __version__)
     old_poetry.add_dependency(Factory.create_dependency("cleo", "^0.8.2"))
+    old_poetry.add_dependency(
+        Factory.create_dependency("poetry-core", f"~{core_version}")
+    )
 
     new_poetry = Package("poetry", new_version)
     new_poetry.add_dependency(Factory.create_dependency("cleo", "^1.0.0"))
+    new_poetry.add_dependency(
+        Factory.create_dependency("poetry-core", f"~{core_version}")
+    )
 
     installed_repository = Repository()
     installed_repository.add_package(old_poetry)
+    installed_repository.add_package(Package("poetry-core", core_version))
     installed_repository.add_package(Package("cleo", "0.8.2"))
 
     repository = Repository()
     repository.add_package(new_poetry)
+    repository.add_package(Package("poetry-core", core_version))
     repository.add_package(Package("cleo", "1.0.0"))
 
     pool = Pool()
@@ -72,7 +82,7 @@ def test_self_update_can_update_from_recommended_installation(
     tester.execute()
 
     expected_output = f"""\
-Updating Poetry to 1.2.0
+Updating poetry to 1.2.0.
 
 Updating dependencies
 Resolving dependencies...
@@ -84,10 +94,168 @@ Package operations: 0 installs, 2 updates, 0 removals
 
 Updating the poetry script
 
-Poetry ({new_version}) is installed now. Great!
+Successfully updated poetry to {new_version}. Great!
 """
 
     assert tester.io.fetch_output() == expected_output
+
+
+def test_self_update_core_only(
+    tester: CommandTester,
+    http: type[httpretty.httpretty],
+    mocker: MockerFixture,
+    environ: None,
+    tmp_venv: VirtualEnv,
+):
+    mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
+
+    command = tester.command
+    command._data_dir = tmp_venv.path.parent
+
+    core_version = metadata.version("poetry-core")
+    new_core_version = Version.parse(core_version).next_patch().text
+
+    old_poetry = Package("poetry", __version__)
+    old_poetry.add_dependency(Factory.create_dependency("cleo", "^0.8.2"))
+    old_poetry.add_dependency(
+        Factory.create_dependency("poetry-core", f"~{core_version}")
+    )
+
+    installed_repository = Repository()
+    installed_repository.add_package(old_poetry)
+    installed_repository.add_package(Package("poetry-core", core_version))
+    installed_repository.add_package(Package("cleo", "0.8.2"))
+
+    repository = Repository()
+    repository.add_package(old_poetry)
+    repository.add_package(Package("poetry-core", new_core_version))
+    repository.add_package(Package("cleo", "0.8.2"))
+
+    pool = Pool()
+    pool.add_repository(repository)
+
+    command._pool = pool
+
+    mocker.patch.object(InstalledRepository, "load", return_value=installed_repository)
+
+    tester.execute()
+
+    expected_output = f"""\
+Updating poetry-core to {new_core_version}.
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 0 installs, 1 update, 0 removals
+
+  - Updating poetry-core ({core_version} -> {new_core_version})
+
+Successfully updated poetry-core to {new_core_version}. Great!
+"""
+
+    assert tester.io.fetch_output() == expected_output
+
+
+def test_self_update_specific_core(
+    tester: CommandTester,
+    http: type[httpretty.httpretty],
+    mocker: MockerFixture,
+    environ: None,
+    tmp_venv: VirtualEnv,
+):
+    mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
+
+    command = tester.command
+    command._data_dir = tmp_venv.path.parent
+
+    core_version = metadata.version("poetry-core")
+    next_patch_1 = Version.parse(core_version).next_patch().text
+    next_patch_2 = Version.parse(next_patch_1).next_patch().text
+
+    old_poetry = Package("poetry", __version__)
+    old_poetry.add_dependency(Factory.create_dependency("cleo", "^0.8.2"))
+    old_poetry.add_dependency(
+        Factory.create_dependency("poetry-core", f"~{core_version}")
+    )
+
+    installed_repository = Repository()
+    installed_repository.add_package(old_poetry)
+    installed_repository.add_package(Package("poetry-core", core_version))
+    installed_repository.add_package(Package("cleo", "0.8.2"))
+
+    repository = Repository()
+    repository.add_package(old_poetry)
+    repository.add_package(Package("poetry-core", next_patch_1))
+    repository.add_package(Package("poetry-core", next_patch_2))
+    repository.add_package(Package("cleo", "0.8.2"))
+
+    pool = Pool()
+    pool.add_repository(repository)
+
+    command._pool = pool
+
+    mocker.patch.object(InstalledRepository, "load", return_value=installed_repository)
+
+    tester.execute(f"--core {next_patch_1}")
+
+    expected_output = f"""\
+Updating poetry-core to {next_patch_1}.
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 0 installs, 1 update, 0 removals
+
+  - Updating poetry-core ({core_version} -> {next_patch_1})
+
+Successfully updated poetry-core to {next_patch_1}. Great!
+"""
+
+    assert tester.io.fetch_output() == expected_output
+
+
+def test_self_update_not_supported_core(
+    tester: CommandTester,
+    http: type[httpretty.httpretty],
+    mocker: MockerFixture,
+    environ: None,
+    tmp_venv: VirtualEnv,
+):
+    mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
+
+    command = tester.command
+    command._data_dir = tmp_venv.path.parent
+
+    core_version = metadata.version("poetry-core")
+    next_major_core_version = Version.parse(core_version).next_major().text
+
+    old_poetry = Package("poetry", __version__)
+    old_poetry.add_dependency(Factory.create_dependency("cleo", "^0.8.2"))
+    old_poetry.add_dependency(
+        Factory.create_dependency("poetry-core", f"~{core_version}")
+    )
+
+    installed_repository = Repository()
+    installed_repository.add_package(old_poetry)
+    installed_repository.add_package(Package("poetry-core", core_version))
+    installed_repository.add_package(Package("cleo", "0.8.2"))
+
+    repository = Repository()
+    repository.add_package(old_poetry)
+    repository.add_package(Package("poetry-core", next_major_core_version))
+    repository.add_package(Package("cleo", "0.8.2"))
+
+    pool = Pool()
+    pool.add_repository(repository)
+
+    command._pool = pool
+
+    mocker.patch.object(InstalledRepository, "load", return_value=installed_repository)
+
+    with pytest.raises(PoetrySimpleConsoleException) as error:
+        tester.execute(f"--core {next_major_core_version}")
+
+    assert str(error.value) == "poetry-core 2.0.0 is not supported by poetry 1.2.0a2."
 
 
 def test_self_update_does_not_update_non_recommended_installation(

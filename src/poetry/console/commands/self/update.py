@@ -16,7 +16,6 @@ from poetry.console.commands.command import Command
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
-    from poetry.core.semver.version import Version
 
     from poetry.repositories.pool import Pool
 
@@ -35,6 +34,7 @@ class SelfUpdateCommand(Command):
             "Output the operations but do not execute anything "
             "(implicitly enables --verbose).",
         ),
+        option("core", None, "The poetry-core version to update to.", flag=False),
     ]
 
     _data_dir = None
@@ -88,68 +88,40 @@ class SelfUpdateCommand(Command):
         return pool
 
     def handle(self) -> int:
-        from poetry.core.packages.dependency import Dependency
-        from poetry.core.semver.version import Version
+        from poetry.utils._compat import metadata
 
-        from poetry.__version__ import __version__
+        poetry_release = self._find_poetry_release()
+        core_release = self._find_compatible_core_release(poetry_release)
 
-        version = self.argument("version")
-        if not version:
-            version = ">=" + __version__
+        update_releases = [
+            release
+            for release in {poetry_release, core_release}
+            if release.version.text != metadata.version(release.name)
+        ]
 
-        repo = self.pool.repositories[0]
-        packages = repo.find_packages(
-            Dependency("poetry", version, allows_prereleases=self.option("preview"))
-        )
-        if not packages:
-            self.line("No release found for the specified version")
-            return 1
-
-        def cmp(x: Package, y: Package) -> int:
-            if x.version == y.version:
-                return 0
-            return int(x.version < y.version or -1)
-
-        packages.sort(key=cmp_to_key(cmp))
-
-        release = None
-        for package in packages:
-            if package.is_prerelease():
-                if self.option("preview"):
-                    release = package
-
-                    break
-
-                continue
-
-            release = package
-
-            break
-
-        if release is None:
-            self.line("No new release found")
-            return 1
-
-        if release.version == Version.parse(__version__):
+        if not update_releases:
             self.line("You are using the latest version")
             return 0
 
-        self.line(f"Updating <c1>Poetry</c1> to <c2>{release.version}</c2>")
+        msg = [
+            f"<c1>{release.pretty_name}</c1> to <c2>{release.version}</c2>"
+            for release in update_releases
+        ]
+        self.line(f"Updating {' and '.join(msg)}.")
         self.line("")
 
-        self.update(release)
+        self.update(update_releases)
+
+        if poetry_release in update_releases:
+            self._make_bin()
 
         self.line("")
-        self.line(
-            f"<c1>Poetry</c1> (<c2>{release.version}</c2>) is installed now. Great!"
-        )
+        self.line(f"Successfully updated {' and '.join(msg)}. Great!")
 
         return 0
 
-    def update(self, release: Package) -> None:
+    def update(self, releases: list[Package]) -> None:
         from poetry.utils.env import EnvManager
-
-        version = release.version
 
         env = EnvManager.get_system_env(naive=True)
 
@@ -165,10 +137,90 @@ class SelfUpdateCommand(Command):
                 "so it cannot be updated automatically."
             )
 
-        self._update(version)
-        self._make_bin()
+        self._update(releases)
 
-    def _update(self, version: Version) -> None:
+    def _find_poetry_release(self) -> Package:
+        from poetry.core.semver.version import Version
+
+        from poetry.utils._compat import metadata
+
+        is_prerelease = False
+        version = self.argument("version")
+        if not version:
+            is_prerelease = Version.parse(metadata.version("poetry")).is_prerelease()
+            version = ">=" + metadata.version("poetry")
+
+        release = self._find_release(
+            "poetry", version, is_prerelease or self.option("preview")
+        )
+        return release
+
+    def _find_compatible_core_release(self, poetry_release: Package) -> Package:
+        from poetry.core.semver.version import Version
+
+        from poetry.console.exceptions import PoetrySimpleConsoleException
+
+        core = self.option("core")
+
+        for dependency in poetry_release.all_requires:
+            if dependency.name == "poetry-core":
+                if core and not dependency.constraint.allows(Version.parse(core)):
+                    raise PoetrySimpleConsoleException(
+                        f"poetry-core {core} is not supported by poetry"
+                        f" {poetry_release.version}."
+                    )
+
+                core = core or str(dependency.constraint)
+                break
+        else:
+            raise PoetrySimpleConsoleException(
+                "No compatible version of poetry-core for poetry"
+                f" {poetry_release.version}."
+            )
+
+        core_release = self._find_release("poetry-core", core, True)
+
+        return core_release
+
+    def _find_release(self, name: str, version: str, preview: bool) -> Package:
+        from poetry.core.packages.dependency import Dependency
+
+        from poetry.console.exceptions import PoetrySimpleConsoleException
+
+        repo = self.pool.repositories[0]
+
+        packages = repo.find_packages(
+            Dependency(name, version, allows_prereleases=preview)
+        )
+        if not packages:
+            raise PoetrySimpleConsoleException(
+                "No release found for the specified version."
+            )
+
+        def cmp(x: Package, y: Package) -> int:
+            if x.version == y.version:
+                return 0
+            return int(x.version < y.version or -1)
+
+        packages.sort(key=cmp_to_key(cmp))
+
+        release = None
+        for package in packages:
+            if package.is_prerelease():
+                if preview:
+                    release = package
+
+                    break
+
+                continue
+
+            release = package
+
+            break
+
+        return release
+
+    def _update(self, releases: list[Package]) -> None:
         from poetry.core.packages.dependency import Dependency
         from poetry.core.packages.project_package import ProjectPackage
 
@@ -183,7 +235,9 @@ class SelfUpdateCommand(Command):
 
         root = ProjectPackage("poetry-updater", "0.0.0")
         root.python_versions = ".".join(str(c) for c in env.version_info[:3])
-        root.add_dependency(Dependency("poetry", version.text))
+
+        for release in releases:
+            root.add_dependency(Dependency(release.name, release.version.text))
 
         installer = Installer(
             self.io,
