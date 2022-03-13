@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 import time
 
 from collections import defaultdict
@@ -195,17 +194,11 @@ class DFSNode:
         return str(self.id)
 
 
-class VisitedState(enum.Enum):
-    Unvisited = 0
-    PartiallyVisited = 1
-    Visited = 2
-
-
 def depth_first_search(
     source: PackageNode, aggregator: Callable
 ) -> list[tuple[Package, int]]:
     back_edges: dict[DFSNodeID, list[PackageNode]] = defaultdict(list)
-    visited: dict[DFSNodeID, VisitedState] = {}
+    visited: set[DFSNodeID] = set()
     topo_sorted_nodes: list[PackageNode] = []
 
     dfs_visit(source, back_edges, visited, topo_sorted_nodes)
@@ -233,23 +226,17 @@ def depth_first_search(
 def dfs_visit(
     node: PackageNode,
     back_edges: dict[DFSNodeID, list[PackageNode]],
-    visited: dict[DFSNodeID, VisitedState],
+    visited: set[DFSNodeID],
     sorted_nodes: list[PackageNode],
 ) -> bool:
-    if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
+    if node.id in visited:
         return True
-    if visited.get(node.id, VisitedState.Unvisited) == VisitedState.PartiallyVisited:
-        # We have a circular dependency.
-        # Since the dependencies are resolved we can
-        # simply skip it because we already have it
-        return True
+    visited.add(node.id)
 
-    visited[node.id] = VisitedState.PartiallyVisited
     for neighbor in node.reachable():
         back_edges[neighbor.id].append(node)
         if not dfs_visit(neighbor, back_edges, visited, sorted_nodes):
             return False
-    visited[node.id] = VisitedState.Visited
     sorted_nodes.insert(0, node)
     return True
 
