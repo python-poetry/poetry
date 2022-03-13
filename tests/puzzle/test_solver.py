@@ -686,6 +686,53 @@ def test_solver_returns_extras_only_requested_nested(
     assert ops[0].package.marker.is_any()
 
 
+def test_solver_finds_extras_next_to_non_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    # Root depends on A[foo]
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+    package_d = get_package("D", "1.0")
+
+    # A depends on B; A[foo] depends on B[bar].
+    package_a.add_dependency(Factory.create_dependency("B", "*"))
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "*", "extras": ["bar"], "markers": "extra == 'foo'"}
+        )
+    )
+    package_a.extras = {"foo": [get_dependency("B", "*")]}
+
+    # B depends on C; B[bar] depends on D.
+    package_b.add_dependency(Factory.create_dependency("C", "*"))
+    package_b.add_dependency(
+        Factory.create_dependency("D", {"version": "*", "markers": 'extra == "bar"'})
+    )
+    package_b.extras = {"bar": [get_dependency("D", "*")]}
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_d},
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):

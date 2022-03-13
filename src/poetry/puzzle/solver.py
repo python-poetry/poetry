@@ -339,7 +339,7 @@ class PackageNode(DFSNode):
                         and dependency.constraint.allows(pkg.version.stable)
                     )
                     and not any(
-                        child.package.name == pkg.name
+                        child.package.complete_name == pkg.complete_name
                         and child.groups == dependency.groups
                         for child in children
                     )
