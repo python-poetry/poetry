@@ -228,17 +228,15 @@ def dfs_visit(
     back_edges: dict[DFSNodeID, list[PackageNode]],
     visited: set[DFSNodeID],
     sorted_nodes: list[PackageNode],
-) -> bool:
+) -> None:
     if node.id in visited:
-        return True
+        return
     visited.add(node.id)
 
     for neighbor in node.reachable():
         back_edges[neighbor.id].append(node)
-        if not dfs_visit(neighbor, back_edges, visited, sorted_nodes):
-            return False
+        dfs_visit(neighbor, back_edges, visited, sorted_nodes)
     sorted_nodes.insert(0, node)
-    return True
 
 
 class PackageNode(DFSNode):
