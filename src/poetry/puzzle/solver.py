@@ -205,10 +205,8 @@ def depth_first_search(
 
     # Combine the nodes by name
     combined_nodes = defaultdict(list)
-    name_children = defaultdict(list)
     for node in topo_sorted_nodes:
         node.visit(back_edges[node.id])
-        name_children[node.name].extend(node.reachable())
         combined_nodes[node.name].append(node)
 
     combined_topo_sorted_nodes = [
@@ -217,10 +215,7 @@ def depth_first_search(
         if node.name in combined_nodes
     ]
 
-    return [
-        aggregator(nodes, name_children[nodes[0].name])
-        for nodes in combined_topo_sorted_nodes
-    ]
+    return [aggregator(nodes) for nodes in combined_topo_sorted_nodes]
 
 
 def dfs_visit(
@@ -355,19 +350,15 @@ class PackageNode(DFSNode):
         )
 
 
-def aggregate_package_nodes(
-    nodes: list[PackageNode], children: list[PackageNode]
-) -> tuple[Package, int]:
+def aggregate_package_nodes(nodes: list[PackageNode]) -> tuple[Package, int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
     groups: list[str] = []
     for node in nodes:
         groups.extend(node.groups)
 
-    category = (
-        "main" if any("default" in node.groups for node in children + nodes) else "dev"
-    )
-    optional = all(node.optional for node in children + nodes)
+    category = "main" if any("default" in node.groups for node in nodes) else "dev"
+    optional = all(node.optional for node in nodes)
     for node in nodes:
         node.depth = depth
         node.category = category
