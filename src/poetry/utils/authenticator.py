@@ -6,10 +6,7 @@ import urllib.parse
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Generator
-from typing import Optional
-from typing import Tuple
 
 import requests
 import requests.auth
@@ -173,11 +170,7 @@ class Authenticator:
 
             return auth
 
-    def _get_credentials_for_netloc(
-        self, netloc: str
-    ) -> Tuple[Optional[str], Optional[str]]:
-        credentials = (None, None)
-
+    def _get_credentials_for_netloc(self, netloc: str) -> tuple[str | None, str | None]:
         for (repository_name, _) in self._get_repository_netlocs():
             auth = self._get_http_auth(repository_name, netloc)
 
@@ -186,9 +179,9 @@ class Authenticator:
 
             return auth["username"], auth["password"]
 
-        return credentials
+        return None, None
 
-    def get_certs_for_url(self, url: str) -> Dict[str, "Path"]:
+    def get_certs_for_url(self, url: str) -> dict[str, Path]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
@@ -198,14 +191,11 @@ class Authenticator:
             self._get_certs_for_netloc_from_config(netloc),
         )
 
-    def _get_repository_netlocs(self) -> Generator[Tuple[str, str], None, None]:
+    def _get_repository_netlocs(self) -> Generator[tuple[str, str], None, None]:
         for repository_name in self._config.get("repositories", []):
             url = self._config.get(f"repositories.{repository_name}.url")
             parsed_url = urllib.parse.urlsplit(url)
-            yield (
-                repository_name,
-                parsed_url.netloc,
-            )
+            yield repository_name, parsed_url.netloc
 
     def _get_credentials_for_netloc_from_keyring(
         self, url: str, netloc: str, username: str | None
@@ -234,7 +224,7 @@ class Authenticator:
 
         return None
 
-    def _get_certs_for_netloc_from_config(self, netloc: str) -> Dict[str, "Path"]:
+    def _get_certs_for_netloc_from_config(self, netloc: str) -> dict[str, Path]:
         certs = {"cert": None, "verify": None}
 
         for (repository_name, repository_netloc) in self._get_repository_netlocs():

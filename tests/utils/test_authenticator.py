@@ -4,13 +4,9 @@ import re
 import uuid
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Type
-from typing import Union
-from pathlib import Path
 
 import httpretty
 import pytest
@@ -323,12 +319,12 @@ def test_authenticator_uses_env_provided_credentials(
     ],
 )
 def test_authenticator_uses_certs_from_config_if_not_provided(
-    config: "Config",
-    mock_remote: Type[httpretty.httpretty],
-    http: Type[httpretty.httpretty],
-    mocker: "MockerFixture",
-    cert: Union[str, None],
-    client_cert: Union[str, None],
+    config: Config,
+    mock_remote: type[httpretty.httpretty],
+    http: type[httpretty.httpretty],
+    mocker: MockerFixture,
+    cert: str | None,
+    client_cert: str | None,
 ):
     configured_cert = "/path/to/cert"
     configured_client_cert = "/path/to/client-cert"
