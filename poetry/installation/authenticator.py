@@ -1,6 +1,5 @@
 import logging
 import time
-import urllib.parse
 
 from typing import TYPE_CHECKING
 
@@ -188,7 +187,7 @@ class Authenticator(object):
         return credentials
 
     def get_certs_for_url(self, url):  # type: (str) -> Dict[str, Path]
-        parsed_url = urllib.parse.urlsplit(url)
+        parsed_url = urlparse.urlsplit(url)
 
         netloc = parsed_url.netloc
 
@@ -201,7 +200,7 @@ class Authenticator(object):
     ):  # type: () -> Generator[Tuple[str, str], None, None]
         for repository_name in self._config.get("repositories", []):
             url = self._config.get("repositories.{}.url".format(repository_name))
-            parsed_url = urllib.parse.urlsplit(url)
+            parsed_url = urlparse.urlsplit(url)
             yield repository_name, parsed_url.netloc
 
     def _get_certs_for_netloc_from_config(
