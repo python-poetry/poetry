@@ -200,7 +200,7 @@ class Authenticator(object):
         self,
     ):  # type: () -> Generator[Tuple[str, str], None, None]
         for repository_name in self._config.get("repositories", []):
-            url = self._config.get(f"repositories.{repository_name}.url")
+            url = self._config.get("repositories.{}.url".format(repository_name))
             parsed_url = urllib.parse.urlsplit(url)
             yield repository_name, parsed_url.netloc
 
