@@ -57,7 +57,7 @@ class Authenticator(object):
 
         return self._session
 
-    def __del__(self) -> None:
+    def __del__(self):  # type: () -> None
         if self._session is not None:
             self._session.close()
 
