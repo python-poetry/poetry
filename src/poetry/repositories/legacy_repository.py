@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import cgi
-import hashlib
 import re
 import urllib.parse
 import warnings
 
 from collections import defaultdict
 from html import unescape
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterator
@@ -35,12 +33,12 @@ from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import canonicalize_name
-from poetry.utils.helpers import download_file
-from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.core.packages.dependency import Dependency
 
 with warnings.catch_warnings():
@@ -354,35 +352,9 @@ class LegacyRepository(PyPiRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
-
-            if not link.hash or (
-                link.hash_name not in ("sha256", "sha384", "sha512")
-                and hasattr(hashlib, link.hash_name)
-            ):
-                with temporary_directory() as temp_dir:
-                    filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, str(filepath))
-
-                    known_hash = (
-                        getattr(hashlib, link.hash_name)() if link.hash_name else None
-                    )
-                    required_hash = hashlib.sha256()
-
-                    chunksize = 4096
-                    with filepath.open("rb") as f:
-                        while True:
-                            chunk = f.read(chunksize)
-                            if not chunk:
-                                break
-                            if known_hash:
-                                known_hash.update(chunk)
-                            required_hash.update(chunk)
-
-                    if not known_hash or known_hash.hexdigest() == link.hash:
-                        file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
-
-            files.append({"file": link.filename, "hash": file_hash})
+            files.append(
+                {"file": link.filename, "hash": self.get_sha_hash_from_link(link)}
+            )
 
         data.files = files
 
@@ -417,6 +389,3 @@ class LegacyRepository(PyPiRepository):
             )
 
         return Page(response.url, response.content, response.headers)
-
-    def _download(self, url: str, dest: str) -> None:
-        return download_file(url, dest, session=self.session)

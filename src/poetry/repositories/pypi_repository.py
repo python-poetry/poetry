@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import urllib.parse
@@ -453,3 +454,40 @@ class PyPiRepository(RemoteRepository):
 
     def _log(self, msg: str, level: str = "info") -> None:
         getattr(logger, level)(f"<debug>{self._name}:</debug> {msg}")
+
+    def get_sha_hash_from_link(self, link: Link) -> str | None:
+        """Get sha256|384|512 hash for a file from the provided link.
+
+        If the hash type included in the link is not sha256|384|512,
+        convert it to sha256.
+
+        """
+        file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
+
+        if not link.hash or (
+            link.hash_name not in ("sha256", "sha384", "sha512")
+            and hasattr(hashlib, link.hash_name)
+        ):
+            with temporary_directory() as temp_dir:
+                filepath = Path(temp_dir) / link.filename
+                self._download(link.url, str(filepath))
+
+                known_hash = (
+                    getattr(hashlib, link.hash_name)() if link.hash_name else None
+                )
+                required_hash = hashlib.sha256()
+
+                chunksize = 4096
+                with filepath.open("rb") as f:
+                    while True:
+                        chunk = f.read(chunksize)
+                        if not chunk:
+                            break
+                        if known_hash:
+                            known_hash.update(chunk)
+                        required_hash.update(chunk)
+
+                if not known_hash or known_hash.hexdigest() == link.hash:
+                    file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
+
+        return file_hash
