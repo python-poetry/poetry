@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
 
+from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -100,6 +101,15 @@ class Chooser:
         selected_links = []
         for link in links:
             if not link.hash:
+                selected_links.append(link)
+                continue
+
+            if (
+                link.hash_name
+                and not link.hash_name.startswith("sha")
+                and isinstance(repository, PyPiRepository)
+                and repository.get_sha_hash_from_link(link) in hashes
+            ):
                 selected_links.append(link)
                 continue
 

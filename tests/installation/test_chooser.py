@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     import httpretty
 
     from httpretty.core import HTTPrettyRequest
+    from pytest_mock import MockerFixture
 
 
 JSON_FIXTURES = (
@@ -255,3 +256,29 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     with pytest.raises(RuntimeError) as e:
         chooser.choose_for(package)
     assert files[0]["hash"] in str(e)
+
+
+@pytest.mark.parametrize("known_hash", ["sha256:1234", "md5:1234"])
+def test_chooser_can_choose_distribution_with_non_sha_hash(
+    env: MockEnv, known_hash: str, mock_legacy: None, mocker: MockerFixture, pool: Pool
+):
+    chooser = Chooser(pool, env)
+
+    package = Package(
+        "md5-package",
+        "1.2.3",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://foo.bar/simple/",
+    )
+    files = [{"hash": known_hash, "filename": "md5-package-1.2.3.tar.gz"}]
+    package.files = files
+
+    mock_get_sha_hash_from_link = mocker.patch.object(
+        pool.repository(package.source_reference),
+        "get_sha_hash_from_link",
+        return_value="sha256:1234",
+    )
+
+    assert chooser.choose_for(package).filename == files[0]["filename"]
+    mock_get_sha_hash_from_link.assert_called_once()
