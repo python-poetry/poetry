@@ -15,7 +15,6 @@ from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
     from typing import Any
     from typing import Dict
     from typing import Generator
@@ -25,6 +24,7 @@ if TYPE_CHECKING:
     from clikit.api.io import IO
 
     from poetry.config.config import Config
+    from poetry.utils._compat import Path
 
 
 logger = logging.getLogger()

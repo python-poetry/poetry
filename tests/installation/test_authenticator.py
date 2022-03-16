@@ -1,14 +1,13 @@
 import re
 import uuid
 
-from pathlib import Path
-
 import httpretty
 import pytest
 import requests
 
 from poetry.installation.authenticator import Authenticator
 from poetry.io.null_io import NullIO
+from poetry.utils._compat import Path
 
 
 @pytest.fixture()
