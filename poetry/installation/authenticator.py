@@ -1,5 +1,6 @@
 import logging
 import time
+import urllib.parse
 
 from typing import TYPE_CHECKING
 
@@ -9,11 +10,16 @@ import requests.exceptions
 
 from poetry.exceptions import PoetryException
 from poetry.utils._compat import urlparse
+from poetry.utils.helpers import get_cert
+from poetry.utils.helpers import get_client_cert
 from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import Any
+    from typing import Dict
+    from typing import Generator
     from typing import Optional
     from typing import Tuple
 
@@ -29,7 +35,9 @@ class Authenticator(object):
     def __init__(self, config, io=None):  # type: (Config, Optional[IO]) -> None
         self._config = config
         self._io = io
+        self._session = None
         self._credentials = {}
+        self._certs = {}
         self._password_manager = PasswordManager(self._config)
 
     def _log(self, message, level="debug"):  # type: (str, str) -> None
@@ -44,7 +52,14 @@ class Authenticator(object):
 
     @property
     def session(self):  # type: () -> requests.Session
-        return requests.Session()
+        if self._session is None:
+            self._session = requests.Session()
+
+        return self._session
+
+    def __del__(self) -> None:
+        if self._session is not None:
+            self._session.close()
 
     def request(
         self, method, url, **kwargs
@@ -60,8 +75,16 @@ class Authenticator(object):
 
         proxies = kwargs.get("proxies", {})
         stream = kwargs.get("stream")
-        verify = kwargs.get("verify")
-        cert = kwargs.get("cert")
+
+        certs = self.get_certs_for_url(url)
+        verify = kwargs.get("verify") or certs.get("verify")
+        cert = kwargs.get("cert") or certs.get("cert")
+
+        if cert is not None:
+            cert = str(cert)
+
+        if verify is not None:
+            verify = str(verify)
 
         settings = session.merge_environment_settings(
             prepared_request.url, proxies, stream, verify, cert
@@ -163,3 +186,33 @@ class Authenticator(object):
                 return auth["username"], auth["password"]
 
         return credentials
+
+    def get_certs_for_url(self, url):  # type: (str) -> Dict[str, Path]
+        parsed_url = urllib.parse.urlsplit(url)
+
+        netloc = parsed_url.netloc
+
+        return self._certs.setdefault(
+            netloc, self._get_certs_for_netloc_from_config(netloc),
+        )
+
+    def _get_repository_netlocs(
+        self,
+    ):  # type: () -> Generator[Tuple[str, str], None, None]
+        for repository_name in self._config.get("repositories", []):
+            url = self._config.get(f"repositories.{repository_name}.url")
+            parsed_url = urllib.parse.urlsplit(url)
+            yield repository_name, parsed_url.netloc
+
+    def _get_certs_for_netloc_from_config(
+        self, netloc
+    ):  # type: (str) -> Dict[str, Path]
+        certs = {"cert": None, "verify": None}
+
+        for (repository_name, repository_netloc) in self._get_repository_netlocs():
+            if netloc == repository_netloc:
+                certs["cert"] = get_client_cert(self._config, repository_name)
+                certs["verify"] = get_cert(self._config, repository_name)
+                break
+
+        return certs
