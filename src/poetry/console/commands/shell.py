@@ -22,14 +22,18 @@ If one doesn't exist yet, it will be created.
         from poetry.utils.shell import Shell
 
         # Check if it's already activated or doesn't exist and won't be created
-        venv_activated = strtobool(environ.get("POETRY_ACTIVE", "0")) or getattr(
-            sys, "real_prefix", sys.prefix
-        ) == str(self.env.path)
-        if venv_activated:
-            self.line(
-                f"Virtual environment already activated: <info>{self.env.path}</>"
-            )
-
+        poetry_active = strtobool(environ.get("POETRY_ACTIVE", "0"))
+        venv_activated = getattr(sys, "real_prefix", sys.prefix) == str(self.env.path)
+        if poetry_active:
+            if venv_activated:
+                self.line(
+                    f"Virtual environment already activated: <info>{self.env.path}</>"
+                )
+            else:
+                self.line(
+                    "Poetry shell is active but venv is deactivated. "
+                    "Exit shell and re-launch."
+                )
             return
 
         self.line(f"Spawning shell within <info>{self.env.path}</>")
