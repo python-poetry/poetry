@@ -12,3 +12,8 @@ wheel_file_re = re.compile(
     r"\.whl|\.dist-info$",
     re.VERBOSE,
 )
+
+sdist_file_re = re.compile(
+    r"^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))"
+    r"(\.sdist)?\.(?P<format>(zip|tar(\.(gz|bz2|xz|Z))?))$"
+)

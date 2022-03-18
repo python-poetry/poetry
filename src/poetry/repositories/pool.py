@@ -3,23 +3,23 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
-from poetry.repositories.base_repository import BaseRepository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.repository import Repository
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
-    from poetry.repositories.repository import Repository
 
-
-class Pool(BaseRepository):
+class Pool(Repository):
     def __init__(
         self,
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
+        super().__init__()
+
         if repositories is None:
             repositories = []
 

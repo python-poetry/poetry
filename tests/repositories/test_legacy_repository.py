@@ -14,7 +14,7 @@ from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.legacy_repository import Page
+from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 try:
@@ -35,7 +35,7 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint: str) -> Page | None:
+    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -44,7 +44,7 @@ class MockRepository(LegacyRepository):
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return Page(self._url + endpoint, f.read(), {})
+            return SimpleRepositoryPage(self._url + endpoint, f.read())
 
     def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
