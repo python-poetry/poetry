@@ -98,7 +98,7 @@ class DebugResolveCommand(InitCommand):
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
-            repo = Repository(packages)
+            repo = Repository(packages=packages)
 
             requires = package.all_requires
             for pkg in repo.packages:

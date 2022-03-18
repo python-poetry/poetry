@@ -191,7 +191,7 @@ def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
     mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
-    mocker.patch("poetry.repositories.pypi_repository.download_file", new=mock_download)
+    mocker.patch("poetry.repositories.http.download_file", new=mock_download)
 
 
 @pytest.fixture(autouse=True)
