@@ -584,7 +584,7 @@ def test_show_outdated_has_prerelease_and_allowed(
 ):
     poetry.package.add_dependency(
         Factory.create_dependency(
-            "cachy", {"version": "^0.1.0", "allow-prereleases": True}
+            "cachy", {"version": ">=0.0.1", "allow-prereleases": True}
         )
     )
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
