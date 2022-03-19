@@ -507,6 +507,78 @@ A = []
     assert expected == content
 
 
+def test_package_extras_are_ordered(locker, root):
+    package_a = get_package("A", "1.0.0")
+    package_a.extras["c"] = [Factory.create_dependency("c", {"version": "*"})]
+    package_a.extras["a"] = [Factory.create_dependency("a", {"version": "*"})]
+    package_a.extras["b"] = [Factory.create_dependency("b", {"version": "*"})]
+
+    locker.set_lock_data(root, [package_a])
+
+    expected = """[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+a = ["a"]
+b = ["b"]
+c = ["c"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+A = []
+"""
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == expected
+
+
+def test_package_extras_dependencies_are_ordered(locker, root):
+    package_a = get_package("A", "1.0.0")
+    package_a.extras["b"] = [
+        Factory.create_dependency("c", {"version": "*"}),
+        Factory.create_dependency("a", {"version": "*"}),
+        Factory.create_dependency("b", {"version": "*"}),
+    ]
+
+    locker.set_lock_data(root, [package_a])
+
+    expected = """[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+b = ["a", "b", "c"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+A = []
+"""
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == expected
+
+
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
     locker, caplog
 ):
