@@ -147,7 +147,9 @@ class PartialSolution:
         name = assignment.dependency.complete_name
         old_positive = self._positive.get(name)
         if old_positive is not None:
-            self._positive[name] = old_positive.intersect(assignment)
+            value = old_positive.intersect(assignment)
+            assert value is not None
+            self._positive[name] = value
 
             return
 
