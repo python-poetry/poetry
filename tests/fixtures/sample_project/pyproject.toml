@@ -46,7 +46,7 @@ functools32 = { version = "^3.2.3", markers = "python_version ~= '2.7' and sys_p
 [tool.poetry.extras]
 db = [ "orator" ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "~3.4"
 
 

@@ -125,8 +125,8 @@ def is_decorated():
     if platform.system().lower() == "windows":
         return (
             os.getenv("ANSICON") is not None
-            or "ON" == os.getenv("ConEmuANSI")
-            or "xterm" == os.getenv("Term")
+            or os.getenv("ConEmuANSI") == "ON"
+            or os.getenv("Term") == "xterm"
         )
 
     if not hasattr(sys.stdout, "fileno"):
@@ -449,6 +449,33 @@ class Installer:
 
                 break
 
+        def _is_supported(x):
+            mx = self.VERSION_REGEX.match(x)
+            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
+            return vx < (1, 2, 0)
+
+        if not _is_supported(version):
+            print(
+                colorize(
+                    "error",
+                    "Version {version} does not support this installation method."
+                    " Please specify a version prior to 1.2.0a1 explicitly using the"
+                    " '--version' option.\nPlease see"
+                    " https://python-poetry.org/blog/announcing-poetry-1-2-0a1.html#deprecation-of-the-get-poetry-py-script"
+                    " for more information.".format(version=version),
+                )
+            )
+            return None, None
+
+        print(
+            colorize(
+                "warning",
+                "This installer is deprecated. Poetry versions installed using this"
+                " script will not be able to use 'self update' command to upgrade to"
+                " 1.2.0a1 or later.",
+            )
+        )
+
         current_version = None
         if os.path.exists(POETRY_LIB):
             with open(
@@ -658,7 +685,8 @@ class Installer:
                 return executable
 
             if fallback is None:
-                # keep this one as the fallback; it was the first valid executable we found.
+                # keep this one as the fallback; it was the first valid executable we
+                # found.
                 fallback = executable
 
         if fallback is None:
@@ -746,7 +774,8 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "\nUnable to get the PATH value. It will not be updated automatically.",
+                    "\nUnable to get the PATH value. It will not be updated"
+                    " automatically.",
                 )
             )
             self._modify_path = False
@@ -781,7 +810,8 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "Unable to get the PATH value. It will not be updated automatically",
+                    "Unable to get the PATH value. It will not be updated"
+                    " automatically",
                 )
             )
             self._modify_path = False
@@ -824,7 +854,7 @@ class Installer:
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
-            u"Environment",
+            "Environment",
             SMTO_ABORTIFHUNG,
             5000,
             ctypes.byref(result),
@@ -1047,8 +1077,10 @@ def main():
         "--file",
         dest="file",
         action="store",
-        help="Install from a local file instead of fetching the latest version "
-        "of Poetry available online.",
+        help=(
+            "Install from a local file instead of fetching the latest version "
+            "of Poetry available online."
+        ),
     )
 
     args = parser.parse_args()

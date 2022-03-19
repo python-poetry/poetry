@@ -1,18 +1,33 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 import tomlkit
 
-from poetry.__version__ import __version__
 from poetry.core.packages.package import Package
+
+from poetry.__version__ import __version__
 from poetry.layouts.layout import POETRY_DEFAULT
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+
+    from poetry.console.commands.remove import RemoveCommand
+    from poetry.repositories import Repository
+    from poetry.utils.env import MockEnv
+    from tests.helpers import PoetryTestApplication
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("plugin remove")
 
 
 @pytest.fixture()
-def pyproject(env):
+def pyproject(env: MockEnv) -> None:
     pyproject = tomlkit.loads(POETRY_DEFAULT)
     content = pyproject["tool"]["poetry"]
 
@@ -30,7 +45,7 @@ def pyproject(env):
 
 
 @pytest.fixture(autouse=True)
-def install_plugin(env, installed, pyproject):
+def install_plugin(env: MockEnv, installed: Repository, pyproject: None) -> None:
     lock_content = {
         "package": [
             {
@@ -55,22 +70,24 @@ def install_plugin(env, installed, pyproject):
         tomlkit.dumps(lock_content), encoding="utf-8"
     )
 
-    pyproject = tomlkit.loads(
+    pyproject_toml = tomlkit.loads(
         env.path.joinpath("pyproject.toml").read_text(encoding="utf-8")
     )
-    content = pyproject["tool"]["poetry"]
+    content = pyproject_toml["tool"]["poetry"]
 
     dependency_section = content["dependencies"]
     dependency_section["poetry-plugin"] = "^1.2.3"
 
     env.path.joinpath("pyproject.toml").write_text(
-        tomlkit.dumps(pyproject), encoding="utf-8"
+        tomlkit.dumps(pyproject_toml), encoding="utf-8"
     )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
 
-def test_remove_installed_package(app, tester, env):
+def test_remove_installed_package(
+    app: PoetryTestApplication, tester: CommandTester, env: MockEnv
+):
     tester.execute("poetry-plugin")
 
     expected = """\
@@ -86,7 +103,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
     assert tester.io.fetch_output() == expected
 
-    remove_command = app.find("remove")
+    remove_command: RemoveCommand = app.find("remove")
     assert remove_command.poetry.file.parent == env.path
     assert remove_command.poetry.locker.lock.parent == env.path
     assert remove_command.poetry.locker.lock.exists()
@@ -96,7 +113,9 @@ Package operations: 0 installs, 0 updates, 1 removal
     assert "poetry-plugin" not in content["dependencies"]
 
 
-def test_remove_installed_package_dry_run(app, tester, env):
+def test_remove_installed_package_dry_run(
+    app: PoetryTestApplication, tester: CommandTester, env: MockEnv
+):
     tester.execute("poetry-plugin --dry-run")
 
     expected = """\
@@ -113,7 +132,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
     assert tester.io.fetch_output() == expected
 
-    remove_command = app.find("remove")
+    remove_command: RemoveCommand = app.find("remove")
     assert remove_command.poetry.file.parent == env.path
     assert remove_command.poetry.locker.lock.parent == env.path
     assert remove_command.poetry.locker.lock.exists()

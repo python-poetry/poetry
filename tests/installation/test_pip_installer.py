@@ -1,21 +1,30 @@
+from __future__ import annotations
+
 import re
 import shutil
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from cleo.io.null_io import NullIO
-
 from poetry.core.packages.package import Package
+
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.utils.env import NullEnv
 
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from poetry.utils.env import VirtualEnv
+
+
 @pytest.fixture
-def package_git():
+def package_git() -> Package:
     package = Package(
         "demo",
         "1.0.0",
@@ -28,16 +37,16 @@ def package_git():
 
 
 @pytest.fixture
-def pool():
+def pool() -> Pool:
     return Pool()
 
 
 @pytest.fixture
-def installer(pool):
+def installer(pool: Pool) -> PipInstaller:
     return PipInstaller(NullEnv(), NullIO(), pool)
 
 
-def test_requirement(installer):
+def test_requirement(installer: PipInstaller):
     package = Package("ipython", "7.5.0")
     package.files = [
         {"file": "foo-0.1.0.tar.gz", "hash": "md5:dbdc53e3918f28fa335a173432402a00"},
@@ -55,7 +64,7 @@ def test_requirement(installer):
         "\n"
     )
 
-    assert expected == result
+    assert result == expected
 
 
 def test_requirement_source_type_url():
@@ -65,24 +74,24 @@ def test_requirement_source_type_url():
         "foo",
         "0.0.0",
         source_type="url",
-        source_url="https://somehwere.com/releases/foo-1.0.0.tar.gz",
+        source_url="https://somewhere.com/releases/foo-1.0.0.tar.gz",
     )
 
     result = installer.requirement(foo, formatted=True)
-    expected = "{}#egg={}".format(foo.source_url, foo.name)
+    expected = f"{foo.source_url}#egg={foo.name}"
 
-    assert expected == result
+    assert result == expected
 
 
-def test_requirement_git_develop_false(installer, package_git):
+def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):
     package_git.develop = False
     result = installer.requirement(package_git)
     expected = "git+git@github.com:demo/demo.git@master#egg=demo"
 
-    assert expected == result
+    assert result == expected
 
 
-def test_install_with_non_pypi_default_repository(pool, installer):
+def test_install_with_non_pypi_default_repository(pool: Pool, installer: PipInstaller):
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
 
@@ -170,15 +179,17 @@ def test_install_with_client_cert():
     assert cmd[cert_index + 1] == str(Path(client_path))
 
 
-def test_requirement_git_develop_true(installer, package_git):
+def test_requirement_git_develop_true(installer: PipInstaller, package_git: Package):
     package_git.develop = True
     result = installer.requirement(package_git)
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
 
-    assert expected == result
+    assert result == expected
 
 
-def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
+def test_uninstall_git_package_nspkg_pth_cleanup(
+    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: Pool
+):
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
@@ -194,7 +205,7 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     # in order to reproduce the scenario where the git source is removed prior to proper
     # clean up of nspkg.pth file, we need to make sure the fixture is copied and not
     # symlinked into the git src directory
-    def copy_only(source, dest):
+    def copy_only(source: Path, dest: Path) -> None:
         if dest.exists():
             dest.unlink()
 

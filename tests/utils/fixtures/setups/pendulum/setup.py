@@ -1,7 +1,9 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from distutils.core import setup
 
 from build import *
+
 
 packages = [
     "pendulum",

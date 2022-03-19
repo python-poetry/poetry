@@ -1,10 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import itertools
 import json
-import sys
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -14,10 +15,11 @@ from cleo.io.null_io import NullIO
 from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
 from deepdiff import DeepDiff
-
+from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
+
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
@@ -36,90 +38,101 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository
 
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from poetry.installation.operations import OperationTypes
+    from poetry.packages import DependencyPackage
+    from poetry.utils.env import Env
+    from tests.conftest import Config
+    from tests.types import FixtureDirGetter
+
 RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
 
 class Installer(BaseInstaller):
-    def _get_installer(self):
+    def _get_installer(self) -> NoopInstaller:
         return NoopInstaller()
 
 
 class Executor(BaseExecutor):
-    def __init__(self, *args, **kwargs):
-        super(Executor, self).__init__(*args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
 
-        self._installs = []
-        self._updates = []
-        self._uninstalls = []
+        self._installs: list[DependencyPackage] = []
+        self._updates: list[DependencyPackage] = []
+        self._uninstalls: list[DependencyPackage] = []
 
     @property
-    def installations(self):
+    def installations(self) -> list[DependencyPackage]:
         return self._installs
 
     @property
-    def updates(self):
+    def updates(self) -> list[DependencyPackage]:
         return self._updates
 
     @property
-    def removals(self):
+    def removals(self) -> list[DependencyPackage]:
         return self._uninstalls
 
-    def _do_execute_operation(self, operation):
-        super(Executor, self)._do_execute_operation(operation)
+    def _do_execute_operation(self, operation: OperationTypes) -> None:
+        super()._do_execute_operation(operation)
 
         if not operation.skipped:
-            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+            getattr(self, f"_{operation.job_type}s").append(operation.package)
 
-    def _execute_install(self, operation):
+    def _execute_install(self, operation: OperationTypes) -> int:
         return 0
 
-    def _execute_update(self, operation):
+    def _execute_update(self, operation: OperationTypes) -> int:
         return 0
 
-    def _execute_uninstall(self, operation):
+    def _execute_uninstall(self, operation: OperationTypes) -> int:
         return 0
 
 
 class CustomInstalledRepository(InstalledRepository):
     @classmethod
-    def load(cls, env):
+    def load(
+        cls, env: Env, with_dependencies: bool = False
+    ) -> CustomInstalledRepository:
         return cls()
 
 
 class Locker(BaseLocker):
-    def __init__(self):
-        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
+    def __init__(self, lock_path: str | Path):
+        self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
 
     @property
-    def written_data(self):
+    def written_data(self) -> dict | None:
         return self._written_data
 
-    def set_lock_path(self, lock):
+    def set_lock_path(self, lock: str | Path) -> Locker:
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
 
         return self
 
-    def locked(self, is_locked=True):
+    def locked(self, is_locked: bool = True) -> Locker:
         self._locked = is_locked
 
         return self
 
-    def mock_lock_data(self, data):
+    def mock_lock_data(self, data: dict) -> None:
         self._lock_data = data
 
-    def is_locked(self):
+    def is_locked(self) -> bool:
         return self._locked
 
-    def is_fresh(self):
+    def is_fresh(self) -> bool:
         return True
 
-    def _get_content_hash(self):
+    def _get_content_hash(self) -> str:
         return "123456789"
 
-    def _write_lock_data(self, data):
+    def _write_lock_data(self, data: dict) -> None:
         for package in data["package"]:
             python_versions = str(package["python-versions"])
             package["python-versions"] = python_versions
@@ -129,7 +142,7 @@ class Locker(BaseLocker):
 
 
 @pytest.fixture()
-def package():
+def package() -> ProjectPackage:
     p = ProjectPackage("root", "1.0")
     p.root_dir = Path.cwd()
 
@@ -137,12 +150,12 @@ def package():
 
 
 @pytest.fixture()
-def repo():
+def repo() -> Repository:
     return Repository()
 
 
 @pytest.fixture()
-def pool(repo):
+def pool(repo: Repository) -> Pool:
     pool = Pool()
     pool.add_repository(repo)
 
@@ -150,22 +163,29 @@ def pool(repo):
 
 
 @pytest.fixture()
-def installed():
+def installed() -> CustomInstalledRepository:
     return CustomInstalledRepository()
 
 
 @pytest.fixture()
-def locker():
-    return Locker()
+def locker(project_root: Path) -> Locker:
+    return Locker(lock_path=project_root)
 
 
 @pytest.fixture()
-def env():
+def env() -> NullEnv:
     return NullEnv()
 
 
 @pytest.fixture()
-def installer(package, pool, locker, env, installed, config):
+def installer(
+    package: ProjectPackage,
+    pool: Pool,
+    locker: Locker,
+    env: NullEnv,
+    installed: CustomInstalledRepository,
+    config: Config,
+) -> Installer:
     installer = Installer(
         NullIO(),
         env,
@@ -181,20 +201,22 @@ def installer(package, pool, locker, env, installed, config):
     return installer
 
 
-def fixture(name):
-    file = TOMLFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
+def fixture(name: str) -> dict:
+    file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
 
     return json.loads(json.dumps(file.read()))
 
 
-def test_run_no_dependencies(installer, locker):
+def test_run_no_dependencies(installer: Installer, locker: Locker):
     installer.run()
     expected = fixture("no-dependencies")
 
     assert locker.written_data == expected
 
 
-def test_run_with_dependencies(installer, locker, repo, package):
+def test_run_with_dependencies(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -210,7 +232,11 @@ def test_run_with_dependencies(installer, locker, repo, package):
 
 
 def test_run_update_after_removing_dependencies(
-    installer, locker, repo, package, installed
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -272,12 +298,18 @@ def test_run_update_after_removing_dependencies(
 
     assert locker.written_data == expected
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 1
 
 
-def _configure_run_install_dev(locker, repo, package, installed):
+def _configure_run_install_dev(
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+    with_optional_group: bool = False,
+) -> None:
     """
     Perform common test setup for `test_run_install_*dev*()` methods.
     """
@@ -334,57 +366,311 @@ def _configure_run_install_dev(locker, repo, package, installed):
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
-    package.add_dependency(Factory.create_dependency("C", "~1.2", category="dev"))
+
+    group = DependencyGroup("dev", optional=with_optional_group)
+    group.add_dependency(Factory.create_dependency("C", "~1.2", groups=["dev"]))
+    package.add_dependency_group(group)
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def test_run_install_no_group(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
     _configure_run_install_dev(locker, repo, package, installed)
 
-    installer.dev_mode(False)
+    installer.without_groups(["dev"])
     installer.run()
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
-def test_run_install_dev_only(installer, locker, repo, package, installed):
+def test_run_install_group_only(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
     _configure_run_install_dev(locker, repo, package, installed)
 
-    installer.dev_only(True)
+    installer.only_groups(["dev"])
     installer.run()
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 2 == installer.executor.removals_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
-def test_run_install_no_dev_and_dev_only(installer, locker, repo, package, installed):
-    _configure_run_install_dev(locker, repo, package, installed)
+def test_run_install_with_optional_group_not_selected(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
+    _configure_run_install_dev(
+        locker, repo, package, installed, with_optional_group=True
+    )
 
-    installer.dev_mode(False)
-    installer.dev_only(True)
     installer.run()
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
+
+
+def test_run_install_does_not_remove_locked_packages_if_installed_but_not_required(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+
+    repo.add_package(package_a)
+    installed.add_package(package_a)
+    repo.add_package(package_b)
+    installed.add_package(package_b)
+    repo.add_package(package_c)
+    installed.add_package(package_c)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {package_a.name: [], package_b.name: [], package_c.name: []},
+            },
+        }
+    )
+
+    installer.run()
+
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
+
+
+def test_run_install_removes_locked_packages_if_installed_and_synchronization_is_required(  # noqa: E501
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+
+    repo.add_package(package_a)
+    installed.add_package(package_a)
+    repo.add_package(package_b)
+    installed.add_package(package_b)
+    repo.add_package(package_c)
+    installed.add_package(package_c)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {package_a.name: [], package_b.name: [], package_c.name: []},
+            },
+        }
+    )
+
+    installer.requires_synchronization(True)
+    installer.run()
+
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 2
+
+
+def test_run_install_removes_no_longer_locked_packages_if_installed(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+
+    repo.add_package(package_a)
+    installed.add_package(package_a)
+    repo.add_package(package_b)
+    installed.add_package(package_b)
+    repo.add_package(package_c)
+    installed.add_package(package_c)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {package_a.name: [], package_b.name: [], package_c.name: []},
+            },
+        }
+    )
+
+    installer.update(True)
+    installer.run()
+
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 2
+
+
+def test_run_install_with_optional_group_selected(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
+    _configure_run_install_dev(
+        locker, repo, package, installed, with_optional_group=True
+    )
+
+    installer.with_groups(["dev"])
+    installer.run()
+
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
 @pytest.mark.parametrize(
     "managed_reserved_package_names",
-    [
-        i
-        for i in itertools.chain(
-            [tuple()],
-            itertools.permutations(RESERVED_PACKAGES, 1),
-            itertools.permutations(RESERVED_PACKAGES, 2),
-            [RESERVED_PACKAGES],
-        )
-    ],
+    itertools.chain(
+        [()],
+        itertools.permutations(RESERVED_PACKAGES, 1),
+        itertools.permutations(RESERVED_PACKAGES, 2),
+        [RESERVED_PACKAGES],
+    ),
 )
-def test_run_install_remove_untracked(
-    managed_reserved_package_names, installer, locker, repo, package, installed
+def test_run_install_with_synchronization(
+    managed_reserved_package_names: tuple[str, ...],
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
 ):
     package_a = get_package("a", "1.0")
     package_b = get_package("b", "1.1")
@@ -439,11 +725,11 @@ def test_run_install_remove_untracked(
         }
     )
 
-    installer.dev_mode(True).remove_untracked(True)
+    installer.requires_synchronization(True)
     installer.run()
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
     assert 2 + len(managed_reserved_packages) == installer.executor.removals_count
 
     expected_removals = {
@@ -452,10 +738,12 @@ def test_run_install_remove_untracked(
         *managed_reserved_package_names,
     }
 
-    assert expected_removals == set(r.name for r in installer.executor.removals)
+    assert {r.name for r in installer.executor.removals} == expected_removals
 
 
-def test_run_whitelist_add(installer, locker, repo, package):
+def test_run_whitelist_add(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -497,7 +785,13 @@ def test_run_whitelist_add(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_whitelist_remove(installer, locker, repo, package, installed):
+def test_run_whitelist_remove(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -544,12 +838,14 @@ def test_run_whitelist_remove(installer, locker, repo, package, installed):
     expected = fixture("remove")
 
     assert locker.written_data == expected
-    assert 1 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert installer.executor.installations_count == 1
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 1
 
 
-def test_add_with_sub_dependencies(installer, locker, repo, package):
+def test_add_with_sub_dependencies(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c = get_package("C", "1.2")
@@ -571,7 +867,9 @@ def test_add_with_sub_dependencies(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_with_python_versions(installer, locker, repo, package):
+def test_run_with_python_versions(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package.python_versions = "~2.7 || ^3.4"
 
     package_a = get_package("A", "1.0")
@@ -597,7 +895,7 @@ def test_run_with_python_versions(installer, locker, repo, package):
 
 
 def test_run_with_optional_and_python_restricted_dependencies(
-    installer, locker, repo, package
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
     package.python_versions = "~2.7 || ^3.4"
 
@@ -633,13 +931,17 @@ def test_run_with_optional_and_python_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since python version is not compatible
     # with B's python constraint and A is optional
-    assert 2 == installer.executor.installations_count
-    assert "d" == installer.executor.installations[0].name
-    assert "c" == installer.executor.installations[1].name
+    assert installer.executor.installations_count == 2
+    assert installer.executor.installations[0].name == "d"
+    assert installer.executor.installations[1].name == "c"
 
 
 def test_run_with_optional_and_platform_restricted_dependencies(
-    installer, locker, repo, package, mocker
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
 ):
     mocker.patch("sys.platform", "darwin")
 
@@ -675,12 +977,14 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since the mocked python version is not compatible
     # with B's python constraint and A is optional
-    assert 2 == installer.executor.installations_count
-    assert "d" == installer.executor.installations[0].name
-    assert "c" == installer.executor.installations[1].name
+    assert installer.executor.installations_count == 2
+    assert installer.executor.installations[0].name == "d"
+    assert installer.executor.installations[1].name == "c"
 
 
-def test_run_with_dependencies_extras(installer, locker, repo, package):
+def test_run_with_dependencies_extras(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -705,7 +1009,9 @@ def test_run_with_dependencies_extras(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_with_dependencies_nested_extras(installer, locker, repo, package):
+def test_run_with_dependencies_nested_extras(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -734,7 +1040,9 @@ def test_run_with_dependencies_nested_extras(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, package):
+def test_run_does_not_install_extras_if_not_requested(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package.extras["foo"] = [get_dependency("D")]
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -760,10 +1068,12 @@ def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, p
     assert locker.written_data == expected
 
     # But should not be installed
-    assert 3 == installer.executor.installations_count  # A, B, C
+    assert installer.executor.installations_count == 3  # A, B, C
 
 
-def test_run_installs_extras_if_requested(installer, locker, repo, package):
+def test_run_installs_extras_if_requested(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package.extras["foo"] = [get_dependency("D")]
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -790,10 +1100,12 @@ def test_run_installs_extras_if_requested(installer, locker, repo, package):
     assert locker.written_data == expected
 
     # But should not be installed
-    assert 4 == installer.executor.installations_count  # A, B, C, D
+    assert installer.executor.installations_count == 4  # A, B, C, D
 
 
-def test_run_installs_extras_with_deps_if_requested(installer, locker, repo, package):
+def test_run_installs_extras_with_deps_if_requested(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     package.extras["foo"] = [get_dependency("C")]
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -821,11 +1133,11 @@ def test_run_installs_extras_with_deps_if_requested(installer, locker, repo, pac
     assert locker.written_data == expected
 
     # But should not be installed
-    assert 4 == installer.executor.installations_count  # A, B, C, D
+    assert installer.executor.installations_count == 4  # A, B, C, D
 
 
 def test_run_installs_extras_with_deps_if_requested_locked(
-    installer, locker, repo, package
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
     locker.locked(True)
     locker.mock_lock_data(fixture("extras-with-dependencies"))
@@ -852,10 +1164,15 @@ def test_run_installs_extras_with_deps_if_requested_locked(
     installer.run()
 
     # But should not be installed
-    assert 4 == installer.executor.installations_count  # A, B, C, D
+    assert installer.executor.installations_count == 4  # A, B, C, D
 
 
-def test_installer_with_pypi_repository(package, locker, installed, config):
+def test_installer_with_pypi_repository(
+    package: ProjectPackage,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+):
     pool = Pool()
     pool.add_repository(MockRepository())
 
@@ -863,14 +1180,20 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
         NullIO(), NullEnv(), package, locker, pool, config, installed=installed
     )
 
-    package.add_dependency(Factory.create_dependency("pytest", "^3.5", category="dev"))
+    package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
     installer.run()
 
     expected = fixture("with-pypi-repository")
     assert not DeepDiff(expected, locker.written_data, ignore_order=True)
 
 
-def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
+def test_run_installs_with_local_file(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+):
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
 
@@ -881,11 +1204,15 @@ def test_run_installs_with_local_file(installer, locker, repo, package, fixture_
     expected = fixture("with-file-dependency")
 
     assert locker.written_data == expected
-    assert 2 == installer.executor.installations_count
+    assert installer.executor.installations_count == 2
 
 
 def test_run_installs_wheel_with_no_requires_dist(
-    installer, locker, repo, package, fixture_dir
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
 ):
     file_path = fixture_dir(
         "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
@@ -898,11 +1225,16 @@ def test_run_installs_wheel_with_no_requires_dist(
 
     assert locker.written_data == expected
 
-    assert 1 == installer.executor.installations_count
+    assert installer.executor.installations_count == 1
 
 
 def test_run_installs_with_local_poetry_directory_and_extras(
-    installer, locker, repo, package, tmpdir, fixture_dir
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    tmpdir: Path,
+    fixture_dir: FixtureDirGetter,
 ):
     file_path = fixture_dir("project_with_extras")
     package.add_dependency(
@@ -918,11 +1250,16 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     expected = fixture("with-directory-dependency-poetry")
     assert locker.written_data == expected
 
-    assert 2 == installer.executor.installations_count
+    assert installer.executor.installations_count == 2
 
 
 def test_run_installs_with_local_poetry_directory_transitive(
-    installer, locker, repo, package, tmpdir, fixture_dir
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    tmpdir: Path,
+    fixture_dir: FixtureDirGetter,
 ):
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -945,11 +1282,16 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
     assert locker.written_data == expected
 
-    assert 6 == installer.executor.installations_count
+    assert installer.executor.installations_count == 6
 
 
 def test_run_installs_with_local_poetry_file_transitive(
-    installer, locker, repo, package, tmpdir, fixture_dir
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    tmpdir: str,
+    fixture_dir: FixtureDirGetter,
 ):
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -974,11 +1316,16 @@ def test_run_installs_with_local_poetry_file_transitive(
 
     assert locker.written_data == expected
 
-    assert 4 == installer.executor.installations_count
+    assert installer.executor.installations_count == 4
 
 
 def test_run_installs_with_local_setuptools_directory(
-    installer, locker, repo, package, tmpdir, fixture_dir
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    tmpdir: Path,
+    fixture_dir: FixtureDirGetter,
 ):
     file_path = fixture_dir("project_with_setup/")
     package.add_dependency(
@@ -993,10 +1340,12 @@ def test_run_installs_with_local_setuptools_directory(
     expected = fixture("with-directory-dependency-setuptools")
 
     assert locker.written_data == expected
-    assert 3 == installer.executor.installations_count
+    assert installer.executor.installations_count == 3
 
 
-def test_run_with_prereleases(installer, locker, repo, package):
+def test_run_with_prereleases(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1038,7 +1387,9 @@ def test_run_with_prereleases(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_changes_category_if_needed(installer, locker, repo, package):
+def test_run_changes_category_if_needed(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1069,7 +1420,7 @@ def test_run_changes_category_if_needed(installer, locker, repo, package):
 
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "^1.0", "optional": True}, category="dev"
+            "A", {"version": "^1.0", "optional": True}, groups=["dev"]
         )
     )
     package.add_dependency(Factory.create_dependency("B", "^1.1"))
@@ -1083,7 +1434,9 @@ def test_run_changes_category_if_needed(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_update_all_with_lock(installer, locker, repo, package):
+def test_run_update_all_with_lock(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1120,7 +1473,9 @@ def test_run_update_all_with_lock(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_update_with_locked_extras(installer, locker, repo, package):
+def test_run_update_with_locked_extras(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1169,8 +1524,8 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
     b_dependency.in_extras.append("foo")
     c_dependency = get_dependency("C", "^1.0")
     c_dependency.python_versions = "~2.7"
-    package_a.requires.append(b_dependency)
-    package_a.requires.append(c_dependency)
+    package_a.add_dependency(b_dependency)
+    package_a.add_dependency(c_dependency)
 
     repo.add_package(package_a)
     repo.add_package(get_package("B", "1.0"))
@@ -1192,7 +1547,7 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
 
 
 def test_run_install_duplicate_dependencies_different_constraints(
-    installer, locker, repo, package
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -1225,17 +1580,17 @@ def test_run_install_duplicate_dependencies_different_constraints(
     assert locker.written_data == expected
 
     installs = installer.executor.installations
-    assert 3 == installer.executor.installations_count
+    assert installer.executor.installations_count == 3
     assert installs[0] == package_c12
     assert installs[1] == package_b10
     assert installs[2] == package_a
 
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
 def test_run_install_duplicate_dependencies_different_constraints_with_lock(
-    installer, locker, repo, package
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1336,13 +1691,17 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
 
     assert locker.written_data == expected
 
-    assert 3 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 3
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
 def test_run_update_uninstalls_after_removal_transient_dependency(
-    installer, locker, repo, package, installed
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1394,13 +1753,17 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
     installer.update(True)
     installer.run()
 
-    assert 0 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 1
 
 
 def test_run_install_duplicate_dependencies_different_constraints_with_lock_update(
-    installer, locker, repo, package, installed
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1499,16 +1862,20 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
 
     assert locker.written_data == expected
 
-    assert 2 == installer.executor.installations_count
-    assert 1 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 2
+    assert installer.executor.updates_count == 1
+    assert installer.executor.removals_count == 0
 
 
 @pytest.mark.skip(
     "This is not working at the moment due to limitations in the resolver"
 )
-def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
-    installer, locker, repo, package, installed
+def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
 ):
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
@@ -1528,15 +1895,18 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
 
     expected = fixture("with-conditional-dependency")
     assert locker.written_data == expected
-
-    if sys.version_info >= (3, 5, 0):
-        assert 1 == installer.executor.installations_count
-    else:
-        assert 0 == installer.executor.installations_count
+    assert installer.executor.installations_count == 1
 
 
-def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(
-    installer, locker, repo, package, installed, env, pool, config
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(  # noqa: E501
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+    env: NullEnv,
+    pool: Pool,
+    config: Config,
 ):
     package.add_dependency(Factory.create_dependency("A", {"version": "^1.0"}))
 
@@ -1562,9 +1932,9 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.update(True)
     installer.run()
 
-    assert 3 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 3
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
     package.add_dependency(Factory.create_dependency("D", "^1.0"))
     locker.locked(True)
@@ -1590,13 +1960,19 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["D"])
     installer.run()
 
-    assert 1 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 1
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
-def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(
-    locker, repo, package, installed, env, mocker, config
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(  # noqa: E501
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+    env: NullEnv,
+    mocker: MockerFixture,
+    config: Config,
 ):
     mocker.patch("sys.platform", "darwin")
 
@@ -1620,9 +1996,9 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.update(True)
     installer.run()
 
-    assert 3 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 3
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
     package.add_dependency(Factory.create_dependency("pytest", "^3.5"))
 
@@ -1648,13 +2024,18 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert 7 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 7
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
 def test_installer_required_extras_should_be_installed(
-    locker, repo, package, installed, env, config
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    installed: CustomInstalledRepository,
+    env: NullEnv,
+    config: Config,
 ):
     pool = Pool()
     pool.add_repository(MockRepository())
@@ -1680,9 +2061,9 @@ def test_installer_required_extras_should_be_installed(
     installer.update(True)
     installer.run()
 
-    assert 2 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 2
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
     locker.locked(True)
     locker.mock_lock_data(locker.written_data)
@@ -1702,13 +2083,13 @@ def test_installer_required_extras_should_be_installed(
     installer.update(True)
     installer.run()
 
-    assert 2 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 2
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
 def test_update_multiple_times_with_split_dependencies_is_idempotent(
-    installer, locker, repo, package
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1769,25 +2150,29 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
     installer.update(True)
     installer.run()
 
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
     locker.mock_lock_data(locker.written_data)
 
     installer.update(True)
     installer.run()
 
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
     locker.mock_lock_data(locker.written_data)
 
     installer.update(True)
     installer.run()
 
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
 
 def test_installer_can_install_dependencies_from_forced_source(
-    locker, package, installed, env, config
+    locker: Locker,
+    package: Package,
+    installed: CustomInstalledRepository,
+    env: NullEnv,
+    config: Config,
 ):
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -1813,12 +2198,14 @@ def test_installer_can_install_dependencies_from_forced_source(
     installer.update(True)
     installer.run()
 
-    assert 1 == installer.executor.installations_count
-    assert 0 == installer.executor.updates_count
-    assert 0 == installer.executor.removals_count
+    assert installer.executor.installations_count == 1
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
 
 
-def test_run_installs_with_url_file(installer, locker, repo, package):
+def test_run_installs_with_url_file(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+):
     url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency(Factory.create_dependency("demo", {"url": url}))
 
@@ -1830,11 +2217,11 @@ def test_run_installs_with_url_file(installer, locker, repo, package):
 
     assert locker.written_data == expected
 
-    assert 2 == installer.executor.installations_count
+    assert installer.executor.installations_count == 2
 
 
 def test_installer_uses_prereleases_if_they_are_compatible(
-    installer, locker, package, repo
+    installer: Installer, locker: Locker, package: ProjectPackage, repo: Repository
 ):
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
@@ -1860,16 +2247,20 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     installer.update(True)
     installer.run()
 
-    assert 2 == installer.executor.installations_count
+    assert installer.executor.installations_count == 2
 
 
 def test_installer_can_handle_old_lock_files(
-    installer, locker, package, repo, installed, config
+    locker: Locker,
+    package: ProjectPackage,
+    repo: Repository,
+    installed: CustomInstalledRepository,
+    config: Config,
 ):
     pool = Pool()
     pool.add_repository(MockRepository())
 
-    package.add_dependency(Factory.create_dependency("pytest", "^3.5", category="dev"))
+    package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
 
     locker.locked()
     locker.mock_lock_data(fixture("old-lock"))
@@ -1888,7 +2279,7 @@ def test_installer_can_handle_old_lock_files(
 
     installer.run()
 
-    assert 6 == installer.executor.installations_count
+    assert installer.executor.installations_count == 6
 
     installer = Installer(
         NullIO(),
@@ -1910,7 +2301,7 @@ def test_installer_can_handle_old_lock_files(
     installer.run()
 
     # funcsigs will be added
-    assert 7 == installer.executor.installations_count
+    assert installer.executor.installations_count == 7
 
     installer = Installer(
         NullIO(),
@@ -1932,11 +2323,17 @@ def test_installer_can_handle_old_lock_files(
     installer.run()
 
     # colorama will be added
-    assert 8 == installer.executor.installations_count
+    assert installer.executor.installations_count == 8
 
 
 @pytest.mark.parametrize("quiet", [True, False])
-def test_run_with_dependencies_quiet(installer, locker, repo, package, quiet):
+def test_run_with_dependencies_quiet(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    quiet: bool,
+):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -1961,7 +2358,7 @@ def test_run_with_dependencies_quiet(installer, locker, repo, package, quiet):
 
 
 def test_installer_should_use_the_locked_version_of_git_dependencies(
-    installer, locker, package, repo
+    installer: Installer, locker: Locker, package: ProjectPackage, repo: Repository
 ):
     locker.locked(True)
     locker.mock_lock_data(
