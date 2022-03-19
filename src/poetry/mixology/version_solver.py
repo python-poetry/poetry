@@ -55,6 +55,7 @@ class VersionSolver:
         self._use_latest = use_latest
 
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
+        self._contradicted_incompatibilities: set[Incompatibility] = set()
         self._solution = PartialSolution()
 
     @property
@@ -103,6 +104,9 @@ class VersionSolver:
             # we can derive stronger assignments sooner and more eagerly find
             # conflicts.
             for incompatibility in reversed(self._incompatibilities[package]):
+                if incompatibility in self._contradicted_incompatibilities:
+                    continue
+
                 result = self._propagate_incompatibility(incompatibility)
 
                 if result is _conflict:
@@ -149,6 +153,7 @@ class VersionSolver:
                 # If term is already contradicted by _solution, then
                 # incompatibility is contradicted as well and there's nothing new we
                 # can deduce from it.
+                self._contradicted_incompatibilities.add(incompatibility)
                 return None
             elif relation == SetRelation.OVERLAPPING:
                 # If more than one term is inconclusive, we can't deduce anything about
@@ -165,6 +170,8 @@ class VersionSolver:
         # incompatibility is satisfied and we have a conflict.
         if unsatisfied is None:
             return _conflict
+
+        self._contradicted_incompatibilities.add(incompatibility)
 
         adverb = "not " if unsatisfied.is_positive() else ""
         self._log(f"derived: {adverb}{unsatisfied.dependency}")
@@ -255,6 +262,7 @@ class VersionSolver:
                 or most_recent_satisfier.cause is None
             ):
                 self._solution.backtrack(previous_satisfier_level)
+                self._contradicted_incompatibilities.clear()
                 if new_incompatibility:
                     self._add_incompatibility(incompatibility)
 
