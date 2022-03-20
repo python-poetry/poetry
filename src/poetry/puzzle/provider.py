@@ -67,7 +67,6 @@ class Provider:
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._search_for: dict[Dependency, list[Package]] = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
         self._overrides: dict = {}
@@ -119,28 +118,6 @@ class Provider:
         if dependency.is_root:
             return PackageCollection(dependency, [self._package])
 
-        for constraint in self._search_for:
-            if (
-                constraint.is_same_package_as(dependency)
-                and constraint.constraint.intersect(dependency.constraint)
-                == dependency.constraint
-            ):
-                packages = [
-                    p
-                    for p in self._search_for[constraint]
-                    if dependency.constraint.allows(p.version)
-                ]
-
-                packages.sort(
-                    key=lambda p: (
-                        not p.is_prerelease() and not dependency.allows_prereleases(),
-                        p.version,
-                    ),
-                    reverse=True,
-                )
-
-                return PackageCollection(dependency, packages)
-
         if dependency.is_vcs():
             packages = self.search_for_vcs(dependency)
         elif dependency.is_file():
@@ -159,8 +136,6 @@ class Provider:
                 ),
                 reverse=True,
             )
-
-        self._search_for[dependency] = packages
 
         return PackageCollection(dependency, packages)
 
