@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import time
 
 from contextlib import suppress
@@ -23,10 +24,41 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider
 
 
 _conflict = object()
+
+
+class DependencyCache:
+    """
+    A cache of the valid dependencies.
+
+    The key observation here is that during the search - except at backtracking
+    - once we have decided that a dependency is invalid, we never need check it
+    again.
+    """
+
+    def __init__(self, provider: Provider):
+        self.provider = provider
+        self.cache: dict[str, list[Package]] = {}
+
+    @functools.lru_cache(maxsize=128)
+    def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
+        complete_name = dependency.complete_name
+        packages = self.cache.get(complete_name)
+        if packages is None:
+            packages = self.provider.search_for(dependency)
+        else:
+            packages = [p for p in packages if dependency.constraint.allows(p.version)]
+
+        self.cache[complete_name] = packages
+
+        return packages
+
+    def clear(self) -> None:
+        self.cache.clear()
 
 
 class VersionSolver:
@@ -47,6 +79,7 @@ class VersionSolver:
     ):
         self._root = root
         self._provider = provider
+        self._dependency_cache = DependencyCache(provider)
         self._locked = locked or {}
 
         if use_latest is None:
@@ -263,6 +296,7 @@ class VersionSolver:
             ):
                 self._solution.backtrack(previous_satisfier_level)
                 self._contradicted_incompatibilities.clear()
+                self._dependency_cache.clear()
                 if new_incompatibility:
                     self._add_incompatibility(incompatibility)
 
@@ -354,7 +388,7 @@ class VersionSolver:
             try:
                 return (
                     not dependency.marker.is_any(),
-                    len(self._provider.search_for(dependency)),
+                    len(self._dependency_cache.search_for(dependency)),
                 )
             except ValueError:
                 return not dependency.marker.is_any(), 0
@@ -367,7 +401,7 @@ class VersionSolver:
         locked = self._get_locked(dependency)
         if locked is None or not dependency.constraint.allows(locked.version):
             try:
-                packages = self._provider.search_for(dependency)
+                packages = self._dependency_cache.search_for(dependency)
             except ValueError as e:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
