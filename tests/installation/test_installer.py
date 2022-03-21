@@ -381,7 +381,7 @@ def test_run_install_no_group(
 ):
     _configure_run_install_dev(locker, repo, package, installed)
 
-    installer.without_groups(["dev"])
+    installer.only_groups([])
     installer.run()
 
     assert installer.executor.installations_count == 0
@@ -647,7 +647,7 @@ def test_run_install_with_optional_group_selected(
         locker, repo, package, installed, with_optional_group=True
     )
 
-    installer.with_groups(["dev"])
+    installer.only_groups(["default", "dev"])
     installer.run()
 
     assert installer.executor.installations_count == 0

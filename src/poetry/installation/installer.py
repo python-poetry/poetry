@@ -54,9 +54,7 @@ class Installer:
         self._update = False
         self._verbose = False
         self._write_lock = True
-        self._without_groups = None
-        self._with_groups = None
-        self._only_groups = None
+        self._groups: Iterable[str] | None = None
 
         self._execute_operations = True
         self._lock = False
@@ -138,18 +136,8 @@ class Installer:
     def is_verbose(self) -> bool:
         return self._verbose
 
-    def without_groups(self, groups: list[str]) -> Installer:
-        self._without_groups = groups
-
-        return self
-
-    def with_groups(self, groups: list[str]) -> Installer:
-        self._with_groups = groups
-
-        return self
-
-    def only_groups(self, groups: list[str]) -> Installer:
-        self._only_groups = groups
+    def only_groups(self, groups: Iterable[str]) -> Installer:
+        self._groups = groups
 
         return self
 
@@ -281,18 +269,8 @@ class Installer:
                 # If we are only in lock mode, no need to go any further
                 return 0
 
-        if self._without_groups or self._with_groups or self._only_groups:
-            if self._with_groups:
-                # Default dependencies and opted-in optional dependencies
-                root = self._package.with_dependency_groups(self._with_groups)
-            elif self._without_groups:
-                # Default dependencies without selected groups
-                root = self._package.without_dependency_groups(self._without_groups)
-            else:
-                # Only selected groups
-                root = self._package.with_dependency_groups(
-                    self._only_groups, only=True
-                )
+        if self._groups is not None:
+            root = self._package.with_dependency_groups(list(self._groups), only=True)
         else:
             root = self._package.without_optional_dependency_groups()
 

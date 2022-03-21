@@ -9,11 +9,51 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
+    from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
+    from tests.types import ProjectFactory
+
+
+PYPROJECT_CONTENT = """\
+[tool.poetry]
+name = "simple-project"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Python Poetry <tests@python-poetry.org>"
+]
+license = "MIT"
+readme = "README.rst"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+
+[tool.poetry.group.foo.dependencies]
+foo = "^1.0"
+
+[tool.poetry.group.bar.dependencies]
+bar = "^1.1"
+
+[tool.poetry.group.baz.dependencies]
+baz = "^1.2"
+
+[tool.poetry.group.bim.dependencies]
+bim = "^1.3"
+
+[tool.poetry.group.bam.dependencies]
+bam = "^1.4"
+"""
 
 
 @pytest.fixture
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+def poetry(project_factory: ProjectFactory) -> Poetry:
+    return project_factory(name="export", pyproject_content=PYPROJECT_CONTENT)
+
+
+@pytest.fixture
+def tester(
+    command_tester_factory: CommandTesterFactory, poetry: Poetry
+) -> CommandTester:
     return command_tester_factory("install")
 
 
@@ -27,9 +67,11 @@ def test_group_options_are_passed_to_the_installer(
 
     tester.execute("--with foo,bar --without baz --without bim --only bam")
 
-    assert tester.command.installer._with_groups == ["foo", "bar"]
-    assert tester.command.installer._without_groups == ["baz", "bim"]
-    assert tester.command.installer._only_groups == ["bam"]
+    package_groups = set(tester.command.poetry.package._dependency_groups.keys())
+    installer_groups = set(tester.command.installer._groups)
+
+    assert installer_groups <= package_groups
+    assert set(installer_groups) == {"bam"}
 
 
 def test_sync_option_is_passed_to_the_installer(
