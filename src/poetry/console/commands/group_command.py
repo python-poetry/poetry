@@ -80,6 +80,14 @@ class GroupCommand(EnvCommand):
                 )
                 groups[new].add(group)
 
+        if groups["only"] and (groups["with"] or groups["without"]):
+            self.line_error(
+                "<warning>The `<fg=yellow;options=bold>--with</>` and "
+                "`<fg=yellow;options=bold>--without</>` options are ignored when used"
+                " along with the `<fg=yellow;options=bold>--only</>` option."
+                "</warning>"
+            )
+
         return groups["only"] or self.non_optional_groups.union(
             groups["with"]
         ).difference(groups["without"])
