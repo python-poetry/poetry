@@ -312,7 +312,7 @@ def test_run_install_no_group(
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
     package.add_dependency(Factory.create_dependency("C", "~1.2", groups=["dev"]))
 
-    installer.without_groups(["dev"])
+    installer.only_groups([])
     installer.run()
 
     installs = installer.installer.installs
