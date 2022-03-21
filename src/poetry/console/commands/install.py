@@ -174,7 +174,7 @@ dependencies and not including the current project, run the command with the
         if return_code != 0:
             return return_code
 
-        if self.option("no-root") or self.option("only"):
+        if self.option("no-root"):
             return 0
 
         try:
