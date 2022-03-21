@@ -31,7 +31,12 @@ class GroupCommand(EnvCommand):
                 flag=False,
                 multiple=True,
             ),
-            option("default", None, "Only install the default dependencies."),
+            option(
+                "default",
+                None,
+                "Only install the default dependencies."
+                " (<warning>Deprecated</warning>)",
+            ),
             option(
                 "only",
                 None,
@@ -61,10 +66,8 @@ class GroupCommand(EnvCommand):
                 for group in groups.split(",")
             }
 
-        if self.option("default"):
-            groups["only"].add("default")
-
         for opt, new, group in [
+            ("default", "only", "default"),
             ("no-dev", "only", "default"),
             ("dev", "without", "default"),
             ("dev-only", "without", "default"),
