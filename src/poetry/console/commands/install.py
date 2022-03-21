@@ -63,7 +63,8 @@ class InstallCommand(InstallerCommand):
         option(
             "remove-untracked",
             None,
-            "Removes packages not present in the lock file.",
+            "Removes packages not present in the lock file."
+            " (<warning>Deprecated</warning>)",
         ),
         option(
             "extras",
