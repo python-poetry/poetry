@@ -63,22 +63,29 @@ def tester(
 
 
 @pytest.mark.parametrize(
-    ("options", "groups", "with_root"),
+    ("options", "groups"),
     [
-        case + (with_root,)
-        for case in [
-            ("", {"default", "foo", "bar", "baz", "bim"}),
-            ("--only default", {"default"}),
-            ("--only foo", {"foo"}),
-            ("--only foo,bar", {"foo", "bar"}),
-            ("--only bam", {"bam"}),
-            ("--with bam", {"default", "foo", "bar", "baz", "bim", "bam"}),
-            ("--without foo,bar", {"default", "baz", "bim"}),
-            ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
-        ]
-        for with_root in {True, False}
+        ("", {"default", "foo", "bar", "baz", "bim"}),
+        ("--only default", {"default"}),
+        ("--only foo", {"foo"}),
+        ("--only foo,bar", {"foo", "bar"}),
+        ("--only bam", {"bam"}),
+        ("--with bam", {"default", "foo", "bar", "baz", "bim", "bam"}),
+        ("--without foo,bar", {"default", "baz", "bim"}),
+        ("--without default", {"foo", "bar", "baz", "bim"}),
+        ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
+        # net result zero options
+        ("--with foo", {"default", "foo", "bar", "baz", "bim"}),
+        ("--without bam", {"default", "foo", "bar", "baz", "bim"}),
+        ("--with bam --without bam", {"default", "foo", "bar", "baz", "bim"}),
+        ("--with foo --without foo", {"default", "bar", "baz", "bim"}),
+        # deprecated options
+        ("--default", {"default"}),
+        ("--no-dev", {"default"}),
+        ("--dev-only", {"foo", "bar", "baz", "bim"}),
     ],
 )
+@pytest.mark.parametrize("with_root", [True, False])
 def test_group_options_are_passed_to_the_installer(
     options: str,
     groups: set[str],
