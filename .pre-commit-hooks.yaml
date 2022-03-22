@@ -15,6 +15,15 @@
   language_version: python3
   pass_filenames: false
 
+- id: poetry-lock-no-update
+  name: poetry-check
+  description: run poetry lock --no-update to validate the lock file
+  entry: poetry lock --no-update
+  language: python
+  language_version: python3
+  pass_filenames: false
+  files: 'pyproject\.toml$|poetry\.lock$'
+
 - id: poetry-export
   name: poetry-export
   description: run poetry export to sync lock file with requirements.txt
