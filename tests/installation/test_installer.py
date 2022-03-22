@@ -309,6 +309,7 @@ def _configure_run_install_dev(
     package: ProjectPackage,
     installed: CustomInstalledRepository,
     with_optional_group: bool = False,
+    with_packages_installed: bool = False,
 ) -> None:
     """
     Perform common test setup for `test_run_install_*dev*()` methods.
@@ -360,9 +361,10 @@ def _configure_run_install_dev(
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    installed.add_package(package_a)
-    installed.add_package(package_b)
-    installed.add_package(package_c)
+    if with_packages_installed:
+        installed.add_package(package_a)
+        installed.add_package(package_b)
+        installed.add_package(package_c)
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
@@ -372,41 +374,27 @@ def _configure_run_install_dev(
     package.add_dependency_group(group)
 
 
-def test_run_install_no_group(
-    installer: Installer,
-    locker: Locker,
-    repo: Repository,
-    package: ProjectPackage,
-    installed: CustomInstalledRepository,
-):
-    _configure_run_install_dev(locker, repo, package, installed)
-
-    installer.only_groups([])
-    installer.run()
-
-    assert installer.executor.installations_count == 0
-    assert installer.executor.updates_count == 0
-    assert installer.executor.removals_count == 0
-
-
-def test_run_install_group_only(
-    installer: Installer,
-    locker: Locker,
-    repo: Repository,
-    package: ProjectPackage,
-    installed: CustomInstalledRepository,
-):
-    _configure_run_install_dev(locker, repo, package, installed)
-
-    installer.only_groups(["dev"])
-    installer.run()
-
-    assert installer.executor.installations_count == 0
-    assert installer.executor.updates_count == 0
-    assert installer.executor.removals_count == 0
-
-
-def test_run_install_with_optional_group_not_selected(
+@pytest.mark.parametrize(
+    ("groups", "installs", "updates", "removals", "with_packages_installed"),
+    [
+        (None, 2, 0, 0, False),
+        (None, 0, 0, 1, True),
+        ([], 0, 0, 0, False),
+        ([], 0, 0, 3, True),
+        (["dev"], 1, 0, 0, False),
+        (["dev"], 0, 0, 2, True),
+        (["default"], 2, 0, 0, False),
+        (["default"], 0, 0, 1, True),
+        (["default", "dev"], 3, 0, 0, False),
+        (["default", "dev"], 0, 0, 0, True),
+    ],
+)
+def test_run_install_with_dependency_groups(
+    groups: list[str] | None,
+    installs: int,
+    updates: int,
+    removals: int,
+    with_packages_installed: bool,
     installer: Installer,
     locker: Locker,
     repo: Repository,
@@ -414,14 +402,23 @@ def test_run_install_with_optional_group_not_selected(
     installed: CustomInstalledRepository,
 ):
     _configure_run_install_dev(
-        locker, repo, package, installed, with_optional_group=True
+        locker,
+        repo,
+        package,
+        installed,
+        with_optional_group=True,
+        with_packages_installed=with_packages_installed,
     )
 
+    if groups is not None:
+        installer.only_groups(groups)
+
+    installer.requires_synchronization(True)
     installer.run()
 
-    assert installer.executor.installations_count == 0
-    assert installer.executor.updates_count == 0
-    assert installer.executor.removals_count == 0
+    assert installer.executor.installations_count == installs
+    assert installer.executor.updates_count == updates
+    assert installer.executor.removals_count == removals
 
 
 def test_run_install_does_not_remove_locked_packages_if_installed_but_not_required(
@@ -634,25 +631,6 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
     assert installer.executor.installations_count == 0
     assert installer.executor.updates_count == 0
     assert installer.executor.removals_count == 2
-
-
-def test_run_install_with_optional_group_selected(
-    installer: Installer,
-    locker: Locker,
-    repo: Repository,
-    package: ProjectPackage,
-    installed: CustomInstalledRepository,
-):
-    _configure_run_install_dev(
-        locker, repo, package, installed, with_optional_group=True
-    )
-
-    installer.only_groups(["default", "dev"])
-    installer.run()
-
-    assert installer.executor.installations_count == 0
-    assert installer.executor.updates_count == 0
-    assert installer.executor.removals_count == 0
 
 
 @pytest.mark.parametrize(
