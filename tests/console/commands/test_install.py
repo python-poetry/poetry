@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
@@ -61,25 +63,39 @@ def tester(
 
 
 @pytest.mark.parametrize(
-    ("options", "groups"),
+    ("options", "groups", "with_root"),
     [
-        ("", {"default", "foo", "bar", "baz", "bim"}),
-        ("--only default", {"default"}),
-        ("--only foo", {"foo"}),
-        ("--only foo,bar", {"foo", "bar"}),
-        ("--only bam", {"bam"}),
-        ("--with bam", {"default", "foo", "bar", "baz", "bim", "bam"}),
-        ("--without foo,bar", {"default", "baz", "bim"}),
-        ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
+        case + (with_root,)
+        for case in [
+            ("", {"default", "foo", "bar", "baz", "bim"}),
+            ("--only default", {"default"}),
+            ("--only foo", {"foo"}),
+            ("--only foo,bar", {"foo", "bar"}),
+            ("--only bam", {"bam"}),
+            ("--with bam", {"default", "foo", "bar", "baz", "bim", "bam"}),
+            ("--without foo,bar", {"default", "baz", "bim"}),
+            ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
+        ]
+        for with_root in {True, False}
     ],
 )
 def test_group_options_are_passed_to_the_installer(
-    options: str, groups: set[str], tester: CommandTester, mocker: MockerFixture
+    options: str,
+    groups: set[str],
+    with_root: bool,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     """
     Group options are passed properly to the installer.
     """
-    mocker.patch.object(tester.command.installer, "run", return_value=1)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+    editable_builder_mock = mocker.patch(
+        "poetry.masonry.builders.EditableBuilder", side_effect=ModuleOrPackageNotFound()
+    )
+
+    if not with_root:
+        options = f"--no-root {options}"
 
     tester.execute(options)
 
@@ -88,6 +104,12 @@ def test_group_options_are_passed_to_the_installer(
 
     assert installer_groups <= package_groups
     assert set(installer_groups) == groups
+
+    if with_root:
+        assert editable_builder_mock.call_count == 1
+        assert editable_builder_mock.call_args_list[0][0][0] == tester.command.poetry
+    else:
+        assert editable_builder_mock.call_count == 0
 
 
 def test_sync_option_is_passed_to_the_installer(
