@@ -36,6 +36,7 @@ on whether their dependencies will be resolved and installed **by default**, the
 the dependencies logically.
 {{% /note %}}
 
+{{% note %}}
 The dependencies declared in `tool.poetry.dependencies` are part of an implicit `default` group.
 
 ```toml
@@ -47,6 +48,7 @@ pendulum = "*"
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
+{{% /note %}}
 
 {{% note %}}
 **A note about the `dev-dependencies` section**
@@ -109,7 +111,14 @@ If the group does not already exist, it will be created automatically.
 
 ### Installing group dependencies
 
-**By default**, dependencies across **all groups** will be installed when executing `poetry install`.
+**By default**, dependencies across **all non-optional groups** will be installed when executing
+`poetry install`.
+
+{{% note %}}
+The default set of dependencies for a project includes the implicit `default` group defined in
+`tool.poetry.dependencies` as well as all groups that are not explicitly marked as an
+[optional group]({{< relref "#optional-groups" >}}).
+{{% /note %}}
 
 You can **exclude** one or more groups with the `--without` option:
 
@@ -123,20 +132,22 @@ You can also opt in [optional groups]({{< relref "#optional-groups" >}}) by usin
 poetry install --with docs
 ```
 
-If you only want to install the **default**, non-grouped, dependencies, you can do so
-with the `--default` option:
-
-```bash
-poetry install --default
-```
-
 Finally, in some case you might want to install **only specific groups** of dependencies
-without installing the default dependencies. For that purpose, you can use
+without installing the default set of dependencies. For that purpose, you can use
 the `--only` option.
 
 ```bash
 poetry install --only docs
 ```
+
+{{% note %}}
+If you only want to install the project's runtime dependencies, you can do so  with the
+`--only default` notation:
+
+```bash
+poetry install --only default
+```
+{{% /note %}}
 
 ### Removing dependencies from a group
 
