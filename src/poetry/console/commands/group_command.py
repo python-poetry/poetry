@@ -20,27 +20,27 @@ class GroupCommand(EnvCommand):
             option(
                 "without",
                 None,
-                "The dependency groups to ignore for installation.",
+                "The dependency groups to ignore.",
                 flag=False,
                 multiple=True,
             ),
             option(
                 "with",
                 None,
-                "The optional dependency groups to include for installation.",
+                "The optional dependency groups to include.",
                 flag=False,
                 multiple=True,
             ),
             option(
                 "default",
                 None,
-                "Only install the default dependencies."
+                "Only include the default dependencies."
                 " (<warning>Deprecated</warning>)",
             ),
             option(
                 "only",
                 None,
-                "The only dependency groups to install.",
+                "The only dependency groups to include.",
                 flag=False,
                 multiple=True,
             ),
