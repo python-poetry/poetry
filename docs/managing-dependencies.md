@@ -132,6 +132,15 @@ You can also opt in [optional groups]({{< relref "#optional-groups" >}}) by usin
 poetry install --with docs
 ```
 
+{{% warning %}}
+When used together, `--without` takes precedence over `--with`. For example, the following command
+will only install the dependencies specified in the `test` group.
+
+```bash
+poetry install --with docs --without test,docs
+```
+{{% /warning %}}
+
 Finally, in some case you might want to install **only specific groups** of dependencies
 without installing the default set of dependencies. For that purpose, you can use
 the `--only` option.
