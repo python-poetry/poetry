@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import urllib.parse
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
 from typing import Sequence
 
@@ -70,17 +69,13 @@ class Exporter:
         content = ""
         dependency_lines = set()
 
-        # Get project dependencies, and add the project-wide marker to them.
+        # Get project dependencies.
         groups = ["dev"] if dev else []
         root_package = self._poetry.package.with_dependency_groups(groups)
-        project_requires = []
-        for require in root_package.all_requires:
-            require = deepcopy(require)
-            require.marker = require.marker.intersect(root_package.python_marker)
-            project_requires.append(require)
 
         for dependency_package in self._poetry.locker.get_project_dependency_packages(
-            project_requires=project_requires,
+            project_requires=root_package.all_requires,
+            project_python_marker=root_package.python_marker,
             dev=dev,
             extras=extras,
         ):

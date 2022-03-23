@@ -32,6 +32,7 @@ from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
+    from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
     from tomlkit.items import InlineTable
     from tomlkit.toml_document import TOMLDocument
@@ -315,9 +316,19 @@ class Locker:
     def get_project_dependency_packages(
         self,
         project_requires: list[Dependency],
+        project_python_marker: VersionConstraint | None = None,
         dev: bool = False,
         extras: bool | Sequence[str] | None = None,
     ) -> Iterator[DependencyPackage]:
+        # Apply the project python marker to all requirements.
+        if project_python_marker is not None:
+            marked_requires: list[Dependency] = []
+            for require in project_requires:
+                require = deepcopy(require)
+                require.marker = require.marker.intersect(project_python_marker)
+                marked_requires.append(require)
+            project_requires = marked_requires
+
         repository = self.locked_repository(with_dev_reqs=dev)
 
         # Build a set of all packages required by our selected extras
