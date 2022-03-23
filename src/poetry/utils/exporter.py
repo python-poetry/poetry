@@ -70,8 +70,11 @@ class Exporter:
         dependency_lines = set()
 
         # Get project dependencies.
-        groups = ["dev"] if dev else []
-        root_package = self._poetry.package.with_dependency_groups(groups)
+        root_package = (
+            self._poetry.package.clone()
+            if dev
+            else self._poetry.package.with_dependency_groups(["default"], only=True)
+        )
 
         for dependency_package in self._poetry.locker.get_project_dependency_packages(
             project_requires=root_package.all_requires,
