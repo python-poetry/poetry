@@ -208,7 +208,7 @@ class Uploader:
         return data
 
     def _upload(
-        self, session: requests.Session, url: str, dry_run: bool | None = False
+        self, session: requests.Session, url: str, dry_run: bool = False
     ) -> None:
         for file in self.files:
             # TODO: Check existence
@@ -220,7 +220,7 @@ class Uploader:
         session: requests.Session,
         url: str,
         file: Path,
-        dry_run: bool | None = False,
+        dry_run: bool = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
 
