@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 import sys
@@ -12,11 +14,14 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
+from poetry.utils.helpers import canonicalize_name
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureRequest
+    from poetry.core.packages.package import Package
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -36,7 +41,7 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
-def patches(mocker: "MockerFixture", source_dir: Path, repo: "TestRepository") -> None:
+def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
@@ -93,9 +98,9 @@ def test_basic_interactive(
 
 def test_noninteractive(
     app: PoetryTestApplication,
-    mocker: "MockerFixture",
-    poetry: "Poetry",
-    repo: "TestRepository",
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
     tmp_path: Path,
 ):
     command = app.find("init")
@@ -119,10 +124,11 @@ def test_noninteractive(
     assert 'pytest = "^3.6.0"' in toml_content
 
 
-def test_interactive_with_dependencies(tester: CommandTester, repo: "TestRepository"):
+def test_interactive_with_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
+    repo.add_package(get_package("flask", "2.0.0"))
 
     inputs = [
         "my-package",  # Package name
@@ -135,6 +141,9 @@ def test_interactive_with_dependencies(tester: CommandTester, repo: "TestReposit
         "pendulu",  # Search for package
         "1",  # Second option is pendulum
         "",  # Do not set constraint
+        "Flask",
+        "0",
+        "",
         "",  # Stop searching for packages
         "",  # Interactive dev packages
         "pytest",  # Search for package
@@ -158,6 +167,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
+flask = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -196,9 +206,7 @@ python = "^{python}"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies(
-    tester: CommandTester, repo: "TestRepository"
-):
+def test_interactive_with_git_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -242,8 +250,53 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+_generate_choice_list_packages_params: list[list[Package]] = [
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask-test2", "1.0.0"),
+        get_package("Flask-test3", "1.0.0"),
+        get_package("Flask-test4", "1.0.0"),
+        get_package("Flask-test5", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+        get_package("Flask-test6", "1.0.0"),
+        get_package("Flask-test7", "1.0.0"),
+    ],
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+    ],
+]
+
+
+@pytest.fixture(params=_generate_choice_list_packages_params)
+def _generate_choice_list_packages(request: FixtureRequest) -> list[Package]:
+    return request.param
+
+
+@pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
+def test_generate_choice_list(
+    tester: CommandTester,
+    package_name: str,
+    _generate_choice_list_packages: list[Package],
+):
+    init_command = tester.command
+
+    packages = _generate_choice_list_packages
+    choices = init_command._generate_choice_list(
+        packages, canonicalize_name(package_name)
+    )
+
+    assert choices[0] == "Flask"
+
+
 def test_interactive_with_git_dependencies_with_reference(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -289,7 +342,7 @@ pytest = "^3.6.0"
 
 
 def test_interactive_with_git_dependencies_and_other_name(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -336,9 +389,9 @@ pytest = "^3.6.0"
 
 def test_interactive_with_directory_dependency(
     tester: CommandTester,
-    repo: "TestRepository",
+    repo: TestRepository,
     source_dir: Path,
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -387,9 +440,9 @@ pytest = "^3.6.0"
 
 def test_interactive_with_directory_dependency_and_other_name(
     tester: CommandTester,
-    repo: "TestRepository",
+    repo: TestRepository,
     source_dir: Path,
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -439,9 +492,9 @@ pytest = "^3.6.0"
 
 def test_interactive_with_file_dependency(
     tester: CommandTester,
-    repo: "TestRepository",
+    repo: TestRepository,
     source_dir: Path,
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -519,7 +572,7 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dependency(tester: CommandTester, repo: "TestRepository"):
+def test_predefined_dependency(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pendulum", "2.0.0"))
 
     inputs = [
@@ -554,7 +607,7 @@ pendulum = "^2.0.0"
 
 
 def test_predefined_and_interactive_dependencies(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
@@ -596,7 +649,7 @@ python = "~2.7 || ^3.6"
     assert 'pyramid = "^1.10"' in output
 
 
-def test_predefined_dev_dependency(tester: CommandTester, repo: "TestRepository"):
+def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pytest", "3.6.0"))
 
     inputs = [
@@ -634,7 +687,7 @@ pytest = "^3.6.0"
 
 
 def test_predefined_and_interactive_dev_dependencies(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
@@ -710,7 +763,7 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    repo: "TestRepository",
+    repo: TestRepository,
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -757,7 +810,7 @@ build-backend = "setuptools.build_meta"
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
     assert (
-        tester.io.fetch_output().strip()
+        tester.io.fetch_error().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
     assert existing_section in pyproject_file.read_text()

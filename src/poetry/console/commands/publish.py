@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 
 from cleo.helpers import option
 
@@ -41,7 +42,7 @@ the config command.
 
     loggers = ["poetry.masonry.publishing.publisher"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -13,19 +15,19 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def tester(
-    command_tester_factory: "CommandTesterFactory",
-    poetry_with_source: "Poetry",
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_source: Poetry,
     add_multiple_sources: None,
-) -> "CommandTester":
+) -> CommandTester:
     return command_tester_factory("source remove", poetry=poetry_with_source)
 
 
 def test_source_remove_simple(
-    tester: "CommandTester",
-    poetry_with_source: "Poetry",
-    source_existing: "Source",
-    source_one: "Source",
-    source_two: "Source",
+    tester: CommandTester,
+    poetry_with_source: Poetry,
+    source_existing: Source,
+    source_one: Source,
+    source_two: Source,
 ):
     tester.execute(f"{source_existing.name}")
     assert (
@@ -40,7 +42,7 @@ def test_source_remove_simple(
     assert tester.status_code == 0
 
 
-def test_source_remove_error(tester: "CommandTester"):
+def test_source_remove_error(tester: CommandTester):
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "Source with name error was not found."
     assert tester.status_code == 1

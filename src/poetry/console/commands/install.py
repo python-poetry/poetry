@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
@@ -110,14 +112,14 @@ dependencies and not including the current project, run the command with the
         included_groups = []
         only_groups = []
         if self.option("no-dev"):
-            self.line(
+            self.line_error(
                 "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is"
                 " deprecated, use the `<fg=yellow;options=bold>--without dev</>`"
                 " notation instead.</warning>"
             )
             excluded_groups.append("dev")
         elif self.option("dev-only"):
-            self.line(
+            self.line_error(
                 "<warning>The `<fg=yellow;options=bold>--dev-only</>` option is"
                 " deprecated, use the `<fg=yellow;options=bold>--only dev</>` notation"
                 " instead.</warning>"
@@ -151,7 +153,7 @@ dependencies and not including the current project, run the command with the
 
         with_synchronization = self.option("sync")
         if self.option("remove-untracked"):
-            self.line(
+            self.line_error(
                 "<warning>The `<fg=yellow;options=bold>--remove-untracked</>` option is"
                 " deprecated, use the `<fg=yellow;options=bold>--sync</>` option"
                 " instead.</warning>"

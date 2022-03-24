@@ -17,7 +17,7 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
-Poetry requires **Python 3.6+**. It is multi-platform and the goal is to make it work equally well
+Poetry requires **Python 3.7+**. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
 
 ## Installation
@@ -47,7 +47,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 {{% note %}}
-Note that the installer does not support Python < 3.6.
+Note that the installer does not support Python < 3.7.
 {{% /note %}}
 
 {{% warning %}}

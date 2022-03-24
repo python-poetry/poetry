@@ -1,9 +1,10 @@
+from __future__ import annotations
+
+import itertools
 import urllib.parse
 
 from typing import TYPE_CHECKING
-from typing import Optional
 from typing import Sequence
-from typing import Union
 
 from poetry.core.packages.utils.utils import path_to_url
 
@@ -28,17 +29,17 @@ class Exporter:
     ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(self, poetry: "Poetry") -> None:
+    def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
 
     def export(
         self,
         fmt: str,
-        cwd: "Path",
-        output: Union["IO", str],
+        cwd: Path,
+        output: IO | str,
         with_hashes: bool = True,
         dev: bool = False,
-        extras: Optional[Union[bool, Sequence[str]]] = None,
+        extras: bool | Sequence[str] | None = None,
         with_credentials: bool = False,
         with_urls: bool = True,
     ) -> None:
@@ -57,11 +58,11 @@ class Exporter:
 
     def _export_requirements_txt(
         self,
-        cwd: "Path",
-        output: Union["IO", str],
+        cwd: Path,
+        output: IO | str,
         with_hashes: bool = True,
         dev: bool = False,
-        extras: Optional[Union[bool, Sequence[str]]] = None,
+        extras: bool | Sequence[str] | None = None,
         with_credentials: bool = False,
         with_urls: bool = True,
     ) -> None:
@@ -69,13 +70,21 @@ class Exporter:
         content = ""
         dependency_lines = set()
 
-        for dependency_package in self._poetry.locker.get_project_dependency_packages(
-            project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
+        for package, groups in itertools.groupby(
+            self._poetry.locker.get_project_dependency_packages(
+                project_requires=self._poetry.package.all_requires,
+                dev=dev,
+                extras=extras,
+            ),
+            lambda dependency_package: dependency_package.package,
         ):
             line = ""
-
-            dependency = dependency_package.dependency
-            package = dependency_package.package
+            dependency_packages = list(groups)
+            dependency = dependency_packages[0].dependency
+            marker = dependency.marker
+            for dep_package in dependency_packages[1:]:
+                marker = marker.union(dep_package.dependency.marker)
+            dependency.marker = marker
 
             if package.develop:
                 line += "-e "
@@ -163,7 +172,7 @@ class Exporter:
 
         self._output(content, cwd, output)
 
-    def _output(self, content: str, cwd: "Path", output: Union["IO", str]) -> None:
+    def _output(self, content: str, cwd: Path, output: IO | str) -> None:
         decoded = decode(content)
         try:
             output.write(decoded)

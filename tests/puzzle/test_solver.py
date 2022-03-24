@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
 
 import pytest
 
@@ -93,10 +91,10 @@ def solver(
 
 
 def check_solver_result(
-    transaction: "Transaction",
-    expected: List[Dict[str, Any]],
+    transaction: Transaction,
+    expected: list[dict[str, Any]],
     synchronize: bool = False,
-) -> List["OperationTypes"]:
+) -> list[OperationTypes]:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
@@ -120,7 +118,7 @@ def check_solver_result(
 
             result.append({"job": job, "package": op.package, "skipped": op.skipped})
 
-    assert expected == result
+    assert result == expected
 
     return ops
 
@@ -523,7 +521,7 @@ def test_solver_returns_extras_only_requested(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    enabled_extra: Optional[bool],
+    enabled_extra: bool | None,
 ):
     extras = [enabled_extra] if enabled_extra is not None else []
 
@@ -585,7 +583,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    enabled_extra: Optional[bool],
+    enabled_extra: bool | None,
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -634,7 +632,7 @@ def test_solver_returns_extras_only_requested_nested(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    enabled_extra: Optional[bool],
+    enabled_extra: bool | None,
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -686,6 +684,53 @@ def test_solver_returns_extras_only_requested_nested(
 
     assert ops[-1].package.marker.is_any()
     assert ops[0].package.marker.is_any()
+
+
+def test_solver_finds_extras_next_to_non_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    # Root depends on A[foo]
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+    package_d = get_package("D", "1.0")
+
+    # A depends on B; A[foo] depends on B[bar].
+    package_a.add_dependency(Factory.create_dependency("B", "*"))
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "*", "extras": ["bar"], "markers": "extra == 'foo'"}
+        )
+    )
+    package_a.extras = {"foo": [get_dependency("B", "*")]}
+
+    # B depends on C; B[bar] depends on D.
+    package_b.add_dependency(Factory.create_dependency("C", "*"))
+    package_b.add_dependency(
+        Factory.create_dependency("D", {"version": "*", "markers": 'extra == "bar"'})
+    )
+    package_b.extras = {"bar": [get_dependency("D", "*")]}
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_d},
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
 
 
 def test_solver_returns_prereleases_if_requested(
@@ -1432,7 +1477,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(
     ids=["branch", "tag", "rev"],
 )
 def test_solver_can_resolve_git_dependencies_with_ref(
-    solver: Solver, repo: Repository, package: Package, ref: Dict[str, str]
+    solver: Solver, repo: Repository, package: Package, ref: dict[str, str]
 ):
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
@@ -2771,7 +2816,7 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     solver: Solver,
     repo: Repository,
     package: Package,
-    http: Type["httpretty.httpretty"],
+    http: type[httpretty.httpretty],
 ):
     path = (
         Path(__file__).parent.parent

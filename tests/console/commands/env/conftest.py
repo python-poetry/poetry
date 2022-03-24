@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
-from typing import List
 
 import pytest
 
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def venv_name(app: "PoetryTestApplication") -> str:
+def venv_name(app: PoetryTestApplication) -> str:
     return EnvManager(app.poetry).generate_env_name(
         "simple-project", str(app.poetry.file.parent)
     )
@@ -27,23 +28,23 @@ def venv_cache(tmp_dir: str) -> Path:
 
 
 @pytest.fixture(scope="module")
-def python_versions() -> List[str]:
+def python_versions() -> list[str]:
     return ["3.6", "3.7"]
 
 
 @pytest.fixture
-def venvs_in_cache_config(app: "PoetryTestApplication", venv_cache: Path) -> None:
+def venvs_in_cache_config(app: PoetryTestApplication, venv_cache: Path) -> None:
     app.poetry.config.merge({"virtualenvs": {"path": str(venv_cache)}})
 
 
 @pytest.fixture
 def venvs_in_cache_dirs(
-    app: "PoetryTestApplication",
+    app: PoetryTestApplication,
     venvs_in_cache_config: None,
     venv_name: str,
     venv_cache: Path,
-    python_versions: List[str],
-) -> List[str]:
+    python_versions: list[str],
+) -> list[str]:
     directories = []
     for version in python_versions:
         directory = venv_cache.joinpath(f"{venv_name}-py{version}")
@@ -53,7 +54,7 @@ def venvs_in_cache_dirs(
 
 
 @pytest.fixture
-def venvs_in_project_dir(app: "PoetryTestApplication") -> Iterator[Path]:
+def venvs_in_project_dir(app: PoetryTestApplication) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
     venv_dir = app.poetry.file.parent.joinpath(".venv")
     venv_dir.mkdir(exist_ok=True)

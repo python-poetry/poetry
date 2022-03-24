@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def test_simple_dependencies(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("a", "1.0.0"))
     root.add_dependency(Factory.create_dependency("b", "1.0.0"))
@@ -39,7 +41,7 @@ def test_simple_dependencies(
 
 
 def test_shared_dependencies_with_overlapping_constraints(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("a", "1.0.0"))
     root.add_dependency(Factory.create_dependency("b", "1.0.0"))
@@ -56,7 +58,7 @@ def test_shared_dependencies_with_overlapping_constraints(
 
 
 def test_shared_dependency_where_dependent_version_affects_other_dependencies(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "<=1.0.2"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
@@ -76,7 +78,7 @@ def test_shared_dependency_where_dependent_version_affects_other_dependencies(
 
 
 def test_circular_dependency(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
 

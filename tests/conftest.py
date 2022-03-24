@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 import shutil
@@ -8,13 +10,8 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Iterator
-from typing import List
-from typing import Optional
 from typing import TextIO
-from typing import Tuple
-from typing import Type
 
 import httpretty
 import pytest
@@ -62,13 +59,13 @@ class Config(BaseConfig):
 
         return super().get(setting_name, default=default)
 
-    def raw(self) -> Dict[str, Any]:
+    def raw(self) -> dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super().raw()
 
-    def all(self) -> Dict[str, Any]:
+    def all(self) -> dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
@@ -83,18 +80,16 @@ class DummyBackend(KeyringBackend):
     def priority(cls) -> int:
         return 42
 
-    def set_password(
-        self, service: str, username: Optional[str], password: Any
-    ) -> None:
+    def set_password(self, service: str, username: str | None, password: Any) -> None:
         self._passwords[service] = {username: password}
 
-    def get_password(self, service: str, username: Optional[str]) -> Any:
+    def get_password(self, service: str, username: str | None) -> Any:
         return self._passwords.get(service, {}).get(username)
 
-    def get_credential(self, service: str, username: Optional[str]) -> Any:
+    def get_credential(self, service: str, username: str | None) -> Any:
         return self._passwords.get(service, {}).get(username)
 
-    def delete_password(self, service: str, username: Optional[str]) -> None:
+    def delete_password(self, service: str, username: str | None) -> None:
         if service in self._passwords and username in self._passwords[service]:
             del self._passwords[service][username]
 
@@ -121,7 +116,7 @@ def with_fail_keyring() -> None:
 
 
 @pytest.fixture()
-def with_chained_keyring(mocker: "MockerFixture") -> None:
+def with_chained_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
     mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
@@ -163,7 +158,7 @@ def auth_config_source() -> DictConfigSource:
 def config(
     config_source: DictConfigSource,
     auth_config_source: DictConfigSource,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ) -> Config:
     import keyring
 
@@ -183,7 +178,7 @@ def config(
 
 
 @pytest.fixture(autouse=True)
-def mock_user_config_dir(mocker: "MockerFixture") -> Iterator[None]:
+def mock_user_config_dir(mocker: MockerFixture) -> Iterator[None]:
     config_dir = tempfile.mkdtemp(prefix="poetry_config_")
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
     mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
@@ -192,7 +187,7 @@ def mock_user_config_dir(mocker: "MockerFixture") -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def download_mock(mocker: "MockerFixture") -> None:
+def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
     mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
@@ -200,7 +195,7 @@ def download_mock(mocker: "MockerFixture") -> None:
 
 
 @pytest.fixture(autouse=True)
-def pep517_metadata_mock(mocker: "MockerFixture") -> None:
+def pep517_metadata_mock(mocker: MockerFixture) -> None:
     @classmethod
     def _pep517_metadata(cls: PackageInfo, path: Path) -> PackageInfo:
         with suppress(PackageInfoError):
@@ -224,7 +219,7 @@ def environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def git_mock(mocker: "MockerFixture") -> None:
+def git_mock(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
     mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
     mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
@@ -233,7 +228,7 @@ def git_mock(mocker: "MockerFixture") -> None:
 
 
 @pytest.fixture
-def http() -> Iterator[Type[httpretty.httpretty]]:
+def http() -> Iterator[type[httpretty.httpretty]]:
     httpretty.reset()
     httpretty.enable(allow_net_connect=False)
 
@@ -249,7 +244,7 @@ def fixture_base() -> Path:
 
 
 @pytest.fixture
-def fixture_dir(fixture_base: Path) -> "FixtureDirGetter":
+def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
     def _fixture_dir(name: str) -> Path:
         return fixture_base / name
 
@@ -266,7 +261,7 @@ def tmp_dir() -> Iterator[str]:
 
 
 @pytest.fixture
-def mocked_open_files(mocker: "MockerFixture") -> List:
+def mocked_open_files(mocker: MockerFixture) -> list:
     files = []
     original = Path.open
 
@@ -303,17 +298,17 @@ def current_env() -> SystemEnv:
 
 
 @pytest.fixture(scope="session")
-def current_python(current_env: SystemEnv) -> Tuple[int, int, int]:
+def current_python(current_env: SystemEnv) -> tuple[int, int, int]:
     return current_env.version_info[:3]
 
 
 @pytest.fixture(scope="session")
-def default_python(current_python: Tuple[int, int, int]) -> str:
+def default_python(current_python: tuple[int, int, int]) -> str:
     return "^" + ".".join(str(v) for v in current_python[:2])
 
 
 @pytest.fixture
-def repo(http: Type[httpretty.httpretty]) -> TestRepository:
+def repo(http: type[httpretty.httpretty]) -> TestRepository:
     http.register_uri(
         http.GET,
         re.compile("^https?://foo.bar/(.+?)$"),
@@ -328,17 +323,17 @@ def project_factory(
     repo: TestRepository,
     installed: Repository,
     default_python: str,
-) -> "ProjectFactory":
+) -> ProjectFactory:
     workspace = Path(tmp_dir)
 
     def _factory(
-        name: Optional[str] = None,
-        dependencies: Optional[Dict[str, str]] = None,
-        dev_dependencies: Optional[Dict[str, str]] = None,
-        pyproject_content: Optional[str] = None,
-        poetry_lock_content: Optional[str] = None,
+        name: str | None = None,
+        dependencies: dict[str, str] | None = None,
+        dev_dependencies: dict[str, str] | None = None,
+        pyproject_content: str | None = None,
+        poetry_lock_content: str | None = None,
         install_deps: bool = True,
-    ) -> "Poetry":
+    ) -> Poetry:
         project_dir = workspace / f"poetry-fixture-{name}"
         dependencies = dependencies or {}
         dev_dependencies = dev_dependencies or {}
@@ -391,14 +386,14 @@ def project_factory(
 
 @pytest.fixture
 def command_tester_factory(
-    app: "PoetryTestApplication", env: "MockEnv"
-) -> "CommandTesterFactory":
+    app: PoetryTestApplication, env: MockEnv
+) -> CommandTesterFactory:
     def _tester(
         command: str,
-        poetry: Optional["Poetry"] = None,
-        installer: Optional[Installer] = None,
-        executor: Optional["Executor"] = None,
-        environment: Optional["Env"] = None,
+        poetry: Poetry | None = None,
+        installer: Installer | None = None,
+        executor: Executor | None = None,
+        environment: Env | None = None,
     ) -> CommandTester:
         command = app.find(command)
         tester = CommandTester(command)
@@ -439,7 +434,7 @@ def command_tester_factory(
 
 
 @pytest.fixture
-def do_lock(command_tester_factory: "CommandTesterFactory", poetry: "Poetry") -> None:
+def do_lock(command_tester_factory: CommandTesterFactory, poetry: Poetry) -> None:
     command_tester_factory("lock").execute()
     assert poetry.locker.lock.exists()
 

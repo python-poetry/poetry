@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,12 +20,12 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
 def test_show_basic_with_installed_packages(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -96,11 +98,11 @@ pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_basic_with_installed_packages_single(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
 
@@ -142,7 +144,7 @@ def test_show_basic_with_installed_packages_single(
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -194,11 +196,11 @@ cachy        0.1.0 Cachy package
 pendulum (!) 2.0.0 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_basic_with_not_installed_packages_decorated(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -250,14 +252,14 @@ def test_show_basic_with_not_installed_packages_decorated(
 \033[31mpendulum\033[39m \033[39;1m2.0.0\033[39;22m Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_latest_non_decorated(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -320,14 +322,14 @@ cachy    0.1.0 0.2.0 Cachy package
 pendulum 2.0.0 2.0.1 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_latest_decorated(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -392,14 +394,14 @@ def test_show_latest_decorated(
  \033[31m2.0.1\033[39m Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_outdated(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -458,14 +460,14 @@ def test_show_outdated(
 cachy 0.1.0 0.2.0 Cachy package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_outdated_with_only_up_to_date_packages(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     cachy_020 = get_package("cachy", "0.2.0")
     cachy_020.description = "Cachy package"
@@ -500,14 +502,14 @@ def test_show_outdated_with_only_up_to_date_packages(
 
     expected = ""
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_outdated_has_prerelease_but_not_allowed(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -571,14 +573,14 @@ def test_show_outdated_has_prerelease_but_not_allowed(
 cachy 0.1.0 0.2.0 Cachy package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_outdated_has_prerelease_and_allowed(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(
         Factory.create_dependency(
@@ -646,14 +648,14 @@ def test_show_outdated_has_prerelease_and_allowed(
 cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_outdated_formatting(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -716,15 +718,15 @@ cachy    0.1.0 0.2.0 Cachy package
 pendulum 2.0.0 2.0.1 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_local_dependencies"])
 def test_show_outdated_local_dependencies(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -829,17 +831,18 @@ def test_show_outdated_local_dependencies(
 cachy              0.2.0                       0.3.0
 project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 """
-    assert expected.rstrip() == "\n".join(
-        line.rstrip() for line in tester.io.fetch_output().splitlines()
+    assert (
+        "\n".join(line.rstrip() for line in tester.io.fetch_output().splitlines())
+        == expected.rstrip()
     )
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
 def test_show_outdated_git_dev_dependency(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -933,15 +936,15 @@ cachy 0.1.0         0.2.0         Cachy package
 demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
 def test_show_outdated_no_dev_git_dev_dependency(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -1031,14 +1034,14 @@ def test_show_outdated_no_dev_git_dev_dependency(
 cachy 0.1.0 0.2.0 Cachy package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_hides_incompatible_package(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
@@ -1092,14 +1095,14 @@ def test_show_hides_incompatible_package(
 pendulum 2.0.0 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_all_shows_incompatible_package(
-    tester: "CommandTester",
-    poetry: "Poetry",
-    installed: "Repository",
-    repo: "TestRepository",
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
 ):
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -1150,11 +1153,11 @@ cachy     0.1.0 Cachy package
 pendulum  2.0.0 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_non_dev_with_basic_installed_packages(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -1226,11 +1229,11 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_with_group_only(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -1301,11 +1304,11 @@ def test_show_with_group_only(
 pytest 3.7.3 Pytest package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_with_optional_group(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -1377,7 +1380,7 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
     tester.execute("--with dev")
 
@@ -1387,10 +1390,10 @@ pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_show_tree(tester: "CommandTester", poetry: "Poetry", installed: "Repository"):
+def test_show_tree(tester: CommandTester, poetry: Poetry, installed: Repository):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
 
     cachy2 = get_package("cachy", "0.2.0")
@@ -1439,12 +1442,10 @@ cachy 0.2.0
 `-- msgpack-python >=0.5 <0.6
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_show_tree_no_dev(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
-):
+def test_show_tree_no_dev(tester: CommandTester, poetry: Poetry, installed: Repository):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
     poetry.package.add_dependency(
         Factory.create_dependency("pytest", "^6.1.0", groups=["dev"])
@@ -1508,11 +1509,11 @@ cachy 0.2.0
 └── msgpack-python >=0.5 <0.6
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_show_required_by_deps(
-    tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+    tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "2.0.0"))
@@ -1586,3 +1587,13 @@ required by
 """.splitlines()
     actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
     assert actual == expected
+
+
+def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry):
+    assert not poetry.locker.lock.exists()
+
+    tester.execute()
+
+    expected = "Error: poetry.lock not found. Run `poetry lock` to create it.\n"
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1

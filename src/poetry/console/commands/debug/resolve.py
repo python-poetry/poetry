@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -35,7 +36,7 @@ class DebugResolveCommand(InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int:
         from cleo.io.null_io import NullIO
         from poetry.core.packages.project_package import ProjectPackage
 
@@ -93,7 +94,7 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: "ShowCommand" = self.application.find("show")
+            show_command: ShowCommand = self.application.find("show")
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
@@ -143,4 +144,4 @@ class DebugResolveCommand(InitCommand):
         table.set_rows(rows)
         table.render()
 
-        return None
+        return 0

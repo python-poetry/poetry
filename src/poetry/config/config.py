@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 
@@ -6,8 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Dict
-from typing import Optional
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.locations import CACHE_DIR
@@ -31,7 +31,7 @@ def int_normalizer(val: str) -> int:
 
 class Config:
 
-    default_config: Dict[str, Any] = {
+    default_config: dict[str, Any] = {
         "cache-dir": str(CACHE_DIR),
         "virtualenvs": {
             "create": True,
@@ -46,43 +46,43 @@ class Config:
     }
 
     def __init__(
-        self, use_environment: bool = True, base_dir: Optional[Path] = None
+        self, use_environment: bool = True, base_dir: Path | None = None
     ) -> None:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
         self._base_dir = base_dir
-        self._config_source: "ConfigSource" = DictConfigSource()
-        self._auth_config_source: "ConfigSource" = DictConfigSource()
+        self._config_source: ConfigSource = DictConfigSource()
+        self._auth_config_source: ConfigSource = DictConfigSource()
 
     @property
-    def config(self) -> Dict:
+    def config(self) -> dict:
         return self._config
 
     @property
-    def config_source(self) -> "ConfigSource":
+    def config_source(self) -> ConfigSource:
         return self._config_source
 
     @property
-    def auth_config_source(self) -> "ConfigSource":
+    def auth_config_source(self) -> ConfigSource:
         return self._auth_config_source
 
-    def set_config_source(self, config_source: "ConfigSource") -> "Config":
+    def set_config_source(self, config_source: ConfigSource) -> Config:
         self._config_source = config_source
 
         return self
 
-    def set_auth_config_source(self, config_source: "ConfigSource") -> "Config":
+    def set_auth_config_source(self, config_source: ConfigSource) -> Config:
         self._auth_config_source = config_source
 
         return self
 
-    def merge(self, config: Dict[str, Any]) -> None:
+    def merge(self, config: dict[str, Any]) -> None:
         from poetry.utils.helpers import merge_dicts
 
         merge_dicts(self._config, config)
 
-    def all(self) -> Dict[str, Any]:
-        def _all(config: Dict, parent_key: str = "") -> Dict:
+    def all(self) -> dict[str, Any]:
+        def _all(config: dict, parent_key: str = "") -> dict:
             all_ = {}
 
             for key in config:
@@ -101,7 +101,7 @@ class Config:
 
         return _all(self.config)
 
-    def raw(self) -> Dict[str, Any]:
+    def raw(self) -> dict[str, Any]:
         return self._config
 
     def get(self, setting_name: str, default: Any = None) -> Any:

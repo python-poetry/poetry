@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Any
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class FileConfigSource(ConfigSource):
-    def __init__(self, file: "TOMLFile", auth_config: bool = False) -> None:
+    def __init__(self, file: TOMLFile, auth_config: bool = False) -> None:
         self._file = file
         self._auth_config = auth_config
 
@@ -24,7 +26,7 @@ class FileConfigSource(ConfigSource):
         return str(self._file.path)
 
     @property
-    def file(self) -> "TOMLFile":
+    def file(self) -> TOMLFile:
         return self._file
 
     def add_property(self, key: str, value: Any) -> None:
@@ -58,7 +60,7 @@ class FileConfigSource(ConfigSource):
                 current_config = current_config[key]
 
     @contextmanager
-    def secure(self) -> Iterator["TOMLDocument"]:
+    def secure(self) -> Iterator[TOMLDocument]:
         if self.file.exists():
             initial_config = self.file.read()
             config = self.file.read()

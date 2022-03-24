@@ -47,7 +47,7 @@ readme = "README.md"
 packages = [{include = "poetry_demo"}]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 
 
 [build-system]

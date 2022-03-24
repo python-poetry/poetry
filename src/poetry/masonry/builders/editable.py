@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import os
 import shutil
@@ -5,7 +7,6 @@ import shutil
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
@@ -15,7 +16,7 @@ from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
-from poetry.utils.pip import pip_editable_install
+from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ WINDOWS_CMD_TEMPLATE = """\
 
 
 class EditableBuilder(Builder):
-    def __init__(self, poetry: "Poetry", env: "Env", io: "IO") -> None:
+    def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 
         self._env = env
@@ -83,7 +84,7 @@ class EditableBuilder(Builder):
         has_setup = setup.exists()
 
         if has_setup:
-            self._io.write_line(
+            self._io.write_error_line(
                 "<warning>A setup.py file already exists. Using it.</warning>"
             )
         else:
@@ -92,14 +93,14 @@ class EditableBuilder(Builder):
 
         try:
             if self._env.pip_version < Version.from_parts(19, 0):
-                pip_editable_install(self._path, self._env)
+                pip_install(self._path, self._env, upgrade=True, editable=True)
             else:
                 # Temporarily rename pyproject.toml
                 shutil.move(
                     str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
                 )
                 try:
-                    pip_editable_install(self._path, self._env)
+                    pip_install(self._path, self._env, upgrade=True, editable=True)
                 finally:
                     shutil.move(
                         str(self._poetry.file.with_suffix(".tmp")),
@@ -109,7 +110,7 @@ class EditableBuilder(Builder):
             if not has_setup:
                 os.remove(str(setup))
 
-    def _add_pth(self) -> List[Path]:
+    def _add_pth(self) -> list[Path]:
         paths = {
             include.base.resolve().as_posix()
             for include in self._module.includes
@@ -147,7 +148,7 @@ class EditableBuilder(Builder):
             )
             return []
 
-    def _add_scripts(self) -> List[Path]:
+    def _add_scripts(self) -> list[Path]:
         added = []
         entry_points = self.convert_entry_points()
 
@@ -202,7 +203,7 @@ class EditableBuilder(Builder):
 
         return added
 
-    def _add_dist_info(self, added_files: List[Path]) -> None:
+    def _add_dist_info(self, added_files: list[Path]) -> None:
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,21 +14,21 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("check")
 
 
-def test_check_valid(tester: "CommandTester"):
+def test_check_valid(tester: CommandTester):
     tester.execute()
 
     expected = """\
 All set!
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_check_invalid(mocker: "MockerFixture", tester: "CommandTester"):
+def test_check_invalid(mocker: MockerFixture, tester: CommandTester):
     mocker.patch(
         "poetry.factory.Factory.locate",
         return_value=Path(__file__).parent.parent.parent
@@ -45,4 +47,4 @@ Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
  which is deprecated. Use "allow-prereleases" instead.
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_error() == expected

@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import os
 import signal
+import subprocess
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Optional
 
 import pexpect
 
@@ -40,7 +42,7 @@ class Shell:
         return self._path
 
     @classmethod
-    def get(cls) -> "Shell":
+    def get(cls) -> Shell:
         """
         Retrieve the current shell.
         """
@@ -66,9 +68,22 @@ class Shell:
 
         return cls._shell
 
-    def activate(self, env: "VirtualEnv") -> Optional[int]:
-        if WINDOWS:
-            return env.execute(self.path)
+    def activate(self, env: VirtualEnv) -> int | None:
+        activate_script = self._get_activate_script()
+        bin_dir = "Scripts" if WINDOWS else "bin"
+        activate_path = env.path / bin_dir / activate_script
+
+        # mypy requires using sys.platform instead of WINDOWS constant
+        # in if statements to properly type check on Windows
+        if sys.platform == "win32":
+            if self._name in ("powershell", "pwsh"):
+                args = ["-NoExit", "-File", str(activate_path)]
+            else:
+                # /K will execute the bat file and
+                # keep the cmd process from terminating
+                args = ["/K", str(activate_path)]
+            completed_proc = subprocess.run([self.path, *args])
+            return completed_proc.returncode
 
         import shlex
 
@@ -81,9 +96,6 @@ class Shell:
         if self._name == "zsh":
             c.setecho(False)
 
-        activate_script = self._get_activate_script()
-        bin_dir = "Scripts" if WINDOWS else "bin"
-        activate_path = env.path / bin_dir / activate_script
         c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
 
         def resize(sig: Any, data: Any) -> None:
@@ -103,6 +115,10 @@ class Shell:
             suffix = ".fish"
         elif self._name in ("csh", "tcsh"):
             suffix = ".csh"
+        elif self._name in ("powershell", "pwsh"):
+            suffix = ".ps1"
+        elif self._name == "cmd":
+            suffix = ".bat"
         else:
             suffix = ""
 

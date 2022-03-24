@@ -215,7 +215,7 @@ you would declare it like so:
 [tool.poetry.dependencies]
 foo = [
     {version = "<=1.9", python = "^2.7"},
-    {version = "^2.0", python = "^3.4"}
+    {version = "^2.0", python = "^3.8"}
 ]
 ```
 
@@ -234,7 +234,7 @@ An example where this might be useful is the following:
 
 ```toml
 [tool.poetry.group.dev.dependencies]
-black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.7", markers = "platform_python_implementation == 'CPython'"}
 ```
 
 As a single line, this is a lot to digest. To make this a bit easier to
@@ -244,7 +244,7 @@ work with, you can do the following:
 [tool.poetry.group.dev.dependencies.black]
 version = "19.10b0"
 allow-prereleases = true
-python = "^3.6"
+python = "^3.7"
 markers = "platform_python_implementation == 'CPython'"
 ```
 

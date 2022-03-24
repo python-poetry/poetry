@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.helpers import option
 
 from poetry.console.commands.env_command import EnvCommand

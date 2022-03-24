@@ -1,20 +1,20 @@
+from __future__ import annotations
+
 import sys
 
 from contextlib import suppress
-from typing import List
-from typing import Optional
 
 
-try:
-    from importlib import metadata
-except ImportError:
+if sys.version_info < (3, 8):
     # compatibility for python <3.8
-    import importlib_metadata as metadata  # noqa: F401, TC002
+    import importlib_metadata as metadata
+else:
+    from importlib import metadata  # noqa: F401, TC002
 
 WINDOWS = sys.platform == "win32"
 
 
-def decode(string: str, encodings: Optional[List[str]] = None) -> str:
+def decode(string: str, encodings: list[str] | None = None) -> str:
     if not isinstance(string, bytes):
         return string
 
@@ -27,7 +27,7 @@ def decode(string: str, encodings: Optional[List[str]] = None) -> str:
     return string.decode(encodings[0], errors="ignore")
 
 
-def encode(string: str, encodings: Optional[List[str]] = None) -> bytes:
+def encode(string: str, encodings: list[str] | None = None) -> bytes:
     if isinstance(string, bytes):
         return string
 
@@ -44,7 +44,7 @@ def to_str(string: str) -> str:
     return decode(string)
 
 
-def list_to_shell_command(cmd: List[str]) -> str:
+def list_to_shell_command(cmd: list[str]) -> str:
     return " ".join(
         f'"{token}"' if " " in token and token[0] not in {"'", '"'} else token
         for token in cmd
