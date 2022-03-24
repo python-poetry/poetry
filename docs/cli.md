@@ -103,7 +103,7 @@ my-package
 
 * `--name`: Set the resulting package name.
 * `--src`: Use the src layout for the project.
-* `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
+* `--readme`: Specify the readme file format. Default is `md`.
 
 
 ## init
