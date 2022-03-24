@@ -363,7 +363,7 @@ class Installer:
                 version, upgrade=current_version is not None, file=self._offline_file
             )
         except subprocess.CalledProcessError as e:
-            print(colorize("error", "An error has occured: {}".format(str(e))))
+            print(colorize("error", "An error has occurred: {}".format(str(e))))
             print(e.output.decode())
 
             return e.returncode
