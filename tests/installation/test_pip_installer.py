@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import shutil
 
@@ -62,7 +64,7 @@ def test_requirement(installer: PipInstaller):
         "\n"
     )
 
-    assert expected == result
+    assert result == expected
 
 
 def test_requirement_source_type_url():
@@ -78,7 +80,7 @@ def test_requirement_source_type_url():
     result = installer.requirement(foo, formatted=True)
     expected = f"{foo.source_url}#egg={foo.name}"
 
-    assert expected == result
+    assert result == expected
 
 
 def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):
@@ -86,7 +88,7 @@ def test_requirement_git_develop_false(installer: PipInstaller, package_git: Pac
     result = installer.requirement(package_git)
     expected = "git+git@github.com:demo/demo.git@master#egg=demo"
 
-    assert expected == result
+    assert result == expected
 
 
 def test_install_with_non_pypi_default_repository(pool: Pool, installer: PipInstaller):
@@ -182,11 +184,11 @@ def test_requirement_git_develop_true(installer: PipInstaller, package_git: Pack
     result = installer.requirement(package_git)
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
 
-    assert expected == result
+    assert result == expected
 
 
 def test_uninstall_git_package_nspkg_pth_cleanup(
-    mocker: "MockerFixture", tmp_venv: "VirtualEnv", pool: Pool
+    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: Pool
 ):
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)

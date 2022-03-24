@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import urllib.parse
@@ -5,9 +7,6 @@ import urllib.parse
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Union
 
 import requests
 
@@ -85,7 +84,7 @@ class PyPiRepository(RemoteRepository):
     def __del__(self) -> None:
         self._session.close()
 
-    def find_packages(self, dependency: Dependency) -> List[Package]:
+    def find_packages(self, dependency: Dependency) -> list[Package]:
         """
         Find packages on the remote server.
         """
@@ -157,11 +156,11 @@ class PyPiRepository(RemoteRepository):
         self,
         name: str,
         version: str,
-        extras: (Union[list, None]) = None,
+        extras: (list | None) = None,
     ) -> Package:
         return self.get_release_info(name, version).to_package(name=name, extras=extras)
 
-    def search(self, query: str) -> List[Package]:
+    def search(self, query: str) -> list[Package]:
         results = []
 
         search = {"q": query}
@@ -213,7 +212,7 @@ class PyPiRepository(RemoteRepository):
 
         return data
 
-    def get_release_info(self, name: str, version: str) -> "PackageInfo":
+    def get_release_info(self, name: str, version: str) -> PackageInfo:
         """
         Return the release information given a package name and a version.
 
@@ -242,7 +241,7 @@ class PyPiRepository(RemoteRepository):
 
         return PackageInfo.load(cached)
 
-    def find_links_for_package(self, package: Package) -> List[Link]:
+    def find_links_for_package(self, package: Package) -> list[Link]:
         json_data = self._get(f"pypi/{package.name}/{package.version}/json")
         if json_data is None:
             return []
@@ -317,7 +316,7 @@ class PyPiRepository(RemoteRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint: str) -> Union[dict, None]:
+    def _get(self, endpoint: str) -> dict | None:
         try:
             json_response = self.session.get(self._base_url + endpoint)
         except requests.exceptions.TooManyRedirects:
@@ -331,7 +330,7 @@ class PyPiRepository(RemoteRepository):
 
         return json_response.json()
 
-    def _get_info_from_urls(self, urls: Dict[str, List[str]]) -> "PackageInfo":
+    def _get_info_from_urls(self, urls: dict[str, list[str]]) -> PackageInfo:
         # Checking wheels first as they are more likely to hold
         # the necessary information
         if "bdist_wheel" in urls:
@@ -423,7 +422,7 @@ class PyPiRepository(RemoteRepository):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def _get_info_from_wheel(self, url: str) -> "PackageInfo":
+    def _get_info_from_wheel(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
         wheel_name = urllib.parse.urlparse(url).path.rsplit("/")[-1]
@@ -436,7 +435,7 @@ class PyPiRepository(RemoteRepository):
 
             return PackageInfo.from_wheel(filepath)
 
-    def _get_info_from_sdist(self, url: str) -> "PackageInfo":
+    def _get_info_from_sdist(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
         sdist_name = urllib.parse.urlparse(url).path

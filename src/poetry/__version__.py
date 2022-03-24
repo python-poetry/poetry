@@ -1,1 +1,6 @@
-__version__ = "1.2.0a2"
+from __future__ import annotations
+
+from poetry.utils._compat import metadata
+
+
+__version__ = metadata.version("poetry")

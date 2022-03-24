@@ -1,5 +1,4 @@
-from typing import Dict
-from typing import Union
+from __future__ import annotations
 
 import dataclasses
 
@@ -11,5 +10,5 @@ class Source:
     default: bool = dataclasses.field(default=False)
     secondary: bool = dataclasses.field(default=False)
 
-    def to_dict(self) -> Dict[str, Union[str, bool]]:
+    def to_dict(self) -> dict[str, str | bool]:
         return dataclasses.asdict(self)

@@ -1,11 +1,10 @@
+from __future__ import annotations
+
 import itertools
 import json
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Set
-from typing import Tuple
-from typing import Union
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path
@@ -31,7 +30,7 @@ except NameError:
 
 class InstalledRepository(Repository):
     @classmethod
-    def get_package_paths(cls, env: "Env", name: str) -> Set[Path]:
+    def get_package_paths(cls, env: Env, name: str) -> set[Path]:
         """
         Process a .pth file within the site-packages directories, and return any valid
         paths. We skip executable .pth files as there is no reliable means to do this
@@ -77,7 +76,7 @@ class InstalledRepository(Repository):
         return paths
 
     @classmethod
-    def get_package_vcs_properties_from_path(cls, src: Path) -> Tuple[str, str, str]:
+    def get_package_vcs_properties_from_path(cls, src: Path) -> tuple[str, str, str]:
         from poetry.core.vcs.git import Git
 
         git = Git()
@@ -87,7 +86,7 @@ class InstalledRepository(Repository):
         return "git", url, revision
 
     @classmethod
-    def is_vcs_package(cls, package: Union[Path, Package], env: "Env") -> bool:
+    def is_vcs_package(cls, package: Path | Package, env: Env) -> bool:
         # A VCS dependency should have been installed
         # in the src directory.
         src = env.path / "src"
@@ -103,7 +102,7 @@ class InstalledRepository(Repository):
 
     @classmethod
     def create_package_from_distribution(
-        cls, distribution: metadata.Distribution, env: "Env"
+        cls, distribution: metadata.Distribution, env: Env
     ) -> Package:
         # We first check for a direct_url.json file to determine
         # the type of package.
@@ -202,8 +201,10 @@ class InstalledRepository(Repository):
             # VCS distribution
             source_type = url_reference["vcs_info"]["vcs"]
             source_url = url_reference["url"]
-            source_reference = url_reference["vcs_info"]["requested_revision"]
             source_resolved_reference = url_reference["vcs_info"]["commit_id"]
+            source_reference = url_reference["vcs_info"].get(
+                "requested_revision", source_resolved_reference
+            )
 
         package = Package(
             distribution.metadata["name"],
@@ -220,7 +221,7 @@ class InstalledRepository(Repository):
         return package
 
     @classmethod
-    def load(cls, env: "Env", with_dependencies: bool = False) -> "InstalledRepository":
+    def load(cls, env: Env, with_dependencies: bool = False) -> InstalledRepository:
         """
         Load installed packages.
         """

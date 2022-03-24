@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
@@ -48,21 +50,20 @@ class ExportCommand(Command):
             self.line_error("<comment>The lock file does not exist. Locking.</comment>")
             options = []
             if self.io.is_debug():
-                options.append(("-vvv", None))
+                options.append("-vvv")
             elif self.io.is_very_verbose():
-                options.append(("-vv", None))
+                options.append("-vv")
             elif self.io.is_verbose():
-                options.append(("-v", None))
+                options.append("-v")
 
             self.call("lock", " ".join(options))
 
         if not locker.is_fresh():
             self.line_error(
                 "<warning>"
-                "Warning: The lock file is not up to date with "
-                "the latest changes in pyproject.toml. "
-                "You may be getting outdated dependencies. "
-                "Run update to update them."
+                "Warning: poetry.lock is not consistent with pyproject.toml. "
+                "You may be getting improper dependencies. "
+                "Run `poetry lock [--no-update]` to fix it."
                 "</warning>"
             )
 

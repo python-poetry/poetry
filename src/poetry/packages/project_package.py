@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
 
 from poetry.core.packages.project_package import ProjectPackage as _ProjectPackage
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class ProjectPackage(_ProjectPackage):
     def set_version(
-        self, version: Union[str, "Version"], pretty_version: Optional[str] = None
+        self, version: str | Version, pretty_version: str | None = None
     ) -> None:
         from poetry.core.semver.version import Version
 

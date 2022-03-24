@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import json
 import os
-
-from typing import List
 
 import jsonschema
 
@@ -14,7 +14,7 @@ class ValidationError(ValueError):
     pass
 
 
-def validate_object(obj: dict, schema_name: str) -> List[str]:
+def validate_object(obj: dict, schema_name: str) -> list[str]:
     schema = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
 
     if not os.path.exists(schema):

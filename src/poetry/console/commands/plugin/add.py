@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import os
 
-from typing import Dict
-from typing import List
 from typing import cast
 
 from cleo.helpers import argument
@@ -115,13 +115,16 @@ You can specify a package in the following forms:
 
                 break
 
-        root_package.python_versions = ".".join(
+        root_package.python_versions = ".".join(  # type: ignore[union-attr]
             str(v) for v in system_env.version_info[:3]
         )
         # We create a `pyproject.toml` file based on all the information
         # we have about the current environment.
         if not env_dir.joinpath("pyproject.toml").exists():
-            Factory.create_pyproject_from_package(root_package, env_dir)
+            Factory.create_pyproject_from_package(
+                root_package,  # type: ignore[arg-type]
+                env_dir,
+            )
 
         # We add the plugins to the dependencies section of the previously
         # created `pyproject.toml` file
@@ -173,8 +176,8 @@ You can specify a package in the following forms:
         )
 
     def get_existing_packages_from_input(
-        self, packages: List[str], poetry_content: Dict, target_section: str
-    ) -> List[str]:
+        self, packages: list[str], poetry_content: dict, target_section: str
+    ) -> list[str]:
         existing_packages = []
 
         for name in packages:
@@ -184,7 +187,7 @@ You can specify a package in the following forms:
 
         return existing_packages
 
-    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
+    def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(
             "The following plugins are already present in the "
             "<c2>pyproject.toml</c2> file and will be skipped:\n"

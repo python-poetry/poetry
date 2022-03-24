@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from typing import TYPE_CHECKING
@@ -10,12 +12,12 @@ if TYPE_CHECKING:
 
 
 class IOHandler(logging.Handler):
-    def __init__(self, io: "IO") -> None:
+    def __init__(self, io: IO) -> None:
         self._io = io
 
         super().__init__()
 
-    def emit(self, record: "LogRecord") -> None:
+    def emit(self, record: LogRecord) -> None:
         try:
             msg = self.format(record)
             level = record.levelname.lower()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from poetry.core.masonry.api import build_sdist
 from poetry.core.masonry.api import build_wheel
 from poetry.core.masonry.api import get_requires_for_build_sdist

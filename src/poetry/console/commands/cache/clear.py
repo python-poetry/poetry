@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from cleo.helpers import argument
@@ -79,3 +81,5 @@ class CacheClearCommand(Command):
             cache.forget(f"{package}:{version}")
         else:
             raise ValueError("Invalid cache key")
+
+        return 0

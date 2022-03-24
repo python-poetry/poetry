@@ -29,7 +29,7 @@ to activate one explicitly, see [Switching environments](#switching-between-envi
 {{% note %}}
 If you use a tool like [pyenv](https://github.com/pyenv/pyenv) to manage different Python versions,
 you can set the experimental `virtualenvs.prefer-active-python` option to `true`. Poetry
-than will try to find the current `python` of your shell.
+will then try to find the current `python` of your shell.
 
 For instance, if your project requires a newer Python than is available with
 your system, a standard workflow would be:

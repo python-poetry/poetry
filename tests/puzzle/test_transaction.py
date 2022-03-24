@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
 
 from poetry.core.packages.package import Package
 
@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from poetry.installation.operations import OperationTypes
 
 
-def check_operations(
-    ops: List["OperationTypes"], expected: List[Dict[str, Any]]
-) -> None:
+def check_operations(ops: list[OperationTypes], expected: list[dict[str, Any]]) -> None:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
@@ -37,7 +35,7 @@ def check_operations(
 
             result.append({"job": job, "package": op.package, "skipped": op.skipped})
 
-    assert expected == result
+    assert result == expected
 
 
 def test_it_should_calculate_operations_in_correct_order():

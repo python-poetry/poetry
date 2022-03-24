@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 from pathlib import Path
@@ -26,19 +28,19 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("add")
 
 
 @pytest.fixture()
-def old_tester(tester: "CommandTester") -> "CommandTester":
+def old_tester(tester: CommandTester) -> CommandTester:
     tester.command.installer.use_executor(False)
 
     return tester
 
 
 def test_add_no_constraint(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -58,7 +60,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -68,7 +70,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_replace_by_constraint(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -115,7 +117,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_no_constraint_editable_error(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -130,13 +132,13 @@ Failed to add packages. Only vcs/path dependencies support editable installs.\
 No changes were applied.
 """
     assert tester.status_code == 1
-    assert expected == tester.io.fetch_error()
+    assert tester.io.fetch_error() == expected
     assert tester.command.installer.executor.installations_count == 0
     assert content == app.poetry.file.read()["tool"]["poetry"]
 
 
 def test_add_equal_constraint(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -155,12 +157,12 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.1.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
 
 def test_add_greater_constraint(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -179,12 +181,12 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
 
 def test_add_constraint_with_extras(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -210,12 +212,12 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing cachy (0.1.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_constraint_dependencies(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
@@ -240,15 +242,15 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_git_constraint(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    tmp_venv: "VirtualEnv",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    tmp_venv: VirtualEnv,
 ):
     tester.command.set_env(tmp_venv)
 
@@ -270,7 +272,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -282,10 +284,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_git_constraint_with_poetry(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    tmp_venv: "VirtualEnv",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    tmp_venv: VirtualEnv,
 ):
     tester.command.set_env(tmp_venv)
 
@@ -306,15 +308,15 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_git_constraint_with_extras(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    tmp_venv: "VirtualEnv",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    tmp_venv: VirtualEnv,
 ):
     tester.command.set_env(tmp_venv)
 
@@ -339,7 +341,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected.strip() == tester.io.fetch_output().strip()
+    assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 4
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -354,10 +356,10 @@ Package operations: 4 installs, 0 updates, 0 removals
 @pytest.mark.parametrize("editable", [False, True])
 def test_add_git_ssh_constraint(
     editable: bool,
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    tmp_venv: "VirtualEnv",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    tmp_venv: VirtualEnv,
 ):
     tester.command.set_env(tmp_venv)
 
@@ -380,7 +382,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -400,10 +402,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 @pytest.mark.parametrize("editable", [False, True])
 def test_add_directory_constraint(
     editable: bool,
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__).parent
@@ -427,7 +429,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -442,10 +444,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_with_poetry(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -468,16 +470,16 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
 
 def test_add_file_constraint_wheel(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
-    poetry: "Poetry",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
+    poetry: Poetry,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = poetry.file.parent
@@ -500,7 +502,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -512,10 +514,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_sdist(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -538,7 +540,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -550,7 +552,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_constraint_with_extras_option(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -576,7 +578,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -589,10 +591,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -617,7 +619,7 @@ Package operations: 2 installs, 0 updates, 0 removals
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -629,10 +631,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel_with_extras(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -661,7 +663,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     # Order might be different, split into lines and compare the overall output.
     expected = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
-    assert expected == output
+    assert output == expected
     assert tester.command.installer.executor.installations_count == 4
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -676,7 +678,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 
 
 def test_add_constraint_with_python(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     cachy2 = get_package("cachy", "0.2.0")
 
@@ -697,7 +699,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -707,10 +709,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_platform(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    tester: "CommandTester",
-    env: "MockEnv",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
 ):
     platform = sys.platform
     env._platform = platform
@@ -734,7 +736,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -747,7 +749,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_source(
-    app: "PoetryTestApplication", poetry: "Poetry", tester: "CommandTester"
+    app: PoetryTestApplication, poetry: Poetry, tester: CommandTester
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -769,7 +771,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -782,7 +784,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_source_that_does_not_exist(
-    app: "PoetryTestApplication", tester: "CommandTester"
+    app: PoetryTestApplication, tester: CommandTester
 ):
     with pytest.raises(ValueError) as e:
         tester.execute("foo --source i-dont-exist")
@@ -791,10 +793,10 @@ def test_add_constraint_with_source_that_does_not_exist(
 
 
 def test_add_constraint_not_found_with_source(
-    app: "PoetryTestApplication",
-    poetry: "Poetry",
-    mocker: "MockerFixture",
-    tester: "CommandTester",
+    app: PoetryTestApplication,
+    poetry: Poetry,
+    mocker: MockerFixture,
+    tester: CommandTester,
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
@@ -811,7 +813,7 @@ def test_add_constraint_not_found_with_source(
 
 
 def test_add_to_section_that_does_not_exist_yet(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -831,7 +833,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -850,16 +852,18 @@ cachy = "^0.2.0"
 
 
 def test_add_to_dev_section_deprecated(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
     tester.execute("cachy --dev")
 
-    expected = """\
+    warning = """\
 The --dev option is deprecated, use the `--group dev` notation instead.
+"""
 
+    expected = """\
 Using version ^0.2.0 for cachy
 
 Updating dependencies
@@ -872,7 +876,8 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing cachy (0.2.0)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_error() == warning
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -882,7 +887,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_should_not_select_prereleases(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
@@ -902,7 +907,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing pyyaml (3.13)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -912,7 +917,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
@@ -936,7 +941,7 @@ If you prefer to upgrade it to the latest available version,\
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
@@ -968,7 +973,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -992,7 +997,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_prefers_stable_releases(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
@@ -1016,7 +1021,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_with_lock(
-    app: "PoetryTestApplication", repo: "TestRepository", tester: "CommandTester"
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     content_hash = app.poetry.locker._get_content_hash()
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1032,15 +1037,15 @@ Resolving dependencies...
 Writing lock file
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
 def test_add_no_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1060,7 +1065,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1071,10 +1076,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_equal_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1093,16 +1098,16 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.1.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
 
 def test_add_greater_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1121,16 +1126,16 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
 
 def test_add_constraint_with_extras_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -1156,16 +1161,16 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing cachy (0.1.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
 
 def test_add_constraint_dependencies_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
@@ -1190,16 +1195,16 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
 
 def test_add_git_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -1219,7 +1224,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1232,10 +1237,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_git_constraint_with_poetry_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
 
@@ -1254,16 +1259,16 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
 
 def test_add_git_constraint_with_extras_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -1286,7 +1291,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 4
 
@@ -1300,10 +1305,10 @@ Package operations: 4 installs, 0 updates, 0 removals
 
 
 def test_add_git_ssh_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -1323,7 +1328,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1337,11 +1342,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    mocker: "MockerFixture",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    mocker: MockerFixture,
+    old_tester: CommandTester,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -1365,7 +1370,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1376,11 +1381,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_with_poetry_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    mocker: "MockerFixture",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    mocker: MockerFixture,
+    old_tester: CommandTester,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -1403,17 +1408,17 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
 
 def test_add_file_constraint_wheel_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    mocker: "MockerFixture",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    mocker: MockerFixture,
+    old_tester: CommandTester,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -1436,7 +1441,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1449,11 +1454,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_sdist_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    mocker: "MockerFixture",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    mocker: MockerFixture,
+    old_tester: CommandTester,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -1476,7 +1481,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1489,10 +1494,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_constraint_with_extras_option_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -1518,7 +1523,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1532,11 +1537,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    mocker: "MockerFixture",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    mocker: MockerFixture,
+    old_tester: CommandTester,
 ):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
@@ -1561,7 +1566,7 @@ Package operations: 2 installs, 0 updates, 0 removals
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 2
 
@@ -1574,10 +1579,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel_with_extras_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -1604,7 +1609,7 @@ Package operations: 4 installs, 0 updates, 0 removals
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 4
 
@@ -1620,10 +1625,10 @@ Package operations: 4 installs, 0 updates, 0 removals
 
 
 def test_add_constraint_with_python_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     cachy2 = get_package("cachy", "0.2.0")
 
@@ -1644,7 +1649,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1655,11 +1660,11 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_platform_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    env: "MockEnv",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    env: MockEnv,
+    old_tester: CommandTester,
 ):
     platform = sys.platform
     env._platform = platform
@@ -1683,7 +1688,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1697,10 +1702,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_source_old_installer(
-    app: "PoetryTestApplication",
-    poetry: "Poetry",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    poetry: Poetry,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1722,7 +1727,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1736,7 +1741,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_source_that_does_not_exist_old_installer(
-    app: "PoetryTestApplication", old_tester: "CommandTester"
+    app: PoetryTestApplication, old_tester: CommandTester
 ):
     with pytest.raises(ValueError) as e:
         old_tester.execute("foo --source i-dont-exist")
@@ -1745,10 +1750,10 @@ def test_add_constraint_with_source_that_does_not_exist_old_installer(
 
 
 def test_add_constraint_not_found_with_source_old_installer(
-    app: "PoetryTestApplication",
-    poetry: "Poetry",
-    mocker: "MockerFixture",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    poetry: Poetry,
+    mocker: MockerFixture,
+    old_tester: CommandTester,
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
@@ -1765,10 +1770,10 @@ def test_add_constraint_not_found_with_source_old_installer(
 
 
 def test_add_to_section_that_does_no_exist_yet_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1788,7 +1793,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing cachy (0.2.0)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1799,10 +1804,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_should_not_select_prereleases_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
@@ -1822,7 +1827,7 @@ Package operations: 1 install, 0 updates, 0 removals
   - Installing pyyaml (3.13)
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
     assert len(installer.installs) == 1
 
@@ -1833,10 +1838,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
@@ -1861,10 +1866,10 @@ If you prefer to upgrade it to the latest available version,\
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(  # noqa: E501
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
@@ -1896,10 +1901,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -1923,10 +1928,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_preferes_stable_releases_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
@@ -1950,10 +1955,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_with_lock_old_installer(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    old_tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
 ):
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1968,15 +1973,15 @@ Resolving dependencies...
 Writing lock file
 """
 
-    assert expected == old_tester.io.fetch_output()
+    assert old_tester.io.fetch_output() == expected
 
 
 def test_add_keyboard_interrupt_restore_content(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    tester: "CommandTester",
-    mocker: "MockerFixture",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
@@ -1991,10 +1996,10 @@ def test_add_keyboard_interrupt_restore_content(
 
 
 def test_dry_run_restore_original_content(
-    app: "PoetryTestApplication",
-    repo: "TestRepository",
-    installer: "NoopInstaller",
-    tester: "CommandTester",
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    tester: CommandTester,
 ):
     original_content = app.poetry.file.read()
 

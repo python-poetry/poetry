@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -33,9 +35,9 @@ def installed() -> InstalledRepository:
     return repository
 
 
-def configure_sources_factory(repo: "TestRepository") -> "SourcesFactory":
+def configure_sources_factory(repo: TestRepository) -> SourcesFactory:
     def _configure_sources(
-        poetry: "Poetry", sources: "Source", config: "Config", io: "IO"
+        poetry: Poetry, sources: Source, config: Config, io: IO
     ) -> None:
         pool = Pool()
         pool.add_repository(repo)
@@ -46,10 +48,10 @@ def configure_sources_factory(repo: "TestRepository") -> "SourcesFactory":
 
 @pytest.fixture(autouse=True)
 def setup_mocks(
-    mocker: "MockerFixture",
-    env: "MockEnv",
-    repo: "TestRepository",
-    installed: "Repository",
+    mocker: MockerFixture,
+    env: MockEnv,
+    repo: TestRepository,
+    installed: Repository,
 ) -> None:
     mocker.patch.object(EnvManager, "get_system_env", return_value=env)
     mocker.patch.object(InstalledRepository, "load", return_value=installed)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -10,12 +12,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
@@ -60,38 +57,38 @@ class Indicator(ProgressIndicator):
 
 class Provider:
 
-    UNSAFE_PACKAGES: Set[str] = set()
+    UNSAFE_PACKAGES: set[str] = set()
 
     def __init__(
-        self, package: "Package", pool: "Pool", io: Any, env: Optional["Env"] = None
+        self, package: Package, pool: Pool, io: Any, env: Env | None = None
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._search_for: Dict["Dependency", List["Package"]] = {}
+        self._search_for: dict[Dependency, list[Package]] = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
-        self._overrides: Dict = {}
-        self._deferred_cache: Dict["Dependency", "Package"] = {}
+        self._overrides: dict = {}
+        self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
 
     @property
-    def pool(self) -> "Pool":
+    def pool(self) -> Pool:
         return self._pool
 
     def is_debugging(self) -> bool:
         return self._is_debugging
 
-    def set_overrides(self, overrides: Dict) -> None:
+    def set_overrides(self, overrides: dict) -> None:
         self._overrides = overrides
 
     def load_deferred(self, load_deferred: bool) -> None:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_environment(self, env: "Env") -> Iterator["Provider"]:
+    def use_environment(self, env: Env) -> Iterator[Provider]:
         original_env = self._env
         original_python_constraint = self._python_constraint
 
@@ -105,14 +102,14 @@ class Provider:
 
     def search_for(
         self,
-        dependency: Union[
-            "Dependency",
-            "VCSDependency",
-            "FileDependency",
-            "DirectoryDependency",
-            "URLDependency",
-        ],
-    ) -> List["DependencyPackage"]:
+        dependency: (
+            Dependency
+            | VCSDependency
+            | FileDependency
+            | DirectoryDependency
+            | URLDependency
+        ),
+    ) -> list[DependencyPackage]:
         """
         Search for the specifications that match the given dependency.
 
@@ -167,7 +164,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: "VCSDependency") -> List["Package"]:
+    def search_for_vcs(self, dependency: VCSDependency) -> list[Package]:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -208,11 +205,11 @@ class Provider:
         cls,
         vcs: str,
         url: str,
-        branch: Optional[str] = None,
-        tag: Optional[str] = None,
-        rev: Optional[str] = None,
-        name: Optional[str] = None,
-    ) -> "Package":
+        branch: str | None = None,
+        tag: str | None = None,
+        rev: str | None = None,
+        name: str | None = None,
+    ) -> Package:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
@@ -242,7 +239,7 @@ class Provider:
 
         return package
 
-    def search_for_file(self, dependency: "FileDependency") -> List["Package"]:
+    def search_for_file(self, dependency: FileDependency) -> list[Package]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -272,7 +269,7 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_file(cls, file_path: Path) -> "Package":
+    def get_package_from_file(cls, file_path: Path) -> Package:
         try:
             package = PackageInfo.from_path(path=file_path).to_package(
                 root_dir=file_path
@@ -284,9 +281,7 @@ class Provider:
 
         return package
 
-    def search_for_directory(
-        self, dependency: "DirectoryDependency"
-    ) -> List["Package"]:
+    def search_for_directory(self, dependency: DirectoryDependency) -> list[Package]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -310,8 +305,8 @@ class Provider:
 
     @classmethod
     def get_package_from_directory(
-        cls, directory: Path, name: Optional[str] = None
-    ) -> "Package":
+        cls, directory: Path, name: str | None = None
+    ) -> Package:
         package = PackageInfo.from_directory(path=directory).to_package(
             root_dir=directory
         )
@@ -325,7 +320,7 @@ class Provider:
 
         return package
 
-    def search_for_url(self, dependency: "URLDependency") -> List["Package"]:
+    def search_for_url(self, dependency: URLDependency) -> list[Package]:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
@@ -354,7 +349,7 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_url(cls, url: str) -> "Package":
+    def get_package_from_url(cls, url: str) -> Package:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
@@ -368,7 +363,7 @@ class Provider:
 
     def incompatibilities_for(
         self, package: DependencyPackage
-    ) -> List[Incompatibility]:
+    ) -> list[Incompatibility]:
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
         or that it can't be safely selected.
@@ -548,7 +543,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates: Dict[str, List["Dependency"]] = {}
+        duplicates: dict[str, list[Dependency]] = {}
         for dep in dependencies:
             if dep.complete_name not in duplicates:
                 duplicates[dep.complete_name] = []
@@ -564,7 +559,7 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
-            by_constraint: Dict[str, List["Dependency"]] = {}
+            by_constraint: dict[str, list[Dependency]] = {}
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []
@@ -631,7 +626,7 @@ class Provider:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
             _deps = [_dep[0] for _dep in by_constraint.values()]
 
-            def fmt_warning(d: "Dependency") -> str:
+            def fmt_warning(d: Dependency) -> str:
                 marker = d.marker if not d.marker.is_any() else "*"
                 return (
                     f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</>"

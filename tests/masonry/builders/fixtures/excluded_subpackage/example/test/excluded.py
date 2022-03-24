@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tests.masonry.builders.fixtures.excluded_subpackage.example import __version__
 
 

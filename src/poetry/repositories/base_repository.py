@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
 
 
 if TYPE_CHECKING:
@@ -10,22 +10,22 @@ if TYPE_CHECKING:
 
 class BaseRepository:
     def __init__(self) -> None:
-        self._packages: List["Package"] = []
+        self._packages: list[Package] = []
 
     @property
-    def packages(self) -> List["Package"]:
+    def packages(self) -> list[Package]:
         return self._packages
 
-    def has_package(self, package: "Package") -> bool:
+    def has_package(self, package: Package) -> bool:
         raise NotImplementedError()
 
     def package(
-        self, name: str, version: str, extras: Optional[List[str]] = None
-    ) -> "Package":
+        self, name: str, version: str, extras: list[str] | None = None
+    ) -> Package:
         raise NotImplementedError()
 
-    def find_packages(self, dependency: "Dependency") -> List["Package"]:
+    def find_packages(self, dependency: Dependency) -> list[Package]:
         raise NotImplementedError()
 
-    def search(self, query: str) -> List["Package"]:
+    def search(self, query: str) -> list[Package]:
         raise NotImplementedError()

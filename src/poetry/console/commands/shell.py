@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 from distutils.util import strtobool
@@ -35,5 +37,5 @@ If one doesn't exist yet, it will be created.
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"
         shell = Shell.get()
-        shell.activate(self.env)
+        shell.activate(self.env)  # type: ignore[arg-type]
         environ.pop("POETRY_ACTIVE")

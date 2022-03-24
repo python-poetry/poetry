@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-import io
+from __future__ import annotations
+
 import re
+
 from collections import OrderedDict
 
 from setuptools import setup
+
 
 with open("README.rst", encoding="utf8") as f:
     readme = f.read()

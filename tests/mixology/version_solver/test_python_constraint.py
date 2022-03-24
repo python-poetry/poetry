@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def test_dependency_does_not_match_root_python_constraint(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     provider.set_package_python_versions("^3.6")
     root.add_dependency(Factory.create_dependency("foo", "*"))

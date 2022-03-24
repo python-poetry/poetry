@@ -5,7 +5,7 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 3.6+.
+It supports Python 3.7+.
 
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
@@ -88,7 +88,7 @@ You can also install Poetry for a `git` repository by using the `--git` option:
 curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
 ````
 
-_Note that the installer does not support Python < 3.6._
+_Note that the installer does not support Python < 3.7._
 
 ## Updating `poetry`
 

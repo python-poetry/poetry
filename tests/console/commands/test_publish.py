@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Type
 
 import pytest
 import requests
@@ -19,9 +20,9 @@ if TYPE_CHECKING:
 
 
 def test_publish_returns_non_zero_code_for_upload_errors(
-    app: "PoetryTestApplication",
-    app_tester: "ApplicationTester",
-    http: Type["httpretty.httpretty"],
+    app: PoetryTestApplication,
+    app_tester: ApplicationTester,
+    http: type[httpretty.httpretty],
 ):
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
@@ -46,9 +47,9 @@ Publishing simple-project (1.2.3) to PyPI
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_publish_returns_non_zero_code_for_connection_errors(
-    app: "PoetryTestApplication",
-    app_tester: "ApplicationTester",
-    http: Type["httpretty.httpretty"],
+    app: PoetryTestApplication,
+    app_tester: ApplicationTester,
+    http: type[httpretty.httpretty],
 ):
     def request_callback(*_: Any, **__: Any) -> None:
         raise requests.ConnectionError()
@@ -66,7 +67,7 @@ def test_publish_returns_non_zero_code_for_connection_errors(
     assert expected in app_tester.io.fetch_error()
 
 
-def test_publish_with_cert(app_tester: "ApplicationTester", mocker: "MockerFixture"):
+def test_publish_with_cert(app_tester: ApplicationTester, mocker: MockerFixture):
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --cert path/to/ca.pem")
@@ -76,9 +77,7 @@ def test_publish_with_cert(app_tester: "ApplicationTester", mocker: "MockerFixtu
     ] == publisher_publish.call_args
 
 
-def test_publish_with_client_cert(
-    app_tester: "ApplicationTester", mocker: "MockerFixture"
-):
+def test_publish_with_client_cert(app_tester: ApplicationTester, mocker: MockerFixture):
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --client-cert path/to/client.pem")
@@ -88,7 +87,7 @@ def test_publish_with_client_cert(
 
 
 def test_publish_dry_run(
-    app_tester: "ApplicationTester", http: Type["httpretty.httpretty"]
+    app_tester: ApplicationTester, http: type[httpretty.httpretty]
 ):
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=403, body="Forbidden"

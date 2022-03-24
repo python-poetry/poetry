@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.helpers import argument
 from cleo.helpers import option
 

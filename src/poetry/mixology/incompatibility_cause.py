@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 
@@ -32,16 +34,16 @@ class ConflictCause(IncompatibilityCause):
     during conflict resolution.
     """
 
-    def __init__(self, conflict: "Incompatibility", other: "Incompatibility") -> None:
+    def __init__(self, conflict: Incompatibility, other: Incompatibility) -> None:
         self._conflict = conflict
         self._other = other
 
     @property
-    def conflict(self) -> "Incompatibility":
+    def conflict(self) -> Incompatibility:
         return self._conflict
 
     @property
-    def other(self) -> "Incompatibility":
+    def other(self) -> Incompatibility:
         return self._other
 
     def __str__(self) -> str:
