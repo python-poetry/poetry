@@ -89,7 +89,7 @@ extend_skip = ["setup.py"]
 
 [tool.black]
 target-version = ['py37']
-experimental_string_processing = true
+preview = true
 force-exclude = '''
 .*/setup\.py$
 '''
