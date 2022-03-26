@@ -411,6 +411,42 @@ def verify_installed_distribution(
         assert not direct_url_file.exists()
 
 
+@pytest.mark.parametrize(
+    "package",
+    [
+        Package("demo", "0.1.0"),  # PyPI
+        Package(  # private source
+            "demo",
+            "0.1.0",
+            source_type="legacy",
+            source_url="http://localhost:3141/root/pypi/+simple",
+            source_reference="private",
+        ),
+    ],
+)
+def test_executor_should_not_write_pep610_url_references_for_cached_package(
+    package: Package,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    tmp_venv: VirtualEnv,
+    pool: Pool,
+    config: Config,
+    io: BufferedIO,
+):
+    link_cached = Link(
+        fixture_dir("distributions")
+        .joinpath("demo-0.1.0-py2.py3-none-any.whl")
+        .as_uri()
+    )
+    mocker.patch(
+        "poetry.installation.executor.Executor._download", return_value=link_cached
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    verify_installed_distribution(tmp_venv, package)
+
+
 def test_executor_should_write_pep610_url_references_for_files(
     tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
 ):
