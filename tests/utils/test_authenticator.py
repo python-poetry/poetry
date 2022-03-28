@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 import re
 import uuid
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+from typing import Any
 
 import httpretty
 import pytest
@@ -10,21 +16,31 @@ from cleo.io.null_io import NullIO
 from poetry.utils.authenticator import Authenticator
 
 
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
+    from pytest_mock import MockerFixture
+
+    from tests.conftest import Config
+    from tests.conftest import DummyBackend
+
+
+@dataclass
 class SimpleCredential:
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
+    username: str
+    password: str
 
 
 @pytest.fixture()
-def mock_remote(http):
+def mock_remote(http: type[httpretty.httpretty]) -> None:
     http.register_uri(
         http.GET,
         re.compile("^https?://foo.bar/(.+?)$"),
     )
 
 
-def test_authenticator_uses_url_provided_credentials(config, mock_remote, http):
+def test_authenticator_uses_url_provided_credentials(
+    config: Config, mock_remote: None, http: type[httpretty.httpretty]
+):
     config.merge(
         {
             "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
@@ -37,11 +53,11 @@ def test_authenticator_uses_url_provided_credentials(config, mock_remote, http):
 
     request = http.last_request()
 
-    assert "Basic Zm9vMDAxOmJhcjAwMg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic Zm9vMDAxOmJhcjAwMg=="
 
 
 def test_authenticator_uses_credentials_from_config_if_not_provided(
-    config, mock_remote, http
+    config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ):
     config.merge(
         {
@@ -55,11 +71,14 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
 
     request = http.last_request()
 
-    assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
 
 
 def test_authenticator_uses_username_only_credentials(
-    config, mock_remote, http, with_simple_keyring
+    config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_simple_keyring: None,
 ):
     config.merge(
         {
@@ -73,10 +92,12 @@ def test_authenticator_uses_username_only_credentials(
 
     request = http.last_request()
 
-    assert "Basic Zm9vMDAxOg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic Zm9vMDAxOg=="
 
 
-def test_authenticator_uses_password_only_credentials(config, mock_remote, http):
+def test_authenticator_uses_password_only_credentials(
+    config: Config, mock_remote: None, http: type[httpretty.httpretty]
+):
     config.merge(
         {
             "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
@@ -89,11 +110,14 @@ def test_authenticator_uses_password_only_credentials(config, mock_remote, http)
 
     request = http.last_request()
 
-    assert "Basic OmJhcjAwMg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcjAwMg=="
 
 
 def test_authenticator_uses_empty_strings_as_default_password(
-    config, mock_remote, http, with_simple_keyring
+    config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_simple_keyring: None,
 ):
     config.merge(
         {
@@ -107,11 +131,11 @@ def test_authenticator_uses_empty_strings_as_default_password(
 
     request = http.last_request()
 
-    assert "Basic YmFyOg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic YmFyOg=="
 
 
 def test_authenticator_uses_empty_strings_as_default_username(
-    config, mock_remote, http
+    config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ):
     config.merge(
         {
@@ -125,11 +149,15 @@ def test_authenticator_uses_empty_strings_as_default_username(
 
     request = http.last_request()
 
-    assert "Basic OmJhcg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
 def test_authenticator_falls_back_to_keyring_url(
-    config, mock_remote, http, with_simple_keyring, dummy_keyring
+    config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
 ):
     config.merge(
         {
@@ -146,11 +174,15 @@ def test_authenticator_falls_back_to_keyring_url(
 
     request = http.last_request()
 
-    assert "Basic OmJhcg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
 def test_authenticator_falls_back_to_keyring_netloc(
-    config, mock_remote, http, with_simple_keyring, dummy_keyring
+    config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
 ):
     config.merge(
         {
@@ -165,16 +197,21 @@ def test_authenticator_falls_back_to_keyring_netloc(
 
     request = http.last_request()
 
-    assert "Basic OmJhcg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
-def test_authenticator_request_retries_on_exception(mocker, config, http):
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+def test_authenticator_request_retries_on_exception(
+    mocker: MockerFixture, config: Config, http: type[httpretty.httpretty]
+):
     sleep = mocker.patch("time.sleep")
-    sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
     content = str(uuid.uuid4())
-    seen = list()
+    seen = []
 
-    def callback(request, uri, response_headers):
+    def callback(
+        request: requests.Request, uri: str, response_headers: dict
+    ) -> list[int | dict | str]:
         if seen.count(uri) < 2:
             seen.append(uri)
             raise requests.exceptions.ConnectionError("Disconnected")
@@ -188,13 +225,14 @@ def test_authenticator_request_retries_on_exception(mocker, config, http):
     assert sleep.call_count == 2
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_authenticator_request_raises_exception_when_attempts_exhausted(
-    mocker, config, http
+    mocker: MockerFixture, config: Config, http: type[httpretty.httpretty]
 ):
     sleep = mocker.patch("time.sleep")
-    sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
 
-    def callback(*_, **__):
+    def callback(*_: Any, **___: Any) -> None:
         raise requests.exceptions.ConnectionError(str(uuid.uuid4()))
 
     httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
@@ -207,17 +245,32 @@ def test_authenticator_request_raises_exception_when_attempts_exhausted(
 
 
 @pytest.mark.parametrize(
-    "status, attempts",
-    [(400, 0), (401, 0), (403, 0), (404, 0), (500, 0), (502, 5), (503, 5), (504, 5)],
+    ["status", "attempts"],
+    [
+        (400, 0),
+        (401, 0),
+        (403, 0),
+        (404, 0),
+        (500, 0),
+        (502, 5),
+        (503, 5),
+        (504, 5),
+    ],
 )
 def test_authenticator_request_retries_on_status_code(
-    mocker, config, http, status, attempts
+    mocker: MockerFixture,
+    config: Config,
+    http: type[httpretty.httpretty],
+    status: int,
+    attempts: int,
 ):
     sleep = mocker.patch("time.sleep")
-    sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
     content = str(uuid.uuid4())
 
-    def callback(request, uri, response_headers):
+    def callback(
+        request: requests.Request, uri: str, response_headers: dict
+    ) -> list[int | dict | str]:
         return [status, response_headers, content]
 
     httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
@@ -233,13 +286,17 @@ def test_authenticator_request_retries_on_status_code(
 
 
 @pytest.fixture
-def environment_repository_credentials(monkeypatch):
+def environment_repository_credentials(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_USERNAME", "bar")
     monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_PASSWORD", "baz")
 
 
 def test_authenticator_uses_env_provided_credentials(
-    config, environ, mock_remote, http, environment_repository_credentials
+    config: Config,
+    environ: None,
+    mock_remote: type[httpretty.httpretty],
+    http: type[httpretty.httpretty],
+    environment_repository_credentials: None,
 ):
     config.merge({"repositories": {"foo": {"url": "https://foo.bar/simple/"}}})
 
@@ -248,4 +305,4 @@ def test_authenticator_uses_env_provided_credentials(
 
     request = http.last_request()
 
-    assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
+    assert request.headers["Authorization"] == "Basic YmFyOmJheg=="

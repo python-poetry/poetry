@@ -5,12 +5,14 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 2.7 and 3.5+.
+It supports Python 3.7+.
 
-**Note**: Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
-You should consider updating your Python version to a supported one.
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
+[![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)](https://pypi.org/project/poetry/)
+[![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=alpha&include_prereleases&sort=semver)](https://pypi.org/project/poetry/#history)
+[![Downloads](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
+[![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)](https://discord.com/invite/awxPgve)
 
 The [complete documentation](https://python-poetry.org/docs/) is available on the [official website](https://python-poetry.org).
 
@@ -21,11 +23,11 @@ from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
 **Warning**: The previous `get-poetry.py` installer is now deprecated, if you are currently using it
@@ -53,40 +55,40 @@ by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
 ```bash
-python install-poetry.py --uninstall
-POETRY_UNINSTALL=1 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python3 - --uninstall
+curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
 
 By default, Poetry is installed into the user's platform-specific home directory.
 If you wish to change this, you may define the `POETRY_HOME` environment variable:
 
 ```bash
-POETRY_HOME=/etc/poetry python install-poetry.py
+curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python3 -
 ```
 
 If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`
 or by using the `POETRY_PREVIEW` environment variable:
 
 ```bash
-python install-poetry.py --preview
-POETRY_PREVIEW=1 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python3 - --preview
+curl -sSL https://install.python-poetry.org | POETRY_PREVIEW=1 python3 -
 ```
 
 Similarly, if you want to install a specific version, you can use `--version` option or the `POETRY_VERSION`
 environment variable:
 
 ```bash
-python install-poetry.py --version 1.2.0
-POETRY_VERSION=1.2.0 python install-poetry.py
+curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
+curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
 ```
 
 You can also install Poetry for a `git` repository by using the `--git` option:
 
 ```bash
-python install-poetry.py --git https://github.com/python-poetry/poetry.git@master
+curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
 ````
 
-**Note**: Note that the installer does not support Python < 3.6.
+_Note that the installer does not support Python < 3.7._
 
 ## Updating `poetry`
 
@@ -122,24 +124,17 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Bash (Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
-
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
-
-# Fish (Homebrew)
-poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
 
-# Zsh (Homebrew)
-poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
-
 # Zsh (Oh-My-Zsh)
 mkdir $ZSH_CUSTOM/plugins/poetry
 poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
+rm ~/.zcompdump*
+# add `poetry` in the `plugins` list (https://github.com/ohmyzsh/ohmyzsh#enabling-plugins)
 
 # Zsh (prezto)
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
@@ -175,12 +170,12 @@ authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 
-readme = 'README.md'  # Markdown files are supported
+readme = "README.md"  # Markdown files are supported
 
 repository = "https://github.com/python-poetry/poetry"
 homepage = "https://github.com/python-poetry/poetry"
 
-keywords = ['packaging', 'poetry']
+keywords = ["packaging", "poetry"]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
@@ -200,7 +195,7 @@ pytest = "^3.0"
 pytest-cov = "^2.4"
 
 [tool.poetry.scripts]
-my-script = 'my_package:main'
+my-script = "my_package:main"
 ```
 
 There are some things we can notice here:
@@ -208,7 +203,7 @@ There are some things we can notice here:
 * It will try to enforce [semantic versioning](<http://semver.org>) as the best practice in version naming.
 * You can specify the readme, included and excluded files: no more `MANIFEST.in`.
 `poetry` will also use VCS ignore files (like `.gitignore`) to populate the `exclude` section.
-* Keywords (up to 5) can be specified and will act as tags on the packaging site.
+* Keywords can be specified and will act as tags on the packaging site.
 * The dependencies sections support caret, tilde, wildcard, inequality and multiple requirements.
 * You must specify the python versions for which your package is compatible.
 

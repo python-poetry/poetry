@@ -87,7 +87,7 @@ An URL to the documentation of the project. **Optional**
 
 ## keywords
 
-A list of keywords (max: 5) that the package is related to. **Optional**
+A list of keywords that the package is related to. **Optional**
 
 ## classifiers
 
@@ -216,8 +216,15 @@ you can add it to your `pyproject.toml` file, like so:
 
 ```toml
 [[tool.poetry.source]]
-name = 'private'
-url = 'http://example.com/simple'
+name = "private"
+url = "http://example.com/simple"
+```
+
+If you have multiple repositories configured, you can explicitly tell poetry where to look for a specific package:
+
+```toml
+[tool.poetry.dependencies]
+requests = { version = "^2.13.0", source = "private" }
 ```
 
 {{% note %}}
@@ -226,7 +233,7 @@ is compatible is mandatory:
 
 ```toml
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 ```
 {{% /note %}}
 
@@ -254,6 +261,13 @@ poetry = 'poetry.console:run'
 ```
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+
+To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
+
+```toml
+[tool.poetry.scripts]
+devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
+```
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.

@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import os
 import shutil
 import sys
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Iterator
 
 import pytest
 
@@ -10,12 +14,23 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
-from tests.helpers import TestApplication
+from poetry.utils.helpers import canonicalize_name
+from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
+if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureRequest
+    from poetry.core.packages.package import Package
+    from pytest_mock import MockerFixture
+
+    from poetry.poetry import Poetry
+    from tests.helpers import TestRepository
+    from tests.types import FixtureDirGetter
+
+
 @pytest.fixture
-def source_dir(tmp_path) -> Path:
+def source_dir(tmp_path: Path) -> Iterator[Path]:
     cwd = os.getcwd()
 
     try:
@@ -26,7 +41,7 @@ def source_dir(tmp_path) -> Path:
 
 
 @pytest.fixture
-def patches(mocker, source_dir, repo):
+def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
@@ -34,14 +49,14 @@ def patches(mocker, source_dir, repo):
 
 
 @pytest.fixture
-def tester(patches):
+def tester(patches: None) -> CommandTester:
     # we need a test application without poetry here.
-    app = TestApplication(None)
+    app = PoetryTestApplication(None)
     return CommandTester(app.find("init"))
 
 
 @pytest.fixture
-def init_basic_inputs():
+def init_basic_inputs() -> str:
     return "\n".join(
         [
             "my-package",  # Package name
@@ -58,7 +73,7 @@ def init_basic_inputs():
 
 
 @pytest.fixture()
-def init_basic_toml():
+def init_basic_toml() -> str:
     return """\
 [tool.poetry]
 name = "my-package"
@@ -74,12 +89,20 @@ python = "~2.7 || ^3.6"
 """
 
 
-def test_basic_interactive(tester, init_basic_inputs, init_basic_toml):
+def test_basic_interactive(
+    tester: CommandTester, init_basic_inputs: str, init_basic_toml: str
+):
     tester.execute(inputs=init_basic_inputs)
     assert init_basic_toml in tester.io.fetch_output()
 
 
-def test_noninteractive(app, mocker, poetry, repo, tmp_path):
+def test_noninteractive(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
+):
     command = app.find("init")
     command._pool = poetry.pool
 
@@ -94,17 +117,18 @@ def test_noninteractive(app, mocker, poetry, repo, tmp_path):
 
     expected = "Using version ^3.6.0 for pytest\n"
     assert tester.io.fetch_output() == expected
-    assert "" == tester.io.fetch_error()
+    assert tester.io.fetch_error() == ""
 
     toml_content = (tmp_path / "pyproject.toml").read_text()
     assert 'name = "my-package"' in toml_content
     assert 'pytest = "^3.6.0"' in toml_content
 
 
-def test_interactive_with_dependencies(tester, repo):
+def test_interactive_with_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
+    repo.add_package(get_package("flask", "2.0.0"))
 
     inputs = [
         "my-package",  # Package name
@@ -117,6 +141,9 @@ def test_interactive_with_dependencies(tester, repo):
         "pendulu",  # Search for package
         "1",  # Second option is pendulum
         "",  # Do not set constraint
+        "Flask",
+        "0",
+        "",
         "",  # Stop searching for packages
         "",  # Interactive dev packages
         "pytest",  # Search for package
@@ -140,6 +167,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
+flask = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -148,7 +176,7 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_empty_license(tester):
+def test_empty_license(tester: CommandTester):
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -162,7 +190,8 @@ def test_empty_license(tester):
     ]
     tester.execute(inputs="\n".join(inputs))
 
-    expected = """\
+    python = ".".join(str(c) for c in sys.version_info[:2])
+    expected = f"""\
 [tool.poetry]
 name = "my-package"
 version = "1.2.3"
@@ -173,13 +202,11 @@ packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
-""".format(
-        python=".".join(str(c) for c in sys.version_info[:2])
-    )
+"""
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies(tester, repo):
+def test_interactive_with_git_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -223,7 +250,54 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies_with_reference(tester, repo):
+_generate_choice_list_packages_params: list[list[Package]] = [
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask-test2", "1.0.0"),
+        get_package("Flask-test3", "1.0.0"),
+        get_package("Flask-test4", "1.0.0"),
+        get_package("Flask-test5", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+        get_package("Flask-test6", "1.0.0"),
+        get_package("Flask-test7", "1.0.0"),
+    ],
+    [
+        get_package("flask-blacklist", "1.0.0"),
+        get_package("Flask-Shelve", "1.0.0"),
+        get_package("flask-pwa", "1.0.0"),
+        get_package("Flask-test1", "1.0.0"),
+        get_package("Flask", "1.0.0"),
+    ],
+]
+
+
+@pytest.fixture(params=_generate_choice_list_packages_params)
+def _generate_choice_list_packages(request: FixtureRequest) -> list[Package]:
+    return request.param
+
+
+@pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
+def test_generate_choice_list(
+    tester: CommandTester,
+    package_name: str,
+    _generate_choice_list_packages: list[Package],
+):
+    init_command = tester.command
+
+    packages = _generate_choice_list_packages
+    choices = init_command._generate_choice_list(
+        packages, canonicalize_name(package_name)
+    )
+
+    assert choices[0] == "Flask"
+
+
+def test_interactive_with_git_dependencies_with_reference(
+    tester: CommandTester, repo: TestRepository
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -267,7 +341,9 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies_and_other_name(tester, repo):
+def test_interactive_with_git_dependencies_and_other_name(
+    tester: CommandTester, repo: TestRepository
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -311,7 +387,12 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_directory_dependency(tester, repo, source_dir, fixture_dir):
+def test_interactive_with_directory_dependency(
+    tester: CommandTester,
+    repo: TestRepository,
+    source_dir: Path,
+    fixture_dir: FixtureDirGetter,
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -358,7 +439,10 @@ pytest = "^3.6.0"
 
 
 def test_interactive_with_directory_dependency_and_other_name(
-    tester, repo, source_dir, fixture_dir
+    tester: CommandTester,
+    repo: TestRepository,
+    source_dir: Path,
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -406,7 +490,12 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_file_dependency(tester, repo, source_dir, fixture_dir):
+def test_interactive_with_file_dependency(
+    tester: CommandTester,
+    repo: TestRepository,
+    source_dir: Path,
+    fixture_dir: FixtureDirGetter,
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -453,7 +542,7 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_python_option(tester):
+def test_python_option(tester: CommandTester):
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -483,7 +572,7 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dependency(tester, repo):
+def test_predefined_dependency(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pendulum", "2.0.0"))
 
     inputs = [
@@ -517,7 +606,9 @@ pendulum = "^2.0.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_and_interactive_dependencies(tester, repo):
+def test_predefined_and_interactive_dependencies(
+    tester: CommandTester, repo: TestRepository
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
 
@@ -558,7 +649,7 @@ python = "~2.7 || ^3.6"
     assert 'pyramid = "^1.10"' in output
 
 
-def test_predefined_dev_dependency(tester, repo):
+def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pytest", "3.6.0"))
 
     inputs = [
@@ -595,7 +686,9 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_and_interactive_dev_dependencies(tester, repo):
+def test_predefined_and_interactive_dev_dependencies(
+    tester: CommandTester, repo: TestRepository
+):
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
 
@@ -641,7 +734,7 @@ pytest-requests = "^0.2.0"
     assert 'pytest = "^3.6.0"' in output
 
 
-def test_add_package_with_extras_and_whitespace(tester):
+def test_add_package_with_extras_and_whitespace(tester: CommandTester):
     result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
@@ -651,7 +744,10 @@ def test_add_package_with_extras_and_whitespace(tester):
 
 
 def test_init_existing_pyproject_simple(
-    tester, source_dir, init_basic_inputs, init_basic_toml
+    tester: CommandTester,
+    source_dir: Path,
+    init_basic_inputs: str,
+    init_basic_toml: str,
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -660,13 +756,14 @@ line-length = 88
 """
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
-    assert (
-        "{}\n{}".format(existing_section, init_basic_toml) in pyproject_file.read_text()
-    )
+    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
 
 def test_init_non_interactive_existing_pyproject_add_dependency(
-    tester, source_dir, init_basic_inputs, repo
+    tester: CommandTester,
+    source_dir: Path,
+    init_basic_inputs: str,
+    repo: TestRepository,
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -698,11 +795,11 @@ packages = [{include = "my_package"}]
 python = "^3.6"
 foo = "^1.19.2"
 """
-    assert "{}\n{}".format(existing_section, expected) in pyproject_file.read_text()
+    assert f"{existing_section}\n{expected}" in pyproject_file.read_text()
 
 
 def test_init_existing_pyproject_with_build_system_fails(
-    tester, source_dir, init_basic_inputs
+    tester: CommandTester, source_dir: Path, init_basic_inputs: str
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -713,7 +810,7 @@ build-backend = "setuptools.build_meta"
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
     assert (
-        tester.io.fetch_output().strip()
+        tester.io.fetch_error().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
-    assert "{}".format(existing_section) in pyproject_file.read_text()
+    assert existing_section in pyproject_file.read_text()

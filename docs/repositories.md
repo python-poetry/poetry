@@ -21,7 +21,6 @@ on PyPI.
 
 This represents most cases and will likely be enough for most users.
 
-
 ## Using a private repository
 
 However, at times, you may need to keep your package private while still being
@@ -65,8 +64,8 @@ call to `config`.
 ```bash
 poetry config http-basic.pypi username password
 ```
-{{% /note %}}
 
+{{% /note %}}
 
 You can also specify the username and password when using the `publish` command
 with the `--username` and `--password` options.
@@ -80,7 +79,7 @@ Keyring support is enabled using the [keyring library](https://pypi.org/project/
 Poetry will fallback to Pip style use of keyring so that backends like
 Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a change to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
-preferrably by installing a plugin.
+preferably by installing a plugin.
 
 If you are letting Poetry manage your virtual environments you will want a virtualenv
 seeder installed in Poetry's virtualenv that installs the desired keyring backend
@@ -101,9 +100,18 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
+If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a
+command line option instead of a password.
+You can prevent this by adding double dashes to prevent any following argument from being parsed as an option.
+
+```bash
+poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
+```
+
 #### Custom certificate authority and mutual TLS authentication
+
 Poetry supports repositories that are secured by a custom certificate authority as well as those that require
-certificate-based client authentication.  The following will configure the "foo" repository to validate the repository's
+certificate-based client authentication. The following will configure the "foo" repository to validate the repository's
 certificate using a custom certificate authority and use a client certificate (note that these config variables do not
 both need to be set):
 
@@ -139,6 +147,7 @@ name = "foo"
 url = "https://foo.bar/simple/"
 secondary = true
 ```
+
 {{% /note %}}
 
 If your private repository requires HTTP Basic Auth be sure to add the username and
@@ -147,7 +156,6 @@ same name that is in the `tool.poetry.source` section). If your repository requi
 a custom certificate authority or client certificates, similarly refer to the example above to configure the
 `certificates` section. Poetry will use these values to authenticate to your private repository when downloading or
 looking for packages.
-
 
 ### Disabling the PyPI repository
 
@@ -165,16 +173,8 @@ A default source will also be the fallback source if you add other sources.
 
 ### Trusting a repository
 
-You can bypass SSL verification for a repository if you know it can be trusted (useful for corporate private repositories):
+You can bypass SSL verification for a repository if you know it can be trusted (useful for private repositories):
 
-```toml
-[[tool.poetry.source]]
-name = "foo"
-url = "https://foo.bar/simple/"
-trusted = true
-```
-
-You can also change it in your local configuration using the `config` command:
 ```bash
 poetry config certificates.foo.trusted true
 ```

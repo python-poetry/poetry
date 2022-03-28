@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -11,7 +14,16 @@ from poetry.factory import Factory
 from poetry.publishing.publisher import Publisher
 
 
-def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tests.conftest import Config
+    from tests.types import FixtureDirGetter
+
+
+def test_publish_publishes_to_pypi_by_default(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -30,11 +42,12 @@ def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):
     ] == uploader_upload.call_args
 
 
-@pytest.mark.parametrize(
-    ("fixture_name",), [("sample_project",), ("with_default_source",)]
-)
+@pytest.mark.parametrize("fixture_name", ["sample_project", "with_default_source"])
 def test_publish_can_publish_to_given_repository(
-    fixture_dir, mocker, config, fixture_name
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    config: Config,
+    fixture_name: str,
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -62,7 +75,9 @@ def test_publish_can_publish_to_given_repository(
     assert "Publishing my-package (1.2.3) to foo" in io.fetch_output()
 
 
-def test_publish_raises_error_for_undefined_repository(fixture_dir, mocker, config):
+def test_publish_raises_error_for_undefined_repository(
+    fixture_dir: FixtureDirGetter, config: Config
+):
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
     poetry.config.merge(
@@ -74,7 +89,9 @@ def test_publish_raises_error_for_undefined_repository(fixture_dir, mocker, conf
         publisher.publish("my-repo", None, None)
 
 
-def test_publish_uses_token_if_it_exists(fixture_dir, mocker, config):
+def test_publish_uses_token_if_it_exists(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -91,7 +108,9 @@ def test_publish_uses_token_if_it_exists(fixture_dir, mocker, config):
     ] == uploader_upload.call_args
 
 
-def test_publish_uses_cert(fixture_dir, mocker, config):
+def test_publish_uses_cert(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+):
     cert = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -115,7 +134,9 @@ def test_publish_uses_cert(fixture_dir, mocker, config):
     ] == uploader_upload.call_args
 
 
-def test_publish_uses_client_cert(fixture_dir, mocker, config):
+def test_publish_uses_client_cert(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+):
     client_cert = "path/to/client.pem"
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -136,7 +157,12 @@ def test_publish_uses_client_cert(fixture_dir, mocker, config):
     ] == uploader_upload.call_args
 
 
-def test_publish_read_from_environment_variable(fixture_dir, environ, mocker, config):
+def test_publish_read_from_environment_variable(
+    fixture_dir: FixtureDirGetter,
+    environ: None,
+    mocker: MockerFixture,
+    config: Config,
+):
     os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"

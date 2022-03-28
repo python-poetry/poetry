@@ -152,6 +152,30 @@ with the corresponding `add` call:
 poetry add https://example.com/my-package-0.1.0.tar.gz
 ```
 
+## `source` dependencies
+
+To depend on a package from an [alternate repository](/docs/repositories/#install-dependencies-from-a-private-repository),
+you can use the `source` property:
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+secondary = true
+
+[tool.poetry.dependencies]
+my-cool-package = { version = "*", source = "foo" }
+```
+
+with the corresponding `add` call:
+
+```sh
+poetry add my-cool-package --source foo
+```
+
+!!!note
+
+    In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository) for further information.
 
 ## Python restricted dependencies
 
@@ -178,7 +202,6 @@ via the `markers` property:
 pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
 ```
 
-
 ## Multiple constraints dependencies
 
 Sometimes, one of your dependency may have different version ranges depending
@@ -192,7 +215,7 @@ you would declare it like so:
 [tool.poetry.dependencies]
 foo = [
     {version = "<=1.9", python = "^2.7"},
-    {version = "^2.0", python = "^3.4"}
+    {version = "^2.0", python = "^3.8"}
 ]
 ```
 
@@ -211,7 +234,7 @@ An example where this might be useful is the following:
 
 ```toml
 [tool.poetry.group.dev.dependencies]
-black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.7", markers = "platform_python_implementation == 'CPython'"}
 ```
 
 As a single line, this is a lot to digest. To make this a bit easier to
@@ -221,7 +244,7 @@ work with, you can do the following:
 [tool.poetry.group.dev.dependencies.black]
 version = "19.10b0"
 allow-prereleases = true
-python = "^3.6"
+python = "^3.7"
 markers = "platform_python_implementation == 'CPython'"
 ```
 

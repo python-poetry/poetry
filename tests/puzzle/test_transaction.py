@@ -1,15 +1,25 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Any
+
 from poetry.core.packages.package import Package
+
 from poetry.puzzle.transaction import Transaction
 
 
-def check_operations(ops, expected):
+if TYPE_CHECKING:
+    from poetry.installation.operations import OperationTypes
+
+
+def check_operations(ops: list[OperationTypes], expected: list[dict[str, Any]]) -> None:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
 
     result = []
     for op in ops:
-        if "update" == op.job_type:
+        if op.job_type == "update":
             result.append(
                 {
                     "job": "update",
@@ -25,7 +35,7 @@ def check_operations(ops, expected):
 
             result.append({"job": job, "package": op.package, "skipped": op.skipped})
 
-    assert expected == result
+    assert result == expected
 
 
 def test_it_should_calculate_operations_in_correct_order():

@@ -1,19 +1,27 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import pytest
 
 from poetry.factory import Factory
-from poetry.poetry import Poetry
+
+
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+
+    from poetry.poetry import Poetry
+    from tests.types import CommandTesterFactory
 
 
 @pytest.fixture
-def tester(command_tester_factory):
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("new")
 
 
 def verify_project_directory(
-    path: Path, package_name: str, package_path: str, include_from: Optional[str] = None
+    path: Path, package_name: str, package_path: str, include_from: str | None = None
 ) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
@@ -135,7 +143,13 @@ def verify_project_directory(
     ],
 )
 def test_command_new(
-    options, directory, package_name, package_path, include_from, tester, tmp_dir
+    options: list[str],
+    directory: str,
+    package_name: str,
+    package_path: str,
+    include_from: str | None,
+    tester: CommandTester,
+    tmp_dir: str,
 ):
     path = Path(tmp_dir) / directory
     options.append(path.as_posix())
@@ -143,13 +157,16 @@ def test_command_new(
     verify_project_directory(path, package_name, package_path, include_from)
 
 
-@pytest.mark.parametrize("fmt", [(None,), ("md",), ("rst",)])
-def test_command_new_with_readme(fmt, tester, tmp_dir):
-    fmt = "md"
+@pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",)])
+def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir: str):
     package = "package"
     path = Path(tmp_dir) / package
-    options = ["--readme {}".format(fmt) if fmt else "md", path.as_posix()]
+    options = [path.as_posix()]
+
+    if fmt:
+        options.insert(0, f"--readme {fmt}")
+
     tester.execute(" ".join(options))
 
     poetry = verify_project_directory(path, package, package, None)
-    assert poetry.local_config.get("readme") == "README.{}".format(fmt or "md")
+    assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"

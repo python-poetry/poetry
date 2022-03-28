@@ -1,18 +1,41 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 
 
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from poetry.console.commands.update import UpdateCommand
+    from poetry.repositories import Repository
+    from poetry.utils.env import MockEnv
+    from tests.helpers import PoetryTestApplication
+    from tests.helpers import TestRepository
+    from tests.types import CommandTesterFactory
+
+
 @pytest.fixture()
-def tester(command_tester_factory):
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("plugin add")
 
 
-def assert_plugin_add_result(tester, app, env, expected, constraint):
+def assert_plugin_add_result(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    env: MockEnv,
+    expected: str,
+    constraint: str | dict[str, str],
+) -> None:
     assert tester.io.fetch_output() == expected
 
-    update_command = app.find("update")
+    update_command: UpdateCommand = app.find("update")
     assert update_command.poetry.file.parent == env.path
     assert update_command.poetry.locker.lock.parent == env.path
     assert update_command.poetry.locker.lock.exists()
@@ -22,7 +45,13 @@ def assert_plugin_add_result(tester, app, env, expected, constraint):
     assert content["dependencies"]["poetry-plugin"] == constraint
 
 
-def test_add_no_constraint(app, repo, tester, env, installed):
+def test_add_no_constraint(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
+):
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
     tester.execute("poetry-plugin")
@@ -41,7 +70,13 @@ Package operations: 1 install, 0 updates, 0 removals
     assert_plugin_add_result(tester, app, env, expected, "^0.1.0")
 
 
-def test_add_with_constraint(app, repo, tester, env, installed):
+def test_add_with_constraint(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
+):
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
 
@@ -61,7 +96,13 @@ Package operations: 1 install, 0 updates, 0 removals
     assert_plugin_add_result(tester, app, env, expected, "^0.2.0")
 
 
-def test_add_with_git_constraint(app, repo, tester, env, installed):
+def test_add_with_git_constraint(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
+):
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git")
@@ -83,7 +124,13 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
 
-def test_add_with_git_constraint_with_extras(app, repo, tester, env, installed):
+def test_add_with_git_constraint_with_extras(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
+):
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
 
@@ -115,7 +162,11 @@ Package operations: 3 installs, 0 updates, 0 removals
 
 
 def test_add_existing_plugin_warns_about_no_operation(
-    app, repo, tester, env, installed
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     env.path.joinpath("pyproject.toml").write_text(
         """\
@@ -141,24 +192,32 @@ poetry-plugin = "^1.2.3"
     tester.execute("poetry-plugin")
 
     expected = """\
-The following plugins are already present in the pyproject.toml file and will be skipped:
+The following plugins are already present in the pyproject.toml file and will be\
+ skipped:
 
   • poetry-plugin
 
-If you want to update it to the latest compatible version, you can use `poetry plugin update package`.
-If you prefer to upgrade it to the latest available version, you can use `poetry plugin add package@latest`.
+If you want to update it to the latest compatible version,\
+ you can use `poetry plugin update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry plugin add package@latest`.
 
 """
 
     assert tester.io.fetch_output() == expected
 
-    update_command = app.find("update")
+    update_command: UpdateCommand = app.find("update")
     # The update command should not have been called
     assert update_command.poetry.file.parent != env.path
 
 
 def test_add_existing_plugin_updates_if_requested(
-    app, repo, tester, env, installed, mocker
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
+    mocker: MockerFixture,
 ):
     env.path.joinpath("pyproject.toml").write_text(
         """\
@@ -200,7 +259,11 @@ Package operations: 0 installs, 1 update, 0 removals
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
-    app, repo, tester, env, installed
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+    installed: Repository,
 ):
     poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))

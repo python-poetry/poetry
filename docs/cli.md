@@ -97,6 +97,13 @@ my-package
     └── __init__.py
 ```
 
+### Options
+
+* `--name`: Set the resulting package name.
+* `--src`: Use the src layout for the project.
+* `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
+
+
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
@@ -186,7 +193,7 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-By default `poetry` will install your project's package everytime you run `install`:
+By default `poetry` will install your project's package every time you run `install`:
 
 ```bash
 $ poetry install
@@ -208,10 +215,10 @@ option is used.
 
 ### Options
 
-* `--without`: The dependency groups to ignore for installation.
-* `--with`: The optional dependency groups to include for installation.
-* `--only`: The only dependency groups to install.
-* `--default`: Only install the default dependencies.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -220,6 +227,9 @@ option is used.
 * `--dev-only`: Only install dev dependencies. (**Deprecated**)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
 
+{{% note %}}
+When `--only` is specified, `--with` and `--without` options are ignored.
+{{% /note %}}
 
 ## update
 
@@ -245,9 +255,17 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 
 ### Options
 
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--no-dev` : Do not install dev dependencies.
+* `--no-dev` : Do not update the development dependencies. (**Deprecated**)
 * `--lock` : Do not perform install (only update the lockfile).
+
+{{% note %}}
+When `--only` is specified, `--with` and `--without` options are ignored.
+{{% /note %}}
 
 ## add
 
@@ -352,7 +370,7 @@ about dependency groups.
 
 ### Options
 
-* `--group (-D)`: The group to add the dependency to.
+* `--group (-G)`: The group to add the dependency to.
 * `--dev (-D)`: Add package as development dependency. (**Deprecated**)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
@@ -360,8 +378,8 @@ about dependency groups.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
-* `---allow-prereleases`: Accept prereleases.
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--allow-prereleases`: Accept prereleases.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--lock`: Do not perform install (only update the lockfile).
 
 
@@ -407,23 +425,29 @@ name        : pendulum
 version     : 1.4.2
 description : Python datetimes made easy
 
-dependencies:
+dependencies
  - python-dateutil >=2.6.1
  - tzlocal >=1.4
  - pytzdata >=2017.2.2
+
+required by
+ - calendar >=1.4.0
 ```
 
 ### Options
 
-* `--without`: Do not show the information of the specified groups' dependencies.
-* `--with`: Show the information of the specified optional groups' dependencies as well.
-* `--only`: Only show the information of dependencies belonging to the specified groups.
-* `--default`: Only show the information of the default dependencies.
-* `--no-dev`: Do not list the dev dependencies.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 
+{{% note %}}
+When `--only` is specified, `--with` and `--without` options are ignored.
+{{% /note %}}
 
 ## build
 
@@ -517,10 +541,18 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
+Note that this commmand starts a new shell and activates the virtual environment.
+
+As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
+
 ## check
 
 The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
+
+{{% note %}}
+This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+{{% /note %}}
 
 ```bash
 poetry check
@@ -540,6 +572,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 {{% note %}}
 By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
 {{% /note %}}
 
 ```bash
@@ -588,6 +621,7 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 Only the `requirements.txt` format is currently supported.
+This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
 {{% /note %}}
 
 ### Options
@@ -599,6 +633,7 @@ Only the `requirements.txt` format is currently supported.
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+* `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
 ## env
