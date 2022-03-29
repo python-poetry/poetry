@@ -482,6 +482,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
 * `--dry-run`: Perform all actions except upload the package.
+* `--skip-existing`: Ignore errors from files already existing in the repository.
 
 ## config
 

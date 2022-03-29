@@ -72,3 +72,31 @@ def test_uploader_registers_for_appropriate_400_errors(
         uploader.upload("https://foo.com")
 
     assert register.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "status, body",
+    [
+        (409, ""),
+        (400, "File already exists"),
+        (400, "Repository does not allow updating assets"),
+        (403, "Not enough permissions to overwrite artifact"),
+        (400, "file name has already been taken"),
+    ],
+)
+def test_uploader_skips_existing(
+    http: type[httpretty.httpretty], uploader: Uploader, status: int, body: str
+):
+    http.register_uri(http.POST, "https://foo.com", status=status, body=body)
+
+    # should not raise
+    uploader.upload("https://foo.com", skip_existing=True)
+
+
+def test_uploader_skip_existing_bubbles_unskippable_errors(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
+    http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
+
+    with pytest.raises(UploadError):
+        uploader.upload("https://foo.com", skip_existing=True)
