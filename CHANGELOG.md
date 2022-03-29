@@ -41,6 +41,7 @@
 - Added a `new installer.max-workers` property to the configuration ([#3516](https://github.com/python-poetry/poetry/pull/3516)).
 - Added experimental option `virtualenvs.prefer-active-python` to detect current activated python ([#4852](https://github.com/python-poetry/poetry/pull/4852)).
 - Added better windows shell support ([#5053](https://github.com/python-poetry/poetry/pull/5053)).
+- Added new argument `--skip-existing` for `poetry publish` to ignore errors from files already present in the index ([#2812](https://github.com/python-poetry/poetry/pull/2812)).
 
 ### Changed
 
