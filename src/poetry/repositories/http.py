@@ -7,6 +7,7 @@ import urllib
 
 from abc import ABC
 from collections import defaultdict
+from packaging.tags import sys_tags, Tag
 from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
@@ -143,7 +144,7 @@ class HTTPRepository(CachedRepository, ABC):
             universal_wheel = None
             universal_python2_wheel = None
             universal_python3_wheel = None
-            platform_specific_wheels = []
+            platform_specific_wheels = {}
             for wheel in wheels:
                 link = Link(wheel)
                 m = wheel_file_re.match(link.filename)
@@ -163,7 +164,7 @@ class HTTPRepository(CachedRepository, ABC):
                     else:
                         universal_python3_wheel = wheel
                 else:
-                    platform_specific_wheels.append(wheel)
+                    platform_specific_wheels[Tag(pyver, abi, plat)] = wheel
 
             if universal_wheel is not None:
                 return self._get_info_from_wheel(universal_wheel)
@@ -219,9 +220,16 @@ class HTTPRepository(CachedRepository, ABC):
             if universal_python2_wheel:
                 return self._get_info_from_wheel(universal_python2_wheel)
 
+            # Prefer compatible platform wheel over sdist
+            for tag in sys_tags():
+                if tag in platform_specific_wheels:
+                    return self._get_info_from_wheel(platform_specific_wheels[tag])
+
             if platform_specific_wheels and "sdist" not in urls:
                 # Pick the first wheel available and hope for the best
-                return self._get_info_from_wheel(platform_specific_wheels[0])
+                return self._get_info_from_wheel(
+                    next(iter(platform_specific_wheels.values()))
+                )
 
         return self._get_info_from_sdist(urls["sdist"][0])
 

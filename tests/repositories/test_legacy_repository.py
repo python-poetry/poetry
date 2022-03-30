@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import distutils.util
 import shutil
+import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -11,6 +13,7 @@ import requests
 from poetry.core.packages.dependency import Dependency
 
 from poetry.factory import Factory
+from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -26,6 +29,7 @@ if TYPE_CHECKING:
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
+    from pytest_mock import MockerFixture
 
 
 class MockRepository(LegacyRepository):
@@ -182,6 +186,52 @@ def test_find_packages_only_prereleases_empty_when_not_any():
     packages = repo.find_packages(Factory.create_dependency("black", ">=1"))
 
     assert len(packages) == 0
+
+
+windows_platforms = ["win32", "win-amd64"]
+
+
+@pytest.mark.parametrize(
+    "platform",
+    [distutils.util.get_platform()]
+    if distutils.util.get_platform() not in windows_platforms
+    else windows_platforms,
+)
+@pytest.mark.parametrize(
+    "sys_version_info",
+    [sys.version_info]
+    if distutils.util.get_platform() not in windows_platforms
+    else [(3, 7, 1), (3, 8, 1)],
+)
+def test_get_package_dependencies_with_sdist_and_bdist_platform_compatible(
+    platform: str, sys_version_info: tuple, mocker: MockerFixture
+):
+    get_info_from_wheel = mocker.patch(
+        "poetry.repositories.legacy_repository.LegacyRepository._get_info_from_wheel"
+    )
+    get_info_from_sdist = mocker.patch(
+        "poetry.repositories.legacy_repository.LegacyRepository._get_info_from_sdist"
+    )
+    name, version = "pyyaml", "3.13"
+    get_info_from_wheel.return_value = PackageInfo(name, version)
+    get_info_from_sdist.return_value = PackageInfo(name, version)
+
+    if platform in windows_platforms:
+        mocker.patch("distutils.util.get_platform").return_value = platform
+        mocker.patch("sys.version_info", sys_version_info)
+
+    repo = MockRepository()
+    package = repo.package(name, version)
+
+    assert package.name == name
+    assert package.version.text == version
+
+    if platform == "win32" and sys_version_info == (3, 7, 1):
+        assert get_info_from_wheel.called
+        assert not get_info_from_sdist.called
+    else:
+        assert not get_info_from_wheel.called
+        assert get_info_from_sdist.called
 
 
 def test_get_package_information_chooses_correct_distribution():
