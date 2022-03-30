@@ -403,7 +403,7 @@ about dependency groups.
 
 ### Options
 
-* `--group (-D)`: The group to remove the dependency from.
+* `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
