@@ -144,7 +144,7 @@ class Page:
         """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
         the link, it will be rewritten to %20 (while not over-quoting
         % or other characters)."""
-        return self._clean_re.sub(lambda match: f"%{match.group(0):2x}", url)
+        return self._clean_re.sub(lambda match: f"%{ord(match.group(0)):02x}", url)
 
 
 # TODO: revisit whether the LegacyRepository should inherit from PyPiRepository.
