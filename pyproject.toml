@@ -132,7 +132,6 @@ module = [
   'poetry.utils.authenticator',
   'poetry.utils.env',
   'poetry.utils.exporter',
-  'poetry.utils.password_manager',
   'poetry.utils.setup_reader',
 ]
 ignore_errors = true
