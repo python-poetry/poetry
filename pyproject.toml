@@ -112,8 +112,6 @@ files = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.application',
-  'poetry.console.logging.formatters.builder_formatter',
   'poetry.console.commands.init',
   'poetry.inspection.info',
   'poetry.installation.chef',
