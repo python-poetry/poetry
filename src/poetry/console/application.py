@@ -313,9 +313,10 @@ class Application(BaseApplication):
         self._disable_plugins = io.input.has_parameter_option("--no-plugins")
 
         if not self._disable_plugins:
+            from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
-            manager = PluginManager("application.plugin")
+            manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
 
