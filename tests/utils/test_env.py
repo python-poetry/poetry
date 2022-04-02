@@ -25,9 +25,11 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv
 from poetry.utils.env import InvalidCurrentPythonVersionError
+from poetry.utils.env import MockEnv
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.env import build_environment
 from poetry.utils.helpers import remove_directory
 
 
@@ -1331,3 +1333,51 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(tmp_dir: str):
         assert venv_name1 == venv_name2
     else:
         assert venv_name1 != venv_name2
+
+
+@pytest.fixture()
+def extended_without_setup_poetry() -> Poetry:
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / "extended_project_without_setup"
+    )
+
+    return poetry
+
+
+def test_build_environment_called_build_script_specified(
+    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_dir: str
+):
+    project_env = MockEnv(path=Path(tmp_dir) / "project")
+    ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
+
+    mocker.patch(
+        "poetry.utils.env.ephemeral_environment"
+    ).return_value.__enter__.return_value = ephemeral_env
+
+    with build_environment(extended_without_setup_poetry, project_env) as env:
+        assert env == ephemeral_env
+        assert env.executed == [
+            [
+                "python",
+                env.pip_embedded,
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                *extended_without_setup_poetry.pyproject.build_system.requires,
+            ]
+        ]
+
+
+def test_build_environment_not_called_without_build_script_specified(
+    mocker: MockerFixture, poetry: Poetry, tmp_dir: str
+):
+    project_env = MockEnv(path=Path(tmp_dir) / "project")
+    ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
+
+    mocker.patch(
+        "poetry.utils.env.ephemeral_environment"
+    ).return_value.__enter__.return_value = ephemeral_env
+
+    with build_environment(poetry, project_env) as env:
+        assert env == project_env
+        assert not env.executed

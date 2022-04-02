@@ -20,6 +20,7 @@ from typing import Any
 from typing import ContextManager
 from typing import Iterable
 from typing import Iterator
+from typing import TypeVar
 
 import packaging.tags
 import tomlkit
@@ -30,6 +31,7 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
+from poetry.core.poetry import Poetry
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
@@ -50,7 +52,8 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.version.markers import BaseMarker
 
-    from poetry.poetry import Poetry
+
+P = TypeVar("P", bound=Poetry)
 
 
 GET_SYS_TAGS = f"""
@@ -494,7 +497,7 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry) -> None:
+    def __init__(self, poetry: P) -> None:
         self._poetry = poetry
 
     def _full_python_path(self, python: str) -> str:
@@ -1837,6 +1840,48 @@ def ephemeral_environment(
             flags=flags,
         )
         yield VirtualEnv(venv_dir, venv_dir)
+
+
+@contextmanager
+def build_environment(
+    poetry: P, env: Env | None = None, io: IO | None = None
+) -> Iterator[Env]:
+    """
+    If a build script is specified for the project, there could be additional build
+    time dependencies, eg: cython, setuptools etc. In these cases, we create an
+    ephemeral build environment with all requirements specified under
+    `build-system.requires` and return this. Otherwise, the given default project
+    environment is returned.
+    """
+    if not env or poetry.package.build_script:
+        with ephemeral_environment(executable=env.python if env else None) as venv:
+            overwrite = io and io.output.is_decorated() and not io.is_debug()
+            if io:
+                if not overwrite:
+                    io.write_line("")
+
+                requires = [
+                    f"<c1>{requirement}</c1>"
+                    for requirement in poetry.pyproject.build_system.requires
+                ]
+
+                io.overwrite(
+                    "<b>Preparing</b> build environment with build-system requirements"
+                    f" {', '.join(requires)}"
+                )
+            venv.run_pip(
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                *poetry.pyproject.build_system.requires,
+            )
+
+            if overwrite:
+                io.write_line("")
+
+            yield venv
+    else:
+        yield env
 
 
 class MockEnv(NullEnv):
