@@ -45,14 +45,26 @@ def test_run_keeps_options_passed_before_command(
 
 
 def test_run_has_helpful_error_when_command_not_found(
-    app_tester: ApplicationTester, env: MockEnv
+    app_tester: ApplicationTester, env: MockEnv, capfd: pytest.CaptureFixture[str]
 ):
     env._execute = True
     app_tester.execute("run nonexistent-command")
 
     assert env.executed == [["nonexistent-command"]]
     assert app_tester.status_code == 1
-    assert app_tester.io.fetch_error() == "Command not found: nonexistent-command\n"
+    if WINDOWS:
+        # On Windows we use a shell to run commands which provides its own error
+        # message when a command is not found that is not captured by the
+        # ApplicationTester but is captured by pytest, and we can access it via capfd.
+        # The expected string in this assertion assumes Command Prompt (cmd.exe) is the
+        # shell used.
+        assert capfd.readouterr().err.splitlines() == [
+            "'nonexistent-command' is not recognized as an internal or external"
+            " command,",
+            "operable program or batch file.",
+        ]
+    else:
+        assert app_tester.io.fetch_error() == "Command not found: nonexistent-command\n"
 
 
 @pytest.mark.skipif(
