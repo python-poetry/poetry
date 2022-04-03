@@ -7,11 +7,13 @@ import tempfile
 import time
 import urllib.parse
 
+from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterable
 from typing import Iterator
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -42,6 +44,8 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
+    from poetry.core.semver.version_constraint import VersionConstraint
+    from poetry.core.version.markers import BaseMarker
 
     from poetry.repositories import Pool
     from poetry.utils.env import Env
@@ -525,15 +529,12 @@ class Provider:
 
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
-            # Regrouping by constraint
-            by_constraint: dict[str, list[Dependency]] = {}
+            deps = self._merge_dependencies_by_marker(deps)
+
+            # Merging dependencies by constraint
+            by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
             for dep in deps:
-                if dep.constraint not in by_constraint:
-                    by_constraint[dep.constraint] = []
-
                 by_constraint[dep.constraint].append(dep)
-
-            # We merge by constraint
             for constraint, _deps in by_constraint.items():
                 new_markers = []
                 for dep in _deps:
@@ -810,3 +811,29 @@ class Provider:
                 yield
 
         self._in_progress = False
+
+    def _merge_dependencies_by_marker(
+        self, dependencies: Iterable[Dependency]
+    ) -> list[Dependency]:
+        by_marker: dict[BaseMarker, list[Dependency]] = defaultdict(list)
+        for dep in dependencies:
+            by_marker[dep.marker].append(dep)
+        deps = []
+        for _deps in by_marker.values():
+            if len(_deps) == 1:
+                deps.extend(_deps)
+            else:
+                new_constraint = _deps[0].constraint
+                for dep in _deps[1:]:
+                    new_constraint = new_constraint.intersect(dep.constraint)
+                if new_constraint.is_empty():
+                    # leave dependencies as-is so the resolver will pickup
+                    # the conflict and display a proper error.
+                    deps.extend(_deps)
+                else:
+                    self.debug(
+                        f"<debug>Merging constraints for {_deps[0].name} for"
+                        f" marker {_deps[0].marker}</debug>"
+                    )
+                    deps.append(_deps[0].with_constraint(new_constraint))
+        return deps

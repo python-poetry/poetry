@@ -1300,6 +1300,43 @@ So, because no versions of a match !=1.0
     assert str(e.value) == expected
 
 
+def test_solver_duplicate_dependencies_different_constraints_merge_by_marker(
+    solver: Solver, repo: Repository, package: Package
+):
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "^1.0", "python": "<3.4"})
+    )
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "^2.0", "python": ">=3.4"})
+    )
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "!=1.1", "python": "<3.4"})
+    )
+
+    package_b10 = get_package("B", "1.0")
+    package_b11 = get_package("B", "1.1")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b11)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
     solver: Solver, repo: Repository, package: Package
 ):
