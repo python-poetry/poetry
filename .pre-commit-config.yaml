@@ -90,6 +90,6 @@ repos:
           - types-requests
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v2.17.0
+    rev: v2.18.1
     hooks:
       - id: validate_manifest
