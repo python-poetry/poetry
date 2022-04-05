@@ -73,6 +73,15 @@ def test_page_absolute_links_path_are_correct():
         assert link.path.startswith("/packages/")
 
 
+def test_page_clean_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/relative")
+
+    cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
+    assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
+
+
 def test_sdist_format_support():
     repo = MockRepository()
     page = repo._get_page("/relative")
