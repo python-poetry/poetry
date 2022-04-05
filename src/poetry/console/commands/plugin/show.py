@@ -19,6 +19,7 @@ class PluginShowCommand(Command):
 
     def handle(self) -> int:
         from poetry.plugins.application_plugin import ApplicationPlugin
+        from poetry.plugins.plugin import Plugin
         from poetry.plugins.plugin_manager import PluginManager
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.utils.env import EnvManager
@@ -34,8 +35,8 @@ class PluginShowCommand(Command):
         )
 
         entry_points = (
-            PluginManager("application.plugin").get_plugin_entry_points()
-            + PluginManager("plugin").get_plugin_entry_points()
+            PluginManager(ApplicationPlugin.group).get_plugin_entry_points()
+            + PluginManager(Plugin.group).get_plugin_entry_points()
         )
 
         system_env = EnvManager.get_system_env(naive=True)
