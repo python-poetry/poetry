@@ -403,7 +403,7 @@ about dependency groups.
 
 ### Options
 
-* `--group (-D)`: The group to remove the dependency from.
+* `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
@@ -482,6 +482,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
 * `--dry-run`: Perform all actions except upload the package.
+* `--skip-existing`: Ignore errors from files already existing in the repository.
 
 ## config
 

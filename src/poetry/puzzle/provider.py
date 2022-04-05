@@ -189,12 +189,7 @@ class Provider:
 
         dependency._source_reference = package.source_reference
         dependency._source_resolved_reference = package.source_resolved_reference
-
-        if hasattr(package, "source_subdirectory") and hasattr(
-            dependency, "_source_subdirectory"
-        ):
-            # this is supported only for poetry-core >= 1.1.0a7
-            dependency._source_subdirectory = package.source_subdirectory
+        dependency._source_subdirectory = package.source_subdirectory
 
         self._deferred_cache[dependency] = package
 
@@ -671,10 +666,6 @@ class Provider:
                         dep_other.set_constraint(
                             dep_other.constraint.intersect(dep_any.constraint)
                         )
-                        # TODO: Setting _pretty_constraint can be removed once the
-                        # following issue has been fixed:
-                        # https://github.com/python-poetry/poetry/issues/4589
-                        dep_other._pretty_constraint = str(dep_other.constraint)
 
             overrides = []
             for _dep in _deps:

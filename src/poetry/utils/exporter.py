@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import urllib.parse
 
 from typing import TYPE_CHECKING
@@ -70,21 +69,22 @@ class Exporter:
         content = ""
         dependency_lines = set()
 
-        for package, groups in itertools.groupby(
-            self._poetry.locker.get_project_dependency_packages(
-                project_requires=self._poetry.package.all_requires,
-                dev=dev,
-                extras=extras,
-            ),
-            lambda dependency_package: dependency_package.package,
+        # Get project dependencies.
+        root_package = (
+            self._poetry.package.clone()
+            if dev
+            else self._poetry.package.with_dependency_groups(["default"], only=True)
+        )
+
+        for dependency_package in self._poetry.locker.get_project_dependency_packages(
+            project_requires=root_package.all_requires,
+            project_python_marker=root_package.python_marker,
+            dev=dev,
+            extras=extras,
         ):
             line = ""
-            dependency_packages = list(groups)
-            dependency = dependency_packages[0].dependency
-            marker = dependency.marker
-            for dep_package in dependency_packages[1:]:
-                marker = marker.union(dep_package.dependency.marker)
-            dependency.marker = marker
+            dependency = dependency_package.dependency
+            package = dependency_package.package
 
             if package.develop:
                 line += "-e "

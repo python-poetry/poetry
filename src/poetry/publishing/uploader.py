@@ -116,6 +116,7 @@ class Uploader:
         cert: Path | None = None,
         client_cert: Path | None = None,
         dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         session = self.make_session()
 
@@ -126,7 +127,7 @@ class Uploader:
             session.cert = str(client_cert)
 
         try:
-            self._upload(session, url, dry_run)
+            self._upload(session, url, dry_run, skip_existing)
         finally:
             session.close()
 
@@ -208,19 +209,24 @@ class Uploader:
         return data
 
     def _upload(
-        self, session: requests.Session, url: str, dry_run: bool | None = False
+        self,
+        session: requests.Session,
+        url: str,
+        dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         for file in self.files:
             # TODO: Check existence
 
-            self._upload_file(session, url, file, dry_run)
+            self._upload_file(session, url, file, dry_run, skip_existing)
 
     def _upload_file(
         self,
         session: requests.Session,
         url: str,
         file: Path,
-        dry_run: bool | None = False,
+        dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
 
@@ -275,6 +281,12 @@ class Uploader:
                 elif resp.status_code == 400 and "was ever registered" in resp.text:
                     self._register(session, url)
                     resp.raise_for_status()
+                elif skip_existing and self._is_file_exists_error(resp):
+                    bar.set_format(
+                        f" - Uploading <c1>{file.name}</c1> <warning>File exists."
+                        " Skipping</>"
+                    )
+                    bar.display()
                 else:
                     resp.raise_for_status()
             except (requests.ConnectionError, requests.HTTPError) as e:
@@ -334,3 +346,23 @@ class Uploader:
             return "sdist"
 
         raise ValueError("Unknown distribution format " + "".join(exts))
+
+    def _is_file_exists_error(self, response: requests.Response) -> bool:
+        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32  # noqa: E501
+        status = response.status_code
+        reason = response.reason.lower()
+        text = response.text.lower()
+        reason_and_text = reason + text
+
+        return (
+            # pypiserver (https://pypi.org/project/pypiserver)
+            status == 409
+            # PyPI / TestPyPI / GCP Artifact Registry
+            or (status == 400 and "already exist" in reason_and_text)
+            # Nexus Repository OSS (https://www.sonatype.com/nexus-repository-oss)
+            or (status == 400 and "updating asset" in reason_and_text)
+            # Artifactory (https://jfrog.com/artifactory/)
+            or (status == 403 and "overwrite artifact" in reason_and_text)
+            # Gitlab Enterprise Edition (https://about.gitlab.com)
+            or (status == 400 and "already been taken" in reason_and_text)
+        )

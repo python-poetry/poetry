@@ -93,7 +93,7 @@ class Application(BaseApplication):
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
-        self._poetry = None
+        self._poetry: Poetry | None = None
         self._io: IO | None = None
         self._disable_plugins = False
         self._plugins_loaded = False
@@ -232,8 +232,8 @@ class Application(BaseApplication):
         handler = IOHandler(io)
         handler.setFormatter(IOFormatter())
 
-        for logger in loggers:
-            logger = logging.getLogger(logger)
+        for name in loggers:
+            logger = logging.getLogger(name)
 
             logger.handlers = [handler]
 

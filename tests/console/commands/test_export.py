@@ -84,7 +84,9 @@ def _export_requirements(tester: CommandTester, poetry: Poetry) -> None:
     assert poetry.locker.lock.exists()
 
     expected = """\
-foo==1.0.0
+foo==1.0.0 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.4" and python_version < "4.0"
 """
 
     assert content == expected
@@ -113,7 +115,9 @@ def test_export_fails_on_invalid_format(tester: CommandTester, do_lock: None):
 def test_export_prints_to_stdout_by_default(tester: CommandTester, do_lock: None):
     tester.execute("--format requirements.txt")
     expected = """\
-foo==1.0.0
+foo==1.0.0 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.4" and python_version < "4.0"
 """
     assert tester.io.fetch_output() == expected
 
@@ -123,7 +127,9 @@ def test_export_uses_requirements_txt_format_by_default(
 ):
     tester.execute()
     expected = """\
-foo==1.0.0
+foo==1.0.0 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.4" and python_version < "4.0"
 """
     assert tester.io.fetch_output() == expected
 
@@ -131,8 +137,12 @@ foo==1.0.0
 def test_export_includes_extras_by_flag(tester: CommandTester, do_lock: None):
     tester.execute("--format requirements.txt --extras feature_bar")
     expected = """\
-bar==1.1.0
-foo==1.0.0
+bar==1.1.0 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.4" and python_version < "4.0"
+foo==1.0.0 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.4" and python_version < "4.0"
 """
     assert tester.io.fetch_output() == expected
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -126,8 +125,12 @@ def test_exporter_can_export_requirements_txt_with_standard_packages(
         content = f.read()
 
     expected = """\
-bar==4.5.6
-foo==1.2.3
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -181,9 +184,15 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
         content = f.read()
 
     expected = """\
-bar==4.5.6
-baz==7.8.9 ; sys_platform == "win32"
-foo==1.2.3 ; python_version < "3.7"
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+baz==7.8.9 ;\
+ python_version >= "2.7" and python_version < "2.8" and sys_platform == "win32" or\
+ python_version >= "3.6" and python_version < "4.0" and sys_platform == "win32"
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "3.7"
 """
 
     assert content == expected
@@ -286,17 +295,29 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir: str, poetry: Poetr
     # │       ├── cryptography >=2.0
     # │       │   └── six >=1.4.1
     # │       └── jeepney >=0.6 (circular dependency aborted here)
+    python27 = 'python_version >= "2.7" and python_version < "2.8"'
+    python36 = 'python_version >= "3.6" and python_version < "4.0"'
+    linux = 'sys_platform=="linux"'
     expected = {
-        "poetry": Dependency.create_from_pep_508("poetry==1.1.4"),
-        "junit-xml": Dependency.create_from_pep_508("junit-xml==1.9"),
-        "keyring": Dependency.create_from_pep_508("keyring==21.8.0"),
+        "poetry": Dependency.create_from_pep_508(
+            f"poetry==1.1.4; {python27} or {python36}"
+        ),
+        "junit-xml": Dependency.create_from_pep_508(
+            f"junit-xml==1.9 ; {python27} or {python36}"
+        ),
+        "keyring": Dependency.create_from_pep_508(
+            f"keyring==21.8.0 ; {python27} or {python36}"
+        ),
         "secretstorage": Dependency.create_from_pep_508(
-            "secretstorage==3.3.0 ; sys_platform=='linux'"
+            f"secretstorage==3.3.0 ; {python27} and {linux} or {python36} and {linux}"
         ),
         "cryptography": Dependency.create_from_pep_508(
-            "cryptography==3.2 ; sys_platform=='linux'"
+            f"cryptography==3.2 ; {python27} and {linux} or {python36} and {linux}"
         ),
-        "six": Dependency.create_from_pep_508("six==1.15.0"),
+        "six": Dependency.create_from_pep_508(
+            f"six==1.15.0 ; {python27} or {python36} or {python27} and {linux} or"
+            f" {python36} and {linux}"
+        ),
     }
 
     for line in content.strip().split("\n"):
@@ -368,11 +389,19 @@ def test_exporter_can_export_requirements_txt_pyinstaller(tmp_dir: str, poetry: 
     # ├── altgraph *      dependencies into a single package.
     # ├── macholib >=1.8 -- only on Darwin
     # │   └── altgraph >=0.15
+    python27 = 'python_version >= "2.7" and python_version < "2.8"'
+    python36 = 'python_version >= "3.6" and python_version < "4.0"'
+    darwin = 'sys_platform=="darwin"'
     expected = {
-        "pyinstaller": Dependency.create_from_pep_508("pyinstaller==4.0"),
-        "altgraph": Dependency.create_from_pep_508("altgraph==0.17"),
+        "pyinstaller": Dependency.create_from_pep_508(
+            f"pyinstaller==4.0 ; {python27} or {python36}"
+        ),
+        "altgraph": Dependency.create_from_pep_508(
+            f"altgraph==0.17 ; {python27} or {python36} or {python27} and {darwin} or"
+            f" {python36} and {darwin}"
+        ),
         "macholib": Dependency.create_from_pep_508(
-            "macholib==1.8 ; sys_platform == 'darwin'"
+            f"macholib==1.8 ; {python27} and {darwin} or {python36} and {darwin}"
         ),
     }
 
@@ -441,17 +470,21 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+    python27 = 'python_version >= "2.7" and python_version < "2.8"'
+    python36 = 'python_version >= "3.6" and python_version < "3.7"'
+    windows = 'platform_system == "Windows"'
+    win32 = 'sys_platform == "win32"'
     expected = {
-        "a": Dependency.create_from_pep_508("a==1.2.3 ; python_version < '3.7'"),
+        "a": Dependency.create_from_pep_508(f"a==1.2.3 ; {python27} or {python36}"),
         "b": Dependency.create_from_pep_508(
-            "b==4.5.6 ; platform_system == 'Windows' and python_version < '3.7'"
+            f"b==4.5.6 ; {python27} and {windows} or {python36} and {windows}"
         ),
         "c": Dependency.create_from_pep_508(
-            "c==7.8.9 ; sys_platform == 'win32' and python_version < '3.7'"
+            f"c==7.8.9 ; {python27} and {win32} or {python36} and {win32}"
         ),
         "d": Dependency.create_from_pep_508(
-            "d==0.0.1 ; platform_system == 'Windows' and python_version < '3.7' or"
-            " sys_platform == 'win32' and python_version < '3.7'"
+            f"d==0.0.1 ; {python27} and {windows} or {python36} and {windows} or"
+            f" {python27} and {win32} or {python36} and {win32}"
         ),
     }
 
@@ -467,7 +500,25 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
 
 @pytest.mark.parametrize(
     ["dev", "lines"],
-    [(False, ['a==1.2.3 ; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
+    [
+        (
+            False,
+            [
+                'a==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "3.8"'
+            ],
+        ),
+        (
+            True,
+            [
+                'a==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "3.8" or python_version'
+                ' >= "3.6" and python_version < "4.0"',
+                'b==4.5.6 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+            ],
+        ),
+    ],
 )
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
     tmp_dir: str, poetry: Poetry, dev: bool, lines: list[str]
@@ -560,9 +611,13 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
         content = f.read()
 
     expected = """\
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -609,8 +664,12 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_
         content = f.read()
 
     expected = """\
-bar==4.5.6
-foo==1.2.3
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -654,7 +713,9 @@ def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
         content = f.read()
 
     expected = """\
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -699,9 +760,13 @@ def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
         content = f.read()
 
     expected = """\
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -746,7 +811,9 @@ def test_exporter_exports_requirements_txt_without_optional_packages(
         content = f.read()
 
     expected = """\
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -756,10 +823,42 @@ foo==1.2.3 \\
 @pytest.mark.parametrize(
     ["extras", "lines"],
     [
-        (None, ["foo==1.2.3"]),
-        (False, ["foo==1.2.3"]),
-        (True, ["bar==4.5.6", "foo==1.2.3", "spam==0.1.0"]),
-        (["feature_bar"], ["bar==4.5.6", "foo==1.2.3", "spam==0.1.0"]),
+        (
+            None,
+            [
+                'foo==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"'
+            ],
+        ),
+        (
+            False,
+            [
+                'foo==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"'
+            ],
+        ),
+        (
+            True,
+            [
+                'bar==4.5.6 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'foo==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'spam==0.1.0 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+            ],
+        ),
+        (
+            ["feature_bar"],
+            [
+                'bar==4.5.6 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'foo==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'spam==0.1.0 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+            ],
+        ),
     ],
 )
 def test_exporter_exports_requirements_txt_with_optional_packages(
@@ -859,7 +958,9 @@ def test_exporter_can_export_requirements_txt_with_git_packages(
         content = f.read()
 
     expected = """\
-foo @ git+https://github.com/foo/foo.git@123456
+foo @ git+https://github.com/foo/foo.git@123456 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -909,8 +1010,12 @@ def test_exporter_can_export_requirements_txt_with_nested_packages(
         content = f.read()
 
     expected = """\
-bar==4.5.6
-foo @ git+https://github.com/foo/foo.git@123456
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+foo @ git+https://github.com/foo/foo.git@123456 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -964,9 +1069,15 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_cyclic(
         content = f.read()
 
     expected = """\
-bar==4.5.6
-baz==7.8.9
-foo==1.2.3
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+baz==7.8.9 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -1036,26 +1147,21 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = (
-        # expectation for poetry-core <= 1.1.0a6
-        textwrap.dedent(
-            """\
-            bar==7.8.9 ; platform_system != "Windows" or platform_system == "Windows"
-            baz==10.11.13 ; platform_system == "Windows"
-            foo==1.2.3
-            """
-        ),
-        # expectation for poetry-core > 1.1.0a6
-        textwrap.dedent(
-            """\
-            bar==7.8.9
-            baz==10.11.13 ; platform_system == "Windows"
-            foo==1.2.3
-            """
-        ),
-    )
+    expected = """\
+bar==7.8.9 ;\
+ python_version >= "2.7" and python_version < "2.8" and platform_system != "Windows" or\
+ python_version >= "3.6" and python_version < "4.0" and platform_system != "Windows" or\
+ python_version >= "2.7" and python_version < "2.8" and platform_system == "Windows" or\
+ python_version >= "3.6" and python_version < "4.0" and platform_system == "Windows"
+baz==10.11.13 ;\
+ python_version >= "2.7" and python_version < "2.8" and platform_system == "Windows" or\
+ python_version >= "3.6" and python_version < "4.0" and platform_system == "Windows"
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+"""
 
-    assert content in expected
+    assert content == expected
 
 
 def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
@@ -1095,7 +1201,9 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
         content = f.read()
 
     expected = """\
-foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
+foo @ git+https://github.com/foo/foo.git@123456 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "3.7"
 """
 
     assert content == expected
@@ -1137,7 +1245,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
         content = f.read()
 
     expected = f"""\
-foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
+foo @ {working_directory.as_uri()}/tests/fixtures/sample_project ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -1203,9 +1313,15 @@ def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
         content = f.read()
 
     expected = f"""\
-bar @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local/bar
-baz @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local
-foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
+bar @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local/bar ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+baz @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+foo @ {working_directory.as_uri()}/tests/fixtures/sample_project ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -1248,8 +1364,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = f"""\
-foo @ {working_directory.as_uri()}/tests/fixtures/sample_project\
- ; python_version < "3.7"
+foo @ {working_directory.as_uri()}/tests/fixtures/sample_project ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "3.7"
 """
 
     assert content == expected
@@ -1291,7 +1408,9 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
         content = f.read()
 
     expected = f"""\
-foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz
+foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
 """
 
     assert content == expected
@@ -1334,8 +1453,9 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = f"""\
-foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz\
- ; python_version < "3.7"
+foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "3.7"
 """
 
     assert content == expected
@@ -1392,9 +1512,13 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(
     expected = """\
 --extra-index-url https://example.com/simple
 
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -1450,9 +1574,13 @@ def test_exporter_exports_requirements_txt_with_url_false(tmp_dir: str, poetry: 
         content = f.read()
 
     expected = """\
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -1503,7 +1631,9 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
 --trusted-host example.com
 --extra-index-url http://example.com/simple
 
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
 """
 
@@ -1513,8 +1643,26 @@ bar==4.5.6 \\
 @pytest.mark.parametrize(
     ["dev", "expected"],
     [
-        (True, ["bar==1.2.2", "baz==1.2.3", "foo==1.2.1"]),
-        (False, ["bar==1.2.2", "foo==1.2.1"]),
+        (
+            True,
+            [
+                'bar==1.2.2 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'baz==1.2.3 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'foo==1.2.1 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+            ],
+        ),
+        (
+            False,
+            [
+                'bar==1.2.2 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+                'foo==1.2.1 ; python_version >= "2.7" and python_version < "2.8" or'
+                ' python_version >= "3.6" and python_version < "4.0"',
+            ],
+        ),
     ],
 )
 def test_exporter_exports_requirements_txt_with_dev_extras(
@@ -1647,11 +1795,17 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
 --extra-index-url https://example.com/simple
 --extra-index-url https://foobaz.com/simple
 
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
-baz==7.8.9 \\
+baz==7.8.9 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:24680
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -1718,9 +1872,13 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
     expected = """\
 --extra-index-url https://foo:bar@example.com/simple
 
-bar==4.5.6 \\
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:67890
-foo==1.2.3 \\
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0" \\
     --hash=sha256:12345
 """
 
@@ -1763,8 +1921,248 @@ def test_exporter_exports_requirements_txt_to_standard_output(
 
     out, err = capsys.readouterr()
     expected = """\
-bar==4.5.6
-foo==1.2.3
+bar==4.5.6 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+foo==1.2.3 ;\
+ python_version >= "2.7" and python_version < "2.8" or\
+ python_version >= "3.6" and python_version < "4.0"
+"""
+
+    assert out == expected
+
+
+def test_exporter_doesnt_confuse_repeated_packages(
+    tmp_dir: str, poetry: Poetry, capsys: CaptureFixture
+):
+    # Testcase derived from <https://github.com/python-poetry/poetry/issues/5141>.
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "celery",
+                    "version": "5.1.2",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "<3.7",
+                    "dependencies": {
+                        "click": ">=7.0,<8.0",
+                        "click-didyoumean": ">=0.0.3",
+                        "click-plugins": ">=1.1.1",
+                    },
+                },
+                {
+                    "name": "celery",
+                    "version": "5.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": ">=3.7",
+                    "dependencies": {
+                        "click": ">=8.0.3,<9.0",
+                        "click-didyoumean": ">=0.0.3",
+                        "click-plugins": ">=1.1.1",
+                    },
+                },
+                {
+                    "name": "click",
+                    "version": "7.1.2",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": (
+                        ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+                    ),
+                },
+                {
+                    "name": "click",
+                    "version": "8.0.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": ">=3.6",
+                    "dependencies": {},
+                },
+                {
+                    "name": "click-didyoumean",
+                    "version": "0.0.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"click": "*"},
+                },
+                {
+                    "name": "click-didyoumean",
+                    "version": "0.3.0",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": ">=3.6.2,<4.0.0",
+                    "dependencies": {"click": ">=7"},
+                },
+                {
+                    "name": "click-plugins",
+                    "version": "1.1.1",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"click": ">=4.0"},
+                },
+            ],
+            "metadata": {
+                "lock-version": "1.1",
+                "python-versions": "^3.6",
+                "content-hash": (
+                    "832b13a88e5020c27cbcd95faa577bf0dbf054a65c023b45dc9442b640d414e6"
+                ),
+                "hashes": {
+                    "celery": [],
+                    "click-didyoumean": [],
+                    "click-plugins": [],
+                    "click": [],
+                },
+            },
+        }
+    )
+    root = poetry.package.with_dependency_groups([], only=True)
+    root.python_versions = "^3.6"
+    root.add_dependency(
+        Factory.create_dependency(
+            name="celery", constraint={"version": "5.1.2", "python": "<3.7"}
+        )
+    )
+    root.add_dependency(
+        Factory.create_dependency(
+            name="celery", constraint={"version": "5.2.3", "python": ">=3.7"}
+        )
+    )
+    poetry._package = root
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
+
+    out, err = capsys.readouterr()
+    expected = """\
+celery==5.1.2 ; python_version >= "3.6" and python_version < "3.7"
+celery==5.2.3 ; python_version >= "3.7" and python_version < "4.0"
+click-didyoumean==0.0.3 ; python_version >= "3.6" and python_version < "3.7"
+click-didyoumean==0.3.0 ; python_version >= "3.7" and python_full_version < "4.0.0"
+click-plugins==1.1.1 ;\
+ python_version >= "3.6" and python_version < "3.7" or\
+ python_version >= "3.7" and python_version < "4.0"
+click==7.1.2 ; python_version >= "3.6" and python_version < "3.7"
+click==8.0.3 ;\
+ python_version >= "3.7" and python_version < "4.0" or\
+ python_version >= "3.7" and python_full_version < "4.0.0"
+"""
+
+    assert out == expected
+
+
+def test_exporter_handles_extras_next_to_non_extras(
+    tmp_dir: str, poetry: Poetry, capsys: CaptureFixture
+):
+    # Testcase similar to the solver testcase added at #5305.
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "localstack",
+                    "python-versions": "*",
+                    "version": "1.0.0",
+                    "category": "main",
+                    "optional": False,
+                    "dependencies": {
+                        "localstack-ext": [
+                            {"version": ">=1.0.0"},
+                            {
+                                "version": ">=1.0.0",
+                                "extras": ["bar"],
+                                "markers": 'extra == "foo"',
+                            },
+                        ]
+                    },
+                    "extras": {"foo": ["localstack-ext (>=1.0.0)"]},
+                },
+                {
+                    "name": "localstack-ext",
+                    "python-versions": "*",
+                    "version": "1.0.0",
+                    "category": "main",
+                    "optional": False,
+                    "dependencies": {
+                        "something": "*",
+                        "something-else": {
+                            "version": ">=1.0.0",
+                            "markers": 'extra == "bar"',
+                        },
+                        "another-thing": {
+                            "version": ">=1.0.0",
+                            "markers": 'extra == "baz"',
+                        },
+                    },
+                    "extras": {
+                        "bar": ["something-else (>=1.0.0)"],
+                        "baz": ["another-thing (>=1.0.0)"],
+                    },
+                },
+                {
+                    "name": "something",
+                    "python-versions": "*",
+                    "version": "1.0.0",
+                    "category": "main",
+                    "optional": False,
+                    "dependencies": {},
+                },
+                {
+                    "name": "something-else",
+                    "python-versions": "*",
+                    "version": "1.0.0",
+                    "category": "main",
+                    "optional": False,
+                    "dependencies": {},
+                },
+                {
+                    "name": "another-thing",
+                    "python-versions": "*",
+                    "version": "1.0.0",
+                    "category": "main",
+                    "optional": False,
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
+                "lock-version": "1.1",
+                "python-versions": "^3.6",
+                "content-hash": (
+                    "832b13a88e5020c27cbcd95faa577bf0dbf054a65c023b45dc9442b640d414e6"
+                ),
+                "hashes": {
+                    "localstack": [],
+                    "localstack-ext": [],
+                    "something": [],
+                    "something-else": [],
+                    "another-thing": [],
+                },
+            },
+        }
+    )
+    root = poetry.package.with_dependency_groups([], only=True)
+    root.python_versions = "^3.6"
+    root.add_dependency(
+        Factory.create_dependency(
+            name="localstack", constraint={"version": "^1.0.0", "extras": ["foo"]}
+        )
+    )
+    poetry._package = root
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
+
+    out, err = capsys.readouterr()
+    expected = """\
+localstack-ext==1.0.0 ; python_version >= "3.6" and python_version < "4.0"
+localstack==1.0.0 ; python_version >= "3.6" and python_version < "4.0"
+something-else==1.0.0 ; python_version >= "3.6" and python_version < "4.0"
+something==1.0.0 ; python_version >= "3.6" and python_version < "4.0"
 """
 
     assert out == expected
