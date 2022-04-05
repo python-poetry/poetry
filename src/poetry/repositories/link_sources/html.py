@@ -46,3 +46,30 @@ class SimpleRepositoryPage(HTMLPage):
         if not url.endswith("/"):
             url += "/"
         super().__init__(url=url, content=content)
+
+
+class SimpleIndexPage:
+    """Describes the root page of a PEP503 compliant repository.
+
+    This contains a list of links, each one corresponding to a served project.
+    """
+
+    def __init__(self, url: str, content: str) -> None:
+        if not url.endswith("/"):
+            url += "/"
+
+        self._url = url
+        self._content = content
+        self._parsed = html5lib.parse(content, namespaceHTMLElements=False)
+        self._cached_packages = set(self.links)
+
+    @property
+    def links(self) -> Iterator[Link]:
+        # Note: PEP426 specifies that comparisons should be
+        # case-insensitive. For simplicity, we'll do lookups using
+        # lowercase-naming, and treating - and _ equivalently.
+        for anchor in self._parsed.findall(".//a"):
+            yield anchor.text.lower().replace("-", "_")
+
+    def serves_package(self, name: str) -> bool:
+        return name.lower().replace("-", "_") in self._cached_packages

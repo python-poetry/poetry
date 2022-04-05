@@ -237,6 +237,20 @@ Note the trailing `/simple/`. This is important when configuring
 
 {{% /note %}}
 
+Repositories following the [PEP503](https://peps.python.org/pep-0503/)
+specification should expose a root page with individual links for each
+package it serves. This isn't reliably implemented everywhere, which
+leads to increased network traffic and slower resolve times. If you're
+using a repository which has a valid listing, you can add the
+`indexed` property to let Poetry prefetch and cache this package list.
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+indexed = true
+```
+
 In addition to [PEP 503](https://peps.python.org/pep-0503/), Poetry can also handle simple API
 repositories that implement [PEP 658](https://peps.python.org/pep-0658/) (*Introduced in 1.2.0*).
 This is helpful in reducing dependency resolution time for packages from these sources as Poetry can

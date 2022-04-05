@@ -9,6 +9,7 @@ from poetry.core.semver.version import Version
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http import HTTPRepository
+from poetry.repositories.link_sources.html import SimpleIndexPage
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 from poetry.utils.helpers import canonicalize_name
 
@@ -27,11 +28,16 @@ class LegacyRepository(HTTPRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
+        indexed: bool = False,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
         super().__init__(name, url.rstrip("/"), config, disable_cache)
+
+        self._index_page = None
+        if indexed:
+            self._index_page = self._get_index_page()
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
@@ -48,6 +54,11 @@ class LegacyRepository(HTTPRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
+            if self._index_page is not None and not self._index_page.serves_package(
+                dependency.name
+            ):
+                return []
+
             page = self._get_page(f"/{dependency.name.replace('.', '-')}/")
             if page is None:
                 return []
@@ -147,3 +158,9 @@ class LegacyRepository(HTTPRepository):
         if not response:
             return None
         return SimpleRepositoryPage(response.url, response.text)
+
+    def _get_index_page(self) -> SimpleIndexPage | None:
+        response = self._get_response("")
+        if not response:
+            return None
+        return SimpleIndexPage(response.url, response.text)

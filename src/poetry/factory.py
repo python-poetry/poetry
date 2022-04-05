@@ -185,6 +185,7 @@ class Factory(BaseFactory):
             raise RuntimeError("Missing [name] in source.")
         name = source["name"]
         url = source["url"]
+        indexed = bool(source.get("indexed", False))
 
         repository_class = LegacyRepository
 
@@ -196,6 +197,7 @@ class Factory(BaseFactory):
             url,
             config=auth_config,
             disable_cache=disable_cache,
+            indexed=indexed,
         )
 
     @classmethod
