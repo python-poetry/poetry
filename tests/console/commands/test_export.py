@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import ANY
 from unittest.mock import Mock
 
 import pytest
 
-from poetry.console.commands.export import Exporter
+from poetry_plugin_export.exporter import Exporter
+
 from tests.helpers import get_package
 
 
@@ -155,15 +155,6 @@ def test_export_with_urls(
     the Exporter test.
     """
     mock_export = Mock()
-    monkeypatch.setattr(Exporter, "export", mock_export)
+    monkeypatch.setattr(Exporter, "with_urls", mock_export)
     tester.execute("--without-urls")
-    mock_export.assert_called_once_with(
-        ANY,
-        ANY,
-        ANY,
-        dev=False,
-        extras=[],
-        with_credentials=False,
-        with_hashes=True,
-        with_urls=False,
-    )
+    mock_export.assert_called_once_with(False)

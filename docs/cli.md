@@ -621,8 +621,13 @@ poetry export -f requirements.txt --output requirements.txt
 ```
 
 {{% note %}}
-Only the `requirements.txt` format is currently supported.
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
+and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+{{% /note %}}
+
+{{% note %}}
+Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `default`
+group defined in `tool.poetry.dependencies` when used without specifying any options.
 {{% /note %}}
 
 ### Options
@@ -631,8 +636,12 @@ This command is also available as a pre-commit hook. See [pre-commit hooks](/doc
   Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
-* `--dev`: Include development dependencies.
+* `--dev`: Include development dependencies. (**Deprecated**)
 * `--extras (-E)`: Extra sets of dependencies to include.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
