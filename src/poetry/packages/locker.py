@@ -32,7 +32,6 @@ from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
     from tomlkit.items import InlineTable
     from tomlkit.toml_document import TOMLDocument
@@ -317,7 +316,7 @@ class Locker:
     def get_project_dependency_packages(
         self,
         project_requires: list[Dependency],
-        project_python_marker: VersionConstraint | None = None,
+        project_python_marker: BaseMarker | None = None,
         dev: bool = False,
         extras: bool | Sequence[str] | None = None,
     ) -> Iterator[DependencyPackage]:
