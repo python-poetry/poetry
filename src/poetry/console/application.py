@@ -53,7 +53,6 @@ COMMANDS = [
     "build",
     "check",
     "config",
-    "export",
     "init",
     "install",
     "lock",
