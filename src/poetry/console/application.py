@@ -16,6 +16,7 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
+from cleo.io.null_io import NullIO
 
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
@@ -306,9 +307,12 @@ class Application(BaseApplication):
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
 
-    def _load_plugins(self, io: IO) -> None:
+    def _load_plugins(self, io: IO = None) -> None:
         if self._plugins_loaded:
             return
+
+        if io is None:
+            io = NullIO()
 
         self._disable_plugins = io.input.has_parameter_option("--no-plugins")
 

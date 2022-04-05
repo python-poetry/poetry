@@ -10,8 +10,10 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from cleo.testers.application_tester import ApplicationTester
+from cleo.testers.command_tester import CommandTester
 
 from poetry.factory import Factory
+from poetry.installation import Installer
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.repositories import Pool
 from poetry.utils.env import MockEnv
@@ -24,10 +26,13 @@ from tests.helpers import mock_clone
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
+    from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.helpers import TestRepository
+    from tests.types import CommandTesterFactory
 
 
 @pytest.fixture()
@@ -117,7 +122,7 @@ def poetry(repo: TestRepository, project_directory: str, config: Config) -> Poet
 @pytest.fixture
 def app(poetry: Poetry) -> PoetryTestApplication:
     app_ = PoetryTestApplication(poetry)
-
+    app_._load_plugins()
     return app_
 
 
@@ -134,3 +139,58 @@ def new_installer_disabled(config: Config) -> None:
 @pytest.fixture()
 def executor(poetry: Poetry, config: Config, env: MockEnv) -> TestExecutor:
     return TestExecutor(env, poetry.pool, config, NullIO())
+
+
+@pytest.fixture
+def command_tester_factory(
+    app: PoetryTestApplication, env: MockEnv
+) -> CommandTesterFactory:
+    def _tester(
+        command: str,
+        poetry: Poetry | None = None,
+        installer: Installer | None = None,
+        executor: Executor | None = None,
+        environment: Env | None = None,
+    ) -> CommandTester:
+        command = app.find(command)
+        tester = CommandTester(command)
+
+        # Setting the formatter from the application
+        # TODO: Find a better way to do this in Cleo
+        app_io = app.create_io()
+        formatter = app_io.output.formatter
+        tester.io.output.set_formatter(formatter)
+        tester.io.error_output.set_formatter(formatter)
+
+        if poetry:
+            app._poetry = poetry
+
+        poetry = app.poetry
+        command._pool = poetry.pool
+
+        if hasattr(command, "set_env"):
+            command.set_env(environment or env)
+
+        if hasattr(command, "set_installer"):
+            installer = installer or Installer(
+                tester.io,
+                env,
+                poetry.package,
+                poetry.locker,
+                poetry.pool,
+                poetry.config,
+                executor=executor
+                or TestExecutor(env, poetry.pool, poetry.config, tester.io),
+            )
+            installer.use_executor(True)
+            command.set_installer(installer)
+
+        return tester
+
+    return _tester
+
+
+@pytest.fixture
+def do_lock(command_tester_factory: CommandTesterFactory, poetry: Poetry) -> None:
+    command_tester_factory("lock").execute()
+    assert poetry.locker.lock.exists()
