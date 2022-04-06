@@ -52,7 +52,7 @@ class PluginShowCommand(Command):
             if issubclass(plugin, ApplicationPlugin):
                 category = "application_plugins"
 
-            package = packages_by_name[canonicalize_name(entry_point.name)]
+            package = packages_by_name[canonicalize_name(entry_point.distro.name)]
             plugins[package.pretty_name]["package"] = package
             plugins[package.pretty_name][category].append(entry_point)
 
