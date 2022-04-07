@@ -436,8 +436,13 @@ You can specify a package in the following forms:
                     if extras:
                         pair["extras"] = extras
 
+                    source_root = (
+                        self.env.path.joinpath("src")
+                        if isinstance(self, EnvCommand) and self.env
+                        else None
+                    )
                     package = Provider.get_package_from_vcs(
-                        "git", url.url, rev=pair.get("rev")
+                        "git", url=url.url, rev=pair.get("rev"), source_root=source_root
                     )
                     pair["name"] = package.name
                     result.append(pair)

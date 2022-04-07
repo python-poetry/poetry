@@ -248,27 +248,19 @@ class PipInstaller(BaseInstaller):
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package
-        from poetry.core.vcs.git import Git
 
-        src_dir = self._env.path / "src" / package.name
-        if src_dir.exists():
-            remove_directory(src_dir, force=True)
+        from poetry.vcs.git import Git
 
-        src_dir.parent.mkdir(exist_ok=True)
-
-        git = Git()
-        git.clone(package.source_url, src_dir)
-
-        reference = package.source_resolved_reference
-        if not reference:
-            reference = package.source_reference
-
-        git.checkout(reference, src_dir)
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
 
         # Now we just need to install from the source directory
         pkg = Package(package.name, package.version)
         pkg._source_type = "directory"
-        pkg._source_url = str(src_dir)
+        pkg._source_url = str(source.path)
         pkg.develop = package.develop
 
         self.install_directory(pkg)

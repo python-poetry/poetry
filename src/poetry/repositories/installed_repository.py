@@ -77,13 +77,10 @@ class InstalledRepository(Repository):
 
     @classmethod
     def get_package_vcs_properties_from_path(cls, src: Path) -> tuple[str, str, str]:
-        from poetry.core.vcs.git import Git
+        from poetry.vcs.git import Git
 
-        git = Git()
-        revision = git.rev_parse("HEAD", src).strip()
-        url = git.remote_url(src)
-
-        return "git", url, revision
+        info = Git.info(repo=src)
+        return "git", info.origin, info.revision
 
     @classmethod
     def is_vcs_package(cls, package: Path | Package, env: Env) -> bool:

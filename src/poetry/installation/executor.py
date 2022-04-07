@@ -576,7 +576,7 @@ class Executor:
         return self.pip_install(req, upgrade=True)
 
     def _install_git(self, operation: Install | Update) -> int:
-        from poetry.core.vcs import Git
+        from poetry.vcs.git import Git
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
@@ -586,24 +586,15 @@ class Executor:
         )
         self._write(operation, message)
 
-        src_dir = self._env.path / "src" / package.name
-        if src_dir.exists():
-            remove_directory(src_dir, force=True)
-
-        src_dir.parent.mkdir(exist_ok=True)
-
-        git = Git()
-        git.clone(package.source_url, src_dir)
-
-        reference = package.source_resolved_reference
-        if not reference:
-            reference = package.source_reference
-
-        git.checkout(reference, src_dir)
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
 
         # Now we just need to install from the source directory
         original_url = package.source_url
-        package._source_url = str(src_dir)
+        package._source_url = str(source.path)
 
         status_code = self._install_directory(operation)
 

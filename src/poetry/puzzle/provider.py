@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 import os
 import re
@@ -10,7 +11,6 @@ import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import mkdtemp
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterable
@@ -20,7 +20,6 @@ from cleo.ui.progress_indicator import ProgressIndicator
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.semver.empty_constraint import EmptyConstraint
 from poetry.core.semver.version import Version
-from poetry.core.vcs.git import Git
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import MarkerUnion
 
@@ -34,7 +33,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import remove_directory
+from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
@@ -61,12 +60,43 @@ class Indicator(ProgressIndicator):
         return f"{elapsed:.1f}s"
 
 
+@functools.lru_cache(maxsize=None)
+def _get_package_from_git(
+    url: str,
+    branch: str | None = None,
+    tag: str | None = None,
+    rev: str | None = None,
+    source_root: Path | None = None,
+) -> Package:
+    source = Git.clone(
+        url=url,
+        source_root=source_root,
+        branch=branch,
+        tag=tag,
+        revision=rev,
+        clean=False,
+    )
+    revision = Git.get_revision(source)
+
+    package = Provider.get_package_from_directory(Path(source.path))
+    package._source_type = "git"
+    package._source_url = url
+    package._source_reference = rev or tag or branch or "HEAD"
+    package._source_resolved_reference = revision
+
+    return package
+
+
 class Provider:
 
     UNSAFE_PACKAGES: set[str] = set()
 
     def __init__(
-        self, package: Package, pool: Pool, io: Any, env: Env | None = None
+        self,
+        package: Package,
+        pool: Pool,
+        io: Any,
+        env: Env | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -78,6 +108,7 @@ class Provider:
         self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
+        self._source_root: Path | None = None
 
     @property
     def pool(self) -> Pool:
@@ -93,6 +124,15 @@ class Provider:
         self._load_deferred = load_deferred
 
     @contextmanager
+    def use_source_root(self, source_root: Path) -> Iterator[Provider]:
+        original_source_root = self._source_root
+        self._source_root = source_root
+
+        yield self
+
+        self._source_root = original_source_root
+
+    @contextmanager
     def use_environment(self, env: Env) -> Iterator[Provider]:
         original_env = self._env
         original_python_constraint = self._python_constraint
@@ -104,6 +144,17 @@ class Provider:
 
         self._env = original_env
         self._python_constraint = original_python_constraint
+
+    @staticmethod
+    def validate_package_for_dependency(
+        dependency: Dependency, package: Package
+    ) -> None:
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                f"The dependency name for {dependency.name} does not match the actual"
+                f" package's name: {package.name}"
+            )
 
     def search_for(
         self,
@@ -161,8 +212,12 @@ class Provider:
             branch=dependency.branch,
             tag=dependency.tag,
             rev=dependency.rev,
-            name=dependency.name,
+            source_root=self._source_root
+            or (self._env.path.joinpath("src") if self._env else None),
         )
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
+
         package.develop = dependency.develop
 
         dependency._constraint = package.version
@@ -176,44 +231,21 @@ class Provider:
 
         return [package]
 
-    @classmethod
+    @staticmethod
     def get_package_from_vcs(
-        cls,
         vcs: str,
         url: str,
         branch: str | None = None,
         tag: str | None = None,
         rev: str | None = None,
-        name: str | None = None,
+        source_root: Path | None = None,
     ) -> Package:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
-        suffix = url.split("/")[-1].rstrip(".git")
-        tmp_dir = Path(mkdtemp(prefix=f"pypoetry-git-{suffix}"))
-
-        try:
-            git = Git()
-            git.clone(url, tmp_dir)
-            reference = branch or tag or rev
-            if reference is not None:
-                git.checkout(reference, tmp_dir)
-            else:
-                reference = "HEAD"
-
-            revision = git.rev_parse(reference, tmp_dir).strip()
-
-            package = cls.get_package_from_directory(tmp_dir, name=name)
-            package._source_type = "git"
-            package._source_url = url
-            package._source_reference = reference
-            package._source_resolved_reference = revision
-        except Exception:
-            raise
-        finally:
-            remove_directory(tmp_dir, force=True)
-
-        return package
+        return _get_package_from_git(
+            url=url, branch=branch, tag=tag, rev=rev, source_root=source_root
+        )
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
         if dependency in self._deferred_cache:
@@ -228,12 +260,7 @@ class Provider:
 
             self._deferred_cache[dependency] = (dependency, package)
 
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual"
-                f" package's name: {package.name}"
-            )
+        self.validate_package_for_dependency(dependency=dependency, package=package)
 
         if dependency.base is not None:
             package.root_dir = dependency.base
@@ -263,14 +290,14 @@ class Provider:
 
             package = _package.clone()
         else:
-            package = self.get_package_from_directory(
-                dependency.full_path, name=dependency.name
-            )
+            package = self.get_package_from_directory(dependency.full_path)
 
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
             self._deferred_cache[dependency] = (dependency, package)
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
 
         package.develop = dependency.develop
 
@@ -280,21 +307,8 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_directory(
-        cls, directory: Path, name: str | None = None
-    ) -> Package:
-        package = PackageInfo.from_directory(path=directory).to_package(
-            root_dir=directory
-        )
-
-        if name and name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {name} does not match the actual package's"
-                f" name: {package.name}"
-            )
-
-        return package
+    def get_package_from_directory(cls, directory: Path) -> Package:
+        return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def search_for_url(self, dependency: URLDependency) -> list[Package]:
         if dependency in self._deferred_cache:
@@ -302,12 +316,7 @@ class Provider:
 
         package = self.get_package_from_url(dependency.url)
 
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual"
-                f" package's name: {package.name}"
-            )
+        self.validate_package_for_dependency(dependency=dependency, package=package)
 
         for extra in dependency.extras:
             if extra in package.extras:

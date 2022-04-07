@@ -199,7 +199,10 @@ class Installer:
             self._io,
         )
 
-        ops = solver.solve(use_latest=[]).calculate_operations()
+        with solver.provider.use_source_root(
+            source_root=self._env.path.joinpath("src")
+        ):
+            ops = solver.solve(use_latest=[]).calculate_operations()
 
         local_repo = Repository()
         self._populate_local_repo(local_repo, ops)
@@ -236,7 +239,10 @@ class Installer:
                 self._io,
             )
 
-            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+            with solver.provider.use_source_root(
+                source_root=self._env.path.joinpath("src")
+            ):
+                ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 

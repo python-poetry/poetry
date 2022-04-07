@@ -85,6 +85,9 @@ jobs:
       - name: Run pytest
         run: poetry run python -m pytest -p no:sugar -q tests/
 
+      - name: Run pytest (integration suite)
+        run: poetry run python -m pytest -p no:sugar -q --integration tests/integration
+
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
         run: |
