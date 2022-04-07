@@ -145,9 +145,7 @@ def test_set_pypi_token(tester: CommandTester, auth_config_source: DictConfigSou
 
 
 def test_set_client_cert(
-    tester: CommandTester,
-    auth_config_source: DictConfigSource,
-    mocker: MockerFixture,
+    tester: CommandTester, auth_config_source: DictConfigSource, mocker: MockerFixture,
 ):
     mocker.spy(ConfigSource, "__init__")
 
@@ -160,9 +158,7 @@ def test_set_client_cert(
 
 
 def test_set_cert(
-    tester: CommandTester,
-    auth_config_source: DictConfigSource,
-    mocker: MockerFixture,
+    tester: CommandTester, auth_config_source: DictConfigSource, mocker: MockerFixture,
 ):
     mocker.spy(ConfigSource, "__init__")
 
@@ -171,12 +167,14 @@ def test_set_cert(
     assert auth_config_source.config["certificates"]["foo"]["cert"] == "path/to/ca.pem"
 
 
-def test_set_trusted(tester, auth_config_source, mocker):
+def test_set_trusted(
+    tester: CommandTester, auth_config_source: DictConfigSource, mocker: MockerFixture
+):
     mocker.spy(ConfigSource, "__init__")
 
     tester.execute("certificates.foo.trusted true")
 
-    assert "true" == auth_config_source.config["certificates"]["foo"]["trusted"]
+    assert auth_config_source.config["certificates"]["foo"]["trusted"] == "true"
 
 
 def test_config_installer_parallel(

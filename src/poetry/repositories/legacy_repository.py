@@ -213,7 +213,7 @@ class LegacyRepository(PyPiRepository):
         return self._client_cert
 
     @property
-    def trusted(self) -> bool:
+    def trusted(self) -> bool | None:
         return self._trusted
 
     @property
@@ -347,8 +347,7 @@ class LegacyRepository(PyPiRepository):
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
             raise PackageNotFound(
-                f'No valid distribution links found for package: "{name}" version:'
-                f' "{version}"'
+                f'No valid distribution links found for package: "{name}" version: "{version}"'
             )
         urls = defaultdict(list)
         files = []
@@ -411,8 +410,7 @@ class LegacyRepository(PyPiRepository):
             response = self.session.get(url)
             if response.status_code in (401, 403):
                 self._log(
-                    f"Authorization error accessing {url}",
-                    level="warning",
+                    f"Authorization error accessing {url}", level="warning",
                 )
                 return None
             if response.status_code == 404:
@@ -422,9 +420,9 @@ class LegacyRepository(PyPiRepository):
             raise RepositoryError(e)
         finally:
             if self._trusted:
-                import urllib3
+                import warnings
 
-                urllib3.warnings.simplefilter(
+                warnings.simplefilter(
                     "default", urllib3.exceptions.InsecureRequestWarning
                 )
 
