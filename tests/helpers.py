@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import urllib.parse
 
@@ -90,19 +91,34 @@ def copy_or_symlink(source: Path, dest: Path) -> None:
         os.symlink(str(source), str(dest))
 
 
-def mock_clone(_: Any, source: str, dest: Path) -> None:
-    # Checking source to determine which folder we need to copy
-    parsed = ParsedUrl.parse(source)
+class MockDulwichRepo:
+    def __init__(self, root: Path | str, **__: Any) -> None:
+        self.path = str(root)
 
-    folder = (
-        Path(__file__).parent
-        / "fixtures"
-        / "git"
-        / parsed.resource
-        / parsed.pathname.lstrip("/").rstrip(".git")
-    )
+    def head(self) -> bytes:
+        return b"9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
+
+def mock_clone(
+    url: str,
+    *_: Any,
+    source_root: Path | None = None,
+    **__: Any,
+) -> MockDulwichRepo:
+    # Checking source to determine which folder we need to copy
+    parsed = ParsedUrl.parse(url)
+    path = re.sub(r"(.git)?$", "", parsed.pathname.lstrip("/"))
+
+    folder = Path(__file__).parent / "fixtures" / "git" / parsed.resource / path
+
+    if not source_root:
+        source_root = Path(Factory.create_config().get("cache-dir")) / "src"
+
+    dest = source_root / path
+    dest.parent.mkdir(parents=True, exist_ok=True)
 
     copy_or_symlink(folder, dest)
+    return MockDulwichRepo(dest)
 
 
 def mock_download(url: str, dest: str, **__: Any) -> None:
