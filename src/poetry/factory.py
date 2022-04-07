@@ -12,6 +12,7 @@ from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CONFIG_DIR
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
+from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
 
@@ -77,7 +78,7 @@ class Factory(BaseFactory):
             poetry, poetry.local_config.get("source", []), config, io
         )
 
-        plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
+        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
         plugin_manager.load_plugins()
         poetry.set_plugin_manager(plugin_manager)
         plugin_manager.activate(poetry, io)

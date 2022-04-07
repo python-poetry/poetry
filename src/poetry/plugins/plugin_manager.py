@@ -18,8 +18,8 @@ class PluginManager:
     This class registers and activates plugins.
     """
 
-    def __init__(self, type: str, disable_plugins: bool = False) -> None:
-        self._type = type
+    def __init__(self, group: str, disable_plugins: bool = False) -> None:
+        self._group = group
         self._disable_plugins = disable_plugins
         self._plugins: list[Plugin] = []
 
@@ -33,7 +33,7 @@ class PluginManager:
             self._load_plugin_entrypoint(entrypoint)
 
     def get_plugin_entry_points(self) -> list[entrypoints.EntryPoint]:
-        return entrypoints.get_group_all(f"poetry.{self._type}")
+        return entrypoints.get_group_all(self._group)
 
     def add_plugin(self, plugin: Plugin) -> None:
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):
