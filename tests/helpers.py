@@ -22,7 +22,6 @@ from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
@@ -68,27 +67,12 @@ def fixture(path: str | None = None) -> Path:
 
 
 def copy_or_symlink(source: Path, dest: Path) -> None:
-    if dest.exists():
-        if dest.is_symlink():
-            os.unlink(str(dest))
-        elif dest.is_dir():
-            shutil.rmtree(str(dest))
-        else:
-            os.unlink(str(dest))
+    if dest.is_symlink() or dest.is_file():
+        dest.unlink()  # missing_ok is only available in Python >= 3.8
+    elif dest.is_dir():
+        shutil.rmtree(dest)
 
-    # Python2 does not support os.symlink on Windows whereas Python3 does.
-    # os.symlink requires either administrative privileges or developer mode on Win10,
-    # throwing an OSError if neither is active.
-    if WINDOWS:
-        try:
-            os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
-        except OSError:
-            if source.is_dir():
-                shutil.copytree(str(source), str(dest))
-            else:
-                shutil.copyfile(str(source), str(dest))
-    else:
-        os.symlink(str(source), str(dest))
+    os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
 
 
 class MockDulwichRepo:
