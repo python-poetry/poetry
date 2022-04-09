@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 def resolve_version(
     root: ProjectPackage,
     provider: Provider,
-    locked: dict[str, DependencyPackage] = None,
+    locked: dict[str, list[DependencyPackage]] = None,
     use_latest: list[str] = None,
 ) -> SolverResult:
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
