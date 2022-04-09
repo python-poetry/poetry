@@ -368,11 +368,7 @@ class VersionSolver:
                 return not dependency.marker.is_any(), 1
 
             locked = self._get_locked(dependency)
-            if locked and (
-                dependency.constraint.allows(locked.version)
-                or locked.is_prerelease()
-                and dependency.constraint.allows(locked.version.next_patch())
-            ):
+            if locked:
                 return not dependency.marker.is_any(), 1
 
             # VCS, URL, File or Directory dependencies
@@ -399,7 +395,7 @@ class VersionSolver:
             dependency = min(*unsatisfied, key=_get_min)
 
         locked = self._get_locked(dependency)
-        if locked is None or not dependency.constraint.allows(locked.version):
+        if locked is None:
             try:
                 packages = self._dependency_cache.search_for(dependency)
             except ValueError as e:
@@ -498,6 +494,13 @@ class VersionSolver:
             return None
 
         if not allow_similar and not dependency.is_same_package_as(locked):
+            return None
+
+        if not (
+            dependency.constraint.allows(locked.version)
+            or locked.is_prerelease()
+            and dependency.constraint.allows(locked.version.next_patch())
+        ):
             return None
 
         return locked
