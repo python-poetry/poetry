@@ -123,10 +123,13 @@ class Solver:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
-        locked = {
-            package.name: DependencyPackage(package.to_dependency(), package)
-            for package in self._locked.packages
-        }
+        locked = defaultdict(list)
+        for package in self._locked.packages:
+            locked[package.name].append(
+                DependencyPackage(package.to_dependency(), package)
+            )
+        for packages in locked.values():
+            packages.sort(key=lambda package: package.version, reverse=True)
 
         try:
             result = resolve_version(
