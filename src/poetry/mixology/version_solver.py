@@ -413,7 +413,7 @@ class VersionSolver:
                 # prefer locked version of compatible (not exact same) dependency;
                 # required in order to not unnecessarily update dependencies with
                 # extras, e.g. "coverage" vs. "coverage[toml]"
-                locked = self._locked.get(dependency.name, None)
+                locked = self._get_locked(dependency, allow_similar=True)
             if locked is not None:
                 package = next(
                     (p for p in packages if p.version == locked.version), None
@@ -487,7 +487,9 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency: Dependency) -> Package | None:
+    def _get_locked(
+        self, dependency: Dependency, *, allow_similar: bool = False
+    ) -> Package | None:
         if dependency.name in self._use_latest:
             return None
 
@@ -495,7 +497,7 @@ class VersionSolver:
         if not locked:
             return None
 
-        if not dependency.is_same_package_as(locked):
+        if not allow_similar and not dependency.is_same_package_as(locked):
             return None
 
         return locked
