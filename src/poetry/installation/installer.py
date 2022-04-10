@@ -190,7 +190,7 @@ class Installer:
             if extra not in self._package.extras:
                 raise ValueError(f"Extra [{extra}] is not specified.")
 
-        locked_repository = self._locker.locked_repository(True)
+        locked_repository = self._locker.locked_repository()
         solver = Solver(
             self._package,
             self._pool,
@@ -214,7 +214,7 @@ class Installer:
         locked_repository = Repository()
         if self._update:
             if self._locker.is_locked() and not self._lock:
-                locked_repository = self._locker.locked_repository(True)
+                locked_repository = self._locker.locked_repository()
 
                 # If no packages have been whitelisted (The ones we want to update),
                 # we whitelist every package in the lock file.
@@ -240,7 +240,7 @@ class Installer:
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
-            locked_repository = self._locker.locked_repository(True)
+            locked_repository = self._locker.locked_repository()
 
             if not self._locker.is_fresh():
                 self._io.write_error_line(

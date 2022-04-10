@@ -75,7 +75,7 @@ lists all packages available."""
             )
             return 1
 
-        locked_repo = self.poetry.locker.locked_repository(True)
+        locked_repo = self.poetry.locker.locked_repository()
         root = self.project_with_activated_groups_only()
 
         # Show tree view if requested

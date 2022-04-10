@@ -86,7 +86,7 @@ class Locker:
 
         return False
 
-    def locked_repository(self, with_dev_reqs: bool = False) -> Repository:
+    def locked_repository(self) -> Repository:
         """
         Searches and returns a repository of locked packages.
         """
@@ -98,13 +98,7 @@ class Locker:
 
         lock_data = self.lock_data
         packages = Repository()
-
-        if with_dev_reqs:
-            locked_packages = lock_data["package"]
-        else:
-            locked_packages = [
-                p for p in lock_data["package"] if p["category"] == "main"
-            ]
+        locked_packages = lock_data["package"]
 
         if not locked_packages:
             return packages
@@ -317,7 +311,6 @@ class Locker:
         self,
         project_requires: list[Dependency],
         project_python_marker: BaseMarker | None = None,
-        dev: bool = False,
         extras: bool | Sequence[str] | None = None,
     ) -> Iterator[DependencyPackage]:
         # Apply the project python marker to all requirements.
@@ -329,7 +322,7 @@ class Locker:
                 marked_requires.append(require)
             project_requires = marked_requires
 
-        repository = self.locked_repository(with_dev_reqs=dev)
+        repository = self.locked_repository()
 
         # Build a set of all packages required by our selected extras
         extra_package_names: set[str] | None = None
