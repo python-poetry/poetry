@@ -69,7 +69,7 @@ class GroupCommand(EnvCommand):
         for opt, new, group in [
             ("default", "only", "default"),
             ("no-dev", "only", "default"),
-            ("dev", "without", "default"),
+            ("dev", "with", "dev"),
             ("dev-only", "without", "default"),
         ]:
             if self.io.input.has_option(opt) and self.option(opt):
