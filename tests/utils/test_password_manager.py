@@ -187,7 +187,7 @@ def test_keyring_raises_errors_on_keyring_errors(
         key_ring.delete_password("foo", "bar")
 
 
-def test_keyring_with_chainer_backend_and_not_compatible_only_should_be_unavailable(
+def test_keyring_with_chainer_backend_and_not_compatible_only_fail_should_be_unavailable(
     with_chained_fail_keyring: None,
 ):
     key_ring = KeyRing("poetry")
