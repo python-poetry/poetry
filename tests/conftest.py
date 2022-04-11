@@ -114,10 +114,30 @@ def with_fail_keyring() -> None:
 
     keyring.set_keyring(Keyring())
 
+@pytest.fixture()
+def with_null_keyring() -> None:
+    import keyring
+
+    from keyring.backends.null import Keyring
+
+    keyring.set_keyring(Keyring())
+
 
 @pytest.fixture()
-def with_chained_keyring(mocker: MockerFixture) -> None:
+def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
+
+    mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
+    import keyring
+
+    from keyring.backends.chainer import ChainerBackend
+
+    keyring.set_keyring(ChainerBackend())
+
+
+@pytest.fixture()
+def with_chained_null_keyring(mocker: MockerFixture) -> None:
+    from keyring.backends.null import Keyring
 
     mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
     import keyring

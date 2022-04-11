@@ -188,7 +188,30 @@ def test_keyring_raises_errors_on_keyring_errors(
 
 
 def test_keyring_with_chainer_backend_and_not_compatible_only_should_be_unavailable(
-    with_chained_keyring: None,
+    with_chained_fail_keyring: None,
+):
+    key_ring = KeyRing("poetry")
+
+    assert not key_ring.is_available()
+
+
+def test_keyring_with_chainer_backend_and_not_compatible_only_null_should_be_unavailable(
+    with_chained_null_keyring: None,
+):
+    key_ring = KeyRing("poetry")
+
+    assert not key_ring.is_available()
+
+
+def test_null_keyring_should_be_unavailable(
+    with_null_keyring: None,
+):
+    key_ring = KeyRing("poetry")
+
+    assert not key_ring.is_available()
+
+def test_fail_keyring_should_be_unavailable(
+    with_fail_keyring: None,
 ):
     key_ring = KeyRing("poetry")
 
