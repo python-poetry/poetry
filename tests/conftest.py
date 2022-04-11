@@ -114,6 +114,7 @@ def with_fail_keyring() -> None:
 
     keyring.set_keyring(Keyring())
 
+
 @pytest.fixture()
 def with_null_keyring() -> None:
     import keyring

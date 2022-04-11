@@ -210,6 +210,7 @@ def test_null_keyring_should_be_unavailable(
 
     assert not key_ring.is_available()
 
+
 def test_fail_keyring_should_be_unavailable(
     with_fail_keyring: None,
 ):
