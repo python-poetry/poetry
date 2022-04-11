@@ -127,7 +127,7 @@ def with_null_keyring() -> None:
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
+    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
@@ -139,7 +139,7 @@ def with_chained_fail_keyring(mocker: MockerFixture) -> None:
 def with_chained_null_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.null import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
+    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
