@@ -1686,6 +1686,64 @@ cachy 0.2.0
     assert tester.io.fetch_output() == expected
 
 
+def test_show_tree_why(tester: CommandTester, poetry: Poetry, installed: Repository):
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    installed.add_package(a)
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+
+    b = get_package("b", "0.0.1")
+    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    installed.add_package(c)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "dependencies": {"b": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "dependencies": {"c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": [], "c": []},
+            },
+        }
+    )
+
+    tester.execute("--tree --why b")
+
+    expected = """\
+a 0.0.1
+└── b =0.0.1
+    └── c =0.0.1
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
 def test_show_required_by_deps(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ):
