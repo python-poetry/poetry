@@ -22,6 +22,17 @@ if TYPE_CHECKING:
     from poetry.repositories.repository import Repository
 
 
+def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
+    required_by = {}
+    for locked in repo.packages:
+        dependencies = {d.name: d.pretty_constraint for d in locked.requires}
+
+        if pkg.name in dependencies:
+            required_by[locked.pretty_name] = dependencies[pkg.name]
+
+    return required_by
+
+
 class ShowCommand(GroupCommand):
 
     name = "show"
@@ -74,9 +85,10 @@ lists all packages available."""
         if self.option("tree"):
             self.init_styles(self.io)
 
-        if self.option("why") and package is None:
+        if self.option("why") and self.option("tree") and package is None:
             self.line_error(
-                "<error>Error: --why requires specifying a package name.</error>"
+                "<error>Error: --why requires a package when combined with"
+                " --tree.</error>"
             )
 
             return 1
@@ -133,12 +145,7 @@ lists all packages available."""
             if not pkg:
                 raise ValueError(f"Package {package} not found")
 
-            required_by = {}
-            for locked in locked_packages:
-                dependencies = {d.name: d.pretty_constraint for d in locked.requires}
-
-                if pkg.name in dependencies:
-                    required_by[locked.pretty_name] = dependencies[pkg.name]
+            required_by = reverse_deps(pkg, locked_repo)
 
             if self.option("tree"):
                 if self.option("why"):
@@ -201,7 +208,7 @@ lists all packages available."""
         show_all = self.option("all")
         terminal = Terminal()
         width = terminal.width
-        name_length = version_length = latest_length = 0
+        name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
@@ -246,6 +253,13 @@ lists all packages available."""
                             )
                         ),
                     )
+
+                    if self.option("why"):
+                        required_by = reverse_deps(locked, locked_repo)
+                        required_by_length = max(
+                            required_by_length,
+                            len("via " + ",".join(required_by.keys())),
+                        )
             else:
                 name_length = max(name_length, current_length)
                 version_length = max(
@@ -257,9 +271,22 @@ lists all packages available."""
                     ),
                 )
 
+                if self.option("why"):
+                    required_by = reverse_deps(locked, locked_repo)
+                    required_by_length = max(
+                        required_by_length, len(" from " + ",".join(required_by.keys()))
+                    )
+
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
-        write_description = name_length + version_length + latest_length + 24 <= width
+        write_why = self.option("why") and (
+            name_length + version_length + latest_length + required_by_length + 3
+            <= width
+        )
+        write_description = (
+            name_length + version_length + latest_length + required_by_length + 24
+            <= width
+        )
 
         for locked in locked_packages:
             color = "cyan"
@@ -311,9 +338,21 @@ lists all packages available."""
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 
+            if write_why:
+                required_by = reverse_deps(locked, locked_repo)
+                if required_by:
+                    content = ",".join(required_by.keys())
+                    # subtract 6 for ' from '
+                    line += f" from {content:{required_by_length - 6}}"
+                else:
+                    line += " " * required_by_length
+
             if write_description:
                 description = locked.description
-                remaining = width - name_length - version_length - 4
+                remaining = (
+                    width - name_length - version_length - required_by_length - 4
+                )
+
                 if show_latest:
                     remaining -= latest_length
 
@@ -323,6 +362,7 @@ lists all packages available."""
                 line += " " + description
 
             self.line(line)
+
         return None
 
     def display_package_tree(
