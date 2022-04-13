@@ -85,13 +85,22 @@ lists all packages available."""
         if self.option("tree"):
             self.init_styles(self.io)
 
-        if self.option("why") and self.option("tree") and package is None:
-            self.line_error(
-                "<error>Error: --why requires a package when combined with"
-                " --tree.</error>"
-            )
+        if self.option("why"):
+            if self.option("tree") and package is None:
+                self.line_error(
+                    "<error>Error: --why requires a package when combined with"
+                    " --tree.</error>"
+                )
 
-            return 1
+                return 1
+
+            if not self.option("tree") and package:
+                self.line_error(
+                    "<error>Error: --why cannot be used when displaying a single"
+                    " package.</error>"
+                )
+
+                return 1
 
         if self.option("outdated"):
             self._io.input.set_option("latest", True)
