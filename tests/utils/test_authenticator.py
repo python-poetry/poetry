@@ -4,6 +4,7 @@ import re
 import uuid
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -306,3 +307,46 @@ def test_authenticator_uses_env_provided_credentials(
     request = http.last_request()
 
     assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
+
+
+@pytest.mark.parametrize(
+    "cert,client_cert",
+    [
+        (None, None),
+        (None, "path/to/provided/client-cert"),
+        ("/path/to/provided/cert", None),
+        ("/path/to/provided/cert", "path/to/provided/client-cert"),
+    ],
+)
+def test_authenticator_uses_certs_from_config_if_not_provided(
+    config: Config,
+    mock_remote: type[httpretty.httpretty],
+    http: type[httpretty.httpretty],
+    mocker: MockerFixture,
+    cert: str | None,
+    client_cert: str | None,
+):
+    configured_cert = "/path/to/cert"
+    configured_client_cert = "/path/to/client-cert"
+    config.merge(
+        {
+            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
+            "certificates": {
+                "foo": {"cert": configured_cert, "client-cert": configured_client_cert}
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    session_send = mocker.patch.object(authenticator.session, "send")
+    authenticator.request(
+        "get",
+        "https://foo.bar/files/foo-0.1.0.tar.gz",
+        verify=cert,
+        cert=client_cert,
+    )
+    kwargs = session_send.call_args[1]
+
+    assert Path(kwargs["verify"]) == Path(cert or configured_cert)
+    assert Path(kwargs["cert"]) == Path(client_cert or configured_client_cert)
