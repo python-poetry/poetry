@@ -29,6 +29,8 @@ readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+fizz = { version = "^1.0", optional = true }
+buzz = { version = "^2.0", optional = true }
 
 [tool.poetry.group.foo.dependencies]
 foo = "^1.0"
@@ -47,6 +49,10 @@ optional = true
 
 [tool.poetry.group.bam.dependencies]
 bam = "^1.4"
+
+[tool.poetry.extras]
+extras_a = [ "fizz" ]
+extras_b = [ "buzz" ]
 """
 
 
@@ -130,3 +136,37 @@ def test_sync_option_is_passed_to_the_installer(
     tester.execute("--sync")
 
     assert tester.command.installer._requires_synchronization
+
+
+def test_no_all_extras_doesnt_populate_installer(
+    tester: CommandTester, mocker: MockerFixture
+):
+    """
+    Not passing --all-extras means the installer doesn't see any extras.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute()
+
+    assert not tester.command.installer._extras
+
+
+def test_all_extras_populates_installer(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --all-extras option results in extras passed to the installer.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--all-extras")
+
+    assert tester.command.installer._extras == ["extras_a", "extras_b"]
+
+
+def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --extras doesn't make sense with --all-extras.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    with pytest.raises(ValueError):
+        tester.execute("--extras foo --all-extras")

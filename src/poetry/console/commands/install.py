@@ -52,6 +52,7 @@ class InstallCommand(InstallerCommand):
             flag=False,
             multiple=True,
         ),
+        option("all-extras", None, "Install all extra dependencies."),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -79,12 +80,20 @@ dependencies and not including the current project, run the command with the
             self.poetry.config.get("experimental.new-installer", False)
         )
 
-        extras = []
-        for extra in self.option("extras"):
-            if " " in extra:
-                extras += [e.strip() for e in extra.split(" ")]
-            else:
-                extras.append(extra)
+        if self.option("extras") and self.option("all-extras"):
+            raise ValueError(
+                "You cannot specify explicit extras while installing all extras"
+            )
+
+        if self.option("all-extras"):
+            extras = list(self.poetry.package.extras.keys())
+        else:
+            extras = []
+            for extra in self.option("extras"):
+                if " " in extra:
+                    extras += [e.strip() for e in extra.split(" ")]
+                else:
+                    extras.append(extra)
 
         self._installer.extras(extras)
 
