@@ -42,6 +42,8 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
+    package_a2 = get_package("A", "2.0.0")
+    package_a2.files = [{"file": "baz", "hash": "345"}]
     package_git = Package(
         "git-package",
         "1.2.3",
@@ -50,14 +52,15 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         source_reference="develop",
         source_resolved_reference="123456",
     )
-    packages = [package_a, get_package("B", "1.2"), package_git]
+    packages = [package_a2, package_a, get_package("B", "1.2"), package_git]
 
     locker.set_lock_data(root, packages)
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """[[package]]
+    expected = """\
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -67,6 +70,14 @@ python-versions = "*"
 
 [package.dependencies]
 B = "^1.0"
+
+[[package]]
+name = "A"
+version = "2.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "B"
@@ -100,6 +111,7 @@ content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831
 A = [
     {file = "bar", hash = "123"},
     {file = "foo", hash = "456"},
+    {file = "baz", hash = "345"},
 ]
 B = []
 git-package = []
