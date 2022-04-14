@@ -104,11 +104,7 @@ list of installed packages
         )
         self._installer.set_locker(self.poetry.locker)
 
-        # Update packages
-        self._installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
-
+        self._installer.set_package(self.poetry.package)
         self._installer.dry_run(self.option("dry-run", False))
         self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
