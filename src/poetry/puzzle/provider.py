@@ -55,6 +55,18 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
+    CONTEXT: str | None = None
+
+    @staticmethod
+    def set_context(context: str | None) -> None:
+        Indicator.CONTEXT = context
+
+    def _formatter_context(self) -> str:
+        if Indicator.CONTEXT is None:
+            return " "
+        else:
+            return f": {Indicator.CONTEXT} "
+
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
 
@@ -802,7 +814,9 @@ class Provider:
             self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(self._io, "{message} <debug>({elapsed:2s})</debug>")
+            indicator = Indicator(
+                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
+            )
 
             with indicator.auto(
                 "<info>Resolving dependencies...</info>",
