@@ -72,10 +72,7 @@ class AddCommand(InstallerCommand, InitCommand):
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
-    help = """\
-The add command adds required packages to your <comment>pyproject.toml</> and installs\
- them.
-
+    examples = """\
 If you do not specify a version constraint, poetry will choose a suitable one based on\
  the available package versions.
 
@@ -91,6 +88,12 @@ You can specify a package in the following forms:
   - A file path (<b>../my-package/my-package.whl</b>)
   - A directory (<b>../my-package/</b>)
   - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
+"""
+    help = f"""\
+The add command adds required packages to your <comment>pyproject.toml</> and installs\
+ them.
+
+{examples}
 """
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]

@@ -6,9 +6,11 @@ import shutil
 import stat
 import tempfile
 
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 from typing import Mapping
 
 
@@ -30,6 +32,16 @@ def canonicalize_name(name: str) -> str:
 
 def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
+
+
+@contextmanager
+def directory(path: Path) -> Iterator[Path]:
+    cwd = Path.cwd()
+    try:
+        os.chdir(path)
+        yield path
+    finally:
+        os.chdir(cwd)
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:
