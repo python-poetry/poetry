@@ -6,7 +6,7 @@ import urllib.parse
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Generator
+from typing import Iterator
 
 import requests
 import requests.auth
@@ -171,7 +171,7 @@ class Authenticator:
             return auth
 
     def _get_credentials_for_netloc(self, netloc: str) -> tuple[str | None, str | None]:
-        for (repository_name, _) in self._get_repository_netlocs():
+        for repository_name, _ in self._get_repository_netlocs():
             auth = self._get_http_auth(repository_name, netloc)
 
             if auth is None:
@@ -181,7 +181,7 @@ class Authenticator:
 
         return None, None
 
-    def get_certs_for_url(self, url: str) -> dict[str, Path]:
+    def get_certs_for_url(self, url: str) -> dict[str, Path | None]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
@@ -191,7 +191,7 @@ class Authenticator:
             self._get_certs_for_netloc_from_config(netloc),
         )
 
-    def _get_repository_netlocs(self) -> Generator[tuple[str, str], None, None]:
+    def _get_repository_netlocs(self) -> Iterator[tuple[str, str]]:
         for repository_name in self._config.get("repositories", []):
             url = self._config.get(f"repositories.{repository_name}.url")
             parsed_url = urllib.parse.urlsplit(url)
@@ -224,10 +224,10 @@ class Authenticator:
 
         return None
 
-    def _get_certs_for_netloc_from_config(self, netloc: str) -> dict[str, Path]:
+    def _get_certs_for_netloc_from_config(self, netloc: str) -> dict[str, Path | None]:
         certs = {"cert": None, "verify": None}
 
-        for (repository_name, repository_netloc) in self._get_repository_netlocs():
+        for repository_name, repository_netloc in self._get_repository_netlocs():
             if netloc == repository_netloc:
                 certs["cert"] = get_client_cert(self._config, repository_name)
                 certs["verify"] = get_cert(self._config, repository_name)
