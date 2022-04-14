@@ -54,7 +54,7 @@ def get_dependency(
         constraint = {"version": constraint}
 
     constraint["optional"] = optional
-    constraint["allow_prereleases"] = allows_prereleases
+    constraint["allow-prereleases"] = allows_prereleases
 
     return Factory.create_dependency(name, constraint or "*", groups=groups)
 
