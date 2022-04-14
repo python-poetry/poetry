@@ -32,7 +32,7 @@ class VersionSelector:
             package_name,
             {
                 "version": target_package_version or "*",
-                "allow_prereleases": allow_prereleases,
+                "allow-prereleases": allow_prereleases,
                 "source": source,
             },
         )
