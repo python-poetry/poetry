@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 
 from typing import TYPE_CHECKING
@@ -22,10 +23,17 @@ from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
 
 
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
+
 if TYPE_CHECKING:
     from pathlib import Path
 
     from cleo.io.io import IO
+    from poetry.core.packages.package import Package
 
     from poetry.repositories.legacy_repository import LegacyRepository
 
@@ -206,23 +214,73 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_pyproject_from_package(cls, package: ProjectPackage, path: Path) -> None:
+    def create_pyproject_from_package(
+        cls, package: Package, path: Path | None = None
+    ) -> TOMLDocument:
         import tomlkit
 
-        from poetry.layouts.layout import POETRY_DEFAULT
+        pyproject: dict[str, Any] = tomlkit.document()
 
-        pyproject: dict[str, Any] = tomlkit.loads(POETRY_DEFAULT)
-        content = pyproject["tool"]["poetry"]
+        tool_table = tomlkit.table()
+        tool_table._is_super_table = True
+        pyproject["tool"] = tool_table
+
+        content: dict[str, Any] = tomlkit.table()
+        pyproject["tool"]["poetry"] = content
 
         content["name"] = package.name
         content["version"] = package.version.text
         content["description"] = package.description
         content["authors"] = package.authors
+        content["license"] = package.license.id if package.license else ""
 
-        dependency_section = content["dependencies"]
+        if package.classifiers:
+            content["classifiers"] = package.classifiers
+
+        for key, attr in {
+            ("documentation", "documentation_url"),
+            ("repository", "repository_url"),
+            ("homepage", "homepage"),
+            ("maintainers", "maintainers"),
+            ("keywords", "keywords"),
+        }:
+            value = getattr(package, attr, None)
+            if value:
+                content[key] = value
+
+        readmes = []
+
+        for readme in package.readmes:
+            readme_posix_path = readme.as_posix()
+
+            with contextlib.suppress(ValueError):
+                if package.root_dir:
+                    readme_posix_path = readme.relative_to(package.root_dir).as_posix()
+
+            readmes.append(readme_posix_path)
+
+        if readmes:
+            content["readme"] = readmes
+
+        optional_dependencies = set()
+        extras_section = None
+
+        if package.extras:
+            extras_section = tomlkit.table()
+
+            for extra in package.extras:
+                _dependencies = []
+                for dependency in package.extras[extra]:
+                    _dependencies.append(dependency.name)
+                    optional_dependencies.add(dependency.name)
+
+                extras_section[extra] = _dependencies
+
+        optional_dependencies = set(optional_dependencies)
+        dependency_section = content["dependencies"] = tomlkit.table()
         dependency_section["python"] = package.python_versions
 
-        for dep in package.requires:
+        for dep in package.all_requires:
             constraint: dict[str, Any] = tomlkit.inline_table()
             if dep.is_vcs():
                 dep = cast(VCSDependency, dep)
@@ -241,12 +299,39 @@ class Factory(BaseFactory):
             if dep.extras:
                 constraint["extras"] = sorted(dep.extras)
 
+            if dep.name in optional_dependencies:
+                constraint["optional"] = True
+
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            dependency_section[dep.name] = constraint
+            for group in dep.groups:
+                if group == MAIN_GROUP:
+                    dependency_section[dep.name] = constraint
+                else:
+                    if "group" not in content:
+                        _table = tomlkit.table()
+                        _table._is_super_table = True
+                        content["group"] = _table
 
-        assert isinstance(pyproject, TOMLDocument)
-        path.joinpath("pyproject.toml").write_text(
-            pyproject.as_string(), encoding="utf-8"
-        )
+                    if group not in content["group"]:
+                        _table = tomlkit.table()
+                        _table._is_super_table = True
+                        content["group"][group] = _table
+
+                    if "dependencies" not in content["group"][group]:
+                        content["group"][group]["dependencies"] = tomlkit.table()
+
+                    content["group"][group]["dependencies"][dep.name] = constraint
+
+        if extras_section:
+            content["extras"] = extras_section
+
+        pyproject.add(tomlkit.nl())  # type: ignore[attr-defined]
+
+        if path:
+            path.joinpath("pyproject.toml").write_text(
+                pyproject.as_string(), encoding="utf-8"  # type: ignore[attr-defined]
+            )
+
+        return cast(TOMLDocument, pyproject)
