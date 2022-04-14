@@ -61,6 +61,16 @@ class GroupCommand(EnvCommand):
         }
 
     @property
+    def default_group(self) -> str | None:
+        """
+        The default group to use when no group is specified. This is useful
+        for command that have the `--group` option, eg: add, remove.
+
+        Can be overridden to adapt behavior.
+        """
+        return None
+
+    @property
     def default_groups(self) -> set[str]:
         """
         The groups that are considered by the command by default.
