@@ -48,7 +48,7 @@ list of installed packages
             )
             group = "dev"
         else:
-            group = self.option("group")
+            group = self.option("group", self.default_group)
 
         content = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
@@ -106,7 +106,7 @@ list of installed packages
             self.poetry.config.get("experimental.new-installer", False)
         )
 
-        self._installer.dry_run(self.option("dry-run"))
+        self._installer.dry_run(self.option("dry-run", False))
         self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
         self._installer.whitelist(removed_set)

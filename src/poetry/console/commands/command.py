@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from cleo.commands.command import Command as BaseCommand
+from cleo.exceptions import ValueException
 
 
 if TYPE_CHECKING:
@@ -30,3 +32,9 @@ class Command(BaseCommand):
 
     def reset_poetry(self) -> None:
         self.get_application().reset_poetry()
+
+    def option(self, name: str, default: Any = None) -> Any:
+        try:
+            return super().option(name)
+        except ValueException:
+            return default

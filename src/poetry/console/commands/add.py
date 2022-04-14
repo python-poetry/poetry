@@ -107,7 +107,7 @@ You can specify a package in the following forms:
             )
             group = "dev"
         else:
-            group = self.option("group")
+            group = self.option("group", self.default_group or MAIN_GROUP)
 
         if self.option("extras") and len(packages) > 1:
             raise ValueError(
