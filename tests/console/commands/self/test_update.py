@@ -10,46 +10,15 @@ from poetry.core.semver.version import Version
 
 from poetry.__version__ import __version__
 from poetry.factory import Factory
-from poetry.repositories.repository import Repository
-from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
-    import httpretty
-
     from cleo.testers.command_tester import CommandTester
-    from pytest_mock import MockerFixture
 
-    from poetry.utils.env import VirtualEnv
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
 
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
-
-
-@pytest.fixture
-def installed_repository() -> Repository:
-    return Repository()
-
-
-@pytest.fixture(autouse=True)
-def save_environ(environ: None) -> Repository:
-    yield
-
-
-@pytest.fixture(autouse=True)
-def setup_mocks(
-    mocker: MockerFixture,
-    tmp_venv: VirtualEnv,
-    installed_repository: Repository,
-    http: type[httpretty.httpretty],
-):
-    mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
-    mocker.patch("poetry.installation.executor.pip_install")
-    mocker.patch(
-        "poetry.installation.installer.Installer._get_installed",
-        return_value=installed_repository,
-    )
 
 
 @pytest.fixture()
@@ -60,7 +29,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def test_self_update_can_update_from_recommended_installation(
     tester: CommandTester,
     repo: TestRepository,
-    installed_repository: TestRepository,
+    installed: TestRepository,
 ):
     new_version = Version.parse(__version__).next_minor().text
 
@@ -70,8 +39,8 @@ def test_self_update_can_update_from_recommended_installation(
     new_poetry = Package("poetry", new_version)
     new_poetry.add_dependency(Factory.create_dependency("cleo", "^1.0.0"))
 
-    installed_repository.add_package(old_poetry)
-    installed_repository.add_package(Package("cleo", "0.8.2"))
+    installed.add_package(old_poetry)
+    installed.add_package(Package("cleo", "0.8.2"))
 
     repo.add_package(new_poetry)
     repo.add_package(Package("cleo", "1.0.0"))
