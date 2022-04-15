@@ -81,12 +81,17 @@ list of installed packages
             if not poetry_content["dev-dependencies"]:
                 del poetry_content["dev-dependencies"]
         else:
-            removed = self._remove_packages(
-                packages, poetry_content["group"][group].get("dependencies", {}), group
-            )
+            removed = []
+            if "group" in poetry_content:
+                if group in poetry_content["group"]:
+                    removed = self._remove_packages(
+                        packages,
+                        poetry_content["group"][group].get("dependencies", {}),
+                        group,
+                    )
 
-            if not poetry_content["group"][group]:
-                del poetry_content["group"][group]
+                if not poetry_content["group"][group]:
+                    del poetry_content["group"][group]
 
         if "group" in poetry_content and not poetry_content["group"]:
             del poetry_content["group"]
