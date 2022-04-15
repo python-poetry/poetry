@@ -19,6 +19,7 @@ from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory
+from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import WINDOWS
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
@@ -196,10 +197,12 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -331,10 +334,12 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.6",
         executable="/usr/bin/python3.6",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
     assert envs_file.exists()
@@ -392,10 +397,12 @@ def test_activate_activates_recreates_for_different_patch(
     build_venv_m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / f"{venv_name}-py3.7")
 
@@ -827,10 +834,12 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
         executable="python3",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
 
@@ -858,10 +867,12 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.9",
         executable="python3.9",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
 
@@ -948,10 +959,12 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
         executable=None,
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
 
@@ -987,10 +1000,12 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor - 1}",
         executable=f"python{version.major}.{version.minor - 1}",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
 
@@ -1055,10 +1070,12 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     m.assert_called_with(
         poetry.file.parent / ".venv",
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
@@ -1104,6 +1121,36 @@ def test_env_system_packages(tmp_path: Path, poetry: Poetry):
     EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
 
     assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
+
+
+@pytest.mark.parametrize(
+    ("flags", "packages"),
+    [
+        ({"no-pip": False}, {"pip", "wheel"}),
+        ({"no-pip": False, "no-wheel": True}, {"pip"}),
+        ({"no-pip": True}, set()),
+        ({"no-setuptools": False}, {"setuptools"}),
+        ({"no-setuptools": True}, set()),
+        ({"no-pip": True, "no-setuptools": False}, {"setuptools"}),
+        ({"no-wheel": False}, {"wheel"}),
+        ({}, set()),
+    ],
+)
+def test_env_no_pip(
+    tmp_path: Path, poetry: Poetry, flags: dict[str, bool], packages: set[str]
+):
+    venv_path = tmp_path / "venv"
+    EnvManager(poetry).build_venv(path=venv_path, flags=flags)
+    env = VirtualEnv(venv_path)
+    installed_repository = InstalledRepository.load(env=env, with_dependencies=True)
+    installed_packages = {
+        package.name
+        for package in installed_repository.packages
+        # workaround for BSD test environments
+        if package.name != "sqlite3"
+    }
+
+    assert installed_packages == packages
 
 
 def test_env_finds_the_correct_executables(tmp_dir: str, manager: EnvManager):
@@ -1256,10 +1303,12 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.5",
         executable="python3.5",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
     )
 
 

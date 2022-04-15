@@ -465,7 +465,7 @@ class PackageInfo:
             pass
 
         with ephemeral_environment(
-            with_pip=True, with_wheel=True, with_setuptools=True
+            flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
         ) as venv:
             # TODO: cache PEP 517 build environment corresponding to each project venv
             dest_dir = venv.path.parent / "dist"
