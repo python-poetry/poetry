@@ -159,7 +159,7 @@ class VersionSolver:
                     changed.add(str(self._propagate_incompatibility(root_cause)))
                     break
                 elif result is not None:
-                    changed.add(result)
+                    changed.add(str(result))
 
     def _propagate_incompatibility(
         self, incompatibility: Incompatibility
@@ -290,6 +290,9 @@ class VersionSolver:
             # than a derivation), then incompatibility is the root cause. We then
             # backjump to previous_satisfier_level, where incompatibility is
             # guaranteed to allow _propagate to produce more assignments.
+
+            # using assert to suppress mypy [union-attr]
+            assert most_recent_satisfier is not None
             if (
                 previous_satisfier_level < most_recent_satisfier.decision_level
                 or most_recent_satisfier.cause is None

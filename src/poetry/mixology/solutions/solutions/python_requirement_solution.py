@@ -6,18 +6,19 @@ from crashtest.contracts.solution import Solution
 
 
 if TYPE_CHECKING:
-    from poetry.mixology.incompatibility_cause import PackageNotFoundCause
+    from poetry.mixology.failure import SolveFailure
+    from poetry.puzzle.exceptions import SolverProblemError
 
 
 class PythonRequirementSolution(Solution):
-    def __init__(self, exception: PackageNotFoundCause) -> None:
+    def __init__(self, exception: SolverProblemError) -> None:
         from poetry.core.semver.helpers import parse_constraint
 
         from poetry.mixology.incompatibility_cause import PythonCause
 
         self._title = "Check your dependencies Python requirement."
 
-        failure = exception.error
+        failure: SolveFailure = exception.error
         version_solutions = []
         for incompatibility in failure._incompatibility.external_incompatibilities:
             if isinstance(incompatibility.cause, PythonCause):
