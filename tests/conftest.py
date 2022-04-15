@@ -190,13 +190,15 @@ def config(
     return c
 
 
+@pytest.fixture()
+def config_dir(tmp_dir: str) -> str:
+    return tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir)
+
+
 @pytest.fixture(autouse=True)
-def mock_user_config_dir(mocker: MockerFixture) -> Iterator[None]:
-    config_dir = tempfile.mkdtemp(prefix="poetry_config_")
+def mock_user_config_dir(mocker: MockerFixture, config_dir: str) -> None:
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
     mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
-    yield
-    shutil.rmtree(config_dir, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)
