@@ -88,6 +88,7 @@ COMMANDS = [
     "self remove",
     "self update",
     "self show",
+    "self show plugins",
     # Source commands
     "source add",
     "source remove",
