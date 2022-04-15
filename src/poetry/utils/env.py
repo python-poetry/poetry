@@ -990,12 +990,6 @@ class EnvManager:
                 venv,
                 executable=executable,
                 flags=self._poetry.config.get("virtualenvs.options"),
-                # TODO: in a future version switch remove pip/setuptools/wheel
-                # poetry does not need them these exists today to not break developer
-                # environment assumptions
-                with_pip=True,
-                with_setuptools=True,
-                with_wheel=True,
             )
 
         # venv detection:
@@ -1833,9 +1827,6 @@ class NullEnv(SystemEnv):
 def ephemeral_environment(
     executable: str | Path | None = None,
     flags: dict[str, bool] = None,
-    with_pip: bool = False,
-    with_wheel: bool | None = None,
-    with_setuptools: bool | None = None,
 ) -> ContextManager[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
@@ -1844,9 +1835,6 @@ def ephemeral_environment(
             path=venv_dir.as_posix(),
             executable=executable,
             flags=flags,
-            with_pip=with_pip,
-            with_wheel=with_wheel,
-            with_setuptools=with_setuptools,
         )
         yield VirtualEnv(venv_dir, venv_dir)
 

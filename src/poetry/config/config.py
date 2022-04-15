@@ -37,7 +37,16 @@ class Config:
             "create": True,
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
-            "options": {"always-copy": False, "system-site-packages": False},
+            "options": {
+                "always-copy": False,
+                "system-site-packages": False,
+                # we default to False here in order to prevent development environment
+                # breakages for IDEs etc. as when working in these environments
+                # assumptions are often made about virtual environments having pip and
+                # setuptools.
+                "no-pip": False,
+                "no-setuptools": False,
+            },
             "prefer-active-python": False,
         },
         "experimental": {"new-installer": True, "system-git-client": False},
