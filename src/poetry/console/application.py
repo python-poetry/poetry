@@ -87,6 +87,7 @@ COMMANDS = [
     "self install",
     "self remove",
     "self update",
+    "self show",
     # Source commands
     "source add",
     "source remove",
