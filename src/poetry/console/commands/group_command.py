@@ -85,7 +85,7 @@ class GroupCommand(EnvCommand):
         for key in {"with", "without", "only"}:
             groups[key] = {
                 group.strip()
-                for groups in self.option(key)
+                for groups in self.option(key, "")
                 for group in groups.split(",")
             }
 
