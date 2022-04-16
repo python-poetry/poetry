@@ -855,7 +855,7 @@ Package operations: 3 installs, 0 updates, 0 removals
 
     expected_set = set(expected_output.splitlines())
     output_set = set(tester.io.fetch_output().splitlines())
-    assert expected_set == output_set
+    assert output_set == expected_set
     assert tester.command.installer.executor.installations_count == 3
 
     expected_content = (
@@ -874,7 +874,7 @@ Package operations: 3 installs, 0 updates, 0 removals
             app.poetry.file.read()["tool"]["poetry"]["group"][group]["dependencies"]
         )
 
-    assert expected_content == poetry_content
+    assert poetry_content == expected_content
 
 
 def test_add_constraint_with_source(
