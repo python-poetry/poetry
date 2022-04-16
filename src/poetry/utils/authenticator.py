@@ -158,7 +158,7 @@ class Authenticator:
         parsed_repository_url = urllib.parse.urlsplit(repository_url)
         parsed_package_url = urllib.parse.urlsplit(url)
 
-        if parsed_package_url is None or (
+        if url is None or (
             parsed_repository_url.netloc == parsed_package_url.netloc
             and parsed_repository_url.path in parsed_package_url.path
         ):
