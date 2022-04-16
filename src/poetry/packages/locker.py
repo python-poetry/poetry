@@ -46,7 +46,8 @@ class Locker:
 
     _VERSION = "1.1"
 
-    _relevant_keys = ["dependencies", "group", "source", "extras"]
+    _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
+    _relevant_keys = [*_legacy_keys, "group"]
 
     def __init__(self, lock: str | Path, local_config: dict) -> None:
         self._lock = TOMLFile(lock)
@@ -428,13 +429,14 @@ class Locker:
 
         relevant_content = {}
         for key in self._relevant_keys:
-            relevant_content[key] = content.get(key)
+            data = content.get(key)
 
-        content_hash = sha256(
-            json.dumps(relevant_content, sort_keys=True).encode()
-        ).hexdigest()
+            if data is None and key not in self._legacy_keys:
+                continue
 
-        return content_hash
+            relevant_content[key] = data
+
+        return sha256(json.dumps(relevant_content, sort_keys=True).encode()).hexdigest()
 
     def _get_lock_data(self) -> TOMLDocument:
         if not self._lock.exists():
