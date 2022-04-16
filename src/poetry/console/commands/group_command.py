@@ -18,6 +18,11 @@ class GroupCommand(EnvCommand):
     def _group_dependency_options() -> list[Option]:
         return [
             option(
+                "all-groups",
+                None,
+                "Include all dependency groups.",
+            ),
+            option(
                 "without",
                 None,
                 "The dependency groups to ignore.",
@@ -57,6 +62,9 @@ class GroupCommand(EnvCommand):
 
     @property
     def activated_groups(self) -> set[str]:
+        if self.option("all-groups"):
+            return self.poetry.package._dependency_groups
+
         groups = {}
 
         for key in {"with", "without", "only"}:

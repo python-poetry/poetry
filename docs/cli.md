@@ -163,6 +163,13 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
+You may also enable all available dependency groups with the `--all-groups`
+option:
+
+```bash
+poetry install --all-groups
+```
+
 {{% note %}}
 The `--dev-only` option is now deprecated. You should use the `--only dev` notation instead.
 {{% /note %}}

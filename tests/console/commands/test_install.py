@@ -66,6 +66,7 @@ def tester(
     ("options", "groups"),
     [
         ("", {"default", "foo", "bar", "baz", "bim"}),
+        ("--all-groups", {"default", "foo", "bar", "baz", "bim", "bam"}),
         ("--only default", {"default"}),
         ("--only foo", {"foo"}),
         ("--only foo,bar", {"foo", "bar"}),
