@@ -175,7 +175,7 @@ Defaults to `false`.
 
 **Type**: boolean
 
-Sort dependencies alphabetically when adding.
+Sort dependencies in `pyproject.toml` alphabetically when adding.
 
 Defaults to `false`.
 
