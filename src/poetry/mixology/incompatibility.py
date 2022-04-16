@@ -125,18 +125,16 @@ class Incompatibility:
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
 
-            python_cause = self._cause
             text = f"{self._terse(self._terms[0], allow_every=True)} requires "
-            text += f"Python {python_cause.python_version}"
+            text += f"Python {self._cause.python_version}"
 
             return text
         elif isinstance(self._cause, PlatformCause):
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
 
-            platform_cause = self._cause
             text = f"{self._terse(self._terms[0], allow_every=True)} requires "
-            text += f"platform {platform_cause.platform}"
+            text += f"platform {self._cause.platform}"
 
             return text
         elif isinstance(self._cause, NoVersionsCause):
