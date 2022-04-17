@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from collections import OrderedDict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -11,6 +12,7 @@ from typing import Union
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from tomlkit import document
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
@@ -54,6 +56,13 @@ class InitCommand(Command):
             flag=False,
             multiple=True,
         ),
+        option(
+            "sort-dependencies",
+            None,
+            "Sort dependencies in pyproject.toml alphabetically.",
+            flag=True,
+            value_required=False,
+        ),
         option("license", "l", "License of the package.", flag=False),
     ]
 
@@ -71,6 +80,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from pathlib import Path
 
         from poetry.core.pyproject.toml import PyProjectTOML
+        from poetry.core.toml.file import TOMLFile
         from poetry.core.vcs.git import GitConfig
 
         from poetry.layouts import layout
@@ -207,6 +217,20 @@ You can specify a package in the following forms:
             )
             if self.io.is_interactive():
                 self.line("")
+
+        sort_dependencies = self.option("sort-dependencies")
+        question = "Would you like to sort your dependencies alphabetically?"
+        if self.confirm(question, True):
+            sort_dependencies = True
+            if self.io.is_interactive():
+                self.line("")
+        if sort_dependencies is True:
+            requirements = OrderedDict(sorted(requirements.items()))
+            dev_requirements = OrderedDict(sorted(dev_requirements.items()))
+            local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
+            local_config_file_contents = document()
+            local_config_file_contents.update({"dependencies": {"sort": True}})
+            local_config_file.write(local_config_file_contents)
 
         layout_ = layout("standard")(
             name,
