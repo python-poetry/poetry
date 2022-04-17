@@ -20,6 +20,12 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
@@ -383,10 +389,10 @@ def _configure_run_install_dev(
         ([], 0, 0, 3, True),
         (["dev"], 1, 0, 0, False),
         (["dev"], 0, 0, 2, True),
-        (["default"], 2, 0, 0, False),
-        (["default"], 0, 0, 1, True),
-        (["default", "dev"], 3, 0, 0, False),
-        (["default", "dev"], 0, 0, 0, True),
+        ([MAIN_GROUP], 2, 0, 0, False),
+        ([MAIN_GROUP], 0, 0, 1, True),
+        ([MAIN_GROUP, "dev"], 3, 0, 0, False),
+        ([MAIN_GROUP, "dev"], 0, 0, 0, True),
     ],
 )
 def test_run_install_with_dependency_groups(

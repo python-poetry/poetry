@@ -14,6 +14,12 @@ from typing import Iterator
 from typing import Sequence
 
 from poetry.core.packages.dependency import Dependency
+
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
 from poetry.core.packages.package import Package
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
@@ -121,7 +127,7 @@ class Locker:
             )
             package.description = info.get("description", "")
             package.category = info.get("category", "main")
-            package.groups = info.get("groups", ["default"])
+            package.groups = info.get("groups", [MAIN_GROUP])
             package.optional = info["optional"]
             if "hashes" in lock_data["metadata"]:
                 # Old lock so we create dummy files from the hashes

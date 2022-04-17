@@ -7,6 +7,12 @@ from typing import cast
 from cleo.helpers import argument
 from cleo.helpers import option
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
 
@@ -23,7 +29,7 @@ class AddCommand(InstallerCommand, InitCommand):
             "-G",
             "The group to add the dependency to.",
             flag=False,
-            default="default",
+            default=MAIN_GROUP,
         ),
         option("dev", "D", "Add as a development dependency."),
         option("editable", "e", "Add vcs/path dependencies as editable."),
@@ -111,7 +117,7 @@ You can specify a package in the following forms:
         content = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
-        if group == "default":
+        if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
                 poetry_content["dependencies"] = table()
 

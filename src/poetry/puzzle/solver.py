@@ -10,6 +10,12 @@ from typing import FrozenSet
 from typing import Iterator
 from typing import Tuple
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -270,7 +276,7 @@ class PackageNode(DFSNode):
             self.groups: frozenset[str] = frozenset()
             self.optional = True
         elif dep:
-            self.category = "main" if "default" in dep.groups else "dev"
+            self.category = "main" if MAIN_GROUP in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
         else:
@@ -348,7 +354,7 @@ def aggregate_package_nodes(nodes: list[PackageNode]) -> tuple[Package, int]:
     for node in nodes:
         groups.extend(node.groups)
 
-    category = "main" if any("default" in node.groups for node in nodes) else "dev"
+    category = "main" if any(MAIN_GROUP in node.groups for node in nodes) else "dev"
     optional = all(node.optional for node in nodes)
     for node in nodes:
         node.depth = depth

@@ -218,7 +218,7 @@ option is used.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -258,7 +258,7 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**)
 * `--lock` : Do not perform install (only update the lockfile).
@@ -439,7 +439,7 @@ required by
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
@@ -626,7 +626,7 @@ and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-com
 {{% /note %}}
 
 {{% note %}}
-Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `default`
+Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `main`
 group defined in `tool.poetry.dependencies` when used without specifying any options.
 {{% /note %}}
 
@@ -641,7 +641,7 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.

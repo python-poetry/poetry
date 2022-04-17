@@ -5,6 +5,12 @@ from typing import Any
 from cleo.helpers import argument
 from cleo.helpers import option
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.console.commands.installer_command import InstallerCommand
 
 
@@ -55,10 +61,10 @@ list of installed packages
             ]
 
             for group_name, section in [
-                ("default", poetry_content["dependencies"])
+                (MAIN_GROUP, poetry_content["dependencies"])
             ] + group_sections:
                 removed += self._remove_packages(packages, section, group_name)
-                if group_name != "default":
+                if group_name != MAIN_GROUP:
                     if not section:
                         del poetry_content["group"][group_name]
                     else:

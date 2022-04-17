@@ -6,6 +6,12 @@ import pytest
 
 from poetry.core.packages.dependency_group import DependencyGroup
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -197,13 +203,13 @@ cachy 0.1.0 Cachy package
 """,
         ),
         (
-            "--without default",
+            f"--without {MAIN_GROUP}",
             """\
 pytest 3.7.3 Pytest package
 """,
         ),
         (
-            "--only default",
+            f"--only {MAIN_GROUP}",
             """\
 cachy 0.1.0 Cachy package
 """,
@@ -228,7 +234,7 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            "--with time --without default,test",
+            f"--with time --without {MAIN_GROUP},test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
