@@ -61,6 +61,15 @@ class GroupCommand(EnvCommand):
         }
 
     @property
+    def default_groups(self) -> set[str]:
+        """
+        The groups that are considered by the command by default.
+
+        Can be overridden to adapt behavior.
+        """
+        return self.non_optional_groups
+
+    @property
     def activated_groups(self) -> set[str]:
         groups = {}
 
@@ -93,9 +102,9 @@ class GroupCommand(EnvCommand):
                 "</warning>"
             )
 
-        return groups["only"] or self.non_optional_groups.union(
-            groups["with"]
-        ).difference(groups["without"])
+        return groups["only"] or self.default_groups.union(groups["with"]).difference(
+            groups["without"]
+        )
 
     def project_with_activated_groups_only(self) -> ProjectPackage:
         return self.poetry.package.with_dependency_groups(
