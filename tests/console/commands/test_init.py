@@ -69,7 +69,6 @@ def init_basic_inputs() -> str:
             "~2.7 || ^3.6",  # Python
             "n",  # Interactive packages
             "n",  # Interactive dev packages
-            "n",  # Sort dependencies
             "\n",  # Generate
         ]
     )
@@ -128,13 +127,28 @@ def test_noninteractive(
 
 
 def test_noninteractive_with_sort(
-    repo: TestRepository, tester: CommandTester, tmp_path: Path
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
 ):
+    mocker.patch.dict(os.environ, clear=True)
+    os.environ["POETRY_DEPENDENCIES_SORT"] = "true"
+
+    command = app.find("init")
+    command._pool = poetry.pool
+
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("flask", "2.0.0"))
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
 
     args = (
         "--name my-package "
@@ -146,7 +160,6 @@ def test_noninteractive_with_sort(
         "--dependency flask "
         "--dev-dependency pytest-requests "
         "--dev-dependency pytest "
-        "--sort-dependencies "
         "--license MIT"
     )
     tester.execute(args=args, interactive=False)
@@ -187,13 +200,6 @@ build-backend = "poetry.core.masonry.api"
     pyproject_content = (tmp_path / "pyproject.toml").read_text()
     assert pyproject_content == expected_pyproject_content
 
-    expected_config_content = """\
-[dependencies]
-sort = true
-"""
-    config_content = (tmp_path / "poetry.toml").read_text()
-    assert config_content == expected_config_content
-
 
 def test_interactive_with_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
@@ -221,7 +227,6 @@ def test_interactive_with_dependencies(tester: CommandTester, repo: TestReposito
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -293,8 +298,11 @@ python = "~2.7 || ^3.6"
 
 
 def test_interactive_with_dependencies_and_sort(
-    repo: TestRepository, tester: CommandTester, tmp_path: Path
+    mocker: MockerFixture, repo: TestRepository, tester: CommandTester
 ):
+    mocker.patch.dict(os.environ, clear=True)
+    os.environ["POETRY_DEPENDENCIES_SORT"] = "true"
+
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
@@ -327,12 +335,11 @@ def test_interactive_with_dependencies_and_sort(
         "0",
         "",
         "",
-        "y",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
 
-    expected_pyproject_content = """\
+    expected = """\
 [tool.poetry]
 name = "my-package"
 version = "1.2.3"
@@ -356,17 +363,7 @@ pytest-requests = "^0.2.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 """
-    output = tester.io.fetch_output()
-    assert expected_pyproject_content in output
-    pyproject_content = (tmp_path / "pyproject.toml").read_text()
-    assert pyproject_content == expected_pyproject_content
-
-    expected_config_content = """\
-[dependencies]
-sort = true
-"""
-    config_content = (tmp_path / "poetry.toml").read_text()
-    assert config_content == expected_config_content
+    assert expected in tester.io.fetch_output()
 
 
 def test_empty_license(tester: CommandTester):
@@ -379,7 +376,6 @@ def test_empty_license(tester: CommandTester):
         "",  # Python
         "n",  # Interactive packages
         "n",  # Interactive dev packages
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -419,7 +415,6 @@ def test_interactive_with_git_dependencies(tester: CommandTester, repo: TestRepo
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -511,7 +506,6 @@ def test_interactive_with_git_dependencies_with_reference(
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -558,7 +552,6 @@ def test_interactive_with_git_dependencies_and_other_name(
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -611,7 +604,6 @@ def test_interactive_with_directory_dependency(
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -663,7 +655,6 @@ def test_interactive_with_directory_dependency_and_other_name(
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -716,7 +707,6 @@ def test_interactive_with_file_dependency(
         "0",
         "",
         "",
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
@@ -801,7 +791,6 @@ def test_python_option(tester: CommandTester):
         "MIT",  # License
         "n",  # Interactive packages
         "n",  # Interactive dev packages
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute("--python '~2.7 || ^3.6'", inputs="\n".join(inputs))
@@ -835,7 +824,6 @@ def test_predefined_dependency(tester: CommandTester, repo: TestRepository):
         "~2.7 || ^3.6",  # Python
         "n",  # Interactive packages
         "n",  # Interactive dev packages
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
     tester.execute("--dependency pendulum", inputs="\n".join(inputs))
@@ -877,7 +865,6 @@ def test_predefined_and_interactive_dependencies(
         "",  # Do not set constraint
         "",  # Stop searching for packages
         "n",  # Interactive dev packages
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
 
@@ -914,7 +901,6 @@ def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository):
         "~2.7 || ^3.6",  # Python
         "n",  # Interactive packages
         "n",  # Interactive dev packages
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
 
@@ -959,7 +945,6 @@ def test_predefined_and_interactive_dev_dependencies(
         "0",  # Select first option
         "",  # Do not set constraint
         "",  # Stop searching for dev packages
-        "n",  # Sort dependencies
         "\n",  # Generate
     ]
 

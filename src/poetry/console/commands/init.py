@@ -12,7 +12,6 @@ from typing import Union
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
-from tomlkit import document
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
@@ -56,13 +55,6 @@ class InitCommand(Command):
             flag=False,
             multiple=True,
         ),
-        option(
-            "sort-dependencies",
-            None,
-            "Sort dependencies in pyproject.toml alphabetically.",
-            flag=True,
-            value_required=False,
-        ),
         option("license", "l", "License of the package.", flag=False),
     ]
 
@@ -80,9 +72,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from pathlib import Path
 
         from poetry.core.pyproject.toml import PyProjectTOML
-        from poetry.core.toml.file import TOMLFile
         from poetry.core.vcs.git import GitConfig
 
+        from poetry.config.config import Config
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
@@ -103,6 +95,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 )
                 return 1
 
+        config = Config()
         vcs_config = GitConfig()
 
         if self.io.is_interactive():
@@ -218,19 +211,9 @@ You can specify a package in the following forms:
             if self.io.is_interactive():
                 self.line("")
 
-        sort_dependencies = self.option("sort-dependencies")
-        question = "Would you like to sort your dependencies alphabetically?"
-        if self.confirm(question, True):
-            sort_dependencies = True
-            if self.io.is_interactive():
-                self.line("")
-        if sort_dependencies is True:
+        if config.get("dependencies.sort") is True:
             requirements = OrderedDict(sorted(requirements.items()))
             dev_requirements = OrderedDict(sorted(dev_requirements.items()))
-            local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
-            local_config_file_contents = document()
-            local_config_file_contents.update({"dependencies": {"sort": True}})
-            local_config_file.write(local_config_file_contents)
 
         layout_ = layout("standard")(
             name,
