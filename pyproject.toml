@@ -129,11 +129,7 @@ module = [
   'poetry.mixology.term',
   'poetry.mixology.version_solver',
   'poetry.repositories.installed_repository',
-  'poetry.utils.appdirs',
-  'poetry.utils.authenticator',
   'poetry.utils.env',
-  'poetry.utils.exporter',
-  'poetry.utils.setup_reader',
 ]
 ignore_errors = true
 
