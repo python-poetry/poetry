@@ -980,7 +980,7 @@ def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
     )
 
 
-def test_solver_with_dependency_in_both_default_and_dev_dependencies(
+def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     solver: Solver, repo: Repository, package: Package
 ):
     solver.provider.set_package_python_versions("^3.5")

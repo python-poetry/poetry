@@ -4,6 +4,12 @@ from typing import TYPE_CHECKING
 
 from cleo.helpers import option
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.console.commands.env_command import EnvCommand
 
 
@@ -34,8 +40,7 @@ class GroupCommand(EnvCommand):
             option(
                 "default",
                 None,
-                "Only include the default dependencies."
-                " (<warning>Deprecated</warning>)",
+                "Only include the main dependencies. (<warning>Deprecated</warning>)",
             ),
             option(
                 "only",
@@ -67,10 +72,10 @@ class GroupCommand(EnvCommand):
             }
 
         for opt, new, group in [
-            ("default", "only", "default"),
-            ("no-dev", "only", "default"),
+            ("default", "only", MAIN_GROUP),
+            ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
-            ("dev-only", "without", "default"),
+            ("dev-only", "without", MAIN_GROUP),
         ]:
             if self.io.input.has_option(opt) and self.option(opt):
                 self.line_error(

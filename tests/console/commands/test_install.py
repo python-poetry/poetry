@@ -7,6 +7,11 @@ import pytest
 from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
 
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -65,23 +70,23 @@ def tester(
 @pytest.mark.parametrize(
     ("options", "groups"),
     [
-        ("", {"default", "foo", "bar", "baz", "bim"}),
-        ("--only default", {"default"}),
+        ("", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        (f"--only {MAIN_GROUP}", {MAIN_GROUP}),
         ("--only foo", {"foo"}),
         ("--only foo,bar", {"foo", "bar"}),
         ("--only bam", {"bam"}),
-        ("--with bam", {"default", "foo", "bar", "baz", "bim", "bam"}),
-        ("--without foo,bar", {"default", "baz", "bim"}),
-        ("--without default", {"foo", "bar", "baz", "bim"}),
+        ("--with bam", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam"}),
+        ("--without foo,bar", {MAIN_GROUP, "baz", "bim"}),
+        (f"--without {MAIN_GROUP}", {"foo", "bar", "baz", "bim"}),
         ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
         # net result zero options
-        ("--with foo", {"default", "foo", "bar", "baz", "bim"}),
-        ("--without bam", {"default", "foo", "bar", "baz", "bim"}),
-        ("--with bam --without bam", {"default", "foo", "bar", "baz", "bim"}),
-        ("--with foo --without foo", {"default", "bar", "baz", "bim"}),
+        ("--with foo", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--with bam --without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--with foo --without foo", {MAIN_GROUP, "bar", "baz", "bim"}),
         # deprecated options
-        ("--default", {"default"}),
-        ("--no-dev", {"default"}),
+        ("--default", {MAIN_GROUP}),
+        ("--no-dev", {MAIN_GROUP}),
         ("--dev-only", {"foo", "bar", "baz", "bim"}),
     ],
 )
