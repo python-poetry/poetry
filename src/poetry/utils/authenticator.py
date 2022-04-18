@@ -207,6 +207,14 @@ class Authenticator:
                 "password": cred.password,
             }
 
+        parsed_url = urllib.parse.urlsplit(url)
+        cred = keyring.get_credential(parsed_url.netloc, username)
+        if cred is not None:
+            return {
+                "username": cred.username,
+                "password": cred.password,
+            }
+
         if username:
             return {
                 "username": username,
