@@ -17,7 +17,7 @@ from poetry.utils.password_manager import PasswordManager
 if TYPE_CHECKING:
     from typing import Any
     from typing import Dict
-    from typing import Generator
+    from typing import Iterator
     from typing import Optional
     from typing import Tuple
 
@@ -186,18 +186,19 @@ class Authenticator(object):
 
         return credentials
 
-    def get_certs_for_url(self, url):  # type: (str) -> Dict[str, Path]
+    def get_certs_for_url(self, url):  # type: (str) -> Dict[str, Optional[Path]]
         parsed_url = urlparse.urlsplit(url)
 
         netloc = parsed_url.netloc
 
         return self._certs.setdefault(
-            netloc, self._get_certs_for_netloc_from_config(netloc),
+            netloc,
+            self._get_certs_for_netloc_from_config(netloc),
         )
 
     def _get_repository_netlocs(
         self,
-    ):  # type: () -> Generator[Tuple[str, str], None, None]
+    ):  # type: () -> Iterator[Tuple[str, str]]
         for repository_name in self._config.get("repositories", []):
             url = self._config.get("repositories.{}.url".format(repository_name))
             parsed_url = urlparse.urlsplit(url)
@@ -205,7 +206,7 @@ class Authenticator(object):
 
     def _get_certs_for_netloc_from_config(
         self, netloc
-    ):  # type: (str) -> Dict[str, Path]
+    ):  # type: (str) -> Dict[str, Optional[Path]]
         certs = {"cert": None, "verify": None}
 
         for (repository_name, repository_netloc) in self._get_repository_netlocs():
