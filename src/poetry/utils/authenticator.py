@@ -160,7 +160,7 @@ class Authenticator:
 
         if url is None or (
             parsed_repository_url.netloc == parsed_package_url.netloc
-            and parsed_repository_url.path in parsed_package_url.path
+            and parsed_package_url.path.startswith(parsed_repository_url.path)
         ):
             auth = self._password_manager.get_http_auth(name)
 

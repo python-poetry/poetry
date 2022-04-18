@@ -111,7 +111,7 @@ def test_authenticator_uses_credentials_from_config_with_at_sign_in_path(
     config.merge(
         {
             "repositories": {
-                "foo": {"url": "https://foo.bar/files/simple/"},
+                "foo": {"url": "https://foo.bar/beta/files/simple/"},
             },
             "http-basic": {
                 "foo": {"username": "bar", "password": "baz"},
