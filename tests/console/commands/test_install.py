@@ -166,7 +166,12 @@ def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture
     """
     The --extras doesn't make sense with --all-extras.
     """
-    mocker.patch.object(tester.command.installer, "run", return_value=1)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
 
-    with pytest.raises(ValueError):
-        tester.execute("--extras foo --all-extras")
+    tester.execute("--extras foo --all-extras")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify explicit `--extras` while installing `--all-extras`.\n"
+    )

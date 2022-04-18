@@ -81,9 +81,12 @@ dependencies and not including the current project, run the command with the
         )
 
         if self.option("extras") and self.option("all-extras"):
-            raise ValueError(
-                "You cannot specify explicit extras while installing all extras"
+            self.line_error(
+                "<error>You cannot specify explicit"
+                " `<fg=yellow;options=bold>--extras</>` while installing"
+                " `<fg=yellow;options=bold>--all-extras</>`.</error>"
             )
+            return 1
 
         if self.option("all-extras"):
             extras = list(self.poetry.package.extras.keys())
