@@ -3,6 +3,8 @@ repos:
     rev: 19.10b0
     hooks:
       - id: black
+        additional_dependencies:
+          - click >=6.5,<8.1  # https://github.com/pallets/click/issues/2225
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.3

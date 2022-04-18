@@ -192,13 +192,10 @@ class Authenticator(object):
         netloc = parsed_url.netloc
 
         return self._certs.setdefault(
-            netloc,
-            self._get_certs_for_netloc_from_config(netloc),
+            netloc, self._get_certs_for_netloc_from_config(netloc),
         )
 
-    def _get_repository_netlocs(
-        self,
-    ):  # type: () -> Iterator[Tuple[str, str]]
+    def _get_repository_netlocs(self,):  # type: () -> Iterator[Tuple[str, str]]
         for repository_name in self._config.get("repositories", []):
             url = self._config.get("repositories.{}.url".format(repository_name))
             parsed_url = urlparse.urlsplit(url)
