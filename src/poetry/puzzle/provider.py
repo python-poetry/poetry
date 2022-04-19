@@ -65,7 +65,7 @@ class Indicator(ProgressIndicator):
         if Indicator.CONTEXT is None:
             return " "
         else:
-            return f": {Indicator.CONTEXT} "
+            return f" <c1>{Indicator.CONTEXT}</> "
 
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
