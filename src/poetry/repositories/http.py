@@ -7,7 +7,6 @@ import urllib
 
 from abc import ABC
 from collections import defaultdict
-from packaging.tags import sys_tags, Tag
 from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
@@ -16,6 +15,8 @@ import requests
 import requests.auth
 
 from cachecontrol import CacheControl
+from packaging.tags import Tag
+from packaging.tags import sys_tags
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.markers import parse_marker
