@@ -40,12 +40,10 @@ commands respectively.
             }
         )
 
-        entry_points = (
-            PluginManager(ApplicationPlugin.group).get_plugin_entry_points()
-            + PluginManager(Plugin.group).get_plugin_entry_points()
-        )
-
         system_env = EnvManager.get_system_env(naive=True)
+        entry_points = PluginManager(ApplicationPlugin.group).get_plugin_entry_points(
+            env=system_env
+        ) + PluginManager(Plugin.group).get_plugin_entry_points(env=system_env)
         installed_repository = InstalledRepository.load(
             system_env, with_dependencies=True
         )
