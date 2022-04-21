@@ -6,7 +6,7 @@ set -Eeuo pipefail
 jqt='.jq-template.awk'
 if [ -n "${BASHBREW_SCRIPTS:-}" ]; then
 	jqt="$BASHBREW_SCRIPTS/jq-template.awk"
-elif [ "$BASH_SOURCE" -nt "$jqt" ]; then
+elif [ "${BASH_SOURCE[0]}" -nt "$jqt" ]; then
 	# https://github.com/docker-library/bashbrew/blob/master/scripts/jq-template.awk
 	wget -qO "$jqt" 'https://github.com/docker-library/bashbrew/raw/1da7341a79651d28fbcc3d14b9176593c4231942/scripts/jq-template.awk'
 fi
@@ -30,7 +30,7 @@ generated_warning() {
 for version; do
 	export version
 
-	rm -rf "$version/"
+	rm -rf "${version:?}/"
 
 	variants="$(jq -r '.[env.version].variants | map(@sh) | join(" ")' versions.json)"
 	eval "variants=( $variants )"
@@ -42,7 +42,7 @@ for version; do
 		case "$dir" in
 			windows/*)
 				windowsVariant="${variant%%-*}" # "windowsservercore", "nanoserver"
-				windowsRelease="${variant#$windowsVariant-}" # "ltsc2022", "1809", etc
+				windowsRelease="${variant#"$windowsVariant"-}" # "ltsc2022", "1809", etc
 				windowsVariant="${windowsVariant#windows}" # "servercore", "nanoserver"
 				export windowsVariant windowsRelease
 				template='Dockerfile-windows.template'

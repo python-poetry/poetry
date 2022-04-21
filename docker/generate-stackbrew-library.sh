@@ -5,8 +5,8 @@ declare -A aliases=(
 	[3.10]='3 latest'
 )
 
-self="$(basename "$BASH_SOURCE")"
-cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
+self="$(basename "${BASH_SOURCE[0]}")"
+cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 if [ "$#" -eq 0 ]; then
 	versions="$(jq -r 'keys | map(@sh) | join(" ")' versions.json)"
@@ -14,7 +14,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 # sort version numbers with highest first
-IFS=$'\n'; set -- $(sort -rV <<<"$*"); unset IFS
+IFS=$'\n'; set -- "$(sort -rV <<<"$*")"; unset IFS
 
 # get the most recent commit which modified any of "$@"
 fileCommit() {
@@ -38,7 +38,7 @@ dirCommit() {
 				}
 			'
 		)"
-		fileCommit Dockerfile $files
+		fileCommit Dockerfile "$files"
 	)
 }
 
@@ -47,7 +47,7 @@ getArches() {
 	local officialImagesUrl='https://github.com/docker-library/official-images/raw/master/library/'
 
 	eval "declare -g -A parentRepoToArches=( $(
-		find -name 'Dockerfile' -exec awk '
+		find . -name 'Dockerfile' -exec awk '
 				toupper($1) == "FROM" && $2 !~ /^('"$repo"'|scratch|.*\/.*)(:|$)/ {
 					print "'"$officialImagesUrl"'" $2
 				}
@@ -70,7 +70,7 @@ EOH
 join() {
 	local sep="$1"; shift
 	local out; printf -v out "${sep//%/%%}%s" "$@"
-	echo "${out#$sep}"
+	echo "${out#"$sep"}"
 }
 
 for version; do
@@ -81,9 +81,9 @@ for version; do
 	fullVersion="$(jq -r '.[env.version].version' versions.json)"
 
 	versionAliases=(
-		$fullVersion
-		$version
-		${aliases[$version]:-}
+		"$fullVersion"
+		"$version"
+		"${aliases[$version]:-}"
 	)
 
 	defaultDebianVariant="$(jq -r '
@@ -113,7 +113,7 @@ for version; do
 		variantAliases=( "${versionAliases[@]/%/-$variant}" )
 		case "$variant" in
 			*-"$defaultDebianVariant") # slim-xxx -> slim
-				variantAliases+=( "${versionAliases[@]/%/-${variant%-$defaultDebianVariant}}" )
+				variantAliases+=( "${versionAliases[@]/%/-${variant%-"$defaultDebianVariant"}}" )
 				;;
 			"$defaultAlpineVariant")
 				variantAliases+=( "${versionAliases[@]/%/-alpine}" )
@@ -128,7 +128,7 @@ for version; do
 
 			*)
 				variantParent="$(awk 'toupper($1) == "FROM" { print $2 }' "$dir/Dockerfile")"
-				variantArches="${parentRepoToArches[$variantParent]}"
+				variantArches="${parentRepoToArches[$variantParent]:?}"
 				;;
 		esac
 
@@ -155,7 +155,7 @@ for version; do
 			echo "SharedTags: $(join ', ' "${sharedTags[@]}")"
 		fi
 		cat <<-EOE
-			Architectures: $(join ', ' $variantArches)
+			Architectures: $(join ', ' "$variantArches")
 			GitCommit: $commit
 			Directory: $dir
 		EOE
