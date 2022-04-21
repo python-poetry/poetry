@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 import pytest
 
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.core.packages.dependency import Dependency
 
 
 def test_pool_raises_package_not_found_when_no_package_is_found():
@@ -71,3 +74,37 @@ def test_repository_with_normal_default_and_secondary_repositories():
     assert pool.repository("foo") is repo1
     assert pool.repository("bar") is repo2
     assert pool.has_default()
+
+
+def test_find_packages_do_not_call_secondary_if_primary_find_package():
+    secondary = LegacyRepository("secondary", "https://secondary.com", secondary=True)
+    repo2 = LegacyRepository("bar", "https://bar.baz")
+
+    pool = Pool()
+    pool.add_repository(secondary, secondary=True)
+    pool.add_repository(repo2)
+
+    dependency = Dependency("test", "1.0.0")
+
+    repo2.find_packages = Mock(return_value=["t"])
+    secondary.find_packages = Mock(return_value=["t"])
+    pool.find_packages(dependency)
+    repo2.find_packages.assert_called_once_with(dependency)
+    secondary.find_packages.assert_not_called()
+
+
+def test_find_packages_call_secondary_if_primary_do_not_find_package():
+    secondary = LegacyRepository("secondary", "https://secondary.com", secondary=True)
+    repo2 = LegacyRepository("bar", "https://bar.baz")
+
+    pool = Pool()
+    pool.add_repository(secondary, secondary=True)
+    pool.add_repository(repo2)
+
+    dependency = Dependency("test", "1.0.0")
+
+    repo2.find_packages = Mock(return_value=[])
+    secondary.find_packages = Mock(return_value=["t"])
+    pool.find_packages(dependency)
+    repo2.find_packages.assert_called_once_with(dependency)
+    secondary.find_packages.assert_called_once_with(dependency)

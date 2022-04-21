@@ -43,8 +43,9 @@ class HTTPRepository(CachedRepository, ABC):
         disable_cache: bool = False,
         cert: Path | None = None,
         client_cert: Path | None = None,
+        secondary: bool = False
     ) -> None:
-        super().__init__(name, "_http", disable_cache)
+        super().__init__(name, "_http", disable_cache, secondary)
         self._url = url
         self._client_cert = client_cert
         self._cert = cert

@@ -17,11 +17,9 @@ from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http import HTTPRepository
 from poetry.utils._compat import to_str
 
-
 cache_control_logger.setLevel(logging.ERROR)
 
 logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
@@ -29,13 +27,14 @@ if TYPE_CHECKING:
 
 class PyPiRepository(HTTPRepository):
     def __init__(
-        self,
-        url: str = "https://pypi.org/",
-        disable_cache: bool = False,
-        fallback: bool = True,
+            self,
+            url: str = "https://pypi.org/",
+            disable_cache: bool = False,
+            fallback: bool = True,
+            secondary: bool = False,
     ) -> None:
         super().__init__(
-            "PyPI", url.rstrip("/") + "/simple/", disable_cache=disable_cache
+            "PyPI", url.rstrip("/") + "/simple/", disable_cache=disable_cache, secondary=secondary
         )
 
         self._base_url = url
@@ -162,7 +161,7 @@ class PyPiRepository(HTTPRepository):
         return links
 
     def _get_release_info(
-        self, name: str, version: str
+            self, name: str, version: str
     ) -> dict[str, str | list[str] | None]:
         from poetry.inspection.info import PackageInfo
 

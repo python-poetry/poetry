@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 class CachedRepository(Repository, ABC):
     CACHE_VERSION = parse_constraint("1.0.0")
 
-    def __init__(self, name: str, cache_group: str, disable_cache: bool = False):
-        super().__init__(name)
+    def __init__(self, name: str, cache_group: str, disable_cache: bool = False, secondary: bool = False):
+        super().__init__(name, secondary=secondary)
         self._disable_cache = disable_cache
         self._cache_dir = REPOSITORY_CACHE_DIR / name
         self._cache = CacheManager(

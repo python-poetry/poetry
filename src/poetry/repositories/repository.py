@@ -8,7 +8,6 @@ from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 
-
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
@@ -17,9 +16,10 @@ if TYPE_CHECKING:
 
 
 class Repository:
-    def __init__(self, name: str = None, packages: list[Package] = None) -> None:
+    def __init__(self, name: str = None, packages: list[Package] = None, secondary: bool = False) -> None:
         self._name = name
         self._packages: list[Package] = []
+        self.secondary = secondary
 
         for package in packages or []:
             self.add_package(package)
@@ -42,9 +42,9 @@ class Repository:
         for package in self.packages:
             if dependency.name == package.name:
                 if (
-                    package.is_prerelease()
-                    and not allow_prereleases
-                    and not package.source_type
+                        package.is_prerelease()
+                        and not allow_prereleases
+                        and not package.source_type
                 ):
                     # If prereleases are not allowed and the package is a prerelease
                     # and is a standard package then we skip it
@@ -54,8 +54,8 @@ class Repository:
                     continue
 
                 if constraint.allows(package.version) or (
-                    package.is_prerelease()
-                    and constraint.allows(package.version.next_patch())
+                        package.is_prerelease()
+                        and constraint.allows(package.version.next_patch())
                 ):
                     packages.append(package)
 
@@ -93,7 +93,7 @@ class Repository:
 
     @staticmethod
     def _get_constraints_from_dependency(
-        dependency: Dependency,
+            dependency: Dependency,
     ) -> tuple[VersionTypes, bool]:
         constraint = dependency.constraint
         if constraint is None:
@@ -104,10 +104,10 @@ class Repository:
 
         allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange) and (
-            constraint.max is not None
-            and constraint.max.is_unstable()
-            or constraint.min is not None
-            and constraint.min.is_unstable()
+                constraint.max is not None
+                and constraint.max.is_unstable()
+                or constraint.min is not None
+                and constraint.min.is_unstable()
         ):
             allow_prereleases = True
 
@@ -125,7 +125,7 @@ class Repository:
         return []
 
     def package(
-        self, name: str, version: str, extras: list[str] | None = None
+            self, name: str, version: str, extras: list[str] | None = None
     ) -> Package:
         name = name.lower()
 
