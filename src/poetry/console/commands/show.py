@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.packages.project_package import ProjectPackage
-    from poetry.repositories import Repository
     from poetry.repositories.installed_repository import InstalledRepository
+    from poetry.repositories.repository import Repository
 
 
 class ShowCommand(GroupCommand):
@@ -75,7 +75,7 @@ lists all packages available."""
             )
             return 1
 
-        locked_repo = self.poetry.locker.locked_repository(True)
+        locked_repo = self.poetry.locker.locked_repository()
         root = self.project_with_activated_groups_only()
 
         # Show tree view if requested

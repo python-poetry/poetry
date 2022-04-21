@@ -45,6 +45,7 @@ class Publisher:
         cert: Path | None = None,
         client_cert: Path | None = None,
         dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
@@ -98,4 +99,5 @@ class Publisher:
             cert=cert or get_cert(self._poetry.config, repository_name),
             client_cert=resolved_client_cert,
             dry_run=dry_run,
+            skip_existing=skip_existing,
         )

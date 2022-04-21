@@ -87,12 +87,13 @@ def test_get_client_cert(config: Config):
     assert get_client_cert(config, "foo") == Path(client_cert)
 
 
-def test_get_trusted(config):
+def test_get_trusted(config: Config):
     trusted = "true"
     config.merge({"certificates": {"foo": {"trusted": trusted}}})
 
     assert get_trusted(config, "foo")
-    
+
+
 test_canonicalize_name_cases = [
     ("flask", "flask"),
     ("Flask", "flask"),

@@ -28,8 +28,7 @@ class FooCommand(Command):
 
 
 class AddCommandPlugin(ApplicationPlugin):
-    def activate(self, application: Application) -> None:
-        application.command_loader.register_factory("foo", lambda: FooCommand())
+    commands = [FooCommand]
 
 
 def test_application_with_plugins(mocker: MockerFixture):

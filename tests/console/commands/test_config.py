@@ -145,7 +145,9 @@ def test_set_pypi_token(tester: CommandTester, auth_config_source: DictConfigSou
 
 
 def test_set_client_cert(
-    tester: CommandTester, auth_config_source: DictConfigSource, mocker: MockerFixture,
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
 ):
     mocker.spy(ConfigSource, "__init__")
 
@@ -158,7 +160,9 @@ def test_set_client_cert(
 
 
 def test_set_cert(
-    tester: CommandTester, auth_config_source: DictConfigSource, mocker: MockerFixture,
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
 ):
     mocker.spy(ConfigSource, "__init__")
 

@@ -3148,3 +3148,57 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
             {"job": "install", "package": virtualenv},
         ],
     )
+
+
+@pytest.mark.parametrize("is_locked", [False, True])
+def test_solver_keeps_multiple_locked_dependencies_for_same_package(
+    solver: Solver,
+    repo: Repository,
+    package: Package,
+    locked: Repository,
+    is_locked: bool,
+):
+    solver.provider.set_package_python_versions("^3.6")
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "~1.1", "python": "<3.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "~1.2", "python": ">=3.7"})
+    )
+
+    a11 = Package("A", "1.1")
+    a12 = Package("A", "1.2")
+
+    a11.add_dependency(Factory.create_dependency("B", {"version": ">=0.3"}))
+    a12.add_dependency(Factory.create_dependency("B", {"version": ">=0.3"}))
+
+    b03 = Package("B", "0.3")
+    b04 = Package("B", "0.4")
+    b04.python_versions = ">=3.6.2,<4.0.0"
+
+    repo.add_package(a11)
+    repo.add_package(a12)
+    repo.add_package(b03)
+    repo.add_package(b04)
+
+    if is_locked:
+        a11_locked = a11.clone()
+        a11_locked.python_versions = "<3.7"
+        locked.add_package(a11_locked)
+        a12_locked = a12.clone()
+        a12_locked.python_versions = ">=3.7"
+        locked.add_package(a12_locked)
+        locked.add_package(b03.clone())
+        locked.add_package(b04.clone())
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": b03},
+            {"job": "install", "package": b04},
+            {"job": "install", "package": a11},
+            {"job": "install", "package": a12},
+        ],
+    )

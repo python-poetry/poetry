@@ -87,8 +87,16 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 True,
             ),
-            "installer.parallel": (boolean_validator, boolean_normalizer, True,),
-            "installer.max-workers": (lambda val: int(val) > 0, int_normalizer, None,),
+            "installer.parallel": (
+                boolean_validator,
+                boolean_normalizer,
+                True,
+            ),
+            "installer.max-workers": (
+                lambda val: int(val) > 0,
+                int_normalizer,
+                None,
+            ),
         }
 
         return unique_config_values
@@ -265,7 +273,11 @@ To remove a repository (repo is a short alias for repositories):
                 self._handle_single_value(
                     config.auth_config_source,
                     key,
-                    (boolean_validator, boolean_normalizer, False,),
+                    (
+                        boolean_validator,
+                        boolean_normalizer,
+                        False,
+                    ),
                     values,
                 )
             if len(values) == 1:

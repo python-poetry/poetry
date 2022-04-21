@@ -26,7 +26,7 @@ CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
 class ManagerFactory(Protocol):
-    def __call__(self, type: str = "plugin") -> PluginManager:
+    def __call__(self, group: str = Plugin.group) -> PluginManager:
         ...
 
 
@@ -37,9 +37,7 @@ class MyPlugin(Plugin):
 
 
 class MyCommandPlugin(ApplicationPlugin):
-    @property
-    def commands(self) -> list[str]:
-        return []
+    commands = []
 
 
 class InvalidPlugin:
@@ -68,15 +66,15 @@ def io() -> BufferedIO:
 
 @pytest.fixture()
 def manager_factory(poetry: Poetry, io: BufferedIO) -> ManagerFactory:
-    def _manager(type: str = "plugin") -> PluginManager:
-        return PluginManager(type)
+    def _manager(group: str = Plugin.group) -> PluginManager:
+        return PluginManager(group)
 
     return _manager
 
 
 @pytest.fixture()
 def no_plugin_manager(poetry: Poetry, io: BufferedIO) -> PluginManager:
-    return PluginManager("plugin", disable_plugins=True)
+    return PluginManager(Plugin.group, disable_plugins=True)
 
 
 def test_load_plugins_and_activate(

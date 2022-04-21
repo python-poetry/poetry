@@ -403,7 +403,7 @@ about dependency groups.
 
 ### Options
 
-* `--group (-D)`: The group to remove the dependency from.
+* `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
@@ -482,6 +482,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
 * `--dry-run`: Perform all actions except upload the package.
+* `--skip-existing`: Ignore errors from files already existing in the repository.
 
 ## config
 
@@ -620,8 +621,13 @@ poetry export -f requirements.txt --output requirements.txt
 ```
 
 {{% note %}}
-Only the `requirements.txt` format is currently supported.
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
+and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+{{% /note %}}
+
+{{% note %}}
+Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `default`
+group defined in `tool.poetry.dependencies` when used without specifying any options.
 {{% /note %}}
 
 ### Options
@@ -630,8 +636,12 @@ This command is also available as a pre-commit hook. See [pre-commit hooks](/doc
   Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
-* `--dev`: Include development dependencies.
+* `--dev`: Include development dependencies. (**Deprecated**)
 * `--extras (-E)`: Extra sets of dependencies to include.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.

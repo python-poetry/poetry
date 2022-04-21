@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import functools
+
 from typing import TYPE_CHECKING
 
 from poetry.mixology.set_relation import SetRelation
@@ -46,6 +48,7 @@ class Term:
             and self.relation(other) == SetRelation.SUBSET
         )
 
+    @functools.lru_cache(maxsize=None)
     def relation(self, other: Term) -> int:
         """
         Returns the relationship between the package versions
@@ -108,6 +111,7 @@ class Term:
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
+    @functools.lru_cache(maxsize=None)
     def intersect(self, other: Term) -> Term | None:
         """
         Returns a Term that represents the packages

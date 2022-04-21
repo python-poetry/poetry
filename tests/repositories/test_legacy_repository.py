@@ -14,7 +14,7 @@ from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.legacy_repository import Page
+from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 try:
@@ -35,7 +35,7 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint: str) -> Page | None:
+    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -44,7 +44,7 @@ class MockRepository(LegacyRepository):
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return Page(self._url + endpoint, f.read(), {})
+            return SimpleRepositoryPage(self._url + endpoint, f.read())
 
     def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -71,6 +71,15 @@ def test_page_absolute_links_path_are_correct():
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
+
+
+def test_page_clean_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/relative")
+
+    cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
+    assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
 
 
 def test_sdist_format_support():

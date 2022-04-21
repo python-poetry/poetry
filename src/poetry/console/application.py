@@ -16,6 +16,7 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
+from cleo.io.null_io import NullIO
 
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
@@ -52,7 +53,6 @@ COMMANDS = [
     "build",
     "check",
     "config",
-    "export",
     "init",
     "install",
     "lock",
@@ -93,7 +93,7 @@ class Application(BaseApplication):
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
-        self._poetry = None
+        self._poetry: Poetry | None = None
         self._io: IO | None = None
         self._disable_plugins = False
         self._plugins_loaded = False
@@ -232,8 +232,8 @@ class Application(BaseApplication):
         handler = IOHandler(io)
         handler.setFormatter(IOFormatter())
 
-        for logger in loggers:
-            logger = logging.getLogger(logger)
+        for name in loggers:
+            logger = logging.getLogger(name)
 
             logger.handlers = [handler]
 
@@ -306,16 +306,20 @@ class Application(BaseApplication):
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
 
-    def _load_plugins(self, io: IO) -> None:
+    def _load_plugins(self, io: IO = None) -> None:
         if self._plugins_loaded:
             return
+
+        if io is None:
+            io = NullIO()
 
         self._disable_plugins = io.input.has_parameter_option("--no-plugins")
 
         if not self._disable_plugins:
+            from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
-            manager = PluginManager("application.plugin")
+            manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
 

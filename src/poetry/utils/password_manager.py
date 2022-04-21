@@ -94,7 +94,7 @@ class KeyRing:
 
         backend = keyring.get_keyring()
         name = backend.name.split(" ")[0]
-        if name == "fail":
+        if name in ("fail", "null"):
             logger.debug("No suitable keyring backend found")
             self._is_available = False
         elif "plaintext" in backend.name.lower():
@@ -107,7 +107,7 @@ class KeyRing:
                 backends = keyring.backend.get_all_keyring()
 
                 self._is_available = any(
-                    b.name.split(" ")[0] not in ["chainer", "fail"]
+                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
                     and "plaintext" not in b.name.lower()
                     for b in backends
                 )
@@ -121,10 +121,10 @@ class KeyRing:
 class PasswordManager:
     def __init__(self, config: Config) -> None:
         self._config = config
-        self._keyring = None
+        self._keyring: KeyRing | None = None
 
     @property
-    def keyring(self) -> KeyRing | None:
+    def keyring(self) -> KeyRing:
         if self._keyring is None:
             self._keyring = KeyRing("poetry-repository")
             if not self._keyring.is_available():
@@ -140,7 +140,7 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str:
+    def get_pypi_token(self, name: str) -> str | None:
         if not self.keyring.is_available():
             return self._config.get(f"pypi-token.{name}")
 
