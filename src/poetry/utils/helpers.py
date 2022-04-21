@@ -64,7 +64,7 @@ def get_client_cert(config: Config, repository_name: str) -> Path | None:
 
 
 def get_trusted(config: Config, repository_name: str) -> bool | None:
-    trusted = config.get("certificates.{}.trusted".format(repository_name))
+    trusted = config.get(f"certificates.{repository_name}.trusted")
     if trusted:
         return bool(trusted)
     else:
