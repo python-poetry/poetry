@@ -512,11 +512,6 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
     }
 
 
-@pytest.fixture(autouse=True)
-def pep517_metadata_mock():
-    pass
-
-
 def test_search_for_vcs_hyphenated_name(provider: Provider):
     dependency = DirectoryDependency(
         "project-with-git-subdir-dependency",
