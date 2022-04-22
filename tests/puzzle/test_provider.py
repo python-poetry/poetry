@@ -521,4 +521,4 @@ def test_search_for_vcs_hyphenated_name(provider: Provider):
     )
 
     package = provider.search_for_directory(dependency)[0]
-    req = provider.search_for_vcs(package.requires[0])
+    provider.search_for_vcs(package.requires[0])
