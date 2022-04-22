@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from cleo.helpers import argument
@@ -42,8 +44,7 @@ class CacheClearCommand(Command):
         if len(parts) == 1:
             if not self.option("all"):
                 raise RuntimeError(
-                    "Add the --all option if you want to clear all "
-                    f"{parts[0]} caches"
+                    f"Add the --all option if you want to clear all {parts[0]} caches"
                 )
 
             if not os.path.exists(str(cache_dir)):
@@ -51,9 +52,9 @@ class CacheClearCommand(Command):
                 return 0
 
             # Calculate number of entries
-            entries_count = 0
-            for _path, _dirs, files in os.walk(str(cache_dir)):
-                entries_count += len(files)
+            entries_count = sum(
+                len(files) for _path, _dirs, files in os.walk(str(cache_dir))
+            )
 
             delete = self.confirm(f"<question>Delete {entries_count} entries?</>")
             if not delete:
@@ -80,3 +81,5 @@ class CacheClearCommand(Command):
             cache.forget(f"{package}:{version}")
         else:
             raise ValueError("Invalid cache key")
+
+        return 0

@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Tuple
 
 import pytest
 import tomlkit
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker: "MockerFixture") -> None:
+def setup(mocker: MockerFixture) -> None:
     mocker.stopall()
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -31,7 +32,7 @@ def setup(mocker: "MockerFixture") -> None:
 
 @pytest.fixture(autouse=True)
 def mock_subprocess_calls(
-    setup: None, current_python: Tuple[int, int, int], mocker: "MockerFixture"
+    setup: None, current_python: tuple[int, int, int], mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.check_output",
@@ -44,13 +45,13 @@ def mock_subprocess_calls(
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("env use")
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
-    mocker: "MockerFixture",
-    tester: "CommandTester",
+    mocker: MockerFixture,
+    tester: CommandTester,
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
@@ -69,7 +70,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_py37 = venv_cache / f"{venv_name}-py3.7"
     mock_build_env.assert_called_with(
         venv_py37,
-        executable="python3.7",
+        executable="/usr/bin/python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -87,12 +88,12 @@ Creating virtualenv {venv_py37.name} in {venv_py37.parent}
 Using virtualenv: {venv_py37}
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    tester: "CommandTester",
-    current_python: Tuple[int, int, int],
+    tester: CommandTester,
+    current_python: tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
@@ -115,13 +116,13 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 Using virtualenv: {venv_dir}
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
-    mocker: "MockerFixture",
-    tester: "CommandTester",
-    current_python: Tuple[int, int, int],
+    mocker: MockerFixture,
+    tester: CommandTester,
+    current_python: tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
@@ -150,4 +151,4 @@ Creating virtualenv {venv_dir.name} in {venv_dir.parent}
 Using virtualenv: {venv_dir}
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected

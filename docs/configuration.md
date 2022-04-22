@@ -48,6 +48,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
+virtualenvs.prefer-active-python = false
 ```
 
 ## Displaying a single configuration setting
@@ -187,6 +188,13 @@ Defaults to `false`.
 Give the virtual environment access to the system site-packages directory.
 Applies on virtualenv creation.
 Defaults to `false`.
+
+### `virtualenvs.prefer-active-python` (experimental)
+
+**Type**: boolean
+
+Use currently activated Python version to create a new venv.
+Defaults to `false`, which means Python version used during Poetry installation is used.
 
 ### `repositories.<name>`
 

@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 import re
 
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 from packaging.tags import Tag
 
@@ -40,12 +39,12 @@ class Wheel:
             Tag(x, y, z) for x in self.pyversions for y in self.abis for z in self.plats
         }
 
-    def get_minimum_supported_index(self, tags: List[Tag]) -> Optional[int]:
+    def get_minimum_supported_index(self, tags: list[Tag]) -> int | None:
         indexes = [tags.index(t) for t in self.tags if t in tags]
 
         return min(indexes) if indexes else None
 
-    def is_supported_by_environment(self, env: "Env") -> bool:
+    def is_supported_by_environment(self, env: Env) -> bool:
         return bool(set(env.supported_tags).intersection(self.tags))
 
 
@@ -54,11 +53,11 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: "Pool", env: "Env") -> None:
+    def __init__(self, pool: Pool, env: Env) -> None:
         self._pool = pool
         self._env = env
 
-    def choose_for(self, package: "Package") -> "Link":
+    def choose_for(self, package: Package) -> Link:
         """
         Return the url of the selected archive for a given package.
         """
@@ -84,15 +83,14 @@ class Chooser:
 
         return chosen
 
-    def _get_links(self, package: "Package") -> List["Link"]:
-        if not package.source_type:
-            if not self._pool.has_repository("pypi"):
-                repository = self._pool.repositories[0]
-            else:
-                repository = self._pool.repository("pypi")
-        else:
+    def _get_links(self, package: Package) -> list[Link]:
+        if package.source_type:
             repository = self._pool.repository(package.source_reference)
 
+        elif not self._pool.has_repository("pypi"):
+            repository = self._pool.repositories[0]
+        else:
+            repository = self._pool.repository("pypi")
         links = repository.find_links_for_package(package)
 
         hashes = [f["hash"] for f in package.files]
@@ -113,12 +111,13 @@ class Chooser:
 
         if links and not selected_links:
             raise RuntimeError(
-                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock metadata {hashes}"
+                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock"
+                f" metadata {hashes}"
             )
 
         return selected_links
 
-    def _sort_key(self, package: "Package", link: "Link") -> Tuple:
+    def _sort_key(self, package: Package, link: Link) -> tuple:
         """
         Function to pass as the `key` argument to a call to sorted() to sort
         InstallationCandidates by preference.
@@ -142,7 +141,6 @@ class Chooser:
               comparison operators, but then different sdist links
               with the same version, would have to be considered equal
         """
-        support_num = len(self._env.supported_tags)
         build_tag = ()
         binary_preference = 0
         if link.is_wheel:
@@ -160,6 +158,7 @@ class Chooser:
                 build_tag_groups = match.groups()
                 build_tag = (int(build_tag_groups[0]), build_tag_groups[1])
         else:  # sdist
+            support_num = len(self._env.supported_tags)
             pri = -support_num
 
         has_allowed_hash = int(self._is_link_hash_allowed_for_package(link, package))
@@ -176,9 +175,7 @@ class Chooser:
             pri,
         )
 
-    def _is_link_hash_allowed_for_package(
-        self, link: "Link", package: "Package"
-    ) -> bool:
+    def _is_link_hash_allowed_for_package(self, link: Link, package: Package) -> bool:
         if not link.hash:
             return True
 

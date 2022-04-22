@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 
 from pathlib import Path
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-def mock_clone(self: "Git", source: str, dest: Path) -> None:
+def mock_clone(self: Git, source: str, dest: Path) -> None:
     # Checking source to determine which folder we need to copy
     parts = urlparse.urlparse(source)
 
@@ -33,7 +35,7 @@ def mock_clone(self: "Git", source: str, dest: Path) -> None:
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker: "MockerFixture") -> None:
+def setup(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
     mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
     mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)

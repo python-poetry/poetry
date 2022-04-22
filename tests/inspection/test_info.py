@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from typing import Set
 
 import pytest
 
@@ -90,12 +91,12 @@ def demo_setup_complex(source_dir: Path) -> Path:
 def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
     pyproject_toml.write_text(
-        decode("[build-system]\n" 'requires = ["setuptools", "wheel"]')
+        decode('[build-system]\nrequires = ["setuptools", "wheel"]')
     )
     return demo_setup_complex
 
 
-def demo_check_info(info: PackageInfo, requires_dist: Set[str] = None) -> None:
+def demo_check_info(info: PackageInfo, requires_dist: set[str] = None) -> None:
     assert info.name == "demo"
     assert info.version == "0.1.0"
     assert info.requires_dist
@@ -157,14 +158,14 @@ def test_info_no_setup_pkg_info_no_deps():
     assert info.requires_dist is None
 
 
-def test_info_setup_simple(mocker: "MockerFixture", demo_setup: Path):
+def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path):
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
     assert spy.call_count == 0
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_setup_cfg(mocker: "MockerFixture", demo_setup_cfg: Path):
+def test_info_setup_cfg(mocker: MockerFixture, demo_setup_cfg: Path):
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup_cfg)
     assert spy.call_count == 0
@@ -177,7 +178,7 @@ def test_info_setup_complex(demo_setup_complex: Path):
 
 
 def test_info_setup_complex_pep517_error(
-    mocker: "MockerFixture", demo_setup_complex: Path
+    mocker: MockerFixture, demo_setup_complex: Path
 ):
     mocker.patch(
         "poetry.utils.env.VirtualEnv.run",
@@ -195,7 +196,7 @@ def test_info_setup_complex_pep517_legacy(demo_setup_complex_pep517_legacy: Path
 
 
 def test_info_setup_complex_disable_build(
-    mocker: "MockerFixture", demo_setup_complex: Path
+    mocker: MockerFixture, demo_setup_complex: Path
 ):
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup_complex, disable_build=True)
@@ -207,7 +208,7 @@ def test_info_setup_complex_disable_build(
 
 @pytest.mark.parametrize("missing", ["version", "name", "install_requires"])
 def test_info_setup_missing_mandatory_should_trigger_pep517(
-    mocker: "MockerFixture", source_dir: Path, missing: str
+    mocker: MockerFixture, source_dir: Path, missing: str
 ):
     setup = "from setuptools import setup; "
     setup += "setup("

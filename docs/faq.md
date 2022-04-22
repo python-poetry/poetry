@@ -62,7 +62,7 @@ And use a `tox.ini` configuration file similar to this:
 ```INI
 [tox]
 isolated_build = true
-envlist = py27, py36
+envlist = py27, py37
 
 [testenv]
 allowlist_externals = poetry
@@ -82,3 +82,27 @@ In this case, you can disable this feature by setting the `virtualenvs.create` s
 ```bash
 poetry config virtualenvs.create false
 ```
+
+### Why is Poetry telling me that the current project's Python requirement is not compatible with one or more packages' Python requirements?
+
+Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
+is resolvable within the given Python version range in `pyproject.toml`.
+
+Assume you have the following `pyproject.toml`:
+
+```toml
+[tool.poetry.dependencies]
+python = "^3.7"
+```
+
+This means your project aims to be compatible with any Python version >=3.7,<4.0. Whenever you try to add a dependency
+whose Python requirement doesn't match the whole range Poetry will tell you this, e.g.:
+
+```
+The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
+    - scipy requires Python >=3.7,<3.11, so it will not be satisfied for Python >=3.11,<4.0.0
+```
+
+Usually you will want to match the Python requirement of your project with the upper bound of the failing dependency.
+Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions](/docs/dependency-specification/#multiple-constraints-dependencies),
+if you know that it's not needed in all versions.

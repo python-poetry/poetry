@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Mapping
 from typing import Sequence
 
@@ -11,8 +12,8 @@ if TYPE_CHECKING:
 
 
 def get_extra_package_names(
-    packages: Sequence["Package"],
-    extras: Mapping[str, List[str]],
+    packages: Sequence[Package],
+    extras: Mapping[str, list[str]],
     extra_names: Sequence[str],
 ) -> Iterable[str]:
     """

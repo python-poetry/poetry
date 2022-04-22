@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from poetry.core.packages.dependency import Dependency
 
 from poetry.mixology.failure import SolveFailure

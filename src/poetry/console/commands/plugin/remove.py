@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from typing import cast
@@ -24,7 +26,8 @@ class PluginRemoveCommand(Command):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables --verbose).",
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         )
     ]
 
@@ -40,9 +43,7 @@ class PluginRemoveCommand(Command):
         plugins = self.argument("plugins")
 
         system_env = EnvManager.get_system_env(naive=True)
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
-        )
+        env_dir = Path(os.getenv("POETRY_HOME") or system_env.path)
 
         # From this point forward, all the logic will be deferred to
         # the remove command, by using the global `pyproject.toml` file.

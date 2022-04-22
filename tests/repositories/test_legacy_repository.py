@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
-from typing import Type
 
 import pytest
 import requests
@@ -15,7 +14,7 @@ from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.legacy_repository import Page
+from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 try:
@@ -36,7 +35,7 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint: str) -> Optional[Page]:
+    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -45,7 +44,7 @@ class MockRepository(LegacyRepository):
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return Page(self._url + endpoint, f.read(), {})
+            return SimpleRepositoryPage(self._url + endpoint, f.read())
 
     def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -72,6 +71,15 @@ def test_page_absolute_links_path_are_correct():
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
+
+
+def test_page_clean_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/relative")
+
+    cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
+    assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
 
 
 def test_sdist_format_support():
@@ -235,7 +243,7 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
         Dependency("win-unicode-console", ">=0.5"),
     ]
     required = [r for r in package.requires if not r.is_optional()]
-    assert expected == required
+    assert required == expected
 
     assert str(required[1].marker) == 'python_version == "2.7"'
     assert (
@@ -272,7 +280,7 @@ def test_get_package_with_dist_and_universal_py3_wheel():
         Dependency("win-unicode-console", ">=0.5"),
     ]
     required = [r for r in package.requires if not r.is_optional()]
-    assert expected == sorted(required, key=lambda dep: dep.name)
+    assert sorted(required, key=lambda dep: dep.name) == expected
 
 
 def test_get_package_retrieves_non_sha256_hashes():
@@ -283,15 +291,15 @@ def test_get_package_retrieves_non_sha256_hashes():
     expected = [
         {
             "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",
+            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",  # noqa: E501
         },
         {
             "file": "ipython-7.5.0.tar.gz",
-            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",  # noqa: E501
         },
     ]
 
-    assert expected == package.files
+    assert package.files == expected
 
 
 def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
@@ -306,15 +314,15 @@ def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
         },
         {
             "file": "ipython-5.7.0-py3-none-any.whl",
-            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",
+            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",  # noqa: E501
         },
         {
             "file": "ipython-5.7.0.tar.gz",
-            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",
+            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",  # noqa: E501
         },
     ]
 
-    assert expected == package.files
+    assert package.files == expected
 
 
 def test_get_package_retrieves_packages_with_no_hashes():
@@ -325,13 +333,13 @@ def test_get_package_retrieves_packages_with_no_hashes():
     assert [
         {
             "file": "jupyter-1.0.0.tar.gz",
-            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",
+            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
         }
     ] == package.files
 
 
 class MockHttpRepository(LegacyRepository):
-    def __init__(self, endpoint_responses: Dict, http: Type["httpretty.httpretty"]):
+    def __init__(self, endpoint_responses: dict, http: type[httpretty.httpretty]):
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
@@ -340,20 +348,20 @@ class MockHttpRepository(LegacyRepository):
             http.register_uri(http.GET, url, status=response)
 
 
-def test_get_200_returns_page(http: Type["httpretty.httpretty"]):
+def test_get_200_returns_page(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 200}, http)
 
     assert repo._get_page("/foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
-def test_get_40x_and_returns_none(http: Type["httpretty.httpretty"], status_code: int):
+def test_get_40x_and_returns_none(http: type[httpretty.httpretty], status_code: int):
     repo = MockHttpRepository({"/foo": status_code}, http)
 
     assert repo._get_page("/foo") is None
 
 
-def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
+def test_get_5xx_raises(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 500}, http)
 
     with pytest.raises(RepositoryError):
@@ -361,7 +369,7 @@ def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
 
 
 def test_get_redirected_response_url(
-    http: Type["httpretty.httpretty"], monkeypatch: "MonkeyPatch"
+    http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
 ):
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"

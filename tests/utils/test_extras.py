@@ -1,5 +1,4 @@
-from typing import Dict
-from typing import List
+from __future__ import annotations
 
 import pytest
 
@@ -60,11 +59,12 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
     ],
 )
 def test_get_extra_package_names(
-    packages: List[Package],
-    extras: Dict[str, List[str]],
-    extra_names: List[str],
-    expected_extra_package_names: List[str],
+    packages: list[Package],
+    extras: dict[str, list[str]],
+    extra_names: list[str],
+    expected_extra_package_names: list[str],
 ):
-    assert expected_extra_package_names == list(
-        get_extra_package_names(packages, extras, extra_names)
+    assert (
+        list(get_extra_package_names(packages, extras, extra_names))
+        == expected_extra_package_names
     )

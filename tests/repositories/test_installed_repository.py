@@ -1,8 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
 
 import pytest
 
@@ -35,6 +34,9 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "bender-2.0.5.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "git_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(
+        SITE_PURELIB / "git_pep_610_no_requested_version-1.2.3.dist-info"
+    ),
     metadata.PathDistribution(SITE_PURELIB / "url_pep_610-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "file_pep_610-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "directory_pep_610-1.2.3.dist-info"),
@@ -46,14 +48,14 @@ INSTALLED_RESULTS = [
 
 class MockEnv(BaseMockEnv):
     @property
-    def paths(self) -> Dict[str, Path]:
+    def paths(self) -> dict[str, Path]:
         return {
             "purelib": SITE_PURELIB,
             "platlib": SITE_PLATLIB,
         }
 
     @property
-    def sys_path(self) -> List[Path]:
+    def sys_path(self) -> list[Path]:
         return [ENV_DIR, SITE_PLATLIB, SITE_PURELIB]
 
 
@@ -63,7 +65,7 @@ def env() -> MockEnv:
 
 
 @pytest.fixture
-def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
+def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -85,7 +87,7 @@ def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
 
 def get_package_from_repository(
     name: str, repository: InstalledRepository
-) -> Optional["Package"]:
+) -> Package | None:
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg
@@ -188,6 +190,25 @@ def test_load_pep_610_compliant_git_packages(repository: InstalledRepository):
     assert package.source_url == "https://github.com/demo/git-pep-610.git"
     assert package.source_reference == "my-branch"
     assert package.source_resolved_reference == "123456"
+
+
+def test_load_pep_610_compliant_git_packages_no_requested_version(
+    repository: InstalledRepository,
+):
+    package = get_package_from_repository(
+        "git-pep-610-no-requested-version", repository
+    )
+
+    assert package is not None
+    assert package.name == "git-pep-610-no-requested-version"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "git"
+    assert (
+        package.source_url
+        == "https://github.com/demo/git-pep-610-no-requested-version.git"
+    )
+    assert package.source_resolved_reference == "123456"
+    assert package.source_reference == package.source_resolved_reference
 
 
 def test_load_pep_610_compliant_url_packages(repository: InstalledRepository):

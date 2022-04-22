@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import json
 import re
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -47,7 +46,7 @@ To remove a repository (repo is a short alias for repositories):
     LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
 
     @property
-    def unique_config_values(self) -> Dict[str, Tuple[Any, Any, Any]]:
+    def unique_config_values(self) -> dict[str, tuple[Any, Any, Any]]:
         from pathlib import Path
 
         from poetry.config.config import boolean_normalizer
@@ -78,6 +77,11 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: str(Path(val)),
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
+            "virtualenvs.prefer-active-python": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
             "experimental.new-installer": (
                 boolean_validator,
                 boolean_normalizer,
@@ -97,7 +101,7 @@ To remove a repository (repo is a short alias for repositories):
 
         return unique_config_values
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from pathlib import Path
 
         from poetry.core.pyproject.exceptions import PyProjectException
@@ -139,6 +143,7 @@ To remove a repository (repo is a short alias for repositories):
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+            value: str | dict[str, Any]
             if m:
                 if not m.group(1):
                     value = {}
@@ -153,8 +158,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 self.line(str(value))
             else:
-                values = self.unique_config_values
-                if setting_key not in values:
+                if setting_key not in self.unique_config_values:
                     raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
@@ -166,7 +170,7 @@ To remove a repository (repo is a short alias for repositories):
 
             return 0
 
-        values = self.argument("value")
+        values: list[str] = self.argument("value")
 
         unique_config_values = self.unique_config_values
         if setting_key in unique_config_values:
@@ -274,10 +278,10 @@ To remove a repository (repo is a short alias for repositories):
 
     def _handle_single_value(
         self,
-        source: "ConfigSource",
+        source: ConfigSource,
         key: str,
-        callbacks: Tuple[Any, Any, Any],
-        values: List[Any],
+        callbacks: tuple[Any, Any, Any],
+        values: list[Any],
     ) -> int:
         validator, normalizer, _ = callbacks
 
@@ -292,7 +296,9 @@ To remove a repository (repo is a short alias for repositories):
 
         return 0
 
-    def _list_configuration(self, config: Dict, raw: Dict, k: str = "") -> None:
+    def _list_configuration(
+        self, config: dict[str, Any], raw: dict[str, Any], k: str = ""
+    ) -> None:
         orig_k = k
         for key, value in sorted(config.items()):
             if k + key in self.LIST_PROHIBITED_SETTINGS:
@@ -302,7 +308,7 @@ To remove a repository (repo is a short alias for repositories):
 
             if isinstance(value, dict):
                 k += f"{key}."
-                self._list_configuration(value, raw_val, k=k)
+                self._list_configuration(value, cast(dict, raw_val), k=k)
                 k = orig_k
 
                 continue
@@ -325,11 +331,11 @@ To remove a repository (repo is a short alias for repositories):
 
     def _get_setting(
         self,
-        contents: Dict,
-        setting: Optional[str] = None,
-        k: Optional[str] = None,
-        default: Optional[Any] = None,
-    ) -> List[Tuple[str, str]]:
+        contents: dict,
+        setting: str | None = None,
+        k: str | None = None,
+        default: Any | None = None,
+    ) -> list[tuple[str, str]]:
         orig_k = k
 
         if setting and setting.split(".")[0] not in contents:
@@ -351,7 +357,7 @@ To remove a repository (repo is a short alias for repositories):
                         setting = ".".join(setting.split(".")[1:])
 
                     values += self._get_setting(
-                        value, k=k, setting=setting, default=default
+                        cast(dict, value), k=k, setting=setting, default=default
                     )
                     k = orig_k
 

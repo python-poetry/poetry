@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.0a2"
+version = "1.2.0-beta.2.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -32,18 +32,17 @@ generate-setup-file = false
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 
-# poetry-core = "^1.1.0a6"
-poetry-core = { git = "https://github.com/python-poetry/poetry-core" }
+poetry-core = "^1.1.0a7"
+poetry-plugin-export = "^1.0"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a4"
 crashtest = "^0.3.0"
-dataclasses = { version = "^0.8", python = "<3.7" }
 entrypoints = "^0.3"
 html5lib = "^1.0"
-importlib-metadata = { version = "^1.6.0", python = "<3.8" }
+importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
 keyring = ">=21.2.0"
 packaging = "^20.4"
 pexpect = "^4.7.0"
@@ -54,6 +53,7 @@ shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
+urllib3 = "^1.26.0"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
@@ -61,7 +61,7 @@ pytest = "^6.2"
 pytest-cov = "^2.8"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
-pre-commit = { version = "^2.6", python = "^3.6.1" }
+pre-commit = "^2.6"
 deepdiff = "^5.0"
 httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
@@ -78,7 +78,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]
-py_version = 36
+py_version = 37
 profile = "black"
 force_single_line = true
 combine_as_imports = true
@@ -89,7 +89,8 @@ extend_skip = ["setup.py"]
 
 
 [tool.black]
-target-version = ['py36']
+target-version = ['py37']
+preview = true
 force-exclude = '''
 .*/setup\.py$
 '''
@@ -98,6 +99,7 @@ force-exclude = '''
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
+show_error_codes = true
 warn_redundant_casts = true
 warn_unused_configs = true
 warn_unused_ignores = true
@@ -111,16 +113,27 @@ files = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.config.file_config_source',
-  'poetry.console.*',
-  'poetry.factory.*',
-  'poetry.inspection.*',
-  'poetry.installation.*',
-  'poetry.layouts.*',
-  'poetry.mixology.*',
-  'poetry.packages.locker',
+  'poetry.console.commands.init',
+  'poetry.inspection.info',
+  'poetry.installation.chef',
+  'poetry.installation.chooser',
+  'poetry.installation.executor',
+  'poetry.installation.installer',
+  'poetry.installation.pip_installer',
+  'poetry.mixology.assignment',
+  'poetry.mixology.failure',
+  'poetry.mixology.incompatibility',
+  'poetry.mixology.partial_solution',
+  'poetry.mixology.solutions.providers.python_requirement_solution_provider',
+  'poetry.mixology.solutions.solutions.python_requirement_solution',
+  'poetry.mixology.term',
+  'poetry.mixology.version_solver',
   'poetry.repositories.installed_repository',
-  'poetry.utils.*'
+  'poetry.utils.appdirs',
+  'poetry.utils.authenticator',
+  'poetry.utils.env',
+  'poetry.utils.exporter',
+  'poetry.utils.setup_reader',
 ]
 ignore_errors = true
 

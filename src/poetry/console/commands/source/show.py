@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from cleo.helpers import argument
 
@@ -18,7 +18,7 @@ class SourceShowCommand(Command):
         ),
     ]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         sources = self.poetry.get_sources()
         names = self.argument("source")
 

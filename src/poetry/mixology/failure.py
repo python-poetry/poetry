@@ -1,8 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 from poetry.core.semver.helpers import parse_constraint
 
@@ -15,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class SolveFailure(Exception):
-    def __init__(self, incompatibility: "Incompatibility") -> None:
+    def __init__(self, incompatibility: Incompatibility) -> None:
         self._incompatibility = incompatibility
 
     @property
@@ -27,11 +25,11 @@ class SolveFailure(Exception):
 
 
 class _Writer:
-    def __init__(self, root: "Incompatibility") -> None:
+    def __init__(self, root: Incompatibility) -> None:
         self._root = root
-        self._derivations: Dict["Incompatibility", int] = {}
-        self._lines: List[Tuple[str, Optional[int]]] = []
-        self._line_numbers: Dict["Incompatibility", int] = {}
+        self._derivations: dict[Incompatibility, int] = {}
+        self._lines: list[tuple[str, int | None]] = []
+        self._line_numbers: dict[Incompatibility, int] = {}
 
         self._count_derivations(self._root)
 
@@ -43,9 +41,10 @@ class _Writer:
             if isinstance(incompatibility.cause, PythonCause):
                 if not required_python_version_notification:
                     buffer.append(
-                        f"The current project's Python requirement ({incompatibility.cause.root_python_version}) "
-                        "is not compatible with some of the required "
-                        "packages Python requirement:"
+                        "The current project's Python requirement"
+                        f" ({incompatibility.cause.root_python_version}) is not"
+                        " compatible with some of the required packages Python"
+                        " requirement:"
                     )
                     required_python_version_notification = True
 
@@ -54,9 +53,9 @@ class _Writer:
                 )
                 constraint = parse_constraint(incompatibility.cause.python_version)
                 buffer.append(
-                    f"  - {incompatibility.terms[0].dependency.name} requires Python "
-                    f"{incompatibility.cause.python_version}, so it will not be satisfied "
-                    f"for Python {root_constraint.difference(constraint)}"
+                    f"  - {incompatibility.terms[0].dependency.name} requires Python"
+                    f" {incompatibility.cause.python_version}, so it will not be"
+                    f" satisfied for Python {root_constraint.difference(constraint)}"
                 )
 
         if required_python_version_notification:
@@ -96,7 +95,7 @@ class _Writer:
         return "\n".join(buffer)
 
     def _write(
-        self, incompatibility: "Incompatibility", message: str, numbered: bool = False
+        self, incompatibility: Incompatibility, message: str, numbered: bool = False
     ) -> None:
         if numbered:
             number = len(self._line_numbers) + 1
@@ -107,8 +106,8 @@ class _Writer:
 
     def _visit(
         self,
-        incompatibility: "Incompatibility",
-        details_for_incompatibility: Dict,
+        incompatibility: Incompatibility,
+        details_for_incompatibility: dict,
         conclusion: bool = False,
     ) -> None:
         numbered = conclusion or self._derivations[incompatibility] > 1
@@ -145,7 +144,8 @@ class _Writer:
                 self._visit(without_line, details_for_cause)
                 self._write(
                     incompatibility,
-                    f"{conjunction} because {with_line!s} ({line}), {incompatibility_string}.",
+                    f"{conjunction} because {with_line!s} ({line}),"
+                    f" {incompatibility_string}.",
                     numbered=numbered,
                 )
             else:
@@ -170,7 +170,9 @@ class _Writer:
 
                     self._write(
                         incompatibility,
-                        f"{conjunction} because {cause.conflict!s} ({self._line_numbers[cause.conflict]}), {incompatibility_string}",
+                        f"{conjunction} because"
+                        f" {cause.conflict!s} ({self._line_numbers[cause.conflict]}),"
+                        f" {incompatibility_string}",
                         numbered=numbered,
                     )
         elif isinstance(cause.conflict.cause, ConflictCause) or isinstance(
@@ -201,12 +203,10 @@ class _Writer:
                 derived_cause: ConflictCause = derived.cause
                 if isinstance(derived_cause.conflict.cause, ConflictCause):
                     collapsed_derived = derived_cause.conflict
+                    collapsed_ext = derived_cause.other
                 else:
                     collapsed_derived = derived_cause.other
 
-                if isinstance(derived_cause.conflict.cause, ConflictCause):
-                    collapsed_ext = derived_cause.other
-                else:
                     collapsed_ext = derived_cause.conflict
 
                 details_for_cause = {}
@@ -235,7 +235,7 @@ class _Writer:
                 numbered=numbered,
             )
 
-    def _is_collapsible(self, incompatibility: "Incompatibility") -> bool:
+    def _is_collapsible(self, incompatibility: Incompatibility) -> bool:
         if self._derivations[incompatibility] > 1:
             return False
 
@@ -263,7 +263,7 @@ class _Writer:
             cause.other.cause, ConflictCause
         )
 
-    def _count_derivations(self, incompatibility: "Incompatibility") -> None:
+    def _count_derivations(self, incompatibility: Incompatibility) -> None:
         if incompatibility in self._derivations:
             self._derivations[incompatibility] += 1
         else:

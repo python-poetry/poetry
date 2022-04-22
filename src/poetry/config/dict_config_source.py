@@ -1,15 +1,16 @@
+from __future__ import annotations
+
 from typing import Any
-from typing import Dict
 
 from poetry.config.config_source import ConfigSource
 
 
 class DictConfigSource(ConfigSource):
     def __init__(self) -> None:
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return self._config
 
     def add_property(self, key: str, value: Any) -> None:

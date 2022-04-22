@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import os
 
-from typing import Dict
-from typing import List
 from typing import cast
 
 from cleo.helpers import argument
@@ -26,7 +26,8 @@ class PluginAddCommand(InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables --verbose).",
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         )
     ]
 
@@ -35,16 +36,19 @@ The <c1>plugin add</c1> command installs Poetry plugins globally.
 
 It works similarly to the <c1>add</c1> command:
 
-If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
+If you do not specify a version constraint, poetry will choose a suitable one based on\
+ the available package versions.
 
 You can specify a package in the following forms:
 
   - A single name (<b>requests</b>)
   - A name and a constraint (<b>requests@^2.23.0</b>)
   - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
-  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
+  - A git url with a revision\
+ (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
   - A git SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)
-  - A git SSH url with a revision (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)
+  - A git SSH url with a revision\
+ (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)
   - A file path (<b>../my-package/my-package.whl</b>)
   - A directory (<b>../my-package/</b>)
   - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\
@@ -70,9 +74,7 @@ You can specify a package in the following forms:
         # Plugins should be installed in the system env to be globally available
         system_env = EnvManager.get_system_env(naive=True)
 
-        env_dir = Path(
-            os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
-        )
+        env_dir = Path(os.getenv("POETRY_HOME") or system_env.path)
 
         # We check for the plugins existence first.
         if env_dir.joinpath("pyproject.toml").exists():
@@ -97,8 +99,9 @@ You can specify a package in the following forms:
         # We retrieve the packages installed in the system environment.
         # We assume that this environment will be a self contained virtual environment
         # built by the official installer or by pipx.
-        # If not, it might lead to side effects since other installed packages
-        # might not be required by Poetry but still taken into account when resolving dependencies.
+        # If not, it might lead to side effects since other installed packages might not
+        # be required by Poetry but still be taken into account when resolving
+        # dependencies.
         installed_repository = InstalledRepository.load(
             system_env, with_dependencies=True
         )
@@ -112,13 +115,16 @@ You can specify a package in the following forms:
 
                 break
 
-        root_package.python_versions = ".".join(
+        root_package.python_versions = ".".join(  # type: ignore[union-attr]
             str(v) for v in system_env.version_info[:3]
         )
         # We create a `pyproject.toml` file based on all the information
         # we have about the current environment.
         if not env_dir.joinpath("pyproject.toml").exists():
-            Factory.create_pyproject_from_package(root_package, env_dir)
+            Factory.create_pyproject_from_package(
+                root_package,  # type: ignore[arg-type]
+                env_dir,
+            )
 
         # We add the plugins to the dependencies section of the previously
         # created `pyproject.toml` file
@@ -170,8 +176,8 @@ You can specify a package in the following forms:
         )
 
     def get_existing_packages_from_input(
-        self, packages: List[str], poetry_content: Dict, target_section: str
-    ) -> List[str]:
+        self, packages: list[str], poetry_content: dict, target_section: str
+    ) -> list[str]:
         existing_packages = []
 
         for name in packages:
@@ -181,7 +187,7 @@ You can specify a package in the following forms:
 
         return existing_packages
 
-    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
+    def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(
             "The following plugins are already present in the "
             "<c2>pyproject.toml</c2> file and will be skipped:\n"

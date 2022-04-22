@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -26,7 +28,7 @@ def repo() -> Repository:
 
 
 @pytest.fixture
-def pool(repo: "TestRepository") -> Pool:
+def pool(repo: TestRepository) -> Pool:
     pool = Pool()
     pool.add_repository(repo)
 

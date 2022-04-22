@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 import urllib.parse
@@ -5,10 +7,6 @@ import urllib.parse
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
 
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
@@ -38,17 +36,17 @@ if TYPE_CHECKING:
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
-def get_package(name: str, version: Union[str, "Version"]) -> Package:
+def get_package(name: str, version: str | Version) -> Package:
     return Package(name, version)
 
 
 def get_dependency(
     name: str,
-    constraint: Optional[Union[str, Dict[str, Any]]] = None,
-    groups: Optional[List[str]] = None,
+    constraint: str | dict[str, Any] | None = None,
+    groups: list[str] | None = None,
     optional: bool = False,
     allows_prereleases: bool = False,
-) -> "DependencyTypes":
+) -> DependencyTypes:
     if constraint is None:
         constraint = "*"
 
@@ -61,7 +59,7 @@ def get_dependency(
     return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
-def fixture(path: Optional[str] = None) -> Path:
+def fixture(path: str | None = None) -> Path:
     if path:
         return FIXTURE_PATH / path
     else:
@@ -125,35 +123,35 @@ class TestExecutor(Executor):
         self._uninstalls = []
 
     @property
-    def installations(self) -> List[Package]:
+    def installations(self) -> list[Package]:
         return self._installs
 
     @property
-    def updates(self) -> List[Package]:
+    def updates(self) -> list[Package]:
         return self._updates
 
     @property
-    def removals(self) -> List[Package]:
+    def removals(self) -> list[Package]:
         return self._uninstalls
 
-    def _do_execute_operation(self, operation: "OperationTypes") -> None:
+    def _do_execute_operation(self, operation: OperationTypes) -> None:
         super()._do_execute_operation(operation)
 
         if not operation.skipped:
             getattr(self, f"_{operation.job_type}s").append(operation.package)
 
-    def _execute_install(self, operation: "OperationTypes") -> int:
+    def _execute_install(self, operation: OperationTypes) -> int:
         return 0
 
-    def _execute_update(self, operation: "OperationTypes") -> int:
+    def _execute_update(self, operation: OperationTypes) -> int:
         return 0
 
-    def _execute_remove(self, operation: "OperationTypes") -> int:
+    def _execute_remove(self, operation: OperationTypes) -> int:
         return 0
 
 
 class PoetryTestApplication(Application):
-    def __init__(self, poetry: "Poetry"):
+    def __init__(self, poetry: Poetry):
         super().__init__()
         self._poetry = poetry
 
@@ -168,7 +166,7 @@ class PoetryTestApplication(Application):
 
 
 class TestLocker(Locker):
-    def __init__(self, lock: Union[str, Path], local_config: Dict):
+    def __init__(self, lock: str | Path, local_config: dict):
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
@@ -183,12 +181,12 @@ class TestLocker(Locker):
     def is_locked(self) -> bool:
         return self._locked
 
-    def locked(self, is_locked: bool = True) -> "TestLocker":
+    def locked(self, is_locked: bool = True) -> TestLocker:
         self._locked = is_locked
 
         return self
 
-    def mock_lock_data(self, data: Dict) -> None:
+    def mock_lock_data(self, data: dict) -> None:
         self.locked()
 
         self._lock_data = data
@@ -196,7 +194,7 @@ class TestLocker(Locker):
     def is_fresh(self) -> bool:
         return True
 
-    def _write_lock_data(self, data: "TOMLDocument") -> None:
+    def _write_lock_data(self, data: TOMLDocument) -> None:
         if self._write:
             super()._write_lock_data(data)
             self._locked = True
@@ -206,16 +204,17 @@ class TestLocker(Locker):
 
 
 class TestRepository(Repository):
-    def find_packages(self, dependency: "Dependency") -> List[Package]:
+    def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = super().find_packages(dependency)
         if len(packages) == 0:
             raise PackageNotFound(f"Package [{dependency.name}] not found.")
 
         return packages
 
-    def find_links_for_package(self, package: Package) -> List[Link]:
+    def find_links_for_package(self, package: Package) -> list[Link]:
         return [
             Link(
-                f"https://foo.bar/files/{escape_name(package.name)}-{escape_version(package.version.text)}-py2.py3-none-any.whl"
+                f"https://foo.bar/files/{escape_name(package.name)}"
+                f"-{escape_version(package.version.text)}-py2.py3-none-any.whl"
             )
         ]

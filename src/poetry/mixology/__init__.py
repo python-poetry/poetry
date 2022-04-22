@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
 
 from poetry.mixology.version_solver import VersionSolver
 
@@ -14,11 +14,11 @@ if TYPE_CHECKING:
 
 
 def resolve_version(
-    root: "ProjectPackage",
-    provider: "Provider",
-    locked: Dict[str, "DependencyPackage"] = None,
-    use_latest: List[str] = None,
-) -> "SolverResult":
+    root: ProjectPackage,
+    provider: Provider,
+    locked: dict[str, list[DependencyPackage]] = None,
+    use_latest: list[str] = None,
+) -> SolverResult:
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
 
     return solver.solve()

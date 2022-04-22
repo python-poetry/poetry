@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -58,14 +60,14 @@ url = "{_existing_source.url}"
 
 
 @pytest.fixture
-def poetry_with_source(project_factory: "ProjectFactory") -> "Poetry":
+def poetry_with_source(project_factory: ProjectFactory) -> Poetry:
     return project_factory(pyproject_content=PYPROJECT_WITH_SOURCES)
 
 
 @pytest.fixture
 def add_multiple_sources(
-    command_tester_factory: "CommandTesterFactory",
-    poetry_with_source: "Poetry",
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_source: Poetry,
     source_one: Source,
     source_two: Source,
 ) -> None:

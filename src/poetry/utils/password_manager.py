@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 import logging
 
 from contextlib import suppress
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 
 if TYPE_CHECKING:
@@ -32,7 +32,7 @@ class KeyRing:
     def is_available(self) -> bool:
         return self._is_available
 
-    def get_password(self, name: str, username: str) -> Optional[str]:
+    def get_password(self, name: str, username: str) -> str | None:
         if not self.is_available():
             return None
 
@@ -94,7 +94,7 @@ class KeyRing:
 
         backend = keyring.get_keyring()
         name = backend.name.split(" ")[0]
-        if name == "fail":
+        if name in ("fail", "null"):
             logger.debug("No suitable keyring backend found")
             self._is_available = False
         elif "plaintext" in backend.name.lower():
@@ -107,7 +107,7 @@ class KeyRing:
                 backends = keyring.backend.get_all_keyring()
 
                 self._is_available = any(
-                    b.name.split(" ")[0] not in ["chainer", "fail"]
+                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
                     and "plaintext" not in b.name.lower()
                     for b in backends
                 )
@@ -119,12 +119,12 @@ class KeyRing:
 
 
 class PasswordManager:
-    def __init__(self, config: "Config") -> None:
+    def __init__(self, config: Config) -> None:
         self._config = config
-        self._keyring = None
+        self._keyring: KeyRing | None = None
 
     @property
-    def keyring(self) -> Optional[KeyRing]:
+    def keyring(self) -> KeyRing:
         if self._keyring is None:
             self._keyring = KeyRing("poetry-repository")
             if not self._keyring.is_available():
@@ -140,7 +140,7 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str:
+    def get_pypi_token(self, name: str) -> str | None:
         if not self.keyring.is_available():
             return self._config.get(f"pypi-token.{name}")
 
@@ -152,7 +152,7 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
+    def get_http_auth(self, name: str) -> dict[str, str] | None:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")

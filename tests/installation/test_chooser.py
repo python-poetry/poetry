@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
 
 import pytest
 
@@ -45,10 +42,10 @@ def env() -> MockEnv:
 
 
 @pytest.fixture()
-def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
+def mock_pypi(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> Optional[List[Union[int, Dict[str, Any], str]]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str] | None:
         parts = uri.rsplit("/")
 
         name = parts[-3]
@@ -72,10 +69,10 @@ def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
 
 
 @pytest.fixture()
-def mock_legacy(http: Type["httpretty.httpretty"]) -> None:
+def mock_legacy(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> List[Union[int, Dict[str, Any], str]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str]:
         parts = uri.rsplit("/")
         name = parts[-2]
 
@@ -207,7 +204,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     package = Package("isort", "4.3.4")
     files = [
         {
-            "hash": "sha256:b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8",
+            "hash": "sha256:b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8",  # noqa: E501
             "filename": "isort-4.3.4.tar.gz",
         }
     ]
@@ -240,7 +237,7 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     package = Package("isort", "4.3.4")
     files = [
         {
-            "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",  # noqa: E501
             "filename": "isort-4.3.4.tar.gz",
         }
     ]

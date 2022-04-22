@@ -1,10 +1,6 @@
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    import logging
+from __future__ import annotations
 
 
 class Formatter:
-    def format(self, record: "logging.LogRecord") -> str:
+    def format(self, record: str) -> str:
         raise NotImplementedError()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 
@@ -6,11 +8,11 @@ if TYPE_CHECKING:
 
 
 class BaseInstaller:
-    def install(self, package: "Package") -> None:
+    def install(self, package: Package) -> None:
         raise NotImplementedError
 
-    def update(self, source: "Package", target: "Package") -> None:
+    def update(self, source: Package, target: Package) -> None:
         raise NotImplementedError
 
-    def remove(self, package: "Package") -> None:
+    def remove(self, package: Package) -> None:
         raise NotImplementedError

@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+import json
 import logging
 import tempfile
+import uuid
 
+from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -92,7 +97,7 @@ resolved_reference = "123456"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = [
@@ -103,7 +108,7 @@ B = []
 git-package = []
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_locker_properly_loads_extras(locker: Locker):
@@ -301,13 +306,13 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_lock_file_should_not_have_mixed_types(locker: Locker, root: ProjectPackage):
@@ -341,7 +346,7 @@ foo = ["B (>=1.0.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -350,7 +355,7 @@ A = []
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    assert expected == content
+    assert content == expected
 
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker: Locker):
@@ -371,7 +376,7 @@ foo = ["bar"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -418,17 +423,17 @@ reference = "legacy"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
-    locker: Locker, caplog: "LogCaptureFixture"
+    locker: Locker, caplog: LogCaptureFixture
 ):
     version = ".".join(Version.parse(Locker._VERSION).next_minor().text.split(".")[:2])
     content = f"""\
@@ -455,11 +460,11 @@ The lock file might not be compatible with the current version of Poetry.
 Upgrade Poetry to ensure the lock file is read properly or, alternatively, \
 regenerate the lock file with the `poetry lock` command.\
 """
-    assert expected == record.message
+    assert record.message == expected
 
 
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
-    locker: Locker, caplog: "LogCaptureFixture"
+    locker: Locker, caplog: LogCaptureFixture
 ):
     content = """\
 [metadata]
@@ -502,7 +507,7 @@ B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -511,11 +516,11 @@ A = []
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    assert expected == content
+    assert content == expected
 
 
-def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
-    locker: Locker, caplog: "LogCaptureFixture"
+def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
+    locker: Locker, caplog: LogCaptureFixture
 ):
     current_version = Version.parse(Locker._VERSION)
     older_version = ".".join(
@@ -596,17 +601,17 @@ F = {git = "https://github.com/python-poetry/poetry.git", branch = "foo"}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
 """
 
-    assert expected == content
+    assert content == expected
 
 
 def test_locked_repository_uses_root_dir_of_package(
-    locker: Locker, mocker: "MockerFixture"
+    locker: Locker, mocker: MockerFixture
 ):
     content = """\
 [[package]]
@@ -649,3 +654,46 @@ lib-b = []
     assert root_dir.match("*/lib/libA")
     # relative_to raises an exception if not relative - is_relative_to comes in py3.9
     assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None
+
+
+@pytest.mark.parametrize(
+    ("local_config", "fresh"),
+    [
+        ({}, True),
+        ({"dependencies": [uuid.uuid4().hex]}, True),
+        (
+            {
+                "dependencies": [uuid.uuid4().hex],
+                "dev-dependencies": [uuid.uuid4().hex],
+            },
+            True,
+        ),
+        (
+            {
+                "dependencies": [uuid.uuid4().hex],
+                "dev-dependencies": None,
+            },
+            True,
+        ),
+        ({"dependencies": [uuid.uuid4().hex], "groups": [uuid.uuid4().hex]}, False),
+    ],
+)
+def test_content_hash_with_legacy_is_compatible(
+    local_config: dict[str, list[str]], fresh: bool, locker: Locker
+) -> None:
+    # old hash generation
+    relevant_content = {}
+    for key in locker._legacy_keys:
+        relevant_content[key] = local_config.get(key)
+
+    locker = locker.__class__(
+        lock=locker.lock.path,
+        local_config=local_config,
+    )
+
+    old_content_hash = sha256(
+        json.dumps(relevant_content, sort_keys=True).encode()
+    ).hexdigest()
+    content_hash = locker._get_content_hash()
+
+    assert (content_hash == old_content_hash) or fresh

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 
@@ -6,8 +8,6 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Optional
-from typing import Type
 from typing import cast
 
 from cleo.application import Application as BaseApplication
@@ -16,7 +16,7 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
-from poetry.core.utils._compat import PY37
+from cleo.io.null_io import NullIO
 
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
 
 def load_command(name: str) -> Callable:
-    def _load() -> Type[Command]:
+    def _load() -> type[Command]:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
@@ -53,7 +53,6 @@ COMMANDS = [
     "build",
     "check",
     "config",
-    "export",
     "init",
     "install",
     "lock",
@@ -94,8 +93,8 @@ class Application(BaseApplication):
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
-        self._poetry = None
-        self._io: Optional["IO"] = None
+        self._poetry: Poetry | None = None
+        self._io: IO | None = None
         self._disable_plugins = False
         self._plugins_loaded = False
 
@@ -109,7 +108,7 @@ class Application(BaseApplication):
         self.set_command_loader(command_loader)
 
     @property
-    def poetry(self) -> "Poetry":
+    def poetry(self) -> Poetry:
         from pathlib import Path
 
         from poetry.factory import Factory
@@ -132,25 +131,11 @@ class Application(BaseApplication):
 
     def create_io(
         self,
-        input: Optional["Input"] = None,
-        output: Optional["Output"] = None,
-        error_output: Optional["Output"] = None,
-    ) -> "IO":
+        input: Input | None = None,
+        output: Output | None = None,
+        error_output: Output | None = None,
+    ) -> IO:
         io = super().create_io(input, output, error_output)
-
-        # Remove when support for Python 3.6 is removed
-        # https://github.com/python-poetry/poetry/issues/3412
-        if (
-            not PY37
-            and hasattr(io.output, "_stream")
-            and hasattr(io.output._stream, "buffer")
-            and io.output._stream.encoding != "utf-8"
-        ):
-            import io as io_
-
-            io.output._stream = io_.TextIOWrapper(
-                io.output._stream.buffer, encoding="utf-8"
-            )
 
         # Set our own CLI styles
         formatter = io.output.formatter
@@ -174,21 +159,21 @@ class Application(BaseApplication):
 
         return io
 
-    def render_error(self, error: Exception, io: "IO") -> None:
+    def render_error(self, error: Exception, io: IO) -> None:
         # We set the solution provider repository here to load providers
         # only when an error occurs
         self.set_solution_provider_repository(self._get_solution_provider_repository())
 
         super().render_error(error, io)
 
-    def _run(self, io: "IO") -> int:
+    def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
 
         self._load_plugins(io)
 
         return super()._run(io)
 
-    def _configure_io(self, io: "IO") -> None:
+    def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
         # is the "run" command.
         definition = self.definition
@@ -225,7 +210,7 @@ class Application(BaseApplication):
         return super()._configure_io(io)
 
     def register_command_loggers(
-        self, event: "ConsoleCommandEvent", event_name: str, _: Any
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.logging.io_formatter import IOFormatter
         from poetry.console.logging.io_handler import IOHandler
@@ -247,8 +232,8 @@ class Application(BaseApplication):
         handler = IOHandler(io)
         handler.setFormatter(IOFormatter())
 
-        for logger in loggers:
-            logger = logging.getLogger(logger)
+        for name in loggers:
+            logger = logging.getLogger(name)
 
             logger.handlers = [handler]
 
@@ -266,7 +251,7 @@ class Application(BaseApplication):
             logger.setLevel(level)
 
     def configure_env(
-        self, event: "ConsoleCommandEvent", event_name: str, _: Any
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.env_command import EnvCommand
 
@@ -291,11 +276,11 @@ class Application(BaseApplication):
         command.set_env(env)
 
     def configure_installer(
-        self, event: "ConsoleCommandEvent", event_name: str, _: Any
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.installer_command import InstallerCommand
 
-        command: "InstallerCommand" = cast(InstallerCommand, event.command)
+        command: InstallerCommand = cast(InstallerCommand, event.command)
         if not isinstance(command, InstallerCommand):
             return
 
@@ -306,7 +291,7 @@ class Application(BaseApplication):
 
         self._configure_installer(command, event.io)
 
-    def _configure_installer(self, command: "InstallerCommand", io: "IO") -> None:
+    def _configure_installer(self, command: InstallerCommand, io: IO) -> None:
         from poetry.installation.installer import Installer
 
         poetry = command.poetry
@@ -321,23 +306,27 @@ class Application(BaseApplication):
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
 
-    def _load_plugins(self, io: "IO") -> None:
+    def _load_plugins(self, io: IO = None) -> None:
         if self._plugins_loaded:
             return
+
+        if io is None:
+            io = NullIO()
 
         self._disable_plugins = io.input.has_parameter_option("--no-plugins")
 
         if not self._disable_plugins:
+            from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
-            manager = PluginManager("application.plugin")
+            manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
 
         self._plugins_loaded = True
 
     @property
-    def _default_definition(self) -> "Definition":
+    def _default_definition(self) -> Definition:
         from cleo.io.inputs.option import Option
 
         definition = super()._default_definition
@@ -348,12 +337,12 @@ class Application(BaseApplication):
 
         return definition
 
-    def _get_solution_provider_repository(self) -> "SolutionProviderRepository":
+    def _get_solution_provider_repository(self) -> SolutionProviderRepository:
         from crashtest.solution_providers.solution_provider_repository import (
             SolutionProviderRepository,
         )
 
-        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (
+        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (  # noqa: E501
             PythonRequirementSolutionProvider,
         )
 

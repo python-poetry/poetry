@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import option
 
@@ -17,7 +18,7 @@ class EnvInfoCommand(Command):
 
     options = [option("path", "p", "Only display the environment's path.")]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from poetry.utils.env import EnvManager
 
         env = EnvManager(self.poetry).get()
@@ -33,19 +34,22 @@ class EnvInfoCommand(Command):
         self._display_complete_info(env)
         return None
 
-    def _display_complete_info(self, env: "Env") -> None:
+    def _display_complete_info(self, env: Env) -> None:
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.line("")
         self.line("<b>Virtualenv</b>")
         listing = [
             f"<info>Python</info>:         <comment>{env_python_version}</>",
             f"<info>Implementation</info>: <comment>{env.python_implementation}</>",
-            f"<info>Path</info>:           <comment>{env.path if env.is_venv() else 'NA'}</>",
-            f"<info>Executable</info>:     <comment>{env.python if env.is_venv() else 'NA'}</>",
+            "<info>Path</info>:          "
+            f" <comment>{env.path if env.is_venv() else 'NA'}</>",
+            "<info>Executable</info>:    "
+            f" <comment>{env.python if env.is_venv() else 'NA'}</>",
         ]
         if env.is_venv():
             listing.append(
-                f"<info>Valid</info>:          <{'comment' if env.is_sane() else 'error'}>{env.is_sane()}</>"
+                "<info>Valid</info>:         "
+                f" <{'comment' if env.is_sane() else 'error'}>{env.is_sane()}</>"
             )
         self.line("\n".join(listing))
 

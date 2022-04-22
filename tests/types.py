@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 from tests.compat import Protocol
 
@@ -23,34 +23,32 @@ class CommandTesterFactory(Protocol):
     def __call__(
         self,
         command: str,
-        poetry: Optional["Poetry"] = None,
-        installer: Optional["Installer"] = None,
-        executor: Optional["Executor"] = None,
-        environment: Optional["Env"] = None,
-    ) -> "CommandTester":
+        poetry: Poetry | None = None,
+        installer: Installer | None = None,
+        executor: Executor | None = None,
+        environment: Env | None = None,
+    ) -> CommandTester:
         ...
 
 
 class SourcesFactory(Protocol):
-    def __call__(
-        self, poetry: "Poetry", sources: "Source", config: "Config", io: "IO"
-    ) -> None:
+    def __call__(self, poetry: Poetry, sources: Source, config: Config, io: IO) -> None:
         ...
 
 
 class ProjectFactory(Protocol):
     def __call__(
         self,
-        name: Optional[str] = None,
-        dependencies: Optional[Dict[str, str]] = None,
-        dev_dependencies: Optional[Dict[str, str]] = None,
-        pyproject_content: Optional[str] = None,
-        poetry_lock_content: Optional[str] = None,
+        name: str | None = None,
+        dependencies: dict[str, str] | None = None,
+        dev_dependencies: dict[str, str] | None = None,
+        pyproject_content: str | None = None,
+        poetry_lock_content: str | None = None,
         install_deps: bool = True,
-    ) -> "Poetry":
+    ) -> Poetry:
         ...
 
 
 class FixtureDirGetter(Protocol):
-    def __call__(self, name: str) -> "Path":
+    def __call__(self, name: str) -> Path:
         ...

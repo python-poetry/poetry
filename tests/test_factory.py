@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -24,7 +26,7 @@ fixtures_dir = Path(__file__).parent / "fixtures"
 
 
 class MyPlugin(Plugin):
-    def activate(self, poetry: "Poetry", io: "IO") -> None:
+    def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Updating version")
         poetry.package.set_version("9.9.9")
 
@@ -103,7 +105,8 @@ def test_create_poetry():
     assert functools32.pretty_constraint == "^3.2.3"
     assert (
         str(functools32.marker)
-        == 'python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5"'
+        == 'python_version ~= "2.7" and sys_platform == "win32" or python_version in'
+        ' "3.4 3.5"'
     )
 
     assert "db" in package.extras
@@ -287,10 +290,10 @@ def test_create_poetry_fails_on_invalid_configuration():
 The Poetry configuration is invalid:
   - 'description' is a required property
 """
-    assert expected == str(e.value)
+    assert str(e.value) == expected
 
 
-def test_create_poetry_with_local_config(fixture_dir: "FixtureDirGetter"):
+def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter):
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
 
     assert not poetry.config.get("virtualenvs.in-project")
@@ -299,7 +302,7 @@ def test_create_poetry_with_local_config(fixture_dir: "FixtureDirGetter"):
     assert not poetry.config.get("virtualenvs.options.system-site-packages")
 
 
-def test_create_poetry_with_plugins(mocker: "MockerFixture"):
+def test_create_poetry_with_plugins(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[EntryPoint("my-plugin", "tests.test_factory", "MyPlugin")],

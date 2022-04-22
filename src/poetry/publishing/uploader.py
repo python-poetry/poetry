@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import hashlib
 import io
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
 
 import requests
 
@@ -38,7 +35,7 @@ _has_blake2 = hasattr(hashlib, "blake2b")
 
 
 class UploadError(Exception):
-    def __init__(self, error: Union[ConnectionError, HTTPError, str]) -> None:
+    def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
             message = (
                 f"HTTP Error {error.response.status_code}: {error.response.reason}"
@@ -54,12 +51,12 @@ class UploadError(Exception):
 
 
 class Uploader:
-    def __init__(self, poetry: "Poetry", io: "NullIO") -> None:
+    def __init__(self, poetry: Poetry, io: NullIO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
-        self._username: Optional[str] = None
-        self._password: Optional[str] = None
+        self._username: str | None = None
+        self._password: str | None = None
 
     @property
     def user_agent(self) -> str:
@@ -77,20 +74,21 @@ class Uploader:
         return adapters.HTTPAdapter(max_retries=retry)
 
     @property
-    def files(self) -> List["Path"]:
+    def files(self) -> list[Path]:
         dist = self._poetry.file.parent / "dist"
         version = normalize_version(self._package.version.text)
 
         wheels = list(
             dist.glob(
-                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}-*.whl"
+                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}"
+                "-*.whl"
             )
         )
         tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
 
         return sorted(wheels + tars)
 
-    def auth(self, username: Optional[str], password: Optional[str]) -> None:
+    def auth(self, username: str | None, password: str | None) -> None:
         self._username = username
         self._password = password
 
@@ -106,7 +104,7 @@ class Uploader:
 
         return session
 
-    def get_auth(self) -> Optional[Tuple[str, str]]:
+    def get_auth(self) -> tuple[str, str] | None:
         if self._username is None or self._password is None:
             return None
 
@@ -115,9 +113,10 @@ class Uploader:
     def upload(
         self,
         url: str,
-        cert: Optional["Path"] = None,
-        client_cert: Optional["Path"] = None,
+        cert: Path | None = None,
+        client_cert: Path | None = None,
         dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         session = self.make_session()
 
@@ -128,11 +127,11 @@ class Uploader:
             session.cert = str(client_cert)
 
         try:
-            self._upload(session, url, dry_run)
+            self._upload(session, url, dry_run, skip_existing)
         finally:
             session.close()
 
-    def post_data(self, file: "Path") -> Dict[str, Any]:
+    def post_data(self, file: Path) -> dict[str, Any]:
         meta = Metadata.from_package(self._package)
 
         file_type = self._get_type(file)
@@ -152,11 +151,11 @@ class Uploader:
 
         md5_digest = md5_hash.hexdigest()
         sha2_digest = sha256_hash.hexdigest()
-        blake2_256_digest: Optional[str] = None
+        blake2_256_digest: str | None = None
         if _has_blake2:
             blake2_256_digest = blake2_256_hash.hexdigest()
 
-        py_version: Optional[str] = None
+        py_version: str | None = None
         if file_type == "bdist_wheel":
             wheel_info = wheel_file_re.match(file.name)
             if wheel_info is not None:
@@ -210,19 +209,24 @@ class Uploader:
         return data
 
     def _upload(
-        self, session: requests.Session, url: str, dry_run: Optional[bool] = False
+        self,
+        session: requests.Session,
+        url: str,
+        dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         for file in self.files:
             # TODO: Check existence
 
-            self._upload_file(session, url, file, dry_run)
+            self._upload_file(session, url, file, dry_run, skip_existing)
 
     def _upload_file(
         self,
         session: requests.Session,
         url: str,
-        file: "Path",
-        dry_run: Optional[bool] = False,
+        file: Path,
+        dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
 
@@ -235,7 +239,7 @@ class Uploader:
             }
         )
 
-        data_to_send: List[Tuple[str, Any]] = self._prepare_data(data)
+        data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 
         with file.open("rb") as fp:
             data_to_send.append(
@@ -277,6 +281,12 @@ class Uploader:
                 elif resp.status_code == 400 and "was ever registered" in resp.text:
                     self._register(session, url)
                     resp.raise_for_status()
+                elif skip_existing and self._is_file_exists_error(resp):
+                    bar.set_format(
+                        f" - Uploading <c1>{file.name}</c1> <warning>File exists."
+                        " Skipping</>"
+                    )
+                    bar.display()
                 else:
                     resp.raise_for_status()
             except (requests.ConnectionError, requests.HTTPError) as e:
@@ -295,7 +305,7 @@ class Uploader:
         dist = self._poetry.file.parent / "dist"
         file = (
             dist
-            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"
+            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"  # noqa: E501
         )
 
         if not file.exists():
@@ -317,7 +327,7 @@ class Uploader:
 
         return resp
 
-    def _prepare_data(self, data: Dict) -> List[Tuple[str, str]]:
+    def _prepare_data(self, data: dict) -> list[tuple[str, str]]:
         data_to_send = []
         for key, value in data.items():
             if not isinstance(value, (list, tuple)):
@@ -328,7 +338,7 @@ class Uploader:
 
         return data_to_send
 
-    def _get_type(self, file: "Path") -> str:
+    def _get_type(self, file: Path) -> str:
         exts = file.suffixes
         if exts[-1] == ".whl":
             return "bdist_wheel"
@@ -336,3 +346,23 @@ class Uploader:
             return "sdist"
 
         raise ValueError("Unknown distribution format " + "".join(exts))
+
+    def _is_file_exists_error(self, response: requests.Response) -> bool:
+        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32  # noqa: E501
+        status = response.status_code
+        reason = response.reason.lower()
+        text = response.text.lower()
+        reason_and_text = reason + text
+
+        return (
+            # pypiserver (https://pypi.org/project/pypiserver)
+            status == 409
+            # PyPI / TestPyPI / GCP Artifact Registry
+            or (status == 400 and "already exist" in reason_and_text)
+            # Nexus Repository OSS (https://www.sonatype.com/nexus-repository-oss)
+            or (status == 400 and "updating asset" in reason_and_text)
+            # Artifactory (https://jfrog.com/artifactory/)
+            or (status == 403 and "overwrite artifact" in reason_and_text)
+            # Gitlab Enterprise Edition (https://about.gitlab.com)
+            or (status == 400 and "already been taken" in reason_and_text)
+        )

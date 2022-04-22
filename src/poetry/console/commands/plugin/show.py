@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from typing import TYPE_CHECKING
 from typing import DefaultDict
-from typing import Dict
-from typing import List
-from typing import Union
 
 from poetry.console.commands.command import Command
 
@@ -20,13 +19,14 @@ class PluginShowCommand(Command):
 
     def handle(self) -> int:
         from poetry.plugins.application_plugin import ApplicationPlugin
+        from poetry.plugins.plugin import Plugin
         from poetry.plugins.plugin_manager import PluginManager
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.utils.env import EnvManager
         from poetry.utils.helpers import canonicalize_name
         from poetry.utils.helpers import pluralize
 
-        plugins: DefaultDict[str, Dict[str, Union["Package", List[str]]]] = defaultdict(
+        plugins: DefaultDict[str, dict[str, Package | list[str]]] = defaultdict(
             lambda: {
                 "package": None,
                 "plugins": [],
@@ -35,8 +35,8 @@ class PluginShowCommand(Command):
         )
 
         entry_points = (
-            PluginManager("application.plugin").get_plugin_entry_points()
-            + PluginManager("plugin").get_plugin_entry_points()
+            PluginManager(ApplicationPlugin.group).get_plugin_entry_points()
+            + PluginManager(Plugin.group).get_plugin_entry_points()
         )
 
         system_env = EnvManager.get_system_env(naive=True)
@@ -52,7 +52,7 @@ class PluginShowCommand(Command):
             if issubclass(plugin, ApplicationPlugin):
                 category = "application_plugins"
 
-            package = packages_by_name[canonicalize_name(entry_point.name)]
+            package = packages_by_name[canonicalize_name(entry_point.distro.name)]
             plugins[package.pretty_name]["package"] = package
             plugins[package.pretty_name][category].append(entry_point)
 
@@ -82,7 +82,8 @@ class PluginShowCommand(Command):
                 self.line("      <info>Dependencies</info>")
                 for dependency in package.requires:
                     self.line(
-                        f"        - {dependency.pretty_name} (<c2>{dependency.pretty_constraint}</c2>)"
+                        f"        - {dependency.pretty_name}"
+                        f" (<c2>{dependency.pretty_constraint}</c2>)"
                     )
 
         return 0

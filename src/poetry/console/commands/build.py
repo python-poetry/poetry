@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.helpers import option
 
 from poetry.console.commands.env_command import EnvCommand
@@ -21,10 +23,7 @@ class BuildCommand(EnvCommand):
     def handle(self) -> None:
         from poetry.core.masonry.builder import Builder
 
-        fmt = "all"
-        if self.option("format"):
-            fmt = self.option("format")
-
+        fmt = self.option("format") or "all"
         package = self.poetry.package
         self.line(
             f"Building <c1>{package.pretty_name}</c1> (<c2>{package.version}</c2>)"

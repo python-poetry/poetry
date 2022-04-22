@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 
 from pathlib import Path
@@ -11,7 +13,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-def test_env_site_simple(tmp_dir: str, mocker: "MockerFixture"):
+def test_env_site_simple(tmp_dir: str, mocker: MockerFixture):
     # emulate permission error when creating directory
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError())
     site_packages = SitePackages(Path("/non-existent"), fallbacks=[Path(tmp_dir)])

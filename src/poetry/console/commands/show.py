@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Union
 
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.group_command import GroupCommand
 
 
 if TYPE_CHECKING:
@@ -15,41 +14,18 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.packages.project_package import ProjectPackage
-    from poetry.repositories import Repository
     from poetry.repositories.installed_repository import InstalledRepository
+    from poetry.repositories.repository import Repository
 
 
-class ShowCommand(EnvCommand):
+class ShowCommand(GroupCommand):
 
     name = "show"
     description = "Shows information about packages."
 
     arguments = [argument("package", "The package to inspect", optional=True)]
     options = [
-        option(
-            "without",
-            None,
-            "Do not show the information of the specified groups' dependencies.",
-            flag=False,
-            multiple=True,
-        ),
-        option(
-            "with",
-            None,
-            "Show the information of the specified optional groups' dependencies as well.",
-            flag=False,
-            multiple=True,
-        ),
-        option(
-            "default", None, "Only show the information of the default dependencies."
-        ),
-        option(
-            "only",
-            None,
-            "Only show the information of dependencies belonging to the specified groups.",
-            flag=False,
-            multiple=True,
-        ),
+        *GroupCommand._group_dependency_options(),
         option(
             "no-dev",
             None,
@@ -74,7 +50,7 @@ lists all packages available."""
 
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from cleo.io.null_io import NullIO
         from cleo.terminal import Terminal
 
@@ -92,49 +68,15 @@ lists all packages available."""
         if self.option("outdated"):
             self._io.input.set_option("latest", True)
 
-        excluded_groups = []
-        included_groups = []
-        only_groups = []
-        if self.option("no-dev"):
-            self.line(
-                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated, "
-                "use the `<fg=yellow;options=bold>--without dev</>` notation instead.</warning>"
+        if not self.poetry.locker.is_locked():
+            self.line_error(
+                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
+                " it.</error>"
             )
-            excluded_groups.append("dev")
+            return 1
 
-        excluded_groups.extend(
-            [
-                group.strip()
-                for groups in self.option("without")
-                for group in groups.split(",")
-            ]
-        )
-        included_groups.extend(
-            [
-                group.strip()
-                for groups in self.option("with")
-                for group in groups.split(",")
-            ]
-        )
-        only_groups.extend(
-            [
-                group.strip()
-                for groups in self.option("only")
-                for group in groups.split(",")
-            ]
-        )
-
-        if self.option("default"):
-            only_groups.append("default")
-
-        locked_repo = self.poetry.locker.locked_repository(True)
-
-        if only_groups:
-            root = self.poetry.package.with_dependency_groups(only_groups, only=True)
-        else:
-            root = self.poetry.package.with_dependency_groups(
-                included_groups
-            ).without_dependency_groups(excluded_groups)
+        locked_repo = self.poetry.locker.locked_repository()
+        root = self.project_with_activated_groups_only()
 
         # Show tree view if requested
         if self.option("tree") and not package:
@@ -201,7 +143,8 @@ lists all packages available."""
                 self.line("<info>dependencies</info>")
                 for dependency in pkg.requires:
                     self.line(
-                        f" - <c1>{dependency.pretty_name}</c1> <b>{dependency.pretty_constraint}</b>"
+                        f" - <c1>{dependency.pretty_name}</c1>"
+                        f" <b>{dependency.pretty_constraint}</b>"
                     )
 
             if required_by:
@@ -301,7 +244,10 @@ lists all packages available."""
             ):
                 continue
 
-            line = f"<fg={color}>{name:{name_length - len(install_marker)}}{install_marker}</>"
+            line = (
+                f"<fg={color}>"
+                f"{name:{name_length - len(install_marker)}}{install_marker}</>"
+            )
             if write_version:
                 version = get_package_version_display_string(
                     locked, root=self.poetry.file.parent
@@ -338,7 +284,7 @@ lists all packages available."""
         return None
 
     def display_package_tree(
-        self, io: "IO", package: "Package", installed_repo: "Repository"
+        self, io: IO, package: Package, installed_repo: Repository
     ) -> None:
         io.write(f"<c1>{package.pretty_name}</c1>")
         description = ""
@@ -357,7 +303,10 @@ lists all packages available."""
 
             level = 1
             color = self.colors[level]
-            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint}"
+            info = (
+                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
+                f" {dependency.pretty_constraint}"
+            )
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
@@ -369,10 +318,10 @@ lists all packages available."""
 
     def _display_tree(
         self,
-        io: "IO",
-        dependency: "Dependency",
-        installed_repo: "Repository",
-        packages_in_tree: List[str],
+        io: IO,
+        dependency: Dependency,
+        installed_repo: Repository,
+        packages_in_tree: list[str],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
@@ -400,7 +349,10 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = "(circular dependency aborted here)"
 
-            info = f"{tree_bar}── <{color}>{dependency.name}</{color}> {dependency.pretty_constraint} {circular_warn}"
+            info = (
+                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
+                f" {dependency.pretty_constraint} {circular_warn}"
+            )
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
@@ -412,7 +364,7 @@ lists all packages available."""
                     io, dependency, installed_repo, current_tree, tree_bar, level + 1
                 )
 
-    def _write_tree_line(self, io: "IO", line: str) -> None:
+    def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():
             line = line.replace("└", "`-")
             line = line.replace("├", "|-")
@@ -421,7 +373,7 @@ lists all packages available."""
 
         io.write_line(line)
 
-    def init_styles(self, io: "IO") -> None:
+    def init_styles(self, io: IO) -> None:
         from cleo.formatters.style import Style
 
         for color in self.colors:
@@ -430,8 +382,8 @@ lists all packages available."""
             io.error_output.formatter.set_style(color, style)
 
     def find_latest_package(
-        self, package: "Package", root: "ProjectPackage"
-    ) -> Union["Package", bool]:
+        self, package: Package, root: ProjectPackage
+    ) -> Package | bool:
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.provider import Provider
@@ -457,7 +409,7 @@ lists all packages available."""
 
         return selector.find_best_candidate(name, f">={package.pretty_version}")
 
-    def get_update_status(self, latest: "Package", package: "Package") -> str:
+    def get_update_status(self, latest: Package, package: Package) -> str:
         from poetry.core.semver.helpers import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
@@ -473,7 +425,7 @@ lists all packages available."""
         return "update-possible"
 
     def get_installed_status(
-        self, locked: "Package", installed_repo: "InstalledRepository"
+        self, locked: Package, installed_repo: InstalledRepository
     ) -> str:
         for package in installed_repo.packages:
             if locked.name == package.name:

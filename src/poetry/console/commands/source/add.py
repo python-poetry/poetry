@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -41,14 +42,14 @@ class SourceAddCommand(Command):
     ]
 
     @staticmethod
-    def source_to_table(source: Source) -> "Table":
-        source_table: "Table" = table()
+    def source_to_table(source: Source) -> Table:
+        source_table: Table = table()
         for key, value in source.to_dict().items():
             source_table.add(key, value)
         source_table.add(nl())
         return source_table
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from poetry.factory import Factory
         from poetry.repositories import Pool
 
@@ -59,11 +60,12 @@ class SourceAddCommand(Command):
 
         if is_default and is_secondary:
             self.line_error(
-                "Cannot configure a source as both <c1>default</c1> and <c1>secondary</c1>."
+                "Cannot configure a source as both <c1>default</c1> and"
+                " <c1>secondary</c1>."
             )
             return 1
 
-        new_source = Source(
+        new_source: Source | None = Source(
             name=name, url=url, default=is_default, secondary=is_secondary
         )
         existing_sources = self.poetry.get_sources()
@@ -73,18 +75,20 @@ class SourceAddCommand(Command):
         for source in existing_sources:
             if source == new_source:
                 self.line(
-                    f"Source with name <c1>{name}</c1> already exits. Skipping addition."
+                    f"Source with name <c1>{name}</c1> already exists. Skipping"
+                    " addition."
                 )
                 return 0
             elif source.default and is_default:
                 self.line_error(
-                    f"<error>Source with name <c1>{source.name}</c1> is already set to default. "
-                    f"Only one default source can be configured at a time.</error>"
+                    f"<error>Source with name <c1>{source.name}</c1> is already set to"
+                    " default. Only one default source can be configured at a"
+                    " time.</error>"
                 )
                 return 1
 
-            if source.name == name:
-                self.line(f"Source with name <c1>{name}</c1> already exits. Updating.")
+            if new_source and source.name == name:
+                self.line(f"Source with name <c1>{name}</c1> already exists. Updating.")
                 source = new_source
                 new_source = None
 

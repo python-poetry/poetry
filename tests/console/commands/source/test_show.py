@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -13,14 +15,14 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def tester(
-    command_tester_factory: "CommandTesterFactory",
-    poetry_with_source: "Poetry",
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_source: Poetry,
     add_multiple_sources: None,
-) -> "CommandTester":
+) -> CommandTester:
     return command_tester_factory("source show", poetry=poetry_with_source)
 
 
-def test_source_show_simple(tester: "CommandTester"):
+def test_source_show_simple(tester: CommandTester):
     tester.execute("")
 
     expected = """\
@@ -46,7 +48,7 @@ secondary  : no
     assert tester.status_code == 0
 
 
-def test_source_show_one(tester: "CommandTester", source_one: "Source"):
+def test_source_show_one(tester: CommandTester, source_one: Source):
     tester.execute(f"{source_one.name}")
 
     expected = """\
@@ -62,9 +64,7 @@ secondary  : no
     assert tester.status_code == 0
 
 
-def test_source_show_two(
-    tester: "CommandTester", source_one: "Source", source_two: "Source"
-):
+def test_source_show_two(tester: CommandTester, source_one: Source, source_two: Source):
     tester.execute(f"{source_one.name} {source_two.name}")
 
     expected = """\
@@ -85,7 +85,7 @@ secondary  : no
     assert tester.status_code == 0
 
 
-def test_source_show_error(tester: "CommandTester"):
+def test_source_show_error(tester: CommandTester):
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "No source found with name(s): error"
     assert tester.status_code == 1

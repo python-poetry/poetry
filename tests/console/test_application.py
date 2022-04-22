@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 from typing import TYPE_CHECKING
@@ -26,11 +28,10 @@ class FooCommand(Command):
 
 
 class AddCommandPlugin(ApplicationPlugin):
-    def activate(self, application: Application) -> None:
-        application.command_loader.register_factory("foo", lambda: FooCommand())
+    commands = [FooCommand]
 
 
-def test_application_with_plugins(mocker: "MockerFixture"):
+def test_application_with_plugins(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -49,7 +50,7 @@ def test_application_with_plugins(mocker: "MockerFixture"):
     assert tester.status_code == 0
 
 
-def test_application_with_plugins_disabled(mocker: "MockerFixture"):
+def test_application_with_plugins_disabled(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -68,7 +69,7 @@ def test_application_with_plugins_disabled(mocker: "MockerFixture"):
     assert tester.status_code == 0
 
 
-def test_application_execute_plugin_command(mocker: "MockerFixture"):
+def test_application_execute_plugin_command(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -88,7 +89,7 @@ def test_application_execute_plugin_command(mocker: "MockerFixture"):
 
 
 def test_application_execute_plugin_command_with_plugins_disabled(
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",

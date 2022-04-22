@@ -97,6 +97,13 @@ my-package
     └── __init__.py
 ```
 
+### Options
+
+* `--name`: Set the resulting package name.
+* `--src`: Use the src layout for the project.
+* `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
+
+
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
@@ -208,10 +215,10 @@ option is used.
 
 ### Options
 
-* `--without`: The dependency groups to ignore for installation.
-* `--with`: The optional dependency groups to include for installation.
-* `--only`: The only dependency groups to install.
-* `--default`: Only install the default dependencies.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -220,6 +227,9 @@ option is used.
 * `--dev-only`: Only install dev dependencies. (**Deprecated**)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
 
+{{% note %}}
+When `--only` is specified, `--with` and `--without` options are ignored.
+{{% /note %}}
 
 ## update
 
@@ -245,9 +255,17 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 
 ### Options
 
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--no-dev` : Do not install dev dependencies.
+* `--no-dev` : Do not update the development dependencies. (**Deprecated**)
 * `--lock` : Do not perform install (only update the lockfile).
+
+{{% note %}}
+When `--only` is specified, `--with` and `--without` options are ignored.
+{{% /note %}}
 
 ## add
 
@@ -385,7 +403,7 @@ about dependency groups.
 
 ### Options
 
-* `--group (-D)`: The group to remove the dependency from.
+* `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
@@ -418,15 +436,18 @@ required by
 
 ### Options
 
-* `--without`: Do not show the information of the specified groups' dependencies.
-* `--with`: Show the information of the specified optional groups' dependencies as well.
-* `--only`: Only show the information of dependencies belonging to the specified groups.
-* `--default`: Only show the information of the default dependencies.
-* `--no-dev`: Do not list the dev dependencies.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 
+{{% note %}}
+When `--only` is specified, `--with` and `--without` options are ignored.
+{{% /note %}}
 
 ## build
 
@@ -461,6 +482,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
 * `--dry-run`: Perform all actions except upload the package.
+* `--skip-existing`: Ignore errors from files already existing in the repository.
 
 ## config
 
@@ -599,8 +621,13 @@ poetry export -f requirements.txt --output requirements.txt
 ```
 
 {{% note %}}
-Only the `requirements.txt` format is currently supported.
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
+and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+{{% /note %}}
+
+{{% note %}}
+Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `default`
+group defined in `tool.poetry.dependencies` when used without specifying any options.
 {{% /note %}}
 
 ### Options
@@ -609,8 +636,12 @@ This command is also available as a pre-commit hook. See [pre-commit hooks](/doc
   Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
-* `--dev`: Include development dependencies.
+* `--dev`: Include development dependencies. (**Deprecated**)
 * `--extras (-E)`: Extra sets of dependencies to include.
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--default`: Only include the default dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.

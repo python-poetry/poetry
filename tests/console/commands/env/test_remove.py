@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
 
 import pytest
 
@@ -18,16 +19,16 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("env remove")
 
 
 def test_remove_by_python_version(
-    mocker: "MockerFixture",
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    mocker: MockerFixture,
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -40,14 +41,14 @@ def test_remove_by_python_version(
     assert not (venv_cache / f"{venv_name}-py3.6").exists()
 
     expected = f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_remove_by_name(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = ""
 
@@ -58,42 +59,42 @@ def test_remove_by_name(
 
         expected += f"Deleted virtualenv: {venv_cache / name}\n"
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
 def test_remove_all(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = {""}
     tester.execute("--all")
     for name in venvs_in_cache_dirs:
         assert not (venv_cache / name).exists()
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
-    assert expected == set(tester.io.fetch_output().split("\n"))
+    assert set(tester.io.fetch_output().split("\n")) == expected
 
 
 def test_remove_all_and_version(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = {""}
     tester.execute(f"--all {venvs_in_cache_dirs[0]}")
     for name in venvs_in_cache_dirs:
         assert not (venv_cache / name).exists()
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
-    assert expected == set(tester.io.fetch_output().split("\n"))
+    assert set(tester.io.fetch_output().split("\n")) == expected
 
 
 def test_remove_multiple(
-    tester: "CommandTester",
-    venvs_in_cache_dirs: List[str],
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
-    venv_cache: "Path",
+    venv_cache: Path,
 ):
     expected = {""}
     removed_envs = venvs_in_cache_dirs[0:2]
@@ -104,4 +105,4 @@ def test_remove_multiple(
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
     for name in remaining_envs:
         assert (venv_cache / name).exists()
-    assert expected == set(tester.io.fetch_output().split("\n"))
+    assert set(tester.io.fetch_output().split("\n")) == expected

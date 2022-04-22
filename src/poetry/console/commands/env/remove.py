@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from cleo.helpers import argument
 from cleo.helpers import option
 
@@ -12,8 +14,8 @@ class EnvRemoveCommand(Command):
     arguments = [
         argument(
             "python",
-            "The python executables associated with, or names of the virtual environments which are to "
-            "be removed.",
+            "The python executables associated with, or names of the virtual"
+            " environments which are to be removed.",
             optional=True,
             multiple=True,
         )
@@ -21,8 +23,9 @@ class EnvRemoveCommand(Command):
     options = [
         option(
             "all",
-            description="Remove all managed virtual environments associated with the "
-            "project.",
+            description=(
+                "Remove all managed virtual environments associated with the project."
+            ),
         ),
     ]
 

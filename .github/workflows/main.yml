@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
         include:
           - os: Ubuntu
             image: ubuntu-latest
@@ -84,3 +84,19 @@ jobs:
 
       - name: Run pytest
         run: poetry run python -m pytest -p no:sugar -q tests/
+
+      - name: Get Plugin Version (poetry-plugin-export)
+        id: poetry-plugin-export-version
+        run: |
+          echo ::set-output name=version::$(\
+            poetry show poetry-plugin-export  | grep version | cut -d : -f 2 | xargs)
+
+      - name: Checkout Plugin Source (poetry-plugin-export)
+        uses: actions/checkout@v2
+        with:
+          path: poetry-plugin-export
+          repository: python-poetry/poetry-plugin-export
+          ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
+
+      - name: Run pytest (poetry-plugin-export)
+        run: poetry run python -m pytest -p no:sugar -q poetry-plugin-export/tests/

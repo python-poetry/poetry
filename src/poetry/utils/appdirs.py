@@ -2,12 +2,12 @@
 This code was taken from https://github.com/ActiveState/appdirs and modified
 to suit our purposes.
 """
+from __future__ import annotations
+
 import os
 import sys
 
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Union
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 
-def expanduser(path: Union[str, "Path"]) -> str:
+def expanduser(path: str | Path) -> str:
     """
     Expand ~ and ~user constructions.
 
@@ -101,15 +101,13 @@ def user_data_dir(appname: str, roaming: bool = False) -> str:
     """
     if WINDOWS:
         const = "CSIDL_APPDATA" if roaming else "CSIDL_LOCAL_APPDATA"
-        path = os.path.join(os.path.normpath(_get_win_folder(const)), appname)
+        return os.path.join(os.path.normpath(_get_win_folder(const)), appname)
     elif sys.platform == "darwin":
-        path = os.path.join(expanduser("~/Library/Application Support/"), appname)
+        return os.path.join(expanduser("~/Library/Application Support/"), appname)
     else:
-        path = os.path.join(
+        return os.path.join(
             os.getenv("XDG_DATA_HOME", expanduser("~/.local/share")), appname
         )
-
-    return path
 
 
 def user_config_dir(appname: str, roaming: bool = True) -> str:
@@ -145,7 +143,7 @@ def user_config_dir(appname: str, roaming: bool = True) -> str:
 
 # for the discussion regarding site_config_dirs locations
 # see <https://github.com/pypa/pip/issues/1733>
-def site_config_dirs(appname: str) -> List[str]:
+def site_config_dirs(appname: str) -> list[str]:
     r"""Return a list of potential user-shared config dirs for this application.
 
         "appname" is the name of application.
@@ -220,11 +218,7 @@ def _get_win_folder_with_ctypes(csidl_name: str) -> str:
 
     # Downgrade to short path name if have highbit chars. See
     # <http://bugs.activestate.com/show_bug.cgi?id=85099>.
-    has_high_char = False
-    for c in buf:
-        if ord(c) > 255:
-            has_high_char = True
-            break
+    has_high_char = any(ord(c) > 255 for c in buf)
     if has_high_char:
         buf2 = ctypes.create_unicode_buffer(1024)
         if ctypes.windll.kernel32.GetShortPathNameW(buf.value, buf2, 1024):

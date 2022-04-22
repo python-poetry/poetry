@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 from tomlkit import dumps
 from tomlkit import inline_table
@@ -32,8 +32,8 @@ packages = []
 [tool.poetry.group.dev.dependencies]
 """
 
-BUILD_SYSTEM_MIN_VERSION: Optional[str] = None
-BUILD_SYSTEM_MAX_VERSION: Optional[str] = None
+BUILD_SYSTEM_MIN_VERSION: str | None = None
+BUILD_SYSTEM_MAX_VERSION: str | None = None
 
 
 class Layout:
@@ -45,11 +45,11 @@ class Layout:
         version: str = "0.1.0",
         description: str = "",
         readme_format: str = "md",
-        author: Optional[str] = None,
-        license: Optional[str] = None,
+        author: str | None = None,
+        license: str | None = None,
         python: str = "*",
-        dependencies: Optional[Dict[str, str]] = None,
-        dev_dependencies: Optional[Dict[str, str]] = None,
+        dependencies: dict[str, str] | None = None,
+        dev_dependencies: dict[str, str] | None = None,
     ):
         self._project = canonicalize_name(project).replace(".", "-")
         self._package_path_relative = Path(
@@ -63,7 +63,8 @@ class Layout:
         if self._readme_format not in self.ACCEPTED_README_FORMATS:
             accepted_readme_formats = ", ".join(self.ACCEPTED_README_FORMATS)
             raise ValueError(
-                f"Invalid readme format '{readme_format}', use one of {accepted_readme_formats}."
+                f"Invalid readme format '{readme_format}', use one of"
+                f" {accepted_readme_formats}."
             )
 
         self._license = license
@@ -84,7 +85,7 @@ class Layout:
     def package_path(self) -> Path:
         return self.basedir / self._package_path_relative
 
-    def get_package_include(self) -> Optional["InlineTable"]:
+    def get_package_include(self) -> InlineTable | None:
         package = inline_table()
 
         include = self._package_path_relative.parts[0]
@@ -111,9 +112,7 @@ class Layout:
 
         self._write_poetry(path)
 
-    def generate_poetry_content(
-        self, original: Optional["PyProjectTOML"] = None
-    ) -> str:
+    def generate_poetry_content(self, original: PyProjectTOML | None = None) -> str:
         template = POETRY_DEFAULT
 
         content = loads(template)

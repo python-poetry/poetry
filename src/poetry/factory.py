@@ -1,8 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Optional
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
@@ -13,6 +12,7 @@ from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CONFIG_DIR
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
+from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
 
@@ -30,8 +30,8 @@ class Factory(BaseFactory):
 
     def create_poetry(
         self,
-        cwd: Optional[Path] = None,
-        io: Optional["IO"] = None,
+        cwd: Path | None = None,
+        io: IO | None = None,
         disable_plugins: bool = False,
     ) -> Poetry:
         if io is None:
@@ -78,7 +78,7 @@ class Factory(BaseFactory):
             poetry, poetry.local_config.get("source", []), config, io
         )
 
-        plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
+        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
         plugin_manager.load_plugins()
         poetry.set_plugin_manager(plugin_manager)
         plugin_manager.activate(poetry, io)
@@ -90,7 +90,7 @@ class Factory(BaseFactory):
         return ProjectPackage(name, version, version)
 
     @classmethod
-    def create_config(cls, io: Optional["IO"] = None) -> Config:
+    def create_config(cls, io: IO | None = None) -> Config:
         if io is None:
             io = NullIO()
 
@@ -123,12 +123,12 @@ class Factory(BaseFactory):
 
     @classmethod
     def configure_sources(
-        cls, poetry: Poetry, sources: List[Dict[str, str]], config: Config, io: "IO"
+        cls, poetry: Poetry, sources: list[dict[str, str]], config: Config, io: IO
     ) -> None:
         for source in sources:
             repository = cls.create_legacy_repository(source, config)
-            is_default = source.get("default", False)
-            is_secondary = source.get("secondary", False)
+            is_default = bool(source.get("default", False))
+            is_secondary = bool(source.get("secondary", False))
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
                 if is_default:
@@ -154,19 +154,18 @@ class Factory(BaseFactory):
 
     @classmethod
     def create_legacy_repository(
-        cls, source: Dict[str, str], auth_config: Config
-    ) -> "LegacyRepository":
+        cls, source: dict[str, str], auth_config: Config
+    ) -> LegacyRepository:
         from poetry.repositories.legacy_repository import LegacyRepository
         from poetry.utils.helpers import get_cert
         from poetry.utils.helpers import get_client_cert
 
-        if "url" in source:
-            # PyPI-like repository
-            if "name" not in source:
-                raise RuntimeError("Missing [name] in source.")
-        else:
+        if "url" not in source:
             raise RuntimeError("Unsupported source specified")
 
+        # PyPI-like repository
+        if "name" not in source:
+            raise RuntimeError("Missing [name] in source.")
         name = source["name"]
         url = source["url"]
 

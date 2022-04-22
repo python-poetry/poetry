@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import hashlib
 import json
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
 
 from poetry.core.packages.utils.link import Link
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class Chef:
-    def __init__(self, config: "Config", env: "Env") -> None:
+    def __init__(self, config: Config, env: Env) -> None:
         self._config = config
         self._env = env
         self._cache_dir = (
@@ -41,10 +41,10 @@ class Chef:
     def is_wheel(self, archive: Path) -> bool:
         return archive.suffix == ".whl"
 
-    def get_cached_archive_for_link(self, link: Link) -> Optional[Link]:
+    def get_cached_archive_for_link(self, link: Link) -> Link | None:
         # If the archive is already a wheel, there is no need to cache it.
         if link.is_wheel:
-            pass
+            return link
 
         archives = self.get_cached_archives_for_link(link)
 
@@ -74,7 +74,7 @@ class Chef:
 
         return min(candidates)[1]
 
-    def get_cached_archives_for_link(self, link: Link) -> List[Link]:
+    def get_cached_archives_for_link(self, link: Link) -> list[Link]:
         cache_dir = self.get_cache_directory_for_link(link)
 
         archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
