@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import contextlib
+import logging
 import re
 
 from abc import abstractmethod
@@ -17,6 +17,9 @@ from poetry.utils.patterns import wheel_file_re
 
 if TYPE_CHECKING:
     from poetry.core.packages.utils.link import Link
+
+
+logger = logging.getLogger(__name__)
 
 
 class LinkSource:
@@ -46,7 +49,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name == name and pkg.version and pkg.version not in seen:
+            if pkg and pkg.name == name and pkg.version and pkg.version not in seen:
                 seen.add(pkg.version)
                 yield pkg.version
 
@@ -55,7 +58,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name and pkg.version:
+            if pkg and pkg.name and pkg.version:
                 yield pkg
 
     @property
@@ -63,7 +66,7 @@ class LinkSource:
     def links(self) -> Iterator[Link]:
         raise NotImplementedError()
 
-    def link_package_data(self, link: Link) -> Package:
+    def link_package_data(self, link: Link) -> Package | None:
         name, version = None, None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
@@ -76,8 +79,13 @@ class LinkSource:
             if match:
                 version_string = match.group(2)
 
-        with contextlib.suppress(ValueError):
+        try:
             version = Version.parse(version_string)
+        except ValueError:
+            logger.debug(
+                "Skipping url (%s) due to invalid version (%s)", link.url, version
+            )
+            return None
 
         return Package(name, version, source_url=link.url)
 
@@ -87,7 +95,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name == name and pkg.version and pkg.version == version:
+            if pkg and pkg.name == name and pkg.version and pkg.version == version:
                 yield link
 
     def clean_link(self, url: str) -> str:
