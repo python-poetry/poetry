@@ -13,11 +13,12 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.helpers import VersionTypes
 
 
 class Repository:
-    def __init__(self, name: str = None, packages: list[Package] = None) -> None:
+    def __init__(
+        self, name: str | None = None, packages: list[Package] | None = None
+    ) -> None:
         self._name = name
         self._packages: list[Package] = []
 
@@ -94,7 +95,7 @@ class Repository:
     @staticmethod
     def _get_constraints_from_dependency(
         dependency: Dependency,
-    ) -> tuple[VersionTypes, bool]:
+    ) -> tuple[VersionConstraint, bool]:
         constraint = dependency.constraint
         if constraint is None:
             constraint = "*"
@@ -125,9 +126,11 @@ class Repository:
 
     def package(
         self, name: str, version: str, extras: list[str] | None = None
-    ) -> Package:
+    ) -> Package | None:
         name = name.lower()
 
         for package in self.packages:
             if name == package.name and package.version.text == version:
                 return package.clone()
+
+        return None

@@ -49,7 +49,7 @@ class DependencyPackage:
     def __hash__(self) -> int:
         return hash(self._package)
 
-    def __eq__(self, other: Package | DependencyPackage) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, DependencyPackage):
             other = other.package
 

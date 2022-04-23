@@ -15,9 +15,14 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterable
 from typing import Iterator
+from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.empty_constraint import EmptyConstraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import AnyMarker
@@ -38,11 +43,7 @@ from poetry.vcs.git import Git
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.packages.directory_dependency import DirectoryDependency
-    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
-    from poetry.core.packages.url_dependency import URLDependency
-    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
@@ -117,7 +118,9 @@ class Provider:
     def is_debugging(self) -> bool:
         return self._is_debugging
 
-    def set_overrides(self, overrides: dict) -> None:
+    def set_overrides(
+        self, overrides: dict[DependencyPackage, dict[str, Dependency]]
+    ) -> None:
         self._overrides = overrides
 
     def load_deferred(self, load_deferred: bool) -> None:
@@ -176,12 +179,16 @@ class Provider:
             return PackageCollection(dependency, [self._package])
 
         if dependency.is_vcs():
+            dependency = cast(VCSDependency, dependency)
             packages = self.search_for_vcs(dependency)
         elif dependency.is_file():
+            dependency = cast(FileDependency, dependency)
             packages = self.search_for_file(dependency)
         elif dependency.is_directory():
+            dependency = cast(DirectoryDependency, dependency)
             packages = self.search_for_directory(dependency)
         elif dependency.is_url():
+            dependency = cast(URLDependency, dependency)
             packages = self.search_for_url(dependency)
         else:
             packages = self._pool.find_packages(dependency)
@@ -249,7 +256,7 @@ class Provider:
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
         if dependency in self._deferred_cache:
-            dependency, _package = self._deferred_cache[dependency]
+            _package = self._deferred_cache[dependency]
 
             package = _package.clone()
         else:
@@ -258,7 +265,7 @@ class Provider:
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
-            self._deferred_cache[dependency] = (dependency, package)
+            self._deferred_cache[dependency] = package
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -286,7 +293,7 @@ class Provider:
 
     def search_for_directory(self, dependency: DirectoryDependency) -> list[Package]:
         if dependency in self._deferred_cache:
-            dependency, _package = self._deferred_cache[dependency]
+            _package = self._deferred_cache[dependency]
 
             package = _package.clone()
         else:
@@ -295,7 +302,7 @@ class Provider:
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
-            self._deferred_cache[dependency] = (dependency, package)
+            self._deferred_cache[dependency] = package
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -665,7 +672,7 @@ class Provider:
                 _deps.append(inverted_marker_dep)
 
             overrides = []
-            overrides_marker_intersection = AnyMarker()
+            overrides_marker_intersection: BaseMarker = AnyMarker()
             for dep_overrides in self._overrides.values():
                 for _dep in dep_overrides.values():
                     overrides_marker_intersection = (

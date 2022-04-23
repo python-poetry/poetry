@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class NoopInstaller(BaseInstaller):
     def __init__(self) -> None:
         self._installs: list[Package] = []
-        self._updates: list[Package] = []
+        self._updates: list[tuple[Package, Package]] = []
         self._removals: list[Package] = []
 
     @property
@@ -20,7 +20,7 @@ class NoopInstaller(BaseInstaller):
         return self._installs
 
     @property
-    def updates(self) -> list[Package]:
+    def updates(self) -> list[tuple[Package, Package]]:
         return self._updates
 
     @property

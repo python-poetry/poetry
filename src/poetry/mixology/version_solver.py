@@ -74,8 +74,8 @@ class VersionSolver:
         self,
         root: ProjectPackage,
         provider: Provider,
-        locked: dict[str, list[Package]] = None,
-        use_latest: list[str] = None,
+        locked: dict[str, list[Package]] | None = None,
+        use_latest: list[str] | None = None,
     ):
         self._root = root
         self._provider = provider

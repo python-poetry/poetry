@@ -9,6 +9,7 @@ from abc import ABC
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from urllib.parse import quote
 
 import requests
@@ -232,7 +233,7 @@ class HTTPRepository(CachedRepository, ABC):
                 f' "{data.version}"'
             )
         urls = defaultdict(list)
-        files = []
+        files: list[dict[str, Any]] = []
         for link in links:
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
@@ -244,7 +245,8 @@ class HTTPRepository(CachedRepository, ABC):
             file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
 
             if not link.hash or (
-                link.hash_name not in ("sha256", "sha384", "sha512")
+                link.hash_name is not None
+                and link.hash_name not in ("sha256", "sha384", "sha512")
                 and hasattr(hashlib, link.hash_name)
             ):
                 with temporary_directory() as temp_dir:

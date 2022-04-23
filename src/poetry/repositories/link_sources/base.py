@@ -69,15 +69,15 @@ class LinkSource:
 
         if m:
             name = canonicalize_name(m.group("name"))
-            version = m.group("ver")
+            version_string = m.group("ver")
         else:
             info, ext = link.splitext()
             match = self.VERSION_REGEX.match(info)
             if match:
-                version = match.group(2)
+                version_string = match.group(2)
 
         with contextlib.suppress(ValueError):
-            version = Version.parse(version)
+            version = Version.parse(version_string)
 
         return Package(name, version, source_url=link.url)
 
