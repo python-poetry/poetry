@@ -9,7 +9,7 @@ from poetry.mixology.set_relation import SetRelation
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.semver.helpers import VersionTypes
+    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Term:
@@ -33,7 +33,7 @@ class Term:
         return self._dependency
 
     @property
-    def constraint(self) -> VersionTypes:
+    def constraint(self) -> VersionConstraint:
         return self._dependency.constraint
 
     def is_positive(self) -> bool:
@@ -159,7 +159,7 @@ class Term:
         )
 
     def _non_empty_term(
-        self, constraint: VersionTypes, is_positive: bool
+        self, constraint: VersionConstraint, is_positive: bool
     ) -> Term | None:
         if constraint.is_empty():
             return None

@@ -32,7 +32,7 @@ from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRe
 if TYPE_CHECKING:
     import httpretty
 
-    from poetry.installation.operations import OperationTypes
+    from poetry.installation.operation.operation import Operation
     from poetry.puzzle.transaction import Transaction
 
 DEFAULT_SOURCE_REF = (
@@ -94,7 +94,7 @@ def check_solver_result(
     transaction: Transaction,
     expected: list[dict[str, Any]],
     synchronize: bool = False,
-) -> list[OperationTypes]:
+) -> list[Operation]:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
