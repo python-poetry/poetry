@@ -43,7 +43,7 @@ class PluginRemoveCommand(Command):
         command: SelfRemoveCommand = cast(
             SelfRemoveCommand, application.find("self remove")
         )
-        application._configure_installer(command, self.io)
+        application.configure_installer_for_command(command, self.io)
 
         argv: list[str] = ["remove", *self.argument("plugins")]
 

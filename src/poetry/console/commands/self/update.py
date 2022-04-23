@@ -40,7 +40,7 @@ environment.
         application = cast(Application, self.application)
         add_command: AddCommand = cast(AddCommand, application.find("add"))
         add_command.set_env(self.env)
-        application._configure_installer(add_command, self._io)
+        application.configure_installer_for_command(add_command, self._io)
 
         argv = ["add", f"poetry@{self.argument('version')}"]
 
