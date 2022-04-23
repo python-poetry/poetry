@@ -109,7 +109,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
         dispatcher.add_listener(COMMAND, self.configure_env)
-        dispatcher.add_listener(COMMAND, self.configure_installer)
+        dispatcher.add_listener(COMMAND, self.configure_installer_for_event)
         self.set_event_dispatcher(dispatcher)
 
         command_loader = CommandLoader({name: load_command(name) for name in COMMANDS})
@@ -301,8 +301,9 @@ class Application(BaseApplication):  # type: ignore[misc]
 
         command.set_env(env)
 
-    def configure_installer(
-        self, event: ConsoleCommandEvent, event_name: str, _: Any
+    @classmethod
+    def configure_installer_for_event(
+        cls, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.installer_command import InstallerCommand
 
@@ -315,9 +316,10 @@ class Application(BaseApplication):  # type: ignore[misc]
         if command.installer is not None:
             return
 
-        self._configure_installer(command, event.io)
+        cls.configure_installer_for_command(command, event.io)
 
-    def _configure_installer(self, command: InstallerCommand, io: IO) -> None:
+    @staticmethod
+    def configure_installer_for_command(command: InstallerCommand, io: IO) -> None:
         from poetry.installation.installer import Installer
 
         poetry = command.poetry

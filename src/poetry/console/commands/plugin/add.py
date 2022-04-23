@@ -49,7 +49,7 @@ It works similarly to the <c1>add</c1> command:
 
         application = cast(Application, self.application)
         command: SelfAddCommand = cast(SelfAddCommand, application.find("self add"))
-        application._configure_installer(command, self.io)
+        application.configure_installer_for_command(command, self.io)
 
         argv: list[str] = ["add", *self.argument("plugins")]
 
