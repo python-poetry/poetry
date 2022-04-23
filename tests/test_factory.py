@@ -28,8 +28,8 @@ fixtures_dir = Path(__file__).parent / "fixtures"
 
 class MyPlugin(Plugin):
     def activate(self, poetry: Poetry, io: IO) -> None:
-        io.write_line("Updating version")
-        poetry.package.set_version("9.9.9")
+        io.write_line("Setting readme")
+        poetry.package.readme = "README.md"
 
 
 def test_create_poetry():
@@ -343,4 +343,4 @@ def test_create_poetry_with_plugins(mocker: MockerFixture):
 
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
-    assert poetry.package.version.text == "9.9.9"
+    assert poetry.package.readme == "README.md"
