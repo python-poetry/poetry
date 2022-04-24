@@ -1,0 +1,58 @@
+{
+  "3.10": {
+    "python": {
+      "version": "3.10.4"
+    },
+    "variants": [
+      "bullseye",
+      "slim-bullseye",
+      "buster",
+      "slim-buster",
+      "alpine3.15",
+      "alpine3.14",
+      "windows/windowsservercore-ltsc2022",
+      "windows/windowsservercore-1809"
+    ]
+  },
+  "3.7": {
+    "python": {
+      "version": "3.7.13"
+    },
+    "variants": [
+      "bullseye",
+      "slim-bullseye",
+      "buster",
+      "slim-buster",
+      "alpine3.15",
+      "alpine3.14"
+    ]
+  },
+  "3.8": {
+    "python": {
+      "version": "3.8.13"
+    },
+    "variants": [
+      "bullseye",
+      "slim-bullseye",
+      "buster",
+      "slim-buster",
+      "alpine3.15",
+      "alpine3.14"
+    ]
+  },
+  "3.9": {
+    "python": {
+      "version": "3.9.12"
+    },
+    "variants": [
+      "bullseye",
+      "slim-bullseye",
+      "buster",
+      "slim-buster",
+      "alpine3.15",
+      "alpine3.14",
+      "windows/windowsservercore-ltsc2022",
+      "windows/windowsservercore-1809"
+    ]
+  }
+}
