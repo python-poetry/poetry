@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+from typing import Any
 from typing import cast
 
 from cleo.helpers import argument
@@ -78,7 +79,7 @@ You can specify a package in the following forms:
 
         # We check for the plugins existence first.
         if env_dir.joinpath("pyproject.toml").exists():
-            pyproject = tomlkit.loads(
+            pyproject: dict[str, Any] = tomlkit.loads(
                 env_dir.joinpath("pyproject.toml").read_text(encoding="utf-8")
             )
             poetry_content = pyproject["tool"]["poetry"]
@@ -128,8 +129,8 @@ You can specify a package in the following forms:
 
         # We add the plugins to the dependencies section of the previously
         # created `pyproject.toml` file
-        pyproject = PyProjectTOML(env_dir.joinpath("pyproject.toml"))
-        poetry_content = pyproject.poetry_config
+        pyproject_toml = PyProjectTOML(env_dir.joinpath("pyproject.toml"))
+        poetry_content = pyproject_toml.poetry_config
         poetry_dependency_section = poetry_content["dependencies"]
         plugin_names = []
         for plugin in plugins:
@@ -137,7 +138,7 @@ You can specify a package in the following forms:
                 # Validate version constraint
                 parse_constraint(plugin["version"])
 
-            constraint = tomlkit.inline_table()
+            constraint: dict[str, Any] = tomlkit.inline_table()
             for name, value in plugin.items():
                 if name == "name":
                     continue
@@ -150,7 +151,7 @@ You can specify a package in the following forms:
             poetry_dependency_section[plugin["name"]] = constraint
             plugin_names.append(plugin["name"])
 
-        pyproject.save()
+        pyproject_toml.save()
 
         # From this point forward, all the logic will be deferred to
         # the update command, by using the previously created `pyproject.toml`
