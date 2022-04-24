@@ -4,6 +4,9 @@ set -Eeuo pipefail
 [ -f versions.json ] # run "versions.sh" first
 
 jqt='.jq-template.awk'
+
+export poetryUrl="https://install.python-poetry.org"
+
 if [ -n "${BASHBREW_SCRIPTS:-}" ]; then
 	jqt="$BASHBREW_SCRIPTS/jq-template.awk"
 elif [ "${BASH_SOURCE[0]}" -nt "$jqt" ]; then
@@ -42,9 +45,10 @@ for version; do
 		case "$dir" in
 			windows/*)
 				windowsVariant="${variant%%-*}" # "windowsservercore", "nanoserver"
+				windowsFullVariant="$windowsVariant"
 				windowsRelease="${variant#"$windowsVariant"-}" # "ltsc2022", "1809", etc
 				windowsVariant="${windowsVariant#windows}" # "servercore", "nanoserver"
-				export windowsVariant windowsRelease
+				export windowsVariant windowsFullVariant windowsRelease
 				template='Dockerfile-windows.template'
 				;;
 
