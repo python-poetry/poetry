@@ -1,0 +1,56 @@
+{{
+	def is_alpine:
+		env.variant | startswith("alpine")
+	;
+	def is_slim:
+		env.variant | startswith("slim-")
+-}}
+{{ if is_alpine then ( -}}
+FROM python:{{ .python.version }}-alpine{{ env.variant | ltrimstr("alpine") }} as base
+{{ ) elif is_slim then ( -}}
+FROM python:{{ .python.version }}-slim-{{ env.variant | ltrimstr("slim-") }} as base
+{{ ) else ( -}}
+FROM python:{{ .python.version }}-{{ env.variant }}
+{{ ) end -}}
+
+ENV POETRY_SCRIPT={{ env.poetryUrl }} \
+	POETRY_HOME="/opt/poetry"
+
+ENV POETRY_CACHE_DIR="$POETRY_HOME/.cache" \
+    XDG_CACHE_HOME="$POETRY_HOME/.cache"
+    # POETRY_CACHE_DIR is not respected currently see https://github.com/python-poetry/poetry/issues/2445#issuecomment-670829271
+
+ENV PATH="$PATH:$POETRY_HOME/bin"
+
+{{ if is_alpine then ( -}}
+FROM base as builder
+
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
+RUN apk add --no-cache gcc musl-dev libffi-dev \
+	&& wget -q -O- "$POETRY_SCRIPT" | python
+
+FROM base as runtime
+
+RUN apk add --no-cache libffi
+
+COPY --from=builder $POETRY_HOME $POETRY_HOME
+{{ ) elif is_slim then ( -}}
+FROM base as builder
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes wget \
+	&& wget -q -O- "$POETRY_SCRIPT" | python
+
+FROM base as runtime
+
+COPY --from=builder $POETRY_HOME $POETRY_HOME
+{{ ) else ( -}}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN wget -q -O- "$POETRY_SCRIPT" | python
+{{ ) end -}}
+
+CMD ["poetry"]
