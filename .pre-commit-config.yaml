@@ -93,9 +93,3 @@ repos:
     rev: v2.18.1
     hooks:
       - id: validate_manifest
-
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.8.0
-    hooks:
-      - id: shellcheck
-        name: "shellcheck (sh)"
