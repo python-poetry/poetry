@@ -40,7 +40,7 @@ class Config:
             "options": {"always-copy": False, "system-site-packages": False},
             "prefer-active-python": False,
         },
-        "experimental": {"new-installer": True},
+        "experimental": {"new-installer": True, "system-git-client": False},
         "installer": {"parallel": True, "max-workers": None},
     }
 
@@ -141,6 +141,7 @@ class Config:
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.new-installer",
+            "experimental.system-git-client",
             "installer.parallel",
         }:
             return boolean_normalizer

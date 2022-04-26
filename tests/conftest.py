@@ -30,7 +30,7 @@ from poetry.repositories import Repository
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
@@ -307,7 +307,7 @@ def tmp_dir() -> Iterator[str]:
 
     yield dir_
 
-    safe_rmtree(dir_)
+    remove_directory(dir_, force=True)
 
 
 @pytest.fixture
