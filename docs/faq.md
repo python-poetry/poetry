@@ -22,7 +22,18 @@ and, as such, they are not available via the PyPI JSON API. At this point, Poetr
 but downloading the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
-At the moment there is no way around it.
+At the moment there is no fix for the issue, however, disabling IPv6 locally provides a temporary workaround:
+
+**MacOS**
+
+Go to System Preferences > Network > Advanced > TCP/IP Tab > Set "Configure IPv6" to "Link-local only".
+
+**Ubuntu**
+
+```bash
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+```
 
 {{% note %}}
 Once Poetry has cached the releases' information, the dependency resolution process
