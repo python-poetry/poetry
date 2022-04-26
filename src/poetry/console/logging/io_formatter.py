@@ -30,6 +30,6 @@ class IOFormatter(logging.Formatter):
             elif level in self._colors:
                 msg = f"<{self._colors[level]}>{msg}</>"
 
-            return msg
+            record.msg = msg
 
         return super().format(record)
