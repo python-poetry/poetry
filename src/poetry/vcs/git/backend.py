@@ -18,7 +18,7 @@ from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetrySimpleConsoleException
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
@@ -196,8 +196,10 @@ class Git:
         """
         from poetry.vcs.git.system import SystemGit
 
+        logger.debug("Cloning '%s' using system git client", url)
+
         if target.exists():
-            safe_rmtree(path=target, ignore_errors=True)
+            remove_directory(path=target, force=True)
 
         revision = refspec.tag or refspec.branch or refspec.revision or "HEAD"
 
@@ -270,7 +272,7 @@ class Git:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
-                safe_rmtree(local.path, ignore_errors=True)
+                remove_directory(local.path, force=True)
 
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
@@ -313,6 +315,22 @@ class Git:
                     and not path_absolute.joinpath(".git").is_dir(),
                 )
 
+    @staticmethod
+    def is_using_legacy_client() -> bool:
+        from poetry.factory import Factory
+
+        return (
+            Factory.create_config()
+            .get("experimental", {})
+            .get("system-git-client", False)
+        )
+
+    @staticmethod
+    def get_default_source_root() -> Path:
+        from poetry.factory import Factory
+
+        return Path(Factory.create_config().get("cache-dir")) / "src"
+
     @classmethod
     def clone(
         cls,
@@ -324,11 +342,7 @@ class Git:
         source_root: Path | None = None,
         clean: bool = False,
     ) -> Repo:
-        if not source_root:
-            from poetry.factory import Factory
-
-            source_root = Path(Factory.create_config().get("cache-dir")) / "src"
-
+        source_root = source_root or cls.get_default_source_root()
         source_root.mkdir(parents=True, exist_ok=True)
 
         name = name or cls.get_name_from_source_url(url=url)
@@ -338,7 +352,7 @@ class Git:
         if target.exists():
             if clean:
                 # force clean the local copy if it exists, do not reuse
-                safe_rmtree(target, ignore_errors=True)
+                remove_directory(target, force=True)
             else:
                 # check if the current local copy matches the requested ref spec
                 try:
@@ -348,18 +362,20 @@ class Git:
                         current_sha = current_repo.head().decode("utf-8")
                 except (NotGitRepository, AssertionError, KeyError):
                     # something is wrong with the current checkout, clean it
-                    safe_rmtree(target, ignore_errors=True)
+                    remove_directory(target, force=True)
                 else:
                     if not is_revision_sha(revision=current_sha):
                         # head is not a sha, this will cause issues later, lets reset
-                        safe_rmtree(target, ignore_errors=True)
+                        remove_directory(target, force=True)
                     elif refspec.is_sha and current_sha.startswith(refspec.revision):
                         # if revision is used short-circuit remote fetch head matches
                         return current_repo
 
         try:
-            local = cls._clone(url=url, refspec=refspec, target=target)
-            cls._clone_submodules(repo=local)
+            if not cls.is_using_legacy_client():
+                local = cls._clone(url=url, refspec=refspec, target=target)
+                cls._clone_submodules(repo=local)
+                return local
         except HTTPUnauthorized:
             # we do this here to handle http authenticated repositories as dulwich
             # does not currently support using credentials from git-credential helpers.
@@ -369,10 +385,10 @@ class Git:
             # without additional configuration or changes for existing projects that
             # use http basic auth credentials.
             logger.debug(
-                "Unable to fetch from private repository '{%s}', falling back to"
+                "Unable to fetch from private repository '%s', falling back to"
                 " system git",
                 url,
             )
-            local = cls._clone_legacy(url=url, refspec=refspec, target=target)
 
-        return local
+        # fallback to legacy git client
+        return cls._clone_legacy(url=url, refspec=refspec, target=target)
