@@ -115,7 +115,7 @@ class Repository:
 
     def _log(self, msg: str, level: str = "info") -> None:
         getattr(logging.getLogger(self.__class__.__name__), level)(
-            f"<debug>{self.name}:</debug> {msg}"
+            f"<c1>Source ({self.name}):</c1> {msg}"
         )
 
     def __len__(self) -> int:
