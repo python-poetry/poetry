@@ -212,6 +212,7 @@ class Application(BaseApplication):
     def register_command_loggers(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
+        from poetry.console.logging.filters import POETRY_FILTER
         from poetry.console.logging.io_formatter import IOFormatter
         from poetry.console.logging.io_handler import IOHandler
 
@@ -240,6 +241,10 @@ class Application(BaseApplication):
             level = logging.INFO
 
         logging.basicConfig(level=level, handlers=[handler])
+
+        # only log third-party packages when very verbose
+        if not io.is_very_verbose():
+            handler.addFilter(POETRY_FILTER)
 
         for name in loggers:
             logger = logging.getLogger(name)
