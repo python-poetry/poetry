@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -402,3 +403,14 @@ def project_factory(
 @pytest.fixture
 def project_root() -> Path:
     return Path(__file__).parent.parent
+
+
+@pytest.fixture(autouse=True)
+def set_simple_log_formatter() -> None:
+    """
+    This fixture removes any formatting added via IOFormatter.
+    """
+    for name in logging.Logger.manager.loggerDict:
+        for handler in logging.getLogger(name).handlers:
+            # replace formatter with simple formatter for testing
+            handler.setFormatter(logging.Formatter(fmt="%(message)s"))
