@@ -114,9 +114,8 @@ class Repository:
         return constraint, allow_prereleases
 
     def _log(self, msg: str, level: str = "info") -> None:
-        getattr(logging.getLogger(self.__class__.__name__), level)(
-            f"<debug>{self.name}:</debug> {msg}"
-        )
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        getattr(logger, level)(f"<debug>{self.name}:</debug> {msg}")
 
     def __len__(self) -> int:
         return len(self._packages)
