@@ -232,23 +232,30 @@ class Application(BaseApplication):
         handler = IOHandler(io)
         handler.setFormatter(IOFormatter())
 
+        level = logging.WARNING
+
+        if io.is_debug():
+            level = logging.DEBUG
+        elif io.is_very_verbose() or io.is_verbose():
+            level = logging.INFO
+
+        logging.basicConfig(level=level, handlers=[handler])
+
         for name in loggers:
             logger = logging.getLogger(name)
 
             logger.handlers = [handler]
 
-            level = logging.WARNING
+            _level = level
             # The builders loggers are special and we can actually
             # start at the INFO level.
-            if logger.name.startswith("poetry.core.masonry.builders"):
-                level = logging.INFO
+            if (
+                logger.name.startswith("poetry.core.masonry.builders")
+                and _level > logging.INFO
+            ):
+                _level = logging.INFO
 
-            if io.is_debug():
-                level = logging.DEBUG
-            elif io.is_very_verbose() or io.is_verbose():
-                level = logging.INFO
-
-            logger.setLevel(level)
+            logger.setLevel(_level)
 
     def configure_env(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
