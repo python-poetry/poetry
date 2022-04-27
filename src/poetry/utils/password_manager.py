@@ -152,7 +152,7 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> dict[str, str] | None:
+    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
@@ -181,10 +181,14 @@ class PasswordManager:
 
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
-        if not auth or "username" not in auth:
+        if not auth:
+            return
+
+        username = auth.get("username")
+        if username is None:
             return
 
         with suppress(KeyRingError):
-            self.keyring.delete_password(name, auth["username"])
+            self.keyring.delete_password(name, username)
 
         self._config.auth_config_source.remove_property(f"http-basic.{name}")

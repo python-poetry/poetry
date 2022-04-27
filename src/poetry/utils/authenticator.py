@@ -33,9 +33,9 @@ class Authenticator:
     def __init__(self, config: Config, io: IO | None = None) -> None:
         self._config = config
         self._io = io
-        self._session = None
-        self._credentials = {}
-        self._certs = {}
+        self._session: requests.Session | None = None
+        self._credentials: dict[str, tuple[str, str]] = {}
+        self._certs: dict[str, dict[str, Path | None]] = {}
         self._password_manager = PasswordManager(self._config)
 
     def _log(self, message: str, level: str = "debug") -> None:
@@ -118,7 +118,9 @@ class Authenticator:
 
         netloc = parsed_url.netloc
 
-        credentials = self._credentials.get(netloc, (None, None))
+        credentials: tuple[str | None, str | None] = self._credentials.get(
+            netloc, (None, None)
+        )
 
         if credentials == (None, None):
             if "@" not in netloc:
@@ -131,25 +133,27 @@ class Authenticator:
                 # Split from the left because that's how urllib.parse.urlsplit()
                 # behaves if more than one : is present (which again can be checked
                 # using the password attribute of the return value)
-                credentials = auth.split(":", 1) if ":" in auth else (auth, None)
-                credentials = tuple(
-                    None if x is None else urllib.parse.unquote(x) for x in credentials
+                user, password = auth.split(":", 1) if ":" in auth else (auth, "")
+                credentials = (
+                    urllib.parse.unquote(user),
+                    urllib.parse.unquote(password),
                 )
 
-        if credentials[0] is not None or credentials[1] is not None:
+        if any(credential is not None for credential in credentials):
             credentials = (credentials[0] or "", credentials[1] or "")
-
             self._credentials[netloc] = credentials
 
-        return credentials[0], credentials[1]
+        return credentials
 
-    def get_pypi_token(self, name: str) -> str:
+    def get_pypi_token(self, name: str) -> str | None:
         return self._password_manager.get_pypi_token(name)
 
-    def get_http_auth(self, name: str) -> dict[str, str] | None:
+    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
         return self._get_http_auth(name, None)
 
-    def _get_http_auth(self, name: str, netloc: str | None) -> dict[str, str] | None:
+    def _get_http_auth(
+        self, name: str, netloc: str | None
+    ) -> dict[str, str | None] | None:
         if name == "pypi":
             url = "https://upload.pypi.org/legacy/"
         else:
@@ -161,14 +165,17 @@ class Authenticator:
 
         if netloc is None or netloc == parsed_url.netloc:
             auth = self._password_manager.get_http_auth(name)
+            auth = auth or {}
 
-            if auth is None or auth["password"] is None:
-                username = auth["username"] if auth else None
+            if auth.get("password") is None:
+                username = auth.get("username")
                 auth = self._get_credentials_for_netloc_from_keyring(
                     url, parsed_url.netloc, username
                 )
 
             return auth
+
+        return None
 
     def _get_credentials_for_netloc(self, netloc: str) -> tuple[str | None, str | None]:
         for repository_name, _ in self._get_repository_netlocs():
@@ -177,7 +184,7 @@ class Authenticator:
             if auth is None:
                 continue
 
-            return auth["username"], auth["password"]
+            return auth.get("username"), auth.get("password")
 
         return None, None
 
@@ -199,7 +206,7 @@ class Authenticator:
 
     def _get_credentials_for_netloc_from_keyring(
         self, url: str, netloc: str, username: str | None
-    ) -> dict[str, str] | None:
+    ) -> dict[str, str | None] | None:
         import keyring
 
         cred = keyring.get_credential(url, username)
@@ -225,7 +232,7 @@ class Authenticator:
         return None
 
     def _get_certs_for_netloc_from_config(self, netloc: str) -> dict[str, Path | None]:
-        certs = {"cert": None, "verify": None}
+        certs: dict[str, Path | None] = {"cert": None, "verify": None}
 
         for repository_name, repository_netloc in self._get_repository_netlocs():
             if netloc == repository_netloc:
