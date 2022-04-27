@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import cast
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.toml.file import TOMLFile
+from tomlkit.toml_document import TOMLDocument
 
 from poetry.config.config import Config
 from poetry.config.file_config_source import FileConfigSource
@@ -183,7 +187,7 @@ class Factory(BaseFactory):
 
         from poetry.layouts.layout import POETRY_DEFAULT
 
-        pyproject = tomlkit.loads(POETRY_DEFAULT)
+        pyproject: dict[str, Any] = tomlkit.loads(POETRY_DEFAULT)
         content = pyproject["tool"]["poetry"]
 
         content["name"] = package.name
@@ -195,8 +199,9 @@ class Factory(BaseFactory):
         dependency_section["python"] = package.python_versions
 
         for dep in package.requires:
-            constraint = tomlkit.inline_table()
+            constraint: dict[str, Any] = tomlkit.inline_table()
             if dep.is_vcs():
+                dep = cast(VCSDependency, dep)
                 constraint[dep.vcs] = dep.source_url
 
                 if dep.reference:
@@ -217,6 +222,7 @@ class Factory(BaseFactory):
 
             dependency_section[dep.name] = constraint
 
+        assert isinstance(pyproject, TOMLDocument)
         path.joinpath("pyproject.toml").write_text(
             pyproject.as_string(), encoding="utf-8"
         )

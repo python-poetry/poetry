@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.command import Command
 
@@ -64,10 +66,11 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                     f" to <fg=green>{version}</>"
                 )
 
-            content = self.poetry.file.read()
+            content: dict[str, Any] = self.poetry.file.read()
             poetry_content = content["tool"]["poetry"]
             poetry_content["version"] = version.text
 
+            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
         else:
             if self.option("short"):
@@ -100,7 +103,9 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 new = new.first_prerelease()
         elif rule == "prerelease":
             if parsed.is_unstable():
-                new = Version(parsed.epoch, parsed.release, parsed.pre.next())
+                pre = parsed.pre
+                assert pre is not None
+                new = Version(parsed.epoch, parsed.release, pre.next())
             else:
                 new = parsed.next_patch().first_prerelease()
         else:

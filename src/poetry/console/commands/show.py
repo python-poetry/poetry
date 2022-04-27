@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.packages.project_package import ProjectPackage
     from poetry.repositories.installed_repository import InstalledRepository
     from poetry.repositories.repository import Repository
 

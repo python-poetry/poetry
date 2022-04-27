@@ -15,8 +15,7 @@ from poetry.console.commands.env_command import EnvCommand
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
-
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
 
 
 class GroupCommand(EnvCommand):
