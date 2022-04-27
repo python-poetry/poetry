@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 from tomlkit import dumps
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
+from tomlkit.toml_document import TOMLDocument
 
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import module_name
@@ -115,7 +117,7 @@ class Layout:
     def generate_poetry_content(self, original: PyProjectTOML | None = None) -> str:
         template = POETRY_DEFAULT
 
-        content = loads(template)
+        content: dict[str, Any] = loads(template)
 
         poetry_content = content["tool"]["poetry"]
         poetry_content["name"] = self._project
@@ -162,14 +164,15 @@ class Layout:
         build_system.add("requires", ["poetry-core" + build_system_version])
         build_system.add("build-backend", "poetry.core.masonry.api")
 
+        assert isinstance(content, TOMLDocument)
         content.add("build-system", build_system)
 
-        content = dumps(content)
+        text = dumps(content)
 
         if original and original.file.exists():
-            content = dumps(original.data) + "\n" + content
+            text = dumps(original.data) + "\n" + text
 
-        return content
+        return text
 
     def _create_default(self, path: Path, src: bool = True) -> None:
         package_path = path / self.package_path

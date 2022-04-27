@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.repositories.exceptions import PackageNotFound
@@ -136,8 +135,9 @@ class Pool(Repository):
             raise ValueError(f'Repository "{repository}" does not exist.')
 
         if repository is not None and not self._ignore_repository_names:
-            with suppress(PackageNotFound):
-                return self.repository(repository).package(name, version, extras=extras)
+            package = self.repository(repository).package(name, version, extras=extras)
+            if package is not None:
+                return package
         else:
             for repo in self._repositories:
                 try:
@@ -146,8 +146,6 @@ class Pool(Repository):
                     continue
 
                 if package:
-                    self._packages.append(package)
-
                     return package
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")

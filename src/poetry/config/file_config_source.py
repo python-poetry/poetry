@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterator
+from typing import cast
 
 from tomlkit import document
 from tomlkit import table
@@ -30,7 +31,9 @@ class FileConfigSource(ConfigSource):
         return self._file
 
     def add_property(self, key: str, value: Any) -> None:
+        config: dict[str, Any]
         with self.secure() as config:
+            config = cast("dict[str, Any]", config)
             keys = key.split(".")
 
             for i, key in enumerate(keys):
@@ -44,7 +47,9 @@ class FileConfigSource(ConfigSource):
                 config = config[key]
 
     def remove_property(self, key: str) -> None:
+        config: dict[str, Any]
         with self.secure() as config:
+            config = cast("dict[str, Any]", config)
             keys = key.split(".")
 
             current_config = config
