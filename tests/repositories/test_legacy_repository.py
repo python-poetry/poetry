@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import posixpath
 import re
 import shutil
 
@@ -23,10 +24,13 @@ from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 if TYPE_CHECKING:
+    from typing import Any
+
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
     from packaging.utils import NormalizedName
+    from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
 
@@ -174,6 +178,37 @@ def test_get_package_information_fallback_read_setup() -> None:
         package.description
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
+
+
+def _get_mock(url: str, **__: Any) -> requests.Response:
+    if url.endswith(".metadata"):
+        response = requests.Response()
+        response.encoding = "application/text"
+        response._content = MockRepository.FIXTURES.joinpath(
+            "metadata", posixpath.basename(url)
+        ).read_bytes()
+        return response
+    raise requests.HTTPError()
+
+
+def test_get_package_information_pep_658(mocker: MockerFixture) -> None:
+    repo = MockRepository()
+
+    isort_package = repo.package("isort", Version.parse("4.3.4"))
+
+    mocker.patch.object(repo.session, "get", _get_mock)
+
+    try:
+        package = repo.package("isort-metadata", Version.parse("4.3.4"))
+    except FileNotFoundError:
+        pytest.fail("Metadata was not successfully retrieved")
+    else:
+        assert package.source_type == isort_package.source_type == "legacy"
+        assert package.source_reference == isort_package.source_reference == repo.name
+        assert package.source_url == isort_package.source_url == repo.url
+        assert package.name == "isort-metadata"
+        assert package.version.text == isort_package.version.text == "4.3.4"
+        assert package.description == isort_package.description
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints() -> None:
