@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from poetry.core.semver.helpers import parse_constraint
 
@@ -114,8 +115,9 @@ class _Writer:
         conjunction = "So," if conclusion or incompatibility == self._root else "And"
         incompatibility_string = str(incompatibility)
 
-        cause = incompatibility.cause
-        details_for_cause = {}
+        cause: ConflictCause = cast(ConflictCause, incompatibility.cause)
+
+        details_for_cause: dict = {}
         if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
             cause.other.cause, ConflictCause
         ):
@@ -136,7 +138,7 @@ class _Writer:
                     with_line = cause.conflict
                     without_line = cause.other
                     line = conflict_line
-                else:
+                elif other_line is not None:
                     with_line = cause.other
                     without_line = cause.conflict
                     line = other_line
@@ -200,7 +202,7 @@ class _Writer:
                     numbered=numbered,
                 )
             elif self._is_collapsible(derived):
-                derived_cause: ConflictCause = derived.cause
+                derived_cause: ConflictCause = cast(ConflictCause, derived.cause)
                 if isinstance(derived_cause.conflict.cause, ConflictCause):
                     collapsed_derived = derived_cause.conflict
                     collapsed_ext = derived_cause.other
@@ -239,7 +241,7 @@ class _Writer:
         if self._derivations[incompatibility] > 1:
             return False
 
-        cause: ConflictCause = incompatibility.cause
+        cause: ConflictCause = cast(ConflictCause, incompatibility.cause)
         if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
             cause.other.cause, ConflictCause
         ):
