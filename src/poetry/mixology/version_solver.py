@@ -22,7 +22,6 @@ from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.puzzle.provider import Provider
@@ -42,7 +41,7 @@ class DependencyCache:
 
     def __init__(self, provider: Provider):
         self.provider = provider
-        self.cache: dict[str, list[Package]] = {}
+        self.cache: dict[str, list[DependencyPackage]] = {}
 
     @functools.lru_cache(maxsize=128)
     def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
@@ -109,7 +108,7 @@ class VersionSolver:
         )
 
         try:
-            next = self._root.name
+            next: str | None = self._root.name
             while next is not None:
                 self._propagate(next)
                 next = self._choose_package_version()
@@ -450,7 +449,7 @@ class VersionSolver:
             )
 
         if not conflict:
-            self._solution.decide(package)
+            self._solution.decide(package.package)
             self._log(
                 f"selecting {package.complete_name} ({package.full_pretty_version})"
             )
@@ -494,7 +493,7 @@ class VersionSolver:
 
         locked = self._locked.get(dependency.name, [])
         for package in locked:
-            if (allow_similar or dependency.is_same_package_as(package)) and (
+            if (allow_similar or dependency.is_same_package_as(package.package)) and (
                 dependency.constraint.allows(package.version)
                 or package.is_prerelease()
                 and dependency.constraint.allows(package.version.next_patch())
