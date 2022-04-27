@@ -235,6 +235,21 @@ def environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
+def isolate_environ() -> Iterator[None]:
+    """Ensure the environment is isolated from user configuration."""
+    original_environ = dict(os.environ)
+
+    for var in os.environ:
+        if var.startswith("POETRY_"):
+            del os.environ[var]
+
+    yield
+
+    os.environ.clear()
+    os.environ.update(original_environ)
+
+
+@pytest.fixture(autouse=True)
 def git_mock(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
     mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
