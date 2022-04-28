@@ -96,8 +96,8 @@ lists all packages available."""
 
             if not self.option("tree") and package:
                 self.line_error(
-                    "<error>Error: --why cannot be used when displaying a single"
-                    " package.</error>"
+                    "<error>Error: --why cannot be used without --tree when displaying"
+                    " a single package.</error>"
                 )
 
                 return 1
