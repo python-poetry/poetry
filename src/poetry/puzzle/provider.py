@@ -13,6 +13,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import Iterable
 from typing import Iterator
 
@@ -58,8 +59,14 @@ class Indicator(ProgressIndicator):
     CONTEXT: str | None = None
 
     @staticmethod
-    def set_context(context: str | None) -> None:
-        Indicator.CONTEXT = context
+    @contextmanager
+    def context() -> Iterator[Callable[[str | None], None]]:
+        def _set_context(context: str | None) -> None:
+            Indicator.CONTEXT = context
+
+        yield _set_context
+
+        _set_context(None)
 
     def _formatter_context(self) -> str:
         if Indicator.CONTEXT is None:
