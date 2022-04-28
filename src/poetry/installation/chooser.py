@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 
 from typing import TYPE_CHECKING
@@ -15,6 +16,9 @@ if TYPE_CHECKING:
 
     from poetry.repositories.pool import Pool
     from poetry.utils.env import Env
+
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidWheelName(Exception):
@@ -66,9 +70,15 @@ class Chooser:
             if link.is_wheel and not Wheel(link.filename).is_supported_by_environment(
                 self._env
             ):
+                logger.debug(
+                    "Skipping wheel %s as this is not supported by the current"
+                    " environment",
+                    link.filename,
+                )
                 continue
 
             if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
+                logger.debug("Skipping unsupported distribution %s", link.filename)
                 continue
 
             links.append(link)
@@ -78,8 +88,6 @@ class Chooser:
 
         # Get the best link
         chosen = max(links, key=lambda link: self._sort_key(package, link))
-        if not chosen:
-            raise RuntimeError(f"Unable to find installation candidates for {package}")
 
         return chosen
 
@@ -105,6 +113,11 @@ class Chooser:
 
             h = link.hash_name + ":" + link.hash
             if h not in hashes:
+                logger.debug(
+                    "Skipping %s as %s checksum does not match expected value",
+                    link.filename,
+                    link.hash_name,
+                )
                 continue
 
             selected_links.append(link)
