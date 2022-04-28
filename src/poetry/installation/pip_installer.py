@@ -13,7 +13,7 @@ from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.base_installer import BaseInstaller
 from poetry.utils._compat import encode
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
 
 
@@ -128,7 +128,7 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
-                safe_rmtree(str(src_dir))
+                remove_directory(src_dir, force=True)
 
     def run(self, *args: Any, **kwargs: Any) -> str:
         return self._env.run_pip(*args, **kwargs)
@@ -252,7 +252,7 @@ class PipInstaller(BaseInstaller):
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():
-            safe_rmtree(str(src_dir))
+            remove_directory(src_dir, force=True)
 
         src_dir.parent.mkdir(exist_ok=True)
 

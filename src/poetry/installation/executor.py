@@ -25,7 +25,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import pluralize
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
 
 
@@ -488,7 +488,7 @@ class Executor:
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
-                safe_rmtree(str(src_dir))
+                remove_directory(src_dir, force=True)
 
         try:
             return self.run_pip("uninstall", package.name, "-y")
@@ -588,7 +588,7 @@ class Executor:
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():
-            safe_rmtree(str(src_dir))
+            remove_directory(src_dir, force=True)
 
         src_dir.parent.mkdir(exist_ok=True)
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import sys
 
@@ -28,6 +27,7 @@ from poetry.utils.env import InvalidCurrentPythonVersionError
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
@@ -692,19 +692,19 @@ def test_remove_keeps_dir_if_not_deleteable(
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    original_rmtree = shutil.rmtree
-
-    def err_on_rm_venv_only(path: str, *args: Any, **kwargs: Any) -> None:
-        if path == str(venv_path):
+    def err_on_rm_venv_only(path: Path | str, *args: Any, **kwargs: Any) -> None:
+        if str(path) == str(venv_path):
             raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
         else:
-            original_rmtree(path)
+            remove_directory(path)
 
-    m = mocker.patch("shutil.rmtree", side_effect=err_on_rm_venv_only)
+    m = mocker.patch(
+        "poetry.utils.env.remove_directory", side_effect=err_on_rm_venv_only
+    )
 
     venv = manager.remove(f"{venv_name}-py3.6")
 
-    m.assert_any_call(str(venv_path))
+    m.assert_any_call(venv_path)
 
     assert venv_path == venv.path
     assert venv_path.exists()
@@ -713,7 +713,7 @@ def test_remove_keeps_dir_if_not_deleteable(
     assert not file1_path.exists()
     assert not file2_path.exists()
 
-    m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
+    m.side_effect = remove_directory  # Avoid teardown using `err_on_rm_venv_only`
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")

@@ -34,7 +34,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
@@ -211,7 +211,7 @@ class Provider:
         except Exception:
             raise
         finally:
-            safe_rmtree(str(tmp_dir))
+            remove_directory(tmp_dir, force=True)
 
         return package
 
