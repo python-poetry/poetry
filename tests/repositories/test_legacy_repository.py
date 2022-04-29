@@ -28,6 +28,11 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
 
 
+@pytest.fixture(autouse=True)
+def _use_simple_keyring(with_simple_keyring: None) -> None:
+    pass
+
+
 class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"

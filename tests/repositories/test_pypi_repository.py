@@ -22,6 +22,11 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+@pytest.fixture(autouse=True)
+def _use_simple_keyring(with_simple_keyring: None) -> None:
+    pass
+
+
 class MockRepository(PyPiRepository):
 
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
