@@ -96,6 +96,7 @@ class Application(BaseApplication):
         self._poetry: Poetry | None = None
         self._io: IO | None = None
         self._disable_plugins = False
+        self._disable_cache = False
         self._plugins_loaded = False
 
         dispatcher = EventDispatcher()
@@ -117,7 +118,10 @@ class Application(BaseApplication):
             return self._poetry
 
         self._poetry = Factory().create_poetry(
-            Path.cwd(), io=self._io, disable_plugins=self._disable_plugins
+            Path.cwd(),
+            io=self._io,
+            disable_plugins=self._disable_plugins,
+            disable_cache=self._disable_cache,
         )
 
         return self._poetry
@@ -168,6 +172,7 @@ class Application(BaseApplication):
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
+        self._disable_cache = io.input.has_parameter_option("--no-cache")
 
         self._load_plugins(io)
 
@@ -345,6 +350,12 @@ class Application(BaseApplication):
 
         definition.add_option(
             Option("--no-plugins", flag=True, description="Disables plugins.")
+        )
+
+        definition.add_option(
+            Option(
+                "--no-cache", flag=True, description="Disables Poetry source caches."
+            )
         )
 
         return definition
