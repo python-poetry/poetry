@@ -174,7 +174,7 @@ poetry add my-cool-package --source foo
 ```
 
 {{% note %}}
-In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository) 
+In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository)
 for further information.
 {{% /note %}}
 
