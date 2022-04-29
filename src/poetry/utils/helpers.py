@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from requests import Session
 
     from poetry.config.config import Config
+    from poetry.utils.authenticator import Authenticator
 
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -94,7 +95,7 @@ def merge_dicts(d1: dict, d2: dict) -> None:
 def download_file(
     url: str,
     dest: str,
-    session: Session | None = None,
+    session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
 ) -> None:
     import requests

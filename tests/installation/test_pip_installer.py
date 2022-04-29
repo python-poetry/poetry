@@ -117,44 +117,22 @@ def test_install_with_non_pypi_default_repository(pool: Pool, installer: PipInst
     installer.install(bar)
 
 
-def test_install_with_cert():
-    ca_path = "path/to/cert.pem"
-    pool = Pool()
-
-    default = LegacyRepository("default", "https://foo.bar", cert=Path(ca_path))
-
-    pool.add_repository(default, default=True)
-
-    null_env = NullEnv()
-
-    installer = PipInstaller(null_env, NullIO(), pool)
-
-    foo = Package(
-        "foo",
-        "0.0.0",
-        source_type="legacy",
-        source_reference=default.name,
-        source_url=default.url,
-    )
-
-    installer.install(foo)
-
-    assert len(null_env.executed) == 1
-    cmd = null_env.executed[0]
-    assert "--cert" in cmd
-    cert_index = cmd.index("--cert")
-    # Need to do the str(Path()) bit because Windows paths get modified by Path
-    assert cmd[cert_index + 1] == str(Path(ca_path))
-
-
-def test_install_with_client_cert():
+@pytest.mark.parametrize(
+    ("key", "option"),
+    [
+        ("cert", "client-cert"),
+        ("verify", "cert"),
+    ],
+)
+def test_install_with_certs(mocker: MockerFixture, key: str, option: str):
     client_path = "path/to/client.pem"
-    pool = Pool()
-
-    default = LegacyRepository(
-        "default", "https://foo.bar", client_cert=Path(client_path)
+    mocker.patch(
+        "poetry.utils.authenticator.Authenticator.get_certs_for_url",
+        return_value={key: client_path},
     )
 
+    default = LegacyRepository("default", "https://foo.bar")
+    pool = Pool()
     pool.add_repository(default, default=True)
 
     null_env = NullEnv()
@@ -173,8 +151,8 @@ def test_install_with_client_cert():
 
     assert len(null_env.executed) == 1
     cmd = null_env.executed[0]
-    assert "--client-cert" in cmd
-    cert_index = cmd.index("--client-cert")
+    assert f"--{option}" in cmd
+    cert_index = cmd.index(f"--{option}")
     # Need to do the str(Path()) bit because Windows paths get modified by Path
     assert cmd[cert_index + 1] == str(Path(client_path))
 

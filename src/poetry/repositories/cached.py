@@ -4,7 +4,6 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from cachecontrol.caches import FileCache
 from cachy import CacheManager
 from poetry.core.semver.helpers import parse_constraint
 
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 class CachedRepository(Repository, ABC):
     CACHE_VERSION = parse_constraint("1.0.0")
 
-    def __init__(self, name: str, cache_group: str, disable_cache: bool = False):
+    def __init__(self, name: str, disable_cache: bool = False):
         super().__init__(name)
         self._disable_cache = disable_cache
         self._cache_dir = REPOSITORY_CACHE_DIR / name
@@ -36,7 +35,6 @@ class CachedRepository(Repository, ABC):
                 },
             }
         )
-        self._cache_control_cache = FileCache(str(self._cache_dir / cache_group))
 
     @abstractmethod
     def _get_release_info(self, name: str, version: str) -> dict:

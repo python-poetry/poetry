@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import os
 import urllib
+import urllib.parse
 
 from abc import ABC
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from urllib.parse import quote
 
 import requests
-import requests.auth
 
-from cachecontrol import CacheControl
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.markers import parse_marker
@@ -42,41 +39,18 @@ class HTTPRepository(CachedRepository, ABC):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
-        cert: Path | None = None,
-        client_cert: Path | None = None,
     ) -> None:
-        super().__init__(name, "_http", disable_cache)
+        super().__init__(name, disable_cache)
         self._url = url
-        self._client_cert = client_cert
-        self._cert = cert
-
         self._authenticator = Authenticator(
-            config=config or Config(use_environment=True)
+            config=config or Config(use_environment=True),
+            cache_id=name,
+            disable_cache=disable_cache,
         )
-
-        self._session = CacheControl(
-            self._authenticator.session, cache=self._cache_control_cache
-        )
-
-        username, password = self._authenticator.get_credentials_for_url(self._url)
-        if username is not None and password is not None:
-            self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
-                username, password
-            )
-
-        if self._cert:
-            self._authenticator.session.verify = str(self._cert)
-
-        if self._client_cert:
-            self._authenticator.session.cert = str(self._client_cert)
 
     @property
-    def session(self) -> CacheControl:
-        return self._session
-
-    def __del__(self) -> None:
-        with contextlib.suppress(AttributeError):
-            self._session.close()
+    def session(self) -> Authenticator:
+        return self._authenticator
 
     @property
     def url(self) -> str:
@@ -84,22 +58,21 @@ class HTTPRepository(CachedRepository, ABC):
 
     @property
     def cert(self) -> Path | None:
-        return self._cert
+        cert = self._authenticator.get_certs_for_url(self.url).get("verify")
+        if cert:
+            return Path(cert)
+        return None
 
     @property
     def client_cert(self) -> Path | None:
-        return self._client_cert
+        cert = self._authenticator.get_certs_for_url(self.url).get("cert")
+        if cert:
+            return Path(cert)
+        return None
 
     @property
     def authenticated_url(self) -> str:
-        if not self._session.auth:
-            return self.url
-
-        parsed = urllib.parse.urlparse(self.url)
-        username = quote(self._session.auth.username, safe="")
-        password = quote(self._session.auth.password, safe="")
-
-        return f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
+        return self._authenticator.authenticated_url(url=self.url)
 
     def _download(self, url: str, dest: str) -> None:
         return download_file(url, dest, session=self.session)
@@ -286,7 +259,7 @@ class HTTPRepository(CachedRepository, ABC):
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
         try:
-            response = self.session.get(url)
+            response = self.session.get(url, raise_for_status=False)
             if response.status_code in (401, 403):
                 self._log(
                     f"Authorization error accessing {url}",

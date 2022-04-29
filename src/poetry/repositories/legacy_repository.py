@@ -13,8 +13,6 @@ from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.utils.link import Link
 
@@ -28,15 +26,11 @@ class LegacyRepository(HTTPRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
-        cert: Path | None = None,
-        client_cert: Path | None = None,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        super().__init__(
-            name, url.rstrip("/"), config, disable_cache, cert, client_cert
-        )
+        super().__init__(name, url.rstrip("/"), config, disable_cache)
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
