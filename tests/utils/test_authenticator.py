@@ -339,10 +339,12 @@ def test_authenticator_uses_certs_from_config_if_not_provided(
     )
 
     authenticator = Authenticator(config, NullIO())
-    session_send = mocker.patch.object(authenticator.session, "send")
+    url = "https://foo.bar/files/foo-0.1.0.tar.gz"
+    session = authenticator.get_session(url)
+    session_send = mocker.patch.object(session, "send")
     authenticator.request(
         "get",
-        "https://foo.bar/files/foo-0.1.0.tar.gz",
+        url,
         verify=cert,
         cert=client_cert,
     )

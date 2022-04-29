@@ -218,10 +218,11 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: MockerFixt
     delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
 
     response = Response()
+    response.status_code = 200
     response.encoding = "utf-8"
     response.raw = BytesIO(encode('{"foo": "bar"}'))
     mocker.patch(
-        "cachecontrol.adapter.CacheControlAdapter.send",
+        "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],
     )
     repository = PyPiRepository()

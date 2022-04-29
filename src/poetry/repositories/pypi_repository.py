@@ -232,7 +232,7 @@ class PyPiRepository(HTTPRepository):
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
-            self._cache_control_cache.delete(self._base_url + endpoint)
+            self.session.delete_cache(self._base_url + endpoint)
             json_response = self.session.get(self._base_url + endpoint)
 
         if json_response.status_code == 404:

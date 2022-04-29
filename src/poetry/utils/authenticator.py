@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 import urllib.parse
@@ -12,7 +13,11 @@ import requests
 import requests.auth
 import requests.exceptions
 
+from cachecontrol import CacheControl
+from cachecontrol.caches import FileCache
+
 from poetry.exceptions import PoetryException
+from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
 from poetry.utils.password_manager import PasswordManager
@@ -26,43 +31,98 @@ if TYPE_CHECKING:
     from poetry.config.config import Config
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class Authenticator:
-    def __init__(self, config: Config, io: IO | None = None) -> None:
+    def __init__(
+        self,
+        config: Config,
+        io: IO | None = None,
+        cache_id: str | None = None,
+        disable_cache: bool = False,
+    ) -> None:
         self._config = config
         self._io = io
         self._session: requests.Session | None = None
+        self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, tuple[str, str]] = {}
         self._certs: dict[str, dict[str, Path | None]] = {}
         self._password_manager = PasswordManager(self._config)
-
-    def _log(self, message: str, level: str = "debug") -> None:
-        if self._io is not None:
-            self._io.write_line(f"<{level}>{message}</{level}>")
-        else:
-            getattr(logger, level, logger.debug)(message)
+        self._cache_control = (
+            FileCache(
+                str(REPOSITORY_CACHE_DIR / (cache_id or "_default_cache") / "_http")
+            )
+            if not disable_cache
+            else None
+        )
 
     @property
-    def session(self) -> requests.Session:
-        if self._session is None:
-            self._session = requests.Session()
+    def cache(self) -> FileCache | None:
+        return self._cache_control
 
-        return self._session
+    @property
+    def is_cached(self) -> bool:
+        return self._cache_control is not None
+
+    def create_session(self) -> requests.Session:
+        session = requests.Session()
+
+        if not self.is_cached:
+            return session
+
+        return CacheControl(sess=session, cache=self._cache_control)
+
+    def get_session(self, url: str | None = None) -> requests.Session:
+        if not url:
+            return self.create_session()
+
+        parsed_url = urllib.parse.urlsplit(url)
+        netloc = parsed_url.netloc
+
+        if netloc not in self._sessions_for_netloc:
+            logger.debug("Creating new session for %s", netloc)
+            self._sessions_for_netloc[netloc] = self.create_session()
+
+        return self._sessions_for_netloc[netloc]
+
+    def close(self) -> None:
+        for session in [self._session, *self._sessions_for_netloc.values()]:
+            if session is not None:
+                with contextlib.suppress(AttributeError):
+                    session.close()
 
     def __del__(self) -> None:
-        if self._session is not None:
-            self._session.close()
+        self.close()
 
-    def request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
+    def delete_cache(self, url: str) -> None:
+        if self.is_cached:
+            self._cache_control.delete(key=url)
+
+    def authenticated_url(self, url: str) -> str:
+        parsed = urllib.parse.urlparse(url)
+        username, password = self.get_credentials_for_url(url)
+
+        if username is not None and password is not None:
+            username = urllib.parse.quote(username, safe="")
+            password = urllib.parse.quote(password, safe="")
+
+            return (
+                f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
+            )
+
+        return url
+
+    def request(
+        self, method: str, url: str, raise_for_status: bool = True, **kwargs: Any
+    ) -> requests.Response:
         request = requests.Request(method, url)
         username, password = self.get_credentials_for_url(url)
 
         if username is not None and password is not None:
             request = requests.auth.HTTPBasicAuth(username, password)(request)
 
-        session = self.session
+        session = self.get_session(url=url)
         prepared_request = session.prepare_request(request)
 
         proxies = kwargs.get("proxies", {})
@@ -100,18 +160,25 @@ class Authenticator:
                     raise e
             else:
                 if resp.status_code not in [502, 503, 504] or is_last_attempt:
-                    resp.raise_for_status()
+                    if resp.status_code is not None and raise_for_status:
+                        resp.raise_for_status()
                     return resp
 
             if not is_last_attempt:
                 attempt += 1
                 delay = 0.5 * attempt
-                self._log(f"Retrying HTTP request in {delay} seconds.", level="debug")
+                logger.debug(f"Retrying HTTP request in {delay} seconds.")
                 time.sleep(delay)
                 continue
 
         # this should never really be hit under any sane circumstance
         raise PoetryException("Failed HTTP {} request", method.upper())
+
+    def get(self, url: str, **kwargs: Any) -> requests.Response:
+        return self.request("get", url, **kwargs)
+
+    def post(self, url: str, **kwargs: Any) -> requests.Response:
+        return self.request("post", url, **kwargs)
 
     def get_credentials_for_url(self, url: str) -> tuple[str | None, str | None]:
         parsed_url = urllib.parse.urlsplit(url)
