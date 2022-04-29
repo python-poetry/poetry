@@ -112,6 +112,20 @@ class Config:
     def raw(self) -> dict[str, Any]:
         return self._config
 
+    @staticmethod
+    def _get_environment_repositories() -> dict[str, dict[str, str]]:
+        repositories = {}
+        pattern = re.compile(r"POETRY_REPOSITORIES_(?P<name>[A-Z_]+)_URL")
+
+        for env_key in os.environ.keys():
+            match = pattern.match(env_key)
+            if match:
+                repositories[match.group("name").lower().replace("_", "-")] = {
+                    "url": os.environ[env_key]
+                }
+
+        return repositories
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
         Retrieve a setting value.
@@ -121,6 +135,12 @@ class Config:
         # Looking in the environment if the setting
         # is set via a POETRY_* environment variable
         if self._use_environment:
+            if setting_name == "repositories":
+                # repositories setting is special for now
+                repositories = self._get_environment_repositories()
+                if repositories:
+                    return repositories
+
             env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
             env_value = os.getenv(env)
             if env_value is not None:
