@@ -4,6 +4,8 @@ import re
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from cleo.testers.application_tester import ApplicationTester
 from entrypoints import EntryPoint
 
@@ -108,3 +110,23 @@ def test_application_execute_plugin_command_with_plugins_disabled(
     assert tester.io.fetch_output() == ""
     assert tester.io.fetch_error() == '\nThe command "foo" does not exist.\n'
     assert tester.status_code == 1
+
+
+@pytest.mark.parametrize("disable_cache", [True, False])
+def test_application_verify_source_cache_flag(disable_cache: bool):
+    app = Application()
+
+    tester = ApplicationTester(app)
+    command = "debug info"
+
+    if disable_cache:
+        command = f"{command} --no-cache"
+
+    assert not app._poetry
+
+    tester.execute(command)
+
+    assert app.poetry.pool.repositories
+
+    for repo in app.poetry.pool.repositories:
+        assert repo._disable_cache == disable_cache
