@@ -7,12 +7,10 @@ import stat
 import tempfile
 
 from collections.abc import Mapping
-from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Iterator
 
 
 if TYPE_CHECKING:
@@ -31,15 +29,6 @@ def canonicalize_name(name: str) -> str:
 
 def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
-
-
-@contextmanager
-def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
-    name = tempfile.mkdtemp(*args, **kwargs)
-
-    yield name
-
-    remove_directory(name, force=True)
 
 
 def get_cert(config: Config, repository_name: str) -> Path | None:
@@ -114,6 +103,7 @@ def get_package_version_display_string(
     package: Package, root: Path | None = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
+        assert package.source_url is not None
         path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
         return f"{package.version} {path}"
 

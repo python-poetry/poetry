@@ -7,6 +7,7 @@ import tarfile
 import zipfile
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Iterator
 
@@ -17,7 +18,6 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
-from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 
 from poetry.utils.env import EnvCommandError
@@ -285,7 +285,7 @@ class PackageInfo:
 
             context = tarfile.open
 
-        with temporary_directory() as tmp:
+        with TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             with context(path.as_posix()) as archive:
                 archive.extractall(tmp.as_posix())

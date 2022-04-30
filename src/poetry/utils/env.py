@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ContextManager
@@ -43,7 +44,6 @@ from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import remove_directory
-from poetry.utils.helpers import temporary_directory
 
 
 if TYPE_CHECKING:
@@ -1837,7 +1837,7 @@ def ephemeral_environment(
     with_wheel: bool | None = None,
     with_setuptools: bool | None = None,
 ) -> ContextManager[VirtualEnv]:
-    with temporary_directory() as tmp_dir:
+    with TemporaryDirectory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"
         EnvManager.build_venv(

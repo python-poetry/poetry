@@ -8,6 +8,7 @@ import urllib
 from abc import ABC
 from collections import defaultdict
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
@@ -26,7 +27,6 @@ from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -111,7 +111,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         filename = os.path.basename(wheel_name)
 
-        with temporary_directory() as temp_dir:
+        with TemporaryDirectory() as temp_dir:
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
@@ -127,7 +127,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         filename = os.path.basename(sdist_name)
 
-        with temporary_directory() as temp_dir:
+        with TemporaryDirectory() as temp_dir:
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
@@ -247,7 +247,7 @@ class HTTPRepository(CachedRepository, ABC):
                 link.hash_name not in ("sha256", "sha384", "sha512")
                 and hasattr(hashlib, link.hash_name)
             ):
-                with temporary_directory() as temp_dir:
+                with TemporaryDirectory() as temp_dir:
                     filepath = Path(temp_dir) / link.filename
                     self._download(link.url, str(filepath))
 
