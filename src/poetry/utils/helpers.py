@@ -33,18 +33,13 @@ def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
 
 
-def _del_ro(action: Callable, name: str, exc: Exception) -> None:
-    os.chmod(name, stat.S_IWRITE)
-    os.remove(name)
-
-
 @contextmanager
 def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
     name = tempfile.mkdtemp(*args, **kwargs)
 
     yield name
 
-    shutil.rmtree(name, onerror=_del_ro)
+    remove_directory(name, force=True)
 
 
 def get_cert(config: Config, repository_name: str) -> Path | None:
@@ -71,11 +66,21 @@ def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
     func(path)
 
 
-def safe_rmtree(path: str) -> None:
+def remove_directory(
+    path: Path | str, *args: Any, force: bool = False, **kwargs: Any
+) -> None:
+    """
+    Helper function handle safe removal, and optionally forces stubborn file removal.
+    This is particularly useful when dist files are read-only or git writes read-only
+    files on Windows.
+
+    Internally, all arguments are passed to `shutil.rmtree`.
+    """
     if Path(path).is_symlink():
         return os.unlink(str(path))
 
-    shutil.rmtree(path, onerror=_on_rm_error)
+    kwargs["onerror"] = kwargs.pop("onerror", _on_rm_error if force else None)
+    shutil.rmtree(path, *args, **kwargs)
 
 
 def merge_dicts(d1: dict, d2: dict) -> None:

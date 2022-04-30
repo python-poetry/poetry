@@ -7,7 +7,6 @@ import json
 import os
 import platform
 import re
-import shutil
 import subprocess
 import sys
 import sysconfig
@@ -43,6 +42,7 @@ from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
+from poetry.utils.helpers import remove_directory
 from poetry.utils.helpers import temporary_directory
 
 
@@ -365,7 +365,7 @@ class SitePackages:
                     file.unlink()
 
             if distribution._path.exists():
-                shutil.rmtree(str(distribution._path))
+                remove_directory(str(distribution._path), force=True)
 
             paths.append(distribution._path)
 
@@ -1070,7 +1070,7 @@ class EnvManager:
             path = Path(path)
         assert path.is_dir()
         try:
-            shutil.rmtree(str(path))
+            remove_directory(path)
             return
         except OSError as e:
             # Continue only if e.errno == 16
@@ -1085,7 +1085,7 @@ class EnvManager:
             if file_path.is_file() or file_path.is_symlink():
                 file_path.unlink()
             elif file_path.is_dir():
-                shutil.rmtree(str(file_path))
+                remove_directory(file_path, force=True)
 
     @classmethod
     def get_system_env(cls, naive: bool = False) -> SystemEnv | GenericEnv:
