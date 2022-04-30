@@ -46,7 +46,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name == name and pkg.version and pkg.version not in seen:
+            if pkg is not None and pkg.name == name and pkg.version not in seen:
                 seen.add(pkg.version)
                 yield pkg.version
 
@@ -55,7 +55,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name and pkg.version:
+            if pkg is not None:
                 yield pkg
 
     @property
@@ -63,23 +63,29 @@ class LinkSource:
     def links(self) -> Iterator[Link]:
         raise NotImplementedError()
 
-    def link_package_data(self, link: Link) -> Package:
-        name, version = None, None
+    def link_package_data(self, link: Link) -> Package | None:
+        name, version_string, version = None, None, None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:
             name = canonicalize_name(m.group("name"))
-            version = m.group("ver")
+            version_string = m.group("ver")
         else:
             info, ext = link.splitext()
             match = self.VERSION_REGEX.match(info)
             if match:
-                version = match.group(2)
+                name = match.group(1)
+                version_string = match.group(2)
 
-        with contextlib.suppress(ValueError):
-            version = Version.parse(version)
+        if version_string is not None:
+            with contextlib.suppress(ValueError):
+                version = Version.parse(version_string)
 
-        return Package(name, version, source_url=link.url)
+        package = None
+        if name is not None and version is not None:
+            package = Package(name, version, source_url=link.url)
+
+        return package
 
     def links_for_version(self, name: str, version: Version) -> Iterator[Link]:
         name = canonicalize_name(name)
@@ -87,7 +93,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name == name and pkg.version and pkg.version == version:
+            if pkg is not None and pkg.name == name and pkg.version == version:
                 yield link
 
     def clean_link(self, url: str) -> str:
