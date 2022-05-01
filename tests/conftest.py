@@ -213,11 +213,11 @@ def config(
 
 @pytest.fixture()
 def config_dir(tmp_dir: str) -> str:
-    return tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir)
+    return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
 
 
 @pytest.fixture(autouse=True)
-def mock_user_config_dir(mocker: MockerFixture, config_dir: str) -> None:
+def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
     mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
 

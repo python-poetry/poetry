@@ -110,7 +110,7 @@ class Factory(BaseFactory):
 
         config = Config()
         # Load global config
-        config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
+        config_file = TOMLFile(CONFIG_DIR / "config.toml")
         if config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -122,7 +122,7 @@ class Factory(BaseFactory):
         config.set_config_source(FileConfigSource(config_file))
 
         # Load global auth config
-        auth_config_file = TOMLFile(Path(CONFIG_DIR) / "auth.toml")
+        auth_config_file = TOMLFile(CONFIG_DIR / "auth.toml")
         if auth_config_file.exists():
             if io.is_debug():
                 io.write_line(

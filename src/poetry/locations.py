@@ -4,14 +4,14 @@ import os
 
 from pathlib import Path
 
-from platformdirs import user_cache_dir
-from platformdirs import user_config_dir
+from platformdirs import user_cache_path
+from platformdirs import user_config_path
 from platformdirs import user_data_path
 
-CACHE_DIR = user_cache_dir("pypoetry", appauthor=False)
-CONFIG_DIR = user_config_dir("pypoetry", appauthor=False, roaming=True)
+CACHE_DIR = user_cache_path("pypoetry", appauthor=False)
+CONFIG_DIR = user_config_path("pypoetry", appauthor=False, roaming=True)
 
-REPOSITORY_CACHE_DIR = Path(CACHE_DIR) / "cache" / "repositories"
+REPOSITORY_CACHE_DIR = CACHE_DIR / "cache" / "repositories"
 
 
 def data_dir() -> Path:
