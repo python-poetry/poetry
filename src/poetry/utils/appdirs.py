@@ -8,9 +8,6 @@ import os
 import sys
 
 
-WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
-
-
 def expanduser(path: str) -> str:
     """
     Expand ~ and ~user constructions.
@@ -44,7 +41,7 @@ def user_cache_dir(appname: str) -> str:
 
     OPINION: This function appends "Cache" to the `CSIDL_LOCAL_APPDATA` value.
     """
-    if WINDOWS:
+    if sys.platform == "win32":
         # Get the base path
         path = os.path.normpath(_get_win_folder("CSIDL_LOCAL_APPDATA"))
 
@@ -93,7 +90,7 @@ def user_data_dir(appname: str, roaming: bool = False) -> str:
     For Unix, we follow the XDG spec and support $XDG_DATA_HOME.
     That means, by default "~/.local/share/<AppName>".
     """
-    if WINDOWS:
+    if sys.platform == "win32":
         const = "CSIDL_APPDATA" if roaming else "CSIDL_LOCAL_APPDATA"
         return os.path.join(os.path.normpath(_get_win_folder(const)), appname)
     elif sys.platform == "darwin":
@@ -124,7 +121,7 @@ def user_config_dir(appname: str, roaming: bool = True) -> str:
     For Unix, we follow the XDG spec and support $XDG_CONFIG_HOME.
     That means, by default "~/.config/<AppName>".
     """
-    if WINDOWS:
+    if sys.platform == "win32":
         path = user_data_dir(appname, roaming=roaming)
     elif sys.platform == "darwin":
         path = user_data_dir(appname)
@@ -153,7 +150,7 @@ def site_config_dirs(appname: str) -> list[str]:
         Win 7:      Hidden, but writeable on Win 7:
                     C:\ProgramData\<AppName>\
     """
-    if WINDOWS:
+    if sys.platform == "win32":
         path = os.path.normpath(_get_win_folder("CSIDL_COMMON_APPDATA"))
         pathlist = [os.path.join(path, appname)]
     elif sys.platform == "darwin":
@@ -175,54 +172,50 @@ def site_config_dirs(appname: str) -> list[str]:
     return pathlist
 
 
-# -- Windows support functions --
+if sys.platform == "win32":
 
+    def _get_win_folder_from_registry(csidl_name: str) -> str:
+        """
+        This is a fallback technique at best. I'm not sure if using the
+        registry for this guarantees us the correct answer for all CSIDL_*
+        names.
+        """
+        import _winreg
 
-def _get_win_folder_from_registry(csidl_name: str) -> str:
-    """
-    This is a fallback technique at best. I'm not sure if using the
-    registry for this guarantees us the correct answer for all CSIDL_*
-    names.
-    """
-    import _winreg
+        shell_folder_name = {
+            "CSIDL_APPDATA": "AppData",
+            "CSIDL_COMMON_APPDATA": "Common AppData",
+            "CSIDL_LOCAL_APPDATA": "Local AppData",
+        }[csidl_name]
 
-    shell_folder_name = {
-        "CSIDL_APPDATA": "AppData",
-        "CSIDL_COMMON_APPDATA": "Common AppData",
-        "CSIDL_LOCAL_APPDATA": "Local AppData",
-    }[csidl_name]
+        key = _winreg.OpenKey(
+            _winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
+        )
+        directory, _type = _winreg.QueryValueEx(key, shell_folder_name)
+        return directory
 
-    key = _winreg.OpenKey(
-        _winreg.HKEY_CURRENT_USER,
-        r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
-    )
-    directory, _type = _winreg.QueryValueEx(key, shell_folder_name)
-    return directory
+    def _get_win_folder_with_ctypes(csidl_name: str) -> str:
+        csidl_const = {
+            "CSIDL_APPDATA": 26,
+            "CSIDL_COMMON_APPDATA": 35,
+            "CSIDL_LOCAL_APPDATA": 28,
+        }[csidl_name]
 
+        buf = ctypes.create_unicode_buffer(1024)
+        windll = ctypes.windll
+        windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)
 
-def _get_win_folder_with_ctypes(csidl_name: str) -> str:
-    csidl_const = {
-        "CSIDL_APPDATA": 26,
-        "CSIDL_COMMON_APPDATA": 35,
-        "CSIDL_LOCAL_APPDATA": 28,
-    }[csidl_name]
+        # Downgrade to short path name if have highbit chars. See
+        # <http://bugs.activestate.com/show_bug.cgi?id=85099>.
+        has_high_char = any(ord(c) > 255 for c in buf)
+        if has_high_char:
+            buf2 = ctypes.create_unicode_buffer(1024)
+            if windll.kernel32.GetShortPathNameW(buf.value, buf2, 1024):
+                buf = buf2
 
-    buf = ctypes.create_unicode_buffer(1024)
-    windll = ctypes.windll  # type: ignore[attr-defined]
-    windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)
+        return buf.value
 
-    # Downgrade to short path name if have highbit chars. See
-    # <http://bugs.activestate.com/show_bug.cgi?id=85099>.
-    has_high_char = any(ord(c) > 255 for c in buf)
-    if has_high_char:
-        buf2 = ctypes.create_unicode_buffer(1024)
-        if windll.kernel32.GetShortPathNameW(buf.value, buf2, 1024):
-            buf = buf2
-
-    return buf.value
-
-
-if WINDOWS:
     try:
         import ctypes
 
