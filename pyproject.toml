@@ -43,12 +43,13 @@ crashtest = "^0.3.0"
 entrypoints = "^0.3"
 html5lib = "^1.0"
 importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
-# packaging uses calver, so version is unclamped
+# keyring uses calver, so version is unclamped
 keyring = ">=21.2.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.5"
+platformdirs = "^2.5.2"
 requests = "^2.18"
 requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"
