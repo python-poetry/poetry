@@ -114,7 +114,6 @@ poetry env list
 will output something like the following:
 
 ```text
-test-O3eWbxRl-py2.7
 test-O3eWbxRl-py3.6
 test-O3eWbxRl-py3.7 (Activated)
 ```

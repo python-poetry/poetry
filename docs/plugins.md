@@ -38,7 +38,7 @@ version = "1.0.0"
 
 # ...
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.7"
+python = "^3.7"
 poetry = "^1.0"
 
 [tool.poetry.plugins."poetry.plugin"]
