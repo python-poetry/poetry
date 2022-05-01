@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -24,6 +23,8 @@ from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io.io import IO
 
     from poetry.repositories.legacy_repository import LegacyRepository

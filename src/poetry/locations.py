@@ -8,6 +8,7 @@ from platformdirs import user_cache_path
 from platformdirs import user_config_path
 from platformdirs import user_data_path
 
+
 CACHE_DIR = user_cache_path("pypoetry", appauthor=False)
 CONFIG_DIR = user_config_path("pypoetry", appauthor=False, roaming=True)
 
