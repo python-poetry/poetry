@@ -68,6 +68,7 @@ class Installer:
 
         self._executor = executor
         self._use_executor = False
+        self._fail_nonfresh = config.get("ci.fail_nonfresh", False)
 
         self._installer = self._get_installer()
         if installed is None:
@@ -250,6 +251,10 @@ class Installer:
                     "Run `poetry lock [--no-update]` to fix it."
                     "</warning>"
                 )
+                if self._fail_nonfresh:
+                    raise OSError(
+                        "Fail if nonfresh is set, and poetry.lock is not fresh."
+                    )
 
             for extra in self._extras:
                 if extra not in self._locker.lock_data.get("extras", {}):
