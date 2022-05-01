@@ -41,6 +41,10 @@ poetry install
 ```
 {{% /note %}}
 
+{{% note %}}
+Since version 1.2, Poetry no longer supports managing environments for Python 2.7. 
+{{% /note %}}
+
 ## Switching between environments
 
 Sometimes this might not be feasible for your system, especially Windows where `pyenv`
