@@ -191,7 +191,7 @@ class Authenticator:
 
         settings = session.merge_environment_settings(
             prepared_request.url, proxies, stream, verify, cert
-        )
+        )  # type: ignore[no-untyped-call]
 
         # Send the request.
         send_kwargs = {

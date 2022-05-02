@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import Any
 
 from cachy import CacheManager
 from poetry.core.semver.helpers import parse_constraint
@@ -37,7 +38,7 @@ class CachedRepository(Repository, ABC):
         )
 
     @abstractmethod
-    def _get_release_info(self, name: str, version: str) -> dict:
+    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
         raise NotImplementedError()
 
     def get_release_info(self, name: str, version: str) -> PackageInfo:
@@ -73,6 +74,6 @@ class CachedRepository(Repository, ABC):
         self,
         name: str,
         version: str,
-        extras: (list | None) = None,
+        extras: list[str] | None = None,
     ) -> Package:
         return self.get_release_info(name, version).to_package(name=name, extras=extras)

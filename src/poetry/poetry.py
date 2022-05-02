@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from poetry.core.poetry import Poetry as BasePoetry
 
@@ -26,7 +27,7 @@ class Poetry(BasePoetry):
     def __init__(
         self,
         file: Path,
-        local_config: dict,
+        local_config: dict[str, Any],
         package: ProjectPackage,
         locker: Locker,
         config: Config,

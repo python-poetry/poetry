@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
@@ -120,7 +121,7 @@ class LegacyRepository(HTTPRepository):
 
         return list(page.links_for_version(package.name, package.version))
 
-    def _get_release_info(self, name: str, version: str) -> dict:
+    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
         page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')

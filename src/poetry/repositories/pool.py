@@ -122,7 +122,11 @@ class Pool(Repository):
         raise NotImplementedError()
 
     def package(
-        self, name: str, version: str, extras: list[str] = None, repository: str = None
+        self,
+        name: str,
+        version: str,
+        extras: list[str] | None = None,
+        repository: str | None = None,
     ) -> Package:
         if repository is not None:
             repository = repository.lower()

@@ -31,9 +31,9 @@ from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
 from tomlkit import table
-from tomlkit.container import Table
 from tomlkit.exceptions import TOMLKitError
 from tomlkit.items import Array
+from tomlkit.items import Table
 
 from poetry.packages import DependencyPackage
 from poetry.utils.extras import get_extra_package_names
@@ -55,7 +55,7 @@ class Locker:
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
 
-    def __init__(self, lock: str | Path, local_config: dict) -> None:
+    def __init__(self, lock: str | Path, local_config: dict[str, Any]) -> None:
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data: TOMLDocument | None = None
@@ -89,7 +89,8 @@ class Locker:
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
-            return self._content_hash == metadata["content-hash"]
+            fresh: bool = self._content_hash == metadata["content-hash"]
+            return fresh
 
         return False
 
@@ -549,7 +550,10 @@ class Locker:
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "files": sorted(package.files, key=lambda x: x["file"]),
+            "files": sorted(
+                package.files,
+                key=lambda x: x["file"],  # type: ignore[no-any-return]
+            ),
         }
 
         if dependencies:

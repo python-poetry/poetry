@@ -148,18 +148,21 @@ class GitRepoLocalInfo:
 class Git:
     @staticmethod
     def as_repo(repo: Path | str) -> Repo:
-        return Repo(repo)
+        return Repo(str(repo))  # type: ignore[no-untyped-call]
 
     @staticmethod
     def get_remote_url(repo: Repo, remote: str = "origin") -> str:
         with repo:
             config = repo.get_config()
             section = (b"remote", remote.encode("utf-8"))
-            return (
-                config.get(section, b"url").decode("utf-8")
-                if config.has_section(section)
-                else ""
-            )
+
+            url = ""
+            if config.has_section(section):  # type: ignore[no-untyped-call]
+                value = config.get(section, b"url")  # type: ignore[no-untyped-call]
+                assert value is not None
+                url = value.decode("utf-8")
+
+            return url
 
     @staticmethod
     def get_revision(repo: Repo) -> str:
@@ -181,14 +184,15 @@ class Git:
         """
         client: GitClient
         path: str
-        client, path = get_transport_and_path(url)
+        client, path = get_transport_and_path(url)  # type: ignore[no-untyped-call]
 
         with local:
-            return client.fetch(
+            result: FetchPackResult = client.fetch(
                 path,
                 local,
                 determine_wants=local.object_store.determine_wants_all,
-            )
+            )  # type: ignore[no-untyped-call]
+            return result
 
     @staticmethod
     def _clone_legacy(url: str, refspec: GitRefSpec, target: Path) -> Repo:
@@ -224,7 +228,8 @@ class Git:
                 f"Failed to checkout {url} at '{revision}'"
             )
 
-        return Repo(target)
+        repo = Repo(str(target))  # type: ignore[no-untyped-call]
+        return repo
 
     @classmethod
     def _clone(cls, url: str, refspec: GitRefSpec, target: Path) -> Repo:
@@ -232,11 +237,12 @@ class Git:
         Helper method to clone a remove repository at the given `url` at the specified
         ref spec.
         """
+        local: Repo
         if not target.exists():
-            local = Repo.init(target, mkdir=True)
-            porcelain.remote_add(local, "origin", url)
+            local = Repo.init(str(target), mkdir=True)  # type: ignore[no-untyped-call]
+            porcelain.remote_add(local, "origin", url)  # type: ignore[no-untyped-call]
         else:
-            local = Repo(target)
+            local = Repo(str(target))  # type: ignore[no-untyped-call]
 
         remote_refs = cls._fetch_remote_refs(url=url, local=local)
 
@@ -270,11 +276,11 @@ class Git:
                     for (n, v) in remote_refs.refs.items()
                     if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
                 },
-            )
+            )  # type: ignore[no-untyped-call]
 
         try:
             with local:
-                local.reset_index()
+                local.reset_index()  # type: ignore[no-untyped-call]
         except (AssertionError, KeyError) as e:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
@@ -316,7 +322,8 @@ class Git:
 
             url: bytes
             path: bytes
-            for path, url, _ in parse_submodules(config):
+            submodules = parse_submodules(config)  # type: ignore[no-untyped-call]
+            for path, url, _ in submodules:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
 
@@ -339,11 +346,12 @@ class Git:
     def is_using_legacy_client() -> bool:
         from poetry.factory import Factory
 
-        return (
+        legacy_client: bool = (
             Factory.create_config()
             .get("experimental", {})
             .get("system-git-client", False)
         )
+        return legacy_client
 
     @staticmethod
     def get_default_source_root() -> Path:
@@ -376,7 +384,7 @@ class Git:
             else:
                 # check if the current local copy matches the requested ref spec
                 try:
-                    current_repo = Repo(target)
+                    current_repo = Repo(str(target))  # type: ignore[no-untyped-call]
 
                     with current_repo:
                         current_sha = current_repo.head().decode("utf-8")

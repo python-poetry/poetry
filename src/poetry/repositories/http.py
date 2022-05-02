@@ -199,7 +199,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict:
+    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
         if not links:
             raise PackageNotFound(
                 f'No valid distribution links found for package: "{data.name}" version:'
@@ -259,7 +259,7 @@ class HTTPRepository(CachedRepository, ABC):
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
         try:
-            response = self.session.get(url, raise_for_status=False)
+            response: requests.Response = self.session.get(url, raise_for_status=False)
             if response.status_code in (401, 403):
                 self._log(
                     f"Authorization error accessing {url}",

@@ -63,7 +63,7 @@ class Config:
         self._auth_config_source: ConfigSource = DictConfigSource()
 
     @property
-    def config(self) -> dict:
+    def config(self) -> dict[str, Any]:
         return self._config
 
     @property
@@ -90,7 +90,7 @@ class Config:
         merge_dicts(self._config, config)
 
     def all(self) -> dict[str, Any]:
-        def _all(config: dict, parent_key: str = "") -> dict:
+        def _all(config: dict[str, Any], parent_key: str = "") -> dict[str, Any]:
             all_ = {}
 
             for key in config:
@@ -159,10 +159,14 @@ class Config:
         if not isinstance(value, str):
             return value
 
-        return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
+        return re.sub(
+            r"{(.+?)}",
+            lambda m: self.get(m.group(1)),  # type: ignore[no-any-return]
+            value,
+        )
 
     @staticmethod
-    def _get_normalizer(name: str) -> Callable:
+    def _get_normalizer(name: str) -> Callable[[str], Any]:
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",

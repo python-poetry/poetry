@@ -91,10 +91,13 @@ class Layout:
         package = inline_table()
 
         include = self._package_path_relative.parts[0]
-        package.append("include", include)
+        package.append("include", include)  # type: ignore[no-untyped-call]
 
         if self.basedir != Path():
-            package.append("from", self.basedir.as_posix())
+            package.append(
+                "from",
+                self.basedir.as_posix(),
+            )  # type: ignore[no-untyped-call]
         else:
             if include == self._project:
                 # package include and package name are the same,

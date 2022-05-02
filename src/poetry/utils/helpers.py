@@ -59,7 +59,7 @@ def get_client_cert(config: Config, repository_name: str) -> Path | None:
         return None
 
 
-def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
+def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:
     if not os.path.exists(path):
         return
 
@@ -84,7 +84,7 @@ def remove_directory(
     shutil.rmtree(path, *args, **kwargs)
 
 
-def merge_dicts(d1: dict, d2: dict) -> None:
+def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
     for k in d2.keys():
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])

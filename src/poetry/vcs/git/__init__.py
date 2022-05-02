@@ -3,4 +3,4 @@ from __future__ import annotations
 from poetry.vcs.git.backend import Git
 
 
-__all__ = [Git.__name__]
+__all__ = ["Git"]

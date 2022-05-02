@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
 
-class PackageCollection(list):
+class PackageCollection(list):  # type: ignore[type-arg]
     def __init__(
         self,
         dependency: Dependency,

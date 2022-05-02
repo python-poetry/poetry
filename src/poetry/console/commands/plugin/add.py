@@ -170,16 +170,17 @@ You can specify a package in the following forms:
         if self.option("dry-run"):
             argv.append("--dry-run")
 
-        return update_command.run(
+        exit_code: int = update_command.run(
             IO(
                 StringInput(" ".join(argv)),
                 self._io.output,
                 self._io.error_output,
             )
         )
+        return exit_code
 
     def get_existing_packages_from_input(
-        self, packages: list[str], poetry_content: dict, target_section: str
+        self, packages: list[str], poetry_content: dict[str, Any], target_section: str
     ) -> list[str]:
         existing_packages = []
 

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from poetry.puzzle.exceptions import SolverProblemError
 
 
-class PythonRequirementSolutionProvider(HasSolutionsForException):
+class PythonRequirementSolutionProvider(HasSolutionsForException):  # type: ignore[misc]
     def can_solve(self, exception: Exception) -> bool:
         from poetry.puzzle.exceptions import SolverProblemError
 

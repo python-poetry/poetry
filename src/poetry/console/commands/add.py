@@ -262,7 +262,7 @@ You can specify a package in the following forms:
         return status
 
     def get_existing_packages_from_input(
-        self, packages: list[str], section: dict
+        self, packages: list[str], section: dict[str, Any]
     ) -> list[str]:
         existing_packages = []
 
