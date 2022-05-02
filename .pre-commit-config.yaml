@@ -82,7 +82,7 @@ repos:
         additional_dependencies: *flake8_deps
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.942
+    rev: v0.950
     hooks:
       - id: mypy
         pass_filenames: false
