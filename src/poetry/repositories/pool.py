@@ -135,18 +135,15 @@ class Pool(Repository):
             raise ValueError(f'Repository "{repository}" does not exist.')
 
         if repository is not None and not self._ignore_repository_names:
-            package = self.repository(repository).package(name, version, extras=extras)
-            if package is not None:
-                return package
-        else:
-            for repo in self._repositories:
-                try:
-                    package = repo.package(name, version, extras=extras)
-                except PackageNotFound:
-                    continue
+            return self.repository(repository).package(name, version, extras=extras)
 
-                if package:
-                    return package
+        for repo in self._repositories:
+            try:
+                package = repo.package(name, version, extras=extras)
+            except PackageNotFound:
+                continue
+
+            return package
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")
 

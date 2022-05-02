@@ -8,6 +8,8 @@ from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 
+from poetry.repositories.exceptions import PackageNotFound
+
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
@@ -126,11 +128,11 @@ class Repository:
 
     def package(
         self, name: str, version: str, extras: list[str] | None = None
-    ) -> Package | None:
+    ) -> Package:
         name = name.lower()
 
         for package in self.packages:
             if name == package.name and package.version.text == version:
                 return package.clone()
 
-        return None
+        raise PackageNotFound(f"Package {name} ({version}) not found.")
