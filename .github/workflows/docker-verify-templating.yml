@@ -1,4 +1,4 @@
-name: Verify Templating
+name: Verify Docker Templating
 
 on:
   push:
