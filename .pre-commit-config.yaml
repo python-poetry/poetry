@@ -24,7 +24,6 @@ repos:
     hooks:
       - id: python-check-mock-methods
       - id: python-use-type-annotations
-      - id: python-check-blanket-type-ignore
       - id: python-check-blanket-noqa
 
   - repo: https://github.com/asottile/yesqa
