@@ -67,6 +67,7 @@ def _get_package_from_git(
     tag: str | None = None,
     rev: str | None = None,
     source_root: Path | None = None,
+    source_subdirectory: str | None = None,
 ) -> Package:
     source = Git.clone(
         url=url,
@@ -78,7 +79,11 @@ def _get_package_from_git(
     )
     revision = Git.get_revision(source)
 
-    package = Provider.get_package_from_directory(Path(source.path))
+    directory = Path(source.path)
+    if source_subdirectory:
+        directory = directory / source_subdirectory
+
+    package = Provider.get_package_from_directory(directory)
     package._source_type = "git"
     package._source_url = url
     package._source_reference = rev or tag or branch or "HEAD"
@@ -214,6 +219,7 @@ class Provider:
             rev=dependency.rev,
             source_root=self._source_root
             or (self._env.path.joinpath("src") if self._env else None),
+            source_subdirectory=dependency._source_subdirectory,
         )
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -239,12 +245,18 @@ class Provider:
         tag: str | None = None,
         rev: str | None = None,
         source_root: Path | None = None,
+        source_subdirectory: str | None = None,
     ) -> Package:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
         return _get_package_from_git(
-            url=url, branch=branch, tag=tag, rev=rev, source_root=source_root
+            url=url,
+            branch=branch,
+            tag=tag,
+            rev=rev,
+            source_root=source_root,
+            source_subdirectory=source_subdirectory,
         )
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
