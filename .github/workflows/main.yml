@@ -85,6 +85,9 @@ jobs:
       - name: Run pytest
         run: poetry run python -m pytest -p no:sugar -q tests/
 
+      - name: Run mypy
+        run: poetry run mypy
+
       - name: Run pytest (integration suite)
         run: poetry run python -m pytest -p no:sugar -q --integration tests/integration
 
