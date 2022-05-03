@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.base_installer import BaseInstaller
-    from poetry.installation.operations import OperationTypes
     from poetry.installation.operations.operation import Operation
     from poetry.packages import Locker
     from poetry.utils.env import Env
@@ -345,7 +344,7 @@ class Installer:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
 
-    def _execute(self, operations: list[OperationTypes]) -> int:
+    def _execute(self, operations: list[Operation]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
 

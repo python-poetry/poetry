@@ -14,7 +14,7 @@ else:
 WINDOWS = sys.platform == "win32"
 
 
-def decode(string: str, encodings: list[str] | None = None) -> str:
+def decode(string: bytes | str, encodings: list[str] | None = None) -> str:
     if not isinstance(string, bytes):
         return string
 

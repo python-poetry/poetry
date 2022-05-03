@@ -15,10 +15,10 @@ from poetry.core.utils.helpers import normalize_version
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
-from requests.packages.urllib3 import util
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
+from urllib3 import util
 
 from poetry.__version__ import __version__
 from poetry.utils.patterns import wheel_file_re
@@ -327,7 +327,7 @@ class Uploader:
 
         return resp
 
-    def _prepare_data(self, data: dict) -> list[tuple[str, str]]:
+    def _prepare_data(self, data: dict[str, Any]) -> list[tuple[str, str]]:
         data_to_send = []
         for key, value in data.items():
             if not isinstance(value, (list, tuple)):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Sequence
 
 from poetry.packages.dependency_package import DependencyPackage
 
@@ -14,7 +15,7 @@ class PackageCollection(list):
     def __init__(
         self,
         dependency: Dependency,
-        packages: list[Package | DependencyPackage] = None,
+        packages: Sequence[Package | DependencyPackage] | None = None,
     ) -> None:
         self._dependency = dependency
 

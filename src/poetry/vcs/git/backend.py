@@ -367,7 +367,11 @@ class Git:
                     if not is_revision_sha(revision=current_sha):
                         # head is not a sha, this will cause issues later, lets reset
                         remove_directory(target, force=True)
-                    elif refspec.is_sha and current_sha.startswith(refspec.revision):
+                    elif (
+                        refspec.is_sha
+                        and refspec.revision is not None
+                        and current_sha.startswith(refspec.revision)
+                    ):
                         # if revision is used short-circuit remote fetch head matches
                         return current_repo
 

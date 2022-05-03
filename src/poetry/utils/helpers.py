@@ -114,6 +114,7 @@ def get_package_version_display_string(
     package: Package, root: Path | None = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
+        assert package.source_url is not None
         path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
         return f"{package.version} {path}"
 

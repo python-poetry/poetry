@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.console.commands.group_command import GroupCommand
 
@@ -12,8 +16,8 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.packages.project_package import ProjectPackage
     from poetry.repositories.installed_repository import InstalledRepository
     from poetry.repositories.repository import Repository
 
@@ -82,10 +86,10 @@ lists all packages available."""
         if self.option("tree") and not package:
             requires = root.all_requires
             packages = locked_repo.packages
-            for pkg in packages:
+            for p in packages:
                 for require in requires:
-                    if pkg.name == require.name:
-                        self.display_package_tree(self._io, pkg, locked_repo)
+                    if p.name == require.name:
+                        self.display_package_tree(self._io, p, locked_repo)
                         break
 
             return 0
@@ -383,7 +387,7 @@ lists all packages available."""
 
     def find_latest_package(
         self, package: Package, root: ProjectPackage
-    ) -> Package | bool:
+    ) -> Package | None:
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.provider import Provider
@@ -398,10 +402,13 @@ lists all packages available."""
                     provider = Provider(root, self.poetry.pool, NullIO())
 
                     if dep.is_vcs():
+                        dep = cast(VCSDependency, dep)
                         return provider.search_for_vcs(dep)[0]
                     if dep.is_file():
+                        dep = cast(FileDependency, dep)
                         return provider.search_for_file(dep)[0]
                     if dep.is_directory():
+                        dep = cast(DirectoryDependency, dep)
                         return provider.search_for_directory(dep)[0]
 
         name = package.name

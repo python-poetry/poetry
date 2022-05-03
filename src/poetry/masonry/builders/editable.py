@@ -74,7 +74,7 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script: Path) -> None:
+    def _run_build_script(self, build_script: str) -> None:
         self._debug(f"  - Executing build script: <b>{build_script}</b>")
         self._env.run("python", str(self._path.joinpath(build_script)), call=True)
 

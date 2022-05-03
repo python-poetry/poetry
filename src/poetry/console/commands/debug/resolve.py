@@ -68,6 +68,7 @@ class DebugResolveCommand(InitCommand):
 
             for constraint in requirements:
                 name = constraint.pop("name")
+                assert isinstance(name, str)
                 extras = []
                 for extra in self.option("extras"):
                     if " " in extra:

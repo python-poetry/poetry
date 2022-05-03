@@ -26,11 +26,10 @@ from poetry.repositories.exceptions import PackageNotFound
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.packages.types import DependencyTypes
     from poetry.core.semver.version import Version
     from tomlkit.toml_document import TOMLDocument
 
-    from poetry.installation.operations import OperationTypes
+    from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
@@ -46,7 +45,7 @@ def get_dependency(
     groups: list[str] | None = None,
     optional: bool = False,
     allows_prereleases: bool = False,
-) -> DependencyTypes:
+) -> Dependency:
     if constraint is None:
         constraint = "*"
 
@@ -134,19 +133,19 @@ class TestExecutor(Executor):
     def removals(self) -> list[Package]:
         return self._uninstalls
 
-    def _do_execute_operation(self, operation: OperationTypes) -> None:
+    def _do_execute_operation(self, operation: Operation) -> None:
         super()._do_execute_operation(operation)
 
         if not operation.skipped:
             getattr(self, f"_{operation.job_type}s").append(operation.package)
 
-    def _execute_install(self, operation: OperationTypes) -> int:
+    def _execute_install(self, operation: Operation) -> int:
         return 0
 
-    def _execute_update(self, operation: OperationTypes) -> int:
+    def _execute_update(self, operation: Operation) -> int:
         return 0
 
-    def _execute_remove(self, operation: OperationTypes) -> int:
+    def _execute_remove(self, operation: Operation) -> int:
         return 0
 
 
