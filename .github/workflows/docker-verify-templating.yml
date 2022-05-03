@@ -1,0 +1,31 @@
+name: Verify Templating
+
+on:
+  push:
+    paths:
+      - 'docker/**'
+    branches:
+      - master
+      - docker
+  pull_request:
+    paths:
+      - 'docker/**'
+    branches:
+      - '**'
+
+defaults:
+  run:
+    shell: 'bash -Eeuo pipefail -x {0}'
+
+jobs:
+  apply-templates:
+    name: Check For Uncomitted Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Apply Templates
+        run: ./docker/apply-templates.sh
+      - name: Check Git Status
+        run: |
+          status="$(git status --short)"
+          [ -z "$status" ]
