@@ -108,6 +108,15 @@ def remote_default_branch(remote_default_ref: bytes) -> str:
     return remote_default_ref.decode("utf-8").replace("refs/heads/", "")
 
 
+def test_git_local_info(
+    source_url: str, remote_refs: FetchPackResult, remote_default_ref: bytes
+) -> None:
+    with Git.clone(url=source_url) as repo:
+        info = Git.info(repo=repo)
+        assert info.origin == source_url
+        assert info.revision == remote_refs.refs[remote_default_ref].decode("utf-8")
+
+
 def test_git_clone_default_branch_head(
     source_url: str,
     remote_refs: FetchPackResult,
