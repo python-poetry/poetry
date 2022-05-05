@@ -22,8 +22,6 @@ from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
-    from dataclasses import InitVar
-
     from dulwich.client import FetchPackResult
     from dulwich.client import GitClient
 
@@ -137,7 +135,7 @@ class GitRefSpec:
 
 @dataclasses.dataclass
 class GitRepoLocalInfo:
-    repo: InitVar[Repo | Path | str]
+    repo: dataclasses.InitVar[Repo | Path | str]
     origin: str = dataclasses.field(init=False)
     revision: str = dataclasses.field(init=False)
 
@@ -157,7 +155,11 @@ class Git:
         with repo:
             config = repo.get_config()
             section = (b"remote", remote.encode("utf-8"))
-            return config.get(section, b"url") if config.has_section(section) else ""
+            return (
+                config.get(section, b"url").decode("utf-8")
+                if config.has_section(section)
+                else ""
+            )
 
     @staticmethod
     def get_revision(repo: Repo) -> str:
