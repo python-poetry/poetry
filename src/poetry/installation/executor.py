@@ -677,6 +677,7 @@ class Executor:
 
         if progress:
             with self._lock:
+                self._sections[id(operation)].clear()
                 progress.start()
 
         done = 0
