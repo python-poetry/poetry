@@ -240,11 +240,16 @@ class Git:
 
         remote_refs = cls._fetch_remote_refs(url=url, local=local)
 
+        logger.debug(
+            "Cloning <c2>%s</> at '<c2>%s</>' to <c1>%s</>", url, refspec.key, target
+        )
+
         try:
             refspec.resolve(remote_refs=remote_refs)
         except KeyError:  # branch / ref does not exist
             raise PoetrySimpleConsoleException(
-                f"Failed to clone {url} at '{refspec.key}'"
+                f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
+                " remote."
             )
 
         # ensure local HEAD matches remote
@@ -274,13 +279,26 @@ class Git:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
+                logger.debug(
+                    "Removing local clone (<c1>%s</>) of repository as it is in a"
+                    " broken state.",
+                    local.path,
+                )
                 remove_directory(local.path, force=True)
 
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
+            logger.debug(
+                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and cannot"
+                " be used. The following error was raised:\n\n\t<warning>%s</>",
+                refspec.key,
+                e,
+            )
+
             raise PoetrySimpleConsoleException(
-                f"Failed to clone {url} at '{refspec.key}'"
+                f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
+                " remote."
             )
 
         return local
