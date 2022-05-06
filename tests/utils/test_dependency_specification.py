@@ -38,6 +38,9 @@ if TYPE_CHECKING:
         ("demo", {"name": "demo"}),
         ("demo@1.0.0", {"name": "demo", "version": "1.0.0"}),
         ("demo@^1.0.0", {"name": "demo", "version": "^1.0.0"}),
+        ("demo@==1.0.0", {"name": "demo", "version": "==1.0.0"}),
+        ("demo@!=1.0.0", {"name": "demo", "version": "!=1.0.0"}),
+        ("demo@~1.0.0", {"name": "demo", "version": "~1.0.0"}),
         ("demo[a,b]@1.0.0", {"name": "demo", "version": "1.0.0", "extras": ["a", "b"]}),
         ("demo[a,b]", {"name": "demo", "extras": ["a", "b"]}),
         ("../demo", {"name": "demo", "path": "../demo"}),
@@ -45,6 +48,47 @@ if TYPE_CHECKING:
         (
             "https://example.com/packages/demo-0.1.0.tar.gz",
             {"name": "demo", "url": "https://example.com/packages/demo-0.1.0.tar.gz"},
+        ),
+        # PEP 508 inputs
+        (
+            "poetry-core (>=1.0.7,<1.1.0)",
+            {"name": "poetry-core", "version": ">=1.0.7,<1.1.0"},
+        ),
+        (
+            'requests [security,tests] >= 2.8.1, == 2.8.* ; python_version < "2.7"',
+            {
+                "name": "requests",
+                "markers": 'python_version < "2.7"',
+                "version": ">=2.8.1,<2.9.0",
+                "extras": ["security", "tests"],
+            },
+        ),
+        ("name (>=3,<4)", {"name": "name", "version": ">=3,<4"}),
+        (
+            "name@http://foo.com",
+            {"name": "name", "url": "http://foo.com"},
+        ),
+        (
+            "name [fred,bar] @ http://foo.com ; python_version=='2.7'",
+            {
+                "name": "name",
+                "markers": 'python_version == "2.7"',
+                "url": "http://foo.com",
+                # This is commented out as there is a bug in
+                # Dependency.create_from_pep_508 that leads to incorrect
+                # URL Dependency creation.
+                # should be: "extras": ["fred", "bar"],
+            },
+        ),
+        (
+            'cachecontrol[filecache] (>=0.12.9,<0.13.0); python_version >= "3.6" and'
+            ' python_version < "4.0"',
+            {
+                "version": ">=0.12.9,<0.13.0",
+                "markers": 'python_version >= "3.6" and python_version < "4.0"',
+                "extras": ["filecache"],
+                "name": "cachecontrol",
+            },
         ),
     ],
 )
@@ -60,4 +104,6 @@ def test_parse_dependency_specification(
 
     mocker.patch("pathlib.Path.exists", _mock)
 
-    assert not DeepDiff(parse_dependency_specification(requirement), specification)
+    assert not DeepDiff(
+        parse_dependency_specification(requirement), specification, ignore_order=True
+    )
