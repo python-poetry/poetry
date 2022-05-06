@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import urllib.parse
@@ -9,6 +10,10 @@ from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import Union
+from typing import cast
+
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.puzzle.provider import Provider
 
@@ -53,7 +58,7 @@ def _parse_dependency_specification_url(
 
     if url_parsed.scheme in ["http", "https"]:
         package = Provider.get_package_from_url(requirement)
-        return {"name": package.name, "url": package.source_url}
+        return {"name": package.name, "url": cast(str, package.source_url)}
 
     return None
 
@@ -131,11 +136,56 @@ def _parse_dependency_specification_simple(
     return require
 
 
+def dependency_to_specification(dependency: Dependency) -> DependencySpec:
+    specification: DependencySpec = {}
+
+    if dependency.is_vcs():
+        dependency = cast(VCSDependency, dependency)
+        specification[dependency.vcs] = cast(str, dependency.source_url)
+        if dependency.reference:
+            specification["rev"] = dependency.reference
+    elif dependency.is_file() or dependency.is_directory():
+        specification["path"] = cast(str, dependency.source_url)
+    elif dependency.is_url():
+        specification["url"] = cast(str, dependency.source_url)
+    elif dependency.pretty_constraint != "*" and not dependency.constraint.is_empty():
+        specification["version"] = dependency.pretty_constraint
+
+    if not dependency.marker.is_any():
+        specification["markers"] = str(dependency.marker)
+
+    if dependency.extras:
+        specification["extras"] = sorted(dependency.extras)
+
+    return specification
+
+
+def pep508_to_dependency_specification(requirement: str) -> DependencySpec | None:
+    if " ; " not in requirement and re.search(r"@[\^~!=<>\d]", requirement):
+        # this is of the form package@<semver>, do not attempt to parse it
+        return None
+
+    with contextlib.suppress(ValueError):
+        dependency = Dependency.create_from_pep_508(requirement)
+        specification = dependency_to_specification(dependency)
+
+        if specification:
+            specification["name"] = dependency.name
+            return specification
+
+    return None
+
+
 def parse_dependency_specification(
     requirement: str, env: Env | None = None, cwd: Path | None = None
 ) -> DependencySpec:
     requirement = requirement.strip()
     cwd = cwd or Path.cwd()
+
+    specification = pep508_to_dependency_specification(requirement)
+
+    if specification is not None:
+        return specification
 
     extras = []
     extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
