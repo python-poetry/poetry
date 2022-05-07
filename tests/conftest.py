@@ -212,7 +212,7 @@ def config(
 
 
 @pytest.fixture()
-def config_dir(tmp_dir: str) -> str:
+def config_dir(tmp_dir: str) -> Path:
     return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
 
 
