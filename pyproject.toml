@@ -71,6 +71,8 @@ httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
 flatdict = "^4.0.1"
+mypy = ">=0.950"
+types-requests = ">=2.27.11"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"

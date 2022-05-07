@@ -122,6 +122,13 @@ $ poetry install
 $ poetry run pytest tests/
 ```
 
+Poetry uses [mypy](https://github.com/python/mypy) for typechecking, and the CI
+will fail if it finds any errors.  To run mypy locally:
+
+```bash
+$ poetry run mypy
+```
+
 Poetry uses the [black](https://github.com/psf/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
 
