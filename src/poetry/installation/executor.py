@@ -12,6 +12,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
@@ -21,6 +22,9 @@ from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
+from poetry.installation.operations import Install
+from poetry.installation.operations import Uninstall
+from poetry.installation.operations import Update
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
@@ -31,12 +35,10 @@ from poetry.utils.pip import pip_install
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from cleo.io.outputs.section_output import SectionOutput
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
-    from poetry.installation.operations import Install
-    from poetry.installation.operations import Uninstall
-    from poetry.installation.operations import Update
     from poetry.installation.operations.operation import Operation
     from poetry.repositories import Pool
     from poetry.utils.env import Env
@@ -49,7 +51,7 @@ class Executor:
         pool: Pool,
         config: Config,
         io: IO,
-        parallel: bool = None,
+        parallel: bool | None = None,
     ) -> None:
         self._env = env
         self._io = io
@@ -75,7 +77,7 @@ class Executor:
         self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
-        self._sections = {}
+        self._sections: dict[int, SectionOutput] = {}
         self._lock = threading.Lock()
         self._shutdown = False
         self._hashes: dict[str, str] = {}
@@ -186,7 +188,7 @@ class Executor:
         # (it raises a NotImplementedError), so, in this case, we assume
         # that the system only has one CPU.
         try:
-            default_max_workers = os.cpu_count() + 4
+            default_max_workers = (os.cpu_count() or 1) + 4
         except NotImplementedError:
             default_max_workers = 5
 
@@ -312,7 +314,7 @@ class Executor:
 
             return 0
 
-        result = getattr(self, f"_execute_{method}")(operation)
+        result: int = getattr(self, f"_execute_{method}")(operation)
 
         if result != 0:
             return result
@@ -373,21 +375,21 @@ class Executor:
             source_operation_color += "_dark"
             package_color += "_dark"
 
-        if operation.job_type == "install":
+        if isinstance(operation, Install):
             return (
                 f"<{base_tag}>Installing"
                 f" <{package_color}>{operation.package.name}</{package_color}>"
                 f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
-        if operation.job_type == "uninstall":
+        if isinstance(operation, Uninstall):
             return (
                 f"<{base_tag}>Removing"
                 f" <{package_color}>{operation.package.name}</{package_color}>"
                 f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
-        if operation.job_type == "update":
+        if isinstance(operation, Update):
             return (
                 f"<{base_tag}>Updating"
                 f" <{package_color}>{operation.initial_package.name}</{package_color}> "
@@ -643,7 +645,7 @@ class Executor:
             package.name,
             archive_path,
         )
-        archive_hash = "sha256:" + file_dep.hash()
+        archive_hash: str = "sha256:" + file_dep.hash()
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:
@@ -681,7 +683,7 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive: Path = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
         with archive.open("wb") as f:
             for chunk in response.iter_content(chunk_size=4096):
@@ -730,7 +732,7 @@ class Executor:
                     direct_url_json.unlink()
             return
 
-        url_reference = None
+        url_reference: dict[str, Any] | None = None
 
         if package.source_type == "git":
             url_reference = self._create_git_url_reference(package)
@@ -745,26 +747,16 @@ class Executor:
             for dist in self._env.site_packages.distributions(
                 name=package.name, writable_only=True
             ):
-                dist._path.joinpath("direct_url.json").write_text(
-                    json.dumps(url_reference),
-                    encoding="utf-8",
-                )
+                dist_path = cast(Path, dist._path)  # type: ignore[attr-defined]
+                url = dist_path / "direct_url.json"
+                url.write_text(json.dumps(url_reference), encoding="utf-8")
 
-                record = dist._path.joinpath("RECORD")
+                record = dist_path / "RECORD"
                 if record.exists():
                     with record.open(mode="a", encoding="utf-8") as f:
                         writer = csv.writer(f)
-                        writer.writerow(
-                            [
-                                str(
-                                    dist._path.joinpath("direct_url.json").relative_to(
-                                        record.parent.parent
-                                    )
-                                ),
-                                "",
-                                "",
-                            ]
-                        )
+                        path = url.relative_to(record.parent.parent)
+                        writer.writerow([str(path), "", ""])
 
     def _create_git_url_reference(
         self, package: Package
@@ -800,24 +792,20 @@ class Executor:
         if package.name in self._hashes:
             archive_info["hash"] = self._hashes[package.name]
 
-        reference = {
+        return {
             "url": Path(package.source_url).as_uri(),
             "archive_info": archive_info,
         }
 
-        return reference
-
     def _create_directory_url_reference(
         self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
+    ) -> dict[str, str | dict[str, bool]]:
         dir_info = {}
 
         if package.develop:
             dir_info["editable"] = True
 
-        reference = {
+        return {
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
-
-        return reference

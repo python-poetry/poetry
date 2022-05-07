@@ -84,6 +84,7 @@ class PipInstaller(BaseInstaller):
         if update:
             args.append("-U")
 
+        req: str | list[str]
         if package.files and not package.source_url:
             # Format as a requirements.txt
             # We need to create a requirements.txt file
@@ -136,10 +137,10 @@ class PipInstaller(BaseInstaller):
             if src_dir.exists():
                 remove_directory(src_dir, force=True)
 
-    def run(self, *args: Any, **kwargs: Any) -> str:
+    def run(self, *args: Any, **kwargs: Any) -> int | str:
         return self._env.run_pip(*args, **kwargs)
 
-    def requirement(self, package: Package, formatted: bool = False) -> str:
+    def requirement(self, package: Package, formatted: bool = False) -> str | list[str]:
         if formatted and not package.source_type:
             req = f"{package.name}=={package.version}"
             for f in package.files:
@@ -161,7 +162,7 @@ class PipInstaller(BaseInstaller):
                 req = os.path.realpath(package.source_url)
 
             if package.develop and package.source_type == "directory":
-                req = ["-e", req]
+                return ["-e", req]
 
             return req
 
@@ -172,7 +173,7 @@ class PipInstaller(BaseInstaller):
             )
 
             if package.develop:
-                req = ["-e", req]
+                return ["-e", req]
 
             return req
 
@@ -183,9 +184,12 @@ class PipInstaller(BaseInstaller):
 
     def create_temporary_requirement(self, package: Package) -> str:
         fd, name = tempfile.mkstemp("reqs.txt", f"{package.name}-{package.version}")
+        req = self.requirement(package, formatted=True)
+        if isinstance(req, list):
+            req = " ".join(req)
 
         try:
-            os.write(fd, encode(self.requirement(package, formatted=True)))
+            os.write(fd, encode(req))
         finally:
             os.close(fd)
 
@@ -237,7 +241,7 @@ class PipInstaller(BaseInstaller):
                 with builder.setup_py():
                     if package.develop:
                         return pip_install(
-                            directory=req,
+                            path=req,
                             environment=self._env,
                             upgrade=True,
                             editable=True,
@@ -248,7 +252,7 @@ class PipInstaller(BaseInstaller):
 
         if package.develop:
             return pip_install(
-                directory=req, environment=self._env, upgrade=True, editable=True
+                path=req, environment=self._env, upgrade=True, editable=True
             )
         return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 

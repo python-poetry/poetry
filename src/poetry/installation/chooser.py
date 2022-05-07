@@ -4,6 +4,7 @@ import logging
 import re
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from packaging.tags import Tag
 
@@ -15,6 +16,7 @@ from poetry.utils.patterns import wheel_file_re
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
+    from poetry.core.semver.version import Version
 
     from poetry.repositories.pool import Pool
     from poetry.utils.env import Env
@@ -144,7 +146,9 @@ class Chooser:
 
         return selected_links
 
-    def _sort_key(self, package: Package, link: Link) -> tuple:
+    def _sort_key(
+        self, package: Package, link: Link
+    ) -> tuple[int, int, int, Version, tuple[Any, ...], int]:
         """
         Function to pass as the `key` argument to a call to sorted() to sort
         InstallationCandidates by preference.
@@ -168,7 +172,7 @@ class Chooser:
               comparison operators, but then different sdist links
               with the same version, would have to be considered equal
         """
-        build_tag = ()
+        build_tag: tuple[Any, ...] = ()
         binary_preference = 0
         if link.is_wheel:
             wheel = Wheel(link.filename)
@@ -179,9 +183,11 @@ class Chooser:
                 )
 
             # TODO: Binary preference
-            pri = -(wheel.get_minimum_supported_index(self._env.supported_tags))
+            pri = -(wheel.get_minimum_supported_index(self._env.supported_tags) or 0)
             if wheel.build_tag is not None:
                 match = re.match(r"^(\d+)(.*)$", wheel.build_tag)
+                if not match:
+                    raise ValueError(f"Unable to parse build tag: {wheel.build_tag}")
                 build_tag_groups = match.groups()
                 build_tag = (int(build_tag_groups[0]), build_tag_groups[1])
         else:  # sdist

@@ -116,11 +116,6 @@ enable_error_code = ["ignore-without-code"]
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.installation.chef',
-  'poetry.installation.chooser',
-  'poetry.installation.executor',
-  'poetry.installation.installer',
-  'poetry.installation.pip_installer',
   'poetry.utils.env',
 ]
 ignore_errors = true
@@ -133,6 +128,7 @@ ignore_errors = true
 # warning.
 [[tool.mypy.overrides]]
 module = [
+  'poetry.installation.executor',
   'poetry.repositories.installed_repository',
 ]
 warn_unused_ignores = false
