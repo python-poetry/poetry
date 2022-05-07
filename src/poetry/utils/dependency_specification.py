@@ -9,11 +9,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
+from typing import TypeVar
 from typing import Union
 from typing import cast
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.vcs_dependency import VCSDependency
+from tomlkit.items import InlineTable
 
 from poetry.puzzle.provider import Provider
 
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-DependencySpec = Dict[str, Union[str, Dict[str, Union[str, bool]], List[str]]]
+DependencySpec = Dict[str, Union[str, bool, Dict[str, Union[str, bool]], List[str]]]
 
 
 def _parse_dependency_specification_git_url(
@@ -136,9 +138,12 @@ def _parse_dependency_specification_simple(
     return require
 
 
-def dependency_to_specification(dependency: Dependency) -> DependencySpec:
-    specification: DependencySpec = {}
+BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
+
+def dependency_to_specification(
+    dependency: Dependency, specification: BaseSpec
+) -> BaseSpec:
     if dependency.is_vcs():
         dependency = cast(VCSDependency, dependency)
         specification[dependency.vcs] = cast(str, dependency.source_url)
@@ -167,7 +172,8 @@ def pep508_to_dependency_specification(requirement: str) -> DependencySpec | Non
 
     with contextlib.suppress(ValueError):
         dependency = Dependency.create_from_pep_508(requirement)
-        specification = dependency_to_specification(dependency)
+        specification: DependencySpec = {}
+        specification = dependency_to_specification(dependency, specification)
 
         if specification:
             specification["name"] = dependency.name

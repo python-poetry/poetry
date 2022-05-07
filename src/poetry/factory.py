@@ -9,7 +9,6 @@ from typing import cast
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.toml.file import TOMLFile
 from tomlkit.toml_document import TOMLDocument
 
@@ -21,6 +20,7 @@ from poetry.packages.project_package import ProjectPackage
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
+from poetry.utils.dependency_specification import dependency_to_specification
 
 
 try:
@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.repositories.legacy_repository import LegacyRepository
+    from poetry.utils.dependency_specification import DependencySpec
 
 
 logger = logging.getLogger(__name__)
@@ -281,29 +282,18 @@ class Factory(BaseFactory):
         dependency_section["python"] = package.python_versions
 
         for dep in package.all_requires:
-            constraint: dict[str, Any] = tomlkit.inline_table()
-            if dep.is_vcs():
-                dep = cast(VCSDependency, dep)
-                constraint[dep.vcs] = dep.source_url
+            constraint: DependencySpec | str = dependency_to_specification(
+                dep, tomlkit.inline_table()
+            )
 
-                if dep.reference:
-                    constraint["rev"] = dep.reference
-            elif dep.is_file() or dep.is_directory():
-                constraint["path"] = dep.source_url
-            else:
-                constraint["version"] = dep.pretty_constraint
+            if not isinstance(constraint, str):
+                if dep.name in optional_dependencies:
+                    constraint["optional"] = True
 
-            if not dep.marker.is_any():
-                constraint["markers"] = str(dep.marker)
-
-            if dep.extras:
-                constraint["extras"] = sorted(dep.extras)
-
-            if dep.name in optional_dependencies:
-                constraint["optional"] = True
-
-            if len(constraint) == 1 and "version" in constraint:
-                constraint = constraint["version"]
+                if len(constraint) == 1 and "version" in constraint:
+                    constraint = cast(str, constraint["version"])
+                elif not constraint:
+                    constraint = "*"
 
             for group in dep.groups:
                 if group == MAIN_GROUP:
