@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -24,6 +23,8 @@ from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io.io import IO
 
     from poetry.repositories.legacy_repository import LegacyRepository
@@ -110,7 +111,7 @@ class Factory(BaseFactory):
 
         config = Config()
         # Load global config
-        config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
+        config_file = TOMLFile(CONFIG_DIR / "config.toml")
         if config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -122,7 +123,7 @@ class Factory(BaseFactory):
         config.set_config_source(FileConfigSource(config_file))
 
         # Load global auth config
-        auth_config_file = TOMLFile(Path(CONFIG_DIR) / "auth.toml")
+        auth_config_file = TOMLFile(CONFIG_DIR / "auth.toml")
         if auth_config_file.exists():
             if io.is_debug():
                 io.write_line(
