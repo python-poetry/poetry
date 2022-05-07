@@ -159,7 +159,7 @@ class Factory(BaseFactory):
             logger.debug("Disabling source caches")
 
         for source in sources:
-            repository = cls.create_legacy_repository(
+            repository = cls.create_package_source(
                 source, config, disable_cache=disable_cache
             )
             is_default = bool(source.get("default", False))
@@ -190,7 +190,7 @@ class Factory(BaseFactory):
             )
 
     @classmethod
-    def create_legacy_repository(
+    def create_package_source(
         cls, source: dict[str, str], auth_config: Config, disable_cache: bool = False
     ) -> LegacyRepository:
         from poetry.repositories.legacy_repository import LegacyRepository
