@@ -189,9 +189,9 @@ class Authenticator:
         if verify is not None:
             verify = str(verify)
 
-        settings = session.merge_environment_settings(
+        settings = session.merge_environment_settings(  # type: ignore[no-untyped-call]
             prepared_request.url, proxies, stream, verify, cert
-        )  # type: ignore[no-untyped-call]
+        )
 
         # Send the request.
         send_kwargs = {

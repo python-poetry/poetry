@@ -187,11 +187,11 @@ class Git:
         client, path = get_transport_and_path(url)  # type: ignore[no-untyped-call]
 
         with local:
-            result: FetchPackResult = client.fetch(
+            result: FetchPackResult = client.fetch(  # type: ignore[no-untyped-call]
                 path,
                 local,
                 determine_wants=local.object_store.determine_wants_all,
-            )  # type: ignore[no-untyped-call]
+            )
             return result
 
     @staticmethod
@@ -269,14 +269,14 @@ class Git:
             (b"refs/remotes/origin", b"refs/heads/"),
             (b"refs/tags", b"refs/tags"),
         }:
-            local.refs.import_refs(
+            local.refs.import_refs(  # type: ignore[no-untyped-call]
                 base=base,
                 other={
                     n[len(prefix) :]: v
                     for (n, v) in remote_refs.refs.items()
                     if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
                 },
-            )  # type: ignore[no-untyped-call]
+            )
 
         try:
             with local:

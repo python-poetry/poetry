@@ -94,10 +94,10 @@ class Layout:
         package.append("include", include)  # type: ignore[no-untyped-call]
 
         if self.basedir != Path():
-            package.append(
+            package.append(  # type: ignore[no-untyped-call]
                 "from",
                 self.basedir.as_posix(),
-            )  # type: ignore[no-untyped-call]
+            )
         else:
             if include == self._project:
                 # package include and package name are the same,
