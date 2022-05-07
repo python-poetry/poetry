@@ -298,7 +298,10 @@ lists all packages available."""
         io.write_line(f" <b>{package.pretty_version}</b>{description}")
 
         dependencies = package.requires
-        dependencies = sorted(dependencies, key=lambda x: x.name)
+        dependencies = sorted(
+            dependencies,
+            key=lambda x: x.name,  # type: ignore[no-any-return]
+        )
         tree_bar = "├"
         total = len(dependencies)
         for i, dependency in enumerate(dependencies, 1):
@@ -338,7 +341,10 @@ lists all packages available."""
 
                 break
 
-        dependencies = sorted(dependencies, key=lambda x: x.name)
+        dependencies = sorted(
+            dependencies,
+            key=lambda x: x.name,  # type: ignore[no-any-return]
+        )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
         for i, dependency in enumerate(dependencies, 1):

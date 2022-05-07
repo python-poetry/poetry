@@ -137,6 +137,7 @@ module = [
   'html5lib.*',
   'jsonschema.*',
   'pexpect.*',
+  'poetry.core.*',
   'requests_toolbelt.*',
   'shellingham.*',
 ]

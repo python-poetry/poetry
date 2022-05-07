@@ -307,7 +307,10 @@ class Locker:
 
         # Put higher versions first so that we prefer them.
         for packages in packages_by_name.values():
-            packages.sort(key=lambda package: package.version, reverse=True)
+            packages.sort(
+                key=lambda package: package.version,  # type: ignore[no-any-return]
+                reverse=True,
+            )
 
         nested_dependencies = cls.__walk_dependencies(
             dependencies=project_requires,
@@ -446,7 +449,7 @@ class Locker:
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
         try:
-            lock_data = self._lock.read()
+            lock_data: TOMLDocument = self._lock.read()
         except TOMLKitError as e:
             raise RuntimeError(f"Unable to read the lock file ({e}).")
 
@@ -487,7 +490,10 @@ class Locker:
 
     def _dump_package(self, package: Package) -> dict[str, Any]:
         dependencies: dict[str, list[Any]] = {}
-        for dependency in sorted(package.requires, key=lambda d: d.name):
+        for dependency in sorted(
+            package.requires,
+            key=lambda d: d.name,  # type: ignore[no-any-return]
+        ):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 

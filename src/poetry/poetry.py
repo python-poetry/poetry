@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from poetry.repositories.pool import Pool
 
 
-class Poetry(BasePoetry):
+class Poetry(BasePoetry):  # type: ignore[misc]
 
     VERSION = __version__
 
