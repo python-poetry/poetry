@@ -51,7 +51,7 @@ class Chef:
         if not archives:
             return link
 
-        candidates = []
+        candidates: list[tuple[float | None, Link]] = []
         for archive in archives:
             if not archive.is_wheel:
                 candidates.append((float("inf"), archive))
