@@ -30,4 +30,5 @@ file.
         if self.option("addons", False):
             return {SelfCommand.ADDITIONAL_PACKAGE_GROUP}
 
-        return super(ShowCommand, self).activated_groups
+        groups: set[str] = super(ShowCommand, self).activated_groups
+        return groups

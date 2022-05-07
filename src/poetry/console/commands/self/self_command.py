@@ -45,7 +45,7 @@ class SelfCommand(InstallerCommand):
 
     @property
     def env(self) -> Env:
-        if self._env is None or not isinstance(self._env, SystemEnv):
+        if not isinstance(self._env, SystemEnv):
             self.reset_env()
         return self._env
 
@@ -102,7 +102,7 @@ class SelfCommand(InstallerCommand):
         The default implementations handles cases where a `self` command delegates
         handling to an existing command. Eg: `SelfAddCommand(SelfCommand, AddCommand)`.
         """
-        return super().handle()
+        return cast(int, super().handle())
 
     def reset(self) -> None:
         """
