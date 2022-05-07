@@ -27,10 +27,12 @@ class PluginShowCommand(Command):
         command: SelfShowPluginsCommand = cast(
             SelfShowPluginsCommand, application.find("self show plugins")
         )
-        return command.run(
+
+        exit_code: int = command.run(
             IO(
                 StringInput(""),
                 self._io.output,
                 self._io.error_output,
             )
         )
+        return exit_code

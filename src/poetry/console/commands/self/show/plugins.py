@@ -1,14 +1,22 @@
 from __future__ import annotations
 
-from collections import defaultdict
+import dataclasses
+
 from typing import TYPE_CHECKING
-from typing import DefaultDict
 
 from poetry.console.commands.self.self_command import SelfCommand
 
 
 if TYPE_CHECKING:
+    from entrypoints import EntryPoint
     from poetry.core.packages.package import Package
+
+
+@dataclasses.dataclass
+class PluginPackage:
+    package: Package
+    plugins: list[EntryPoint] = dataclasses.field(default_factory=list)
+    application_plugins: list[EntryPoint] = dataclasses.field(default_factory=list)
 
 
 class SelfShowPluginsCommand(SelfCommand):
@@ -32,13 +40,7 @@ commands respectively.
         from poetry.utils.helpers import canonicalize_name
         from poetry.utils.helpers import pluralize
 
-        plugins: DefaultDict[str, dict[str, Package | list[str]]] = defaultdict(
-            lambda: {
-                "package": None,
-                "plugins": [],
-                "application_plugins": [],
-            }
-        )
+        plugins: dict[str, PluginPackage] = {}
 
         system_env = EnvManager.get_system_env(naive=True)
         entry_points = PluginManager(ApplicationPlugin.group).get_plugin_entry_points(
@@ -48,33 +50,42 @@ commands respectively.
             system_env, with_dependencies=True
         )
 
-        packages_by_name = {pkg.name: pkg for pkg in installed_repository.packages}
+        packages_by_name: dict[str, Package] = {
+            pkg.name: pkg for pkg in installed_repository.packages
+        }
 
         for entry_point in entry_points:
             plugin = entry_point.load()
-            category = "plugins"
-            if issubclass(plugin, ApplicationPlugin):
-                category = "application_plugins"
 
+            assert entry_point.distro is not None
             package = packages_by_name[canonicalize_name(entry_point.distro.name)]
-            plugins[package.pretty_name]["package"] = package
-            plugins[package.pretty_name][category].append(entry_point)
+
+            name = package.pretty_name
+            info = plugins.get(name) or PluginPackage(package=package)
+
+            if issubclass(plugin, ApplicationPlugin):
+                info.application_plugins.append(entry_point)
+            else:
+                info.plugins.append(entry_point)
+
+            plugins[name] = info
 
         for name, info in plugins.items():
-            package = info["package"]
+            package = info.package
             description = " " + package.description if package.description else ""
             self.line("")
             self.line(f"  • <c1>{name}</c1> (<c2>{package.version}</c2>){description}")
             provide_line = "     "
-            if info["plugins"]:
-                count = len(info["plugins"])
+
+            if info.plugins:
+                count = len(info.plugins)
                 provide_line += f" <info>{count}</info> plugin{pluralize(count)}"
 
-            if info["application_plugins"]:
-                if info["plugins"]:
+            if info.application_plugins:
+                if info.plugins:
                     provide_line += " and"
 
-                count = len(info["application_plugins"])
+                count = len(info.application_plugins)
                 provide_line += (
                     f" <info>{count}</info> application plugin{pluralize(count)}"
                 )
