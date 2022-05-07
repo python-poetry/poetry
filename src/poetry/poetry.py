@@ -31,7 +31,7 @@ class Poetry(BasePoetry):  # type: ignore[misc]
         package: ProjectPackage,
         locker: Locker,
         config: Config,
-    ):
+    ) -> None:
         from poetry.repositories.pool import Pool
 
         super().__init__(file, local_config, package)

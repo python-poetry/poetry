@@ -54,7 +54,7 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self, lock_path: str | Path):
+    def __init__(self, lock_path: str | Path) -> None:
         self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False

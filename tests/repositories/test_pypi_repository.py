@@ -32,7 +32,7 @@ class MockRepository(PyPiRepository):
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
-    def __init__(self, fallback: bool = False):
+    def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
     def _get(self, url: str) -> dict | None:

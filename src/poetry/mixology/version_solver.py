@@ -39,7 +39,7 @@ class DependencyCache:
     again.
     """
 
-    def __init__(self, provider: Provider):
+    def __init__(self, provider: Provider) -> None:
         self.provider = provider
         self.cache: dict[str, list[DependencyPackage]] = {}
 
@@ -75,7 +75,7 @@ class VersionSolver:
         provider: Provider,
         locked: dict[str, list[DependencyPackage]] | None = None,
         use_latest: list[str] | None = None,
-    ):
+    ) -> None:
         self._root = root
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)

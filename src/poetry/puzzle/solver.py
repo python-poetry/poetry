@@ -49,7 +49,7 @@ class Solver:
         locked: Repository,
         io: IO,
         provider: Provider | None = None,
-    ):
+    ) -> None:
         self._package = package
         self._pool = pool
         self._installed = installed

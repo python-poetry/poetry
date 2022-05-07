@@ -62,7 +62,7 @@ class Installer(BaseInstaller):
 
 
 class Executor(BaseExecutor):
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self._installs: list[DependencyPackage] = []
@@ -106,7 +106,7 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self, lock_path: str | Path):
+    def __init__(self, lock_path: str | Path) -> None:
         self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False

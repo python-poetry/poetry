@@ -1852,7 +1852,7 @@ class MockEnv(NullEnv):
         marker_env: dict[str, Any] = None,
         supported_tags: list[Tag] = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
 
         self._version_info = version_info

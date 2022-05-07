@@ -114,7 +114,7 @@ def mock_download(url: str, dest: str, **__: Any) -> None:
 
 
 class TestExecutor(Executor):
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self._installs = []
@@ -150,7 +150,7 @@ class TestExecutor(Executor):
 
 
 class PoetryTestApplication(Application):
-    def __init__(self, poetry: Poetry):
+    def __init__(self, poetry: Poetry) -> None:
         super().__init__()
         self._poetry = poetry
 
@@ -165,7 +165,7 @@ class PoetryTestApplication(Application):
 
 
 class TestLocker(Locker):
-    def __init__(self, lock: str | Path, local_config: dict):
+    def __init__(self, lock: str | Path, local_config: dict) -> None:
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None

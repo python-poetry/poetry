@@ -56,7 +56,7 @@ class MockVirtualEnv(VirtualEnv):
         path: Path,
         base: Path | None = None,
         sys_path: list[str] | None = None,
-    ):
+    ) -> None:
         super().__init__(path, base=base)
 
         self._sys_path = sys_path

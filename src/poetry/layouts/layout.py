@@ -52,7 +52,7 @@ class Layout:
         python: str = "*",
         dependencies: dict[str, str] | None = None,
         dev_dependencies: dict[str, str] | None = None,
-    ):
+    ) -> None:
         self._project = canonicalize_name(project).replace(".", "-")
         self._package_path_relative = Path(
             *(module_name(part) for part in canonicalize_name(project).split("."))
