@@ -47,6 +47,7 @@ class HTTPRepository(CachedRepository, ABC):
             cache_id=name,
             disable_cache=disable_cache,
         )
+        self._authenticator.add_repository(name, url)
 
     @property
     def session(self) -> Authenticator:

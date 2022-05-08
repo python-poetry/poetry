@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import re
 import shutil
 
 from pathlib import Path
@@ -26,6 +28,8 @@ if TYPE_CHECKING:
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
+
+    from poetry.config.config import Config
 
 
 @pytest.fixture(autouse=True)
@@ -418,3 +422,42 @@ def test_get_redirected_response_url(
 
     monkeypatch.setattr(repo.session, "get", get_mock)
     assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+
+
+@pytest.mark.parametrize(
+    ("repositories",),
+    [
+        ({},),
+        # ensure path is respected
+        ({"publish": {"url": "https://foo.bar/legacy"}},),
+        # ensure path length does not give incorrect results
+        ({"publish": {"url": "https://foo.bar/upload/legacy"}},),
+    ],
+)
+def test_authenticator_with_implicit_repository_configuration(
+    http: type[httpretty.httpretty],
+    config: Config,
+    repositories: dict[str, dict[str, str]],
+) -> None:
+    http.register_uri(
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
+    )
+
+    config.merge(
+        {
+            "repositories": repositories,
+            "http-basic": {
+                "source": {"username": "foo", "password": "bar"},
+                "publish": {"username": "baz", "password": "qux"},
+            },
+        }
+    )
+
+    repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
+    repo._get_page("/foo")
+
+    request = http.last_request()
+
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"

@@ -322,6 +322,14 @@ class Authenticator:
 
         return self._configured_repositories
 
+    def reset_credentials_cache(self) -> None:
+        self.get_repository_config_for_url.cache_clear()
+        self._credentials = {}
+
+    def add_repository(self, name: str, url: str) -> None:
+        self.configured_repositories[name] = AuthenticatorRepositoryConfig(name, url)
+        self.reset_credentials_cache()
+
     def get_certs_for_url(self, url: str) -> dict[str, Path | None]:
         if url not in self._certs:
             self._certs[url] = self._get_certs_for_url(url)
