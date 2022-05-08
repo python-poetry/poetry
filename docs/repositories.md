@@ -278,7 +278,7 @@ well.
 ## Publishable Repositories
 
 Poetry treats repositories to which you publish packages as user specific and not project specific
-configuration unlike [package sources](#package-sources]. Poetry, today, only supports the
+configuration unlike [package sources](#package-sources). Poetry, today, only supports the
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) when publishing
 your project.
 
