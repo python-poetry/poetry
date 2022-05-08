@@ -168,8 +168,8 @@ class Application(BaseApplication):
         # only when an error occurs
         self.set_solution_provider_repository(self._get_solution_provider_repository())
         
-        # Wrap all errors in CleoSimpleException, unless --verbose flag is used to reduce output.
-        # Cleo will partially render a stack trace, unless CleoSimpleException is passed.
+        # Wrap all errors in CleoSimpleException, unless --verbose flag is used,
+        # otherwise Cleo will render a partial stack trace.
         if io.is_verbose():
             super().render_error(error, io)
         else:
