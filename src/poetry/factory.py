@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 
 from typing import TYPE_CHECKING
 from typing import Any
@@ -158,7 +159,7 @@ class Factory(BaseFactory):  # type: ignore[misc]
             logger.debug("Disabling source caches")
 
         for source in sources:
-            repository = cls.create_legacy_repository(
+            repository = cls.create_package_source(
                 source, config, disable_cache=disable_cache
             )
             is_default = bool(source.get("default", False))
@@ -189,10 +190,11 @@ class Factory(BaseFactory):  # type: ignore[misc]
             )
 
     @classmethod
-    def create_legacy_repository(
+    def create_package_source(
         cls, source: dict[str, str], auth_config: Config, disable_cache: bool = False
     ) -> LegacyRepository:
         from poetry.repositories.legacy_repository import LegacyRepository
+        from poetry.repositories.single_page_repository import SinglePageRepository
 
         if "url" not in source:
             raise RuntimeError("Unsupported source specified")
@@ -203,7 +205,12 @@ class Factory(BaseFactory):  # type: ignore[misc]
         name = source["name"]
         url = source["url"]
 
-        return LegacyRepository(
+        repository_class = LegacyRepository
+
+        if re.match(r".*\.(htm|html)$", url):
+            repository_class = SinglePageRepository
+
+        return repository_class(
             name,
             url,
             config=auth_config,

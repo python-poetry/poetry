@@ -89,6 +89,9 @@ jobs:
         run: poetry run mypy
 
       - name: Run pytest (integration suite)
+        env:
+          POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
+          POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: poetry run python -m pytest -p no:sugar -q --integration tests/integration
 
       - name: Get Plugin Version (poetry-plugin-export)
