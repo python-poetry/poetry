@@ -13,7 +13,7 @@ from typing import cast
 from cleo.application import Application as BaseApplication
 from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
-from cleo.exceptions import CleoException
+from cleo.exceptions import CleoException, CleoSimpleException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
 from cleo.io.null_io import NullIO
@@ -167,8 +167,13 @@ class Application(BaseApplication):
         # We set the solution provider repository here to load providers
         # only when an error occurs
         self.set_solution_provider_repository(self._get_solution_provider_repository())
-
-        super().render_error(error, io)
+        
+        # Wrap all errors in CleoSimpleException, unless --verbose flag is used to reduce output.
+        # Cleo will partially render a stack trace, unless CleoSimpleException is passed.
+        if io.is_verbose():
+            super().render_error(error, io)
+        else:
+            super().render_error(CleoSimpleException(*error.args), io)
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
