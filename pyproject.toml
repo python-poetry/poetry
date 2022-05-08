@@ -103,13 +103,9 @@ force-exclude = '''
 
 
 [tool.mypy]
-check_untyped_defs = true
-ignore_missing_imports = true
-show_error_codes = true
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unused_ignores = true
 files = "src"
+show_error_codes = true
+strict = true
 
 # The following whitelist is used to allow for incremental adoption
 # of Mypy. Modules should be removed from this whitelist as and when
@@ -131,6 +127,21 @@ module = [
 ]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+  'cachecontrol.*',
+  'cachy.*',
+  'cleo.*',
+  'crashtest.*',
+  'entrypoints.*',
+  'html5lib.*',
+  'jsonschema.*',
+  'pexpect.*',
+  'poetry.core.*',
+  'requests_toolbelt.*',
+  'shellingham.*',
+]
+ignore_missing_imports = true
 
 [tool.coverage.report]
 exclude_lines = [

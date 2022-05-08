@@ -41,7 +41,7 @@ class Installer:
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
-    ):
+    ) -> None:
         self._io = io
         self._env = env
         self._package = package

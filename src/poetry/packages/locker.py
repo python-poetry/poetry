@@ -31,9 +31,9 @@ from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
 from tomlkit import table
-from tomlkit.container import Table
 from tomlkit.exceptions import TOMLKitError
 from tomlkit.items import Array
+from tomlkit.items import Table
 
 from poetry.packages import DependencyPackage
 from poetry.utils.extras import get_extra_package_names
@@ -55,7 +55,7 @@ class Locker:
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
 
-    def __init__(self, lock: str | Path, local_config: dict) -> None:
+    def __init__(self, lock: str | Path, local_config: dict[str, Any]) -> None:
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data: TOMLDocument | None = None
@@ -89,7 +89,8 @@ class Locker:
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
-            return self._content_hash == metadata["content-hash"]
+            fresh: bool = self._content_hash == metadata["content-hash"]
+            return fresh
 
         return False
 
@@ -306,7 +307,10 @@ class Locker:
 
         # Put higher versions first so that we prefer them.
         for packages in packages_by_name.values():
-            packages.sort(key=lambda package: package.version, reverse=True)
+            packages.sort(
+                key=lambda package: package.version,  # type: ignore[no-any-return]
+                reverse=True,
+            )
 
         nested_dependencies = cls.__walk_dependencies(
             dependencies=project_requires,
@@ -445,7 +449,7 @@ class Locker:
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
         try:
-            lock_data = self._lock.read()
+            lock_data: TOMLDocument = self._lock.read()
         except TOMLKitError as e:
             raise RuntimeError(f"Unable to read the lock file ({e}).")
 
@@ -486,7 +490,10 @@ class Locker:
 
     def _dump_package(self, package: Package) -> dict[str, Any]:
         dependencies: dict[str, list[Any]] = {}
-        for dependency in sorted(package.requires, key=lambda d: d.name):
+        for dependency in sorted(
+            package.requires,
+            key=lambda d: d.name,  # type: ignore[no-any-return]
+        ):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
@@ -549,7 +556,10 @@ class Locker:
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "files": sorted(package.files, key=lambda x: x["file"]),
+            "files": sorted(
+                package.files,
+                key=lambda x: x["file"],  # type: ignore[no-any-return]
+            ),
         }
 
         if dependencies:

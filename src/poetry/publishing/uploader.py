@@ -60,7 +60,8 @@ class Uploader:
 
     @property
     def user_agent(self) -> str:
-        return user_agent("poetry", __version__)
+        agent: str = user_agent("poetry", __version__)
+        return agent
 
     @property
     def adapter(self) -> adapters.HTTPAdapter:

@@ -119,7 +119,8 @@ class Authenticator:
         if not self.is_cached:
             return session
 
-        return CacheControl(sess=session, cache=self._cache_control)
+        session = CacheControl(sess=session, cache=self._cache_control)
+        return session
 
     def get_session(self, url: str | None = None) -> requests.Session:
         if not url:
@@ -188,7 +189,7 @@ class Authenticator:
         if verify is not None:
             verify = str(verify)
 
-        settings = session.merge_environment_settings(
+        settings = session.merge_environment_settings(  # type: ignore[no-untyped-call]
             prepared_request.url, proxies, stream, verify, cert
         )
 

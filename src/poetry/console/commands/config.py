@@ -318,7 +318,8 @@ To remove a repository (repo is a short alias for repositories):
 
             if isinstance(value, dict):
                 k += f"{key}."
-                self._list_configuration(value, cast(dict, raw_val), k=k)
+                raw_val = cast("dict[str, Any]", raw_val)
+                self._list_configuration(value, raw_val, k=k)
                 k = orig_k
 
                 continue
@@ -338,50 +339,3 @@ To remove a repository (repo is a short alias for repositories):
                 message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
 
             self.line(message)
-
-    def _get_setting(
-        self,
-        contents: dict,
-        setting: str | None = None,
-        k: str | None = None,
-        default: Any | None = None,
-    ) -> list[tuple[str, str]]:
-        orig_k = k
-
-        if setting and setting.split(".")[0] not in contents:
-            value = json.dumps(default)
-
-            return [((k or "") + setting, value)]
-        else:
-            values = []
-            for key, value in contents.items():
-                if setting and key != setting.split(".")[0]:
-                    continue
-
-                if isinstance(value, dict) or key == "repositories" and k is None:
-                    if k is None:
-                        k = ""
-
-                    k += re.sub(r"^config\.", "", key + ".")
-                    if setting and len(setting) > 1:
-                        setting = ".".join(setting.split(".")[1:])
-
-                    values += self._get_setting(
-                        cast(dict, value), k=k, setting=setting, default=default
-                    )
-                    k = orig_k
-
-                    continue
-
-                if isinstance(value, list):
-                    value = ", ".join(
-                        json.dumps(val) if isinstance(val, list) else val
-                        for val in value
-                    )
-                    value = f"[{value}]"
-
-                value = json.dumps(value)
-
-                values.append(((k or "") + key, value))
-
-            return values

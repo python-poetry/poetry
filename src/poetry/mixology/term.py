@@ -152,11 +152,12 @@ class Term:
         return self.intersect(other.inverse)
 
     def _compatible_dependency(self, other: Dependency) -> bool:
-        return (
+        compatible: bool = (
             self.dependency.is_root
             or other.is_root
             or other.is_same_package_as(self.dependency)
         )
+        return compatible
 
     def _non_empty_term(
         self, constraint: VersionConstraint, is_positive: bool

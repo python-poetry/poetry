@@ -37,12 +37,13 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
 
 
-def load_command(name: str) -> Callable:
+def load_command(name: str) -> Callable[[], type[Command]]:
     def _load() -> type[Command]:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
-        return command_class()
+        command_type: type[Command] = command_class()
+        return command_type
 
     return _load
 
@@ -89,7 +90,7 @@ COMMANDS = [
 ]
 
 
-class Application(BaseApplication):
+class Application(BaseApplication):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
@@ -128,7 +129,8 @@ class Application(BaseApplication):
 
     @property
     def command_loader(self) -> CommandLoader:
-        return self._command_loader
+        command_loader: CommandLoader = self._command_loader
+        return command_loader
 
     def reset_poetry(self) -> None:
         self._poetry = None
@@ -176,7 +178,8 @@ class Application(BaseApplication):
 
         self._load_plugins(io)
 
-        return super()._run(io)
+        exit_code: int = super()._run(io)
+        return exit_code
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -212,7 +215,7 @@ class Application(BaseApplication):
 
             io.set_input(run_input)
 
-        return super()._configure_io(io)
+        super()._configure_io(io)
 
     def register_command_loggers(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
@@ -376,7 +379,8 @@ class Application(BaseApplication):
 
 
 def main() -> int:
-    return Application().run()
+    exit_code: int = Application().run()
+    return exit_code
 
 
 if __name__ == "__main__":

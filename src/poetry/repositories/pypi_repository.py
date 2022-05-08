@@ -4,6 +4,7 @@ import logging
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Any
 
 import requests
 
@@ -128,7 +129,7 @@ class PyPiRepository(HTTPRepository):
 
         return results
 
-    def get_package_info(self, name: str) -> dict:
+    def get_package_info(self, name: str) -> dict[str, Any]:
         """
         Return the package information given its name.
 
@@ -138,11 +139,12 @@ class PyPiRepository(HTTPRepository):
         if self._disable_cache:
             return self._get_package_info(name)
 
-        return self._cache.store("packages").remember_forever(
+        package_info: dict[str, Any] = self._cache.store("packages").remember_forever(
             name, lambda: self._get_package_info(name)
         )
+        return package_info
 
-    def _get_package_info(self, name: str) -> dict:
+    def _get_package_info(self, name: str) -> dict[str, Any]:
         data = self._get(f"pypi/{name}/json")
         if data is None:
             raise PackageNotFound(f"Package [{name}] not found.")
@@ -226,7 +228,7 @@ class PyPiRepository(HTTPRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint: str) -> dict | None:
+    def _get(self, endpoint: str) -> dict[str, Any] | None:
         try:
             json_response = self.session.get(self._base_url + endpoint)
         except requests.exceptions.TooManyRedirects:
@@ -238,4 +240,5 @@ class PyPiRepository(HTTPRepository):
         if json_response.status_code == 404:
             return None
 
-        return json_response.json()
+        json: dict[str, Any] = json_response.json()
+        return json

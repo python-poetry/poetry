@@ -54,7 +54,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Indicator(ProgressIndicator):
+class Indicator(ProgressIndicator):  # type: ignore[misc]
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
 
@@ -104,7 +104,7 @@ class Provider:
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
+        self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
         self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}

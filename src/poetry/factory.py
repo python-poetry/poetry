@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Factory(BaseFactory):
+class Factory(BaseFactory):  # type: ignore[misc]
     """
     Factory class to create various elements needed by Poetry.
     """

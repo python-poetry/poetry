@@ -52,7 +52,7 @@ class Layout:
         python: str = "*",
         dependencies: dict[str, str] | None = None,
         dev_dependencies: dict[str, str] | None = None,
-    ):
+    ) -> None:
         self._project = canonicalize_name(project).replace(".", "-")
         self._package_path_relative = Path(
             *(module_name(part) for part in canonicalize_name(project).split("."))
@@ -91,10 +91,13 @@ class Layout:
         package = inline_table()
 
         include = self._package_path_relative.parts[0]
-        package.append("include", include)
+        package.append("include", include)  # type: ignore[no-untyped-call]
 
         if self.basedir != Path():
-            package.append("from", self.basedir.as_posix())
+            package.append(  # type: ignore[no-untyped-call]
+                "from",
+                self.basedir.as_posix(),
+            )
         else:
             if include == self._project:
                 # package include and package name are the same,

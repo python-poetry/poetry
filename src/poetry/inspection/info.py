@@ -71,7 +71,7 @@ class PackageInfo:
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
         cache_version: str | None = None,
-    ):
+    ) -> None:
         self.name = name
         self.version = version
         self.summary = summary

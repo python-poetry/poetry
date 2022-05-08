@@ -39,7 +39,7 @@ class DependencyCache:
     again.
     """
 
-    def __init__(self, provider: Provider):
+    def __init__(self, provider: Provider) -> None:
         self.provider = provider
         self.cache: dict[str, list[DependencyPackage]] = {}
 
@@ -75,7 +75,7 @@ class VersionSolver:
         provider: Provider,
         locked: dict[str, list[DependencyPackage]] | None = None,
         use_latest: list[str] | None = None,
-    ):
+    ) -> None:
         self._root = root
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)
@@ -212,7 +212,8 @@ class VersionSolver:
             unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
         )
 
-        return unsatisfied.dependency.complete_name
+        complete_name: str = unsatisfied.dependency.complete_name
+        return complete_name
 
     def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
@@ -404,7 +405,8 @@ class VersionSolver:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
                 )
-                return dependency.complete_name
+                complete_name: str = dependency.complete_name
+                return complete_name
 
             package = None
             if dependency.name not in self._use_latest:
@@ -427,7 +429,8 @@ class VersionSolver:
                     Incompatibility([Term(dependency, True)], NoVersionsCause())
                 )
 
-                return dependency.complete_name
+                complete_name = dependency.complete_name
+                return complete_name
         else:
             package = locked
 
@@ -454,7 +457,8 @@ class VersionSolver:
                 f"selecting {package.complete_name} ({package.full_pretty_version})"
             )
 
-        return dependency.complete_name
+        complete_name = dependency.complete_name
+        return complete_name
 
     def _result(self) -> SolverResult:
         """
