@@ -13,7 +13,8 @@ from typing import cast
 from cleo.application import Application as BaseApplication
 from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
-from cleo.exceptions import CleoException, CleoSimpleException
+from cleo.exceptions import CleoException
+from cleo.exceptions import CleoSimpleException
 from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
 from cleo.io.null_io import NullIO
