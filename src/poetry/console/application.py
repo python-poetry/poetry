@@ -168,7 +168,7 @@ class Application(BaseApplication):
         # We set the solution provider repository here to load providers
         # only when an error occurs
         self.set_solution_provider_repository(self._get_solution_provider_repository())
-        
+
         # Wrap all errors in CleoSimpleException, unless --verbose flag is used,
         # otherwise Cleo will render a partial stack trace.
         if io.is_verbose():
