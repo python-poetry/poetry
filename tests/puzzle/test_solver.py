@@ -2101,6 +2101,54 @@ def test_duplicate_path_dependencies_same_path(
     check_solver_result(transaction, [{"job": "install", "package": demo1}])
 
 
+@pytest.mark.parametrize(
+    "marker1, marker2",
+    [
+        ("python_version < '3.7'", "python_version >= '3.7'"),
+        ("sys_platform == 'linux'", "sys_platform != 'linux'"),
+        (
+            "python_version < '3.7' and sys_platform == 'linux'",
+            "python_version >= '3.7' and sys_platform == 'linux'",
+        ),
+    ],
+)
+def test_solver_restricted_dependencies_with_empty_marker_intersection(
+    marker1: str, marker2: str, solver: Solver, repo: Repository, package: Package
+) -> None:
+    package.add_dependency(
+        Factory.create_dependency("A1", {"version": "1.0", "markers": marker1})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A2", {"version": "1.0", "markers": marker2})
+    )
+
+    package_a1 = get_package("A1", "1.0")
+    package_a1.add_dependency(Factory.create_dependency("B", {"version": "<2.0"}))
+
+    package_a2 = get_package("A2", "1.0")
+    package_a2.add_dependency(Factory.create_dependency("B", {"version": ">=2.0"}))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a1},
+            {"job": "install", "package": package_a2},
+        ],
+    )
+
+
 def test_solver_fails_if_dependency_name_does_not_match_package(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
