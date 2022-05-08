@@ -524,3 +524,39 @@ def test_authenticator_azure_feed_guid_credentials(
 
     basic_auth = base64.b64encode(b"baz:qux").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
+def test_authenticator_add_repository(
+    config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+):
+    config.merge(
+        {
+            "http-basic": {
+                "source": {"username": "foo", "password": "bar"},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+
+    authenticator.request(
+        "get",
+        "https://foo.bar/simple/a/1.0.0/a-1.0.0.whl",
+    )
+    request = http.last_request()
+    assert "Authorization" not in request.headers
+
+    authenticator.add_repository("source", "https://foo.bar/simple/")
+
+    authenticator.request(
+        "get",
+        "https://foo.bar/simple/a/1.0.0/a-1.0.0.whl",
+    )
+    request = http.last_request()
+
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
