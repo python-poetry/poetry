@@ -17,7 +17,6 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.markers import parse_marker
 
-from poetry.config.config import Config
 from poetry.repositories.cached import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
@@ -29,6 +28,7 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
 
 
@@ -43,7 +43,7 @@ class HTTPRepository(CachedRepository, ABC):
         super().__init__(name, disable_cache)
         self._url = url
         self._authenticator = Authenticator(
-            config=config or Config(use_environment=True),
+            config=config,
             cache_id=name,
             disable_cache=disable_cache,
         )
