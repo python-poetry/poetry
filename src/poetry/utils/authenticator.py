@@ -18,6 +18,7 @@ import requests.exceptions
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 
+from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils.helpers import get_cert
@@ -30,8 +31,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from cleo.io.io import IO
-
-    from poetry.config.config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -84,12 +83,12 @@ class AuthenticatorRepositoryConfig:
 class Authenticator:
     def __init__(
         self,
-        config: Config,
+        config: Config | None = None,
         io: IO | None = None,
         cache_id: str | None = None,
         disable_cache: bool = False,
     ) -> None:
-        self._config = config
+        self._config = config or Config(use_environment=True)
         self._io = io
         self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, HTTPAuthCredential] = {}
@@ -371,3 +370,15 @@ class Authenticator:
         if selected:
             return selected.certs(config=self._config)
         return {"cert": None, "verify": None}
+
+
+_authenticator: Authenticator | None = None
+
+
+def get_default_authenticator() -> Authenticator:
+    global _authenticator
+
+    if _authenticator is None:
+        _authenticator = Authenticator()
+
+    return _authenticator

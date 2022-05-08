@@ -18,6 +18,7 @@ from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.helpers import remove_directory
 
 
@@ -181,7 +182,11 @@ class Git:
         """
         client: GitClient
         path: str
-        client, path = get_transport_and_path(url)
+
+        credentials = get_default_authenticator().get_credentials_for_url(url=url)
+        client, path = get_transport_and_path(
+            url, username=credentials.username, password=credentials.password
+        )
 
         with local:
             return client.fetch(

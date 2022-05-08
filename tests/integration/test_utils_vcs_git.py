@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 
 from copy import deepcopy
@@ -15,6 +16,7 @@ from dulwich.repo import Repo
 from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.utils.authenticator import Authenticator
 from poetry.vcs.git import Git
 from poetry.vcs.git.backend import GitRefSpec
 
@@ -247,6 +249,53 @@ def test_system_git_fallback_on_http_401(
         refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
     )
     spy.assert_called_once()
+
+
+GIT_USERNAME = os.environ.get("POETRY_TEST_INTEGRATION_GIT_USERNAME")
+GIT_PASSWORD = os.environ.get("POETRY_TEST_INTEGRATION_GIT_PASSWORD")
+HTTP_AUTH_CREDENTIALS_AVAILABLE = not (GIT_USERNAME and GIT_PASSWORD)
+
+
+@pytest.mark.skipif(
+    HTTP_AUTH_CREDENTIALS_AVAILABLE,
+    reason="HTTP authentication credentials not available",
+)
+def test_configured_repository_http_auth(
+    mocker: MockerFixture, source_url: str, config: Config
+) -> None:
+    from poetry.vcs.git import backend
+
+    spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
+    spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
+
+    config.merge(
+        {
+            "repositories": {"git-repo": {"url": source_url}},
+            "http-basic": {
+                "git-repo": {
+                    "username": GIT_USERNAME,
+                    "password": GIT_PASSWORD,
+                }
+            },
+        }
+    )
+
+    mocker.patch(
+        "poetry.vcs.git.backend.get_default_authenticator",
+        return_value=Authenticator(config=config),
+    )
+
+    with Git.clone(url=source_url, branch="0.1") as repo:
+        assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
+
+    spy_clone_legacy.assert_not_called()
+
+    spy_get_transport_and_path.assert_called_with(
+        location=source_url,
+        username=GIT_USERNAME,
+        password=GIT_PASSWORD,
+    )
+    spy_get_transport_and_path.assert_called_once()
 
 
 def test_system_git_called_when_configured(
