@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import sys
 import urllib.parse
 
 from pathlib import Path
@@ -71,7 +72,18 @@ def copy_or_symlink(source: Path, dest: Path) -> None:
     elif dest.is_dir():
         shutil.rmtree(dest)
 
-    os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
+    # os.symlink requires either administrative privileges or developer mode on Win10,
+    # throwing an OSError if neither is active.
+    if sys.platform == "win32":
+        try:
+            os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
+        except OSError:
+            if source.is_dir():
+                shutil.copytree(str(source), str(dest))
+            else:
+                shutil.copyfile(str(source), str(dest))
+    else:
+        os.symlink(str(source), str(dest))
 
 
 class MockDulwichRepo:
