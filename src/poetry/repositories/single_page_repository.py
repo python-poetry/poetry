@@ -5,7 +5,7 @@ from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 class SinglePageRepository(LegacyRepository):
-    def _get_page(self, endpoint: str = None) -> SimpleRepositoryPage | None:
+    def _get_page(self, endpoint: str | None = None) -> SimpleRepositoryPage | None:
         """
         Single page repositories only have one page irrespective of endpoint.
         """
