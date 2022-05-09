@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from deepdiff import DeepDiff
+from poetry.core.semver.helpers import parse_constraint
+from poetry.core.semver.version import Version
 
+from poetry.utils._compat import metadata
 from poetry.utils.dependency_specification import parse_dependency_specification
 
 
@@ -74,10 +77,13 @@ if TYPE_CHECKING:
                 "name": "name",
                 "markers": 'python_version == "2.7"',
                 "url": "http://foo.com",
-                # This is commented out as there is a bug in
-                # Dependency.create_from_pep_508 that leads to incorrect
-                # URL Dependency creation.
-                # should be: "extras": ["fred", "bar"],
+                **(
+                    {"extras": ["fred", "bar"]}
+                    if parse_constraint(">1.1.0a7").allows(
+                        Version.parse(metadata.version("poetry-core"))
+                    )
+                    else {}
+                ),
             },
         ),
         (
