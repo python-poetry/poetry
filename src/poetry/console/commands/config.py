@@ -117,11 +117,11 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.core.toml.file import TOMLFile
 
+        from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
-        from poetry.factory import Factory
         from poetry.locations import CONFIG_DIR
 
-        config = Factory.create_config(self.io)
+        config = Config.create()
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
 
         try:

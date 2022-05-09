@@ -88,7 +88,7 @@ class Authenticator:
         cache_id: str | None = None,
         disable_cache: bool = False,
     ) -> None:
-        self._config = config or Config(use_environment=True)
+        self._config = config or Config.create()
         self._io = io
         self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, HTTPAuthCredential] = {}

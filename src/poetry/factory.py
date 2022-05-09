@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
+import warnings
 
 from typing import TYPE_CHECKING
 from typing import Any
@@ -14,14 +15,11 @@ from poetry.core.toml.file import TOMLFile
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.config.config import Config
-from poetry.config.file_config_source import FileConfigSource
-from poetry.locations import CONFIG_DIR
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
-from poetry.utils.dependency_specification import dependency_to_specification
 
 
 try:
@@ -65,7 +63,12 @@ class Factory(BaseFactory):  # type: ignore[misc]
         )
 
         # Loading global configuration
-        config = self.create_config(io)
+        with warnings.catch_warnings():
+            # this is preserved to ensure export plugin tests pass in ci,
+            # once poetry-plugin-export version is updated to use one that do not
+            # use Factory.create_config(), this can be safely removed.
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            config = self.create_config()
 
         # Loading local configuration
         local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
@@ -116,35 +119,13 @@ class Factory(BaseFactory):  # type: ignore[misc]
 
     @classmethod
     def create_config(cls, io: IO | None = None) -> Config:
-        if io is None:
-            io = NullIO()
-
-        config = Config()
-        # Load global config
-        config_file = TOMLFile(CONFIG_DIR / "config.toml")
-        if config_file.exists():
-            if io.is_debug():
-                io.write_line(
-                    f"<debug>Loading configuration file {config_file.path}</debug>"
-                )
-
-            config.merge(config_file.read())
-
-        config.set_config_source(FileConfigSource(config_file))
-
-        # Load global auth config
-        auth_config_file = TOMLFile(CONFIG_DIR / "auth.toml")
-        if auth_config_file.exists():
-            if io.is_debug():
-                io.write_line(
-                    f"<debug>Loading configuration file {auth_config_file.path}</debug>"
-                )
-
-            config.merge(auth_config_file.read())
-
-        config.set_auth_config_source(FileConfigSource(auth_config_file))
-
-        return config
+        if io is not None:
+            logger.debug("Ignoring provided io when creating config.")
+        warnings.warn(
+            "Use of Factory.create_config() is deprecated, use Config.create() instead",
+            DeprecationWarning,
+        )
+        return Config.create()
 
     @classmethod
     def configure_sources(
@@ -222,6 +203,8 @@ class Factory(BaseFactory):  # type: ignore[misc]
         cls, package: Package, path: Path | None = None
     ) -> TOMLDocument:
         import tomlkit
+
+        from poetry.utils.dependency_specification import dependency_to_specification
 
         pyproject: dict[str, Any] = tomlkit.document()
 
