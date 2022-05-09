@@ -39,7 +39,7 @@ WINDOWS_CMD_TEMPLATE = """\
 """
 
 
-class EditableBuilder(Builder):  # type: ignore[misc]
+class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 

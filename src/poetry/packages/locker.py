@@ -308,7 +308,7 @@ class Locker:
         # Put higher versions first so that we prefer them.
         for packages in packages_by_name.values():
             packages.sort(
-                key=lambda package: package.version,  # type: ignore[no-any-return]
+                key=lambda package: package.version,
                 reverse=True,
             )
 
@@ -492,7 +492,7 @@ class Locker:
         dependencies: dict[str, list[Any]] = {}
         for dependency in sorted(
             package.requires,
-            key=lambda d: d.name,  # type: ignore[no-any-return]
+            key=lambda d: d.name,
         ):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []

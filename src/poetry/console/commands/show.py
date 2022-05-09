@@ -300,7 +300,7 @@ lists all packages available."""
         dependencies = package.requires
         dependencies = sorted(
             dependencies,
-            key=lambda x: x.name,  # type: ignore[no-any-return]
+            key=lambda x: x.name,
         )
         tree_bar = "├"
         total = len(dependencies)
@@ -343,7 +343,7 @@ lists all packages available."""
 
         dependencies = sorted(
             dependencies,
-            key=lambda x: x.name,  # type: ignore[no-any-return]
+            key=lambda x: x.name,
         )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
