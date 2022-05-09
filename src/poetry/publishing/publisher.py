@@ -69,8 +69,8 @@ class Publisher:
                     logger.debug(
                         "Found authentication information for %s.", repository_name
                     )
-                    username = auth.username or username
-                    password = auth.password or password
+                    username = username or auth.username
+                    password = password or auth.password
 
         certificates = self._authenticator.get_certs_for_repository(repository_name)
         resolved_cert = cert or certificates.cert or certificates.verify
