@@ -74,7 +74,7 @@ If your project is proprietary and does not use a specific licence, you can set 
 {{% /note %}}
 
 ```toml
-authors = "MIT"
+license = "MIT"
 ```
 
 ## authors
@@ -97,7 +97,7 @@ This is a list of maintainers and should be distinct from authors. Maintainers m
 
 ```toml
 maintainers = [
-    Richard Brave <email@example.org>
+    "Richard Brave <email@example.org>"
 ]
 ```
 
@@ -108,7 +108,7 @@ The readme file of the package. **Optional**
 The file can be either `README.rst` or `README.md`.
 
 ```toml
-readme = README.md # or README.rst
+readme = "README.md" # or "README.rst"
 ```
 
 ## homepage
