@@ -593,22 +593,30 @@ This command shows the current version of the project or bumps the version of
 the project and writes the new version back to `pyproject.toml` if a valid
 bump rule is provided.
 
-The new version should ideally be a valid [semver](https://semver.org/) string or a valid bump rule:
-`patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+The new version should be a valid [PEP 440](https://peps.python.org/pep-0440/)
+string or a valid bump rule: `patch`, `minor`, `major`, `prepatch`, `preminor`,
+`premajor`, `prerelease`.
+
+{{% note %}}
+
+If you would like to use semantic versioning for your project, please see
+[here]({{< relref "libraries#versioning" >}}).
+
+{{% /note %}}
 
 The table below illustrates the effect of these rules with concrete examples.
 
-| rule       | before        | after         |
-| ---------- | ------------- | ------------- |
-| major      | 1.3.0         | 2.0.0         |
-| minor      | 2.1.4         | 2.2.0         |
-| patch      | 4.1.1         | 4.1.2         |
-| premajor   | 1.0.2         | 2.0.0-alpha.0 |
-| preminor   | 1.0.2         | 1.1.0-alpha.0 |
-| prepatch   | 1.0.2         | 1.0.3-alpha.0 |
-| prerelease | 1.0.2         | 1.0.3-alpha.0 |
-| prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
-| prerelease | 1.0.3-beta.0  | 1.0.3-beta.1  |
+| rule       | before  | after   |
+| ---------- |---------|---------|
+| major      | 1.3.0   | 2.0.0   |
+| minor      | 2.1.4   | 2.2.0   |
+| patch      | 4.1.1   | 4.1.2   |
+| premajor   | 1.0.2   | 2.0.0a0 |
+| preminor   | 1.0.2   | 1.1.0a0 |
+| prepatch   | 1.0.2   | 1.0.3a0 |
+| prerelease | 1.0.2   | 1.0.3a0 |
+| prerelease | 1.0.3a0 | 1.0.3a1 |
+| prerelease | 1.0.3b0 | 1.0.3b1 |
 
 ### Options
 
