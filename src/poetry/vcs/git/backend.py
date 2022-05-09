@@ -349,20 +349,18 @@ class Git:
 
     @staticmethod
     def is_using_legacy_client() -> bool:
-        from poetry.factory import Factory
+        from poetry.config.config import Config
 
         legacy_client: bool = (
-            Factory.create_config()
-            .get("experimental", {})
-            .get("system-git-client", False)
+            Config.create().get("experimental", {}).get("system-git-client", False)
         )
         return legacy_client
 
     @staticmethod
     def get_default_source_root() -> Path:
-        from poetry.factory import Factory
+        from poetry.config.config import Config
 
-        return Path(Factory.create_config().get("cache-dir")) / "src"
+        return Path(Config.create().get("cache-dir")) / "src"
 
     @classmethod
     def clone(

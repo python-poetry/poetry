@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 
@@ -9,8 +10,12 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 
+from poetry.core.toml import TOMLFile
+
 from poetry.config.dict_config_source import DictConfigSource
+from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CACHE_DIR
+from poetry.locations import CONFIG_DIR
 
 
 if TYPE_CHECKING:
@@ -27,6 +32,12 @@ def boolean_normalizer(val: str) -> bool:
 
 def int_normalizer(val: str) -> int:
     return int(val)
+
+
+logger = logging.getLogger(__name__)
+
+
+_default_config: Config | None = None
 
 
 class Config:
@@ -186,3 +197,28 @@ class Config:
             return int_normalizer
 
         return lambda val: val
+
+    @classmethod
+    def create(cls, reload: bool = False) -> Config:
+        global _default_config
+
+        if _default_config is None or reload:
+            _default_config = cls()
+
+            # Load global config
+            config_file = TOMLFile(CONFIG_DIR / "config.toml")
+            if config_file.exists():
+                logger.debug("Loading configuration file %s", config_file.path)
+                _default_config.merge(config_file.read())
+
+            _default_config.set_config_source(FileConfigSource(config_file))
+
+            # Load global auth config
+            auth_config_file = TOMLFile(CONFIG_DIR / "auth.toml")
+            if auth_config_file.exists():
+                logger.debug("Loading configuration file %s", auth_config_file.path)
+                _default_config.merge(auth_config_file.read())
+
+            _default_config.set_auth_config_source(FileConfigSource(auth_config_file))
+
+        return _default_config

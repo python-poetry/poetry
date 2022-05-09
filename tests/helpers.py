@@ -17,6 +17,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 
+from poetry.config.config import Config
 from poetry.console.application import Application
 from poetry.factory import Factory
 from poetry.installation.executor import Executor
@@ -107,7 +108,7 @@ def mock_clone(
     folder = Path(__file__).parent / "fixtures" / "git" / parsed.resource / path
 
     if not source_root:
-        source_root = Path(Factory.create_config().get("cache-dir")) / "src"
+        source_root = Path(Config.create().get("cache-dir")) / "src"
 
     dest = source_root / path
     dest.parent.mkdir(parents=True, exist_ok=True)
