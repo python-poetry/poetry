@@ -120,7 +120,7 @@ To use HTTP basic authentication with your git repositories, you can configure c
 how [repository credentials]({{< relref "repositories#configuring-credentials" >}}) are configured.
 
 ```bash
-poetry config repositories.git-org-project https://gitlhub.com/org/project.git
+poetry config repositories.git-org-project https://github.com/org/project.git
 poetry config http-basic.git-org-project username token
 poetry add git+https://github.com/org/project.git
 ```
