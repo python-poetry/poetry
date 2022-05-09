@@ -560,3 +560,38 @@ def test_authenticator_add_repository(
 
     basic_auth = base64.b64encode(b"foo:bar").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
+def test_authenticator_git_repositories(
+    config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+):
+    config.merge(
+        {
+            "repositories": {
+                "one": {"url": "https://foo.bar/org/one.git"},
+                "two": {"url": "https://foo.bar/org/two.git"},
+            },
+            "http-basic": {
+                "one": {"username": "foo", "password": "bar"},
+                "two": {"username": "baz", "password": "qux"},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+
+    one = authenticator.get_credentials_for_git_url("https://foo.bar/org/one.git")
+    assert one.username == "foo"
+    assert one.password == "bar"
+
+    two = authenticator.get_credentials_for_git_url("https://foo.bar/org/two.git")
+    assert two.username == "baz"
+    assert two.password == "qux"
+
+    three = authenticator.get_credentials_for_git_url("https://foo.bar/org/three.git")
+    assert not three.username
+    assert not three.password

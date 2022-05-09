@@ -245,8 +245,10 @@ class Authenticator:
 
         return self._credentials[key]
 
-    def _get_credentials_for_url(self, url: str) -> HTTPAuthCredential:
-        repository = self.get_repository_config_for_url(url)
+    def _get_credentials_for_url(
+        self, url: str, exact_match: bool = False
+    ) -> HTTPAuthCredential:
+        repository = self.get_repository_config_for_url(url, exact_match)
 
         credential = (
             self._get_credentials_for_repository(repository=repository)
@@ -266,6 +268,14 @@ class Authenticator:
             )
 
         return credential
+
+    def get_credentials_for_git_url(self, url: str) -> HTTPAuthCredential:
+        key = f"git+{url}"
+
+        if key not in self._credentials:
+            self._credentials[key] = self._get_credentials_for_url(url, True)
+
+        return self._credentials[key]
 
     def get_credentials_for_url(self, url: str) -> HTTPAuthCredential:
         parsed_url = urllib.parse.urlsplit(url)
@@ -338,13 +348,17 @@ class Authenticator:
 
     @functools.lru_cache(maxsize=None)
     def get_repository_config_for_url(
-        self, url: str
+        self, url: str, exact_match: bool = False
     ) -> AuthenticatorRepositoryConfig | None:
         parsed_url = urllib.parse.urlsplit(url)
         candidates_netloc_only = []
         candidates_path_match = []
 
         for repository in self.configured_repositories.values():
+            if exact_match:
+                if parsed_url.path == repository.path:
+                    return repository
+                continue
 
             if repository.netloc == parsed_url.netloc:
                 if parsed_url.path.startswith(repository.path) or commonprefix(
