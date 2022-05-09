@@ -186,7 +186,7 @@ class Git:
         client: GitClient
         path: str
 
-        credentials = get_default_authenticator().get_credentials_for_url(url=url)
+        credentials = get_default_authenticator().get_credentials_for_git_url(url=url)
         client, path = get_transport_and_path(  # type: ignore[no-untyped-call]
             url, username=credentials.username, password=credentials.password
         )
