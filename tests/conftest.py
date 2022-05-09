@@ -233,15 +233,14 @@ def download_mock(mocker: MockerFixture) -> None:
 
 @pytest.fixture(autouse=True)
 def pep517_metadata_mock(mocker: MockerFixture) -> None:
-    @classmethod
-    def _pep517_metadata(cls: PackageInfo, path: Path) -> PackageInfo:
+    def get_pep517_metadata(path: Path) -> PackageInfo:
         with suppress(PackageInfoError):
             return PackageInfo.from_setup_files(path)
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata",
-        _pep517_metadata,
+        "poetry.inspection.info.get_pep517_metadata",
+        get_pep517_metadata,
     )
 
 
