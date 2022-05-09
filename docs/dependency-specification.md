@@ -116,11 +116,21 @@ To use an SSH connection, for example in the case of private repositories, use t
 requests = { git = "git@github.com:requests/requests.git" }
 ```
 
+To use HTTP basic authentication with your git repositories, you can configure credentials similar to
+how [repository credentials]({{< relref "repositories#configuring-credentials" >}}) are configured.
+
+```bash
+poetry config repositories.git-org-project https://gitlhub.com/org/project.git
+poetry config http-basic.git-org-project username token
+poetry add git+https://github.com/org/project.git
+```
+
 {{% note %}}
-With Poetry 1.2 releases, the default git client used is [Dulwich](https://www.dulwich.io/). We
-fall back to legacy system git client implementation in cases where [gitcredentials](https://git-scm.com/docs/gitcredentials)
-are used. This fallback will be removed in a future release where username/password authentication
-can be better supported natively.
+With Poetry 1.2 releases, the default git client used is [Dulwich](https://www.dulwich.io/).
+
+We fall back to legacy system git client implementation in cases where
+[gitcredentials](https://git-scm.com/docs/gitcredentials) is used. This fallback will be removed in
+a future release where `gitcredentials` helpers can be better supported natively.
 
 In cases where you encounter issues with the default implementation that used to work prior to
 Poetry 1.2, you may wish to explicitly configure the use of the system git client via a shell
