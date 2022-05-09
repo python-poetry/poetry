@@ -54,9 +54,9 @@ class Publisher:
                 raise RuntimeError(f"Repository {repository_name} is not defined")
 
         if not (username and password):
-            # Check if we have a token first
             token = None
             if not (username or password):
+                # If both are missing, check if we have a token first
                 token = self._authenticator.get_pypi_token(repository_name)
 
             if token:
