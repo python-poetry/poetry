@@ -55,7 +55,7 @@ Provide more context by answering these questions:
 Include details about your configuration and environment:
 
 * **Which version of Poetry are you using?** You can get the exact version by running `poetry -V` in your terminal.
-* **Which Python version Poetry has been installed for?** Execute the `debug:info` to get the information.
+* **Which Python version Poetry has been installed for?** Execute the `poetry debug info` to get the information.
 * **What's the name and version of the OS you're using**?
 
 
