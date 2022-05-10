@@ -205,7 +205,7 @@ If you are helping with the triage of reported issues, this section provides som
 
 #### Multiple versions
 
-Often times you would want to attempt to reproduce issues with multiple versions of `poetry` at the same time. For these use cases, the [pipx project](https://pipxproject.github.io/pipx/) is useful.
+Often times you would want to attempt to reproduce issues with multiple versions of `poetry` at the same time. For these use cases, the [pipx project](https://pypa.github.io/pipx/) is useful.
 
 You can set your environment up like so.
 
