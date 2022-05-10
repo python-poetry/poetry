@@ -270,6 +270,11 @@ class Authenticator:
         return credential
 
     def get_credentials_for_git_url(self, url: str) -> HTTPAuthCredential:
+        parsed_url = urllib.parse.urlsplit(url)
+
+        if parsed_url.scheme not in {"http", "https"}:
+            return HTTPAuthCredential()
+
         key = f"git+{url}"
 
         if key not in self._credentials:

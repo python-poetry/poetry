@@ -186,9 +186,17 @@ class Git:
         client: GitClient
         path: str
 
+        kwargs: dict[str, str] = {}
         credentials = get_default_authenticator().get_credentials_for_git_url(url=url)
+
+        if credentials.password and credentials.username:
+            # we do this conditionally as otherwise, dulwich might complain if these
+            # parameters are passed in for an ssh url
+            kwargs["username"] = credentials.username
+            kwargs["password"] = credentials.password
+
         client, path = get_transport_and_path(  # type: ignore[no-untyped-call]
-            url, username=credentials.username, password=credentials.password
+            url, **kwargs
         )
 
         with local:
