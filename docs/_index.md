@@ -155,7 +155,7 @@ curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 
 {{< tab tabID="installing-with-pipx" >}}
 
-Using [`pipx`](https://github.com/pipxproject/pipx) to install Poetry is also possible.
+Using [`pipx`](https://github.com/pypa/pipx) to install Poetry is also possible.
 
 `pipx` is used to install Python CLI applications globally while still isolating them in virtual environments.
 This allows for clean upgrades and uninstalls.
