@@ -298,6 +298,25 @@ def test_configured_repository_http_auth(
     spy_get_transport_and_path.assert_called_once()
 
 
+def test_username_password_parameter_is_not_passed_to_dulwich(
+    mocker: MockerFixture, source_url: str, config: Config
+) -> None:
+    from poetry.vcs.git import backend
+
+    spy_clone = mocker.spy(Git, "_clone")
+    spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
+
+    with Git.clone(url=source_url, branch="0.1") as repo:
+        assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
+
+    spy_clone.assert_called_once()
+
+    spy_get_transport_and_path.assert_called_with(
+        location=source_url,
+    )
+    spy_get_transport_and_path.assert_called_once()
+
+
 def test_system_git_called_when_configured(
     mocker: MockerFixture, source_url: str, use_system_git_client: None
 ) -> None:

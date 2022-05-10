@@ -592,6 +592,10 @@ def test_authenticator_git_repositories(
     assert two.username == "baz"
     assert two.password == "qux"
 
+    two_ssh = authenticator.get_credentials_for_git_url("ssh://git@foo.bar/org/two.git")
+    assert not two_ssh.username
+    assert not two_ssh.password
+
     three = authenticator.get_credentials_for_git_url("https://foo.bar/org/three.git")
     assert not three.username
     assert not three.password
