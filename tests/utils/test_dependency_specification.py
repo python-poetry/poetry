@@ -6,11 +6,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from deepdiff import DeepDiff
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
 
-from poetry.utils._compat import metadata
 from poetry.utils.dependency_specification import parse_dependency_specification
+from tests.compat import is_poetry_core_1_1_0a7_compat
 
 
 if TYPE_CHECKING:
@@ -78,11 +76,7 @@ if TYPE_CHECKING:
                 "markers": 'python_version == "2.7"',
                 "url": "http://foo.com",
                 **(
-                    {"extras": ["fred", "bar"]}
-                    if parse_constraint(">1.1.0a7").allows(
-                        Version.parse(metadata.version("poetry-core"))
-                    )
-                    else {}
+                    {} if is_poetry_core_1_1_0a7_compat else {"extras": ["fred", "bar"]}
                 ),
             },
         ),
