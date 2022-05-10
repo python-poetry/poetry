@@ -267,7 +267,7 @@ lists all packages available."""
                         required_by = reverse_deps(locked, locked_repo)
                         required_by_length = max(
                             required_by_length,
-                            len("via " + ",".join(required_by.keys())),
+                            len(" from " + ",".join(required_by.keys())),
                         )
             else:
                 name_length = max(name_length, current_length)
@@ -288,14 +288,12 @@ lists all packages available."""
 
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
-        write_why = self.option("why") and (
-            name_length + version_length + latest_length + required_by_length + 3
-            <= width
+
+        why_end_column = (
+            name_length + version_length + latest_length + required_by_length
         )
-        write_description = (
-            name_length + version_length + latest_length + required_by_length + 24
-            <= width
-        )
+        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_description = (why_end_column + 24) <= width
 
         for locked in locked_packages:
             color = "cyan"
