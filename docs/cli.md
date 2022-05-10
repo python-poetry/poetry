@@ -439,6 +439,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
+* `--why`: Include reverse dependencies where applicable.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--default`: Only include the main dependencies. (**Deprecated**)
