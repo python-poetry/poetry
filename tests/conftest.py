@@ -34,6 +34,7 @@ from poetry.utils.helpers import remove_directory
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
+from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
@@ -246,27 +247,19 @@ def pep517_metadata_mock(mocker: MockerFixture) -> None:
 
 @pytest.fixture
 def environ() -> Iterator[None]:
-    original_environ = dict(os.environ)
-
-    yield
-
-    os.environ.clear()
-    os.environ.update(original_environ)
+    with isolated_environment():
+        yield
 
 
 @pytest.fixture(autouse=True)
 def isolate_environ() -> Iterator[None]:
     """Ensure the environment is isolated from user configuration."""
-    original_environ = dict(os.environ)
+    with isolated_environment():
+        for var in os.environ:
+            if var.startswith("POETRY_") or var in {"PYTHONPATH", "VIRTUAL_ENV"}:
+                del os.environ[var]
 
-    for var in os.environ:
-        if var.startswith("POETRY_"):
-            del os.environ[var]
-
-    yield
-
-    os.environ.clear()
-    os.environ.update(original_environ)
+        yield
 
 
 @pytest.fixture(autouse=True)

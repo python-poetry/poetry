@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import shutil
@@ -9,6 +10,7 @@ import urllib.parse
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
@@ -230,3 +232,21 @@ class TestRepository(Repository):
                 f"-{escape_version(package.version.text)}-py2.py3-none-any.whl"
             )
         ]
+
+
+@contextlib.contextmanager
+def isolated_environment(
+    environ: dict[str, Any] | None = None, clear: bool = False
+) -> Iterator[None]:
+    original_environ = dict(os.environ)
+
+    if clear:
+        os.environ.clear()
+
+    if environ:
+        os.environ.update(environ)
+
+    yield
+
+    os.environ.clear()
+    os.environ.update(original_environ)
