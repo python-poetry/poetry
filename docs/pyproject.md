@@ -84,7 +84,7 @@ The authors of the package. **Required**
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
 ```toml
-license = [
+authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 ```
