@@ -55,15 +55,6 @@ jobs:
           poetry install --no-dev
           poetry run python bin/website build --local ./poetry
 
-      - name: Start Deployment
-        uses: bobheadxi/deployments@v1
-        id: deployment
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: Preview
-          repository: python-poetry/poetry
-
       - name: Install Hugo
         uses: peaceiris/actions-hugo@v2
         with:
@@ -81,17 +72,5 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           scope: python-poetry
-          github-comment: false
+          github-comment: true
           working-directory: public
-
-      - name: Update Deployment Status
-        uses: bobheadxi/deployments@v1
-        if: always()
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: ${{ steps.vercel-action.outputs.preview-url }}
-          env: ${{ steps.deployment.outputs.env }}
-          repository: python-poetry/poetry
