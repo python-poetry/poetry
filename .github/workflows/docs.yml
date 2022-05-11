@@ -1,0 +1,74 @@
+name: "Documentation Preview"
+
+on:
+  push:
+    paths-ignore:
+      - '**'
+      - '!docs/**'
+      - '!.github/workflows/docs.yml'
+    branches-ignore:
+      - main
+      - master
+  pull_request:
+    paths-ignore:
+      - '**'
+      - '!docs/**'
+      - '!.github/workflows/docs.yml'
+    branches:
+      - '**'
+
+jobs:
+  deploy-preview:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Website Source
+        uses: actions/checkout@v3
+        with:
+          repository: python-poetry/website
+          ref: website-allow-local-version-builds
+
+      - name: Checkout Poetry Source
+        uses: actions/checkout@v3
+        with:
+          path: poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: Build Assets
+        run: npm ci && npm run prod
+
+      - name: Fetch Documentation
+        run: |
+          python -m pip install poetry
+          poetry install --no-dev
+          poetry run python bin/website build --local ./poetry
+
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.83.1'
+
+      - name: Build
+        run: hugo -v --minify
+
+      - name: Deploy
+        uses: amondnet/vercel-action@v20
+        id: vercel-action
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: python-poetry
+          github-comment: true
+          working-directory: public
