@@ -76,3 +76,9 @@ def test_version_update(tester: CommandTester):
 def test_short_version_update(tester: CommandTester):
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"
+
+
+def test_dry_run(tester: CommandTester):
+    content = tester.command.poetry.file.path.read_text()
+    tester.execute("--dry-run major")
+    assert content == tester.command.poetry.file.path.read_text()
