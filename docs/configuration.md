@@ -30,9 +30,11 @@ by passing the `--local` option to the `config` command.
 poetry config virtualenvs.create false --local
 ```
 
+{{% note %}}
 Your local configuration of Poetry application is stored in `poetry.toml` file,
 which is separate from `pyproject.toml`.
 You should not check-in this file into your repository.
+{{% /note %}}
 
 ## Listing the current configuration
 
