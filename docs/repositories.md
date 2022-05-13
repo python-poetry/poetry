@@ -94,7 +94,7 @@ when publishing a package.
 
 ### Project Configuration
 
-These package sources maybe managed using the [`source`]({{< relref "cli#source" >}}) command for
+These package sources may be managed using the [`source`]({{< relref "cli#source" >}}) command for
 your project.
 
 ```bash
@@ -112,9 +112,27 @@ default = false
 secondary = false
 ```
 
+When a package source is defined like this, it takes precedence over [PyPI](https://pypi.org).
+
+To ignore [PyPI](https://pypi.org) completely, use `default = true`.
+
+To target a package source only on specific packages, use `secondary = true` on the package source, and specify the `source` when adding the dependency.
+In the example below, `my-lib` will be obtained from the custom package source and `urllib3` will use the [PyPI](https://pypi.org) source.
+
+```toml
+[tool.poetry.requirements]
+my-lib = { version = "*", source = "foo" }
+urllib3 = "*"
+
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+secondary = true
+```
+
 {{% warning %}}
 
-If package sources are defined for a project, these will take precedence over
+Reminder: If package sources are defined for a project, these will take precedence over
 [PyPI](https://pypi.org). If you do not want this to be the case, you should declare **all** package
 sources to be [secondary](#secondary-package-sources).
 
