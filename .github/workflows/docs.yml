@@ -11,6 +11,7 @@ on:
     # prevent execution when the workflow itself is modified from a fork
     types:
       - labeled
+      - synchronize
     paths-ignore:
       - "**"
       - "!docs/**"
