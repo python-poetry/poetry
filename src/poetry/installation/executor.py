@@ -92,6 +92,9 @@ class Executor:
     def removals_count(self) -> int:
         return self._executed["uninstall"]
 
+    def set_no_binary_policy(self, policy: str) -> None:
+        self._chooser.set_no_binary_policy(policy)
+
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
 
