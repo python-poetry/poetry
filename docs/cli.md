@@ -622,7 +622,7 @@ The table below illustrates the effect of these rules with concrete examples.
 ### Options
 
 * `--short (-s)`: Output the version number only.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything.
 
 ## export
 

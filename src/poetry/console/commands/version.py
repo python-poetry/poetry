@@ -31,7 +31,7 @@ class VersionCommand(Command):
     ]
     options = [
         option("short", "s", "Output the version number only"),
-        option("dry-run", None, "Perform all actions except upload the package."),
+        option("dry-run", None, "Outputs the operations but will not execute anything"),
     ]
 
     help = """\

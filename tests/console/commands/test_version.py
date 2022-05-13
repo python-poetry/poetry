@@ -81,6 +81,7 @@ def test_short_version_update(tester: CommandTester):
 def test_dry_run(tester: CommandTester):
     old_pyproject = tester.command.poetry.file.path.read_text()
     tester.execute("--dry-run major")
-    assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
+
     new_pyproject = tester.command.poetry.file.path.read_text()
+    assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
     assert old_pyproject == new_pyproject
