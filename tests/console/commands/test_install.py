@@ -136,3 +136,29 @@ def test_sync_option_is_passed_to_the_installer(
     tester.execute("--sync")
 
     assert tester.command.installer._requires_synchronization
+
+
+@pytest.mark.parametrize(
+    ("options", "policy"),
+    [
+        (
+            "--no-binary :all:",
+            {":all:"},
+        ),
+        ("--no-binary :none:", {":none:"}),
+        ("--no-binary pytest", {"pytest"}),
+        ("--no-binary pytest,black", {"black", "pytest"}),
+        ("--no-binary pytest --no-binary black", {"black", "pytest"}),
+    ],
+)
+def test_no_binary_option_is_passed_to_the_installer(
+    tester: CommandTester, mocker: MockerFixture, options: str, policy: set[str]
+) -> None:
+    """
+    The --no-binary option is passed properly to the installer.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute(options)
+
+    assert tester.command.installer.executor._chooser._no_binary_policy == policy

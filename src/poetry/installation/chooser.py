@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
 
+from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -60,6 +61,28 @@ class Chooser:
     def __init__(self, pool: Pool, env: Env) -> None:
         self._pool = pool
         self._env = env
+        self._no_binary_policy: set[str] = set()
+
+    def set_no_binary_policy(self, policy: str) -> None:
+        self._no_binary_policy = {
+            name.strip() if re.match(r":(all|none):", name) else canonicalize_name(name)
+            for name in policy.split(",")
+        }
+
+        if {":all:", ":none:"} <= self._no_binary_policy:
+            raise ValueError(
+                "Ambiguous binary policy containing :all: and :none: given."
+            )
+
+    def allow_binary(self, package_name: str) -> bool:
+        if ":all:" in self._no_binary_policy:
+            return False
+
+        return (
+            not self._no_binary_policy
+            or ":none:" in self._no_binary_policy
+            or canonicalize_name(package_name) not in self._no_binary_policy
+        )
 
     def choose_for(self, package: Package) -> Link:
         """
@@ -67,15 +90,23 @@ class Chooser:
         """
         links = []
         for link in self._get_links(package):
-            if link.is_wheel and not Wheel(link.filename).is_supported_by_environment(
-                self._env
-            ):
-                logger.debug(
-                    "Skipping wheel %s as this is not supported by the current"
-                    " environment",
-                    link.filename,
-                )
-                continue
+            if link.is_wheel:
+                if not self.allow_binary(package.name):
+                    logger.debug(
+                        "Skipping wheel for %s as requested in no binary policy for"
+                        " package (%s)",
+                        link.filename,
+                        package.name,
+                    )
+                    continue
+
+                if not Wheel(link.filename).is_supported_by_environment(self._env):
+                    logger.debug(
+                        "Skipping wheel %s as this is not supported by the current"
+                        " environment",
+                        link.filename,
+                    )
+                    continue
 
             if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
                 logger.debug("Skipping unsupported distribution %s", link.filename)

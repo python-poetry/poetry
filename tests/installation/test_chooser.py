@@ -121,6 +121,44 @@ def test_chooser_chooses_universal_wheel_link_if_available(
     assert link.filename == "pytest-3.5.0-py2.py3-none-any.whl"
 
 
+@pytest.mark.parametrize(
+    ("policy", "filename"),
+    [
+        (":all:", "pytest-3.5.0.tar.gz"),
+        (":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("black", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("pytest", "pytest-3.5.0.tar.gz"),
+        ("pytest,black", "pytest-3.5.0.tar.gz"),
+    ],
+)
+@pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_no_binary_policy(
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: Pool,
+    policy: str,
+    filename: str,
+):
+    chooser = Chooser(pool, env)
+    chooser.set_no_binary_policy(policy)
+
+    package = Package("pytest", "3.5.0")
+    if source_type == "legacy":
+        package = Package(
+            package.name,
+            package.version.text,
+            source_type="legacy",
+            source_reference="foo",
+            source_url="https://foo.bar/simple/",
+        )
+
+    link = chooser.choose_for(package)
+
+    assert link.filename == filename
+
+
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
     env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
