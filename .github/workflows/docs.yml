@@ -1,27 +1,27 @@
 name: "Documentation Preview"
 
 on:
-  push:
-    paths-ignore:
-      - '**'
-      - '!docs/**'
-      - '!.github/workflows/docs.yml'
-    branches-ignore:
-      - main
-      - master
   pull_request:
+    # allow repository maintainers to modify and test workflow
     paths-ignore:
-      - '**'
-      - '!docs/**'
-      - '!.github/workflows/docs.yml'
-    branches:
-      - '**'
+      - "**"
+      - "!.github/workflows/docs.yml"
+  pull_request_target:
+    # enable runs for this workflow when labeled as documentation only
+    # prevent execution when the workflow itself is modified from a fork
+    types:
+      - labeled
+    paths-ignore:
+      - "**"
+      - "!docs/**"
 
 jobs:
-  deploy-preview:
+  deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
-
+    if: |
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'Documentation'))
+      || (github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - name: Checkout Website Source
         uses: actions/checkout@v3
@@ -32,6 +32,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: poetry
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v2
