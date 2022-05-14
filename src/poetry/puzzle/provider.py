@@ -631,7 +631,9 @@ class Provider:
                         dep_other.set_constraint(
                             dep_other.constraint.intersect(dep_any.constraint)
                         )
-            elif not inverted_marker.is_empty():
+            elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
+                get_python_constraint_from_marker(inverted_marker)
+            ):
                 # if there is no any marker dependency
                 # and the inverted marker is not empty,
                 # a dependency with the inverted union of all markers is required
