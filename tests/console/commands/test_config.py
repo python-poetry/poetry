@@ -46,7 +46,8 @@ def test_list_displays_default_value_if_not_set(
     tester: CommandTester, config: Config, config_cache_dir: Path
 ):
     tester.execute("--list")
-
+    print(config_cache_dir)
+    print(config.config)
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
@@ -62,6 +63,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert tester.io.fetch_output() == expected
@@ -89,6 +91,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 0
@@ -140,6 +143,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 1

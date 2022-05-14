@@ -51,6 +51,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{project_name}-py{python_version}"
 ```
 
 ## Displaying a single configuration setting
@@ -170,6 +171,14 @@ existing `.venv` directory.
 
 Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
+
+### `virtualenvs.prompt`
+
+**Type**: string
+
+Name of the command line prompt to be displayed when the virtual enviroment is activated.
+The variables `project_name` and `python_version` are available for formatting.
+Defaults to `"{project_name}-py{python_version}"`.
 
 ### `virtualenvs.options.always-copy`
 

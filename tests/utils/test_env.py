@@ -217,6 +217,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -354,6 +355,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.6",
     )
 
     assert envs_file.exists()
@@ -417,6 +419,7 @@ def test_activate_activates_recreates_for_different_patch(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.7",
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / f"{venv_name}-py3.7")
 
@@ -854,6 +857,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.7",
     )
 
 
@@ -887,6 +891,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.9",
     )
 
 
@@ -979,6 +984,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.8",
     )
 
 
@@ -1020,6 +1026,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.7",
     )
 
 
@@ -1090,6 +1097,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
@@ -1323,6 +1331,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.5",
     )
 
 

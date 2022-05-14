@@ -77,6 +77,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
             "no-pip": False,
             "no-setuptools": False,
         },
+        prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(venv_cache / "envs.toml")

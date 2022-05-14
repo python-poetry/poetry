@@ -226,7 +226,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     except PackageInfoError:
         assert spy.call_count == 3
     else:
-        assert spy.call_count == 2
+        assert spy.call_count == 3
 
 
 def test_info_prefer_poetry_config_over_egg_info():
