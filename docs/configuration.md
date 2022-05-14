@@ -141,6 +141,54 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 This configuration will be ignored when `installer.parallel` is set to false.
 {{% /note %}}
 
+### `installer.no-binary`
+
+**Type**: string | bool
+
+*Introduced in 1.2.0*
+
+When set this configuration allows users to configure package distribution format policy for all or
+specific packages.
+
+| Configuration          | Description                                                |
+|------------------------|------------------------------------------------------------|
+| `:all:` or `true`      | Disallow binary distributions for all packages.            |
+| `:none:` or `false`    | Allow binary distributions for all packages.               |
+| `package[,package,..]` | Disallow binary distributions for specified packages only. |
+
+{{% note %}}
+This configuration is only respected when using the new installer. If you have disabled it please
+consider re-enabling it.
+
+As with all configurations described here, this is a user specific configuration. This means that this
+is not taken into consideration when a lockfile is generated or dependencies are resolved. This is
+applied only when selecting which distribution for dependency should be installed into a Poetry managed
+environment.
+{{% /note %}}
+
+{{% note %}}
+For project specific usage, it is recommended that this be configured with the `--local`.
+
+```bash
+poetry config --local installer.no-binary :all:
+```
+{{% /note %}}
+
+{{% note %}}
+For CI or container environments using [environment variable](#using-environment-variables)
+to configure this might be useful.
+
+```bash
+export POETRY_INSTALLER_NO_BINARY=:all:
+```
+{{% /note %}}
+
+{{% warning %}}
+Unless this is required system-wide, if configured globally, you could encounter slower install times
+across all your projects if incorrectly set.
+{{% /warning %}}
+
+
 ### `virtualenvs.create`
 
 **Type**: boolean

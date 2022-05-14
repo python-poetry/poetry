@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 
     from httpretty.core import HTTPrettyRequest
 
+    from tests.conftest import Config
+
 
 JSON_FIXTURES = (
     Path(__file__).parent.parent / "repositories" / "fixtures" / "pypi.org" / "json"
@@ -140,9 +142,11 @@ def test_chooser_no_binary_policy(
     pool: Pool,
     policy: str,
     filename: str,
+    config: Config,
 ):
-    chooser = Chooser(pool, env)
-    chooser.set_no_binary_policy(policy)
+    config.merge({"installer": {"no-binary": policy.split(",")}})
+
+    chooser = Chooser(pool, env, config)
 
     package = Package("pytest", "3.5.0")
     if source_type == "legacy":
