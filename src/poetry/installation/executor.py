@@ -58,7 +58,7 @@ class Executor:
         self._verbose = False
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env)
+        self._chooser = Chooser(pool, self._env, config)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -91,9 +91,6 @@ class Executor:
     @property
     def removals_count(self) -> int:
         return self._executed["uninstall"]
-
-    def set_no_binary_policy(self, policy: str) -> None:
-        self._chooser.set_no_binary_policy(policy)
 
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run

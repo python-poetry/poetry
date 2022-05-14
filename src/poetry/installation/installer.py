@@ -135,11 +135,6 @@ class Installer:
     def is_verbose(self) -> bool:
         return self._verbose
 
-    def no_binary(self, policy: str) -> Installer:
-        if self._executor:
-            self._executor.set_no_binary_policy(policy=policy)
-        return self
-
     def only_groups(self, groups: Iterable[str]) -> Installer:
         self._groups = groups
 

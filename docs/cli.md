@@ -223,7 +223,6 @@ option is used.
 * `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
-* `--no-binary`: Do not use binary distributions for packages matching given policy. Use package name to disallow a specific package; or `:all:` to disallow and `:none:` to force binary for all packages.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**)
@@ -232,11 +231,6 @@ option is used.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
-{{% /note %}}
-
-{{% note %}}
-The `--no-binary` option will only work with the new installer. For the old installer,
-this is ignored.
 {{% /note %}}
 
 

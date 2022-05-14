@@ -34,16 +34,6 @@ class InstallCommand(InstallerCommand):
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
-            "no-binary",
-            None,
-            "Do not use binary distributions for packages matching given policy.\n"
-            "Use package name to disallow a specific package; or <b>:all:</b> to\n"
-            "disallow and <b>:none:</b> to force binary for all packages. Multiple\n"
-            "packages can be specified separated by commas.",
-            flag=False,
-            multiple=True,
-        ),
-        option(
             "dry-run",
             None,
             "Output the operations but do not execute anything "
@@ -107,17 +97,6 @@ dependencies and not including the current project, run the command with the
             )
 
             with_synchronization = True
-
-        if self.option("no-binary"):
-            policy = ",".join(self.option("no-binary", []))
-            try:
-                self._installer.no_binary(policy=policy)
-            except ValueError as e:
-                self.line_error(
-                    f"<warning>Invalid value (<c1>{policy}</>) for"
-                    f" `<b>--no-binary</b>`</>.\n\n<error>{e}</>"
-                )
-                return 1
 
         self._installer.only_groups(self.activated_groups)
         self._installer.dry_run(self.option("dry-run"))
