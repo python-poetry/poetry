@@ -163,7 +163,11 @@ class InstalledRepository(Repository):
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
         )
-        package.description = distribution.metadata.get("summary", "")
+
+        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+            "summary",
+            "",
+        )
 
         return package
 
@@ -213,7 +217,10 @@ class InstalledRepository(Repository):
             develop=develop,
         )
 
-        package.description = distribution.metadata.get("summary", "")
+        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+            "summary",
+            "",
+        )
 
         return package
 
@@ -229,7 +236,9 @@ class InstalledRepository(Repository):
 
         for entry in reversed(env.sys_path):
             for distribution in sorted(
-                metadata.distributions(path=[entry]),
+                metadata.distributions(  # type: ignore[no-untyped-call]
+                    path=[entry],
+                ),
                 key=lambda d: str(d._path),  # type: ignore[attr-defined]
             ):
                 name = canonicalize_name(distribution.metadata["name"])
