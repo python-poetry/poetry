@@ -10,6 +10,7 @@ from typing import cast
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from poetry.config.config import PackageFilterPolicy
 from poetry.console.commands.command import Command
 
 
@@ -111,6 +112,11 @@ To remove a repository (repo is a short alias for repositories):
                 str,
                 lambda val: str(val),
                 "{project_name}-py{python_version}",
+            ),
+            "installer.no-binary": (
+                PackageFilterPolicy.validator,
+                PackageFilterPolicy.normalize,
+                None,
             ),
         }
 
