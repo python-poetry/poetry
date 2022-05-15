@@ -31,7 +31,11 @@ class VersionCommand(Command):
     ]
     options = [
         option("short", "s", "Output the version number only"),
-        option("dry-run", None, "Outputs the operations but will not execute anything"),
+        option(
+            "dry-run",
+            None,
+            "Outputs the version without updating the pyproject.toml file",
+        ),
     ]
 
     help = """\
