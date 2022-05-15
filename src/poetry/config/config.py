@@ -171,7 +171,7 @@ class Config:
         if not isinstance(value, str):
             return value
 
-        def resolve_from_config(match: re.Match[str]) -> str | Any:
+        def resolve_from_config(match: re.Match[str]) -> Any:
             key = match.group(1)
             config_value = self.get(key)
             if config_value:
