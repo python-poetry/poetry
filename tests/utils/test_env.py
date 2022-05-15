@@ -984,7 +984,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
             "no-pip": False,
             "no-setuptools": False,
         },
-        prompt="simple-project-py3.8",
+        prompt=f"simple-project-py{version.major}.{version.minor}",
     )
 
 
@@ -1026,7 +1026,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
             "no-pip": False,
             "no-setuptools": False,
         },
-        prompt="simple-project-py3.7",
+        prompt=f"simple-project-py{version.major}.{version.minor - 1}",
     )
 
 
