@@ -295,6 +295,16 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     assert str(required[5].marker) == 'sys_platform != "win32"'
 
 
+def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint():
+    repo = MockRepository()
+
+    package = repo.package("poetry-test-py2-py3-metadata-merge", "0.1.0")
+
+    assert package.name == "poetry-test-py2-py3-metadata-merge"
+    assert package.version.text == "0.1.0"
+    assert package.python_versions == ">=2.7,<2.8 || >=3.7,<4.0"
+
+
 def test_get_package_with_dist_and_universal_py3_wheel():
     repo = MockRepository()
 
