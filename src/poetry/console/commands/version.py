@@ -29,7 +29,14 @@ class VersionCommand(Command):
             optional=True,
         )
     ]
-    options = [option("short", "s", "Output the version number only")]
+    options = [
+        option("short", "s", "Output the version number only"),
+        option(
+            "dry-run",
+            None,
+            "Do not update pyproject.toml file",
+        ),
+    ]
 
     help = """\
 The version command shows the current version of the project or bumps the version of
@@ -66,12 +73,13 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                     f" to <fg=green>{version}</>"
                 )
 
-            content: dict[str, Any] = self.poetry.file.read()
-            poetry_content = content["tool"]["poetry"]
-            poetry_content["version"] = version.text
+            if not self.option("dry-run"):
+                content: dict[str, Any] = self.poetry.file.read()
+                poetry_content = content["tool"]["poetry"]
+                poetry_content["version"] = version.text
 
-            assert isinstance(content, TOMLDocument)
-            self.poetry.file.write(content)
+                assert isinstance(content, TOMLDocument)
+                self.poetry.file.write(content)
         else:
             if self.option("short"):
                 self.line(self.poetry.package.pretty_version)

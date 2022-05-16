@@ -623,6 +623,7 @@ The table below illustrates the effect of these rules with concrete examples.
 ### Options
 
 * `--short (-s)`: Output the version number only.
+* `--dry-run`: Do not update pyproject.toml file.
 
 ## export
 
