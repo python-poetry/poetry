@@ -43,8 +43,13 @@ curl -sSL https://install.python-poetry.org | python3 -
 
 **windows powershell install instructions**
 ```powershell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
+above.
+{{% /note %}}
 
 {{% note %}}
 Note that the installer does not support Python < 3.7.
