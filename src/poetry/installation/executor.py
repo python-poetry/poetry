@@ -58,7 +58,7 @@ class Executor:
         self._verbose = False
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env)
+        self._chooser = Chooser(pool, self._env, config)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)

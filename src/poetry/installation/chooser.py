@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
 
+from poetry.config.config import Config
+from poetry.config.config import PackageFilterPolicy
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -57,9 +59,13 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: Pool, env: Env) -> None:
+    def __init__(self, pool: Pool, env: Env, config: Config | None = None) -> None:
         self._pool = pool
         self._env = env
+        self._config = config or Config.create()
+        self._no_binary_policy: PackageFilterPolicy = PackageFilterPolicy(
+            self._config.get("installer.no-binary", [])
+        )
 
     def choose_for(self, package: Package) -> Link:
         """
@@ -67,15 +73,23 @@ class Chooser:
         """
         links = []
         for link in self._get_links(package):
-            if link.is_wheel and not Wheel(link.filename).is_supported_by_environment(
-                self._env
-            ):
-                logger.debug(
-                    "Skipping wheel %s as this is not supported by the current"
-                    " environment",
-                    link.filename,
-                )
-                continue
+            if link.is_wheel:
+                if not self._no_binary_policy.allows(package.name):
+                    logger.debug(
+                        "Skipping wheel for %s as requested in no binary policy for"
+                        " package (%s)",
+                        link.filename,
+                        package.name,
+                    )
+                    continue
+
+                if not Wheel(link.filename).is_supported_by_environment(self._env):
+                    logger.debug(
+                        "Skipping wheel %s as this is not supported by the current"
+                        " environment",
+                        link.filename,
+                    )
+                    continue
 
             if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
                 logger.debug("Skipping unsupported distribution %s", link.filename)

@@ -103,7 +103,7 @@ class InstalledRepository(Repository):
     ) -> Package:
         # We first check for a direct_url.json file to determine
         # the type of package.
-        path = Path(str(distribution._path))
+        path = Path(str(distribution._path))  # type: ignore[attr-defined]
 
         if (
             path.name.endswith(".dist-info")
@@ -163,13 +163,17 @@ class InstalledRepository(Repository):
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
         )
-        package.description = distribution.metadata.get("summary", "")
+
+        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+            "summary",
+            "",
+        )
 
         return package
 
     @classmethod
     def create_package_from_pep610(cls, distribution: metadata.Distribution) -> Package:
-        path = Path(str(distribution._path))
+        path = Path(str(distribution._path))  # type: ignore[attr-defined]
         source_type = None
         source_url = None
         source_reference = None
@@ -213,7 +217,10 @@ class InstalledRepository(Repository):
             develop=develop,
         )
 
-        package.description = distribution.metadata.get("summary", "")
+        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+            "summary",
+            "",
+        )
 
         return package
 
@@ -229,15 +236,17 @@ class InstalledRepository(Repository):
 
         for entry in reversed(env.sys_path):
             for distribution in sorted(
-                metadata.distributions(path=[entry]),
-                key=lambda d: str(d._path),
+                metadata.distributions(  # type: ignore[no-untyped-call]
+                    path=[entry],
+                ),
+                key=lambda d: str(d._path),  # type: ignore[attr-defined]
             ):
                 name = canonicalize_name(distribution.metadata["name"])
 
                 if name in seen:
                     continue
 
-                path = Path(str(distribution._path))
+                path = Path(str(distribution._path))  # type: ignore[attr-defined]
 
                 try:
                     path.relative_to(_VENDORS)

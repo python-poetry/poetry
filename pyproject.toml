@@ -123,10 +123,21 @@ module = [
   'poetry.installation.executor',
   'poetry.installation.installer',
   'poetry.installation.pip_installer',
-  'poetry.repositories.installed_repository',
   'poetry.utils.env',
 ]
 ignore_errors = true
+
+# use of importlib-metadata backport at python3.7 makes it impossible to
+# satisfy mypy without some ignores: but we get a different set of ignores at
+# different python versions.
+#
+# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
+# warning.
+[[tool.mypy.overrides]]
+module = [
+  'poetry.repositories.installed_repository',
+]
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
