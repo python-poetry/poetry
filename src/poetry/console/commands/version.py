@@ -34,7 +34,7 @@ class VersionCommand(Command):
         option(
             "dry-run",
             None,
-            "Outputs the version without updating the pyproject.toml file",
+            "Do not update pyproject.toml file",
         ),
     ]
 
