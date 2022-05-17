@@ -1186,8 +1186,15 @@ def test_run_installs_with_local_file(
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
 ):
+    root_dir = Path(__file__).parent.parent.parent
+    package.root_dir = root_dir
+    locker.set_lock_path(root_dir)
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
-    package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"file": str(file_path.relative_to(root_dir))}, root_dir=root_dir
+        )
+    )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
@@ -1206,10 +1213,17 @@ def test_run_installs_wheel_with_no_requires_dist(
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
 ):
+    root_dir = Path(__file__).parent.parent.parent
+    package.root_dir = root_dir
+    locker.set_lock_path(root_dir)
     file_path = fixture_dir(
         "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
     )
-    package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"file": str(file_path.relative_to(root_dir))}, root_dir=root_dir
+        )
+    )
 
     installer.run()
 
@@ -1228,10 +1242,15 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     tmpdir: Path,
     fixture_dir: FixtureDirGetter,
 ):
+    root_dir = Path(__file__).parent.parent.parent
+    package.root_dir = root_dir
+    locker.set_lock_path(root_dir)
     file_path = fixture_dir("project_with_extras")
     package.add_dependency(
         Factory.create_dependency(
-            "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
+            "project-with-extras",
+            {"path": str(file_path.relative_to(root_dir)), "extras": ["extras_a"]},
+            root_dir=root_dir,
         )
     )
 
@@ -1319,9 +1338,16 @@ def test_run_installs_with_local_setuptools_directory(
     tmpdir: Path,
     fixture_dir: FixtureDirGetter,
 ):
+    root_dir = Path(__file__).parent.parent.parent
+    package.root_dir = root_dir
+    locker.set_lock_path(root_dir)
     file_path = fixture_dir("project_with_setup/")
     package.add_dependency(
-        Factory.create_dependency("project-with-setup", {"path": str(file_path)})
+        Factory.create_dependency(
+            "project-with-setup",
+            {"path": str(file_path.relative_to(root_dir))},
+            root_dir=root_dir,
+        )
     )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
