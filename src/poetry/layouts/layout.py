@@ -90,7 +90,14 @@ class Layout:
     def get_package_include(self) -> InlineTable | None:
         package = inline_table()
 
-        include = self._package_path_relative.parts[0]
+        # If a project is created in the root directory (this is reasonable inside a
+        # docker container, eg <https://github.com/python-poetry/poetry/issues/5103>)
+        # then parts will be empty.
+        parts = self._package_path_relative.parts
+        if not parts:
+            return None
+
+        include = parts[0]
         package.append("include", include)  # type: ignore[no-untyped-call]
 
         if self.basedir != Path():
