@@ -513,6 +513,7 @@ See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 * `--unset`: Remove the configuration element named by `setting-key`.
 * `--list`: Show the list of current config variables.
+* `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
 
 ## run
 
