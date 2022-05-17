@@ -52,6 +52,12 @@ repos:
         args: [--py37-plus]
         exclude: ^(install|get)-poetry.py$
 
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v1.3.2
+    hooks:
+      - id: pycln
+        args: [--all]
+
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
