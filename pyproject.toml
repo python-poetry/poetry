@@ -116,7 +116,6 @@ enable_error_code = ["ignore-without-code"]
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.commands.init',
   'poetry.inspection.info',
   'poetry.installation.chef',
   'poetry.installation.chooser',

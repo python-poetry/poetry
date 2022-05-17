@@ -5,7 +5,9 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Dict
 from typing import Mapping
+from typing import Union
 
 from cleo.helpers import option
 from tomlkit import inline_table
@@ -21,6 +23,8 @@ if TYPE_CHECKING:
     from tomlkit.items import InlineTable
 
     from poetry.repositories import Pool
+
+Requirements = Dict[str, Union[str, Mapping[str, Any]]]
 
 
 class InitCommand(Command):
@@ -162,7 +166,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if self.io.is_interactive():
             self.line("")
 
-        requirements = {}
+        requirements: Requirements = {}
         if self.option("dependency"):
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
@@ -192,7 +196,7 @@ You can specify a package in the following forms:
             if self.io.is_interactive():
                 self.line("")
 
-        dev_requirements: dict[str, str] = {}
+        dev_requirements: Requirements = {}
         if self.option("dev-dependency"):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
@@ -264,9 +268,9 @@ You can specify a package in the following forms:
         requires: list[str],
         allow_prereleases: bool = False,
         source: str | None = None,
-    ) -> list[dict[str, str | list[str]]]:
+    ) -> list[dict[str, Any]]:
         if not requires:
-            requires = []
+            result = []
 
             package = self.ask(
                 "Search for package to add (or leave blank to continue):"
@@ -280,7 +284,7 @@ You can specify a package in the following forms:
                     or "version" in constraint
                 ):
                     self.line(f"Adding <info>{package}</info>")
-                    requires.append(constraint)
+                    result.append(constraint)
                     package = self.ask("\nAdd a package:")
                     continue
 
@@ -337,16 +341,15 @@ You can specify a package in the following forms:
                     constraint["version"] = package_constraint
 
                 if package is not False:
-                    requires.append(constraint)
+                    result.append(constraint)
 
                 if self.io.is_interactive():
                     package = self.ask("\nAdd a package:")
 
-            return requires
+            return result
 
-        requires = self._parse_requirements(requires)
         result = []
-        for requirement in requires:
+        for requirement in self._parse_requirements(requires):
             if "git" in requirement or "url" in requirement or "path" in requirement:
                 result.append(requirement)
                 continue
@@ -414,10 +417,8 @@ You can specify a package in the following forms:
             for requirement in requirements
         ]
 
-    def _format_requirements(
-        self, requirements: list[dict[str, str]]
-    ) -> Mapping[str, str | Mapping[str, str]]:
-        requires = {}
+    def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
+        requires: Requirements = {}
         for requirement in requirements:
             name = requirement.pop("name")
             constraint: str | InlineTable
