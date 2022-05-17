@@ -82,7 +82,7 @@ in a PyPI build (similar to `long_description` in setuptools).
 ```toml
 [tool.poetry]
 # ...
-readme = "./README.md"
+readme = "README.md"
 ```
 
 ## homepage
