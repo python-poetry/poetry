@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Mapping
 
 from tomlkit import dumps
 from tomlkit import inline_table
@@ -50,8 +51,8 @@ class Layout:
         author: str | None = None,
         license: str | None = None,
         python: str = "*",
-        dependencies: dict[str, str] | None = None,
-        dev_dependencies: dict[str, str] | None = None,
+        dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+        dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
         self._project = canonicalize_name(project).replace(".", "-")
         self._package_path_relative = Path(
