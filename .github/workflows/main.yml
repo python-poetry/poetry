@@ -31,11 +31,11 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
         include:
           - os: Ubuntu
-            image: ubuntu-latest
+            image: ubuntu-22.04
           - os: Windows
             image: windows-2022
           - os: macOS
-            image: macos-11
+            image: macos-12
       fail-fast: false
     defaults:
       run:
@@ -81,14 +81,14 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
+      - name: Run mypy
+        run: poetry run mypy
+
       - name: Install pytest plugin
         run: poetry run pip install pytest-github-actions-annotate-failures
 
       - name: Run pytest
         run: poetry run python -m pytest -p no:sugar -q tests/
-
-      - name: Run mypy
-        run: poetry run mypy
 
       - name: Run pytest (integration suite)
         env:
