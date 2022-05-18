@@ -32,7 +32,7 @@ from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRe
 if TYPE_CHECKING:
     import httpretty
 
-    from poetry.installation.operation.operation import Operation
+    from poetry.installation.operations.operation import Operation
     from poetry.puzzle.transaction import Transaction
 
 DEFAULT_SOURCE_REF = (
