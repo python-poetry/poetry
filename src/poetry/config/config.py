@@ -9,7 +9,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 from poetry.core.toml import TOMLFile
 from poetry.core.utils.helpers import canonicalize_name
@@ -21,6 +20,8 @@ from poetry.locations import CONFIG_DIR
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.config.config_source import ConfigSource
 
 
