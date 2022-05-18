@@ -3,7 +3,17 @@ name = "poetry"
 version = "1.2.0-beta.2.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    "Sébastien Eustace <sebastien@eustace.io>",
+]
+maintainers = [
+    "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
+    "Bjorn Neergaard <bjorn@neersighted.com>",
+    "Branch Vincent <branchevincent@gmail.com>",
+    "Bryce Drennan <github@accounts.brycedrennan.com>",
+    "Daniel Eades <danieleades@hotmail.com>",
+    "Randy Döring <30527984+radoering@users.noreply.github.com>",
+    "Steph Samson <hello@stephsamson.com>",
+    "finswimmer <finswimmer77@gmail.com>",
 ]
 license = "MIT"
 
