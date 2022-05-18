@@ -29,11 +29,11 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) repository to your
+First, [configure](#project-configuration) the [package source](#package-source) as a secondary repository to your
 project.
 
 ```bash
-poetry source add foo https://pypi.example.org/simple/
+poetry source add --secondary foo https://pypi.example.org/simple/
 ```
 
 Then, assuming the repository requires authentication, configure credentials for it.
@@ -101,6 +101,13 @@ your project.
 poetry source add foo https://foo.bar/simple/
 ```
 
+{{% note %}}
+
+If your package source requires [credentials](#configuring-credentials) or
+[certificates](#certificates), please refer to the relevant sections below.
+
+{{% /note %}}
+
 This will generate the following configuration snippet in your
 [`pyproject.toml`]({{< relref "pyproject" >}}) file.
 
@@ -112,40 +119,25 @@ default = false
 secondary = false
 ```
 
-When a package source is defined like this, it takes precedence over [PyPI](https://pypi.org).
+Any package source defined like this takes precedence over [PyPI](https://pypi.org).
 
-To ignore [PyPI](https://pypi.org) completely, use `default = true`.
-
-To target a package source only on specific packages, use `secondary = true` on the package source, and specify the `source` when adding the dependency.
-In the example below, `my-lib` will be obtained from the custom package source and `urllib3` will use the [PyPI](https://pypi.org) source.
-
-```toml
-[tool.poetry.requirements]
-my-lib = { version = "*", source = "foo" }
-urllib3 = "*"
-
-[[tool.poetry.source]]
-name = "foo"
-url = "https://foo.bar/simple/"
-secondary = true
-```
-
-{{% warning %}}
-
-Reminder: If package sources are defined for a project, these will take precedence over
-[PyPI](https://pypi.org). If you do not want this to be the case, you should declare **all** package
-sources to be [secondary](#secondary-package-sources).
-
-{{% /warning %}}
-
-See [Supported Package Sources](#supported-package-sources) for source type specific information.
 
 {{% note %}}
 
-If your package source requires [credentials](#configuring-credentials) or
-[certificates](#certificates), please refer to the relevant sections below.
+If you prefer to disable [PyPI](https://pypi.org) completely, you may choose to set one of your package sources to be the [default](#default-package-source).
+
+To enable a package source only for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
 
 {{% /note %}}
+
+
+{{% warning %}}
+
+If you do not want any of the custom sources to take precedence over [PyPI](https://pypi.org),
+you must declare **all** package sources to be [secondary](#secondary-package-sources).
+
+{{% /warning %}}
+
 
 #### Default Package Source
 
@@ -189,7 +181,18 @@ If you wish to avoid this, you may explicitly specify which source to search in 
 package.
 
 ```bash
-poetry add --source pypi httpx
+poetry add --source internal-pypi httpx
+```
+
+```toml
+[tool.poetry.requirements]
+httpx = { version = "*", source = "internal-pypi" }
+urllib3 = "*"
+
+[[tool.poetry.source]]
+name = "internal-pypi"
+url = "https://foo.bar/simple/"
+secondary = true
 ```
 
 {{% /note %}}
