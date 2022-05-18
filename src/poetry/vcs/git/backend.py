@@ -149,7 +149,7 @@ class GitRepoLocalInfo:
 class Git:
     @staticmethod
     def as_repo(repo: Path | str) -> Repo:
-        return Repo(str(repo))  # type: ignore[no-untyped-call]
+        return Repo(str(repo))
 
     @staticmethod
     def get_remote_url(repo: Repo, remote: str = "origin") -> str:
@@ -158,8 +158,8 @@ class Git:
             section = (b"remote", remote.encode("utf-8"))
 
             url = ""
-            if config.has_section(section):  # type: ignore[no-untyped-call]
-                value = config.get(section, b"url")  # type: ignore[no-untyped-call]
+            if config.has_section(section):
+                value = config.get(section, b"url")
                 assert value is not None
                 url = value.decode("utf-8")
 
@@ -195,12 +195,10 @@ class Git:
             kwargs["username"] = credentials.username
             kwargs["password"] = credentials.password
 
-        client, path = get_transport_and_path(  # type: ignore[no-untyped-call]
-            url, **kwargs
-        )
+        client, path = get_transport_and_path(url, **kwargs)
 
         with local:
-            result: FetchPackResult = client.fetch(  # type: ignore[no-untyped-call]
+            result: FetchPackResult = client.fetch(
                 path,
                 local,
                 determine_wants=local.object_store.determine_wants_all,
@@ -241,7 +239,7 @@ class Git:
                 f"Failed to checkout {url} at '{revision}'"
             )
 
-        repo = Repo(str(target))  # type: ignore[no-untyped-call]
+        repo = Repo(str(target))
         return repo
 
     @classmethod
@@ -252,10 +250,10 @@ class Git:
         """
         local: Repo
         if not target.exists():
-            local = Repo.init(str(target), mkdir=True)  # type: ignore[no-untyped-call]
-            porcelain.remote_add(local, "origin", url)  # type: ignore[no-untyped-call]
+            local = Repo.init(str(target), mkdir=True)
+            porcelain.remote_add(local, "origin", url)
         else:
-            local = Repo(str(target))  # type: ignore[no-untyped-call]
+            local = Repo(str(target))
 
         remote_refs = cls._fetch_remote_refs(url=url, local=local)
 
@@ -282,7 +280,7 @@ class Git:
             (b"refs/remotes/origin", b"refs/heads/"),
             (b"refs/tags", b"refs/tags"),
         }:
-            local.refs.import_refs(  # type: ignore[no-untyped-call]
+            local.refs.import_refs(
                 base=base,
                 other={
                     n[len(prefix) :]: v
@@ -293,7 +291,7 @@ class Git:
 
         try:
             with local:
-                local.reset_index()  # type: ignore[no-untyped-call]
+                local.reset_index()
         except (AssertionError, KeyError) as e:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
@@ -335,7 +333,7 @@ class Git:
 
             url: bytes
             path: bytes
-            submodules = parse_submodules(config)  # type: ignore[no-untyped-call]
+            submodules = parse_submodules(config)
             for path, url, _ in submodules:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
@@ -395,7 +393,7 @@ class Git:
             else:
                 # check if the current local copy matches the requested ref spec
                 try:
-                    current_repo = Repo(str(target))  # type: ignore[no-untyped-call]
+                    current_repo = Repo(str(target))
 
                     with current_repo:
                         current_sha = current_repo.head().decode("utf-8")
