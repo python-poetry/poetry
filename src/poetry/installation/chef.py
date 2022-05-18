@@ -41,7 +41,7 @@ class Chef:
     def is_wheel(self, archive: Path) -> bool:
         return archive.suffix == ".whl"
 
-    def get_cached_archive_for_link(self, link: Link) -> Link | None:
+    def get_cached_archive_for_link(self, link: Link) -> Link:
         # If the archive is already a wheel, there is no need to cache it.
         if link.is_wheel:
             return link
