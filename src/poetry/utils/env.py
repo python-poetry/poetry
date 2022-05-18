@@ -18,7 +18,6 @@ from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ContextManager
 from typing import Iterable
 from typing import Iterator
 from typing import TypeVar
@@ -1830,7 +1829,7 @@ class NullEnv(SystemEnv):
 def ephemeral_environment(
     executable: str | Path | None = None,
     flags: dict[str, bool] = None,
-) -> ContextManager[VirtualEnv]:
+) -> Iterator[VirtualEnv]:
     with TemporaryDirectory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"

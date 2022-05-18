@@ -10,7 +10,11 @@ import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import ContextManager
 from typing import Iterator
+from typing import cast
 
 import pkginfo
 
@@ -81,9 +85,9 @@ class PackageInfo:
         self.requires_python = requires_python
         self.files = files or []
         self._cache_version = cache_version
-        self._source_type = None
-        self._source_url = None
-        self._source_reference = None
+        self._source_type: str | None = None
+        self._source_url: str | None = None
+        self._source_reference: str | None = None
 
     @property
     def cache_version(self) -> str | None:
@@ -100,7 +104,7 @@ class PackageInfo:
         self._cache_version = other.cache_version or self._cache_version
         return self
 
-    def asdict(self) -> dict[str, str | list[str] | None]:
+    def asdict(self) -> dict[str, Any]:
         """
         Helper method to convert package info into a dictionary used for caching.
         """
@@ -116,7 +120,7 @@ class PackageInfo:
         }
 
     @classmethod
-    def load(cls, data: dict[str, str | list[str] | None]) -> PackageInfo:
+    def load(cls, data: dict[str, Any]) -> PackageInfo:
         """
         Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
 
@@ -169,7 +173,9 @@ class PackageInfo:
         if root_dir or (self._source_type in {"directory"} and self._source_url):
             # this is a local poetry project, this means we can extract "richer"
             # requirement information, eg: development requirements etc.
-            poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
+            poetry_package = self._get_poetry_package(
+                path=root_dir or Path(cast(str, self._source_url))
+            )
             if poetry_package:
                 package.extras = poetry_package.extras
                 for dependency in poetry_package.requires:
@@ -274,6 +280,7 @@ class PackageInfo:
         # So, we unpack and introspect
         suffix = path.suffix
 
+        context: Callable[[str], ContextManager[zipfile.ZipFile | tarfile.TarFile]]
         if suffix == ".zip":
             context = zipfile.ZipFile
         else:
@@ -286,8 +293,8 @@ class PackageInfo:
 
             context = tarfile.open
 
-        with TemporaryDirectory() as tmp:
-            tmp = Path(tmp)
+        with TemporaryDirectory() as tmp_str:
+            tmp = Path(tmp_str)
             with context(path.as_posix()) as archive:
                 archive.extractall(tmp.as_posix())
 
@@ -394,7 +401,7 @@ class PackageInfo:
         if path.suffix in {".dist-info", ".egg-info"}:
             directories = [path]
         else:
-            directories = cls._find_dist_info(path=path)
+            directories = list(cls._find_dist_info(path=path))
 
         for directory in directories:
             try:
@@ -463,6 +470,7 @@ class PackageInfo:
             build is attempted in order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
+        info: PackageInfo | None
         if project_package:
             info = cls.from_package(project_package)
         else:
@@ -480,6 +488,7 @@ class PackageInfo:
 
                     # we discovered PkgInfo but no requirements were listed
 
+        assert info
         info._source_type = "directory"
         info._source_url = path.as_posix()
 
