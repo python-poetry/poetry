@@ -61,8 +61,8 @@ dulwich = "^0.20.35"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
-pytest = "^6.2"
-pytest-cov = "^2.8"
+pytest = "^7.1"
+pytest-cov = "^3.0"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
 pre-commit = "^2.6"
