@@ -48,7 +48,7 @@ class SystemGit:
                 folder.as_posix(),
             ) + args
 
-        git_command = find_git_command()  # type: ignore[no-untyped-call]
+        git_command = find_git_command()
         return (
             subprocess.check_output(git_command + list(args), stderr=subprocess.STDOUT)
             .decode()
