@@ -13,7 +13,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Iterable
 from typing import Iterator
 from typing import cast
@@ -43,6 +42,8 @@ from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.semver.version_constraint import VersionConstraint

@@ -10,7 +10,6 @@ import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import ContextManager
 from typing import Iterator
 from typing import cast
@@ -31,6 +30,8 @@ from poetry.utils.setup_reader import SetupReader
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.packages.project_package import ProjectPackage
 
 

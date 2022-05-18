@@ -3,12 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 from poetry.core.semver.version import Version
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.version.pep440.version import PEP440Version
 
 VERSION_3_7_1 = Version.parse("3.7.1")
