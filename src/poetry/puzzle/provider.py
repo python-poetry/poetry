@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import Iterable
 from typing import Iterator
 from typing import cast
@@ -55,6 +56,24 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):  # type: ignore[misc]
+    CONTEXT: str | None = None
+
+    @staticmethod
+    @contextmanager
+    def context() -> Iterator[Callable[[str | None], None]]:
+        def _set_context(context: str | None) -> None:
+            Indicator.CONTEXT = context
+
+        yield _set_context
+
+        _set_context(None)
+
+    def _formatter_context(self) -> str:
+        if Indicator.CONTEXT is None:
+            return " "
+        else:
+            return f" <c1>{Indicator.CONTEXT}</> "
+
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
 
@@ -796,7 +815,9 @@ class Provider:
             self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(self._io, "{message} <debug>({elapsed:2s})</debug>")
+            indicator = Indicator(
+                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
+            )
 
             with indicator.auto(
                 "<info>Resolving dependencies...</info>",
