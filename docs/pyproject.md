@@ -43,7 +43,7 @@ If you would like to use semantic versioning for your project, please see
 A short description of the package. **Required**
 
 ```toml
-description = "The description of the package"
+description = "A short description of the package."
 ```
 
 ## license
