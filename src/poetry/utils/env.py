@@ -16,7 +16,6 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
-from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterable
@@ -36,6 +35,7 @@ from poetry.core.poetry import Poetry
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
+from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
 from poetry.locations import CACHE_DIR
@@ -1833,7 +1833,7 @@ def ephemeral_environment(
     executable: str | Path | None = None,
     flags: dict[str, bool] = None,
 ) -> Iterator[VirtualEnv]:
-    with TemporaryDirectory() as tmp_dir:
+    with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"
         EnvManager.build_venv(
