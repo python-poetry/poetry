@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import sysconfig
+import warnings
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -1538,7 +1539,9 @@ class SystemEnv(Env):
 
         d = Distribution()
         d.parse_config_files()
-        obj = d.get_command_obj("install", create=True)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "setup.py install is deprecated")
+            obj = d.get_command_obj("install", create=True)
         obj.finalize_options()
 
         paths = sysconfig.get_paths().copy()

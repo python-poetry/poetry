@@ -32,8 +32,8 @@ class ManagerFactory(Protocol):
 
 class MyPlugin(Plugin):
     def activate(self, poetry: Poetry, io: BufferedIO) -> None:
-        io.write_line("Setting readme")
-        poetry.package.readme = "README.md"
+        io.write_line("Setting readmes")
+        poetry.package.readmes = ("README.md",)
 
 
 class MyCommandPlugin(ApplicationPlugin):
@@ -95,8 +95,8 @@ def test_load_plugins_and_activate(
     manager.load_plugins()
     manager.activate(poetry, io)
 
-    assert poetry.package.readme == "README.md"
-    assert io.fetch_output() == "Setting readme\n"
+    assert poetry.package.readmes == ("README.md",)
+    assert io.fetch_output() == "Setting readmes\n"
 
 
 def test_load_plugins_with_invalid_plugin(

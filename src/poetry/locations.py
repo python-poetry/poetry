@@ -29,7 +29,7 @@ if sys.platform == "darwin":
     auth_toml = _LEGACY_CONFIG_DIR / "auth.toml"
 
     if any(file.exists() for file in (auth_toml, config_toml)):
-        logger.warn(
+        logger.warning(
             "Configuration file exists at %s, reusing this directory.\n\nConsider"
             " moving configuration to %s, as support for the legacy directory will be"
             " removed in an upcoming release.",
