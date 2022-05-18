@@ -43,8 +43,13 @@ curl -sSL https://install.python-poetry.org | python3 -
 
 **windows powershell install instructions**
 ```powershell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
+above.
+{{% /note %}}
 
 {{% note %}}
 Note that the installer does not support Python < 3.7.
@@ -155,7 +160,7 @@ curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 
 {{< tab tabID="installing-with-pipx" >}}
 
-Using [`pipx`](https://github.com/pipxproject/pipx) to install Poetry is also possible.
+Using [`pipx`](https://github.com/pypa/pipx) to install Poetry is also possible.
 
 `pipx` is used to install Python CLI applications globally while still isolating them in virtual environments.
 This allows for clean upgrades and uninstalls.

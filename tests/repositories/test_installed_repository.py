@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import namedtuple
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -71,15 +72,11 @@ def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
         return_value=INSTALLED_RESULTS,
     )
     mocker.patch(
-        "poetry.core.vcs.git.Git.rev_parse",
-        return_value="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
-    )
-    mocker.patch(
-        "poetry.core.vcs.git.Git.remote_urls",
-        side_effect=[
-            {"remote.origin.url": "https://github.com/sdispater/pendulum.git"},
-            {"remote.origin.url": "git@github.com:sdispater/pendulum.git"},
-        ],
+        "poetry.vcs.git.Git.info",
+        return_value=namedtuple("GitRepoLocalInfo", "origin revision")(
+            origin="https://github.com/sdispater/pendulum.git",
+            revision="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
+        ),
     )
     mocker.patch("poetry.repositories.installed_repository._VENDORS", str(VENDOR_DIR))
     return InstalledRepository.load(env)

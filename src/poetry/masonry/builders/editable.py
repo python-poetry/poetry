@@ -15,14 +15,15 @@ from poetry.core.semver.version import Version
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
+from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-    from poetry.core.poetry import Poetry
 
+    from poetry.poetry import Poetry
     from poetry.utils.env import Env
 
 SCRIPT_TEMPLATE = """\
@@ -39,7 +40,7 @@ WINDOWS_CMD_TEMPLATE = """\
 """
 
 
-class EditableBuilder(Builder):
+class EditableBuilder(Builder):  # type: ignore[misc]
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 
@@ -74,9 +75,10 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script: Path) -> None:
-        self._debug(f"  - Executing build script: <b>{build_script}</b>")
-        self._env.run("python", str(self._path.joinpath(build_script)), call=True)
+    def _run_build_script(self, build_script: str) -> None:
+        with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
+            self._debug(f"  - Executing build script: <b>{build_script}</b>")
+            env.run("python", str(self._path.joinpath(build_script)), call=True)
 
     def _setup_build(self) -> None:
         builder = SdistBuilder(self._poetry)

@@ -8,7 +8,8 @@ from tests.mixology.helpers import check_solver_result
 
 
 if TYPE_CHECKING:
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
 

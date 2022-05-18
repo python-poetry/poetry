@@ -35,7 +35,7 @@ generate-setup-file = false
 python = "^3.7"
 
 poetry-core = "^1.1.0a7"
-poetry-plugin-export = "^1.0"
+poetry-plugin-export = "^1.0.2"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a4"
@@ -43,10 +43,13 @@ crashtest = "^0.3.0"
 entrypoints = "^0.3"
 html5lib = "^1.0"
 importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
+# keyring uses calver, so version is unclamped
 keyring = ">=21.2.0"
-packaging = "^20.4"
+# packaging uses calver, so version is unclamped
+packaging = ">=20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.5"
+platformdirs = "^2.5.2"
 requests = "^2.18"
 requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"
@@ -54,6 +57,7 @@ tomlkit = ">=0.7.0,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 urllib3 = "^1.26.0"
+dulwich = "^0.20.35"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
@@ -67,6 +71,8 @@ httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
 flatdict = "^4.0.1"
+mypy = ">=0.950"
+types-requests = ">=2.27.11"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
@@ -97,13 +103,10 @@ force-exclude = '''
 
 
 [tool.mypy]
-check_untyped_defs = true
-ignore_missing_imports = true
-show_error_codes = true
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unused_ignores = true
 files = "src"
+show_error_codes = true
+strict = true
+enable_error_code = ["ignore-without-code"]
 
 # The following whitelist is used to allow for incremental adoption
 # of Mypy. Modules should be removed from this whitelist as and when
@@ -113,18 +116,43 @@ files = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.commands.init',
   'poetry.inspection.info',
   'poetry.installation.chef',
   'poetry.installation.chooser',
   'poetry.installation.executor',
   'poetry.installation.installer',
   'poetry.installation.pip_installer',
-  'poetry.repositories.installed_repository',
   'poetry.utils.env',
 ]
 ignore_errors = true
 
+# use of importlib-metadata backport at python3.7 makes it impossible to
+# satisfy mypy without some ignores: but we get a different set of ignores at
+# different python versions.
+#
+# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
+# warning.
+[[tool.mypy.overrides]]
+module = [
+  'poetry.repositories.installed_repository',
+]
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+  'cachecontrol.*',
+  'cachy.*',
+  'cleo.*',
+  'crashtest.*',
+  'entrypoints.*',
+  'html5lib.*',
+  'jsonschema.*',
+  'pexpect.*',
+  'poetry.core.*',
+  'requests_toolbelt.*',
+  'shellingham.*',
+]
+ignore_missing_imports = true
 
 [tool.coverage.report]
 exclude_lines = [

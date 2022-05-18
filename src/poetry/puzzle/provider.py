@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 import os
 import re
@@ -10,18 +11,21 @@ import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import mkdtemp
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import Iterator
+from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.empty_constraint import EmptyConstraint
 from poetry.core.semver.version import Version
-from poetry.core.vcs.git import Git
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import MarkerUnion
 
@@ -35,16 +39,12 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import safe_rmtree
+from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.packages.directory_dependency import DirectoryDependency
-    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
-    from poetry.core.packages.url_dependency import URLDependency
-    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
@@ -55,7 +55,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Indicator(ProgressIndicator):
+class Indicator(ProgressIndicator):  # type: ignore[misc]
     CONTEXT: str | None = None
 
     @staticmethod
@@ -80,23 +80,55 @@ class Indicator(ProgressIndicator):
         return f"{elapsed:.1f}s"
 
 
+@functools.lru_cache(maxsize=None)
+def _get_package_from_git(
+    url: str,
+    branch: str | None = None,
+    tag: str | None = None,
+    rev: str | None = None,
+    source_root: Path | None = None,
+) -> Package:
+    source = Git.clone(
+        url=url,
+        source_root=source_root,
+        branch=branch,
+        tag=tag,
+        revision=rev,
+        clean=False,
+    )
+    revision = Git.get_revision(source)
+
+    package = Provider.get_package_from_directory(Path(source.path))
+    package._source_type = "git"
+    package._source_url = url
+    package._source_reference = rev or tag or branch or "HEAD"
+    package._source_resolved_reference = revision
+
+    return package
+
+
 class Provider:
 
     UNSAFE_PACKAGES: set[str] = set()
 
     def __init__(
-        self, package: Package, pool: Pool, io: Any, env: Env | None = None
+        self,
+        package: Package,
+        pool: Pool,
+        io: Any,
+        env: Env | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
+        self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
         self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
+        self._source_root: Path | None = None
 
     @property
     def pool(self) -> Pool:
@@ -105,11 +137,22 @@ class Provider:
     def is_debugging(self) -> bool:
         return self._is_debugging
 
-    def set_overrides(self, overrides: dict) -> None:
+    def set_overrides(
+        self, overrides: dict[DependencyPackage, dict[str, Dependency]]
+    ) -> None:
         self._overrides = overrides
 
     def load_deferred(self, load_deferred: bool) -> None:
         self._load_deferred = load_deferred
+
+    @contextmanager
+    def use_source_root(self, source_root: Path) -> Iterator[Provider]:
+        original_source_root = self._source_root
+        self._source_root = source_root
+
+        yield self
+
+        self._source_root = original_source_root
 
     @contextmanager
     def use_environment(self, env: Env) -> Iterator[Provider]:
@@ -123,6 +166,17 @@ class Provider:
 
         self._env = original_env
         self._python_constraint = original_python_constraint
+
+    @staticmethod
+    def validate_package_for_dependency(
+        dependency: Dependency, package: Package
+    ) -> None:
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                f"The dependency name for {dependency.name} does not match the actual"
+                f" package's name: {package.name}"
+            )
 
     def search_for(
         self,
@@ -144,12 +198,16 @@ class Provider:
             return PackageCollection(dependency, [self._package])
 
         if dependency.is_vcs():
+            dependency = cast(VCSDependency, dependency)
             packages = self.search_for_vcs(dependency)
         elif dependency.is_file():
+            dependency = cast(FileDependency, dependency)
             packages = self.search_for_file(dependency)
         elif dependency.is_directory():
+            dependency = cast(DirectoryDependency, dependency)
             packages = self.search_for_directory(dependency)
         elif dependency.is_url():
+            dependency = cast(URLDependency, dependency)
             packages = self.search_for_url(dependency)
         else:
             packages = self._pool.find_packages(dependency)
@@ -180,8 +238,12 @@ class Provider:
             branch=dependency.branch,
             tag=dependency.tag,
             rev=dependency.rev,
-            name=dependency.name,
+            source_root=self._source_root
+            or (self._env.path.joinpath("src") if self._env else None),
         )
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
+
         package.develop = dependency.develop
 
         dependency._constraint = package.version
@@ -195,48 +257,25 @@ class Provider:
 
         return [package]
 
-    @classmethod
+    @staticmethod
     def get_package_from_vcs(
-        cls,
         vcs: str,
         url: str,
         branch: str | None = None,
         tag: str | None = None,
         rev: str | None = None,
-        name: str | None = None,
+        source_root: Path | None = None,
     ) -> Package:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
-        suffix = url.split("/")[-1].rstrip(".git")
-        tmp_dir = Path(mkdtemp(prefix=f"pypoetry-git-{suffix}"))
-
-        try:
-            git = Git()
-            git.clone(url, tmp_dir)
-            reference = branch or tag or rev
-            if reference is not None:
-                git.checkout(reference, tmp_dir)
-            else:
-                reference = "HEAD"
-
-            revision = git.rev_parse(reference, tmp_dir).strip()
-
-            package = cls.get_package_from_directory(tmp_dir, name=name)
-            package._source_type = "git"
-            package._source_url = url
-            package._source_reference = reference
-            package._source_resolved_reference = revision
-        except Exception:
-            raise
-        finally:
-            safe_rmtree(str(tmp_dir))
-
-        return package
+        return _get_package_from_git(
+            url=url, branch=branch, tag=tag, rev=rev, source_root=source_root
+        )
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
         if dependency in self._deferred_cache:
-            dependency, _package = self._deferred_cache[dependency]
+            _package = self._deferred_cache[dependency]
 
             package = _package.clone()
         else:
@@ -245,14 +284,9 @@ class Provider:
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
-            self._deferred_cache[dependency] = (dependency, package)
+            self._deferred_cache[dependency] = package
 
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual"
-                f" package's name: {package.name}"
-            )
+        self.validate_package_for_dependency(dependency=dependency, package=package)
 
         if dependency.base is not None:
             package.root_dir = dependency.base
@@ -278,18 +312,18 @@ class Provider:
 
     def search_for_directory(self, dependency: DirectoryDependency) -> list[Package]:
         if dependency in self._deferred_cache:
-            dependency, _package = self._deferred_cache[dependency]
+            _package = self._deferred_cache[dependency]
 
             package = _package.clone()
         else:
-            package = self.get_package_from_directory(
-                dependency.full_path, name=dependency.name
-            )
+            package = self.get_package_from_directory(dependency.full_path)
 
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
-            self._deferred_cache[dependency] = (dependency, package)
+            self._deferred_cache[dependency] = package
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
 
         package.develop = dependency.develop
 
@@ -299,21 +333,8 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_directory(
-        cls, directory: Path, name: str | None = None
-    ) -> Package:
-        package = PackageInfo.from_directory(path=directory).to_package(
-            root_dir=directory
-        )
-
-        if name and name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {name} does not match the actual package's"
-                f" name: {package.name}"
-            )
-
-        return package
+    def get_package_from_directory(cls, directory: Path) -> Package:
+        return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def search_for_url(self, dependency: URLDependency) -> list[Package]:
         if dependency in self._deferred_cache:
@@ -321,12 +342,7 @@ class Provider:
 
         package = self.get_package_from_url(dependency.url)
 
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual"
-                f" package's name: {package.name}"
-            )
+        self.validate_package_for_dependency(dependency=dependency, package=package)
 
         for extra in dependency.extras:
             if extra in package.extras:
@@ -549,43 +565,20 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             deps = self._merge_dependencies_by_marker(deps)
+            deps = self._merge_dependencies_by_constraint(deps)
 
-            # Merging dependencies by constraint
-            by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
-            for dep in deps:
-                by_constraint[dep.constraint].append(dep)
-            for constraint, _deps in by_constraint.items():
-                new_markers = []
-                for dep in _deps:
-                    marker = dep.marker.without_extras()
-                    if marker.is_any():
-                        # No marker or only extras
-                        continue
-
-                    new_markers.append(marker)
-
-                if not new_markers:
-                    continue
-
-                dep = _deps[0]
-                dep.marker = dep.marker.union(MarkerUnion(*new_markers))
-                by_constraint[constraint] = [dep]
-
-                continue
-
-            if len(by_constraint) == 1:
+            if len(deps) == 1:
                 self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
-                dependencies.append(list(by_constraint.values())[0][0])
+                dependencies.append(deps[0])
                 continue
 
             # We leave dependencies as-is if they have the same
             # python/platform constraints.
             # That way the resolver will pickup the conflict
             # and display a proper error.
-            _deps = [value[0] for value in by_constraint.values()]
             seen = set()
-            for _dep in _deps:
-                pep_508_dep = _dep.to_pep_508(False)
+            for dep in deps:
+                pep_508_dep = dep.to_pep_508(False)
                 if ";" not in pep_508_dep:
                     _requirements = ""
                 else:
@@ -594,9 +587,9 @@ class Provider:
                 if _requirements not in seen:
                     seen.add(_requirements)
 
-            if len(_deps) != len(seen):
-                for _dep in _deps:
-                    dependencies.append(_dep)
+            if len(deps) != len(seen):
+                for dep in deps:
+                    dependencies.append(dep)
 
                 continue
 
@@ -611,7 +604,6 @@ class Provider:
             # with the following overrides:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
-            _deps = [_dep[0] for _dep in by_constraint.values()]
 
             def fmt_warning(d: Dependency) -> str:
                 marker = d.marker if not d.marker.is_any() else "*"
@@ -620,8 +612,8 @@ class Provider:
                     f" with markers <b>{marker}</b>"
                 )
 
-            warnings = ", ".join(fmt_warning(d) for d in _deps[:-1])
-            warnings += f" and {fmt_warning(_deps[-1])}"
+            warnings = ", ".join(fmt_warning(d) for d in deps[:-1])
+            warnings += f" and {fmt_warning(deps[-1])}"
             self.debug(
                 f"<warning>Different requirements found for {warnings}.</warning>"
             )
@@ -643,8 +635,8 @@ class Provider:
             #   - foo (!= 1.2.1) ; python == 3.10
             #
             # the constraint for the second entry will become (!= 1.2.1, >= 1.2)
-            any_markers_dependencies = [d for d in _deps if d.marker.is_any()]
-            other_markers_dependencies = [d for d in _deps if not d.marker.is_any()]
+            any_markers_dependencies = [d for d in deps if d.marker.is_any()]
+            other_markers_dependencies = [d for d in deps if not d.marker.is_any()]
 
             marker = other_markers_dependencies[0].marker
             for other_dep in other_markers_dependencies[1:]:
@@ -658,7 +650,9 @@ class Provider:
                         dep_other.set_constraint(
                             dep_other.constraint.intersect(dep_any.constraint)
                         )
-            elif not inverted_marker.is_empty():
+            elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
+                get_python_constraint_from_marker(inverted_marker)
+            ):
                 # if there is no any marker dependency
                 # and the inverted marker is not empty,
                 # a dependency with the inverted union of all markers is required
@@ -670,22 +664,22 @@ class Provider:
                 #
                 # the last dependency would be missed without this,
                 # because the intersection with both foo dependencies is empty
-                inverted_marker_dep = _deps[0].with_constraint(EmptyConstraint())
+                inverted_marker_dep = deps[0].with_constraint(EmptyConstraint())
                 inverted_marker_dep.marker = inverted_marker
-                _deps.append(inverted_marker_dep)
+                deps.append(inverted_marker_dep)
 
             overrides = []
-            overrides_marker_intersection = AnyMarker()
+            overrides_marker_intersection: BaseMarker = AnyMarker()
             for dep_overrides in self._overrides.values():
-                for _dep in dep_overrides.values():
+                for dep in dep_overrides.values():
                     overrides_marker_intersection = (
-                        overrides_marker_intersection.intersect(_dep.marker)
+                        overrides_marker_intersection.intersect(dep.marker)
                     )
-            for _dep in _deps:
-                if not overrides_marker_intersection.intersect(_dep.marker).is_empty():
+            for dep in deps:
+                if not overrides_marker_intersection.intersect(dep.marker).is_empty():
                     current_overrides = self._overrides.copy()
                     package_overrides = current_overrides.get(package, {}).copy()
-                    package_overrides.update({_dep.name: _dep})
+                    package_overrides.update({dep.name: dep})
                     current_overrides.update({package: package_overrides})
                     overrides.append(current_overrides)
 
@@ -832,6 +826,31 @@ class Provider:
                 yield
 
         self._in_progress = False
+
+    def _merge_dependencies_by_constraint(
+        self, dependencies: Iterable[Dependency]
+    ) -> list[Dependency]:
+        by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
+        for dep in dependencies:
+            by_constraint[dep.constraint].append(dep)
+        for constraint, _deps in by_constraint.items():
+            new_markers = []
+            for dep in _deps:
+                marker = dep.marker.without_extras()
+                if marker.is_any():
+                    # No marker or only extras
+                    continue
+
+                new_markers.append(marker)
+
+            if not new_markers:
+                continue
+
+            dep = _deps[0]
+            dep.marker = dep.marker.union(MarkerUnion(*new_markers))
+            by_constraint[constraint] = [dep]
+
+        return [value[0] for value in by_constraint.values()]
 
     def _merge_dependencies_by_marker(
         self, dependencies: Iterable[Dependency]

@@ -21,8 +21,14 @@ The name of the package. **Required**
 
 The version of the package. **Required**
 
-This should follow [semantic versioning](http://semver.org/). However it will not be enforced and you remain
-free to follow another specification.
+This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
+
+{{% note %}}
+
+If you would like to use semantic versioning for your project, please see
+[here]({{< relref "libraries#versioning" >}}).
+
+{{% /note %}}
 
 ## description
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import re
 import shutil
 
 from pathlib import Path
@@ -26,6 +28,13 @@ if TYPE_CHECKING:
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
+
+    from poetry.config.config import Config
+
+
+@pytest.fixture(autouse=True)
+def _use_simple_keyring(with_simple_keyring: None) -> None:
+    pass
 
 
 class MockRepository(LegacyRepository):
@@ -80,6 +89,37 @@ def test_page_clean_link():
 
     cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
     assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
+
+
+def test_page_invalid_version_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/invalid-version")
+
+    links = list(page.links)
+    assert len(links) == 2
+
+    versions = list(page.versions("poetry"))
+    assert len(versions) == 1
+    assert versions[0].to_string() == "0.1.0"
+
+    invalid_link = None
+
+    for link in links:
+        if link.filename.startswith("poetry-21"):
+            invalid_link = link
+            break
+
+    links_010 = list(page.links_for_version("poetry", versions[0]))
+    assert invalid_link not in links_010
+
+    assert invalid_link
+    assert not page.link_package_data(invalid_link)
+
+    packages = list(page.packages)
+    assert len(packages) == 1
+    assert packages[0].name == "poetry"
+    assert packages[0].version.to_string() == "0.1.0"
 
 
 def test_sdist_format_support():
@@ -255,6 +295,16 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     assert str(required[5].marker) == 'sys_platform != "win32"'
 
 
+def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint():
+    repo = MockRepository()
+
+    package = repo.package("poetry-test-py2-py3-metadata-merge", "0.1.0")
+
+    assert package.name == "poetry-test-py2-py3-metadata-merge"
+    assert package.version.text == "0.1.0"
+    assert package.python_versions == ">=2.7,<2.8 || >=3.7,<4.0"
+
+
 def test_get_package_with_dist_and_universal_py3_wheel():
     repo = MockRepository()
 
@@ -339,7 +389,9 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 class MockHttpRepository(LegacyRepository):
-    def __init__(self, endpoint_responses: dict, http: type[httpretty.httpretty]):
+    def __init__(
+        self, endpoint_responses: dict, http: type[httpretty.httpretty]
+    ) -> None:
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
@@ -374,7 +426,7 @@ def test_get_redirected_response_url(
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
-    def get_mock(url: str) -> requests.Response:
+    def get_mock(url: str, raise_for_status: bool = True) -> requests.Response:
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"
@@ -382,3 +434,42 @@ def test_get_redirected_response_url(
 
     monkeypatch.setattr(repo.session, "get", get_mock)
     assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+
+
+@pytest.mark.parametrize(
+    ("repositories",),
+    [
+        ({},),
+        # ensure path is respected
+        ({"publish": {"url": "https://foo.bar/legacy"}},),
+        # ensure path length does not give incorrect results
+        ({"publish": {"url": "https://foo.bar/upload/legacy"}},),
+    ],
+)
+def test_authenticator_with_implicit_repository_configuration(
+    http: type[httpretty.httpretty],
+    config: Config,
+    repositories: dict[str, dict[str, str]],
+) -> None:
+    http.register_uri(
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
+    )
+
+    config.merge(
+        {
+            "repositories": repositories,
+            "http-basic": {
+                "source": {"username": "foo", "password": "bar"},
+                "publish": {"username": "baz", "password": "qux"},
+            },
+        }
+    )
+
+    repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
+    repo._get_page("/foo")
+
+    request = http.last_request()
+
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"

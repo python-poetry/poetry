@@ -66,7 +66,7 @@ Provide more context by answering these questions:
 Include details about your configuration and environment:
 
 * **Which version of Poetry are you using?** You can get the exact version by running `poetry -V` in your terminal.
-* **Which Python version Poetry has been installed for?** Execute the `debug:info` to get the information.
+* **Which Python version Poetry has been installed for?** Execute the `poetry debug info` to get the information.
 * **What's the name and version of the OS you're using**?
 
 
@@ -139,6 +139,13 @@ $ poetry install
 $ poetry run pytest tests/
 ```
 
+Poetry uses [mypy](https://github.com/python/mypy) for typechecking, and the CI
+will fail if it finds any errors.  To run mypy locally:
+
+```bash
+$ poetry run mypy
+```
+
 Poetry uses the [black](https://github.com/psf/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
 
@@ -198,7 +205,7 @@ If you are helping with the triage of reported issues, this section provides som
 
 #### Multiple versions
 
-Often times you would want to attempt to reproduce issues with multiple versions of `poetry` at the same time. For these use cases, the [pipx project](https://pipxproject.github.io/pipx/) is useful.
+Often times you would want to attempt to reproduce issues with multiple versions of `poetry` at the same time. For these use cases, the [pipx project](https://pypa.github.io/pipx/) is useful.
 
 You can set your environment up like so.
 

@@ -12,8 +12,9 @@ from typing import Any
 from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.base_installer import BaseInstaller
+from poetry.repositories.http import HTTPRepository
 from poetry.utils._compat import encode
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
 
 
@@ -57,23 +58,28 @@ class PipInstaller(BaseInstaller):
                 )
                 args += ["--trusted-host", parsed.hostname]
 
-            if repository.cert:
-                args += ["--cert", str(repository.cert)]
+            if isinstance(repository, HTTPRepository):
+                if repository.cert:
+                    args += ["--cert", str(repository.cert)]
 
-            if repository.client_cert:
-                args += ["--client-cert", str(repository.client_cert)]
+                if repository.client_cert:
+                    args += ["--client-cert", str(repository.client_cert)]
 
-            index_url = repository.authenticated_url
+                index_url = repository.authenticated_url
 
-            args += ["--index-url", index_url]
+                args += ["--index-url", index_url]
+
             if (
                 self._pool.has_default()
                 and repository.name != self._pool.repositories[0].name
             ):
-                args += [
-                    "--extra-index-url",
-                    self._pool.repositories[0].authenticated_url,
-                ]
+                first_repository = self._pool.repositories[0]
+
+                if isinstance(first_repository, HTTPRepository):
+                    args += [
+                        "--extra-index-url",
+                        first_repository.authenticated_url,
+                    ]
 
         if update:
             args.append("-U")
@@ -128,7 +134,7 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
-                safe_rmtree(str(src_dir))
+                remove_directory(src_dir, force=True)
 
     def run(self, *args: Any, **kwargs: Any) -> str:
         return self._env.run_pip(*args, **kwargs)
@@ -248,27 +254,19 @@ class PipInstaller(BaseInstaller):
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package
-        from poetry.core.vcs.git import Git
 
-        src_dir = self._env.path / "src" / package.name
-        if src_dir.exists():
-            safe_rmtree(str(src_dir))
+        from poetry.vcs.git import Git
 
-        src_dir.parent.mkdir(exist_ok=True)
-
-        git = Git()
-        git.clone(package.source_url, src_dir)
-
-        reference = package.source_resolved_reference
-        if not reference:
-            reference = package.source_reference
-
-        git.checkout(reference, src_dir)
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
 
         # Now we just need to install from the source directory
         pkg = Package(package.name, package.version)
         pkg._source_type = "directory"
-        pkg._source_url = str(src_dir)
+        pkg._source_url = str(source.path)
         pkg.develop = package.develop
 
         self.install_directory(pkg)

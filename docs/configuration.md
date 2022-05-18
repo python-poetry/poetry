@@ -46,6 +46,8 @@ cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 virtualenvs.prefer-active-python = false
@@ -139,6 +141,54 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 This configuration will be ignored when `installer.parallel` is set to false.
 {{% /note %}}
 
+### `installer.no-binary`
+
+**Type**: string | bool
+
+*Introduced in 1.2.0*
+
+When set this configuration allows users to configure package distribution format policy for all or
+specific packages.
+
+| Configuration          | Description                                                |
+|------------------------|------------------------------------------------------------|
+| `:all:` or `true`      | Disallow binary distributions for all packages.            |
+| `:none:` or `false`    | Allow binary distributions for all packages.               |
+| `package[,package,..]` | Disallow binary distributions for specified packages only. |
+
+{{% note %}}
+This configuration is only respected when using the new installer. If you have disabled it please
+consider re-enabling it.
+
+As with all configurations described here, this is a user specific configuration. This means that this
+is not taken into consideration when a lockfile is generated or dependencies are resolved. This is
+applied only when selecting which distribution for dependency should be installed into a Poetry managed
+environment.
+{{% /note %}}
+
+{{% note %}}
+For project specific usage, it is recommended that this be configured with the `--local`.
+
+```bash
+poetry config --local installer.no-binary :all:
+```
+{{% /note %}}
+
+{{% note %}}
+For CI or container environments using [environment variable](#using-environment-variables)
+to configure this might be useful.
+
+```bash
+export POETRY_INSTALLER_NO_BINARY=:all:
+```
+{{% /note %}}
+
+{{% warning %}}
+Unless this is required system-wide, if configured globally, you could encounter slower install times
+across all your projects if incorrectly set.
+{{% /warning %}}
+
+
 ### `virtualenvs.create`
 
 **Type**: boolean
@@ -147,11 +197,6 @@ Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
 If set to `false`, poetry will install dependencies into the current python environment.
-
-{{% note %}}
-When setting this configuration to `false`, the Python environment used must have `pip`
-installed and available.
-{{% /note %}}
 
 ### `virtualenvs.in-project`
 
@@ -180,6 +225,37 @@ Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 
 If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
 Defaults to `false`.
+
+### `virtualenvs.options.no-pip`
+
+**Type**: boolean
+
+If set to `true` the `--no-pip` parameter is passed to `virtualenv` on creation of the venv. This means when a new
+virtual environment is created, `pip` will not be installed in the environment.
+Defaults to `false`.
+
+{{% note %}}
+Poetry, for its internal operations, uses the `pip` wheel embedded in the `virtualenv` package installed as a dependency
+in Poetry's runtime environment. If a user runs `poetry run pip` when this option is set to `true`, the `pip` the
+embedded instance of `pip` is used.
+
+You can safely set this, along with `no-setuptools`, to `true`, if you desire a virtual environment with no additional
+packages. This is desirable for production environments.
+{{% /note %}}
+
+### `virtualenvs.options.no-setuptools`
+
+**Type**: boolean
+
+If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the venv. This means when a new
+virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its internal operations,
+does not require `setuptools` and this can safely be set to `true`.
+Defaults to `false`.
+
+{{% warning %}}
+Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
+available within a virtual environment. This can cause some features in these tools to not work as expected.
+{{% /warning %}}
 
 ### `virtualenvs.options.system-site-packages`
 
