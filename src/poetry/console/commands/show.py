@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.console.commands.group_command import GroupCommand
 
@@ -12,10 +16,21 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.packages.project_package import ProjectPackage
     from poetry.repositories.installed_repository import InstalledRepository
     from poetry.repositories.repository import Repository
+
+
+def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
+    required_by = {}
+    for locked in repo.packages:
+        dependencies = {d.name: d.pretty_constraint for d in locked.requires}
+
+        if pkg.name in dependencies:
+            required_by[locked.pretty_name] = dependencies[pkg.name]
+
+    return required_by
 
 
 class ShowCommand(GroupCommand):
@@ -32,6 +47,11 @@ class ShowCommand(GroupCommand):
             "Do not list the development dependencies. (<warning>Deprecated</warning>)",
         ),
         option("tree", "t", "List the dependencies as a tree."),
+        option(
+            "why",
+            None,
+            "When listing the tree for a single package, start from parents.",
+        ),
         option("latest", "l", "Show the latest version."),
         option(
             "outdated",
@@ -65,6 +85,23 @@ lists all packages available."""
         if self.option("tree"):
             self.init_styles(self.io)
 
+        if self.option("why"):
+            if self.option("tree") and package is None:
+                self.line_error(
+                    "<error>Error: --why requires a package when combined with"
+                    " --tree.</error>"
+                )
+
+                return 1
+
+            if not self.option("tree") and package:
+                self.line_error(
+                    "<error>Error: --why cannot be used without --tree when displaying"
+                    " a single package.</error>"
+                )
+
+                return 1
+
         if self.option("outdated"):
             self._io.input.set_option("latest", True)
 
@@ -79,13 +116,13 @@ lists all packages available."""
         root = self.project_with_activated_groups_only()
 
         # Show tree view if requested
-        if self.option("tree") and not package:
+        if self.option("tree") and package is None:
             requires = root.all_requires
             packages = locked_repo.packages
-            for pkg in packages:
+            for p in packages:
                 for require in requires:
-                    if pkg.name == require.name:
-                        self.display_package_tree(self._io, pkg, locked_repo)
+                    if p.name == require.name:
+                        self.display_package_tree(self._io, p, locked_repo)
                         break
 
             return 0
@@ -117,17 +154,38 @@ lists all packages available."""
             if not pkg:
                 raise ValueError(f"Package {package} not found")
 
+            required_by = reverse_deps(pkg, locked_repo)
+
             if self.option("tree"):
-                self.display_package_tree(self.io, pkg, locked_repo)
+                if self.option("why"):
+                    # The default case if there's no reverse dependencies is to query
+                    # the subtree for pkg but if any rev-deps exist we'll query for each
+                    # of them in turn
+                    packages = [pkg]
+                    if required_by:
+                        packages = [
+                            p
+                            for p in locked_packages
+                            for r in required_by.keys()
+                            if p.name == r
+                        ]
+                    else:
+                        # if no rev-deps exist we'll make this clear as it can otherwise
+                        # look very odd for packages that also have no or few direct
+                        # dependencies
+                        self._io.write_line(
+                            f"Package {package} is a direct dependency."
+                        )
+
+                    for p in packages:
+                        self.display_package_tree(
+                            self._io, p, locked_repo, why_package=pkg
+                        )
+
+                else:
+                    self.display_package_tree(self._io, pkg, locked_repo)
 
                 return 0
-
-            required_by = {}
-            for locked in locked_packages:
-                dependencies = {d.name: d.pretty_constraint for d in locked.requires}
-
-                if pkg.name in dependencies:
-                    required_by[locked.pretty_name] = dependencies[pkg.name]
 
             rows = [
                 ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
@@ -159,7 +217,7 @@ lists all packages available."""
         show_all = self.option("all")
         terminal = Terminal()
         width = terminal.width
-        name_length = version_length = latest_length = 0
+        name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
@@ -204,6 +262,13 @@ lists all packages available."""
                             )
                         ),
                     )
+
+                    if self.option("why"):
+                        required_by = reverse_deps(locked, locked_repo)
+                        required_by_length = max(
+                            required_by_length,
+                            len(" from " + ",".join(required_by.keys())),
+                        )
             else:
                 name_length = max(name_length, current_length)
                 version_length = max(
@@ -215,9 +280,20 @@ lists all packages available."""
                     ),
                 )
 
+                if self.option("why"):
+                    required_by = reverse_deps(locked, locked_repo)
+                    required_by_length = max(
+                        required_by_length, len(" from " + ",".join(required_by.keys()))
+                    )
+
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
-        write_description = name_length + version_length + latest_length + 24 <= width
+
+        why_end_column = (
+            name_length + version_length + latest_length + required_by_length
+        )
+        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_description = (why_end_column + 24) <= width
 
         for locked in locked_packages:
             color = "cyan"
@@ -269,9 +345,21 @@ lists all packages available."""
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 
+            if write_why:
+                required_by = reverse_deps(locked, locked_repo)
+                if required_by:
+                    content = ",".join(required_by.keys())
+                    # subtract 6 for ' from '
+                    line += f" from {content:{required_by_length - 6}}"
+                else:
+                    line += " " * required_by_length
+
             if write_description:
                 description = locked.description
-                remaining = width - name_length - version_length - 4
+                remaining = (
+                    width - name_length - version_length - required_by_length - 4
+                )
+
                 if show_latest:
                     remaining -= latest_length
 
@@ -281,10 +369,15 @@ lists all packages available."""
                 line += " " + description
 
             self.line(line)
+
         return None
 
     def display_package_tree(
-        self, io: IO, package: Package, installed_repo: Repository
+        self,
+        io: IO,
+        package: Package,
+        installed_repo: Repository,
+        why_package: Package | None = None,
     ) -> None:
         io.write(f"<c1>{package.pretty_name}</c1>")
         description = ""
@@ -293,8 +386,15 @@ lists all packages available."""
 
         io.write_line(f" <b>{package.pretty_version}</b>{description}")
 
-        dependencies = package.requires
-        dependencies = sorted(dependencies, key=lambda x: x.name)
+        if why_package is not None:
+            dependencies = [p for p in package.requires if p.name == why_package.name]
+        else:
+            dependencies = package.requires
+            dependencies = sorted(
+                dependencies,
+                key=lambda x: x.name,  # type: ignore[no-any-return]
+            )
+
         tree_bar = "├"
         total = len(dependencies)
         for i, dependency in enumerate(dependencies, 1):
@@ -334,7 +434,10 @@ lists all packages available."""
 
                 break
 
-        dependencies = sorted(dependencies, key=lambda x: x.name)
+        dependencies = sorted(
+            dependencies,
+            key=lambda x: x.name,  # type: ignore[no-any-return]
+        )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
         for i, dependency in enumerate(dependencies, 1):
@@ -383,7 +486,7 @@ lists all packages available."""
 
     def find_latest_package(
         self, package: Package, root: ProjectPackage
-    ) -> Package | bool:
+    ) -> Package | None:
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.provider import Provider
@@ -398,10 +501,13 @@ lists all packages available."""
                     provider = Provider(root, self.poetry.pool, NullIO())
 
                     if dep.is_vcs():
+                        dep = cast(VCSDependency, dep)
                         return provider.search_for_vcs(dep)[0]
                     if dep.is_file():
+                        dep = cast(FileDependency, dep)
                         return provider.search_for_file(dep)[0]
                     if dep.is_directory():
+                        dep = cast(DirectoryDependency, dep)
                         return provider.search_for_directory(dep)[0]
 
         name = package.name

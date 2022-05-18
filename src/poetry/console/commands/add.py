@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import contextlib
 
+from typing import Any
 from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from tomlkit.toml_document import TOMLDocument
 
 
 try:
@@ -107,14 +109,16 @@ You can specify a package in the following forms:
             )
             group = "dev"
         else:
-            group = self.option("group")
+            group = self.option("group", self.default_group or MAIN_GROUP)
 
         if self.option("extras") and len(packages) > 1:
             raise ValueError(
                 "You can only specify one package when using the --extras option"
             )
 
-        content = self.poetry.file.read()
+        # tomlkit types are awkward to work with, treat content as a mostly untyped
+        # dictionary.
+        content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
         if group == MAIN_GROUP:
@@ -130,9 +134,10 @@ You can specify a package in the following forms:
 
             groups = poetry_content["group"]
             if group not in groups:
-                group_table = parse_toml(
+                dependencies_toml: dict[str, Any] = parse_toml(
                     f"[tool.poetry.group.{group}.dependencies]\n\n"
-                )["tool"]["poetry"]["group"][group]
+                )
+                group_table = dependencies_toml["tool"]["poetry"]["group"][group]
                 poetry_content["group"][group] = group_table
 
             if "dependencies" not in poetry_content["group"][group]:
@@ -158,11 +163,13 @@ You can specify a package in the following forms:
         )
 
         for _constraint in requirements:
-            if "version" in _constraint:
+            version = _constraint.get("version")
+            if version is not None:
                 # Validate version constraint
-                parse_constraint(_constraint["version"])
+                assert isinstance(version, str)
+                parse_constraint(version)
 
-            constraint = inline_table()
+            constraint: dict[str, Any] = inline_table()
             for name, value in _constraint.items():
                 if name == "name":
                     continue
@@ -210,16 +217,18 @@ You can specify a package in the following forms:
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            section[_constraint["name"]] = constraint
+            constraint_name = _constraint["name"]
+            assert isinstance(constraint_name, str)
+            section[constraint_name] = constraint
 
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(
-                    _constraint["name"]
+                    constraint_name
                 )
 
             self.poetry.package.add_dependency(
                 Factory.create_dependency(
-                    _constraint["name"],
+                    constraint_name,
                     constraint,
                     groups=[group],
                     root_dir=self.poetry.file.parent,
@@ -247,12 +256,13 @@ You can specify a package in the following forms:
         status = self._installer.run()
 
         if status == 0 and not self.option("dry-run"):
+            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
 
         return status
 
     def get_existing_packages_from_input(
-        self, packages: list[str], section: dict
+        self, packages: list[str], section: dict[str, Any]
     ) -> list[str]:
         existing_packages = []
 

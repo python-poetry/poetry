@@ -7,12 +7,10 @@ import stat
 import tempfile
 
 from collections.abc import Mapping
-from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Iterator
 
 
 if TYPE_CHECKING:
@@ -20,6 +18,7 @@ if TYPE_CHECKING:
     from requests import Session
 
     from poetry.config.config import Config
+    from poetry.utils.authenticator import Authenticator
 
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -31,20 +30,6 @@ def canonicalize_name(name: str) -> str:
 
 def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
-
-
-def _del_ro(action: Callable, name: str, exc: Exception) -> None:
-    os.chmod(name, stat.S_IWRITE)
-    os.remove(name)
-
-
-@contextmanager
-def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
-    name = tempfile.mkdtemp(*args, **kwargs)
-
-    yield name
-
-    shutil.rmtree(name, onerror=_del_ro)
 
 
 def get_cert(config: Config, repository_name: str) -> Path | None:
@@ -63,7 +48,7 @@ def get_client_cert(config: Config, repository_name: str) -> Path | None:
         return None
 
 
-def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
+def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:
     if not os.path.exists(path):
         return
 
@@ -71,14 +56,24 @@ def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
     func(path)
 
 
-def safe_rmtree(path: str) -> None:
+def remove_directory(
+    path: Path | str, *args: Any, force: bool = False, **kwargs: Any
+) -> None:
+    """
+    Helper function handle safe removal, and optionally forces stubborn file removal.
+    This is particularly useful when dist files are read-only or git writes read-only
+    files on Windows.
+
+    Internally, all arguments are passed to `shutil.rmtree`.
+    """
     if Path(path).is_symlink():
         return os.unlink(str(path))
 
-    shutil.rmtree(path, onerror=_on_rm_error)
+    kwargs["onerror"] = kwargs.pop("onerror", _on_rm_error if force else None)
+    shutil.rmtree(path, *args, **kwargs)
 
 
-def merge_dicts(d1: dict, d2: dict) -> None:
+def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
     for k in d2.keys():
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
@@ -89,7 +84,7 @@ def merge_dicts(d1: dict, d2: dict) -> None:
 def download_file(
     url: str,
     dest: str,
-    session: Session | None = None,
+    session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
 ) -> None:
     import requests
@@ -109,10 +104,12 @@ def get_package_version_display_string(
     package: Package, root: Path | None = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
+        assert package.source_url is not None
         path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
         return f"{package.version} {path}"
 
-    return package.full_pretty_version
+    pretty_version: str = package.full_pretty_version
+    return pretty_version
 
 
 def paths_csv(paths: list[Path]) -> str:

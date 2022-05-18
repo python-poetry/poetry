@@ -1,36 +1,35 @@
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import os
 import urllib
+import urllib.parse
 
 from abc import ABC
 from collections import defaultdict
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
-from urllib.parse import quote
+from typing import Any
 
 import requests
-import requests.auth
 
-from cachecontrol import CacheControl
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
+from poetry.core.semver.helpers import parse_constraint
 from poetry.core.version.markers import parse_marker
 
-from poetry.config.config import Config
 from poetry.repositories.cached import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
 
 
@@ -41,41 +40,19 @@ class HTTPRepository(CachedRepository, ABC):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
-        cert: Path | None = None,
-        client_cert: Path | None = None,
     ) -> None:
-        super().__init__(name, "_http", disable_cache)
+        super().__init__(name, disable_cache)
         self._url = url
-        self._client_cert = client_cert
-        self._cert = cert
-
         self._authenticator = Authenticator(
-            config=config or Config(use_environment=True)
+            config=config,
+            cache_id=name,
+            disable_cache=disable_cache,
         )
-
-        self._session = CacheControl(
-            self._authenticator.session, cache=self._cache_control_cache
-        )
-
-        username, password = self._authenticator.get_credentials_for_url(self._url)
-        if username is not None and password is not None:
-            self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
-                username, password
-            )
-
-        if self._cert:
-            self._authenticator.session.verify = str(self._cert)
-
-        if self._client_cert:
-            self._authenticator.session.cert = str(self._client_cert)
+        self._authenticator.add_repository(name, url)
 
     @property
-    def session(self) -> CacheControl:
-        return self._session
-
-    def __del__(self) -> None:
-        with contextlib.suppress(AttributeError):
-            self._session.close()
+    def session(self) -> Authenticator:
+        return self._authenticator
 
     @property
     def url(self) -> str:
@@ -83,22 +60,21 @@ class HTTPRepository(CachedRepository, ABC):
 
     @property
     def cert(self) -> Path | None:
-        return self._cert
+        cert = self._authenticator.get_certs_for_url(self.url).get("verify")
+        if cert:
+            return Path(cert)
+        return None
 
     @property
     def client_cert(self) -> Path | None:
-        return self._client_cert
+        cert = self._authenticator.get_certs_for_url(self.url).get("cert")
+        if cert:
+            return Path(cert)
+        return None
 
     @property
     def authenticated_url(self) -> str:
-        if not self._session.auth:
-            return self.url
-
-        parsed = urllib.parse.urlparse(self.url)
-        username = quote(self._session.auth.username, safe="")
-        password = quote(self._session.auth.password, safe="")
-
-        return f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
+        return self._authenticator.authenticated_url(url=self.url)
 
     def _download(self, url: str, dest: str) -> None:
         return download_file(url, dest, session=self.session)
@@ -111,7 +87,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         filename = os.path.basename(wheel_name)
 
-        with temporary_directory() as temp_dir:
+        with TemporaryDirectory() as temp_dir:
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
@@ -127,7 +103,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         filename = os.path.basename(sdist_name)
 
-        with temporary_directory() as temp_dir:
+        with TemporaryDirectory() as temp_dir:
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
@@ -173,6 +149,14 @@ class HTTPRepository(CachedRepository, ABC):
                 info = self._get_info_from_wheel(universal_python2_wheel)
 
                 py3_info = self._get_info_from_wheel(universal_python3_wheel)
+
+                if info.requires_python or py3_info.requires_python:
+                    info.requires_python = str(
+                        parse_constraint(info.requires_python or "^2.7").union(
+                            parse_constraint(py3_info.requires_python or "^3")
+                        )
+                    )
+
                 if py3_info.requires_dist:
                     if not info.requires_dist:
                         info.requires_dist = py3_info.requires_dist
@@ -225,14 +209,14 @@ class HTTPRepository(CachedRepository, ABC):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict:
+    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
         if not links:
             raise PackageNotFound(
                 f'No valid distribution links found for package: "{data.name}" version:'
                 f' "{data.version}"'
             )
         urls = defaultdict(list)
-        files = []
+        files: list[dict[str, Any]] = []
         for link in links:
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
@@ -244,10 +228,11 @@ class HTTPRepository(CachedRepository, ABC):
             file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
 
             if not link.hash or (
-                link.hash_name not in ("sha256", "sha384", "sha512")
+                link.hash_name is not None
+                and link.hash_name not in ("sha256", "sha384", "sha512")
                 and hasattr(hashlib, link.hash_name)
             ):
-                with temporary_directory() as temp_dir:
+                with TemporaryDirectory() as temp_dir:
                     filepath = Path(temp_dir) / link.filename
                     self._download(link.url, str(filepath))
 
@@ -284,7 +269,7 @@ class HTTPRepository(CachedRepository, ABC):
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
         try:
-            response = self.session.get(url)
+            response: requests.Response = self.session.get(url, raise_for_status=False)
             if response.status_code in (401, 403):
                 self._log(
                     f"Authorization error accessing {url}",

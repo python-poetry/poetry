@@ -8,16 +8,19 @@ from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 
+from poetry.repositories.exceptions import PackageNotFound
+
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.helpers import VersionTypes
 
 
 class Repository:
-    def __init__(self, name: str = None, packages: list[Package] = None) -> None:
+    def __init__(
+        self, name: str | None = None, packages: list[Package] | None = None
+    ) -> None:
         self._name = name
         self._packages: list[Package] = []
 
@@ -94,7 +97,7 @@ class Repository:
     @staticmethod
     def _get_constraints_from_dependency(
         dependency: Dependency,
-    ) -> tuple[VersionTypes, bool]:
+    ) -> tuple[VersionConstraint, bool]:
         constraint = dependency.constraint
         if constraint is None:
             constraint = "*"
@@ -114,9 +117,8 @@ class Repository:
         return constraint, allow_prereleases
 
     def _log(self, msg: str, level: str = "info") -> None:
-        getattr(logging.getLogger(self.__class__.__name__), level)(
-            f"<c1>Source ({self.name}):</c1> {msg}"
-        )
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        getattr(logger, level)(f"<c1>Source ({self.name}):</c1> {msg}")
 
     def __len__(self) -> int:
         return len(self._packages)
@@ -132,3 +134,5 @@ class Repository:
         for package in self.packages:
             if name == package.name and package.version.text == version:
                 return package.clone()
+
+        raise PackageNotFound(f"Package {name} ({version}) not found.")

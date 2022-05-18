@@ -9,12 +9,12 @@ if sys.version_info < (3, 8):
     # compatibility for python <3.8
     import importlib_metadata as metadata
 else:
-    from importlib import metadata  # noqa: F401, TC002
+    from importlib import metadata
 
 WINDOWS = sys.platform == "win32"
 
 
-def decode(string: str, encodings: list[str] | None = None) -> str:
+def decode(string: bytes | str, encodings: list[str] | None = None) -> str:
     if not isinstance(string, bytes):
         return string
 
@@ -49,3 +49,6 @@ def list_to_shell_command(cmd: list[str]) -> str:
         f'"{token}"' if " " in token and token[0] not in {"'", '"'} else token
         for token in cmd
     )
+
+
+__all__ = ["WINDOWS", "decode", "encode", "list_to_shell_command", "metadata", "to_str"]

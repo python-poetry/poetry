@@ -25,7 +25,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import pluralize
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
 
 
@@ -34,11 +34,10 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
-    from poetry.installation.operations import OperationTypes
-    from poetry.installation.operations.install import Install
+    from poetry.installation.operations import Install
+    from poetry.installation.operations import Uninstall
+    from poetry.installation.operations import Update
     from poetry.installation.operations.operation import Operation
-    from poetry.installation.operations.uninstall import Uninstall
-    from poetry.installation.operations.update import Update
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
@@ -59,7 +58,7 @@ class Executor:
         self._verbose = False
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env)
+        self._chooser = Chooser(pool, self._env, config)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -127,7 +126,7 @@ class Executor:
 
         return 0
 
-    def execute(self, operations: list[OperationTypes]) -> int:
+    def execute(self, operations: list[Operation]) -> int:
         self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
@@ -195,7 +194,7 @@ class Executor:
             return default_max_workers
         return min(default_max_workers, desired_max_workers)
 
-    def _write(self, operation: OperationTypes, line: str) -> None:
+    def _write(self, operation: Operation, line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
             operation
         ):
@@ -213,7 +212,7 @@ class Executor:
             section.clear()
             section.write(line)
 
-    def _execute_operation(self, operation: OperationTypes) -> None:
+    def _execute_operation(self, operation: Operation) -> None:
         try:
             op_message = self.get_operation_message(operation)
             if self.supports_fancy_output():
@@ -290,7 +289,7 @@ class Executor:
                 with self._lock:
                     self._shutdown = True
 
-    def _do_execute_operation(self, operation: OperationTypes) -> int:
+    def _do_execute_operation(self, operation: Operation) -> int:
         method = operation.job_type
 
         operation_message = self.get_operation_message(operation)
@@ -326,9 +325,7 @@ class Executor:
 
         return result
 
-    def _increment_operations_count(
-        self, operation: OperationTypes, executed: bool
-    ) -> None:
+    def _increment_operations_count(self, operation: Operation, executed: bool) -> None:
         with self._lock:
             if executed:
                 self._executed_operations += 1
@@ -353,7 +350,7 @@ class Executor:
 
     def get_operation_message(
         self,
-        operation: OperationTypes,
+        operation: Operation,
         done: bool = False,
         error: bool = False,
         warning: bool = False,
@@ -401,7 +398,7 @@ class Executor:
             )
         return ""
 
-    def _display_summary(self, operations: list[OperationTypes]) -> None:
+    def _display_summary(self, operations: list[Operation]) -> None:
         installs = 0
         updates = 0
         uninstalls = 0
@@ -488,7 +485,7 @@ class Executor:
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
-                safe_rmtree(str(src_dir))
+                remove_directory(src_dir, force=True)
 
         try:
             return self.run_pip("uninstall", package.name, "-y")
@@ -576,7 +573,7 @@ class Executor:
         return self.pip_install(req, upgrade=True)
 
     def _install_git(self, operation: Install | Update) -> int:
-        from poetry.core.vcs import Git
+        from poetry.vcs.git import Git
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
@@ -586,24 +583,15 @@ class Executor:
         )
         self._write(operation, message)
 
-        src_dir = self._env.path / "src" / package.name
-        if src_dir.exists():
-            safe_rmtree(str(src_dir))
-
-        src_dir.parent.mkdir(exist_ok=True)
-
-        git = Git()
-        git.clone(package.source_url, src_dir)
-
-        reference = package.source_resolved_reference
-        if not reference:
-            reference = package.source_reference
-
-        git.checkout(reference, src_dir)
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
 
         # Now we just need to install from the source directory
         original_url = package.source_url
-        package._source_url = str(src_dir)
+        package._source_url = str(source.path)
 
         status_code = self._install_directory(operation)
 
@@ -689,6 +677,7 @@ class Executor:
 
         if progress:
             with self._lock:
+                self._sections[id(operation)].clear()
                 progress.start()
 
         done = 0
@@ -716,7 +705,7 @@ class Executor:
     def _should_write_operation(self, operation: Operation) -> bool:
         return not operation.skipped or self._dry_run or self._verbose
 
-    def _save_url_reference(self, operation: OperationTypes) -> None:
+    def _save_url_reference(self, operation: Operation) -> None:
         """
         Create and store a PEP-610 `direct_url.json` file, if needed.
         """

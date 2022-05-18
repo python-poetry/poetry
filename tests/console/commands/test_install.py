@@ -103,7 +103,8 @@ def test_group_options_are_passed_to_the_installer(
     """
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     editable_builder_mock = mocker.patch(
-        "poetry.masonry.builders.EditableBuilder", side_effect=ModuleOrPackageNotFound()
+        "poetry.masonry.builders.editable.EditableBuilder",
+        side_effect=ModuleOrPackageNotFound(),
     )
 
     if not with_root:

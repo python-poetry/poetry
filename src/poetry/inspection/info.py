@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import glob
 import logging
 import os
@@ -7,6 +8,7 @@ import tarfile
 import zipfile
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Iterator
 
@@ -17,7 +19,6 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
-from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 
 from poetry.utils.env import EnvCommandError
@@ -71,7 +72,7 @@ class PackageInfo:
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
         cache_version: str | None = None,
-    ):
+    ) -> None:
         self.name = name
         self.version = version
         self.summary = summary
@@ -285,7 +286,7 @@ class PackageInfo:
 
             context = tarfile.open
 
-        with temporary_directory() as tmp:
+        with TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             with context(path.as_posix()) as archive:
                 archive.extractall(tmp.as_posix())
@@ -450,76 +451,6 @@ class PackageInfo:
         return None
 
     @classmethod
-    def _pep517_metadata(cls, path: Path) -> PackageInfo:
-        """
-        Helper method to use PEP-517 library to build and read package metadata.
-
-        :param path: Path to package source to build and read metadata for.
-        """
-        info = None
-        try:
-            info = cls.from_setup_files(path)
-            if all([info.version, info.name, info.requires_dist]):
-                return info
-        except PackageInfoError:
-            pass
-
-        with ephemeral_environment(
-            with_pip=True, with_wheel=True, with_setuptools=True
-        ) as venv:
-            # TODO: cache PEP 517 build environment corresponding to each project venv
-            dest_dir = venv.path.parent / "dist"
-            dest_dir.mkdir()
-
-            pep517_meta_build_script = PEP517_META_BUILD.format(
-                source=path.as_posix(), dest=dest_dir.as_posix()
-            )
-
-            try:
-                venv.run_pip(
-                    "install",
-                    "--disable-pip-version-check",
-                    "--ignore-installed",
-                    *PEP517_META_BUILD_DEPS,
-                )
-                venv.run(
-                    "python",
-                    "-",
-                    input_=pep517_meta_build_script,
-                )
-                return cls.from_metadata(dest_dir)
-            except EnvCommandError as e:
-                # something went wrong while attempting pep517 metadata build
-                # fallback to egg_info if setup.py available
-                cls._log(f"PEP517 build failed: {e}", level="debug")
-                setup_py = path / "setup.py"
-                if not setup_py.exists():
-                    raise PackageInfoError(
-                        path,
-                        e,
-                        "No fallback setup.py file was found to generate egg_info.",
-                    )
-
-                cwd = Path.cwd()
-                os.chdir(path.as_posix())
-                try:
-                    venv.run("python", "setup.py", "egg_info")
-                    return cls.from_metadata(path)
-                except EnvCommandError as fbe:
-                    raise PackageInfoError(
-                        path, "Fallback egg_info generation failed.", fbe
-                    )
-                finally:
-                    os.chdir(cwd.as_posix())
-
-        if info:
-            cls._log(f"Falling back to parsed setup.py file for {path}", "debug")
-            return info
-
-        # if we reach here, everything has failed and all hope is lost
-        raise PackageInfoError(path, "Exhausted all core metadata sources.")
-
-    @classmethod
     def from_directory(cls, path: Path, disable_build: bool = False) -> PackageInfo:
         """
         Generate package information from a package source directory. If `disable_build`
@@ -542,7 +473,7 @@ class PackageInfo:
                     if disable_build:
                         info = cls.from_setup_files(path)
                     else:
-                        info = cls._pep517_metadata(path)
+                        info = get_pep517_metadata(path)
                 except PackageInfoError:
                     if not info:
                         raise
@@ -609,3 +540,74 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
+
+
+@functools.lru_cache(maxsize=None)
+def get_pep517_metadata(path: Path) -> PackageInfo:
+    """
+    Helper method to use PEP-517 library to build and read package metadata.
+
+    :param path: Path to package source to build and read metadata for.
+    """
+    info = None
+    try:
+        info = PackageInfo.from_setup_files(path)
+        if all([info.version, info.name, info.requires_dist]):
+            return info
+    except PackageInfoError:
+        pass
+
+    with ephemeral_environment(
+        flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
+    ) as venv:
+        # TODO: cache PEP 517 build environment corresponding to each project venv
+        dest_dir = venv.path.parent / "dist"
+        dest_dir.mkdir()
+
+        pep517_meta_build_script = PEP517_META_BUILD.format(
+            source=path.as_posix(), dest=dest_dir.as_posix()
+        )
+
+        try:
+            venv.run_pip(
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                *PEP517_META_BUILD_DEPS,
+            )
+            venv.run(
+                "python",
+                "-",
+                input_=pep517_meta_build_script,
+            )
+            info = PackageInfo.from_metadata(dest_dir)
+        except EnvCommandError as e:
+            # something went wrong while attempting pep517 metadata build
+            # fallback to egg_info if setup.py available
+            logger.debug("PEP517 build failed: %s", e)
+            setup_py = path / "setup.py"
+            if not setup_py.exists():
+                raise PackageInfoError(
+                    path,
+                    e,
+                    "No fallback setup.py file was found to generate egg_info.",
+                )
+
+            cwd = Path.cwd()
+            os.chdir(path.as_posix())
+            try:
+                venv.run("python", "setup.py", "egg_info")
+                info = PackageInfo.from_metadata(path)
+            except EnvCommandError as fbe:
+                raise PackageInfoError(
+                    path, "Fallback egg_info generation failed.", fbe
+                )
+            finally:
+                os.chdir(cwd.as_posix())
+
+    if info:
+        logger.debug("Falling back to parsed setup.py file for %s", path)
+        return info
+
+    # if we reach here, everything has failed and all hope is lost
+    raise PackageInfoError(path, "Exhausted all core metadata sources.")

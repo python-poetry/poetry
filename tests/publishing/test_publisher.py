@@ -59,7 +59,7 @@ def test_publish_can_publish_to_given_repository(
         }
     )
 
-    mocker.patch("poetry.factory.Factory.create_config", return_value=config)
+    mocker.patch("poetry.config.config.Config.create", return_value=config)
     poetry = Factory().create_poetry(fixture_dir(fixture_name))
 
     io = BufferedIO()

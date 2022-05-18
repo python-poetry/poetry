@@ -1,19 +1,42 @@
 from __future__ import annotations
 
+import logging
 import os
+import sys
 
 from pathlib import Path
 
-from poetry.utils.appdirs import user_cache_dir
-from poetry.utils.appdirs import user_config_dir
-from poetry.utils.appdirs import user_data_dir
+from platformdirs import user_cache_path
+from platformdirs import user_config_path
+from platformdirs import user_data_path
 
 
-CACHE_DIR = user_cache_dir("pypoetry")
-DATA_DIR = user_data_dir("pypoetry")
-CONFIG_DIR = user_config_dir("pypoetry")
+logger = logging.getLogger(__name__)
 
-REPOSITORY_CACHE_DIR = Path(CACHE_DIR) / "cache" / "repositories"
+CACHE_DIR = user_cache_path("pypoetry", appauthor=False)
+CONFIG_DIR = user_config_path("pypoetry", appauthor=False, roaming=True)
+
+REPOSITORY_CACHE_DIR = CACHE_DIR / "cache" / "repositories"
+
+# platformdirs 2.0.0 corrected the OSX/macOS config directory from
+# /Users/<user>/Library/Application Support/<appname> to
+# /Users/<user>/Library/Preferences/<appname>.
+#
+# For now we only deprecate use of the old directory.
+if sys.platform == "darwin":
+    _LEGACY_CONFIG_DIR = CONFIG_DIR.parent.parent / "Application Support" / "pypoetry"
+    config_toml = _LEGACY_CONFIG_DIR / "config.toml"
+    auth_toml = _LEGACY_CONFIG_DIR / "auth.toml"
+
+    if any(file.exists() for file in (auth_toml, config_toml)):
+        logger.warn(
+            "Configuration file exists at %s, reusing this directory.\n\nConsider"
+            " moving configuration to %s, as support for the legacy directory will be"
+            " removed in an upcoming release.",
+            _LEGACY_CONFIG_DIR,
+            CONFIG_DIR,
+        )
+        CONFIG_DIR = _LEGACY_CONFIG_DIR
 
 
 def data_dir() -> Path:
@@ -21,4 +44,4 @@ def data_dir() -> Path:
     if poetry_home:
         return Path(poetry_home).expanduser()
 
-    return Path(user_data_dir("pypoetry", roaming=True))
+    return user_data_path("pypoetry", appauthor=False, roaming=True)

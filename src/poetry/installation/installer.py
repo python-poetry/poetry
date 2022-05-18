@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.base_installer import BaseInstaller
-    from poetry.installation.operations import OperationTypes
     from poetry.installation.operations.operation import Operation
     from poetry.packages import Locker
     from poetry.utils.env import Env
@@ -42,7 +41,7 @@ class Installer:
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
-    ):
+    ) -> None:
         self._io = io
         self._env = env
         self._package = package
@@ -199,7 +198,10 @@ class Installer:
             self._io,
         )
 
-        ops = solver.solve(use_latest=[]).calculate_operations()
+        with solver.provider.use_source_root(
+            source_root=self._env.path.joinpath("src")
+        ):
+            ops = solver.solve(use_latest=[]).calculate_operations()
 
         local_repo = Repository()
         self._populate_local_repo(local_repo, ops)
@@ -236,7 +238,10 @@ class Installer:
                 self._io,
             )
 
-            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+            with solver.provider.use_source_root(
+                source_root=self._env.path.joinpath("src")
+            ):
+                ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
@@ -339,7 +344,7 @@ class Installer:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
 
-    def _execute(self, operations: list[OperationTypes]) -> int:
+    def _execute(self, operations: list[Operation]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
 

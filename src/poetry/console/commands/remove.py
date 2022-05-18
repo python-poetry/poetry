@@ -4,6 +4,7 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from tomlkit.toml_document import TOMLDocument
 
 
 try:
@@ -48,9 +49,9 @@ list of installed packages
             )
             group = "dev"
         else:
-            group = self.option("group")
+            group = self.option("group", self.default_group)
 
-        content = self.poetry.file.read()
+        content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
         if group is None:
@@ -106,7 +107,7 @@ list of installed packages
             self.poetry.config.get("experimental.new-installer", False)
         )
 
-        self._installer.dry_run(self.option("dry-run"))
+        self._installer.dry_run(self.option("dry-run", False))
         self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
         self._installer.whitelist(removed_set)
@@ -114,6 +115,7 @@ list of installed packages
         status = self._installer.run()
 
         if not self.option("dry-run") and status == 0:
+            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
 
         return status

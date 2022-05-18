@@ -15,8 +15,7 @@ from poetry.console.commands.env_command import EnvCommand
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
-
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
 
 
 class GroupCommand(EnvCommand):
@@ -59,6 +58,16 @@ class GroupCommand(EnvCommand):
             for group in self.poetry.package._dependency_groups.values()
             if not group.is_optional()
         }
+
+    @property
+    def default_group(self) -> str | None:
+        """
+        The default group to use when no group is specified. This is useful
+        for command that have the `--group` option, eg: add, remove.
+
+        Can be overridden to adapt behavior.
+        """
+        return None
 
     @property
     def default_groups(self) -> set[str]:

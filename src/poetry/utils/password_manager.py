@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import logging
 
 from contextlib import suppress
@@ -22,6 +23,12 @@ class KeyRingError(Exception):
     pass
 
 
+@dataclasses.dataclass
+class HTTPAuthCredential:
+    username: str | None = dataclasses.field(default=None)
+    password: str | None = dataclasses.field(default=None)
+
+
 class KeyRing:
     def __init__(self, namespace: str) -> None:
         self._namespace = namespace
@@ -31,6 +38,25 @@ class KeyRing:
 
     def is_available(self) -> bool:
         return self._is_available
+
+    def get_credential(
+        self, *names: str, username: str | None = None
+    ) -> HTTPAuthCredential:
+        default = HTTPAuthCredential(username=username, password=None)
+
+        if not self.is_available():
+            return default
+
+        import keyring
+
+        for name in names:
+            credential = keyring.get_credential(name, username)
+            if credential:
+                return HTTPAuthCredential(
+                    username=credential.username, password=credential.password
+                )
+
+        return default
 
     def get_password(self, name: str, username: str) -> str | None:
         if not self.is_available():
@@ -142,7 +168,8 @@ class PasswordManager:
 
     def get_pypi_token(self, name: str) -> str | None:
         if not self.keyring.is_available():
-            return self._config.get(f"pypi-token.{name}")
+            token: str | None = self._config.get(f"pypi-token.{name}")
+            return token
 
         return self.keyring.get_password(name, "__token__")
 
@@ -152,7 +179,7 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> dict[str, str] | None:
+    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
@@ -181,10 +208,14 @@ class PasswordManager:
 
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
-        if not auth or "username" not in auth:
+        if not auth:
+            return
+
+        username = auth.get("username")
+        if username is None:
             return
 
         with suppress(KeyRingError):
-            self.keyring.delete_password(name, auth["username"])
+            self.keyring.delete_password(name, username)
 
         self._config.auth_config_source.remove_property(f"http-basic.{name}")

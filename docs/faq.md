@@ -106,3 +106,11 @@ The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with
 Usually you will want to match the Python requirement of your project with the upper bound of the failing dependency.
 Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions](/docs/dependency-specification/#multiple-constraints-dependencies),
 if you know that it's not needed in all versions.
+
+
+### Why does Poetry enforce PEP 440 versions?
+
+This is done so to be compliant with the broader Python ecosystem.
+
+For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
+[PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.

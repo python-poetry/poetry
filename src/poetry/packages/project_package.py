@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from poetry.core.semver.version import Version
 
 
-class ProjectPackage(_ProjectPackage):
+class ProjectPackage(_ProjectPackage):  # type: ignore[misc]
     def set_version(
         self, version: str | Version, pretty_version: str | None = None
     ) -> None:

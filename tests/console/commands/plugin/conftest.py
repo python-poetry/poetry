@@ -37,7 +37,11 @@ def installed() -> InstalledRepository:
 
 def configure_sources_factory(repo: TestRepository) -> SourcesFactory:
     def _configure_sources(
-        poetry: Poetry, sources: Source, config: Config, io: IO
+        poetry: Poetry,
+        sources: Source,
+        config: Config,
+        io: IO,
+        disable_cache: bool = False,
     ) -> None:
         pool = Pool()
         pool.add_repository(repo)

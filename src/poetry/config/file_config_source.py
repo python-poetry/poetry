@@ -30,7 +30,8 @@ class FileConfigSource(ConfigSource):
         return self._file
 
     def add_property(self, key: str, value: Any) -> None:
-        with self.secure() as config:
+        with self.secure() as toml:
+            config: dict[str, Any] = toml
             keys = key.split(".")
 
             for i, key in enumerate(keys):
@@ -44,7 +45,8 @@ class FileConfigSource(ConfigSource):
                 config = config[key]
 
     def remove_property(self, key: str) -> None:
-        with self.secure() as config:
+        with self.secure() as toml:
+            config: dict[str, Any] = toml
             keys = key.split(".")
 
             current_config = config

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+from typing import Any
 from typing import cast
 
 from cleo.helpers import argument
@@ -78,7 +79,7 @@ You can specify a package in the following forms:
 
         # We check for the plugins existence first.
         if env_dir.joinpath("pyproject.toml").exists():
-            pyproject = tomlkit.loads(
+            pyproject: dict[str, Any] = tomlkit.loads(
                 env_dir.joinpath("pyproject.toml").read_text(encoding="utf-8")
             )
             poetry_content = pyproject["tool"]["poetry"]
@@ -115,21 +116,23 @@ You can specify a package in the following forms:
 
                 break
 
-        root_package.python_versions = ".".join(  # type: ignore[union-attr]
+        assert root_package is not None
+
+        root_package.python_versions = ".".join(
             str(v) for v in system_env.version_info[:3]
         )
         # We create a `pyproject.toml` file based on all the information
         # we have about the current environment.
         if not env_dir.joinpath("pyproject.toml").exists():
             Factory.create_pyproject_from_package(
-                root_package,  # type: ignore[arg-type]
+                root_package,
                 env_dir,
             )
 
         # We add the plugins to the dependencies section of the previously
         # created `pyproject.toml` file
-        pyproject = PyProjectTOML(env_dir.joinpath("pyproject.toml"))
-        poetry_content = pyproject.poetry_config
+        pyproject_toml = PyProjectTOML(env_dir.joinpath("pyproject.toml"))
+        poetry_content = pyproject_toml.poetry_config
         poetry_dependency_section = poetry_content["dependencies"]
         plugin_names = []
         for plugin in plugins:
@@ -137,7 +140,7 @@ You can specify a package in the following forms:
                 # Validate version constraint
                 parse_constraint(plugin["version"])
 
-            constraint = tomlkit.inline_table()
+            constraint: dict[str, Any] = tomlkit.inline_table()
             for name, value in plugin.items():
                 if name == "name":
                     continue
@@ -150,7 +153,7 @@ You can specify a package in the following forms:
             poetry_dependency_section[plugin["name"]] = constraint
             plugin_names.append(plugin["name"])
 
-        pyproject.save()
+        pyproject_toml.save()
 
         # From this point forward, all the logic will be deferred to
         # the update command, by using the previously created `pyproject.toml`
@@ -167,16 +170,17 @@ You can specify a package in the following forms:
         if self.option("dry-run"):
             argv.append("--dry-run")
 
-        return update_command.run(
+        exit_code: int = update_command.run(
             IO(
                 StringInput(" ".join(argv)),
                 self._io.output,
                 self._io.error_output,
             )
         )
+        return exit_code
 
     def get_existing_packages_from_input(
-        self, packages: list[str], poetry_content: dict, target_section: str
+        self, packages: list[str], poetry_content: dict[str, Any], target_section: str
     ) -> list[str]:
         existing_packages = []
 

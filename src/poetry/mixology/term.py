@@ -9,7 +9,7 @@ from poetry.mixology.set_relation import SetRelation
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.semver.helpers import VersionTypes
+    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Term:
@@ -33,7 +33,7 @@ class Term:
         return self._dependency
 
     @property
-    def constraint(self) -> VersionTypes:
+    def constraint(self) -> VersionConstraint:
         return self._dependency.constraint
 
     def is_positive(self) -> bool:
@@ -49,7 +49,7 @@ class Term:
         )
 
     @functools.lru_cache(maxsize=None)
-    def relation(self, other: Term) -> int:
+    def relation(self, other: Term) -> str:
         """
         Returns the relationship between the package versions
         allowed by this term and another.
@@ -144,7 +144,7 @@ class Term:
         else:
             return None
 
-    def difference(self, other: Term) -> Term:
+    def difference(self, other: Term) -> Term | None:
         """
         Returns a Term that represents packages
         allowed by this term and not by the other
@@ -152,14 +152,15 @@ class Term:
         return self.intersect(other.inverse)
 
     def _compatible_dependency(self, other: Dependency) -> bool:
-        return (
+        compatible: bool = (
             self.dependency.is_root
             or other.is_root
             or other.is_same_package_as(self.dependency)
         )
+        return compatible
 
     def _non_empty_term(
-        self, constraint: VersionTypes, is_positive: bool
+        self, constraint: VersionConstraint, is_positive: bool
     ) -> Term | None:
         if constraint.is_empty():
             return None

@@ -144,7 +144,7 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(
     provider: Provider, mocker: MockerFixture
 ):
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        "poetry.inspection.info.get_pep517_metadata",
         return_value=PackageInfo(name="demo", version=None),
     )
 

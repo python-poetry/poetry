@@ -37,12 +37,13 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
 
 
-def load_command(name: str) -> Callable:
+def load_command(name: str) -> Callable[[], type[Command]]:
     def _load() -> type[Command]:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
-        return command_class()
+        command_type: type[Command] = command_class()
+        return command_type
 
     return _load
 
@@ -89,13 +90,14 @@ COMMANDS = [
 ]
 
 
-class Application(BaseApplication):
+class Application(BaseApplication):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
         self._poetry: Poetry | None = None
         self._io: IO | None = None
         self._disable_plugins = False
+        self._disable_cache = False
         self._plugins_loaded = False
 
         dispatcher = EventDispatcher()
@@ -117,14 +119,18 @@ class Application(BaseApplication):
             return self._poetry
 
         self._poetry = Factory().create_poetry(
-            Path.cwd(), io=self._io, disable_plugins=self._disable_plugins
+            Path.cwd(),
+            io=self._io,
+            disable_plugins=self._disable_plugins,
+            disable_cache=self._disable_cache,
         )
 
         return self._poetry
 
     @property
     def command_loader(self) -> CommandLoader:
-        return self._command_loader
+        command_loader: CommandLoader = self._command_loader
+        return command_loader
 
     def reset_poetry(self) -> None:
         self._poetry = None
@@ -168,10 +174,12 @@ class Application(BaseApplication):
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
+        self._disable_cache = io.input.has_parameter_option("--no-cache")
 
         self._load_plugins(io)
 
-        return super()._run(io)
+        exit_code: int = super()._run(io)
+        return exit_code
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -207,11 +215,12 @@ class Application(BaseApplication):
 
             io.set_input(run_input)
 
-        return super()._configure_io(io)
+        super()._configure_io(io)
 
     def register_command_loggers(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
+        from poetry.console.logging.filters import POETRY_FILTER
         from poetry.console.logging.io_formatter import IOFormatter
         from poetry.console.logging.io_handler import IOHandler
 
@@ -232,23 +241,34 @@ class Application(BaseApplication):
         handler = IOHandler(io)
         handler.setFormatter(IOFormatter())
 
+        level = logging.WARNING
+
+        if io.is_debug():
+            level = logging.DEBUG
+        elif io.is_very_verbose() or io.is_verbose():
+            level = logging.INFO
+
+        logging.basicConfig(level=level, handlers=[handler])
+
+        # only log third-party packages when very verbose
+        if not io.is_very_verbose():
+            handler.addFilter(POETRY_FILTER)
+
         for name in loggers:
             logger = logging.getLogger(name)
 
             logger.handlers = [handler]
 
-            level = logging.WARNING
+            _level = level
             # The builders loggers are special and we can actually
             # start at the INFO level.
-            if logger.name.startswith("poetry.core.masonry.builders"):
-                level = logging.INFO
+            if (
+                logger.name.startswith("poetry.core.masonry.builders")
+                and _level > logging.INFO
+            ):
+                _level = logging.INFO
 
-            if io.is_debug():
-                level = logging.DEBUG
-            elif io.is_very_verbose() or io.is_verbose():
-                level = logging.INFO
-
-            logger.setLevel(level)
+            logger.setLevel(_level)
 
     def configure_env(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
@@ -335,6 +355,12 @@ class Application(BaseApplication):
             Option("--no-plugins", flag=True, description="Disables plugins.")
         )
 
+        definition.add_option(
+            Option(
+                "--no-cache", flag=True, description="Disables Poetry source caches."
+            )
+        )
+
         return definition
 
     def _get_solution_provider_repository(self) -> SolutionProviderRepository:
@@ -353,7 +379,8 @@ class Application(BaseApplication):
 
 
 def main() -> int:
-    return Application().run()
+    exit_code: int = Application().run()
+    return exit_code
 
 
 if __name__ == "__main__":
