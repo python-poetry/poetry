@@ -85,7 +85,7 @@ This is a list of authors and should contain at least one author. Authors must b
 
 ```toml
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    "Sébastien Eustace <sebastien@eustace.io>",
 ]
 ```
 
@@ -97,7 +97,7 @@ This is a list of maintainers and should be distinct from authors. Maintainers m
 
 ```toml
 maintainers = [
-    "Richard Brave <email@example.org>"
+    "Richard Brave <email@example.org>",
 ]
 ```
 
