@@ -24,7 +24,8 @@ class Command(BaseCommand):  # type: ignore[misc]
     def run(self, io: IO) -> int:
         if io.input.stream is None:
             io.input.set_stream(sys.stdin)
-        return super().run(io)
+        status_code: int = super().run(io)
+        return status_code
 
     @property
     def poetry(self) -> Poetry:
