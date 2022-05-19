@@ -16,7 +16,7 @@ The `tool.poetry` section of the `pyproject.toml` file is composed of multiple s
 ## name
 
 The name of the package. **Required**
-This should be valid name accoording to specification in [PEP 508 - Names](https://peps.python.org/pep-0508/#names)
+This should be valid name according to specifications in [PEP 508 - Names](https://peps.python.org/pep-0508/#names)
 
 
 ```toml
