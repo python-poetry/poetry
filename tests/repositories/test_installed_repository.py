@@ -13,6 +13,7 @@ from tests.compat import zipp
 
 
 if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
     from poetry.core.packages.package import Package
     from pytest_mock.plugin import MockerFixture
 
@@ -101,6 +102,27 @@ def get_package_from_repository(
 
 def test_load_successful(repository: InstalledRepository):
     assert len(repository.packages) == len(INSTALLED_RESULTS) - 1
+
+
+def test_load_successful_with_invalid_distribution(
+    caplog: LogCaptureFixture, mocker: MockerFixture, env: MockEnv, tmp_dir: str
+) -> None:
+    invalid_dist_info = Path(tmp_dir) / "site-packages" / "invalid-0.1.0.dist-info"
+    invalid_dist_info.mkdir(parents=True)
+    mocker.patch(
+        "poetry.utils._compat.metadata.Distribution.discover",
+        return_value=INSTALLED_RESULTS + [metadata.PathDistribution(invalid_dist_info)],
+    )
+    repository_with_invalid_distribution = InstalledRepository.load(env)
+
+    assert (
+        len(repository_with_invalid_distribution.packages) == len(INSTALLED_RESULTS) - 1
+    )
+    assert len(caplog.messages) == 1
+
+    message = caplog.messages[0]
+    assert message.startswith("Project environment contains an invalid distribution")
+    assert str(invalid_dist_info) in message
 
 
 def test_load_ensure_isolation(repository: InstalledRepository):

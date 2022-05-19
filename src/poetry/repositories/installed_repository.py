@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -26,6 +27,9 @@ try:
     FileNotFoundError
 except NameError:
     FileNotFoundError = OSError
+
+
+logger = logging.getLogger(__name__)
 
 
 class InstalledRepository(Repository):
@@ -233,20 +237,41 @@ class InstalledRepository(Repository):
 
         repo = cls()
         seen = set()
+        skipped = set()
 
         for entry in reversed(env.sys_path):
+            if not entry.strip():
+                logger.debug(
+                    "Project environment contains an empty path in <c1>sys_path</>,"
+                    " ignoring."
+                )
+                continue
+
             for distribution in sorted(
                 metadata.distributions(  # type: ignore[no-untyped-call]
                     path=[entry],
                 ),
                 key=lambda d: str(d._path),  # type: ignore[attr-defined]
             ):
-                name = canonicalize_name(distribution.metadata["name"])
+                path = Path(str(distribution._path))  # type: ignore[attr-defined]
+
+                if path in skipped:
+                    continue
+
+                try:
+                    name = canonicalize_name(distribution.metadata["name"])
+                except TypeError:
+                    logger.warning(
+                        "Project environment contains an invalid distribution"
+                        " (<c1>%s</>). Consider removing it manually or recreate the"
+                        " environment.",
+                        path,
+                    )
+                    skipped.add(path)
+                    continue
 
                 if name in seen:
                     continue
-
-                path = Path(str(distribution._path))  # type: ignore[attr-defined]
 
                 try:
                     path.relative_to(_VENDORS)
