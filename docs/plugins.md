@@ -67,11 +67,8 @@ from poetry.poetry import Poetry
 class MyPlugin(Plugin):
 
     def activate(self, poetry: Poetry, io: IO):
-        version = self.get_custom_version()
-        io.write_line(f"Setting package version to <b>{version}</b>")
-        poetry.package.set_version(version)
-
-    def get_custom_version(self) -> str:
+        io.write_line("Setting readme")
+        poetry.package.readme = "README.md"
         ...
 ```
 

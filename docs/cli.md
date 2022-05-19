@@ -357,10 +357,14 @@ If the package(s) you want to install provide extras, you can specify them
 when adding the package:
 
 ```bash
-poetry add requests[security,socks]
+poetry add "requests[security,socks]"
 poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
+
+{{% warning %}}
+Some shells may treat square braces (`[` and `]`) as special characters. It is suggested to always quote arguments containing these characters to prevent unexpected shell expansion.
+{{% /warning %}}
 
 If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
 
@@ -509,6 +513,7 @@ See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 * `--unset`: Remove the configuration element named by `setting-key`.
 * `--list`: Show the list of current config variables.
+* `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
 
 ## run
 
@@ -623,6 +628,7 @@ The table below illustrates the effect of these rules with concrete examples.
 ### Options
 
 * `--short (-s)`: Output the version number only.
+* `--dry-run`: Do not update pyproject.toml file.
 
 ## export
 

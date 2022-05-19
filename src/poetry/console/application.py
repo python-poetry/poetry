@@ -7,7 +7,6 @@ from contextlib import suppress
 from importlib import import_module
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import cast
 
 from cleo.application import Application as BaseApplication
@@ -24,6 +23,8 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from cleo.events.console_command_event import ConsoleCommandEvent
     from cleo.io.inputs.definition import Definition
     from cleo.io.inputs.input import Input

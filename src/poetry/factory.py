@@ -11,12 +11,12 @@ from typing import cast
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.config.config import Config
 from poetry.packages.locker import Locker
-from poetry.packages.project_package import ProjectPackage
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry

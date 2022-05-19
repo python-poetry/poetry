@@ -61,8 +61,8 @@ dulwich = "^0.20.35"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
-pytest = "^6.2"
-pytest-cov = "^2.8"
+pytest = "^7.1"
+pytest-cov = "^3.0"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
 pre-commit = "^2.6"
@@ -116,17 +116,22 @@ enable_error_code = ["ignore-without-code"]
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.commands.init',
-  'poetry.inspection.info',
-  'poetry.installation.chef',
-  'poetry.installation.chooser',
-  'poetry.installation.executor',
-  'poetry.installation.installer',
-  'poetry.installation.pip_installer',
-  'poetry.repositories.installed_repository',
   'poetry.utils.env',
 ]
 ignore_errors = true
+
+# use of importlib-metadata backport at python3.7 makes it impossible to
+# satisfy mypy without some ignores: but we get a different set of ignores at
+# different python versions.
+#
+# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
+# warning.
+[[tool.mypy.overrides]]
+module = [
+  'poetry.installation.executor',
+  'poetry.repositories.installed_repository',
+]
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
@@ -138,6 +143,7 @@ module = [
   'html5lib.*',
   'jsonschema.*',
   'pexpect.*',
+  'pkginfo.*',
   'poetry.core.*',
   'requests_toolbelt.*',
   'shellingham.*',

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING
 
 from poetry.console.commands.command import Command
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class AboutCommand(Command):

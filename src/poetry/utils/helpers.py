@@ -7,15 +7,14 @@ import stat
 import tempfile
 
 from collections.abc import Mapping
-from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import Iterator
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.packages.package import Package
     from requests import Session
 
@@ -32,15 +31,6 @@ def canonicalize_name(name: str) -> str:
 
 def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
-
-
-@contextmanager
-def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
-    name = tempfile.mkdtemp(*args, **kwargs)
-
-    yield name
-
-    remove_directory(name, force=True)
 
 
 def get_cert(config: Config, repository_name: str) -> Path | None:
@@ -100,15 +90,41 @@ def download_file(
 ) -> None:
     import requests
 
+    from poetry.puzzle.provider import Indicator
+
     get = requests.get if not session else session.get
 
     response = get(url, stream=True)
     response.raise_for_status()
 
-    with open(dest, "wb") as f:
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            if chunk:
-                f.write(chunk)
+    set_indicator = False
+    with Indicator.context() as update_context:
+        update_context(f"Downloading {url}")
+
+        if "Content-Length" in response.headers:
+            try:
+                total_size = int(response.headers["Content-Length"])
+            except ValueError:
+                total_size = 0
+
+            fetched_size = 0
+            last_percent = 0
+
+            # if less than 1MB, we simply show that we're downloading
+            # but skip the updating
+            set_indicator = total_size > 1024 * 1024
+
+        with open(dest, "wb") as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+
+                    if set_indicator:
+                        fetched_size += len(chunk)
+                        percent = (fetched_size * 100) // total_size
+                        if percent > last_percent:
+                            last_percent = percent
+                            update_context(f"Downloading {url} {percent:3}%")
 
 
 def get_package_version_display_string(

@@ -15,6 +15,8 @@ import requests
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
+from poetry.core.semver.helpers import parse_constraint
+from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
 from poetry.repositories.cached import CachedRepository
@@ -23,7 +25,6 @@ from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -148,6 +149,14 @@ class HTTPRepository(CachedRepository, ABC):
                 info = self._get_info_from_wheel(universal_python2_wheel)
 
                 py3_info = self._get_info_from_wheel(universal_python3_wheel)
+
+                if info.requires_python or py3_info.requires_python:
+                    info.requires_python = str(
+                        parse_constraint(info.requires_python or "^2.7").union(
+                            parse_constraint(py3_info.requires_python or "^3")
+                        )
+                    )
+
                 if py3_info.requires_dist:
                     if not info.requires_dist:
                         info.requires_dist = py3_info.requires_dist

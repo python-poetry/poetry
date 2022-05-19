@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Iterator
 
 import pytest
@@ -34,6 +33,8 @@ from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry

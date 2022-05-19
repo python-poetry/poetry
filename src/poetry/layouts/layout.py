@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Mapping
 
 from tomlkit import dumps
 from tomlkit import inline_table
@@ -50,8 +51,8 @@ class Layout:
         author: str | None = None,
         license: str | None = None,
         python: str = "*",
-        dependencies: dict[str, str] | None = None,
-        dev_dependencies: dict[str, str] | None = None,
+        dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+        dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
         self._project = canonicalize_name(project).replace(".", "-")
         self._package_path_relative = Path(
@@ -90,7 +91,14 @@ class Layout:
     def get_package_include(self) -> InlineTable | None:
         package = inline_table()
 
-        include = self._package_path_relative.parts[0]
+        # If a project is created in the root directory (this is reasonable inside a
+        # docker container, eg <https://github.com/python-poetry/poetry/issues/5103>)
+        # then parts will be empty.
+        parts = self._package_path_relative.parts
+        if not parts:
+            return None
+
+        include = parts[0]
         package.append("include", include)  # type: ignore[no-untyped-call]
 
         if self.basedir != Path():

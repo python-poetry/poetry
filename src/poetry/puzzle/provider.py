@@ -42,6 +42,8 @@ from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.semver.version_constraint import VersionConstraint
@@ -55,6 +57,24 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):  # type: ignore[misc]
+    CONTEXT: str | None = None
+
+    @staticmethod
+    @contextmanager
+    def context() -> Iterator[Callable[[str | None], None]]:
+        def _set_context(context: str | None) -> None:
+            Indicator.CONTEXT = context
+
+        yield _set_context
+
+        _set_context(None)
+
+    def _formatter_context(self) -> str:
+        if Indicator.CONTEXT is None:
+            return " "
+        else:
+            return f" <c1>{Indicator.CONTEXT}</> "
+
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
 
@@ -530,18 +550,32 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates: dict[str, list[Dependency]] = {}
+        #
+        # Additional care has to be taken to ensure that hidden constraints like that
+        # of source type, reference etc. are taking into consideration when duplicates
+        # are identified.
+        duplicates: dict[
+            tuple[str, str | None, str | None, str | None], list[Dependency]
+        ] = {}
         for dep in dependencies:
-            if dep.complete_name not in duplicates:
-                duplicates[dep.complete_name] = []
-
-            duplicates[dep.complete_name].append(dep)
+            key = (
+                dep.complete_name,
+                dep.source_type,
+                dep.source_url,
+                dep.source_reference,
+            )
+            if key not in duplicates:
+                duplicates[key] = []
+            duplicates[key].append(dep)
 
         dependencies = []
-        for dep_name, deps in duplicates.items():
+        for key, deps in duplicates.items():
             if len(deps) == 1:
                 dependencies.append(deps[0])
                 continue
+
+            extra_keys = ", ".join(k for k in key[1:] if k is not None)
+            dep_name = f"{key[0]} ({extra_keys})" if extra_keys else key[0]
 
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
@@ -631,7 +665,9 @@ class Provider:
                         dep_other.set_constraint(
                             dep_other.constraint.intersect(dep_any.constraint)
                         )
-            elif not inverted_marker.is_empty():
+            elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
+                get_python_constraint_from_marker(inverted_marker)
+            ):
                 # if there is no any marker dependency
                 # and the inverted marker is not empty,
                 # a dependency with the inverted union of all markers is required
@@ -794,7 +830,9 @@ class Provider:
             self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(self._io, "{message} <debug>({elapsed:2s})</debug>")
+            indicator = Indicator(
+                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
+            )
 
             with indicator.auto(
                 "<info>Resolving dependencies...</info>",

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Callable
 
 from cleo.exceptions import LogicException
 from cleo.loaders.factory_command_loader import FactoryCommandLoader
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.console.commands.command import Command
 
 

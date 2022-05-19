@@ -118,7 +118,7 @@ class Repository:
 
     def _log(self, msg: str, level: str = "info") -> None:
         logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        getattr(logger, level)(f"<debug>{self.name}:</debug> {msg}")
+        getattr(logger, level)(f"<c1>Source ({self.name}):</c1> {msg}")
 
     def __len__(self) -> int:
         return len(self._packages)

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING
 
 from poetry.utils._compat import metadata
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 # The metadata.version that we import for Python 3.7 is untyped, work around
