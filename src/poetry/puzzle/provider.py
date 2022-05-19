@@ -87,6 +87,7 @@ def _get_package_from_git(
     branch: str | None = None,
     tag: str | None = None,
     rev: str | None = None,
+    subdirectory: str | None = None,
     source_root: Path | None = None,
 ) -> Package:
     source = Git.clone(
@@ -99,11 +100,16 @@ def _get_package_from_git(
     )
     revision = Git.get_revision(source)
 
-    package = Provider.get_package_from_directory(Path(source.path))
+    path = Path(source.path)
+    if subdirectory:
+        path = path.joinpath(subdirectory)
+
+    package = Provider.get_package_from_directory(path)
     package._source_type = "git"
     package._source_url = url
     package._source_reference = rev or tag or branch or "HEAD"
     package._source_resolved_reference = revision
+    package._source_subdirectory = subdirectory
 
     return package
 
@@ -230,7 +236,13 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        if dependency in self._deferred_cache:
+        # we ensure subdirectory match here as workaround until poetry-core is updated
+        # to >1.1.0a7
+        if (
+            dependency in self._deferred_cache
+            and self._deferred_cache[dependency].source_subdirectory
+            == dependency.source_subdirectory
+        ):
             return [self._deferred_cache[dependency]]
 
         package = self.get_package_from_vcs(
@@ -239,6 +251,7 @@ class Provider:
             branch=dependency.branch,
             tag=dependency.tag,
             rev=dependency.rev,
+            subdirectory=dependency.source_subdirectory,
             source_root=self._source_root
             or (self._env.path.joinpath("src") if self._env else None),
         )
@@ -265,13 +278,19 @@ class Provider:
         branch: str | None = None,
         tag: str | None = None,
         rev: str | None = None,
+        subdirectory: str | None = None,
         source_root: Path | None = None,
     ) -> Package:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
         return _get_package_from_git(
-            url=url, branch=branch, tag=tag, rev=rev, source_root=source_root
+            url=url,
+            branch=branch,
+            tag=tag,
+            rev=rev,
+            subdirectory=subdirectory,
+            source_root=source_root,
         )
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
