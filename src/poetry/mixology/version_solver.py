@@ -44,9 +44,9 @@ class DependencyCache:
         self.cache: dict[
             tuple[str, str | None, str | None, str | None], list[DependencyPackage]
         ] = {}
+        self.search_for = functools.lru_cache(maxsize=128)(self._search_for)
 
-    @functools.lru_cache(maxsize=128)
-    def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
+    def _search_for(self, dependency: Dependency) -> list[DependencyPackage]:
         key = (
             dependency.complete_name,
             dependency.source_type,
