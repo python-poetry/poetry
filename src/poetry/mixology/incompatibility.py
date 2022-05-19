@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import DependencyCause
@@ -14,6 +13,7 @@ from poetry.mixology.incompatibility_cause import RootCause
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
 
     from poetry.mixology.incompatibility_cause import IncompatibilityCause
     from poetry.mixology.term import Term

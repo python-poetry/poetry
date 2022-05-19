@@ -10,8 +10,6 @@ import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ContextManager
-from typing import Iterator
 from typing import cast
 
 import pkginfo
@@ -31,6 +29,8 @@ from poetry.utils.setup_reader import SetupReader
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
+    from contextlib import AbstractContextManager
 
     from poetry.core.packages.project_package import ProjectPackage
 
@@ -281,7 +281,9 @@ class PackageInfo:
         # So, we unpack and introspect
         suffix = path.suffix
 
-        context: Callable[[str], ContextManager[zipfile.ZipFile | tarfile.TarFile]]
+        context: Callable[
+            [str], AbstractContextManager[zipfile.ZipFile | tarfile.TarFile]
+        ]
         if suffix == ".zip":
             context = zipfile.ZipFile
         else:

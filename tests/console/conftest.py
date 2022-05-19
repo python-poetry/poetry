@@ -4,7 +4,6 @@ import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 import pytest
 
@@ -24,6 +23,8 @@ from tests.helpers import mock_clone
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from pytest_mock import MockerFixture
 
     from poetry.installation.executor import Executor

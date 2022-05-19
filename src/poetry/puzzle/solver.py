@@ -6,7 +6,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import FrozenSet
-from typing import Iterator
 from typing import Tuple
 from typing import TypeVar
 
@@ -25,6 +24,8 @@ from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency

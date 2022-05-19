@@ -11,7 +11,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import TextIO
 
 import httpretty
@@ -40,6 +39,8 @@ from tests.helpers import mock_download
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
     from pytest_mock import MockerFixture

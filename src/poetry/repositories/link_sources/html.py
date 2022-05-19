@@ -4,12 +4,15 @@ import urllib.parse
 import warnings
 
 from html import unescape
-from typing import Iterator
+from typing import TYPE_CHECKING
 
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

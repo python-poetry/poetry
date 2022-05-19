@@ -18,8 +18,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import TypeVar
 
 import packaging.tags
@@ -49,6 +47,9 @@ from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+
     from cleo.io.io import IO
     from poetry.core.version.markers import BaseMarker
 

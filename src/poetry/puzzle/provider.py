@@ -13,8 +13,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -43,6 +41,8 @@ from poetry.vcs.git import Git
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterable
+    from collections.abc import Iterator
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package

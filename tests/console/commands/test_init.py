@@ -6,7 +6,6 @@ import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 import pytest
 
@@ -20,6 +19,8 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from _pytest.fixtures import FixtureRequest
     from poetry.core.packages.package import Package
     from pytest_mock import MockerFixture
