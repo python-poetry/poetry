@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 from typing import Any
 
 from cleo.commands.command import Command as BaseCommand
 from cleo.exceptions import ValueException
+from cleo.io.io import IO
 
 
 if TYPE_CHECKING:
@@ -16,6 +19,11 @@ class Command(BaseCommand):  # type: ignore[misc]
     loggers: list[str] = []
 
     _poetry: Poetry | None = None
+
+    def run(self, io: IO) -> int:
+        if io.input.stream is None:
+            io.input.set_stream(sys.stdin)
+        return super().run(io)
 
     @property
     def poetry(self) -> Poetry:
