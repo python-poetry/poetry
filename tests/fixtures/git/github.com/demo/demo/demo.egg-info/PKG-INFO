@@ -6,5 +6,6 @@ Home-page: https://github.com/demo/demo
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
 License: MIT
+Platform: UNKNOWN
 Provides-Extra: foo
 Provides-Extra: bar

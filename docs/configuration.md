@@ -224,7 +224,7 @@ Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 
 **Type**: string
 
-Name of the command line prompt to be displayed when the virtual enviroment is activated.
+Format string defining the prompt to be displayed when the virtual environment is activated.
 The variables `project_name` and `python_version` are available for formatting.
 Defaults to `"{project_name}-py{python_version}"`.
 

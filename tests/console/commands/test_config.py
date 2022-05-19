@@ -47,8 +47,7 @@ def test_list_displays_default_value_if_not_set(
     tester: CommandTester, config: Config, config_cache_dir: Path
 ):
     tester.execute("--list")
-    print(config_cache_dir)
-    print(config.config)
+
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
