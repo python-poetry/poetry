@@ -130,6 +130,7 @@ ignore_errors = true
 module = [
   'poetry.installation.executor',
   'poetry.repositories.installed_repository',
+  'poetry.mixology.version_solver',
 ]
 warn_unused_ignores = false
 
