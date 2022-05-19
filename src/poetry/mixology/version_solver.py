@@ -43,7 +43,8 @@ class DependencyCache:
     def __init__(self, provider: Provider) -> None:
         self.provider = provider
         self.cache: dict[
-            tuple[str, str | None, str | None, str | None], list[DependencyPackage]
+            tuple[str, str | None, str | None, str | None, str | None],
+            list[DependencyPackage],
         ] = {}
 
         # TODO: re-enable cache when poetry-core upgrade is completed
@@ -60,6 +61,7 @@ class DependencyCache:
             dependency.source_type,
             dependency.source_url,
             dependency.source_reference,
+            dependency.source_subdirectory,
         )
 
         packages = self.cache.get(key)
