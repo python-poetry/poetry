@@ -7,10 +7,11 @@ from typing import Any
 
 from cleo.commands.command import Command as BaseCommand
 from cleo.exceptions import ValueException
-from cleo.io.io import IO
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
+
     from poetry.console.application import Application
     from poetry.poetry import Poetry
 
