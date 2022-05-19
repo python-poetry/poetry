@@ -1,3 +1,4 @@
 """Example module"""
+from typing import Tuple
 
-version_info = tuple[int, int, int]
+version_info = Tuple[int, int, int]
