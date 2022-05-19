@@ -65,12 +65,8 @@ def env() -> MockEnv:
     return MockEnv(path=ENV_DIR)
 
 
-@pytest.fixture
-def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
-    mocker.patch(
-        "poetry.utils._compat.metadata.Distribution.discover",
-        return_value=INSTALLED_RESULTS,
-    )
+@pytest.fixture(autouse=True)
+def mock_git_info(mocker: MockerFixture) -> None:
     mocker.patch(
         "poetry.vcs.git.Git.info",
         return_value=namedtuple("GitRepoLocalInfo", "origin revision")(
@@ -78,7 +74,19 @@ def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
             revision="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
         ),
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_installed_repository_vendors(mocker: MockerFixture) -> None:
     mocker.patch("poetry.repositories.installed_repository._VENDORS", str(VENDOR_DIR))
+
+
+@pytest.fixture
+def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
+    mocker.patch(
+        "poetry.utils._compat.metadata.Distribution.discover",
+        return_value=INSTALLED_RESULTS,
+    )
     return InstalledRepository.load(env)
 
 
