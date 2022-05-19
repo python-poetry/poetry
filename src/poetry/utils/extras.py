@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
-    from collections.abc import Mapping
     from collections.abc import Sequence
+    from typing import Mapping
 
     from poetry.core.packages.package import Package
 

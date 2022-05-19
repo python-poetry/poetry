@@ -15,7 +15,7 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from typing import Mapping
 
     from poetry.core.pyproject.toml import PyProjectTOML
     from tomlkit.items import InlineTable
