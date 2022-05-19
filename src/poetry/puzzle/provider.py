@@ -236,6 +236,7 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
+        # TODO: remove explicit subdirectory check once poetry-core is updated
         # we ensure subdirectory match here as workaround until poetry-core is updated
         # to >1.1.0a7
         if (
