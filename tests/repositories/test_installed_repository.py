@@ -56,8 +56,8 @@ class MockEnv(BaseMockEnv):
         }
 
     @property
-    def sys_path(self) -> list[Path]:
-        return [ENV_DIR, SITE_PLATLIB, SITE_PURELIB]
+    def sys_path(self) -> list[str]:
+        return [str(path) for path in [ENV_DIR, SITE_PLATLIB, SITE_PURELIB]]
 
 
 @pytest.fixture
