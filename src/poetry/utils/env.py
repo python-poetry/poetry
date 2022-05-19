@@ -4,6 +4,7 @@ import base64
 import hashlib
 import itertools
 import json
+import logging
 import os
 import platform
 import re
@@ -38,6 +39,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
+from poetry.exceptions import PoetryException
 from poetry.locations import CACHE_DIR
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
@@ -52,6 +54,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.version.markers import BaseMarker
 
+logger = logging.getLogger(__name__)
 
 P = TypeVar("P", bound=Poetry)
 
@@ -1638,7 +1641,7 @@ class VirtualEnv(Env):
 
     def get_supported_tags(self) -> list[Tag]:
         if self.get_version_info() < (3, 0, 0):
-            raise NotImplementedError("Poetry does not support python 2.7 environments")
+            raise PoetryException("Poetry does not support python 2.7 environments")
         else:
             output = self.run_python_script(GET_SYS_TAGS)
 
