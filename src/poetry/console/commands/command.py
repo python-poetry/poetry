@@ -22,6 +22,11 @@ class Command(BaseCommand):  # type: ignore[misc]
     _poetry: Poetry | None = None
 
     def run(self, io: IO) -> int:
+        """
+        Temporarily fix for issue where io.input.stream is unset by cleo.
+        """
+        # FIXME: Remove method after upstream merge for cleo
+        # https://github.com/sdispater/cleo/pull/135
         if io.input.stream is None:
             io.input.set_stream(sys.stdin)
         status_code: int = super().run(io)
