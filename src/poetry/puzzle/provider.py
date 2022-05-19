@@ -575,7 +575,7 @@ class Provider:
         # of source type, reference etc. are taking into consideration when duplicates
         # are identified.
         duplicates: dict[
-            tuple[str, str | None, str | None, str | None], list[Dependency]
+            tuple[str, str | None, str | None, str | None, str | None], list[Dependency]
         ] = {}
         for dep in dependencies:
             key = (
@@ -583,6 +583,7 @@ class Provider:
                 dep.source_type,
                 dep.source_url,
                 dep.source_reference,
+                dep.source_subdirectory,
             )
             if key not in duplicates:
                 duplicates[key] = []
