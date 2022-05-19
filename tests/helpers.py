@@ -10,7 +10,6 @@ import urllib.parse
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
@@ -29,6 +28,8 @@ from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.semver.version import Version
     from tomlkit.toml_document import TOMLDocument

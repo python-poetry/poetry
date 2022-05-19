@@ -10,9 +10,6 @@ from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 from typing import cast
 
 from poetry.core.packages.dependency import Dependency
@@ -40,6 +37,10 @@ from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+
     from poetry.core.version.markers import BaseMarker
     from tomlkit.toml_document import TOMLDocument
 

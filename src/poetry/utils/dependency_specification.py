@@ -7,8 +7,6 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -24,7 +22,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-DependencySpec = Dict[str, Union[str, bool, Dict[str, Union[str, bool]], List[str]]]
+DependencySpec = dict[str, Union[str, bool, dict[str, Union[str, bool]], list[str]]]
 
 
 def _parse_dependency_specification_git_url(

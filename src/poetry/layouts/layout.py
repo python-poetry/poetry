@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Mapping
 
 from tomlkit import dumps
 from tomlkit import inline_table
@@ -16,6 +15,8 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from poetry.core.pyproject.toml import PyProjectTOML
     from tomlkit.items import InlineTable
 
