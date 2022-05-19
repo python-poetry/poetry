@@ -27,6 +27,8 @@ then `--help` combined with any of those can give you more information.
 * `--no-ansi`: Disable ANSI output.
 * `--version (-V)`: Display this application version.
 * `--no-interaction (-n)`: Do not ask any interactive question.
+* `--no-plugins`: Disables plugins.
+* `--no-cache`: Disables Poetry source caches.
 
 
 ## new
@@ -231,6 +233,7 @@ option is used.
 When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
 
+
 ## update
 
 In order to get the latest versions of the dependencies and to update the `poetry.lock` file,
@@ -354,10 +357,14 @@ If the package(s) you want to install provide extras, you can specify them
 when adding the package:
 
 ```bash
-poetry add requests[security,socks]
+poetry add "requests[security,socks]"
 poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
+
+{{% warning %}}
+Some shells may treat square braces (`[` and `]`) as special characters. It is suggested to always quote arguments containing these characters to prevent unexpected shell expansion.
+{{% /warning %}}
 
 If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
 
@@ -437,6 +444,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
+* `--why`: Include reverse dependencies where applicable.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--default`: Only include the main dependencies. (**Deprecated**)
@@ -505,6 +513,7 @@ See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 * `--unset`: Remove the configuration element named by `setting-key`.
 * `--list`: Show the list of current config variables.
+* `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
 
 ## run
 
@@ -591,26 +600,35 @@ This command shows the current version of the project or bumps the version of
 the project and writes the new version back to `pyproject.toml` if a valid
 bump rule is provided.
 
-The new version should ideally be a valid [semver](https://semver.org/) string or a valid bump rule:
-`patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+The new version should be a valid [PEP 440](https://peps.python.org/pep-0440/)
+string or a valid bump rule: `patch`, `minor`, `major`, `prepatch`, `preminor`,
+`premajor`, `prerelease`.
+
+{{% note %}}
+
+If you would like to use semantic versioning for your project, please see
+[here]({{< relref "libraries#versioning" >}}).
+
+{{% /note %}}
 
 The table below illustrates the effect of these rules with concrete examples.
 
-| rule       | before        | after         |
-| ---------- | ------------- | ------------- |
-| major      | 1.3.0         | 2.0.0         |
-| minor      | 2.1.4         | 2.2.0         |
-| patch      | 4.1.1         | 4.1.2         |
-| premajor   | 1.0.2         | 2.0.0-alpha.0 |
-| preminor   | 1.0.2         | 1.1.0-alpha.0 |
-| prepatch   | 1.0.2         | 1.0.3-alpha.0 |
-| prerelease | 1.0.2         | 1.0.3-alpha.0 |
-| prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
-| prerelease | 1.0.3-beta.0  | 1.0.3-beta.1  |
+| rule       | before  | after   |
+| ---------- |---------|---------|
+| major      | 1.3.0   | 2.0.0   |
+| minor      | 2.1.4   | 2.2.0   |
+| patch      | 4.1.1   | 4.1.2   |
+| premajor   | 1.0.2   | 2.0.0a0 |
+| preminor   | 1.0.2   | 1.1.0a0 |
+| prepatch   | 1.0.2   | 1.0.3a0 |
+| prerelease | 1.0.2   | 1.0.3a0 |
+| prerelease | 1.0.3a0 | 1.0.3a1 |
+| prerelease | 1.0.3b0 | 1.0.3b1 |
 
 ### Options
 
 * `--short (-s)`: Output the version number only.
+* `--dry-run`: Do not update pyproject.toml file.
 
 ## export
 

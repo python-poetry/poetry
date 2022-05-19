@@ -52,7 +52,7 @@ paginate-sqlalchemy (0.3.0)
 sqlalchemy-audit (0.1.0)
  sqlalchemy-audit provides an easy way to set up revision tracking for your data.
 
-transmogrify.sqlalchemy (1.0.2)
+transmogrify-sqlalchemy (1.0.2)
  Feed data from SQLAlchemy into a transmogrifier pipeline
 
 sqlalchemy-schemadisplay (1.3)
@@ -96,4 +96,9 @@ sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
 """
 
-    assert tester.io.fetch_output() == expected
+    # TODO remove this when https://github.com/python-poetry/poetry-core/pull/328
+    # reaches a published version of poetry-core.
+    output = tester.io.fetch_output()
+    output = output.replace("transmogrify.sqlalchemy", "transmogrify-sqlalchemy")
+
+    assert output == expected

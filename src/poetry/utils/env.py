@@ -7,10 +7,10 @@ import json
 import os
 import platform
 import re
-import shutil
 import subprocess
 import sys
 import sysconfig
+import warnings
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -18,9 +18,9 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ContextManager
 from typing import Iterable
 from typing import Iterator
+from typing import TypeVar
 
 import packaging.tags
 import tomlkit
@@ -31,9 +31,11 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
+from poetry.core.poetry import Poetry
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
+from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
 from poetry.locations import CACHE_DIR
@@ -43,14 +45,15 @@ from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
-from poetry.utils.helpers import temporary_directory
+from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.version.markers import BaseMarker
 
-    from poetry.poetry import Poetry
+
+P = TypeVar("P", bound=Poetry)
 
 
 GET_SYS_TAGS = f"""
@@ -365,7 +368,7 @@ class SitePackages:
                     file.unlink()
 
             if distribution._path.exists():
-                shutil.rmtree(str(distribution._path))
+                remove_directory(str(distribution._path), force=True)
 
             paths.append(distribution._path)
 
@@ -494,7 +497,7 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry) -> None:
+    def __init__(self, poetry: P) -> None:
         self._poetry = poetry
 
     def _full_python_path(self, python: str) -> str:
@@ -534,7 +537,7 @@ class EnvManager:
     def activate(self, python: str, io: IO) -> Env:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
+            venv_path = CACHE_DIR / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -627,7 +630,7 @@ class EnvManager:
     def deactivate(self, io: IO) -> None:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
+            venv_path = CACHE_DIR / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -653,7 +656,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
+            venv_path = CACHE_DIR / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -694,7 +697,7 @@ class EnvManager:
 
             venv_path = self._poetry.config.get("virtualenvs.path")
             if venv_path is None:
-                venv_path = Path(CACHE_DIR) / "virtualenvs"
+                venv_path = CACHE_DIR / "virtualenvs"
             else:
                 venv_path = Path(venv_path)
 
@@ -724,7 +727,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
+            venv_path = CACHE_DIR / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -744,7 +747,7 @@ class EnvManager:
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
+            venv_path = CACHE_DIR / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -866,7 +869,7 @@ class EnvManager:
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
+            venv_path = CACHE_DIR / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -990,12 +993,6 @@ class EnvManager:
                 venv,
                 executable=executable,
                 flags=self._poetry.config.get("virtualenvs.options"),
-                # TODO: in a future version switch remove pip/setuptools/wheel
-                # poetry does not need them these exists today to not break developer
-                # environment assumptions
-                with_pip=True,
-                with_setuptools=True,
-                with_wheel=True,
             )
 
         # venv detection:
@@ -1070,7 +1067,7 @@ class EnvManager:
             path = Path(path)
         assert path.is_dir()
         try:
-            shutil.rmtree(str(path))
+            remove_directory(path)
             return
         except OSError as e:
             # Continue only if e.errno == 16
@@ -1085,7 +1082,7 @@ class EnvManager:
             if file_path.is_file() or file_path.is_symlink():
                 file_path.unlink()
             elif file_path.is_dir():
-                shutil.rmtree(str(file_path))
+                remove_directory(file_path, force=True)
 
     @classmethod
     def get_system_env(cls, naive: bool = False) -> SystemEnv | GenericEnv:
@@ -1542,7 +1539,9 @@ class SystemEnv(Env):
 
         d = Distribution()
         d.parse_config_files()
-        obj = d.get_command_obj("install", create=True)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "setup.py install is deprecated")
+            obj = d.get_command_obj("install", create=True)
         obj.finalize_options()
 
         paths = sysconfig.get_paths().copy()
@@ -1833,10 +1832,7 @@ class NullEnv(SystemEnv):
 def ephemeral_environment(
     executable: str | Path | None = None,
     flags: dict[str, bool] = None,
-    with_pip: bool = False,
-    with_wheel: bool | None = None,
-    with_setuptools: bool | None = None,
-) -> ContextManager[VirtualEnv]:
+) -> Iterator[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"
@@ -1844,11 +1840,50 @@ def ephemeral_environment(
             path=venv_dir.as_posix(),
             executable=executable,
             flags=flags,
-            with_pip=with_pip,
-            with_wheel=with_wheel,
-            with_setuptools=with_setuptools,
         )
         yield VirtualEnv(venv_dir, venv_dir)
+
+
+@contextmanager
+def build_environment(
+    poetry: P, env: Env | None = None, io: IO | None = None
+) -> Iterator[Env]:
+    """
+    If a build script is specified for the project, there could be additional build
+    time dependencies, eg: cython, setuptools etc. In these cases, we create an
+    ephemeral build environment with all requirements specified under
+    `build-system.requires` and return this. Otherwise, the given default project
+    environment is returned.
+    """
+    if not env or poetry.package.build_script:
+        with ephemeral_environment(executable=env.python if env else None) as venv:
+            overwrite = io and io.output.is_decorated() and not io.is_debug()
+            if io:
+                if not overwrite:
+                    io.write_line("")
+
+                requires = [
+                    f"<c1>{requirement}</c1>"
+                    for requirement in poetry.pyproject.build_system.requires
+                ]
+
+                io.overwrite(
+                    "<b>Preparing</b> build environment with build-system requirements"
+                    f" {', '.join(requires)}"
+                )
+            venv.run_pip(
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                *poetry.pyproject.build_system.requires,
+            )
+
+            if overwrite:
+                io.write_line("")
+
+            yield venv
+    else:
+        yield env
 
 
 class MockEnv(NullEnv):
@@ -1864,7 +1899,7 @@ class MockEnv(NullEnv):
         marker_env: dict[str, Any] = None,
         supported_tags: list[Tag] = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
 
         self._version_info = version_info

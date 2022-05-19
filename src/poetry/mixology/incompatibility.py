@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Iterator
 
 from poetry.mixology.incompatibility_cause import ConflictCause
@@ -14,6 +13,8 @@ from poetry.mixology.incompatibility_cause import RootCause
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.mixology.incompatibility_cause import IncompatibilityCause
     from poetry.mixology.term import Term
 
@@ -214,23 +215,18 @@ class Incompatibility:
     def and_to_string(
         self,
         other: Incompatibility,
-        details: dict,
         this_line: int | None,
         other_line: int | None,
     ) -> str:
-        requires_both = self._try_requires_both(other, details, this_line, other_line)
+        requires_both = self._try_requires_both(other, this_line, other_line)
         if requires_both is not None:
             return requires_both
 
-        requires_through = self._try_requires_through(
-            other, details, this_line, other_line
-        )
+        requires_through = self._try_requires_through(other, this_line, other_line)
         if requires_through is not None:
             return requires_through
 
-        requires_forbidden = self._try_requires_forbidden(
-            other, details, this_line, other_line
-        )
+        requires_forbidden = self._try_requires_forbidden(other, this_line, other_line)
         if requires_forbidden is not None:
             return requires_forbidden
 
@@ -248,7 +244,6 @@ class Incompatibility:
     def _try_requires_both(
         self,
         other: Incompatibility,
-        details: dict,
         this_line: int | None,
         other_line: int | None,
     ) -> str | None:
@@ -298,7 +293,6 @@ class Incompatibility:
     def _try_requires_through(
         self,
         other: Incompatibility,
-        details: dict,
         this_line: int | None,
         other_line: int | None,
     ) -> str | None:
@@ -380,7 +374,6 @@ class Incompatibility:
     def _try_requires_forbidden(
         self,
         other: Incompatibility,
-        details: dict,
         this_line: int | None,
         other_line: int | None,
     ) -> str | None:
@@ -442,7 +435,8 @@ class Incompatibility:
             return f"every version of {term.dependency.complete_name}"
 
         if term.dependency.is_root:
-            return term.dependency.pretty_name
+            pretty_name: str = term.dependency.pretty_name
+            return pretty_name
 
         return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
 

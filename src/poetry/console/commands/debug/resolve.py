@@ -41,7 +41,7 @@ class DebugResolveCommand(InitCommand):
         from poetry.core.packages.project_package import ProjectPackage
 
         from poetry.factory import Factory
-        from poetry.puzzle import Solver
+        from poetry.puzzle.solver import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
         from poetry.utils.env import EnvManager
@@ -68,6 +68,7 @@ class DebugResolveCommand(InitCommand):
 
             for constraint in requirements:
                 name = constraint.pop("name")
+                assert isinstance(name, str)
                 extras = []
                 for extra in self.option("extras"):
                     if " " in extra:

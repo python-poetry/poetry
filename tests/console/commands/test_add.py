@@ -10,6 +10,7 @@ import pytest
 from poetry.core.semver.version import Version
 
 from poetry.repositories.legacy_repository import LegacyRepository
+from tests.compat import is_poetry_core_1_1_0a7_compat
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -981,7 +982,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available(
     tester.execute("foo")
 
     expected = """\
-Using version ^1.2.3-beta.1 for foo
+Using version ^1.2.3b1 for foo
 
 Updating dependencies
 Resolving dependencies...
@@ -992,6 +993,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3b1)
 """
+    if is_poetry_core_1_1_0a7_compat:
+        expected = expected.replace("^1.2.3b1", "^1.2.3-beta.1")
 
     assert expected in tester.io.fetch_output()
 
@@ -1912,7 +1915,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
     old_tester.execute("foo")
 
     expected = """\
-Using version ^1.2.3-beta.1 for foo
+Using version ^1.2.3b1 for foo
 
 Updating dependencies
 Resolving dependencies...
@@ -1923,6 +1926,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
 """
+    if is_poetry_core_1_1_0a7_compat:
+        expected = expected.replace("^1.2.3b1", "^1.2.3-beta.1")
 
     assert expected in old_tester.io.fetch_output()
 

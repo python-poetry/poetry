@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import glob
 import logging
 import os
@@ -8,7 +9,10 @@ import zipfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import ContextManager
 from typing import Iterator
+from typing import cast
 
 import pkginfo
 
@@ -26,6 +30,8 @@ from poetry.utils.setup_reader import SetupReader
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.packages.project_package import ProjectPackage
 
 
@@ -71,7 +77,7 @@ class PackageInfo:
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
         cache_version: str | None = None,
-    ):
+    ) -> None:
         self.name = name
         self.version = version
         self.summary = summary
@@ -80,9 +86,9 @@ class PackageInfo:
         self.requires_python = requires_python
         self.files = files or []
         self._cache_version = cache_version
-        self._source_type = None
-        self._source_url = None
-        self._source_reference = None
+        self._source_type: str | None = None
+        self._source_url: str | None = None
+        self._source_reference: str | None = None
 
     @property
     def cache_version(self) -> str | None:
@@ -99,7 +105,7 @@ class PackageInfo:
         self._cache_version = other.cache_version or self._cache_version
         return self
 
-    def asdict(self) -> dict[str, str | list[str] | None]:
+    def asdict(self) -> dict[str, Any]:
         """
         Helper method to convert package info into a dictionary used for caching.
         """
@@ -115,7 +121,7 @@ class PackageInfo:
         }
 
     @classmethod
-    def load(cls, data: dict[str, str | list[str] | None]) -> PackageInfo:
+    def load(cls, data: dict[str, Any]) -> PackageInfo:
         """
         Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
 
@@ -168,7 +174,9 @@ class PackageInfo:
         if root_dir or (self._source_type in {"directory"} and self._source_url):
             # this is a local poetry project, this means we can extract "richer"
             # requirement information, eg: development requirements etc.
-            poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
+            poetry_package = self._get_poetry_package(
+                path=root_dir or Path(cast(str, self._source_url))
+            )
             if poetry_package:
                 package.extras = poetry_package.extras
                 for dependency in poetry_package.requires:
@@ -273,6 +281,7 @@ class PackageInfo:
         # So, we unpack and introspect
         suffix = path.suffix
 
+        context: Callable[[str], ContextManager[zipfile.ZipFile | tarfile.TarFile]]
         if suffix == ".zip":
             context = zipfile.ZipFile
         else:
@@ -285,8 +294,8 @@ class PackageInfo:
 
             context = tarfile.open
 
-        with temporary_directory() as tmp:
-            tmp = Path(tmp)
+        with temporary_directory() as tmp_str:
+            tmp = Path(tmp_str)
             with context(path.as_posix()) as archive:
                 archive.extractall(tmp.as_posix())
 
@@ -393,7 +402,7 @@ class PackageInfo:
         if path.suffix in {".dist-info", ".egg-info"}:
             directories = [path]
         else:
-            directories = cls._find_dist_info(path=path)
+            directories = list(cls._find_dist_info(path=path))
 
         for directory in directories:
             try:
@@ -450,76 +459,6 @@ class PackageInfo:
         return None
 
     @classmethod
-    def _pep517_metadata(cls, path: Path) -> PackageInfo:
-        """
-        Helper method to use PEP-517 library to build and read package metadata.
-
-        :param path: Path to package source to build and read metadata for.
-        """
-        info = None
-        try:
-            info = cls.from_setup_files(path)
-            if all([info.version, info.name, info.requires_dist]):
-                return info
-        except PackageInfoError:
-            pass
-
-        with ephemeral_environment(
-            with_pip=True, with_wheel=True, with_setuptools=True
-        ) as venv:
-            # TODO: cache PEP 517 build environment corresponding to each project venv
-            dest_dir = venv.path.parent / "dist"
-            dest_dir.mkdir()
-
-            pep517_meta_build_script = PEP517_META_BUILD.format(
-                source=path.as_posix(), dest=dest_dir.as_posix()
-            )
-
-            try:
-                venv.run_pip(
-                    "install",
-                    "--disable-pip-version-check",
-                    "--ignore-installed",
-                    *PEP517_META_BUILD_DEPS,
-                )
-                venv.run(
-                    "python",
-                    "-",
-                    input_=pep517_meta_build_script,
-                )
-                return cls.from_metadata(dest_dir)
-            except EnvCommandError as e:
-                # something went wrong while attempting pep517 metadata build
-                # fallback to egg_info if setup.py available
-                cls._log(f"PEP517 build failed: {e}", level="debug")
-                setup_py = path / "setup.py"
-                if not setup_py.exists():
-                    raise PackageInfoError(
-                        path,
-                        e,
-                        "No fallback setup.py file was found to generate egg_info.",
-                    )
-
-                cwd = Path.cwd()
-                os.chdir(path.as_posix())
-                try:
-                    venv.run("python", "setup.py", "egg_info")
-                    return cls.from_metadata(path)
-                except EnvCommandError as fbe:
-                    raise PackageInfoError(
-                        path, "Fallback egg_info generation failed.", fbe
-                    )
-                finally:
-                    os.chdir(cwd.as_posix())
-
-        if info:
-            cls._log(f"Falling back to parsed setup.py file for {path}", "debug")
-            return info
-
-        # if we reach here, everything has failed and all hope is lost
-        raise PackageInfoError(path, "Exhausted all core metadata sources.")
-
-    @classmethod
     def from_directory(cls, path: Path, disable_build: bool = False) -> PackageInfo:
         """
         Generate package information from a package source directory. If `disable_build`
@@ -532,6 +471,7 @@ class PackageInfo:
             build is attempted in order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
+        info: PackageInfo | None
         if project_package:
             info = cls.from_package(project_package)
         else:
@@ -542,13 +482,14 @@ class PackageInfo:
                     if disable_build:
                         info = cls.from_setup_files(path)
                     else:
-                        info = cls._pep517_metadata(path)
+                        info = get_pep517_metadata(path)
                 except PackageInfoError:
                     if not info:
                         raise
 
                     # we discovered PkgInfo but no requirements were listed
 
+        assert info
         info._source_type = "directory"
         info._source_url = path.as_posix()
 
@@ -609,3 +550,74 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
+
+
+@functools.lru_cache(maxsize=None)
+def get_pep517_metadata(path: Path) -> PackageInfo:
+    """
+    Helper method to use PEP-517 library to build and read package metadata.
+
+    :param path: Path to package source to build and read metadata for.
+    """
+    info = None
+    try:
+        info = PackageInfo.from_setup_files(path)
+        if all([info.version, info.name, info.requires_dist]):
+            return info
+    except PackageInfoError:
+        pass
+
+    with ephemeral_environment(
+        flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
+    ) as venv:
+        # TODO: cache PEP 517 build environment corresponding to each project venv
+        dest_dir = venv.path.parent / "dist"
+        dest_dir.mkdir()
+
+        pep517_meta_build_script = PEP517_META_BUILD.format(
+            source=path.as_posix(), dest=dest_dir.as_posix()
+        )
+
+        try:
+            venv.run_pip(
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                *PEP517_META_BUILD_DEPS,
+            )
+            venv.run(
+                "python",
+                "-",
+                input_=pep517_meta_build_script,
+            )
+            info = PackageInfo.from_metadata(dest_dir)
+        except EnvCommandError as e:
+            # something went wrong while attempting pep517 metadata build
+            # fallback to egg_info if setup.py available
+            logger.debug("PEP517 build failed: %s", e)
+            setup_py = path / "setup.py"
+            if not setup_py.exists():
+                raise PackageInfoError(
+                    path,
+                    e,
+                    "No fallback setup.py file was found to generate egg_info.",
+                )
+
+            cwd = Path.cwd()
+            os.chdir(path.as_posix())
+            try:
+                venv.run("python", "setup.py", "egg_info")
+                info = PackageInfo.from_metadata(path)
+            except EnvCommandError as fbe:
+                raise PackageInfoError(
+                    path, "Fallback egg_info generation failed.", fbe
+                )
+            finally:
+                os.chdir(cwd.as_posix())
+
+    if info:
+        logger.debug("Falling back to parsed setup.py file for %s", path)
+        return info
+
+    # if we reach here, everything has failed and all hope is lost
+    raise PackageInfoError(path, "Exhausted all core metadata sources.")

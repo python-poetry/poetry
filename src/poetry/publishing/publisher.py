@@ -69,14 +69,14 @@ class Publisher:
                     logger.debug(
                         f"Found authentication information for {repository_name}."
                     )
-                    username = auth["username"]
-                    password = auth["password"]
+                    username = auth.username
+                    password = auth.password
 
         resolved_client_cert = client_cert or get_client_cert(
             self._poetry.config, repository_name
         )
         # Requesting missing credentials but only if there is not a client cert defined.
-        if not resolved_client_cert:
+        if not resolved_client_cert and hasattr(self._io, "ask"):
             if username is None:
                 username = self._io.ask("Username:")
 

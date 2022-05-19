@@ -191,7 +191,7 @@ class SelfUpdateCommand(Command):
             root,
             NullLocker(self.data_dir.joinpath("poetry.lock"), {}),
             self.pool,
-            Config(),
+            config=Config.create(),
             installed=installed,
         )
         installer.update(True)

@@ -25,7 +25,7 @@ class SetupReader:
     FILES = ["setup.py", "setup.cfg"]
 
     @classmethod
-    def read_from_directory(cls, directory: str | Path) -> dict[str, list | dict]:
+    def read_from_directory(cls, directory: str | Path) -> dict[str, Any]:
         if isinstance(directory, str):
             directory = Path(directory)
 
@@ -44,7 +44,7 @@ class SetupReader:
 
         return result
 
-    def read_setup_py(self, filepath: str | Path) -> dict[str, list | dict]:
+    def read_setup_py(self, filepath: str | Path) -> dict[str, Any]:
         if isinstance(filepath, str):
             filepath = Path(filepath)
 

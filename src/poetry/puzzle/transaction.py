@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
-    from poetry.installation.operations import OperationTypes
+    from poetry.installation.operations.operation import Operation
 
 
 class Transaction:
@@ -28,12 +28,12 @@ class Transaction:
 
     def calculate_operations(
         self, with_uninstalls: bool = True, synchronize: bool = False
-    ) -> list[OperationTypes]:
-        from poetry.installation.operations.install import Install
-        from poetry.installation.operations.uninstall import Uninstall
-        from poetry.installation.operations.update import Update
+    ) -> list[Operation]:
+        from poetry.installation.operations import Install
+        from poetry.installation.operations import Uninstall
+        from poetry.installation.operations import Update
 
-        operations: list[OperationTypes] = []
+        operations: list[Operation] = []
 
         for result_package, priority in self._result_packages:
             installed = False
