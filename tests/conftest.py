@@ -190,7 +190,7 @@ def auth_config_source() -> DictConfigSource:
     return source
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def config(
     config_source: DictConfigSource,
     auth_config_source: DictConfigSource,
