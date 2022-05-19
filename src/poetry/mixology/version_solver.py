@@ -41,18 +41,26 @@ class DependencyCache:
 
     def __init__(self, provider: Provider) -> None:
         self.provider = provider
-        self.cache: dict[str, list[DependencyPackage]] = {}
+        self.cache: dict[
+            tuple[str, str | None, str | None, str | None], list[DependencyPackage]
+        ] = {}
 
     @functools.lru_cache(maxsize=128)
     def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
-        complete_name = dependency.complete_name
-        packages = self.cache.get(complete_name)
+        key = (
+            dependency.complete_name,
+            dependency.source_type,
+            dependency.source_url,
+            dependency.source_reference,
+        )
+
+        packages = self.cache.get(key)
         if packages is None:
             packages = self.provider.search_for(dependency)
         else:
             packages = [p for p in packages if dependency.constraint.allows(p.version)]
 
-        self.cache[complete_name] = packages
+        self.cache[key] = packages
 
         return packages
 

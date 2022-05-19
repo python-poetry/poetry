@@ -14,6 +14,7 @@ from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
 
 from poetry.factory import Factory
+from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import Provider as BaseProvider
@@ -32,7 +33,7 @@ from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRe
 if TYPE_CHECKING:
     import httpretty
 
-    from poetry.installation.operation.operation import Operation
+    from poetry.installation.operations.operation import Operation
     from poetry.puzzle.transaction import Transaction
 
 DEFAULT_SOURCE_REF = (
@@ -1334,6 +1335,67 @@ def test_solver_duplicate_dependencies_different_constraints_merge_by_marker(
             {"job": "install", "package": package_b20},
             {"job": "install", "package": package_a},
         ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
+    solver: Solver, repo: Repository, package: Package
+):
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+    repo.add_package(get_package("cleo", "1.0.0"))
+    repo.add_package(get_package("demo", "0.1.0"))
+
+    dependency_pypi = Factory.create_dependency("demo", ">=0.1.0")
+    dependency_git = Factory.create_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git"}, groups=["dev"]
+    )
+    package.add_dependency(dependency_git)
+    package.add_dependency(dependency_pypi)
+
+    demo = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference=DEFAULT_SOURCE_REF,
+        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+    )
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
+    )
+
+    op = ops[1]
+
+    assert op.package.source_type == demo.source_type
+    assert op.package.source_reference == DEFAULT_SOURCE_REF
+    assert op.package.source_resolved_reference.startswith(
+        demo.source_resolved_reference
+    )
+
+    complete_package = solver.provider.complete_package(
+        DependencyPackage(package.to_dependency(), package)
+    )
+
+    assert len(complete_package.all_requires) == 2
+
+    pypi, git = complete_package.all_requires
+
+    assert isinstance(pypi, Dependency)
+    assert pypi == dependency_pypi
+
+    assert isinstance(git, VCSDependency)
+    assert git.constraint
+    assert git.constraint != dependency_git.constraint
+    assert (git.name, git.source_type, git.source_url, git.source_reference) == (
+        dependency_git.name,
+        dependency_git.source_type,
+        dependency_git.source_url,
+        DEFAULT_SOURCE_REF,
     )
 
 
