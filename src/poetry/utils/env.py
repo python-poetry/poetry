@@ -1637,9 +1637,12 @@ class VirtualEnv(Env):
         ]
 
     def get_supported_tags(self) -> list[Tag]:
-        output = self.run_python_script(GET_SYS_TAGS)
+        if self.get_version_info() < (3, 0, 0):
+            raise NotImplementedError("Poetry does not support python 2.7 environments")
+        else:
+            output = self.run_python_script(GET_SYS_TAGS)
 
-        return [Tag(*t) for t in json.loads(output)]
+            return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
