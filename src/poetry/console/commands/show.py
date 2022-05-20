@@ -50,8 +50,8 @@ class ShowCommand(GroupCommand):
         option(
             "why",
             None,
-            "When showing the full list, or a `--tree` for a single package, start from"
-            " parents.",
+            "When showing the full list, or a <info>--tree</info> for a single package,"
+            " also display why it's included.",
         ),
         option("latest", "l", "Show the latest version."),
         option(
