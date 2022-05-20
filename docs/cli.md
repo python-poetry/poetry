@@ -297,6 +297,10 @@ present dependency you can use the special `latest` constraint:
 poetry add pendulum@latest
 ```
 
+{{% note %}}
+See the [Dependency specification]({{< relref "dependency-specification" >}}) for more information on setting the version constraints for a package.
+{{% /note %}}
+
 You can also add `git` dependencies:
 
 ```bash
