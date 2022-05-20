@@ -444,7 +444,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
-* `--why`: Include reverse dependencies where applicable.
+* `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--default`: Only include the main dependencies. (**Deprecated**)
@@ -456,6 +456,7 @@ required by
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
+
 
 ## build
 
