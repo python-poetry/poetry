@@ -34,7 +34,9 @@ def repository_two() -> str:
 
 @pytest.fixture
 def mock_caches(
-    repository_cache_dir: Path, repository_one: str, repository_two: str
+    repository_cache_dir: Path,
+    repository_one: str,
+    repository_two: str,
 ) -> None:
     (repository_cache_dir / repository_one).mkdir(parents=True)
     (repository_cache_dir / repository_two).mkdir(parents=True)
