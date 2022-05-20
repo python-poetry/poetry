@@ -912,7 +912,7 @@ class EnvManager:
             )
 
             for python_to_try in sorted(
-                self._poetry.package.AVAILABLE_PYTHONS,
+                self._poetry.package.AVAILABLE_PYTHONS - {"2", "2.7"},
                 key=lambda v: (v.startswith("3"), -len(v), v),
                 reverse=True,
             ):
@@ -975,7 +975,7 @@ class EnvManager:
                 )
 
                 return self.get_system_env()
-
+            # todo: this MF
             io.write_line(f"Creating virtualenv <c1>{name}</> in {venv_path!s}")
         else:
             create_venv = False
@@ -1641,11 +1641,14 @@ class VirtualEnv(Env):
 
     def get_supported_tags(self) -> list[Tag]:
         if self.get_version_info() < (3, 0, 0):
-            raise PoetryException("Poetry does not support python 2.7 environments")
-        else:
-            output = self.run_python_script(GET_SYS_TAGS)
+            error_message = """
+            Poetry no longer supports Python 2.7 environments.
 
-            return [Tag(*t) for t in json.loads(output)]
+            """
+            raise PoetryException(error_message)
+
+        output = self.run_python_script(GET_SYS_TAGS)
+        return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
