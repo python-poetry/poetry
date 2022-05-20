@@ -127,17 +127,17 @@ class Term:
                 negative = other if self.is_positive() else self
 
                 return self._non_empty_term(
-                    positive.constraint.difference(negative.constraint), True
+                    positive.constraint.difference(negative.constraint), True, other
                 )
             elif self.is_positive():
                 # foo ^1.0.0 ∩ foo >=1.5.0 <3.0.0 → foo ^1.5.0
                 return self._non_empty_term(
-                    self.constraint.intersect(other.constraint), True
+                    self.constraint.intersect(other.constraint), True, other
                 )
             else:
                 # not foo ^1.0.0 ∩ not foo >=1.5.0 <3.0.0 → not foo >=1.0.0 <3.0.0
                 return self._non_empty_term(
-                    self.constraint.union(other.constraint), False
+                    self.constraint.union(other.constraint), False, other
                 )
         elif self.is_positive() != other.is_positive():
             return self if self.is_positive() else other
@@ -151,21 +151,42 @@ class Term:
         """
         return self.intersect(other.inverse)
 
+    @staticmethod
+    def _is_direct_origin(dependency: Dependency) -> bool:
+        return dependency.source_type in ["directory", "file", "url", "git"]
+
     def _compatible_dependency(self, other: Dependency) -> bool:
-        compatible: bool = (
+        return (
             self.dependency.is_root
             or other.is_root
             or other.is_same_package_as(self.dependency)
+            or (
+                # we do this here to indicate direct origin dependencies are
+                # compatible with NVR dependencies
+                self.dependency.complete_name == other.complete_name
+                and self._is_direct_origin(self.dependency)
+                != self._is_direct_origin(other)
+                and (
+                    self.dependency.constraint.allows_all(other.constraint)
+                    or other.constraint.allows_all(self.dependency.constraint)
+                )
+            )
         )
-        return compatible
 
     def _non_empty_term(
-        self, constraint: VersionConstraint, is_positive: bool
+        self, constraint: VersionConstraint, is_positive: bool, other: Term
     ) -> Term | None:
         if constraint.is_empty():
             return None
 
-        return Term(self.dependency.with_constraint(constraint), is_positive)
+        # when creating a new term prefer direct-reference dependencies
+        dependency = (
+            other.dependency
+            if not self._is_direct_origin(self.dependency)
+            and self._is_direct_origin(other.dependency)
+            else self.dependency
+        )
+        return Term(dependency.with_constraint(constraint), is_positive)
 
     def __str__(self) -> str:
         prefix = "not " if not self.is_positive() else ""

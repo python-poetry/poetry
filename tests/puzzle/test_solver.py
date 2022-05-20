@@ -22,6 +22,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.utils.env import MockEnv
+from tests.compat import is_poetry_core_1_1_0a7_compat
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -1383,7 +1384,10 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
 
     assert len(complete_package.all_requires) == 2
 
-    pypi, git = complete_package.all_requires
+    if is_poetry_core_1_1_0a7_compat:
+        pypi, git = complete_package.all_requires
+    else:
+        git, pypi = complete_package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi
