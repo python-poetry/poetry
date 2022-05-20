@@ -58,8 +58,8 @@ def mock_caches(
     cache: CacheManager,
 ) -> None:
     (repository_cache_dir / repository).mkdir()
-    cache.remember_forever(f"cachy:0.1", lambda: {"name": "cachy", "version": "0.1"})
-    cache.remember_forever(f"cleo:0.2", lambda: {"name": "cleo", "version": "0.2"})
+    cache.remember_forever("cachy:0.1", lambda: {"name": "cachy", "version": "0.1"})
+    cache.remember_forever("cleo:0.2", lambda: {"name": "cleo", "version": "0.2"})
 
 
 @pytest.fixture
