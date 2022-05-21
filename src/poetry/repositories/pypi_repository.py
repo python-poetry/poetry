@@ -106,20 +106,33 @@ class PyPiRepository(HTTPRepository):
         response = requests.session().get(self._base_url + "search", params=search)
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
-            name = result.find("h3/*[@class='package-snippet__name']").text
-            version = result.find("h3/*[@class='package-snippet__version']").text
+            name_element = result.find("h3/*[@class='package-snippet__name']")
+            version_element = result.find("h3/*[@class='package-snippet__version']")
 
-            if not name or not version:
+            if (
+                name_element is None
+                or version_element is None
+                or not name_element.text
+                or not version_element.text
+            ):
                 continue
 
-            description = result.find("p[@class='package-snippet__description']").text
-            if not description:
-                description = ""
+            name = name_element.text
+            version = version_element.text
+
+            description_element = result.find(
+                "p[@class='package-snippet__description']"
+            )
+            description = (
+                description_element.text
+                if description_element is not None and description_element.text
+                else ""
+            )
 
             try:
-                result = Package(name, version, description)
-                result.description = to_str(description.strip())
-                results.append(result)
+                package = Package(name, version)
+                package.description = to_str(description.strip())
+                results.append(package)
             except InvalidVersion:
                 self._log(
                     f'Unable to parse version "{version}" for the {name} package,'
