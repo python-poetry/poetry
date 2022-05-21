@@ -384,7 +384,7 @@ class Authenticator:
             logger.debug(
                 "Multiple source configurations found for %s - %s",
                 parsed_url.netloc,
-                ", ".join(map(lambda c: c.name, candidates)),
+                ", ".join(c.name for c in candidates),
             )
             # prefer the more specific path
             candidates.sort(
