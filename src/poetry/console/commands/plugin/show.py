@@ -47,6 +47,7 @@ class PluginShowCommand(Command):
             if issubclass(plugin, ApplicationPlugin):
                 category = "application_plugins"
 
+            assert entry_point.distro is not None
             package = packages_by_name[canonicalize_name(entry_point.distro.name)]
             plugins[package.pretty_name]["package"] = package
             plugins[package.pretty_name][category].append(entry_point)
