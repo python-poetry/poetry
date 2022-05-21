@@ -565,7 +565,7 @@ The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
 {{% note %}}
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -586,7 +586,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 {{% note %}}
 By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-lock">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -644,7 +644,7 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
-and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+and is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
 {{% note %}}

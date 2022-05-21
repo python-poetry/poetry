@@ -190,9 +190,14 @@ for a dependency as shown here.
 gunicorn = { version = "^20.1", extras = ["gevent"] }
 ```
 
+{{% note %}}
+These activate extra defined for the dependency, to configure an optional dependency
+for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
+{{% /note %}}
+
 ## `source` dependencies
 
-To depend on a package from an [alternate repository](/docs/repositories/#install-dependencies-from-a-private-repository),
+To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
 you can use the `source` property:
 
 ```toml

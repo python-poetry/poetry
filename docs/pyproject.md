@@ -236,7 +236,7 @@ The globs specified in the exclude field identify a set of files that are not in
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
 
 {{% note %}}
-Implicitly declaring entries in `include` will negate VCS' ignore settings.
+Explicitly declaring entries in `include` will negate VCS' ignore settings.
 {{% /note %}}
 
 ```toml

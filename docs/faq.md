@@ -104,7 +104,7 @@ The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with
 ```
 
 Usually you will want to match the Python requirement of your project with the upper bound of the failing dependency.
-Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions](/docs/dependency-specification/#multiple-constraints-dependencies),
+Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
 
 
