@@ -731,6 +731,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-html5lib"
+version = "1.1.7"
+description = "Typing stubs for html5lib"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-requests"
 version = "2.27.26"
 description = "Typing stubs for requests"
@@ -812,7 +820,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "de4d886bc0dfaf7a2cbc42d82147bbcb9490b1f13f1e7abada8c824f1e592a2a"
+content-hash = "58010109be37f846df33e17737ed95a64df555288aabf96c3089fd0d58cc6872"
 
 [metadata.files]
 atomicwrites = [
@@ -1278,6 +1286,10 @@ typed-ast = [
 types-entrypoints = [
     {file = "types-entrypoints-0.3.7.tar.gz", hash = "sha256:3d002ba32fc2c7fb44f65228fb912969a495cb4aa4ae63e05152f4304bc9bba2"},
     {file = "types_entrypoints-0.3.7-py3-none-any.whl", hash = "sha256:06aea9245f25b7b335ef0c3e8e4cc422b1f7c2cc47ae11f9a000a0a15d8ea6aa"},
+]
+types-html5lib = [
+    {file = "types-html5lib-1.1.7.tar.gz", hash = "sha256:fdb307102ceea52adf52aea0e10255d142ee29d7f169014144a730707a92066a"},
+    {file = "types_html5lib-1.1.7-py3-none-any.whl", hash = "sha256:4bc5a1de03b9a697b7cc04b0d03eeed5d36c0073165dd9dc54f2f43d0f23b31f"},
 ]
 types-requests = [
     {file = "types-requests-2.27.26.tar.gz", hash = "sha256:a6a04c0274c0949fd0525f35d8b53ac34e77afecbeb3c4932ddc6ce675ac009c"},
