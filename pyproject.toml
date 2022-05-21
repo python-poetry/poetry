@@ -115,18 +115,6 @@ enable_error_code = [
     "truthy-bool",
 ]
 
-# The following whitelist is used to allow for incremental adoption
-# of Mypy. Modules should be removed from this whitelist as and when
-# their respective type errors have been addressed. No new modules
-# should be added to this whitelist.
-# see https://github.com/python-poetry/poetry/pull/4510.
-
-[[tool.mypy.overrides]]
-module = [
-  'poetry.utils.env',
-]
-ignore_errors = true
-
 # use of importlib-metadata backport at python3.7 makes it impossible to
 # satisfy mypy without some ignores: but we get a different set of ignores at
 # different python versions.
@@ -152,6 +140,7 @@ module = [
   'poetry.core.*',
   'requests_toolbelt.*',
   'shellingham.*',
+  'virtualenv.*',
 ]
 ignore_missing_imports = true
 
