@@ -166,10 +166,6 @@ class Term:
                 self.dependency.complete_name == other.complete_name
                 and self._is_direct_origin(self.dependency)
                 != self._is_direct_origin(other)
-                and (
-                    self.dependency.constraint.allows_all(other.constraint)
-                    or other.constraint.allows_all(self.dependency.constraint)
-                )
             )
         )
 
