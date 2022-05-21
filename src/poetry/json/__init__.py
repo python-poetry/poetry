@@ -17,12 +17,12 @@ class ValidationError(ValueError):
 
 
 def validate_object(obj: dict[str, Any], schema_name: str) -> list[str]:
-    schema = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
+    schema_file = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
 
-    if not os.path.exists(schema):
+    if not os.path.exists(schema_file):
         raise ValueError(f"Schema {schema_name} does not exist.")
 
-    with open(schema, encoding="utf-8") as f:
+    with open(schema_file, encoding="utf-8") as f:
         schema = json.loads(f.read())
 
     validator = jsonschema.Draft7Validator(schema)

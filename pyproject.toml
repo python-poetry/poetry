@@ -74,6 +74,7 @@ flatdict = "^4.0.1"
 mypy = ">=0.950"
 types-entrypoints = ">=0.3.7"
 types-html5lib = ">=1.1.7"
+types-jsonschema = ">=4.4.4"
 types-requests = ">=2.27.11"
 
 [tool.poetry.scripts]
@@ -141,7 +142,6 @@ module = [
   'cachy.*',
   'cleo.*',
   'crashtest.*',
-  'jsonschema.*',
   'pexpect.*',
   'pkginfo.*',
   'poetry.core.*',
