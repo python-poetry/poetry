@@ -120,8 +120,9 @@ enable_error_code = ["ignore-without-code"]
 [[tool.mypy.overrides]]
 module = [
   'poetry.installation.executor',
-  'poetry.repositories.installed_repository',
   'poetry.mixology.version_solver',
+  'poetry.repositories.installed_repository',
+  'poetry.utils.env',
 ]
 warn_unused_ignores = false
 

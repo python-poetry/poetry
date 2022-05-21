@@ -308,7 +308,10 @@ class SitePackages:
             )
         )
 
-        yield from metadata.PathDistribution.discover(name=name, path=path)
+        yield from metadata.PathDistribution.discover(  # type: ignore[no-untyped-call]
+            name=name,
+            path=path,
+        )
 
     def find_distribution(
         self, name: str, writable_only: bool = False
@@ -326,7 +329,9 @@ class SitePackages:
             assert distribution.files is not None
             for file in distribution.files:
                 if file.name.endswith(suffix):
-                    yield Path(distribution.locate_file(file))
+                    yield Path(
+                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
+                    )
 
     def find_distribution_files_with_name(
         self, distribution_name: str, name: str, writable_only: bool = False
@@ -337,7 +342,9 @@ class SitePackages:
             assert distribution.files is not None
             for file in distribution.files:
                 if file.name == name:
-                    yield Path(distribution.locate_file(file))
+                    yield Path(
+                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
+                    )
 
     def find_distribution_nspkg_pth_files(
         self, distribution_name: str, writable_only: bool = False
@@ -365,7 +372,9 @@ class SitePackages:
         ):
             assert distribution.files is not None
             for file in distribution.files:
-                path = Path(distribution.locate_file(file))
+                path = Path(
+                    distribution.locate_file(file),  # type: ignore[no-untyped-call]
+                )
                 # We can't use unlink(missing_ok=True) because it's not always available
                 if path.exists():
                     path.unlink()
@@ -883,6 +892,7 @@ class EnvManager:
 
         if not name:
             name = self._poetry.package.name
+        assert name is not None
 
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
@@ -1395,7 +1405,8 @@ class Env:
         raise NotImplementedError()
 
     def is_valid_for_marker(self, marker: BaseMarker) -> bool:
-        return marker.validate(self.marker_env)
+        valid: bool = marker.validate(self.marker_env)
+        return valid
 
     def is_sane(self) -> bool:
         """
