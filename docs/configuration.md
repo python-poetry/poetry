@@ -205,8 +205,8 @@ If set to `false`, poetry will install dependencies into the current python envi
 Create the virtualenv inside the project's root directory.
 Defaults to `None`.
 
-If not set explicitly (default), `poetry` will create virtual environment in
-`{cache-dir}/virtualenvs` or use the `.venv` directory when one is available.
+If not set explicitly, `poetry` by default will create virtual environment under
+`{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory when one is available.
 
 If set to `true`, the virtualenv will be created and expected in a folder named
 `.venv` within the root directory of the project.
