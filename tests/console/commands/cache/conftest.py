@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 
 from pathlib import Path
@@ -5,12 +7,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from _pytest.monkeypatch import MonkeyPatch
 from cachy import CacheManager
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from _pytest.monkeypatch import MonkeyPatch
 
 
 @pytest.fixture
