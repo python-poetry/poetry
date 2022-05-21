@@ -739,6 +739,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-jsonschema"
+version = "4.4.4"
+description = "Typing stubs for jsonschema"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-requests"
 version = "2.27.26"
 description = "Typing stubs for requests"
@@ -820,7 +828,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "58010109be37f846df33e17737ed95a64df555288aabf96c3089fd0d58cc6872"
+content-hash = "35d68e6eba695382502b1b6faab833606823a2e0cadc1b96137059f1e343e1ad"
 
 [metadata.files]
 atomicwrites = [
@@ -1290,6 +1298,10 @@ types-entrypoints = [
 types-html5lib = [
     {file = "types-html5lib-1.1.7.tar.gz", hash = "sha256:fdb307102ceea52adf52aea0e10255d142ee29d7f169014144a730707a92066a"},
     {file = "types_html5lib-1.1.7-py3-none-any.whl", hash = "sha256:4bc5a1de03b9a697b7cc04b0d03eeed5d36c0073165dd9dc54f2f43d0f23b31f"},
+]
+types-jsonschema = [
+    {file = "types-jsonschema-4.4.4.tar.gz", hash = "sha256:d03f0c1a97ff06dda9535dfa51916a98f38bf40d6828ef4d93bc40708effe507"},
+    {file = "types_jsonschema-4.4.4-py3-none-any.whl", hash = "sha256:294d2de9ea3564fbec6c56153e84d1f3f7d9b2ada36e183d88a63c126da7bc3d"},
 ]
 types-requests = [
     {file = "types-requests-2.27.26.tar.gz", hash = "sha256:a6a04c0274c0949fd0525f35d8b53ac34e77afecbeb3c4932ddc6ce675ac009c"},
