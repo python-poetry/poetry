@@ -148,7 +148,6 @@ module = [
   'crashtest.*',
   'pexpect.*',
   'pkginfo.*',
-  'poetry.core.*',
   'requests_toolbelt.*',
   'shellingham.*',
   'virtualenv.*',
