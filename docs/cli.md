@@ -452,6 +452,7 @@ required by
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--all (-a)`: Show all packages (even those not compatible with current system).
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -490,6 +491,9 @@ It can also build the package if you pass it the `--build` option.
 Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
+* `--cert`: Certificate authority to access the repository.
+* `--client-cert`: Client certificate to access the repository.
+* `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
 
@@ -742,6 +746,10 @@ The `plugin remove` command removes installed plugins.
 ```bash
 poetry plugin remove poetry-plugin
 ```
+
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 ## source
 
