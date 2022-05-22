@@ -46,9 +46,7 @@ class Pool(Repository):
         return self._has_primary_repositories
 
     def has_repository(self, name: str) -> bool:
-        name = name.lower() if name is not None else None
-
-        return name in self._lookup
+        return name.lower() in self._lookup
 
     def repository(self, name: str) -> Repository:
         if name is not None:
