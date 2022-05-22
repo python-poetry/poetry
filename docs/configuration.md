@@ -33,7 +33,9 @@ poetry config virtualenvs.create false --local
 {{% note %}}
 Your local configuration of Poetry application is stored in `poetry.toml` file,
 which is separate from `pyproject.toml`.
-You should not check-in this file into your repository.
+
+It is recommended you do not check-in this file into your repository
+since it may contain user specific or sensitive information.
 {{% /note %}}
 
 ## Listing the current configuration
