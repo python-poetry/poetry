@@ -556,7 +556,7 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
-Note that this commmand starts a new shell and activates the virtual environment.
+Note that this command starts a new shell and activates the virtual environment.
 
 As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
 
