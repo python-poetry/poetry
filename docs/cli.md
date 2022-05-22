@@ -806,7 +806,7 @@ poetry source remove pypi-test
 
 ## about
 
-The `about` command displays global information about Poetry, including the version and version of `poetry-core`.
+The `about` command displays global information about Poetry, including the current version and version of `poetry-core`.
 
 ```bash
 poetry about
