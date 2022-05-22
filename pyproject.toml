@@ -109,7 +109,10 @@ force-exclude = '''
 files = "src"
 show_error_codes = true
 strict = true
-enable_error_code = ["ignore-without-code"]
+enable_error_code = [
+    "ignore-without-code",
+    "truthy-bool",
+]
 
 # The following whitelist is used to allow for incremental adoption
 # of Mypy. Modules should be removed from this whitelist as and when
