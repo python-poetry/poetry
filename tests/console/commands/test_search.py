@@ -96,9 +96,6 @@ sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
 """
 
-    # TODO remove this when https://github.com/python-poetry/poetry-core/pull/328
-    # reaches a published version of poetry-core.
     output = tester.io.fetch_output()
-    output = output.replace("transmogrify.sqlalchemy", "transmogrify-sqlalchemy")
 
     assert output == expected
