@@ -260,7 +260,7 @@ exclude = ["my_package/excluded.py"]
 
 ## dependencies and dependency groups
 
-Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
+Poetry is configured to look for dependencies on [PyPI](https://pypi.org) by default.
 Only the name and a version string are required in this case.
 
 ```toml
