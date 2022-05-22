@@ -418,7 +418,7 @@ You can specify a package in the following forms:
         return [
             parse_dependency_specification(
                 requirement=requirement,
-                env=self.env if isinstance(self, EnvCommand) and self.env else None,
+                env=self.env if isinstance(self, EnvCommand) else None,
                 cwd=cwd,
             )
             for requirement in requirements
