@@ -6,6 +6,8 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from tomlkit.toml_document import TOMLDocument
 
+from poetry.utils.helpers import canonicalize_name
+
 
 try:
     from poetry.core.packages.dependency_group import MAIN_GROUP
@@ -129,7 +131,7 @@ list of installed packages
 
         for package in packages:
             for existing_package in section_keys:
-                if existing_package.lower() == package.lower():
+                if canonicalize_name(existing_package) == canonicalize_name(package):
                     del section[existing_package]
                     removed.append(package)
                     group.remove_dependency(package)
