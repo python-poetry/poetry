@@ -9,6 +9,8 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from tomlkit.toml_document import TOMLDocument
 
+from poetry.utils.helpers import canonicalize_name
+
 
 try:
     from poetry.core.packages.dependency_group import MAIN_GROUP
@@ -268,7 +270,7 @@ You can specify a package in the following forms:
 
         for name in packages:
             for key in section:
-                if key.lower() == name.lower():
+                if canonicalize_name(key) == canonicalize_name(name):
                     existing_packages.append(name)
 
         return existing_packages
