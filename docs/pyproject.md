@@ -108,7 +108,7 @@ maintainers = [
 # Multiple maintainers
 maintainers = [
     "Richard Brave <richardbrave@example.org>",
-    "Amira Fens <amirafens@example.org>"
+    "Amira Fens <amirafens@example.org>",
 ]
 ```
 
