@@ -803,3 +803,45 @@ The `source remove` command removes a configured source from your `pyproject.tom
 ```bash
 poetry source remove pypi-test
 ```
+
+## about
+
+The `about` command displays global information about Poetry, including the version and version of `poetry-core`.
+
+```bash
+poetry about
+```
+
+## help
+
+The `help` command displays global help, or help for a specific command.
+
+To display global help:
+
+```bash
+poetry help
+```
+
+To display help for a specific command, for instance `show`:
+
+```bash
+poetry help show
+```
+
+{{% note %}}
+The `--help` option can also be passed to any command to get help for a specific command.
+
+For instance:
+
+```bash
+poetry show --help
+```
+{{% /note %}}
+
+## list
+
+The `list` command displays all the available Poetry commands.
+
+```bash
+poetry list
+```
