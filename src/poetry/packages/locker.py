@@ -24,6 +24,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
+from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
@@ -398,6 +399,7 @@ class Locker:
             del package["files"]
 
         lock = document()
+        lock.add(comment("@" + "generated"))
         lock["package"] = package_specs
 
         if root.extras:

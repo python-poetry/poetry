@@ -82,6 +82,8 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         content = f.read()
 
     expected = """\
+# @generated
+
 [[package]]
 name = "A"
 version = "1.0.0"
@@ -216,6 +218,8 @@ cachecontrol = []
 
 def test_locker_properly_loads_nested_extras(locker: Locker):
     content = """\
+# @generated
+
 [[package]]
 name = "a"
 version = "1.0"
@@ -296,6 +300,8 @@ content-hash = "123456789"
 
 def test_locker_properly_loads_extras_legacy(locker: Locker):
     content = """\
+# @generated
+
 [[package]]
 name = "a"
 version = "1.0"
@@ -353,7 +359,10 @@ def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackag
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """[[package]]
+    expected = """\
+# @generated
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -384,7 +393,10 @@ def test_lock_file_should_not_have_mixed_types(locker: Locker, root: ProjectPack
 
     locker.set_lock_data(root, [package_a])
 
-    expected = """[[package]]
+    expected = """\
+# @generated
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -417,7 +429,10 @@ A = []
 
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker: Locker):
-    content = """[[package]]
+    content = """\
+# @generated
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -465,7 +480,10 @@ def test_locking_legacy_repository_package_should_include_source_section(
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """[[package]]
+    expected = """\
+# @generated
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -553,7 +571,10 @@ def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
 
     locker.set_lock_data(root, [package_a])
 
-    expected = """[[package]]
+    expected = """\
+# @generated
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -643,7 +664,9 @@ def test_locker_dumps_dependency_information_correctly(
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """[[package]]
+    expected = """# @generated
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -674,6 +697,8 @@ def test_locked_repository_uses_root_dir_of_package(
     locker: Locker, mocker: MockerFixture
 ):
     content = """\
+# @generated
+
 [[package]]
 name = "lib-a"
 version = "0.1.0"
