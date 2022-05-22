@@ -211,7 +211,7 @@ class Authenticator:
                     raise e
             else:
                 if resp.status_code not in [502, 503, 504] or is_last_attempt:
-                    if resp.status_code is not None and raise_for_status:
+                    if raise_for_status:
                         resp.raise_for_status()
                     return resp
 
