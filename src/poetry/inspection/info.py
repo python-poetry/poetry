@@ -424,10 +424,7 @@ class PackageInfo:
             except ValueError:
                 return None
 
-        info = cls._from_distribution(dist=dist)
-        if info:
-            return info
-        return None
+        return cls._from_distribution(dist=dist)
 
     @classmethod
     def from_package(cls, package: Package) -> PackageInfo:
@@ -491,7 +488,6 @@ class PackageInfo:
 
                     # we discovered PkgInfo but no requirements were listed
 
-        assert info
         info._source_type = "directory"
         info._source_url = path.as_posix()
 
