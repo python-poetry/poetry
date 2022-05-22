@@ -119,6 +119,12 @@ test-O3eWbxRl-py3.6
 test-O3eWbxRl-py3.7 (Activated)
 ```
 
+You can pass the option `--full-path` to display the full path to the environments:
+
+```bash
+poetry env list --full-path
+```
+
 ## Deleting the environments
 
 Finally, you can delete existing virtual environments by using `env remove`:
