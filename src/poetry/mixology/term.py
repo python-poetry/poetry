@@ -23,6 +23,8 @@ class Term:
     def __init__(self, dependency: Dependency, is_positive: bool) -> None:
         self._dependency = dependency
         self._positive = is_positive
+        self.relation = functools.lru_cache(maxsize=None)(self._relation)
+        self.intersect = functools.lru_cache(maxsize=None)(self._intersect)
 
     @property
     def inverse(self) -> Term:
@@ -48,8 +50,7 @@ class Term:
             and self.relation(other) == SetRelation.SUBSET
         )
 
-    @functools.lru_cache(maxsize=None)
-    def relation(self, other: Term) -> str:
+    def _relation(self, other: Term) -> str:
         """
         Returns the relationship between the package versions
         allowed by this term and another.
@@ -111,8 +112,7 @@ class Term:
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
-    @functools.lru_cache(maxsize=None)
-    def intersect(self, other: Term) -> Term | None:
+    def _intersect(self, other: Term) -> Term | None:
         """
         Returns a Term that represents the packages
         allowed by both this term and another

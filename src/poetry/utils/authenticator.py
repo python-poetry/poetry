@@ -104,6 +104,9 @@ class Authenticator:
             if not disable_cache
             else None
         )
+        self.get_repository_config_for_url = functools.lru_cache(maxsize=None)(
+            self._get_repository_config_for_url
+        )
 
     @property
     def cache(self) -> FileCache | None:
@@ -351,8 +354,7 @@ class Authenticator:
             self._certs[url] = self._get_certs_for_url(url)
         return self._certs[url]
 
-    @functools.lru_cache(maxsize=None)
-    def get_repository_config_for_url(
+    def _get_repository_config_for_url(
         self, url: str, exact_match: bool = False
     ) -> AuthenticatorRepositoryConfig | None:
         parsed_url = urllib.parse.urlsplit(url)
@@ -384,7 +386,7 @@ class Authenticator:
             logger.debug(
                 "Multiple source configurations found for %s - %s",
                 parsed_url.netloc,
-                ", ".join(map(lambda c: c.name, candidates)),
+                ", ".join(c.name for c in candidates),
             )
             # prefer the more specific path
             candidates.sort(
