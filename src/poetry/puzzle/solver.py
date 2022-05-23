@@ -141,7 +141,7 @@ class Solver:
             )
         for dependency_packages in locked.values():
             dependency_packages.sort(
-                key=lambda p: p.package.version,  # type: ignore[no-any-return]
+                key=lambda p: p.package.version,
                 reverse=True,
             )
 
