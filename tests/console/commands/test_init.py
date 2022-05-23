@@ -788,6 +788,7 @@ def test_add_package_with_extras_and_whitespace(tester: CommandTester):
     assert "sqlite" in result[0]["extras"]
 
 
+@pytest.mark.xfail(sys.platform == "win32", reason="regression in tomlkit")
 def test_init_existing_pyproject_simple(
     tester: CommandTester,
     source_dir: Path,
@@ -804,6 +805,7 @@ line-length = 88
     assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
 
+@pytest.mark.xfail(sys.platform == "win32", reason="regression in tomlkit")
 def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
