@@ -289,7 +289,7 @@ class SitePackages:
                 f"{path} is not relative to any discovered {site_type}sites"
             )
 
-        results = [candidate / path for candidate in candidates if candidate]
+        results = [candidate / path for candidate in candidates]
 
         if not results and strict:
             raise RuntimeError(

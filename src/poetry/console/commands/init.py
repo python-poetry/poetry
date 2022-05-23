@@ -126,7 +126,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         description = self.ask(question)
 
         author = self.option("author")
-        if not author and vcs_config and vcs_config.get("user.name"):
+        if not author and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:

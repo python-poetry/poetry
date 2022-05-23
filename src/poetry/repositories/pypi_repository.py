@@ -88,7 +88,7 @@ class PyPiRepository(HTTPRepository):
                     ignored_pre_release_packages.append(package)
                 continue
 
-            if not constraint or (constraint and constraint.allows(package.version)):
+            if constraint.allows(package.version):
                 packages.append(package)
 
         self._log(
