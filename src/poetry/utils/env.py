@@ -34,7 +34,6 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
-from poetry.locations import CACHE_DIR
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
@@ -554,7 +553,7 @@ class EnvManager:
     def activate(self, python: str, io: IO) -> Env:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -647,7 +646,7 @@ class EnvManager:
     def deactivate(self, io: IO) -> None:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -673,7 +672,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -714,7 +713,7 @@ class EnvManager:
 
             venv_path = self._poetry.config.get("virtualenvs.path")
             if venv_path is None:
-                venv_path = CACHE_DIR / "virtualenvs"
+                venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
             else:
                 venv_path = Path(venv_path)
 
@@ -744,7 +743,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -764,7 +763,7 @@ class EnvManager:
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -887,7 +886,7 @@ class EnvManager:
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 

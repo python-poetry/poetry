@@ -13,10 +13,13 @@ from platformdirs import user_data_path
 
 logger = logging.getLogger(__name__)
 
-CACHE_DIR = user_cache_path("pypoetry", appauthor=False)
-CONFIG_DIR = user_config_path("pypoetry", appauthor=False, roaming=True)
+_APP_NAME = "pypoetry"
 
-REPOSITORY_CACHE_DIR = CACHE_DIR / "cache" / "repositories"
+DEFAULT_CACHE_DIR = user_cache_path(_APP_NAME, appauthor=False)
+CONFIG_DIR = Path(
+    os.getenv("POETRY_CONFIG_DIR")
+    or user_config_path(_APP_NAME, appauthor=False, roaming=True)
+)
 
 # platformdirs 2.0.0 corrected the OSX/macOS config directory from
 # /Users/<user>/Library/Application Support/<appname> to
@@ -24,7 +27,7 @@ REPOSITORY_CACHE_DIR = CACHE_DIR / "cache" / "repositories"
 #
 # For now we only deprecate use of the old directory.
 if sys.platform == "darwin":
-    _LEGACY_CONFIG_DIR = CONFIG_DIR.parent.parent / "Application Support" / "pypoetry"
+    _LEGACY_CONFIG_DIR = CONFIG_DIR.parent.parent / "Application Support" / _APP_NAME
     config_toml = _LEGACY_CONFIG_DIR / "config.toml"
     auth_toml = _LEGACY_CONFIG_DIR / "auth.toml"
 
@@ -44,4 +47,4 @@ def data_dir() -> Path:
     if poetry_home:
         return Path(poetry_home).expanduser()
 
-    return user_data_path("pypoetry", appauthor=False, roaming=True)
+    return user_data_path(_APP_NAME, appauthor=False, roaming=True)

@@ -41,7 +41,7 @@ class HTTPRepository(CachedRepository, ABC):
         config: Config | None = None,
         disable_cache: bool = False,
     ) -> None:
-        super().__init__(name, disable_cache)
+        super().__init__(name, disable_cache, config)
         self._url = url
         self._authenticator = Authenticator(
             config=config,
