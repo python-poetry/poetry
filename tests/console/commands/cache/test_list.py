@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
     from cleo.testers.command_tester import CommandTester
 
-    from tests.conftest import Config
     from tests.types import CommandTesterFactory
 
 
