@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.core.semver.version import Version
 
 from poetry.installation.base_installer import BaseInstaller
 from poetry.repositories.http import HTTPRepository
@@ -20,6 +21,7 @@ from poetry.utils.pip import pip_install
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
     from poetry.repositories.pool import Pool
@@ -49,9 +51,11 @@ class PipInstaller(BaseInstaller):
             package.source_type not in {"git", "directory", "file", "url"}
             and package.source_url
         ):
+            assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
             parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
+                assert parsed.hostname is not None
                 self._io.write_error(
                     "    <warning>Installing from unsecure host:"
                     f" {parsed.hostname}</warning>"
@@ -156,6 +160,7 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type in ["file", "directory"]:
+            assert package.source_url is not None
             if package.root_dir:
                 req = (package.root_dir / package.source_url).as_posix()
             else:
@@ -200,10 +205,9 @@ class PipInstaller(BaseInstaller):
 
         from poetry.factory import Factory
 
-        req: Path
-
+        assert package.source_url is not None
         if package.root_dir:
-            req = (package.root_dir / package.source_url).as_posix()
+            req = package.root_dir / package.source_url
         else:
             req = Path(package.source_url).resolve(strict=False)
 
@@ -214,11 +218,10 @@ class PipInstaller(BaseInstaller):
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
-            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
-                19, 0, 0
-            )
+            legacy_pip = self._env.pip_version < Version.from_parts(19, 0, 0)
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
+            builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
 
@@ -261,6 +264,7 @@ class PipInstaller(BaseInstaller):
 
         from poetry.vcs.git import Git
 
+        assert package.source_url is not None
         source = Git.clone(
             url=package.source_url,
             source_root=self._env.path / "src",

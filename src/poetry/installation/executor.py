@@ -36,6 +36,7 @@ from poetry.utils.pip import pip_install
 if TYPE_CHECKING:
     from cleo.io.io import IO
     from cleo.io.outputs.section_output import SectionOutput
+    from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
@@ -462,9 +463,11 @@ class Executor:
         if package.source_type == "git":
             return self._install_git(operation)
 
+        archive: Link | Path
         if package.source_type == "file":
             archive = self._prepare_file(operation)
         elif package.source_type == "url":
+            assert package.source_url is not None
             archive = self._download_link(operation, Link(package.source_url))
         else:
             archive = self._download(operation)
@@ -507,6 +510,7 @@ class Executor:
         )
         self._write(operation, message)
 
+        assert package.source_url is not None
         archive = Path(package.source_url)
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
@@ -527,6 +531,7 @@ class Executor:
         )
         self._write(operation, message)
 
+        assert package.source_url is not None
         if package.root_dir:
             req = package.root_dir / package.source_url
         else:
@@ -545,6 +550,7 @@ class Executor:
             )
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
+            builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
 
@@ -585,6 +591,7 @@ class Executor:
         )
         self._write(operation, message)
 
+        assert package.source_url is not None
         source = Git.clone(
             url=package.source_url,
             source_root=self._env.path / "src",
@@ -601,14 +608,15 @@ class Executor:
 
         return status_code
 
-    def _download(self, operation: Install | Update) -> Link:
+    def _download(self, operation: Install | Update) -> Link | Path:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation: Install | Update, link: Link) -> Link:
+    def _download_link(self, operation: Install | Update, link: Link) -> Link | Path:
         package = operation.package
 
+        archive: Link | Path
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is link:
             # No cached distributions was found, so we download and prepare it
@@ -758,9 +766,7 @@ class Executor:
                         path = url.relative_to(record.parent.parent)
                         writer.writerow([str(path), "", ""])
 
-    def _create_git_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
+    def _create_git_url_reference(self, package: Package) -> dict[str, Any]:
         reference = {
             "url": package.source_url,
             "vcs_info": {
@@ -772,9 +778,7 @@ class Executor:
 
         return reference
 
-    def _create_url_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
+    def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
         archive_info = {}
 
         if package.name in self._hashes:
@@ -784,27 +788,25 @@ class Executor:
 
         return reference
 
-    def _create_file_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
+    def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
         archive_info = {}
 
         if package.name in self._hashes:
             archive_info["hash"] = self._hashes[package.name]
 
+        assert package.source_url is not None
         return {
             "url": Path(package.source_url).as_uri(),
             "archive_info": archive_info,
         }
 
-    def _create_directory_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, bool]]:
+    def _create_directory_url_reference(self, package: Package) -> dict[str, Any]:
         dir_info = {}
 
         if package.develop:
             dir_info["editable"] = True
 
+        assert package.source_url is not None
         return {
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
