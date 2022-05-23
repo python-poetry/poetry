@@ -8,7 +8,6 @@ import pytest
 from deepdiff import DeepDiff
 
 from poetry.utils.dependency_specification import parse_dependency_specification
-from tests.compat import is_poetry_core_1_1_0a7_compat
 
 
 if TYPE_CHECKING:
@@ -75,9 +74,7 @@ if TYPE_CHECKING:
                 "name": "name",
                 "markers": 'python_version == "2.7"',
                 "url": "http://foo.com",
-                **(
-                    {} if is_poetry_core_1_1_0a7_compat else {"extras": ["fred", "bar"]}
-                ),
+                "extras": ["fred", "bar"],
             },
         ),
         (
