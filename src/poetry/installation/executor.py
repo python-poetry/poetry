@@ -653,16 +653,26 @@ class Executor:
             package.name,
             archive_path,
         )
-        archive_hash: str = "sha256:" + file_dep.hash()
-        known_hashes = {f["hash"] for f in package.files}
 
-        if archive_hash not in known_hashes:
+        archive_hashes = {}
+        for f in package.files:
+            known_hash_type, known_hash = f["hash"].split(":")
+            if known_hash_type not in archive_hashes:
+                archive_hashes[known_hash_type] = file_dep.hash(known_hash_type)
+            if archive_hashes[known_hash_type] == known_hash:
+                break
+        else:
+            archive_hash_str = ";".join(f"{k}:{v}" for k, v in archive_hashes.items())
             raise RuntimeError(
                 f"Hash for {package} from archive {archive_path.name} not found in"
-                f" known hashes (was: {archive_hash})"
+                f" known hashes (was: {archive_hash_str})"
             )
 
-        return archive_hash
+        if "sha256" in archive_hashes:
+            res_hash_type = "sha256"
+        else:
+            res_hash_type = next(iter(archive_hashes.keys()))
+        return f"{res_hash_type}:{archive_hashes[res_hash_type]}"
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
         response = self._authenticator.request(
