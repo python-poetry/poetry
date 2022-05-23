@@ -15,8 +15,8 @@ from poetry.core.utils.helpers import canonicalize_name
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
-from poetry.locations import CACHE_DIR
 from poetry.locations import CONFIG_DIR
+from poetry.locations import DEFAULT_CACHE_DIR
 
 
 if TYPE_CHECKING:
@@ -107,7 +107,7 @@ _default_config: Config | None = None
 class Config:
 
     default_config: dict[str, Any] = {
-        "cache-dir": str(CACHE_DIR),
+        "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
             "create": True,
             "in-project": None,
@@ -201,6 +201,10 @@ class Config:
                 }
 
         return repositories
+
+    @property
+    def repository_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")) / "cache" / "repositories"
 
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
