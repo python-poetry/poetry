@@ -879,6 +879,7 @@ class EnvManager:
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
+        venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
         if not executable and prefer_active_python:
             executable = self._detect_active_python(io)
@@ -980,6 +981,11 @@ class EnvManager:
             name = f"{name}-py{python_minor.strip()}"
             venv = venv_path / name
 
+        if venv_prompt is not None:
+            venv_prompt = venv_prompt.format(
+                project_name=self._poetry.package.name, python_version=python_minor
+            )
+
         if not venv.exists():
             if create_venv is False:
                 io.write_line(
@@ -1011,6 +1017,7 @@ class EnvManager:
                 venv,
                 executable=executable,
                 flags=self._poetry.config.get("virtualenvs.options"),
+                prompt=venv_prompt,
             )
 
         # venv detection:
@@ -1040,6 +1047,7 @@ class EnvManager:
         with_pip: bool | None = None,
         with_wheel: bool | None = None,
         with_setuptools: bool | None = None,
+        prompt: str | None = None,
     ) -> virtualenv.run.session.Session:
         flags = flags or {}
 
@@ -1070,6 +1078,9 @@ class EnvManager:
             "--python",
             executable or sys.executable,
         ]
+
+        if prompt is not None:
+            args.extend(["--prompt", prompt])
 
         for flag, value in flags.items():
             if value is True:

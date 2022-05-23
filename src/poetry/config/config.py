@@ -123,6 +123,7 @@ class Config:
                 "no-setuptools": False,
             },
             "prefer-active-python": False,
+            "prompt": "{project_name}-py{python_version}",
         },
         "experimental": {"new-installer": True, "system-git-client": False},
         "installer": {"parallel": True, "max-workers": None, "no-binary": None},
@@ -234,11 +235,17 @@ class Config:
         if not isinstance(value, str):
             return value
 
-        return re.sub(
-            r"{(.+?)}",
-            lambda m: self.get(m.group(1)),  # type: ignore[no-any-return]
-            value,
-        )
+        def resolve_from_config(match: re.Match[str]) -> Any:
+            key = match.group(1)
+            config_value = self.get(key)
+            if config_value:
+                return config_value
+
+            # The key doesn't exist in the config but might be resolved later,
+            # so we keep it as a format variable.
+            return f"{{{key}}}"
+
+        return re.sub(r"{(.+?)}", resolve_from_config, value)
 
     @staticmethod
     def _get_normalizer(name: str) -> Callable[[str], Any]:

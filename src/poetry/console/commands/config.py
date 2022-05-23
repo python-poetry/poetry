@@ -108,6 +108,11 @@ To remove a repository (repo is a short alias for repositories):
                 int_normalizer,
                 None,
             ),
+            "virtualenvs.prompt": (
+                str,
+                lambda val: str(val),
+                "{project_name}-py{python_version}",
+            ),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
