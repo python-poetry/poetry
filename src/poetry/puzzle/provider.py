@@ -236,16 +236,6 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        # TODO: remove explicit subdirectory check once poetry-core is updated
-        # we ensure subdirectory match here as workaround until poetry-core is updated
-        # to >1.1.0a7
-        if (
-            dependency in self._deferred_cache
-            and self._deferred_cache[dependency].source_subdirectory
-            == dependency.source_subdirectory
-        ):
-            return [self._deferred_cache[dependency]]
-
         package = self.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
