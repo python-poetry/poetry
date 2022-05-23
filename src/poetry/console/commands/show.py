@@ -524,7 +524,7 @@ lists all packages available."""
 
         constraint = parse_constraint("^" + package.pretty_version)
 
-        if latest.version and constraint.allows(latest.version):
+        if constraint.allows(latest.version):
             # It needs an immediate semver-compliant upgrade
             return "semver-safe-update"
 
