@@ -58,7 +58,7 @@ build-backend = "poetry.core.masonry.api"
 Poetry assumes your package contains a package with the same name as `tool.poetry.name`.
 If this is not the case, populate `tool.poetry.packages` to specify your package or packages.
 
-See [Packages](/docs/pyproject#packages) for more information.
+See [Packages]({{< relref "pyproject#packages" >}}) for more information.
 
 ### Initialising a pre-existing project
 
