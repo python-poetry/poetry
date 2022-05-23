@@ -103,6 +103,7 @@ class Application(BaseApplication):  # type: ignore[misc]
 
         self._poetry: Poetry | None = None
         self._io: IO | None = None
+        self._input: Input | None = None
         self._disable_plugins = False
         self._disable_cache = False
         self._plugins_loaded = False
@@ -169,6 +170,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         io.error_output.set_formatter(formatter)
 
         self._io = io
+        self._input = io.input
 
         return io
 

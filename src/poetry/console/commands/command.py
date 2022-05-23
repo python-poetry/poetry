@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -27,8 +25,8 @@ class Command(BaseCommand):  # type: ignore[misc]
         """
         # FIXME: Remove method after upstream merge for cleo
         # https://github.com/sdispater/cleo/pull/135
-        if io.input.stream is None:
-            io.input.set_stream(sys.stdin)
+        if io.input.stream is None and self.application._input is not None:
+            io.input.set_stream(self.application._input.stream)
         status_code: int = super().run(io)
         return status_code
 
