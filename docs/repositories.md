@@ -177,8 +177,7 @@ All package sources (including secondary sources) will be searched during the pa
 process. These network requests will occur for all sources, regardless of if the package is
 found at one or more sources.
 
-If you wish to avoid this, you may explicitly specify which source to search in for a particular
-package.
+In order to limit the search for a specific package to a particular package source, you can explicitly specify what source to use.
 
 ```bash
 poetry add --source internal-pypi httpx
