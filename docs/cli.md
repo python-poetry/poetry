@@ -103,7 +103,9 @@ my-package
 
 * `--name`: Set the resulting package name.
 * `--src`: Use the src layout for the project.
-* `--readme`: Specify the readme file extension. Default is `md`.
+* `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
+  keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
+  in mind.
 
 
 ## init
