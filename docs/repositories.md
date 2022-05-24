@@ -126,7 +126,7 @@ Any package source defined like this takes precedence over [PyPI](https://pypi.o
 
 If you prefer to disable [PyPI](https://pypi.org) completely, you may choose to set one of your package sources to be the [default](#default-package-source).
 
-To enable a package source only for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
+If you prefer to specify a package source for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
 
 {{% /note %}}
 
