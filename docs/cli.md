@@ -797,7 +797,9 @@ poetry source show pypi-test
 ```
 
 {{% note %}}
-This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+When used with the `-v` (verbose) global option, this command will provide additional
+information about the sources configured for your project, if more than one is
+available.
 {{% /note %}}
 
 ### `source remove`
