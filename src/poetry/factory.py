@@ -17,6 +17,7 @@ from poetry.core.toml.file import TOMLFile
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.config.config import Config
+from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
@@ -300,3 +301,13 @@ class Factory(BaseFactory):
             )
 
         return cast(TOMLDocument, pyproject)
+
+    @classmethod
+    def validate(
+        cls, config: dict[str, Any], strict: bool = False
+    ) -> dict[str, list[str]]:
+        results = super().validate(config, strict)
+
+        results["errors"].extend(validate_object(config))
+
+        return results
