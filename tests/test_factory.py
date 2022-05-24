@@ -211,7 +211,7 @@ def test_poetry_with_non_default_source(with_simple_keyring: None):
     assert poetry.pool.repositories[0].name == "foo"
     assert isinstance(poetry.pool.repositories[0], LegacyRepository)
 
-    assert poetry.pool.repositories[1].name == "PyPI"
+    assert poetry.pool.repositories[1].name == "pypi"
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
 
 
@@ -223,7 +223,7 @@ def test_poetry_with_non_default_secondary_source(with_simple_keyring: None):
     assert poetry.pool.has_default()
 
     repository = poetry.pool.repositories[0]
-    assert repository.name == "PyPI"
+    assert repository.name == "pypi"
     assert isinstance(repository, PyPiRepository)
 
     repository = poetry.pool.repositories[1]
@@ -241,7 +241,7 @@ def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring:
     assert poetry.pool.has_default()
 
     repository = poetry.pool.repositories[0]
-    assert repository.name == "PyPI"
+    assert repository.name == "pypi"
     assert isinstance(repository, PyPiRepository)
 
     repository = poetry.pool.repositories[1]
@@ -269,7 +269,7 @@ def test_poetry_with_non_default_multiple_sources(with_simple_keyring: None):
     assert isinstance(repository, LegacyRepository)
 
     repository = poetry.pool.repositories[2]
-    assert repository.name == "PyPI"
+    assert repository.name == "pypi"
     assert isinstance(repository, PyPiRepository)
 
 
@@ -280,7 +280,7 @@ def test_poetry_with_no_default_source():
 
     assert poetry.pool.has_default()
 
-    assert poetry.pool.repositories[0].name == "PyPI"
+    assert poetry.pool.repositories[0].name == "pypi"
     assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
