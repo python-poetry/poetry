@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
 from poetry.mixology.version_solver import DependencyCache
-from tests.compat import is_poetry_core_1_1_0a7_compat
 from tests.mixology.helpers import add_to_repo
 
 
@@ -38,9 +37,8 @@ def test_solver_dependency_cache_respects_source_type(
     packages_pypi = cache.search_for(dependency_pypi)
     packages_git = cache.search_for(dependency_git)
 
-    if not is_poetry_core_1_1_0a7_compat:
-        assert cache.search_for.cache_info().hits == 2
-        assert cache.search_for.cache_info().currsize == 2
+    assert cache.search_for.cache_info().hits == 2
+    assert cache.search_for.cache_info().currsize == 2
 
     assert len(packages_pypi) == len(packages_git) == 1
     assert packages_pypi != packages_git
@@ -95,9 +93,8 @@ def test_solver_dependency_cache_respects_subdirectories(
     packages_one = cache.search_for(dependency_one)
     packages_one_copy = cache.search_for(dependency_one_copy)
 
-    if not is_poetry_core_1_1_0a7_compat:
-        assert cache.search_for.cache_info().hits == 2
-        assert cache.search_for.cache_info().currsize == 2
+    assert cache.search_for.cache_info().hits == 2
+    assert cache.search_for.cache_info().currsize == 2
 
     assert len(packages_one) == len(packages_one_copy) == 1
 

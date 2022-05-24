@@ -30,6 +30,15 @@ by passing the `--local` option to the `config` command.
 poetry config virtualenvs.create false --local
 ```
 
+{{% note %}}
+Your local configuration of Poetry application is stored in the `poetry.toml` file,
+which is separate from `pyproject.toml`.
+{{% /note %}}
+
+{{% warning %}}
+Be mindful about checking in this file into your repository since it may contain user-specific or sensitive information.
+{{% /note %}}
+
 ## Listing the current configuration
 
 To list the current configuration you can use the `--list` option
@@ -51,6 +60,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{project_name}-py{python_version}"
 ```
 
 ## Displaying a single configuration setting
@@ -205,12 +215,13 @@ If set to `false`, poetry will install dependencies into the current python envi
 Create the virtualenv inside the project's root directory.
 Defaults to `None`.
 
+If not set explicitly, `poetry` by default will create virtual environment under
+`{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory when one is available.
+
 If set to `true`, the virtualenv will be created and expected in a folder named
 `.venv` within the root directory of the project.
 
-If not set explicitly (default), `poetry` will use the virtualenv from the `.venv`
-directory when one is available. If set to `false`, `poetry` will ignore any
-existing `.venv` directory.
+If set to `false`, `poetry` will ignore any existing `.venv` directory.
 
 ### `virtualenvs.path`
 
@@ -218,6 +229,14 @@ existing `.venv` directory.
 
 Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
+
+### `virtualenvs.prompt`
+
+**Type**: string
+
+Format string defining the prompt to be displayed when the virtual environment is activated.
+The variables `project_name` and `python_version` are available for formatting.
+Defaults to `"{project_name}-py{python_version}"`.
 
 ### `virtualenvs.options.always-copy`
 
@@ -277,3 +296,35 @@ Defaults to `false`, which means Python version used during Poetry installation 
 **Type**: string
 
 Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
+
+### `http-basic.<name>`:
+
+**Types**: string, string
+
+Set repository credentials (`username` and `password`) for `<name>`.
+See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
+for more information.
+
+### `pypi-token.<name>`:
+
+**Type**: string
+
+Set repository credentials (using an API token) for `<name>`.
+See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
+for more information.
+
+### `certificates.<name>.cert`:
+
+**Type**: string
+
+Set custom certificate authority for repository `<name>`.
+See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
+for more information.
+
+### `certificates.<name>.client-cert`:
+
+**Type**: string
+
+Set client certificate for repository `<name>`.
+See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
+for more information.

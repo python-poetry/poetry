@@ -64,6 +64,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert tester.io.fetch_output() == expected
@@ -92,6 +93,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 0
@@ -144,6 +146,7 @@ virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 1

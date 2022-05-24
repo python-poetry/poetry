@@ -40,14 +40,14 @@ WINDOWS_CMD_TEMPLATE = """\
 """
 
 
-class EditableBuilder(Builder):  # type: ignore[misc]
+class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self) -> None:
+    def build(self, target_dir: Path | None = None) -> Path:
         self._debug(
             f"  - Building package <c1>{self._package.name}</c1> in"
             " <info>editable</info> mode"
@@ -58,7 +58,9 @@ class EditableBuilder(Builder):  # type: ignore[misc]
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-                return self._setup_build()
+                self._setup_build()
+                path: Path = self._path
+                return path
 
             self._run_build_script(self._package.build_script)
 
@@ -74,6 +76,9 @@ class EditableBuilder(Builder):  # type: ignore[misc]
         added_files += self._add_pth()
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
+
+        path = self._path
+        return path
 
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:

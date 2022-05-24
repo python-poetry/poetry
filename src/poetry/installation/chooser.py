@@ -109,6 +109,7 @@ class Chooser:
 
     def _get_links(self, package: Package) -> list[Link]:
         if package.source_type:
+            assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
 
         elif not self._pool.has_repository("pypi"):
@@ -127,6 +128,7 @@ class Chooser:
                 selected_links.append(link)
                 continue
 
+            assert link.hash_name is not None
             h = link.hash_name + ":" + link.hash
             if h not in hashes:
                 logger.debug(
@@ -212,6 +214,7 @@ class Chooser:
         if not link.hash:
             return True
 
+        assert link.hash_name is not None
         h = link.hash_name + ":" + link.hash
 
         return h in {f["hash"] for f in package.files}

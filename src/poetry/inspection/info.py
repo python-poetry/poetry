@@ -154,6 +154,9 @@ class PackageInfo:
         """
         name = name or self.name
 
+        if not name:
+            raise RuntimeError("Unable to create package with no name")
+
         if not self.version:
             # The version could not be determined, so we raise an error since it is
             # mandatory.
@@ -166,7 +169,8 @@ class PackageInfo:
             source_url=self._source_url,
             source_reference=self._source_reference,
         )
-        package.description = self.summary
+        if self.summary is not None:
+            package.description = self.summary
         package.root_dir = root_dir
         package.python_versions = self.requires_python or "*"
         package.files = self.files
@@ -424,10 +428,7 @@ class PackageInfo:
             except ValueError:
                 return None
 
-        info = cls._from_distribution(dist=dist)
-        if info:
-            return info
-        return None
+        return cls._from_distribution(dist=dist)
 
     @classmethod
     def from_package(cls, package: Package) -> PackageInfo:
@@ -491,7 +492,6 @@ class PackageInfo:
 
                     # we discovered PkgInfo but no requirements were listed
 
-        assert info
         info._source_type = "directory"
         info._source_url = path.as_posix()
 

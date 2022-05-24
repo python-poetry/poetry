@@ -522,8 +522,8 @@ class Installer:
 
             if self._update:
                 extras = {}
-                for extra, deps in self._package.extras.items():
-                    extras[extra] = [dep.name for dep in deps]
+                for extra, dependencies in self._package.extras.items():
+                    extras[extra] = [dependency.name for dependency in dependencies]
             else:
                 extras = {}
                 for extra, deps in self._locker.lock_data.get("extras", {}).items():

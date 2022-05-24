@@ -180,9 +180,24 @@ with the corresponding `add` call:
 poetry add https://example.com/my-package-0.1.0.tar.gz
 ```
 
+## Dependency `extras`
+
+You can specify [PEP-508 Extras](https://www.python.org/dev/peps/pep-0508/#extras)
+for a dependency as shown here.
+
+```toml
+[tool.poetry.dependencies]
+gunicorn = { version = "^20.1", extras = ["gevent"] }
+```
+
+{{% note %}}
+These activate extra defined for the dependency, to configure an optional dependency
+for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
+{{% /note %}}
+
 ## `source` dependencies
 
-To depend on a package from an [alternate repository](/docs/repositories/#install-dependencies-from-a-private-repository),
+To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
 you can use the `source` property:
 
 ```toml

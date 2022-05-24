@@ -3,7 +3,17 @@ name = "poetry"
 version = "1.2.0-beta.2.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    "Sébastien Eustace <sebastien@eustace.io>",
+]
+maintainers = [
+    "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
+    "Bjorn Neergaard <bjorn@neersighted.com>",
+    "Branch Vincent <branchevincent@gmail.com>",
+    "Bryce Drennan <github@accounts.brycedrennan.com>",
+    "Daniel Eades <danieleades@hotmail.com>",
+    "Randy Döring <radoering.poetry@gmail.com>",
+    "Steph Samson <hello@stephsamson.com>",
+    "finswimmer <finswimmer77@gmail.com>",
 ]
 license = "MIT"
 
@@ -34,8 +44,8 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "^1.1.0a7"
-poetry-plugin-export = "^1.0.2"
+poetry-core = "^1.1.0b1"
+poetry-plugin-export = "^1.0.3"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a4"
@@ -109,19 +119,11 @@ force-exclude = '''
 files = "src"
 show_error_codes = true
 strict = true
-enable_error_code = ["ignore-without-code"]
-
-# The following whitelist is used to allow for incremental adoption
-# of Mypy. Modules should be removed from this whitelist as and when
-# their respective type errors have been addressed. No new modules
-# should be added to this whitelist.
-# see https://github.com/python-poetry/poetry/pull/4510.
-
-[[tool.mypy.overrides]]
-module = [
-  'poetry.utils.env',
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
 ]
-ignore_errors = true
 
 # use of importlib-metadata backport at python3.7 makes it impossible to
 # satisfy mypy without some ignores: but we get a different set of ignores at
@@ -132,8 +134,9 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = [
   'poetry.installation.executor',
-  'poetry.repositories.installed_repository',
   'poetry.mixology.version_solver',
+  'poetry.repositories.installed_repository',
+  'poetry.utils.env',
 ]
 warn_unused_ignores = false
 
@@ -145,9 +148,9 @@ module = [
   'crashtest.*',
   'pexpect.*',
   'pkginfo.*',
-  'poetry.core.*',
   'requests_toolbelt.*',
   'shellingham.*',
+  'virtualenv.*',
 ]
 ignore_missing_imports = true
 

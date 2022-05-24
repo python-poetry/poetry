@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.console.commands.version import VersionCommand
-from tests.compat import is_poetry_core_1_1_0a7_compat
 
 
 if TYPE_CHECKING:
@@ -53,8 +52,6 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def test_increment_version(
     version: str, rule: str, expected: str, command: VersionCommand
 ):
-    if is_poetry_core_1_1_0a7_compat:
-        expected = expected.replace("a", "-alpha.").replace("b", "-beta.")
     assert command.increment_version(version, rule).text == expected
 
 

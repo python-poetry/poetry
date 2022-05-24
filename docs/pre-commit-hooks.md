@@ -33,7 +33,7 @@ to make sure the poetry configuration does not get committed in a broken state.
 ### Arguments
 
 The hook takes the same arguments as the poetry command.
-For more information see the [check command](/docs/cli#check).
+For more information see the [check command]({{< relref "cli#check" >}}).
 
 
 ## poetry-lock
@@ -44,7 +44,7 @@ to make sure the lock file is up-to-date when committing changes.
 ### Arguments
 
 The hook takes the same arguments as the poetry command.
-For more information see the [lock command](/docs/cli#lock).
+For more information see the [lock command]({{< relref "cli#lock" >}}).
 
 
 ## poetry-export
@@ -59,7 +59,7 @@ It is recommended to run the [`poetry-lock`](#poetry-lock) hook prior to this on
 ### Arguments
 
 The hook takes the same arguments as the poetry command.
-For more information see the [export command](/docs/cli#export).
+For more information see the [export command]({{< relref "cli#export" >}}).
 
 The default arguments are `args: ["-f", "requirements.txt", "-o", "requirements.txt"]`,
 which will create/update the requirements.txt file in the current working directory.

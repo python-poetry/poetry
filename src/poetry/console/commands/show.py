@@ -393,7 +393,7 @@ lists all packages available."""
             dependencies = package.requires
             dependencies = sorted(
                 dependencies,
-                key=lambda x: x.name,  # type: ignore[no-any-return]
+                key=lambda x: x.name,
             )
 
         tree_bar = "├"
@@ -437,7 +437,7 @@ lists all packages available."""
 
         dependencies = sorted(
             dependencies,
-            key=lambda x: x.name,  # type: ignore[no-any-return]
+            key=lambda x: x.name,
         )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
@@ -524,7 +524,7 @@ lists all packages available."""
 
         constraint = parse_constraint("^" + package.pretty_version)
 
-        if latest.version and constraint.allows(latest.version):
+        if constraint.allows(latest.version):
             # It needs an immediate semver-compliant upgrade
             return "semver-safe-update"
 
