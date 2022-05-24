@@ -29,7 +29,7 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) as a secondary repository to your
+First, [configure](#project-configuration) the [package source](#package-source) as a [secondary package source](#secondary-package-sources) to your
 project.
 
 ```bash
@@ -185,9 +185,9 @@ poetry add --source internal-pypi httpx
 ```
 
 ```toml
-[tool.poetry.requirements]
-httpx = { version = "*", source = "internal-pypi" }
-urllib3 = "*"
+[tool.poetry.dependencies]
+...
+httpx = { version = "^0.22", source = "internal-pypi" }
 
 [[tool.poetry.source]]
 name = "internal-pypi"
