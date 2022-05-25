@@ -208,9 +208,7 @@ class Factory(BaseFactory):
 
         pyproject: dict[str, Any] = tomlkit.document()
 
-        tool_table = tomlkit.table()
-        tool_table._is_super_table = True
-        pyproject["tool"] = tool_table
+        pyproject["tool"] = tomlkit.table(is_super_table=True)
 
         content: dict[str, Any] = tomlkit.table()
         pyproject["tool"]["poetry"] = content
@@ -286,14 +284,10 @@ class Factory(BaseFactory):
                     dependency_section[dep.name] = constraint
                 else:
                     if "group" not in content:
-                        _table = tomlkit.table()
-                        _table._is_super_table = True
-                        content["group"] = _table
+                        content["group"] = tomlkit.table(is_super_table=True)
 
                     if group not in content["group"]:
-                        _table = tomlkit.table()
-                        _table._is_super_table = True
-                        content["group"][group] = _table
+                        content["group"][group] = tomlkit.table(is_super_table=True)
 
                     if "dependencies" not in content["group"][group]:
                         content["group"][group]["dependencies"] = tomlkit.table()

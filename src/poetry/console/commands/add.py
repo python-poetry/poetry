@@ -128,9 +128,9 @@ You can specify a package in the following forms:
             section = poetry_content["dependencies"]
         else:
             if "group" not in poetry_content:
-                group_table = table()
-                group_table._is_super_table = True
-                poetry_content.value._insert_after("dependencies", "group", group_table)
+                poetry_content.value._insert_after(
+                    "dependencies", "group", table(is_super_table=True)
+                )
 
             groups = poetry_content["group"]
             if group not in groups:
