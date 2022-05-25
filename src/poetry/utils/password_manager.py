@@ -69,10 +69,10 @@ class KeyRing:
 
         try:
             return keyring.get_password(name, username)
-        except (RuntimeError, keyring.errors.KeyringError):
+        except (RuntimeError, keyring.errors.KeyringError) as err:
             raise KeyRingError(
                 f"Unable to retrieve the password for {name} from the key ring"
-            )
+            ) from err
 
     def set_password(self, name: str, username: str, password: str) -> None:
         if not self.is_available():
