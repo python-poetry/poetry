@@ -261,18 +261,22 @@ class Locker:
             if not locked_package:
                 raise RuntimeError(f"Dependency walk failed at {requirement}")
 
+            if requirement.extras:
+                locked_package = locked_package.with_features(requirement.extras)
+
             # create dependency from locked package to retain dependency metadata
             # if this is not done, we can end-up with incorrect nested dependencies
             constraint = requirement.constraint
             marker = requirement.marker
-            extras = requirement.extras
             requirement = locked_package.to_dependency()
             requirement.marker = requirement.marker.intersect(marker)
 
             requirement.set_constraint(constraint)
 
             for require in locked_package.requires:
-                if require.in_extras and extras.isdisjoint(require.in_extras):
+                if require.in_extras and locked_package.features.isdisjoint(
+                    require.in_extras
+                ):
                     continue
 
                 require = deepcopy(require)
@@ -369,9 +373,6 @@ class Locker:
             project_requires=selected,
             locked_packages=repository.packages,
         ):
-            for extra in dependency.extras:
-                package.requires_extras.append(extra)
-
             yield DependencyPackage(dependency=dependency, package=package)
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
