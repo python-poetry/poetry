@@ -18,7 +18,7 @@ It allows you to declare the libraries your project depends on and it will manag
 ## System requirements
 
 Poetry requires **Python 3.7+**. It is multi-platform and the goal is to make it work equally well
-on Windows, Linux and OSX.
+on Linux, macOS and Windows.
 
 ## Installation
 
@@ -35,13 +35,14 @@ from the rest of your system.
 
 Install Poetry by downloading and executing the [installation script](https://install.python-poetry.org).
 
-**osx / linux / bashonwindows install instructions**
+**Linux, macOS, Windows (WSL)**
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-**windows powershell install instructions**
+**Windows (Powershell)**
+
 ```powershell
 (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
