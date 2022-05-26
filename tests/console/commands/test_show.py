@@ -317,6 +317,48 @@ def test_show_basic_with_installed_packages_single(
     ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
 
 
+def test_show_basic_with_installed_packages_single_canonicalized(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+):
+    poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^0.1.0"))
+
+    foo_bar = get_package("foo-bar", "0.1.0")
+    foo_bar.description = "Foobar package"
+
+    installed.add_package(foo_bar)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo-bar",
+                    "version": "0.1.0",
+                    "description": "Foobar package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo-bar": []},
+            },
+        }
+    )
+
+    tester.execute("Foo_Bar")
+
+    assert [
+        "name         : foo-bar",
+        "version      : 0.1.0",
+        "description  : Foobar package",
+    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+
+
 def test_show_basic_with_not_installed_packages_non_decorated(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ):
