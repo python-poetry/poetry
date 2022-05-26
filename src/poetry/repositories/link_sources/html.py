@@ -69,7 +69,10 @@ class SimpleIndexPage:
         # case-insensitive. For simplicity, we'll do lookups using
         # lowercase-naming, and treating - and _ equivalently.
         for anchor in self._parsed.findall(".//a"):
-            text: str = anchor.text
+            text: str | None = anchor.text
+            if text is None:
+                continue
+
             yield text.lower().replace("-", "_")
 
     def serves_package(self, name: str) -> bool:
