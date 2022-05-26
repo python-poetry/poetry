@@ -85,6 +85,7 @@ COMMANDS = [
     # Self commands
     "self add",
     "self install",
+    "self lock",
     "self remove",
     "self update",
     "self show",
