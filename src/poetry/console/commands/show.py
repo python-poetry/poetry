@@ -10,6 +10,7 @@ from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.console.commands.group_command import GroupCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
@@ -148,7 +149,7 @@ lists all packages available."""
         if package:
             pkg = None
             for locked in locked_packages:
-                if package.lower() == locked.name:
+                if canonicalize_name(package) == locked.name:
                     pkg = locked
                     break
 
