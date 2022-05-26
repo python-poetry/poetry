@@ -64,12 +64,13 @@ class SimpleIndexPage:
         self._cached_packages = set(self.links)
 
     @property
-    def links(self) -> Iterator[Link]:
+    def links(self) -> Iterator[str]:
         # Note: PEP426 specifies that comparisons should be
         # case-insensitive. For simplicity, we'll do lookups using
         # lowercase-naming, and treating - and _ equivalently.
         for anchor in self._parsed.findall(".//a"):
-            yield anchor.text.lower().replace("-", "_")
+            text: str = anchor.text
+            yield text.lower().replace("-", "_")
 
     def serves_package(self, name: str) -> bool:
         return name.lower().replace("-", "_") in self._cached_packages
