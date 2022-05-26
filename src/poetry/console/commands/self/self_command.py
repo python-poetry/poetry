@@ -68,7 +68,7 @@ class SelfCommand(InstallerCommand):
                     preserved[key] = content[key]
 
         package = ProjectPackage(name="poetry-instance", version=__version__)
-        package.add_dependency(Dependency(name="poetry", constraint=f"^{__version__}"))
+        package.add_dependency(Dependency(name="poetry", constraint=f"{__version__}"))
 
         package.python_versions = ".".join(str(v) for v in self.env.version_info[:3])
 
