@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -34,8 +35,10 @@ def test_solver_dependency_cache_respects_source_type(
     cache.search_for(dependency_git)
     assert not cache.search_for.cache_info().hits
 
-    packages_pypi = cache.search_for(dependency_pypi)
-    packages_git = cache.search_for(dependency_git)
+    # increase test coverage by searching for copies
+    # (when searching for the exact same object, __eq__ is never called)
+    packages_pypi = cache.search_for(deepcopy(dependency_pypi))
+    packages_git = cache.search_for(deepcopy(dependency_git))
 
     assert cache.search_for.cache_info().hits == 2
     assert cache.search_for.cache_info().currsize == 2
@@ -90,8 +93,10 @@ def test_solver_dependency_cache_respects_subdirectories(
     cache.search_for(dependency_one_copy)
     assert not cache.search_for.cache_info().hits
 
-    packages_one = cache.search_for(dependency_one)
-    packages_one_copy = cache.search_for(dependency_one_copy)
+    # increase test coverage by searching for copies
+    # (when searching for the exact same object, __eq__ is never called)
+    packages_one = cache.search_for(deepcopy(dependency_one))
+    packages_one_copy = cache.search_for(deepcopy(dependency_one_copy))
 
     assert cache.search_for.cache_info().hits == 2
     assert cache.search_for.cache_info().currsize == 2
