@@ -612,39 +612,31 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        #
-        # Additional care has to be taken to ensure that hidden constraints like that
-        # of source type, reference etc. are taking into consideration when duplicates
-        # are identified.
-        duplicates: dict[
-            tuple[str, str | None, str | None, str | None, str | None], list[Dependency]
-        ] = {}
+        duplicates: dict[str, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
-            key = (
-                dep.complete_name,
-                dep.source_type,
-                dep.source_url,
-                dep.source_reference,
-                dep.source_subdirectory,
-            )
-            if key not in duplicates:
-                duplicates[key] = []
-            duplicates[key].append(dep)
+            duplicates[dep.complete_name].append(dep)
 
         dependencies = []
-        for key, deps in duplicates.items():
+        for dep_name, deps in duplicates.items():
             if len(deps) == 1:
                 dependencies.append(deps[0])
                 continue
 
-            extra_keys = ", ".join(k for k in key[1:] if k is not None)
-            dep_name = f"{key[0]} ({extra_keys})" if extra_keys else key[0]
-
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
-            deps = self._merge_dependencies_by_marker(deps)
-            deps = self._merge_dependencies_by_constraint(deps)
-
+            non_direct_origin_deps: list[Dependency] = []
+            direct_origin_deps: list[Dependency] = []
+            for dep in deps:
+                if dep.is_direct_origin():
+                    direct_origin_deps.append(dep)
+                else:
+                    non_direct_origin_deps.append(dep)
+            deps = (
+                self._merge_dependencies_by_constraint(
+                    self._merge_dependencies_by_marker(non_direct_origin_deps)
+                )
+                + direct_origin_deps
+            )
             if len(deps) == 1:
                 self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
                 dependencies.append(deps[0])
