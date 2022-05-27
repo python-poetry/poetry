@@ -15,14 +15,15 @@ from poetry.core.semver.version import Version
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
+from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-    from poetry.core.poetry import Poetry
 
+    from poetry.poetry import Poetry
     from poetry.utils.env import Env
 
 SCRIPT_TEMPLATE = """\
@@ -46,7 +47,7 @@ class EditableBuilder(Builder):
         self._env = env
         self._io = io
 
-    def build(self) -> None:
+    def build(self, target_dir: Path | None = None) -> Path:
         self._debug(
             f"  - Building package <c1>{self._package.name}</c1> in"
             " <info>editable</info> mode"
@@ -57,7 +58,9 @@ class EditableBuilder(Builder):
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-                return self._setup_build()
+                self._setup_build()
+                path: Path = self._path
+                return path
 
             self._run_build_script(self._package.build_script)
 
@@ -74,9 +77,13 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script: Path) -> None:
-        self._debug(f"  - Executing build script: <b>{build_script}</b>")
-        self._env.run("python", str(self._path.joinpath(build_script)), call=True)
+        path = self._path
+        return path
+
+    def _run_build_script(self, build_script: str) -> None:
+        with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
+            self._debug(f"  - Executing build script: <b>{build_script}</b>")
+            env.run("python", str(self._path.joinpath(build_script)), call=True)
 
     def _setup_build(self) -> None:
         builder = SdistBuilder(self._poetry)

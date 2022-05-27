@@ -27,6 +27,8 @@ then `--help` combined with any of those can give you more information.
 * `--no-ansi`: Disable ANSI output.
 * `--version (-V)`: Display this application version.
 * `--no-interaction (-n)`: Do not ask any interactive question.
+* `--no-plugins`: Disables plugins.
+* `--no-cache`: Disables Poetry source caches.
 
 
 ## new
@@ -218,7 +220,7 @@ option is used.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -230,6 +232,7 @@ option is used.
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
+
 
 ## update
 
@@ -258,7 +261,7 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**)
 * `--lock` : Do not perform install (only update the lockfile).
@@ -293,6 +296,10 @@ present dependency you can use the special `latest` constraint:
 ```bash
 poetry add pendulum@latest
 ```
+
+{{% note %}}
+See the [Dependency specification]({{< relref "dependency-specification" >}}) for more information on setting the version constraints for a package.
+{{% /note %}}
 
 You can also add `git` dependencies:
 
@@ -354,10 +361,14 @@ If the package(s) you want to install provide extras, you can specify them
 when adding the package:
 
 ```bash
-poetry add requests[security,socks]
+poetry add "requests[security,socks]"
 poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
+
+{{% warning %}}
+Some shells may treat square braces (`[` and `]`) as special characters. It is suggested to always quote arguments containing these characters to prevent unexpected shell expansion.
+{{% /warning %}}
 
 If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
 
@@ -437,17 +448,20 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
+* `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--all (-a)`: Show all packages (even those not compatible with current system).
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
+
 
 ## build
 
@@ -481,6 +495,9 @@ It can also build the package if you pass it the `--build` option.
 Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
+* `--cert`: Certificate authority to access the repository.
+* `--client-cert`: Client certificate to access the repository.
+* `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
 
@@ -505,6 +522,7 @@ See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 * `--unset`: Remove the configuration element named by `setting-key`.
 * `--list`: Show the list of current config variables.
+* `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
 
 ## run
 
@@ -542,7 +560,7 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
-Note that this commmand starts a new shell and activates the virtual environment.
+Note that this command starts a new shell and activates the virtual environment.
 
 As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
 
@@ -552,7 +570,7 @@ The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
 {{% note %}}
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -573,7 +591,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 {{% note %}}
 By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-lock">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -591,26 +609,35 @@ This command shows the current version of the project or bumps the version of
 the project and writes the new version back to `pyproject.toml` if a valid
 bump rule is provided.
 
-The new version should ideally be a valid [semver](https://semver.org/) string or a valid bump rule:
-`patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+The new version should be a valid [PEP 440](https://peps.python.org/pep-0440/)
+string or a valid bump rule: `patch`, `minor`, `major`, `prepatch`, `preminor`,
+`premajor`, `prerelease`.
+
+{{% note %}}
+
+If you would like to use semantic versioning for your project, please see
+[here]({{< relref "libraries#versioning" >}}).
+
+{{% /note %}}
 
 The table below illustrates the effect of these rules with concrete examples.
 
-| rule       | before        | after         |
-| ---------- | ------------- | ------------- |
-| major      | 1.3.0         | 2.0.0         |
-| minor      | 2.1.4         | 2.2.0         |
-| patch      | 4.1.1         | 4.1.2         |
-| premajor   | 1.0.2         | 2.0.0-alpha.0 |
-| preminor   | 1.0.2         | 1.1.0-alpha.0 |
-| prepatch   | 1.0.2         | 1.0.3-alpha.0 |
-| prerelease | 1.0.2         | 1.0.3-alpha.0 |
-| prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
-| prerelease | 1.0.3-beta.0  | 1.0.3-beta.1  |
+| rule       | before  | after   |
+| ---------- |---------|---------|
+| major      | 1.3.0   | 2.0.0   |
+| minor      | 2.1.4   | 2.2.0   |
+| patch      | 4.1.1   | 4.1.2   |
+| premajor   | 1.0.2   | 2.0.0a0 |
+| preminor   | 1.0.2   | 1.1.0a0 |
+| prepatch   | 1.0.2   | 1.0.3a0 |
+| prerelease | 1.0.2   | 1.0.3a0 |
+| prerelease | 1.0.3a0 | 1.0.3a1 |
+| prerelease | 1.0.3b0 | 1.0.3b1 |
 
 ### Options
 
 * `--short (-s)`: Output the version number only.
+* `--dry-run`: Do not update pyproject.toml file.
 
 ## export
 
@@ -622,11 +649,11 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
-and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+and is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
 {{% note %}}
-Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `default`
+Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `main`
 group defined in `tool.poetry.dependencies` when used without specifying any options.
 {{% /note %}}
 
@@ -641,7 +668,7 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the default dependencies. (**Deprecated**)
+* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
@@ -724,6 +751,10 @@ The `plugin remove` command removes installed plugins.
 poetry plugin remove poetry-plugin
 ```
 
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+
 ## source
 
 The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
@@ -775,4 +806,46 @@ The `source remove` command removes a configured source from your `pyproject.tom
 
 ```bash
 poetry source remove pypi-test
+```
+
+## about
+
+The `about` command displays global information about Poetry, including the current version and version of `poetry-core`.
+
+```bash
+poetry about
+```
+
+## help
+
+The `help` command displays global help, or help for a specific command.
+
+To display global help:
+
+```bash
+poetry help
+```
+
+To display help for a specific command, for instance `show`:
+
+```bash
+poetry help show
+```
+
+{{% note %}}
+The `--help` option can also be passed to any command to get help for a specific command.
+
+For instance:
+
+```bash
+poetry show --help
+```
+{{% /note %}}
+
+## list
+
+The `list` command displays all the available Poetry commands.
+
+```bash
+poetry list
 ```

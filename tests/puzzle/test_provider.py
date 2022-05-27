@@ -12,7 +12,9 @@ from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
 
+from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
+from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
@@ -144,7 +146,7 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(
     provider: Provider, mocker: MockerFixture
 ):
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        "poetry.inspection.info.get_pep517_metadata",
         return_value=PackageInfo(name="demo", version=None),
     )
 
@@ -509,4 +511,77 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
+    }
+
+
+def test_complete_package_preserves_source_type(provider: Provider) -> None:
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    project_dir = fixtures.joinpath("with_conditional_path_deps")
+    poetry = Factory().create_poetry(cwd=project_dir)
+
+    complete_package = provider.complete_package(
+        DependencyPackage(poetry.package.to_dependency(), poetry.package)
+    )
+
+    requires = complete_package.package.all_requires
+
+    assert len(requires) == 2
+
+    assert {requires[0].source_url, requires[1].source_url} == {
+        project_dir.joinpath("demo_one").as_posix(),
+        project_dir.joinpath("demo_two").as_posix(),
+    }
+    assert {str(requires[0].marker), str(requires[1].marker)} == {
+        'sys_platform == "linux"',
+        'sys_platform == "win32"',
+    }
+
+
+def test_complete_package_preserves_source_type_with_subdirectories(
+    provider: Provider, root: ProjectPackage
+) -> None:
+    dependency_one = Factory.create_dependency(
+        "one",
+        {
+            "git": "https://github.com/demo/subdirectories.git",
+            "subdirectory": "one",
+            "platform": "linux",
+        },
+    )
+    dependency_one_copy = Factory.create_dependency(
+        "one",
+        {
+            "git": "https://github.com/demo/subdirectories.git",
+            "subdirectory": "one-copy",
+            "platform": "win32",
+        },
+    )
+    dependency_two = Factory.create_dependency(
+        "two",
+        {"git": "https://github.com/demo/subdirectories.git", "subdirectory": "two"},
+    )
+
+    root.add_dependency(
+        Factory.create_dependency(
+            "one",
+            {
+                "git": "https://github.com/demo/subdirectories.git",
+                "subdirectory": "one",
+                "platform": "linux",
+            },
+        )
+    )
+    root.add_dependency(dependency_one_copy)
+    root.add_dependency(dependency_two)
+
+    complete_package = provider.complete_package(
+        DependencyPackage(root.to_dependency(), root)
+    )
+
+    requires = complete_package.package.all_requires
+    assert len(requires) == 3
+    assert {r.to_pep_508() for r in requires} == {
+        dependency_one.to_pep_508(),
+        dependency_one_copy.to_pep_508(),
+        dependency_two.to_pep_508(),
     }

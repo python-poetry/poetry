@@ -4,7 +4,6 @@ import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 import pytest
 
@@ -24,6 +23,8 @@ from tests.helpers import mock_clone
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from pytest_mock import MockerFixture
 
     from poetry.installation.executor import Executor
@@ -71,9 +72,8 @@ def setup(
     p.return_value = installed
 
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
+    p = mocker.patch("poetry.vcs.git.Git.get_revision")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
     # Patch the virtual environment creation do actually do nothing
@@ -99,6 +99,7 @@ def project_directory() -> str:
 
 @pytest.fixture
 def poetry(repo: TestRepository, project_directory: str, config: Config) -> Poetry:
+
     p = Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / project_directory
     )

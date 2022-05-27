@@ -4,13 +4,18 @@ from typing import TYPE_CHECKING
 
 from cleo.helpers import option
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
-
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
 
 
 class GroupCommand(EnvCommand):
@@ -34,8 +39,7 @@ class GroupCommand(EnvCommand):
             option(
                 "default",
                 None,
-                "Only include the default dependencies."
-                " (<warning>Deprecated</warning>)",
+                "Only include the main dependencies. (<warning>Deprecated</warning>)",
             ),
             option(
                 "only",
@@ -56,6 +60,25 @@ class GroupCommand(EnvCommand):
         }
 
     @property
+    def default_group(self) -> str | None:
+        """
+        The default group to use when no group is specified. This is useful
+        for command that have the `--group` option, eg: add, remove.
+
+        Can be overridden to adapt behavior.
+        """
+        return None
+
+    @property
+    def default_groups(self) -> set[str]:
+        """
+        The groups that are considered by the command by default.
+
+        Can be overridden to adapt behavior.
+        """
+        return self.non_optional_groups
+
+    @property
     def activated_groups(self) -> set[str]:
         groups = {}
 
@@ -67,10 +90,10 @@ class GroupCommand(EnvCommand):
             }
 
         for opt, new, group in [
-            ("default", "only", "default"),
-            ("no-dev", "only", "default"),
+            ("default", "only", MAIN_GROUP),
+            ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
-            ("dev-only", "without", "default"),
+            ("dev-only", "without", MAIN_GROUP),
         ]:
             if self.io.input.has_option(opt) and self.option(opt):
                 self.line_error(
@@ -88,9 +111,9 @@ class GroupCommand(EnvCommand):
                 "</warning>"
             )
 
-        return groups["only"] or self.non_optional_groups.union(
-            groups["with"]
-        ).difference(groups["without"])
+        return groups["only"] or self.default_groups.union(groups["with"]).difference(
+            groups["without"]
+        )
 
     def project_with_activated_groups_only(self) -> ProjectPackage:
         return self.poetry.package.with_dependency_groups(

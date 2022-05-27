@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterable
-from typing import Sequence
 
 from cleo.io.null_io import NullIO
 
@@ -20,12 +18,14 @@ from poetry.utils.helpers import pluralize
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Sequence
+
     from cleo.io.io import IO
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
     from poetry.installation.base_installer import BaseInstaller
-    from poetry.installation.operations import OperationTypes
     from poetry.installation.operations.operation import Operation
     from poetry.packages import Locker
     from poetry.utils.env import Env
@@ -42,7 +42,7 @@ class Installer:
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
-    ):
+    ) -> None:
         self._io = io
         self._env = env
         self._package = package
@@ -59,9 +59,9 @@ class Installer:
         self._execute_operations = True
         self._lock = False
 
-        self._whitelist = []
+        self._whitelist: list[str] = []
 
-        self._extras = []
+        self._extras: list[str] = []
 
         if executor is None:
             executor = Executor(self._env, self._pool, config, self._io)
@@ -172,7 +172,7 @@ class Installer:
 
         return self
 
-    def extras(self, extras: list) -> Installer:
+    def extras(self, extras: list[str]) -> Installer:
         self._extras = extras
 
         return self
@@ -183,7 +183,7 @@ class Installer:
         return self
 
     def _do_refresh(self) -> int:
-        from poetry.puzzle import Solver
+        from poetry.puzzle.solver import Solver
 
         # Checking extras
         for extra in self._extras:
@@ -199,7 +199,10 @@ class Installer:
             self._io,
         )
 
-        ops = solver.solve(use_latest=[]).calculate_operations()
+        with solver.provider.use_source_root(
+            source_root=self._env.path.joinpath("src")
+        ):
+            ops = solver.solve(use_latest=[]).calculate_operations()
 
         local_repo = Repository()
         self._populate_local_repo(local_repo, ops)
@@ -209,7 +212,7 @@ class Installer:
         return 0
 
     def _do_install(self, local_repo: Repository) -> int:
-        from poetry.puzzle import Solver
+        from poetry.puzzle.solver import Solver
 
         locked_repository = Repository()
         if self._update:
@@ -236,7 +239,10 @@ class Installer:
                 self._io,
             )
 
-            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+            with solver.provider.use_source_root(
+                source_root=self._env.path.joinpath("src")
+            ):
+                ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
@@ -339,7 +345,7 @@ class Installer:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
 
-    def _execute(self, operations: list[OperationTypes]) -> int:
+    def _execute(self, operations: list[Operation]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
 
@@ -470,9 +476,9 @@ class Installer:
 
     def _get_operations_from_lock(
         self, locked_repository: Repository
-    ) -> Sequence[Operation]:
+    ) -> list[Operation]:
         installed_repo = self._installed_repository
-        ops = []
+        ops: list[Operation] = []
 
         extra_packages = self._get_extra_packages(locked_repository)
         for locked in locked_repository.packages:
@@ -516,8 +522,8 @@ class Installer:
 
             if self._update:
                 extras = {}
-                for extra, deps in self._package.extras.items():
-                    extras[extra] = [dep.name for dep in deps]
+                for extra, dependencies in self._package.extras.items():
+                    extras[extra] = [dependency.name for dependency in dependencies]
             else:
                 extras = {}
                 for extra, deps in self._locker.lock_data.get("extras", {}).items():

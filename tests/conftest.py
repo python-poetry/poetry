@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -10,7 +11,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import TextIO
 
 import httpretty
@@ -29,19 +29,42 @@ from poetry.repositories import Repository
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.helpers import remove_directory
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
+from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from _pytest.config import Config as PyTestConfig
+    from _pytest.config.argparsing import Parser
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+
+
+def pytest_addoption(parser: Parser) -> None:
+    parser.addoption(
+        "--integration",
+        action="store_true",
+        dest="integration",
+        default=False,
+        help="enable integration tests",
+    )
+
+
+def pytest_configure(config: PyTestConfig) -> None:
+    config.addinivalue_line("markers", "integration: mark integration tests")
+
+    if not config.option.integration:
+        config.option.markexpr = "not integration"
 
 
 class Config(BaseConfig):
@@ -167,7 +190,7 @@ def auth_config_source() -> DictConfigSource:
     return source
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def config(
     config_source: DictConfigSource,
     auth_config_source: DictConfigSource,
@@ -184,19 +207,21 @@ def config(
     c.set_config_source(config_source)
     c.set_auth_config_source(auth_config_source)
 
-    mocker.patch("poetry.factory.Factory.create_config", return_value=c)
+    mocker.patch("poetry.config.config.Config.create", return_value=c)
     mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
 
 
+@pytest.fixture()
+def config_dir(tmp_dir: str) -> Path:
+    return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
+
+
 @pytest.fixture(autouse=True)
-def mock_user_config_dir(mocker: MockerFixture) -> Iterator[None]:
-    config_dir = tempfile.mkdtemp(prefix="poetry_config_")
+def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
-    mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
-    yield
-    shutil.rmtree(config_dir, ignore_errors=True)
+    mocker.patch("poetry.config.config.CONFIG_DIR", new=config_dir)
 
 
 @pytest.fixture(autouse=True)
@@ -209,34 +234,39 @@ def download_mock(mocker: MockerFixture) -> None:
 
 @pytest.fixture(autouse=True)
 def pep517_metadata_mock(mocker: MockerFixture) -> None:
-    @classmethod
-    def _pep517_metadata(cls: PackageInfo, path: Path) -> PackageInfo:
+    def get_pep517_metadata(path: Path) -> PackageInfo:
         with suppress(PackageInfoError):
             return PackageInfo.from_setup_files(path)
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata",
-        _pep517_metadata,
+        "poetry.inspection.info.get_pep517_metadata",
+        get_pep517_metadata,
     )
 
 
 @pytest.fixture
 def environ() -> Iterator[None]:
-    original_environ = dict(os.environ)
+    with isolated_environment():
+        yield
 
-    yield
 
-    os.environ.clear()
-    os.environ.update(original_environ)
+@pytest.fixture(autouse=True)
+def isolate_environ() -> Iterator[None]:
+    """Ensure the environment is isolated from user configuration."""
+    with isolated_environment():
+        for var in os.environ:
+            if var.startswith("POETRY_") or var in {"PYTHONPATH", "VIRTUAL_ENV"}:
+                del os.environ[var]
+
+        yield
 
 
 @pytest.fixture(autouse=True)
 def git_mock(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
+    p = mocker.patch("poetry.vcs.git.Git.get_revision")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
 
@@ -270,7 +300,7 @@ def tmp_dir() -> Iterator[str]:
 
     yield dir_
 
-    shutil.rmtree(dir_)
+    remove_directory(dir_, force=True)
 
 
 @pytest.fixture
@@ -400,3 +430,14 @@ def project_factory(
 @pytest.fixture
 def project_root() -> Path:
     return Path(__file__).parent.parent
+
+
+@pytest.fixture(autouse=True)
+def set_simple_log_formatter() -> None:
+    """
+    This fixture removes any formatting added via IOFormatter.
+    """
+    for name in logging.Logger.manager.loggerDict:
+        for handler in logging.getLogger(name).handlers:
+            # replace formatter with simple formatter for testing
+            handler.setFormatter(logging.Formatter(fmt="%(message)s"))

@@ -5,10 +5,15 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import FrozenSet
-from typing import Iterator
 from typing import Tuple
+from typing import TypeVar
+
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
@@ -19,6 +24,8 @@ from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
@@ -43,7 +50,7 @@ class Solver:
         locked: Repository,
         io: IO,
         provider: Provider | None = None,
-    ):
+    ) -> None:
         self._package = package
         self._pool = pool
         self._installed = installed
@@ -54,7 +61,7 @@ class Solver:
             provider = Provider(self._package, self._pool, self._io)
 
         self._provider = provider
-        self._overrides: list[dict] = []
+        self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
 
     @property
     def provider(self) -> Provider:
@@ -65,7 +72,7 @@ class Solver:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest: list[str] = None) -> Transaction:
+    def solve(self, use_latest: list[str] | None = None) -> Transaction:
         from poetry.puzzle.transaction import Transaction
 
         with self._provider.progress():
@@ -91,7 +98,9 @@ class Solver:
         )
 
     def solve_in_compatibility_mode(
-        self, overrides: tuple[dict, ...], use_latest: list[str] = None
+        self,
+        overrides: tuple[dict[DependencyPackage, dict[str, Dependency]], ...],
+        use_latest: list[str] | None = None,
     ) -> tuple[list[Package], list[int]]:
 
         packages = []
@@ -119,17 +128,22 @@ class Solver:
 
         return packages, depths
 
-    def _solve(self, use_latest: list[str] = None) -> tuple[list[Package], list[int]]:
+    def _solve(
+        self, use_latest: list[str] | None = None
+    ) -> tuple[list[Package], list[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
-        locked = defaultdict(list)
+        locked: dict[str, list[DependencyPackage]] = defaultdict(list)
         for package in self._locked.packages:
             locked[package.name].append(
                 DependencyPackage(package.to_dependency(), package)
             )
-        for packages in locked.values():
-            packages.sort(key=lambda package: package.version, reverse=True)
+        for dependency_packages in locked.values():
+            dependency_packages.sort(
+                key=lambda p: p.package.version,
+                reverse=True,
+            )
 
         try:
             result = resolve_version(
@@ -142,11 +156,8 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
-        results = dict(
-            depth_first_search(
-                PackageNode(self._package, packages), aggregate_package_nodes
-            )
-        )
+        combined_nodes = depth_first_search(PackageNode(self._package, packages))
+        results = dict(aggregate_package_nodes(nodes) for nodes in combined_nodes)
 
         # Merging feature packages with base packages
         final_packages = []
@@ -177,6 +188,8 @@ class Solver:
 
 DFSNodeID = Tuple[str, FrozenSet[str], bool]
 
+T = TypeVar("T", bound="DFSNode")
+
 
 class DFSNode:
     def __init__(self, id: DFSNodeID, name: str, base_name: str) -> None:
@@ -184,7 +197,7 @@ class DFSNode:
         self.name = name
         self.base_name = base_name
 
-    def reachable(self) -> list:
+    def reachable(self: T) -> list[T]:
         return []
 
     def visit(self, parents: list[PackageNode]) -> None:
@@ -194,9 +207,7 @@ class DFSNode:
         return str(self.id)
 
 
-def depth_first_search(
-    source: PackageNode, aggregator: Callable
-) -> list[tuple[Package, int]]:
+def depth_first_search(source: PackageNode) -> list[list[PackageNode]]:
     back_edges: dict[DFSNodeID, list[PackageNode]] = defaultdict(list)
     visited: set[DFSNodeID] = set()
     topo_sorted_nodes: list[PackageNode] = []
@@ -204,18 +215,18 @@ def depth_first_search(
     dfs_visit(source, back_edges, visited, topo_sorted_nodes)
 
     # Combine the nodes by name
-    combined_nodes = defaultdict(list)
+    combined_nodes: dict[str, list[PackageNode]] = defaultdict(list)
     for node in topo_sorted_nodes:
         node.visit(back_edges[node.id])
         combined_nodes[node.name].append(node)
 
-    combined_topo_sorted_nodes = [
+    combined_topo_sorted_nodes: list[list[PackageNode]] = [
         combined_nodes.pop(node.name)
         for node in topo_sorted_nodes
         if node.name in combined_nodes
     ]
 
-    return [aggregator(nodes) for nodes in combined_topo_sorted_nodes]
+    return combined_topo_sorted_nodes
 
 
 def dfs_visit(
@@ -270,7 +281,7 @@ class PackageNode(DFSNode):
             self.groups: frozenset[str] = frozenset()
             self.optional = True
         elif dep:
-            self.category = "main" if "default" in dep.groups else "dev"
+            self.category = "main" if MAIN_GROUP in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
         else:
@@ -348,7 +359,7 @@ def aggregate_package_nodes(nodes: list[PackageNode]) -> tuple[Package, int]:
     for node in nodes:
         groups.extend(node.groups)
 
-    category = "main" if any("default" in node.groups for node in nodes) else "dev"
+    category = "main" if any(MAIN_GROUP in node.groups for node in nodes) else "dev"
     optional = all(node.optional for node in nodes)
     for node in nodes:
         node.depth = depth

@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.utils.password_manager import KeyRing
-from poetry.utils.password_manager import KeyRingError
 from poetry.utils.password_manager import PasswordManager
+from poetry.utils.password_manager import PoetryKeyring
+from poetry.utils.password_manager import PoetryKeyringError
 
 
 if TYPE_CHECKING:
@@ -174,23 +174,23 @@ def test_delete_pypi_token_with_unavailable_backend(
 def test_keyring_raises_errors_on_keyring_errors(
     mocker: MockerFixture, with_fail_keyring: None
 ):
-    mocker.patch("poetry.utils.password_manager.KeyRing._check")
+    mocker.patch("poetry.utils.password_manager.PoetryKeyring._check")
 
-    key_ring = KeyRing("poetry")
-    with pytest.raises(KeyRingError):
+    key_ring = PoetryKeyring("poetry")
+    with pytest.raises(PoetryKeyringError):
         key_ring.set_password("foo", "bar", "baz")
 
-    with pytest.raises(KeyRingError):
+    with pytest.raises(PoetryKeyringError):
         key_ring.get_password("foo", "bar")
 
-    with pytest.raises(KeyRingError):
+    with pytest.raises(PoetryKeyringError):
         key_ring.delete_password("foo", "bar")
 
 
 def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
     with_chained_fail_keyring: None,
 ):
-    key_ring = KeyRing("poetry")
+    key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
 
@@ -198,7 +198,7 @@ def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
 def test_keyring_with_chainer_backend_and_null_keyring_should_be_unavailable(
     with_chained_null_keyring: None,
 ):
-    key_ring = KeyRing("poetry")
+    key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
 
@@ -206,7 +206,7 @@ def test_keyring_with_chainer_backend_and_null_keyring_should_be_unavailable(
 def test_null_keyring_should_be_unavailable(
     with_null_keyring: None,
 ):
-    key_ring = KeyRing("poetry")
+    key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
 
@@ -214,7 +214,7 @@ def test_null_keyring_should_be_unavailable(
 def test_fail_keyring_should_be_unavailable(
     with_fail_keyring: None,
 ):
-    key_ring = KeyRing("poetry")
+    key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
 

@@ -43,7 +43,7 @@ def plugin_package() -> Package:
 
 @pytest.fixture()
 def plugin_distro(plugin_package: Package) -> Distribution:
-    return Distribution(plugin_package.name, plugin_package.version.to_string(True))
+    return Distribution(plugin_package.name, plugin_package.version.to_string())
 
 
 @pytest.mark.parametrize("entrypoint_name", ["poetry-plugin", "not-package-name"])

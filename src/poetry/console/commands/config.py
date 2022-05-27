@@ -10,6 +10,7 @@ from typing import cast
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from poetry.config.config import PackageFilterPolicy
 from poetry.console.commands.command import Command
 
 
@@ -52,13 +53,13 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.config.config import boolean_normalizer
         from poetry.config.config import boolean_validator
         from poetry.config.config import int_normalizer
-        from poetry.locations import CACHE_DIR
+        from poetry.locations import DEFAULT_CACHE_DIR
 
         unique_config_values = {
             "cache-dir": (
                 str,
                 lambda val: str(Path(val)),
-                str(Path(CACHE_DIR) / "virtualenvs"),
+                str(DEFAULT_CACHE_DIR / "virtualenvs"),
             ),
             "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
@@ -72,10 +73,20 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 False,
             ),
+            "virtualenvs.options.no-pip": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
+            "virtualenvs.options.no-setuptools": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
             "virtualenvs.path": (
                 str,
                 lambda val: str(Path(val)),
-                str(Path(CACHE_DIR) / "virtualenvs"),
+                str(DEFAULT_CACHE_DIR / "virtualenvs"),
             ),
             "virtualenvs.prefer-active-python": (
                 boolean_validator,
@@ -97,6 +108,16 @@ To remove a repository (repo is a short alias for repositories):
                 int_normalizer,
                 None,
             ),
+            "virtualenvs.prompt": (
+                str,
+                lambda val: str(val),
+                "{project_name}-py{python_version}",
+            ),
+            "installer.no-binary": (
+                PackageFilterPolicy.validator,
+                PackageFilterPolicy.normalize,
+                None,
+            ),
         }
 
         return unique_config_values
@@ -107,12 +128,12 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.core.toml.file import TOMLFile
 
+        from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
-        from poetry.factory import Factory
         from poetry.locations import CONFIG_DIR
 
-        config = Factory.create_config(self.io)
-        config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
+        config = Config.create()
+        config_file = TOMLFile(CONFIG_DIR / "config.toml")
 
         try:
             local_config_file = TOMLFile(self.poetry.file.parent / "poetry.toml")
@@ -325,7 +346,8 @@ To remove a repository (repo is a short alias for repositories):
 
             if isinstance(value, dict):
                 k += f"{key}."
-                self._list_configuration(value, cast(dict, raw_val), k=k)
+                raw_val = cast("dict[str, Any]", raw_val)
+                self._list_configuration(value, raw_val, k=k)
                 k = orig_k
 
                 continue
@@ -345,50 +367,3 @@ To remove a repository (repo is a short alias for repositories):
                 message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
 
             self.line(message)
-
-    def _get_setting(
-        self,
-        contents: dict,
-        setting: str | None = None,
-        k: str | None = None,
-        default: Any | None = None,
-    ) -> list[tuple[str, str]]:
-        orig_k = k
-
-        if setting and setting.split(".")[0] not in contents:
-            value = json.dumps(default)
-
-            return [((k or "") + setting, value)]
-        else:
-            values = []
-            for key, value in contents.items():
-                if setting and key != setting.split(".")[0]:
-                    continue
-
-                if isinstance(value, dict) or key == "repositories" and k is None:
-                    if k is None:
-                        k = ""
-
-                    k += re.sub(r"^config\.", "", key + ".")
-                    if setting and len(setting) > 1:
-                        setting = ".".join(setting.split(".")[1:])
-
-                    values += self._get_setting(
-                        cast(dict, value), k=k, setting=setting, default=default
-                    )
-                    k = orig_k
-
-                    continue
-
-                if isinstance(value, list):
-                    value = ", ".join(
-                        json.dumps(val) if isinstance(val, list) else val
-                        for val in value
-                    )
-                    value = f"[{value}]"
-
-                value = json.dumps(value)
-
-                values.append(((k or "") + key, value))
-
-            return values

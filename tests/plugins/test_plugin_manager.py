@@ -7,9 +7,9 @@ import pytest
 
 from cleo.io.buffered_io import BufferedIO
 from entrypoints import EntryPoint
+from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.packages.locker import Locker
-from poetry.packages.project_package import ProjectPackage
 from poetry.plugins import ApplicationPlugin
 from poetry.plugins import Plugin
 from poetry.plugins.plugin_manager import PluginManager
@@ -32,8 +32,8 @@ class ManagerFactory(Protocol):
 
 class MyPlugin(Plugin):
     def activate(self, poetry: Poetry, io: BufferedIO) -> None:
-        io.write_line("Updating version")
-        poetry.package.set_version("9.9.9")
+        io.write_line("Setting readmes")
+        poetry.package.readmes = ("README.md",)
 
 
 class MyCommandPlugin(ApplicationPlugin):
@@ -95,8 +95,8 @@ def test_load_plugins_and_activate(
     manager.load_plugins()
     manager.activate(poetry, io)
 
-    assert poetry.package.version.text == "9.9.9"
-    assert io.fetch_output() == "Updating version\n"
+    assert poetry.package.readmes == ("README.md",)
+    assert io.fetch_output() == "Setting readmes\n"
 
 
 def test_load_plugins_with_invalid_plugin(

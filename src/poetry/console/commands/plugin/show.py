@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING
-from typing import DefaultDict
+from typing import Any
 
 from poetry.console.commands.command import Command
-
-
-if TYPE_CHECKING:
-    from poetry.core.packages.package import Package
 
 
 class PluginShowCommand(Command):
@@ -26,7 +21,7 @@ class PluginShowCommand(Command):
         from poetry.utils.helpers import canonicalize_name
         from poetry.utils.helpers import pluralize
 
-        plugins: DefaultDict[str, dict[str, Package | list[str]]] = defaultdict(
+        plugins: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "package": None,
                 "plugins": [],
@@ -52,6 +47,7 @@ class PluginShowCommand(Command):
             if issubclass(plugin, ApplicationPlugin):
                 category = "application_plugins"
 
+            assert entry_point.distro is not None
             package = packages_by_name[canonicalize_name(entry_point.distro.name)]
             plugins[package.pretty_name]["package"] = package
             plugins[package.pretty_name][category].append(entry_point)

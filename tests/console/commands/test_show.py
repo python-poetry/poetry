@@ -6,6 +6,12 @@ import pytest
 
 from poetry.core.packages.dependency_group import DependencyGroup
 
+
+try:
+    from poetry.core.packages.dependency_group import MAIN_GROUP
+except ImportError:
+    MAIN_GROUP = "default"
+
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -197,13 +203,13 @@ cachy 0.1.0 Cachy package
 """,
         ),
         (
-            "--without default",
+            f"--without {MAIN_GROUP}",
             """\
 pytest 3.7.3 Pytest package
 """,
         ),
         (
-            "--only default",
+            f"--only {MAIN_GROUP}",
             """\
 cachy 0.1.0 Cachy package
 """,
@@ -228,7 +234,7 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            "--with time --without default,test",
+            f"--with time --without {MAIN_GROUP},test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
@@ -308,6 +314,48 @@ def test_show_basic_with_installed_packages_single(
         "name         : cachy",
         "version      : 0.1.0",
         "description  : Cachy package",
+    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+
+
+def test_show_basic_with_installed_packages_single_canonicalized(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+):
+    poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^0.1.0"))
+
+    foo_bar = get_package("foo-bar", "0.1.0")
+    foo_bar.description = "Foobar package"
+
+    installed.add_package(foo_bar)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo-bar",
+                    "version": "0.1.0",
+                    "description": "Foobar package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo-bar": []},
+            },
+        }
+    )
+
+    tester.execute("Foo_Bar")
+
+    assert [
+        "name         : foo-bar",
+        "version      : 0.1.0",
+        "description  : Foobar package",
     ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
 
 
@@ -1676,6 +1724,121 @@ def test_show_tree_no_dev(tester: CommandTester, poetry: Poetry, installed: Repo
 cachy 0.2.0
 └── msgpack-python >=0.5 <0.6
 """
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_show_tree_why_package(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+):
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    installed.add_package(a)
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+
+    b = get_package("b", "0.0.1")
+    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    installed.add_package(c)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "dependencies": {"b": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "dependencies": {"c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": [], "c": []},
+            },
+        }
+    )
+
+    tester.execute("--tree --why b")
+
+    expected = """\
+a 0.0.1
+└── b =0.0.1
+    └── c =0.0.1 \n"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_show_tree_why(tester: CommandTester, poetry: Poetry, installed: Repository):
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    installed.add_package(a)
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+
+    b = get_package("b", "0.0.1")
+    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    installed.add_package(c)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "dependencies": {"b": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "dependencies": {"c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": [], "c": []},
+            },
+        }
+    )
+
+    tester.execute("--why")
+
+    # this has to be on a single line due to the padding whitespace, which gets stripped
+    # by pre-commit.
+    expected = """a 0.0.1        \nb 0.0.1 from a \nc 0.0.1 from b \n"""
 
     assert tester.io.fetch_output() == expected
 

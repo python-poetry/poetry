@@ -7,10 +7,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from deepdiff import DeepDiff
 from poetry.core.pyproject.exceptions import PyProjectException
 
 from poetry.config.config_source import ConfigSource
 from poetry.factory import Factory
+from tests.conftest import Config
 
 
 if TYPE_CHECKING:
@@ -20,7 +22,6 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.dict_config_source import DictConfigSource
-    from tests.conftest import Config
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
 
@@ -51,14 +52,19 @@ def test_list_displays_default_value_if_not_set(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
+experimental.system-git-client = false
 installer.max-workers = null
+installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert tester.io.fetch_output() == expected
@@ -75,14 +81,19 @@ def test_list_displays_set_get_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
+experimental.system-git-client = false
 installer.max-workers = null
+installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 0
@@ -123,14 +134,19 @@ def test_list_displays_set_get_local_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
+experimental.system-git-client = false
 installer.max-workers = null
+installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 1
@@ -201,3 +217,33 @@ def test_config_installer_parallel(
         "install"
     )._command._installer._executor._max_workers
     assert workers == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("true", [":all:"]),
+        ("1", [":all:"]),
+        ("false", [":none:"]),
+        ("0", [":none:"]),
+        ("pytest", ["pytest"]),
+        ("PyTest", ["pytest"]),
+        ("pytest,black", ["pytest", "black"]),
+        ("", []),
+    ],
+)
+def test_config_installer_no_binary(
+    tester: CommandTester, value: str, expected: list[str]
+) -> None:
+    setting = "installer.no-binary"
+
+    tester.execute(setting)
+    assert tester.io.fetch_output().strip() == "null"
+
+    config = Config.create()
+    assert not config.get(setting)
+
+    tester.execute(f"{setting} '{value}'")
+
+    config = Config.create(reload=True)
+    assert not DeepDiff(config.get(setting), expected, ignore_order=True)

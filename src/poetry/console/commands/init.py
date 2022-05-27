@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-import os
-import re
 import sys
-import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Dict
 from typing import Mapping
+from typing import Union
 
 from cleo.helpers import option
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.dependency_specification import parse_dependency_specification
 from poetry.utils.helpers import canonicalize_name
 
 
@@ -23,6 +23,8 @@ if TYPE_CHECKING:
     from tomlkit.items import InlineTable
 
     from poetry.repositories import Pool
+
+Requirements = Dict[str, Union[str, Mapping[str, Any]]]
 
 
 class InitCommand(Command):
@@ -124,7 +126,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         description = self.ask(question)
 
         author = self.option("author")
-        if not author and vcs_config and vcs_config.get("user.name"):
+        if not author and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
@@ -164,7 +166,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if self.io.is_interactive():
             self.line("")
 
-        requirements = {}
+        requirements: Requirements = {}
         if self.option("dependency"):
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
@@ -194,7 +196,7 @@ You can specify a package in the following forms:
             if self.io.is_interactive():
                 self.line("")
 
-        dev_requirements: dict[str, str] = {}
+        dev_requirements: Requirements = {}
         if self.option("dev-dependency"):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
@@ -266,9 +268,9 @@ You can specify a package in the following forms:
         requires: list[str],
         allow_prereleases: bool = False,
         source: str | None = None,
-    ) -> list[dict[str, str | list[str]]]:
+    ) -> list[dict[str, Any]]:
         if not requires:
-            requires = []
+            result = []
 
             package = self.ask(
                 "Search for package to add (or leave blank to continue):"
@@ -282,7 +284,7 @@ You can specify a package in the following forms:
                     or "version" in constraint
                 ):
                     self.line(f"Adding <info>{package}</info>")
-                    requires.append(constraint)
+                    result.append(constraint)
                     package = self.ask("\nAdd a package:")
                     continue
 
@@ -304,19 +306,26 @@ You can specify a package in the following forms:
 
                     self.line(info_string)
 
+                    # Default to an empty value to signal no package was selected
+                    choices.append("")
+
                     package = self.choice(
                         "\nEnter package # to add, or the complete package name if it"
                         " is not listed",
                         choices,
                         attempts=3,
+                        default=len(choices) - 1,
                     )
 
+                    if not package:
+                        self.line("<warning>No package selected</warning>")
+
                     # package selected by user, set constraint name to package name
-                    if package is not False:
+                    if package:
                         constraint["name"] = package
 
                 # no constraint yet, determine the best version automatically
-                if package is not False and "version" not in constraint:
+                if package and "version" not in constraint:
                     question = self.create_question(
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
@@ -338,17 +347,16 @@ You can specify a package in the following forms:
 
                     constraint["version"] = package_constraint
 
-                if package is not False:
-                    requires.append(constraint)
+                if package:
+                    result.append(constraint)
 
                 if self.io.is_interactive():
                     package = self.ask("\nAdd a package:")
 
-            return requires
+            return result
 
-        requires = self._parse_requirements(requires)
         result = []
-        for requirement in requires:
+        for requirement in self._parse_requirements(requires):
             if "git" in requirement or "url" in requirement or "path" in requirement:
                 result.append(requirement)
                 continue
@@ -402,137 +410,22 @@ You can specify a package in the following forms:
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException
 
-        from poetry.puzzle.provider import Provider
-
-        result = []
-
         try:
             cwd = self.poetry.file.parent
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
 
-        for requirement in requirements:
-            requirement = requirement.strip()
-            extras = []
-            extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
-            if extras_m:
-                extras = [e.strip() for e in extras_m.group(1).split(",")]
-                requirement, _ = requirement.split("[")
-
-            url_parsed = urllib.parse.urlparse(requirement)
-            if url_parsed.scheme and url_parsed.netloc:
-                # Url
-                if url_parsed.scheme in ["git+https", "git+ssh"]:
-                    from poetry.core.vcs.git import Git
-                    from poetry.core.vcs.git import ParsedUrl
-
-                    parsed = ParsedUrl.parse(requirement)
-                    url = Git.normalize_url(requirement)
-
-                    pair = {"name": parsed.name, "git": url.url}
-                    if parsed.rev:
-                        pair["rev"] = url.revision
-
-                    if extras:
-                        pair["extras"] = extras
-
-                    package = Provider.get_package_from_vcs(
-                        "git", url.url, rev=pair.get("rev")
-                    )
-                    pair["name"] = package.name
-                    result.append(pair)
-
-                    continue
-                elif url_parsed.scheme in ["http", "https"]:
-                    package = Provider.get_package_from_url(requirement)
-
-                    pair = {"name": package.name, "url": package.source_url}
-                    if extras:
-                        pair["extras"] = extras
-
-                    result.append(pair)
-                    continue
-            elif (os.path.sep in requirement or "/" in requirement) and (
-                cwd.joinpath(requirement).exists()
-                or Path(requirement).expanduser().exists()
-                and Path(requirement).expanduser().is_absolute()
-            ):
-                path = Path(requirement).expanduser()
-                is_absolute = path.is_absolute()
-
-                if not path.is_absolute():
-                    path = cwd.joinpath(requirement)
-
-                if path.is_file():
-                    package = Provider.get_package_from_file(path.resolve())
-                else:
-                    package = Provider.get_package_from_directory(path.resolve())
-
-                result.append(
-                    dict(
-                        [
-                            ("name", package.name),
-                            (
-                                "path",
-                                path.relative_to(cwd).as_posix()
-                                if not is_absolute
-                                else path.as_posix(),
-                            ),
-                        ]
-                        + ([("extras", extras)] if extras else [])
-                    )
-                )
-
-                continue
-
-            pair = re.sub(
-                "^([^@=: ]+)(?:@|==|(?<![<>~!])=|:| )(.*)$", "\\1 \\2", requirement
+        return [
+            parse_dependency_specification(
+                requirement=requirement,
+                env=self.env if isinstance(self, EnvCommand) else None,
+                cwd=cwd,
             )
-            pair = pair.strip()
+            for requirement in requirements
+        ]
 
-            require: dict[str, str] = {}
-            if " " in pair:
-                name, version = pair.split(" ", 2)
-                extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-                if extras_m:
-                    extras = [e.strip() for e in extras_m.group(1).split(",")]
-                    name, _ = name.split("[")
-
-                require["name"] = name
-                if version != "latest":
-                    require["version"] = version
-            else:
-                m = re.match(
-                    r"^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
-                )
-                if m:
-                    name, constraint = m.group(1), m.group(2)
-                    extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-                    if extras_m:
-                        extras = [e.strip() for e in extras_m.group(1).split(",")]
-                        name, _ = name.split("[")
-
-                    require["name"] = name
-                    require["version"] = constraint
-                else:
-                    extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
-                    if extras_m:
-                        extras = [e.strip() for e in extras_m.group(1).split(",")]
-                        pair, _ = pair.split("[")
-
-                    require["name"] = pair
-
-            if extras:
-                require["extras"] = extras
-
-            result.append(require)
-
-        return result
-
-    def _format_requirements(
-        self, requirements: list[dict[str, str]]
-    ) -> Mapping[str, str | Mapping[str, str]]:
-        requires = {}
+    def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
+        requires: Requirements = {}
         for requirement in requirements:
             name = requirement.pop("name")
             constraint: str | InlineTable

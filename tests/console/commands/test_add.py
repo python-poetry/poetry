@@ -940,6 +940,30 @@ If you prefer to upgrade it to the latest available version,\
     assert expected in tester.io.fetch_output()
 
 
+def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
+    app.poetry.file.write(content)
+
+    repo.add_package(get_package("foo-bar", "1.1.2"))
+    tester.execute("Foo_Bar")
+
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • Foo_Bar
+
+If you want to update it to the latest compatible version,\
+ you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry add package@latest`.
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
@@ -981,7 +1005,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available(
     tester.execute("foo")
 
     expected = """\
-Using version ^1.2.3-beta.1 for foo
+Using version ^1.2.3b1 for foo
 
 Updating dependencies
 Resolving dependencies...
@@ -992,7 +1016,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3b1)
 """
-
     assert expected in tester.io.fetch_output()
 
 
@@ -1912,7 +1935,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
     old_tester.execute("foo")
 
     expected = """\
-Using version ^1.2.3-beta.1 for foo
+Using version ^1.2.3b1 for foo
 
 Updating dependencies
 Resolving dependencies...
@@ -1923,7 +1946,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
 """
-
     assert expected in old_tester.io.fetch_output()
 
 

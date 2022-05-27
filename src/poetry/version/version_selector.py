@@ -21,7 +21,7 @@ class VersionSelector:
         target_package_version: str | None = None,
         allow_prereleases: bool = False,
         source: str | None = None,
-    ) -> Package | bool:
+    ) -> Package | None:
         """
         Given a package name and optional version,
         returns the latest Package that matches
@@ -32,7 +32,7 @@ class VersionSelector:
             package_name,
             {
                 "version": target_package_version or "*",
-                "allow_prereleases": allow_prereleases,
+                "allow-prereleases": allow_prereleases,
                 "source": source,
             },
         )
@@ -40,7 +40,7 @@ class VersionSelector:
         only_prereleases = all(c.version.is_unstable() for c in candidates)
 
         if not candidates:
-            return False
+            return None
 
         package = None
         for candidate in candidates:
@@ -55,8 +55,6 @@ class VersionSelector:
             if package is None or package.version < candidate.version:
                 package = candidate
 
-        if package is None:
-            return False
         return package
 
     def find_recommended_require_version(self, package: Package) -> str:
