@@ -254,7 +254,7 @@ class PyPiRepository(HTTPRepository):
                 self._base_url + endpoint, raise_for_status=False
             )
 
-        if json_response.status_code == 404:
+        if json_response.status_code != 200:
             return None
 
         json: dict[str, Any] = json_response.json()
