@@ -710,53 +710,6 @@ To only remove a specific package from a cache, you have to specify the cache en
 poetry cache clear pypi:requests:2.24.0
 ```
 
-## plugin
-
-The `plugin` namespace regroups sub commands to manage Poetry plugins.
-
-### `plugin add`
-
-The `plugin add` command installs Poetry plugins and make them available at runtime.
-
-For example, to install the `poetry-plugin` plugin, you can run:
-
-```bash
-poetry plugin add poetry-plugin
-```
-
-The package specification formats supported by the `plugin add` command are the same as the ones supported
-by the [`add` command](#add).
-
-If you just want to check what would happen by installing a plugin, you can use the `--dry-run` option
-
-```bash
-poetry plugin add poetry-plugin --dry-run
-```
-
-#### Options
-
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
-
-### `plugin show`
-
-The `plugin show` command lists all the currently installed plugins.
-
-```bash
-poetry plugin show
-```
-
-### `plugin remove`
-
-The `plugin remove` command removes installed plugins.
-
-```bash
-poetry plugin remove poetry-plugin
-```
-
-#### Options
-
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
-
 ## source
 
 The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
@@ -851,3 +804,143 @@ The `list` command displays all the available Poetry commands.
 ```bash
 poetry list
 ```
+
+## self
+
+The `self` namespace regroups sub commands to manage the Poetry installation itself.
+
+{{% note %}}
+Use of these commands will create the required `pyproject.toml` and `poetry.lock` files in your
+[configuration directory]({{< relref "configuration" >}}).
+{{% /note %}}
+
+### `self add`
+
+The `self add` command installs Poetry plugins and make them available at runtime. Additionally, it can
+also be used to upgrade Poetry's own dependencies or inject additional packages into the runtime
+environment
+
+{{% note %}}
+The `self add` command works exactly like the [`add` command](#add). However, is different in that the packages
+managed are for Poetry's runtime environment.
+
+The package specification formats supported by the `self add` command are the same as the ones supported
+by the [`add` command](#add).
+{{% /note %}}
+
+For example, to install the `poetry-plugin-export` plugin, you can run:
+
+```bash
+poetry self add poetry-plugin-export
+```
+
+To update to the latest `poetry-core` version, you can run:
+
+```bash
+poetry self add poetry-core@latest
+```
+
+To add a keyring provider `artifacts-keyring`, you can run:
+
+```bash
+poetry self add artifacts-keyring
+```
+
+### Options
+
+* `--editable (-e)`: Add vcs/path dependencies as editable.
+* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+* `--allow-prereleases`: Accept prereleases.
+* `--source`: Name of the source to use to install the package.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+
+### `self update`
+
+The `self update` command updates Poetry version in its current runtime environment.
+
+{{% note %}}
+The `self update` command works exactly like the [`update` command](#update). However,
+is different in that the packages managed are for Poetry's runtime environment.
+{{% /note %}}
+
+```bash
+poetry self update
+```
+
+### Options
+
+* `--preview`: Allow the installation of pre-release versions.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+
+### `self lock`
+
+The `self lock` command reads this Poetry installation's system `pyproject.toml` file. The system
+dependencies are locked in the corresponding `poetry.lock` file.
+
+```bash
+poetry self lock
+```
+
+### Options
+
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--no-update`: Do not update locked versions, only refresh lock file.
+
+### `self show`
+
+The `self show` command behaves similar to the show command, but
+working within Poetry's runtime environment. This lists all packages installed within
+the Poetry install environment.
+
+To show only additional packages that have been added via self add and their
+dependencies use `self show --addons`.
+
+```bash
+poetry self show
+```
+
+### Options
+
+* `--addons`: List only add-on packages installed.
+* `--tree`: List the dependencies as a tree.
+* `--latest (-l)`: Show the latest version.
+* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+
+### `self show plugins`
+
+The `self show plugins` command lists all the currently installed plugins.
+
+```bash
+poetry self show plugins
+```
+
+### `self remove`
+
+The `self remove` command removes an installed addon package.
+
+```bash
+poetry self remove poetry-plugin-export
+```
+
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+
+### `self install`
+
+The `self install` command ensures all additional packages specified are installed in the current
+runtime environment.
+
+{{% note %}}
+The `self install` command works similar to the [`install` command](#install). However,
+is different in that the packages managed are for Poetry's runtime environment.
+{{% /note %}}
+
+```bash
+poetry self install --sync
+```
+
+### Options
+
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
