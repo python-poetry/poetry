@@ -58,7 +58,9 @@ class Solver:
         self._io = io
 
         if provider is None:
-            provider = Provider(self._package, self._pool, self._io)
+            provider = Provider(
+                self._package, self._pool, self._io, installed=installed
+            )
 
         self._provider = provider
         self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []

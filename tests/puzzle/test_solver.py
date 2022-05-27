@@ -87,7 +87,12 @@ def solver(
     io: NullIO,
 ) -> Solver:
     return Solver(
-        package, pool, installed, locked, io, provider=Provider(package, pool, io)
+        package,
+        pool,
+        installed,
+        locked,
+        io,
+        provider=Provider(package, pool, io, installed=installed),
     )
 
 
@@ -172,6 +177,36 @@ def test_install_non_existing_package_fail(
 
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+def test_install_unpublished_package_does_not_fail(
+    installed: InstalledRepository,
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+):
+    package.add_dependency(Factory.create_dependency("B", "1"))
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1")
+    package_b.add_dependency(Factory.create_dependency("A", "1.0"))
+
+    repo.add_package(package_a)
+    installed.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a},
+            {
+                "job": "install",
+                "package": package_b,
+                "skipped": True,  # already installed
+            },
+        ],
+    )
 
 
 def test_solver_with_deps(solver: Solver, repo: Repository, package: ProjectPackage):
