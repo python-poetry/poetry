@@ -35,6 +35,7 @@ from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
+from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
 from poetry.vcs.git import Git
 
@@ -46,10 +47,12 @@ if TYPE_CHECKING:
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.specification import PackageSpecification
     from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
     from poetry.repositories import Pool
+    from poetry.repositories import Repository
     from poetry.utils.env import Env
 
 
@@ -124,6 +127,7 @@ class Provider:
         pool: Pool,
         io: Any,
         env: Env | None = None,
+        installed: Repository | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -136,6 +140,7 @@ class Provider:
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
+        self._installed = installed
 
     @property
     def pool(self) -> Pool:
@@ -185,6 +190,36 @@ class Provider:
                 f" package's name: {package.name}"
             )
 
+    def search_for_installed_packages(
+        self,
+        specification: PackageSpecification,
+    ) -> list[Package]:
+        """
+        Search for installed packages, when available, that provides the given
+        specification.
+
+        This is useful when dealing with packages that are under development, not
+        published on package sources and/or only available via system installations.
+        """
+        if not self._installed:
+            return []
+
+        logger.debug(
+            "Falling back to installed packages to discover metadata for <c2>%s</>",
+            specification.complete_name,
+        )
+        packages = [
+            package
+            for package in self._installed.packages
+            if package.provides(specification)
+        ]
+        logger.debug(
+            "Found <c2>%d</> compatible packages for <c2>%s</>",
+            len(packages),
+            specification.complete_name,
+        )
+        return packages
+
     def search_for(
         self,
         dependency: (
@@ -226,6 +261,9 @@ class Provider:
                 ),
                 reverse=True,
             )
+
+        if not packages:
+            packages = self.search_for_installed_packages(dependency)
 
         return PackageCollection(dependency, packages)
 
@@ -478,15 +516,29 @@ class Provider:
             "url",
             "git",
         }:
-            package = DependencyPackage(
-                package.dependency,
-                self._pool.package(
-                    package.name,
-                    package.version.text,
-                    extras=list(package.dependency.extras),
-                    repository=package.dependency.source_name,
-                ),
-            )
+            try:
+                package = DependencyPackage(
+                    package.dependency,
+                    self._pool.package(
+                        package.name,
+                        package.version.text,
+                        extras=list(package.dependency.extras),
+                        repository=package.dependency.source_name,
+                    ),
+                )
+            except PackageNotFound as e:
+                try:
+                    package = next(
+                        DependencyPackage(
+                            package.dependency,
+                            pkg,
+                        )
+                        for pkg in self.search_for_installed_packages(
+                            package.dependency
+                        )
+                    )
+                except StopIteration:
+                    raise e from e
             requires = package.requires
         else:
             requires = package.requires
