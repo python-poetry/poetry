@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 
@@ -240,6 +241,18 @@ class EditableBuilder(Builder):
                 builder._write_entry_points(f)
 
             added_files.append(dist_info.joinpath("entry_points.txt"))
+
+        # write PEP 610 metadata
+        direct_url_json = dist_info.joinpath("direct_url.json")
+        direct_url_json.write_text(
+            json.dumps(
+                {
+                    "dir_info": {"editable": True},
+                    "url": self._poetry.file.path.parent.as_uri(),
+                }
+            )
+        )
+        added_files.append(direct_url_json)
 
         record = dist_info.joinpath("RECORD")
         with record.open("w", encoding="utf-8") as f:

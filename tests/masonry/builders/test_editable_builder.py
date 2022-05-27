@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 
@@ -9,6 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
+from deepdiff import DeepDiff
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
@@ -105,6 +107,15 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert dist_info.joinpath("METADATA").exists()
     assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("entry_points.txt").exists()
+    assert dist_info.joinpath("direct_url.json").exists()
+
+    assert not DeepDiff(
+        {
+            "dir_info": {"editable": True},
+            "url": simple_poetry.file.path.parent.as_uri(),
+        },
+        json.loads(dist_info.joinpath("direct_url.json").read_text()),
+    )
 
     assert dist_info.joinpath("INSTALLER").read_text() == "poetry"
     assert (
@@ -157,6 +168,7 @@ My Package
     assert str(dist_info.joinpath("INSTALLER")) in records
     assert str(dist_info.joinpath("entry_points.txt")) in records
     assert str(dist_info.joinpath("RECORD")) in records
+    assert str(dist_info.joinpath("direct_url.json")) in records
 
     baz_script = f"""\
 #!{tmp_venv.python}
