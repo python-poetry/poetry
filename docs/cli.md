@@ -102,6 +102,13 @@ my-package
 ### Options
 
 * `--name`: Set the resulting package name.
+* `--description`: Description of the package.
+* `--package-version`: Set the version of the package.
+* `--author`: Author of the package.
+* `--python`: Compatible Python versions.
+* `--license`: License of the package.
+* `--dependency`: Package to require with an optional version constraint, e.g. `requests:^2.10.0` or `requests=2.11.1`. (see [add]({{< relref "#add" >}}).
+* `--dev-dependency`: Development requirements, see `--dependency`.
 * `--src`: Use the src layout for the project.
 * `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
 
@@ -123,8 +130,8 @@ poetry init
 * `--description`: Description of the package.
 * `--author`: Author of the package.
 * `--python` Compatible Python versions.
-* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-* `--dev-dependency`: Development requirements, see `--require`.
+* `--dependency`: Package to require with an optional version constraint, e.g. `requests:^2.10.0` or `requests=2.11.1`. (see [add]({{< relref "#add" >}}).
+* `--dev-dependency`: Development requirements, see `--dependency`.
 
 
 ## install

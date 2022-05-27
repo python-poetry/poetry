@@ -6,12 +6,14 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.factory import Factory
+from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
     from poetry.poetry import Poetry
+    from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
 
 
@@ -23,13 +25,14 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def verify_project_directory(
     path: Path, package_name: str, package_path: str, include_from: str | None = None
 ) -> Poetry:
+    module_name = package_name.replace("-", "_")
     package_path = Path(package_path)
     assert path.is_dir()
 
     pyproject = path / "pyproject.toml"
     assert pyproject.is_file()
 
-    init_file = path / package_path / "__init__.py"
+    init_file = path / module_name / "__init__.py"
     assert init_file.is_file()
 
     tests_init_file = path / "tests" / "__init__.py"
@@ -44,7 +47,7 @@ def verify_project_directory(
             "from": include_from,
         }
     else:
-        package_include = {"include": package_path.parts[0]}
+        package_include = {"include": module_name}
 
     packages = poetry.local_config.get("packages")
 
@@ -170,3 +173,45 @@ def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir
 
     poetry = verify_project_directory(path, package, package, None)
     assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"
+
+
+def test_command_new_with_dependencies(
+    tester: CommandTester, repo: TestRepository, tmp_dir: str
+):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    package_path = "package-path"
+    path = Path(tmp_dir) / package_path
+    options = [
+        path.as_posix(),
+        "--name custom-package",
+        "--package-version 1.2.3",
+        "--description 'My Description'",
+        "--author 'Your Name <you@example.com>' ",
+        "--license 'My License'",
+        "--python '^3.8' ",
+        "--dependency pendulum",
+        "--dev-dependency pytest",
+    ]
+    tester.execute(" ".join(options))
+    poetry = verify_project_directory(path, "custom-package", package_path, None)
+
+    expected = """\
+[tool.poetry]
+name = "custom-package"
+version = "1.2.3"
+description = "My Description"
+authors = ["Your Name <you@example.com>"]
+license = "My License"
+readme = "README.md"
+packages = [{include = "custom_package"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pendulum = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^3.6.0"
+"""
+    assert expected in poetry.pyproject.data.as_string()
