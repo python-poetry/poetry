@@ -157,20 +157,14 @@ def test_install_with_certs(mocker: MockerFixture, key: str, option: str):
     assert cmd[cert_index + 1] == str(Path(client_path))
 
 
-def test_requirement_git_develop_true(installer: PipInstaller, package_git: Package):
-    package_git.develop = True
-    result = installer.requirement(package_git)
-    expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
+def test_install_with_trusted_host(mocker: MockerFixture):
+    mocker.patch(
+        "poetry.utils.authenticator.Authenticator.get_certs_for_url",
+        return_value={"trusted": True},
+    )
 
-    assert result == expected
-
-
-def test_install_with_trusted_host():
+    default = LegacyRepository("default", "https://foo.bar")
     pool = Pool()
-    host = "foo.bar"
-
-    default = LegacyRepository("default", f"https://{host}", trusted=True)
-
     pool.add_repository(default, default=True)
 
     null_env = NullEnv()
@@ -181,8 +175,8 @@ def test_install_with_trusted_host():
         "foo",
         "0.0.0",
         source_type="legacy",
-        source_reference=default._name,
-        source_url=default._url,
+        source_reference=default.name,
+        source_url=default.url,
     )
 
     installer.install(foo)
@@ -190,9 +184,17 @@ def test_install_with_trusted_host():
     assert len(null_env.executed) == 1
     cmd = null_env.executed[0]
     assert "--trusted-host" in cmd
-    trusted_host_index = cmd.index("--trusted-host")
+    cert_index = cmd.index("--trusted-host")
+    # Need to do the str(Path()) bit because Windows paths get modified by Path
+    assert cmd[cert_index + 1] == "foo.bar"
 
-    assert cmd[trusted_host_index + 1] == host
+
+def test_requirement_git_develop_true(installer: PipInstaller, package_git: Package):
+    package_git.develop = True
+    result = installer.requirement(package_git)
+    expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
+
+    assert result == expected
 
 
 def test_uninstall_git_package_nspkg_pth_cleanup(
