@@ -49,12 +49,12 @@ def get_client_cert(config: Config, repository_name: str) -> Path | None:
         return None
 
 
-def get_trusted(config: Config, repository_name: str) -> bool | None:
+def get_trusted(config: Config, repository_name: str) -> bool:
     trusted = config.get(f"certificates.{repository_name}.trusted")
     if trusted:
         return bool(trusted)
     else:
-        return None
+        return False
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:

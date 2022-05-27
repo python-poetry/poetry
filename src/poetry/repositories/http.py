@@ -73,8 +73,8 @@ class HTTPRepository(CachedRepository, ABC):
         return None
 
     @property
-    def trusted(self) -> bool | None:
-        return self._authenticator.get_certs_for_url(self.url).get("trusted")
+    def trusted(self) -> bool:
+        return self._authenticator.get_trusted_for_url(self.url)
 
     @property
     def authenticated_url(self) -> str:

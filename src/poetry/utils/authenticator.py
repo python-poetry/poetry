@@ -52,8 +52,10 @@ class AuthenticatorRepositoryConfig:
         return {
             "cert": get_client_cert(config, self.name),
             "verify": get_cert(config, self.name),
-            "trusted": get_trusted(config, self.name),
         }
+
+    def trusted(self, config: Config) -> bool:
+        return get_trusted(config, self.name)
 
     @property
     def http_credential_keys(self) -> list[str]:
@@ -190,7 +192,8 @@ class Authenticator:
         certs = self.get_certs_for_url(url)
         verify = kwargs.get("verify") or certs.get("verify")
         cert = kwargs.get("cert") or certs.get("cert")
-        trusted = kwargs.get("trusted") or certs.get("trusted")
+
+        trusted = kwargs.get("trusted") or self.get_trusted_for_url(url)
 
         if cert is not None:
             cert = str(cert)
@@ -362,6 +365,12 @@ class Authenticator:
         if url not in self._certs:
             self._certs[url] = self._get_certs_for_url(url)
         return self._certs[url]
+
+    def get_trusted_for_url(self, url: str) -> bool:
+        selected = self.get_repository_config_for_url(url)
+        if selected:
+            return selected.trusted(config=self._config)
+        return False
 
     def _get_repository_config_for_url(
         self, url: str, exact_match: bool = False
