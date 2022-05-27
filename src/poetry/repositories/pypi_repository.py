@@ -243,14 +243,18 @@ class PyPiRepository(HTTPRepository):
 
     def _get(self, endpoint: str) -> dict[str, Any] | None:
         try:
-            json_response = self.session.get(self._base_url + endpoint)
+            json_response = self.session.get(
+                self._base_url + endpoint, raise_for_status=False
+            )
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
             self.session.delete_cache(self._base_url + endpoint)
-            json_response = self.session.get(self._base_url + endpoint)
+            json_response = self.session.get(
+                self._base_url + endpoint, raise_for_status=False
+            )
 
-        if json_response.status_code == 404:
+        if json_response.status_code != 200:
             return None
 
         json: dict[str, Any] = json_response.json()
