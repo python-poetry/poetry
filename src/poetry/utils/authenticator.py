@@ -22,6 +22,7 @@ from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
+from poetry.utils.helpers import get_trusted
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 
@@ -51,6 +52,7 @@ class AuthenticatorRepositoryConfig:
         return {
             "cert": get_client_cert(config, self.name),
             "verify": get_cert(config, self.name),
+            "trusted": get_trusted(config, self.name),
         }
 
     @property
@@ -188,12 +190,16 @@ class Authenticator:
         certs = self.get_certs_for_url(url)
         verify = kwargs.get("verify") or certs.get("verify")
         cert = kwargs.get("cert") or certs.get("cert")
+        trusted = kwargs.get("trusted") or certs.get("trusted")
 
         if cert is not None:
             cert = str(cert)
 
         if verify is not None:
             verify = str(verify)
+
+        if trusted:
+            verify = False
 
         settings = session.merge_environment_settings(  # type: ignore[no-untyped-call]
             prepared_request.url, proxies, stream, verify, cert
