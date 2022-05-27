@@ -30,6 +30,7 @@ class LegacyRepository(HTTPRepository):
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
+
         super().__init__(name, url.rstrip("/"), config, disable_cache)
 
     def find_packages(self, dependency: Dependency) -> list[Package]:

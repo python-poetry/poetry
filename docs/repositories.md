@@ -403,9 +403,6 @@ your command with the `--no-cache` flag.
 poetry --no-cache add pycowsay
 ```
 
-If this solves your issue, you can consider clearing your cache using the [`cache`]({{< relref "cli#cache-clear" >}})
-command.
-
 A default source will also be the fallback source if you add other sources.
 
 Alternatively, you could also consider enabling very verbose loging `-vvv` along with the `--no-cache` to see network

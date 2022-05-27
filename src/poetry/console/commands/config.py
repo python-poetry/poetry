@@ -305,8 +305,6 @@ To remove a repository (repo is a short alias for repositories):
                 config.auth_config_source.add_property(
                     f"certificates.{m.group(1)}.{m.group(2)}", values[0]
                 )
-            elif len(values) == 1:
-                config.auth_config_source.add_property(key, values[0])
             else:
                 raise ValueError("You must pass exactly 1 value")
 
