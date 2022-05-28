@@ -384,6 +384,14 @@ poetry config certificates.foo.cert /path/to/ca.pem
 poetry config certificates.foo.client-cert /path/to/client.pem
 ```
 
+### Trusting a repository
+
+You can bypass SSL verification for a repository if you know it can be trusted (useful for private repositories):
+
+```bash
+poetry config certificates.foo.trusted true
+```
+
 ## Caches
 
 Poetry employs multiple caches for package sources in order to improve user experience and avoid duplicate network
@@ -403,15 +411,8 @@ your command with the `--no-cache` flag.
 poetry --no-cache add pycowsay
 ```
 
-A default source will also be the fallback source if you add other sources.
+If this solves your issue, you can consider clearing your cache using the [`cache`]({{< relref "cli#cache-clear" >}})
+command.
 
 Alternatively, you could also consider enabling very verbose loging `-vvv` along with the `--no-cache` to see network
 requests being made in the logs.
-
-### Trusting a repository
-
-You can bypass SSL verification for a repository if you know it can be trusted (useful for private repositories):
-
-```bash
-poetry config certificates.foo.trusted true
-```
