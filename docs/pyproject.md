@@ -72,13 +72,12 @@ The recommended notation for the most common licenses is (alphabetical):
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
-{{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
-{{% /note %}}
-
 ```toml
 license = "MIT"
 ```
+{{% note %}}
+If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+{{% /note %}}
 
 ## authors
 
@@ -100,7 +99,8 @@ This is a list of maintainers and should be distinct from authors. Maintainers m
 
 ```toml
 maintainers = [
-    "Richard Brave <email@example.org>",
+    "John Smith <johnsmith@example.org>",
+    "Jane Smith <janesmith@example.org>",
 ]
 ```
 
