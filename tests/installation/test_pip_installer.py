@@ -159,8 +159,8 @@ def test_install_with_certs(mocker: MockerFixture, key: str, option: str):
 
 def test_install_with_trusted_host(mocker: MockerFixture):
     mocker.patch(
-        "poetry.utils.authenticator.Authenticator.get_certs_for_url",
-        return_value={"trusted": True},
+        "poetry.utils.authenticator.Authenticator.get_trusted_for_url",
+        return_value=True,
     )
 
     default = LegacyRepository("default", "https://foo.bar")
