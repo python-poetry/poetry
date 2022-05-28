@@ -15,8 +15,11 @@ from typing import cast
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver.helpers import parse_constraint
+from poetry.core.semver.util import constraint_regions
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
+from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import SingleMarker
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
@@ -47,6 +50,33 @@ if TYPE_CHECKING:
     from poetry.repositories import Repository
 
 logger = logging.getLogger(__name__)
+
+
+def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarker]:
+    markers = []
+
+    regions = constraint_regions([package.python_constraint for package in packages])
+    for region in regions:
+        marker: BaseMarker = AnyMarker()
+        if region.min is not None:
+            min_operator = ">=" if region.include_min else ">"
+            marker_name = (
+                "python_full_version" if region.min.precision > 2 else "python_version"
+            )
+            lo = SingleMarker(marker_name, f"{min_operator} {region.min}")
+            marker = marker.intersect(lo)
+
+        if region.max is not None:
+            max_operator = "<=" if region.include_max else "<"
+            marker_name = (
+                "python_full_version" if region.max.precision > 2 else "python_version"
+            )
+            hi = SingleMarker(marker_name, f"{max_operator} {region.max}")
+            marker = marker.intersect(hi)
+
+        markers.append(marker)
+
+    return markers
 
 
 class Locker:
@@ -277,12 +307,25 @@ class Locker:
                 ):
                     continue
 
-                require = deepcopy(require)
-                require.marker = require.marker.intersect(
+                base_marker = require.marker.intersect(
                     requirement.marker.without_extras()
                 )
-                if not require.marker.is_empty():
-                    dependencies.append(require)
+
+                if not base_marker.is_empty():
+                    # So as to give ourselves enough flexibility in choosing a solution,
+                    # we need to split the world up into the python version ranges that
+                    # this package might care about.
+                    #
+                    # We create a marker for all of the possible regions, and add a
+                    # requirement for each separately.
+                    candidates = packages_by_name.get(require.name, [])
+                    region_markers = get_python_version_region_markers(candidates)
+                    for region_marker in region_markers:
+                        marker = region_marker.intersect(base_marker)
+                        if not marker.is_empty():
+                            require2 = deepcopy(require)
+                            require2.marker = marker
+                            dependencies.append(require2)
 
             key = locked_package
             if key not in nested_dependencies:
