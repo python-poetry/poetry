@@ -98,17 +98,9 @@ The maintainers of the package. **Optional**
 This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
 
 ```toml
-# Single maintainer
 maintainers = [
-    "Richard Brave <richardbrave@example.org>",
-]
-```
-
-```toml
-# Multiple maintainers
-maintainers = [
-    "Richard Brave <richardbrave@example.org>",
-    "Amira Fens <amirafens@example.org>",
+    "John Smith <johnsmith@example.org>",
+    "Jane Smith <janesmith@example.org>",
 ]
 ```
 
