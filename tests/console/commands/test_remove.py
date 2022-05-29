@@ -8,16 +8,33 @@ import tomlkit
 from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
+from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
+    from poetry.poetry import Poetry
     from poetry.repositories import Repository
     from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
+
+
+@pytest.fixture
+def poetry_with_up_to_date_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("up_to_date_lock")
+
+    return project_factory(
+        name="foobar",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
+    )
 
 
 @pytest.fixture()
@@ -256,3 +273,23 @@ def test_remove_command_should_not_write_changes_upon_installer_errors(
     tester.execute("foo")
 
     assert app.poetry.file.read().as_string() == original_content
+
+
+def test_remove_with_dry_run_keep_files_intact(
+    poetry_with_up_to_date_lockfile: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+):
+    tester = command_tester_factory("remove", poetry=poetry_with_up_to_date_lockfile)
+
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
+
+    repo.add_package(get_package("docker", "4.3.1"))
+
+    tester.execute("docker --dry-run")
+
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert (
+        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
+    )
