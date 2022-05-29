@@ -126,6 +126,7 @@ class Locker:
                 source_url=url,
                 source_reference=source.get("reference"),
                 source_resolved_reference=source.get("resolved_reference"),
+                source_subdirectory=source.get("subdirectory"),
             )
             package.description = info.get("description", "")
             package.category = info.get("category", "main")
@@ -619,6 +620,9 @@ class Locker:
 
             if package.source_resolved_reference:
                 data["source"]["resolved_reference"] = package.source_resolved_reference
+
+            if package.source_subdirectory:
+                data["source"]["subdirectory"] = package.source_subdirectory
 
             if package.source_type in ["directory", "git"]:
                 data["develop"] = package.develop
