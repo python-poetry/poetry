@@ -384,6 +384,21 @@ poetry config certificates.foo.cert /path/to/ca.pem
 poetry config certificates.foo.client-cert /path/to/client.pem
 ```
 
+{{% note %}}
+The value of `certificates.<repository>.cert` can be set to `false` if certificate verification is
+required to be skipped. This is useful for cases where a package source with self-signed certificates
+are used.
+
+```bash
+poetry config certificates.foo.cert false
+```
+
+{{% warning %}}
+Disabling certificate verification is not recommended as it is does not conform to security
+best practices.
+{{% /warning %}}
+{{% /note %}}
+
 ## Caches
 
 Poetry employs multiple caches for package sources in order to improve user experience and avoid duplicate network

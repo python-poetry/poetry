@@ -8,6 +8,7 @@ import time
 import urllib.parse
 
 from os.path import commonprefix
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -20,19 +21,40 @@ from cachecontrol.caches import FileCache
 
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
-from poetry.utils.helpers import get_cert
-from poetry.utils.helpers import get_client_cert
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.io.io import IO
 
 
 logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass(frozen=True)
+class RepositoryCertificateConfig:
+    cert: Path | None = dataclasses.field(default=None)
+    client_cert: Path | None = dataclasses.field(default=None)
+    verify: bool = dataclasses.field(default=True)
+
+    @classmethod
+    def create(
+        cls, repository: str, config: Config | None
+    ) -> RepositoryCertificateConfig:
+        config = config if config else Config.create()
+
+        verify: str | bool = config.get(
+            f"certificates.{repository}.verify",
+            config.get(f"certificates.{repository}.cert", True),
+        )
+        client_cert: str = config.get(f"certificates.{repository}.client-cert")
+
+        return cls(
+            cert=Path(verify) if isinstance(verify, str) else None,
+            client_cert=Path(client_cert) if client_cert else None,
+            verify=verify if isinstance(verify, bool) else True,
+        )
 
 
 @dataclasses.dataclass
@@ -47,11 +69,8 @@ class AuthenticatorRepositoryConfig:
         self.netloc = parsed_url.netloc
         self.path = parsed_url.path
 
-    def certs(self, config: Config) -> dict[str, Path | None]:
-        return {
-            "cert": get_client_cert(config, self.name),
-            "verify": get_cert(config, self.name),
-        }
+    def certs(self, config: Config) -> RepositoryCertificateConfig:
+        return RepositoryCertificateConfig.create(self.name, config)
 
     @property
     def http_credential_keys(self) -> list[str]:
@@ -91,7 +110,7 @@ class Authenticator:
         self._io = io
         self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, HTTPAuthCredential] = {}
-        self._certs: dict[str, dict[str, Path | None]] = {}
+        self._certs: dict[str, RepositoryCertificateConfig] = {}
         self._configured_repositories: dict[
             str, AuthenticatorRepositoryConfig
         ] | None = None
@@ -186,14 +205,13 @@ class Authenticator:
         stream = kwargs.get("stream")
 
         certs = self.get_certs_for_url(url)
-        verify = kwargs.get("verify") or certs.get("verify")
-        cert = kwargs.get("cert") or certs.get("cert")
+        verify = kwargs.get("verify") or certs.cert or certs.verify
+        cert = kwargs.get("cert") or certs.client_cert
 
         if cert is not None:
             cert = str(cert)
 
-        if verify is not None:
-            verify = str(verify)
+        verify = str(verify) if isinstance(verify, Path) else verify
 
         settings = session.merge_environment_settings(  # type: ignore[no-untyped-call]
             prepared_request.url, proxies, stream, verify, cert
@@ -332,6 +350,11 @@ class Authenticator:
             repository=repository, username=username
         )
 
+    def get_certs_for_repository(self, name: str) -> RepositoryCertificateConfig:
+        if name.lower() == "pypi" or name not in self.configured_repositories:
+            return RepositoryCertificateConfig()
+        return self.configured_repositories[name].certs(self._config)
+
     @property
     def configured_repositories(self) -> dict[str, AuthenticatorRepositoryConfig]:
         if self._configured_repositories is None:
@@ -352,7 +375,7 @@ class Authenticator:
         self.configured_repositories[name] = AuthenticatorRepositoryConfig(name, url)
         self.reset_credentials_cache()
 
-    def get_certs_for_url(self, url: str) -> dict[str, Path | None]:
+    def get_certs_for_url(self, url: str) -> RepositoryCertificateConfig:
         if url not in self._certs:
             self._certs[url] = self._get_certs_for_url(url)
         return self._certs[url]
@@ -398,11 +421,11 @@ class Authenticator:
 
         return candidates[0]
 
-    def _get_certs_for_url(self, url: str) -> dict[str, Path | None]:
+    def _get_certs_for_url(self, url: str) -> RepositoryCertificateConfig:
         selected = self.get_repository_config_for_url(url)
         if selected:
             return selected.certs(config=self._config)
-        return {"cert": None, "verify": None}
+        return RepositoryCertificateConfig()
 
 
 _authenticator: Authenticator | None = None
