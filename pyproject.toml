@@ -105,6 +105,7 @@ lines_between_types = 1
 lines_after_imports = 2
 src_paths = ["src", "tests"]
 extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
 
 
 [tool.black]
