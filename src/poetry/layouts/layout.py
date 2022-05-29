@@ -41,7 +41,6 @@ BUILD_SYSTEM_MAX_VERSION: str | None = None
 
 
 class Layout:
-
     def __init__(
         self,
         project: str,
