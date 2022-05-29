@@ -183,6 +183,9 @@ class PipInstaller(BaseInstaller):
                 f"#egg={package.name}"
             )
 
+            if package.source_subdirectory:
+                req += f"&subdirectory={package.source_subdirectory}"
+
             if package.develop:
                 return ["-e", req]
 
@@ -216,6 +219,9 @@ class PipInstaller(BaseInstaller):
             req = package.root_dir / package.source_url
         else:
             req = Path(package.source_url).resolve(strict=False)
+
+        if package.source_subdirectory:
+            req /= package.source_subdirectory
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
@@ -278,9 +284,13 @@ class PipInstaller(BaseInstaller):
         )
 
         # Now we just need to install from the source directory
-        pkg = Package(package.name, package.version)
-        pkg._source_type = "directory"
-        pkg._source_url = str(source.path)
-        pkg.develop = package.develop
+        pkg = Package(
+            name=package.name,
+            version=package.version,
+            source_type="directory",
+            source_url=str(source.path),
+            source_subdirectory=package.source_subdirectory,
+            develop=package.develop,
+        )
 
         self.install_directory(pkg)
