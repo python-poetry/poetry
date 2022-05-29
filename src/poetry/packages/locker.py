@@ -483,7 +483,18 @@ class Locker:
     def _lock_packages(self, packages: list[Package]) -> list[dict[str, Any]]:
         locked = []
 
-        for package in sorted(packages, key=lambda x: (x.name, x.version)):
+        for package in sorted(
+            packages,
+            key=lambda x: (
+                x.name,
+                x.version,
+                x.source_type or "",
+                x.source_url or "",
+                x.source_subdirectory or "",
+                x.source_reference or "",
+                x.source_resolved_reference or "",
+            ),
+        ):
             spec = self._dump_package(package)
 
             locked.append(spec)
