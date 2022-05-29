@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from requests import Session
 
-    from poetry.config.config import Config
     from poetry.utils.authenticator import Authenticator
 
 
@@ -31,22 +30,6 @@ def canonicalize_name(name: str) -> str:
 
 def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
-
-
-def get_cert(config: Config, repository_name: str) -> Path | None:
-    cert = config.get(f"certificates.{repository_name}.cert")
-    if cert:
-        return Path(cert)
-    else:
-        return None
-
-
-def get_client_cert(config: Config, repository_name: str) -> Path | None:
-    client_cert = config.get(f"certificates.{repository_name}.client-cert")
-    if client_cert:
-        return Path(client_cert)
-    else:
-        return None
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:

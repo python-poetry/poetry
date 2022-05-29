@@ -315,11 +315,14 @@ for more information.
 
 ### `certificates.<name>.cert`:
 
-**Type**: string
+**Type**: string | bool
 
 Set custom certificate authority for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
 for more information.
+
+This configuration can be set to `false`, if TLS certificate verification should be skipped for this
+repository.
 
 ### `certificates.<name>.client-cert`:
 

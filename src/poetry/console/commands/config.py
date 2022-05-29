@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -11,7 +12,11 @@ from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.config.config import PackageFilterPolicy
+from poetry.config.config import boolean_normalizer
+from poetry.config.config import boolean_validator
+from poetry.config.config import int_normalizer
 from poetry.console.commands.command import Command
+from poetry.locations import DEFAULT_CACHE_DIR
 
 
 if TYPE_CHECKING:
@@ -48,13 +53,6 @@ To remove a repository (repo is a short alias for repositories):
 
     @property
     def unique_config_values(self) -> dict[str, tuple[Any, Any, Any]]:
-        from pathlib import Path
-
-        from poetry.config.config import boolean_normalizer
-        from poetry.config.config import boolean_validator
-        from poetry.config.config import int_normalizer
-        from poetry.locations import DEFAULT_CACHE_DIR
-
         unique_config_values = {
             "cache-dir": (
                 str,
@@ -275,20 +273,26 @@ To remove a repository (repo is a short alias for repositories):
             return 0
 
         # handle certs
-        m = re.match(
-            r"(?:certificates)\.([^.]+)\.(cert|client-cert)", self.argument("key")
-        )
+        m = re.match(r"certificates\.([^.]+)\.(cert|client-cert)", self.argument("key"))
         if m:
+            repository = m.group(1)
+            key = m.group(2)
+
             if self.option("unset"):
                 config.auth_config_source.remove_property(
-                    f"certificates.{m.group(1)}.{m.group(2)}"
+                    f"certificates.{repository}.{key}"
                 )
 
                 return 0
 
             if len(values) == 1:
+                new_value: str | bool = values[0]
+
+                if key == "cert" and boolean_validator(values[0]):
+                    new_value = boolean_normalizer(values[0])
+
                 config.auth_config_source.add_property(
-                    f"certificates.{m.group(1)}.{m.group(2)}", values[0]
+                    f"certificates.{repository}.{key}", new_value
                 )
             else:
                 raise ValueError("You must pass exactly 1 value")

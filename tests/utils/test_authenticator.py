@@ -16,6 +16,7 @@ import requests
 from cleo.io.null_io import NullIO
 
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
 if TYPE_CHECKING:
@@ -599,3 +600,52 @@ def test_authenticator_git_repositories(
     three = authenticator.get_credentials_for_git_url("https://foo.bar/org/three.git")
     assert not three.username
     assert not three.password
+
+
+@pytest.mark.parametrize(
+    ("ca_cert", "client_cert", "result"),
+    [
+        (None, None, RepositoryCertificateConfig()),
+        (
+            "path/to/ca.pem",
+            "path/to/client.pem",
+            RepositoryCertificateConfig(
+                Path("path/to/ca.pem"), Path("path/to/client.pem")
+            ),
+        ),
+        (
+            None,
+            "path/to/client.pem",
+            RepositoryCertificateConfig(None, Path("path/to/client.pem")),
+        ),
+        (
+            "path/to/ca.pem",
+            None,
+            RepositoryCertificateConfig(Path("path/to/ca.pem"), None),
+        ),
+        (True, None, RepositoryCertificateConfig()),
+        (False, None, RepositoryCertificateConfig(verify=False)),
+        (
+            False,
+            "path/to/client.pem",
+            RepositoryCertificateConfig(None, Path("path/to/client.pem"), verify=False),
+        ),
+    ],
+)
+def test_repository_certificate_configuration_create(
+    ca_cert: str | bool | None,
+    client_cert: str | None,
+    result: RepositoryCertificateConfig,
+    config: Config,
+) -> None:
+    cert_config = {}
+
+    if ca_cert is not None:
+        cert_config["cert"] = ca_cert
+
+    if client_cert is not None:
+        cert_config["client-cert"] = client_cert
+
+    config.merge({"certificates": {"foo": cert_config}})
+
+    assert RepositoryCertificateConfig.create("foo", config) == result
