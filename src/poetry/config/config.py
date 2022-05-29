@@ -15,8 +15,8 @@ from poetry.core.utils.helpers import canonicalize_name
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
-from poetry.locations import CACHE_DIR
 from poetry.locations import CONFIG_DIR
+from poetry.locations import DEFAULT_CACHE_DIR
 
 
 if TYPE_CHECKING:
@@ -107,7 +107,7 @@ _default_config: Config | None = None
 class Config:
 
     default_config: dict[str, Any] = {
-        "cache-dir": str(CACHE_DIR),
+        "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
             "create": True,
             "in-project": None,
@@ -123,6 +123,7 @@ class Config:
                 "no-setuptools": False,
             },
             "prefer-active-python": False,
+            "prompt": "{project_name}-py{python_version}",
         },
         "experimental": {"new-installer": True, "system-git-client": False},
         "installer": {"parallel": True, "max-workers": None, "no-binary": None},
@@ -201,6 +202,10 @@ class Config:
 
         return repositories
 
+    @property
+    def repository_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")) / "cache" / "repositories"
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
         Retrieve a setting value.
@@ -234,11 +239,17 @@ class Config:
         if not isinstance(value, str):
             return value
 
-        return re.sub(
-            r"{(.+?)}",
-            lambda m: self.get(m.group(1)),  # type: ignore[no-any-return]
-            value,
-        )
+        def resolve_from_config(match: re.Match[str]) -> Any:
+            key = match.group(1)
+            config_value = self.get(key)
+            if config_value:
+                return config_value
+
+            # The key doesn't exist in the config but might be resolved later,
+            # so we keep it as a format variable.
+            return f"{{{key}}}"
+
+        return re.sub(r"{(.+?)}", resolve_from_config, value)
 
     @staticmethod
     def _get_normalizer(name: str) -> Callable[[str], Any]:

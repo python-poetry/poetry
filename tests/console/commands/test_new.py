@@ -157,7 +157,7 @@ def test_command_new(
     verify_project_directory(path, package_name, package_path, include_from)
 
 
-@pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",)])
+@pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
 def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir: str):
     package = "package"
     path = Path(tmp_dir) / package

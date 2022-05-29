@@ -6,10 +6,10 @@ import shutil
 import stat
 import tempfile
 
-from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Mapping
 
 
 if TYPE_CHECKING:

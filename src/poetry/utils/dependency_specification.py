@@ -37,12 +37,20 @@ def _parse_dependency_specification_git_url(
     url = Git.normalize_url(requirement)
 
     pair = {"name": parsed.name, "git": url.url}
+
     if parsed.rev:
         pair["rev"] = url.revision
 
+    if parsed.subdirectory:
+        pair["subdirectory"] = parsed.subdirectory
+
     source_root = env.path.joinpath("src") if env else None
     package = Provider.get_package_from_vcs(
-        "git", url=url.url, rev=pair.get("rev"), source_root=source_root
+        "git",
+        url=url.url,
+        rev=pair.get("rev"),
+        subdirectory=parsed.subdirectory,
+        source_root=source_root,
     )
     pair["name"] = package.name
     return pair

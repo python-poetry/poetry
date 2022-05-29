@@ -10,6 +10,7 @@ from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.console.commands.group_command import GroupCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
@@ -50,7 +51,8 @@ class ShowCommand(GroupCommand):
         option(
             "why",
             None,
-            "When listing the tree for a single package, start from parents.",
+            "When showing the full list, or a <info>--tree</info> for a single package,"
+            " also display why it's included.",
         ),
         option("latest", "l", "Show the latest version."),
         option(
@@ -147,7 +149,7 @@ lists all packages available."""
         if package:
             pkg = None
             for locked in locked_packages:
-                if package.lower() == locked.name:
+                if canonicalize_name(package) == locked.name:
                     pkg = locked
                     break
 
@@ -392,7 +394,7 @@ lists all packages available."""
             dependencies = package.requires
             dependencies = sorted(
                 dependencies,
-                key=lambda x: x.name,  # type: ignore[no-any-return]
+                key=lambda x: x.name,
             )
 
         tree_bar = "├"
@@ -436,7 +438,7 @@ lists all packages available."""
 
         dependencies = sorted(
             dependencies,
-            key=lambda x: x.name,  # type: ignore[no-any-return]
+            key=lambda x: x.name,
         )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
@@ -523,7 +525,7 @@ lists all packages available."""
 
         constraint = parse_constraint("^" + package.pretty_version)
 
-        if latest.version and constraint.allows(latest.version):
+        if constraint.allows(latest.version):
             # It needs an immediate semver-compliant upgrade
             return "semver-safe-update"
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Mapping
 
 from tomlkit import dumps
 from tomlkit import inline_table
@@ -16,6 +15,8 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
+    from typing import Mapping
+
     from poetry.core.pyproject.toml import PyProjectTOML
     from tomlkit.items import InlineTable
 
@@ -40,8 +41,6 @@ BUILD_SYSTEM_MAX_VERSION: str | None = None
 
 
 class Layout:
-    ACCEPTED_README_FORMATS = {"md", "rst"}
-
     def __init__(
         self,
         project: str,
@@ -63,12 +62,6 @@ class Layout:
         self._description = description
 
         self._readme_format = readme_format.lower()
-        if self._readme_format not in self.ACCEPTED_README_FORMATS:
-            accepted_readme_formats = ", ".join(self.ACCEPTED_README_FORMATS)
-            raise ValueError(
-                f"Invalid readme format '{readme_format}', use one of"
-                f" {accepted_readme_formats}."
-            )
 
         self._license = license
         self._python = python

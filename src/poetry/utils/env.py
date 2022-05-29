@@ -19,9 +19,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import Iterator
-from typing import TypeVar
 
 import packaging.tags
 import tomlkit
@@ -32,7 +29,6 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-from poetry.core.poetry import Poetry
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
@@ -40,7 +36,6 @@ from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
 from poetry.exceptions import PoetryException
-from poetry.locations import CACHE_DIR
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
@@ -51,12 +46,18 @@ from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+
     from cleo.io.io import IO
+    from poetry.core.poetry import Poetry as CorePoetry
     from poetry.core.version.markers import BaseMarker
+    from virtualenv.seed.wheels.util import Wheel
+
+    from poetry.poetry import Poetry
+
 
 logger = logging.getLogger(__name__)
-
-P = TypeVar("P", bound=Poetry)
 
 
 GET_SYS_TAGS = f"""
@@ -228,7 +229,7 @@ class SitePackages:
         self,
         purelib: Path,
         platlib: Path | None = None,
-        fallbacks: list[Path] = None,
+        fallbacks: list[Path] | None = None,
         skip_write_checks: bool = False,
     ) -> None:
         self._purelib = purelib
@@ -292,7 +293,7 @@ class SitePackages:
                 f"{path} is not relative to any discovered {site_type}sites"
             )
 
-        results = [candidate / path for candidate in candidates if candidate]
+        results = [candidate / path for candidate in candidates]
 
         if not results and strict:
             raise RuntimeError(
@@ -304,18 +305,21 @@ class SitePackages:
 
     def distributions(
         self, name: str | None = None, writable_only: bool = False
-    ) -> Iterable[metadata.PathDistribution]:
+    ) -> Iterable[metadata.Distribution]:
         path = list(
             map(
                 str, self._candidates if not writable_only else self.writable_candidates
             )
         )
 
-        yield from metadata.PathDistribution.discover(name=name, path=path)
+        yield from metadata.PathDistribution.discover(  # type: ignore[no-untyped-call]
+            name=name,
+            path=path,
+        )
 
     def find_distribution(
         self, name: str, writable_only: bool = False
-    ) -> metadata.PathDistribution | None:
+    ) -> metadata.Distribution | None:
         for distribution in self.distributions(name=name, writable_only=writable_only):
             return distribution
         return None
@@ -326,9 +330,12 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
+            assert distribution.files is not None
             for file in distribution.files:
                 if file.name.endswith(suffix):
-                    yield Path(distribution.locate_file(file))
+                    yield Path(
+                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
+                    )
 
     def find_distribution_files_with_name(
         self, distribution_name: str, name: str, writable_only: bool = False
@@ -336,9 +343,12 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
+            assert distribution.files is not None
             for file in distribution.files:
                 if file.name == name:
-                    yield Path(distribution.locate_file(file))
+                    yield Path(
+                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
+                    )
 
     def find_distribution_nspkg_pth_files(
         self, distribution_name: str, writable_only: bool = False
@@ -364,16 +374,20 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=True
         ):
+            assert distribution.files is not None
             for file in distribution.files:
-                file = Path(distribution.locate_file(file))
+                path = Path(
+                    distribution.locate_file(file),  # type: ignore[no-untyped-call]
+                )
                 # We can't use unlink(missing_ok=True) because it's not always available
-                if file.exists():
-                    file.unlink()
+                if path.exists():
+                    path.unlink()
 
-            if distribution._path.exists():
-                remove_directory(str(distribution._path), force=True)
+            distribution_path: Path = distribution._path  # type: ignore[attr-defined]
+            if distribution_path.exists():
+                remove_directory(str(distribution_path), force=True)
 
-            paths.append(distribution._path)
+            paths.append(distribution_path)
 
         return paths
 
@@ -411,10 +425,14 @@ class SitePackages:
         raise OSError(f"Unable to access any of {paths_csv(candidates)}")
 
     def write_text(self, path: str | Path, *args: Any, **kwargs: Any) -> Path:
-        return self._path_method_wrapper(path, "write_text", *args, **kwargs)[0]
+        paths = self._path_method_wrapper(path, "write_text", *args, **kwargs)
+        assert isinstance(paths, tuple)
+        return paths[0]
 
     def mkdir(self, path: str | Path, *args: Any, **kwargs: Any) -> Path:
-        return self._path_method_wrapper(path, "mkdir", *args, **kwargs)[0]
+        paths = self._path_method_wrapper(path, "mkdir", *args, **kwargs)
+        assert isinstance(paths, tuple)
+        return paths[0]
 
     def exists(self, path: str | Path) -> bool:
         return any(
@@ -500,7 +518,7 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: P) -> None:
+    def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
 
     def _full_python_path(self, python: str) -> str:
@@ -518,7 +536,7 @@ class EnvManager:
 
         return executable
 
-    def _detect_active_python(self, io: IO) -> str:
+    def _detect_active_python(self, io: IO) -> str | None:
         executable = None
 
         try:
@@ -540,7 +558,7 @@ class EnvManager:
     def activate(self, python: str, io: IO) -> Env:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -560,7 +578,7 @@ class EnvManager:
         python = self._full_python_path(python)
 
         try:
-            python_version = decode(
+            python_version_string = decode(
                 subprocess.check_output(
                     list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
                     shell=True,
@@ -569,7 +587,7 @@ class EnvManager:
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
-        python_version = Version.parse(python_version.strip())
+        python_version = Version.parse(python_version_string.strip())
         minor = f"{python_version.major}.{python_version.minor}"
         patch = python_version.text
 
@@ -633,7 +651,7 @@ class EnvManager:
     def deactivate(self, io: IO) -> None:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -651,7 +669,7 @@ class EnvManager:
 
                 envs_file.write(envs)
 
-    def get(self, reload: bool = False) -> VirtualEnv | SystemEnv:
+    def get(self, reload: bool = False) -> Env:
         if self._env is not None and not reload:
             return self._env
 
@@ -659,7 +677,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -700,7 +718,7 @@ class EnvManager:
 
             venv_path = self._poetry.config.get("virtualenvs.path")
             if venv_path is None:
-                venv_path = CACHE_DIR / "virtualenvs"
+                venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
             else:
                 venv_path = Path(venv_path)
 
@@ -730,7 +748,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -750,7 +768,7 @@ class EnvManager:
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
@@ -800,7 +818,7 @@ class EnvManager:
             pass
 
         try:
-            python_version = decode(
+            python_version_string = decode(
                 subprocess.check_output(
                     list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
                     shell=True,
@@ -809,13 +827,13 @@ class EnvManager:
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
-        python_version = Version.parse(python_version.strip())
+        python_version = Version.parse(python_version_string.strip())
         minor = f"{python_version.major}.{python_version.minor}"
 
         name = f"{base_env_name}-py{minor}"
-        venv = venv_path / name
+        venv_path = venv_path / name
 
-        if not venv.exists():
+        if not venv_path.exists():
             raise ValueError(f'<warning>Environment "{name}" does not exist.</warning>')
 
         if envs_file.exists():
@@ -828,9 +846,9 @@ class EnvManager:
                     del envs[base_env_name]
                     envs_file.write(envs)
 
-        self.remove_venv(venv)
+        self.remove_venv(venv_path)
 
-        return VirtualEnv(venv, venv)
+        return VirtualEnv(venv_path, venv_path)
 
     def create_venv(
         self,
@@ -838,7 +856,7 @@ class EnvManager:
         name: str | None = None,
         executable: str | None = None,
         force: bool = False,
-    ) -> SystemEnv | VirtualEnv:
+    ) -> Env:
         if self._env is not None and not force:
             return self._env
 
@@ -865,6 +883,7 @@ class EnvManager:
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
+        venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
         if not executable and prefer_active_python:
             executable = self._detect_active_python(io)
@@ -872,12 +891,13 @@ class EnvManager:
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
-            venv_path = CACHE_DIR / "virtualenvs"
+            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
         if not name:
             name = self._poetry.package.name
+        assert name is not None
 
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
@@ -965,6 +985,11 @@ class EnvManager:
             name = f"{name}-py{python_minor.strip()}"
             venv = venv_path / name
 
+        if venv_prompt is not None:
+            venv_prompt = venv_prompt.format(
+                project_name=self._poetry.package.name, python_version=python_minor
+            )
+
         if not venv.exists():
             if create_venv is False:
                 io.write_line(
@@ -996,6 +1021,7 @@ class EnvManager:
                 venv,
                 executable=executable,
                 flags=self._poetry.config.get("virtualenvs.options"),
+                prompt=venv_prompt,
             )
 
         # venv detection:
@@ -1021,10 +1047,11 @@ class EnvManager:
         cls,
         path: Path | str,
         executable: str | Path | None = None,
-        flags: dict[str, bool] = None,
+        flags: dict[str, bool] | None = None,
         with_pip: bool | None = None,
         with_wheel: bool | None = None,
         with_setuptools: bool | None = None,
+        prompt: str | None = None,
     ) -> virtualenv.run.session.Session:
         flags = flags or {}
 
@@ -1055,6 +1082,9 @@ class EnvManager:
             "--python",
             executable or sys.executable,
         ]
+
+        if prompt is not None:
+            args.extend(["--prompt", prompt])
 
         for flag, value in flags.items():
             if value is True:
@@ -1088,7 +1118,7 @@ class EnvManager:
                 remove_directory(file_path, force=True)
 
     @classmethod
-    def get_system_env(cls, naive: bool = False) -> SystemEnv | GenericEnv:
+    def get_system_env(cls, naive: bool = False) -> Env:
         """
         Retrieve the current Python environment.
 
@@ -1102,7 +1132,7 @@ class EnvManager:
         (e.g. plugin installation or self update).
         """
         prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
-        env = SystemEnv(prefix)
+        env: Env = SystemEnv(prefix)
         if not naive:
             if prefix.joinpath("poetry_env").exists():
                 env = GenericEnv(base_prefix, child_env=env)
@@ -1120,11 +1150,13 @@ class EnvManager:
 
     @classmethod
     def get_base_prefix(cls) -> Path:
-        if hasattr(sys, "real_prefix"):
-            return Path(sys.real_prefix)
+        real_prefix = getattr(sys, "real_prefix", None)
+        if real_prefix is not None:
+            return Path(real_prefix)
 
-        if hasattr(sys, "base_prefix"):
-            return Path(sys.base_prefix)
+        base_prefix = getattr(sys, "base_prefix", None)
+        if base_prefix is not None:
+            return Path(base_prefix)
 
         return Path(sys.prefix)
 
@@ -1133,10 +1165,10 @@ class EnvManager:
         name = name.lower()
         sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
         normalized_cwd = os.path.normcase(cwd)
-        h = hashlib.sha256(encode(normalized_cwd)).digest()
-        h = base64.urlsafe_b64encode(h).decode()[:8]
+        h_bytes = hashlib.sha256(encode(normalized_cwd)).digest()
+        h_str = base64.urlsafe_b64encode(h_bytes).decode()[:8]
 
-        return f"{sanitized_name}-{h}"
+        return f"{sanitized_name}-{h_str}"
 
 
 class Env:
@@ -1163,16 +1195,16 @@ class Env:
 
         self._base = base or path
 
-        self._marker_env = None
-        self._pip_version = None
-        self._site_packages = None
-        self._paths = None
-        self._supported_tags = None
-        self._purelib = None
-        self._platlib = None
-        self._script_dirs = None
+        self._marker_env: dict[str, Any] | None = None
+        self._pip_version: Version | None = None
+        self._site_packages: SitePackages | None = None
+        self._paths: dict[str, str] | None = None
+        self._supported_tags: list[Tag] | None = None
+        self._purelib: Path | None = None
+        self._platlib: Path | None = None
+        self._script_dirs: list[Path] | None = None
 
-        self._embedded_pip_path = None
+        self._embedded_pip_path: str | None = None
 
     @property
     def path(self) -> Path:
@@ -1183,12 +1215,13 @@ class Env:
         return self._base
 
     @property
-    def version_info(self) -> tuple[int]:
+    def version_info(self) -> tuple[Any, ...]:
         return tuple(self.marker_env["version_info"])
 
     @property
     def python_implementation(self) -> str:
-        return self.marker_env["platform_python_implementation"]
+        implementation: str = self.marker_env["platform_python_implementation"]
+        return implementation
 
     @property
     def python(self) -> str:
@@ -1244,9 +1277,11 @@ class Env:
         self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
-        return get_embed_wheel(
+        wheel: Wheel = get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
-        ).path
+        )
+        path: Path = wheel.path
+        return path
 
     @property
     def pip_embedded(self) -> str:
@@ -1353,15 +1388,17 @@ class Env:
 
     @classmethod
     def get_base_prefix(cls) -> Path:
-        if hasattr(sys, "real_prefix"):
-            return Path(sys.real_prefix)
+        real_prefix = getattr(sys, "real_prefix", None)
+        if real_prefix is not None:
+            return Path(real_prefix)
 
-        if hasattr(sys, "base_prefix"):
-            return Path(sys.base_prefix)
+        base_prefix = getattr(sys, "base_prefix", None)
+        if base_prefix is not None:
+            return Path(base_prefix)
 
         return Path(sys.prefix)
 
-    def get_version_info(self) -> tuple[int]:
+    def get_version_info(self) -> tuple[Any, ...]:
         raise NotImplementedError()
 
     def get_python_implementation(self) -> str:
@@ -1383,7 +1420,8 @@ class Env:
         raise NotImplementedError()
 
     def is_valid_for_marker(self, marker: BaseMarker) -> bool:
-        return marker.validate(self.marker_env)
+        valid: bool = marker.validate(self.marker_env)
+        return valid
 
     def is_sane(self) -> bool:
         """
@@ -1423,12 +1461,15 @@ class Env:
             if self._is_windows:
                 kwargs["shell"] = True
 
+            command: str | list[str]
             if kwargs.get("shell", False):
-                cmd = list_to_shell_command(cmd)
+                command = list_to_shell_command(cmd)
+            else:
+                command = cmd
 
             if input_:
                 output = subprocess.run(
-                    cmd,
+                    command,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     input=encode(input_),
@@ -1436,10 +1477,12 @@ class Env:
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(cmd, stderr=subprocess.STDOUT, env=env, **kwargs)
+                return subprocess.call(
+                    command, stderr=subprocess.STDOUT, env=env, **kwargs
+                )
             else:
                 output = subprocess.check_output(
-                    cmd, stderr=subprocess.STDOUT, env=env, **kwargs
+                    command, stderr=subprocess.STDOUT, env=env, **kwargs
                 )
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
@@ -1463,11 +1506,10 @@ class Env:
     @property
     def script_dirs(self) -> list[Path]:
         if self._script_dirs is None:
-            self._script_dirs = (
-                [Path(self.paths["scripts"])]
-                if "scripts" in self.paths
-                else self._bin_dir
-            )
+            scripts = self.paths.get("scripts")
+            self._script_dirs = [
+                Path(scripts) if scripts is not None else self._bin_dir
+            ]
             if self.userbase:
                 self._script_dirs.append(self.userbase / self._script_dirs[0].name)
         return self._script_dirs
@@ -1500,6 +1542,9 @@ class Env:
         return str(bin_path)
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Env):
+            return False
+
         return other.__class__ == self.__class__ and other.path == self.path
 
     def __repr__(self) -> str:
@@ -1519,8 +1564,8 @@ class SystemEnv(Env):
     def sys_path(self) -> list[str]:
         return sys.path
 
-    def get_version_info(self) -> tuple[int]:
-        return sys.version_info
+    def get_version_info(self) -> tuple[Any, ...]:
+        return tuple(sys.version_info)
 
     def get_python_implementation(self) -> str:
         return platform.python_implementation()
@@ -1545,6 +1590,7 @@ class SystemEnv(Env):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "setup.py install is deprecated")
             obj = d.get_command_obj("install", create=True)
+        assert obj is not None
         obj.finalize_options()
 
         paths = sysconfig.get_paths().copy()
@@ -1555,9 +1601,12 @@ class SystemEnv(Env):
 
             paths[key] = getattr(obj, f"install_{key}")
 
-        if site.check_enableusersite() and hasattr(obj, "install_usersite"):
-            paths["usersite"] = obj.install_usersite
-            paths["userbase"] = obj.install_userbase
+        if site.check_enableusersite():
+            usersite = getattr(obj, "install_usersite", None)
+            userbase = getattr(obj, "install_userbase", None)
+            if usersite is not None and userbase is not None:
+                paths["usersite"] = usersite
+                paths["userbase"] = userbase
 
         return paths
 
@@ -1616,20 +1665,26 @@ class VirtualEnv(Env):
         # In this case we need to get sys.base_prefix
         # from inside the virtualenv.
         if base is None:
-            self._base = Path(self.run_python_script(GET_BASE_PREFIX).strip())
+            output = self.run_python_script(GET_BASE_PREFIX)
+            assert isinstance(output, str)
+            self._base = Path(output.strip())
 
     @property
     def sys_path(self) -> list[str]:
         output = self.run_python_script(GET_SYS_PATH)
-        return json.loads(output)
+        assert isinstance(output, str)
+        paths: list[str] = json.loads(output)
+        return paths
 
-    def get_version_info(self) -> tuple[int]:
+    def get_version_info(self) -> tuple[Any, ...]:
         output = self.run_python_script(GET_PYTHON_VERSION)
+        assert isinstance(output, str)
 
         return tuple(int(s) for s in output.strip().split("."))
 
     def get_python_implementation(self) -> str:
-        return self.marker_env["platform_python_implementation"]
+        implementation: str = self.marker_env["platform_python_implementation"]
+        return implementation
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
         # We're in a virtualenv that is known to be sane,
@@ -1643,20 +1698,24 @@ class VirtualEnv(Env):
         if self.get_version_info() < (3, 0, 0):
             error_message = """
             Poetry no longer supports Python 2.7 environments.
-
             """
             raise PoetryException(error_message)
-
         output = self.run_python_script(GET_SYS_TAGS)
+        assert isinstance(output, str)
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
+        assert isinstance(output, str)
 
-        return json.loads(output)
+        env: dict[str, Any] = json.loads(output)
+        return env
 
     def get_pip_version(self) -> Version:
-        output = self.run_pip("--version").strip()
+        output = self.run_pip("--version")
+        assert isinstance(output, str)
+        output = output.strip()
+
         m = re.match("pip (.+?)(?: from .+)?$", output)
         if not m:
             return Version.parse("0.0")
@@ -1665,7 +1724,9 @@ class VirtualEnv(Env):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS)
-        return json.loads(output)
+        assert isinstance(output, str)
+        paths: dict[str, str] = json.loads(output)
+        return paths
 
     def is_venv(self) -> bool:
         return True
@@ -1674,7 +1735,7 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if "python" exists.
         return os.path.exists(self.python)
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | None:
+    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super()._run(cmd, **kwargs)
 
@@ -1779,8 +1840,10 @@ class GenericEnv(VirtualEnv):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
+        assert isinstance(output, str)
 
-        return json.loads(output)
+        paths: dict[str, str] = json.loads(output)
+        return paths
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int | None:
         command = self.get_command_from_bin(bin) + list(args)
@@ -1794,7 +1857,7 @@ class GenericEnv(VirtualEnv):
 
         return exe.returncode
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | None:
+    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
@@ -1803,7 +1866,7 @@ class GenericEnv(VirtualEnv):
 
 class NullEnv(SystemEnv):
     def __init__(
-        self, path: Path = None, base: Path | None = None, execute: bool = False
+        self, path: Path | None = None, base: Path | None = None, execute: bool = False
     ) -> None:
         if path is None:
             path = Path(sys.prefix)
@@ -1811,7 +1874,7 @@ class NullEnv(SystemEnv):
         super().__init__(path, base=base)
 
         self._execute = execute
-        self.executed = []
+        self.executed: list[list[str]] = []
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
         return [
@@ -1819,12 +1882,12 @@ class NullEnv(SystemEnv):
             self.pip_embedded if embedded else self.pip,
         ]
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | None:
+    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         self.executed.append(cmd)
 
         if self._execute:
             return super()._run(cmd, **kwargs)
-        return None
+        return 0
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int | None:
         self.executed.append([bin] + list(args))
@@ -1840,7 +1903,7 @@ class NullEnv(SystemEnv):
 @contextmanager
 def ephemeral_environment(
     executable: str | Path | None = None,
-    flags: dict[str, bool] = None,
+    flags: dict[str, bool] | None = None,
 ) -> Iterator[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
@@ -1855,7 +1918,7 @@ def ephemeral_environment(
 
 @contextmanager
 def build_environment(
-    poetry: P, env: Env | None = None, io: IO | None = None
+    poetry: CorePoetry, env: Env | None = None, io: IO | None = None
 ) -> Iterator[Env]:
     """
     If a build script is specified for the project, there could be additional build
@@ -1905,8 +1968,8 @@ class MockEnv(NullEnv):
         is_venv: bool = False,
         pip_version: str = "19.1",
         sys_path: list[str] | None = None,
-        marker_env: dict[str, Any] = None,
-        supported_tags: list[Tag] = None,
+        marker_env: dict[str, Any] | None = None,
+        supported_tags: list[Tag] | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -1916,7 +1979,7 @@ class MockEnv(NullEnv):
         self._platform = platform
         self._os_name = os_name
         self._is_venv = is_venv
-        self._pip_version = Version.parse(pip_version)
+        self._pip_version: Version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
         self._supported_tags = supported_tags

@@ -5,7 +5,6 @@ import re
 
 from abc import abstractmethod
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
@@ -16,6 +15,8 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poetry.core.packages.utils.link import Link
 
 

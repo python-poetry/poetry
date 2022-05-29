@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterable
 from unittest.mock import PropertyMock
 
 import pytest
@@ -14,6 +13,8 @@ from poetry.repositories.link_sources.base import LinkSource
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from pytest_mock import MockerFixture
 
 

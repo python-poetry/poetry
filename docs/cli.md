@@ -103,7 +103,9 @@ my-package
 
 * `--name`: Set the resulting package name.
 * `--src`: Use the src layout for the project.
-* `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
+* `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
+  keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
+  in mind.
 
 
 ## init
@@ -297,6 +299,10 @@ present dependency you can use the special `latest` constraint:
 poetry add pendulum@latest
 ```
 
+{{% note %}}
+See the [Dependency specification]({{< relref "dependency-specification" >}}) for more information on setting the version constraints for a package.
+{{% /note %}}
+
 You can also add `git` dependencies:
 
 ```bash
@@ -444,7 +450,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
-* `--why`: Include reverse dependencies where applicable.
+* `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--default`: Only include the main dependencies. (**Deprecated**)
@@ -452,10 +458,12 @@ required by
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--all (-a)`: Show all packages (even those not compatible with current system).
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
+
 
 ## build
 
@@ -489,6 +497,9 @@ It can also build the package if you pass it the `--build` option.
 Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
+* `--cert`: Certificate authority to access the repository.
+* `--client-cert`: Client certificate to access the repository.
+* `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
 
@@ -551,7 +562,7 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
-Note that this commmand starts a new shell and activates the virtual environment.
+Note that this command starts a new shell and activates the virtual environment.
 
 As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
 
@@ -561,7 +572,7 @@ The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
 {{% note %}}
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -582,7 +593,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 {{% note %}}
 By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
-This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-lock">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -640,7 +651,7 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
-and is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+and is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
 {{% note %}}
@@ -742,6 +753,10 @@ The `plugin remove` command removes installed plugins.
 poetry plugin remove poetry-plugin
 ```
 
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+
 ## source
 
 The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
@@ -793,4 +808,46 @@ The `source remove` command removes a configured source from your `pyproject.tom
 
 ```bash
 poetry source remove pypi-test
+```
+
+## about
+
+The `about` command displays global information about Poetry, including the current version and version of `poetry-core`.
+
+```bash
+poetry about
+```
+
+## help
+
+The `help` command displays global help, or help for a specific command.
+
+To display global help:
+
+```bash
+poetry help
+```
+
+To display help for a specific command, for instance `show`:
+
+```bash
+poetry help show
+```
+
+{{% note %}}
+The `--help` option can also be passed to any command to get help for a specific command.
+
+For instance:
+
+```bash
+poetry show --help
+```
+{{% /note %}}
+
+## list
+
+The `list` command displays all the available Poetry commands.
+
+```bash
+poetry list
 ```

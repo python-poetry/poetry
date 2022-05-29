@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Sequence
 
 from poetry.packages.dependency_package import DependencyPackage
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 

@@ -6,7 +6,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import FrozenSet
-from typing import Iterator
 from typing import Tuple
 from typing import TypeVar
 
@@ -25,6 +24,8 @@ from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
@@ -57,7 +58,9 @@ class Solver:
         self._io = io
 
         if provider is None:
-            provider = Provider(self._package, self._pool, self._io)
+            provider = Provider(
+                self._package, self._pool, self._io, installed=installed
+            )
 
         self._provider = provider
         self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
@@ -140,7 +143,7 @@ class Solver:
             )
         for dependency_packages in locked.values():
             dependency_packages.sort(
-                key=lambda p: p.package.version,  # type: ignore[no-any-return]
+                key=lambda p: p.package.version,
                 reverse=True,
             )
 

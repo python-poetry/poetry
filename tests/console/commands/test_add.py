@@ -10,7 +10,6 @@ import pytest
 from poetry.core.semver.version import Version
 
 from poetry.repositories.legacy_repository import LegacyRepository
-from tests.compat import is_poetry_core_1_1_0a7_compat
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -941,6 +940,30 @@ If you prefer to upgrade it to the latest available version,\
     assert expected in tester.io.fetch_output()
 
 
+def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
+    app.poetry.file.write(content)
+
+    repo.add_package(get_package("foo-bar", "1.1.2"))
+    tester.execute("Foo_Bar")
+
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • Foo_Bar
+
+If you want to update it to the latest compatible version,\
+ you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry add package@latest`.
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
@@ -993,9 +1016,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3b1)
 """
-    if is_poetry_core_1_1_0a7_compat:
-        expected = expected.replace("^1.2.3b1", "^1.2.3-beta.1")
-
     assert expected in tester.io.fetch_output()
 
 
@@ -1926,9 +1946,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
 """
-    if is_poetry_core_1_1_0a7_compat:
-        expected = expected.replace("^1.2.3b1", "^1.2.3-beta.1")
-
     assert expected in old_tester.io.fetch_output()
 
 

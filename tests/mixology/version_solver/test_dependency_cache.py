@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -34,8 +35,10 @@ def test_solver_dependency_cache_respects_source_type(
     cache.search_for(dependency_git)
     assert not cache.search_for.cache_info().hits
 
-    packages_pypi = cache.search_for(dependency_pypi)
-    packages_git = cache.search_for(dependency_git)
+    # increase test coverage by searching for copies
+    # (when searching for the exact same object, __eq__ is never called)
+    packages_pypi = cache.search_for(deepcopy(dependency_pypi))
+    packages_git = cache.search_for(deepcopy(dependency_git))
 
     assert cache.search_for.cache_info().hits == 2
     assert cache.search_for.cache_info().currsize == 2
@@ -57,3 +60,66 @@ def test_solver_dependency_cache_respects_source_type(
         package_git.package.source_resolved_reference
         == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
     )
+
+
+def test_solver_dependency_cache_respects_subdirectories(
+    root: ProjectPackage, provider: Provider, repo: Repository
+):
+    dependency_one = Factory.create_dependency(
+        "one",
+        {
+            "git": "https://github.com/demo/subdirectories.git",
+            "subdirectory": "one",
+            "platform": "linux",
+        },
+    )
+    dependency_one_copy = Factory.create_dependency(
+        "one",
+        {
+            "git": "https://github.com/demo/subdirectories.git",
+            "subdirectory": "one-copy",
+            "platform": "win32",
+        },
+    )
+
+    root.add_dependency(dependency_one)
+    root.add_dependency(dependency_one_copy)
+
+    cache = DependencyCache(provider)
+    cache.search_for.cache_clear()
+
+    # ensure cache was never hit for both calls
+    cache.search_for(dependency_one)
+    cache.search_for(dependency_one_copy)
+    assert not cache.search_for.cache_info().hits
+
+    # increase test coverage by searching for copies
+    # (when searching for the exact same object, __eq__ is never called)
+    packages_one = cache.search_for(deepcopy(dependency_one))
+    packages_one_copy = cache.search_for(deepcopy(dependency_one_copy))
+
+    assert cache.search_for.cache_info().hits == 2
+    assert cache.search_for.cache_info().currsize == 2
+
+    assert len(packages_one) == len(packages_one_copy) == 1
+
+    package_one = packages_one[0]
+    package_one_copy = packages_one_copy[0]
+
+    assert package_one.package.name == package_one_copy.name
+    assert package_one.package.version.text == package_one_copy.package.version.text
+    assert package_one.package.source_type == package_one_copy.source_type == "git"
+    assert (
+        package_one.package.source_resolved_reference
+        == package_one_copy.source_resolved_reference
+        == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    )
+    assert (
+        package_one.package.source_subdirectory != package_one_copy.source_subdirectory
+    )
+    assert package_one.package.source_subdirectory == "one"
+    assert package_one_copy.package.source_subdirectory == "one-copy"
+
+    assert package_one.dependency.marker.intersect(
+        package_one_copy.dependency.marker
+    ).is_empty()

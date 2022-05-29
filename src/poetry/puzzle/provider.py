@@ -13,8 +13,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -37,19 +35,24 @@ from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
+from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
 from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterable
+    from collections.abc import Iterator
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.specification import PackageSpecification
     from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
     from poetry.repositories import Pool
+    from poetry.repositories import Repository
     from poetry.utils.env import Env
 
 
@@ -87,6 +90,7 @@ def _get_package_from_git(
     branch: str | None = None,
     tag: str | None = None,
     rev: str | None = None,
+    subdirectory: str | None = None,
     source_root: Path | None = None,
 ) -> Package:
     source = Git.clone(
@@ -99,11 +103,16 @@ def _get_package_from_git(
     )
     revision = Git.get_revision(source)
 
-    package = Provider.get_package_from_directory(Path(source.path))
+    path = Path(source.path)
+    if subdirectory:
+        path = path.joinpath(subdirectory)
+
+    package = Provider.get_package_from_directory(path)
     package._source_type = "git"
     package._source_url = url
     package._source_reference = rev or tag or branch or "HEAD"
     package._source_resolved_reference = revision
+    package._source_subdirectory = subdirectory
 
     return package
 
@@ -118,6 +127,7 @@ class Provider:
         pool: Pool,
         io: Any,
         env: Env | None = None,
+        installed: Repository | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -130,6 +140,7 @@ class Provider:
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
+        self._installed = installed
 
     @property
     def pool(self) -> Pool:
@@ -179,6 +190,36 @@ class Provider:
                 f" package's name: {package.name}"
             )
 
+    def search_for_installed_packages(
+        self,
+        specification: PackageSpecification,
+    ) -> list[Package]:
+        """
+        Search for installed packages, when available, that provides the given
+        specification.
+
+        This is useful when dealing with packages that are under development, not
+        published on package sources and/or only available via system installations.
+        """
+        if not self._installed:
+            return []
+
+        logger.debug(
+            "Falling back to installed packages to discover metadata for <c2>%s</>",
+            specification.complete_name,
+        )
+        packages = [
+            package
+            for package in self._installed.packages
+            if package.provides(specification)
+        ]
+        logger.debug(
+            "Found <c2>%d</> compatible packages for <c2>%s</>",
+            len(packages),
+            specification.complete_name,
+        )
+        return packages
+
     def search_for(
         self,
         dependency: (
@@ -221,6 +262,9 @@ class Provider:
                 reverse=True,
             )
 
+        if not packages:
+            packages = self.search_for_installed_packages(dependency)
+
         return PackageCollection(dependency, packages)
 
     def search_for_vcs(self, dependency: VCSDependency) -> list[Package]:
@@ -230,15 +274,13 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        if dependency in self._deferred_cache:
-            return [self._deferred_cache[dependency]]
-
         package = self.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
             branch=dependency.branch,
             tag=dependency.tag,
             rev=dependency.rev,
+            subdirectory=dependency.source_subdirectory,
             source_root=self._source_root
             or (self._env.path.joinpath("src") if self._env else None),
         )
@@ -265,13 +307,19 @@ class Provider:
         branch: str | None = None,
         tag: str | None = None,
         rev: str | None = None,
+        subdirectory: str | None = None,
         source_root: Path | None = None,
     ) -> Package:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
         return _get_package_from_git(
-            url=url, branch=branch, tag=tag, rev=rev, source_root=source_root
+            url=url,
+            branch=branch,
+            tag=tag,
+            rev=rev,
+            subdirectory=subdirectory,
+            source_root=source_root,
         )
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
@@ -468,15 +516,29 @@ class Provider:
             "url",
             "git",
         }:
-            package = DependencyPackage(
-                package.dependency,
-                self._pool.package(
-                    package.name,
-                    package.version.text,
-                    extras=list(package.dependency.extras),
-                    repository=package.dependency.source_name,
-                ),
-            )
+            try:
+                package = DependencyPackage(
+                    package.dependency,
+                    self._pool.package(
+                        package.name,
+                        package.version.text,
+                        extras=list(package.dependency.extras),
+                        repository=package.dependency.source_name,
+                    ),
+                )
+            except PackageNotFound as e:
+                try:
+                    package = next(
+                        DependencyPackage(
+                            package.dependency,
+                            pkg,
+                        )
+                        for pkg in self.search_for_installed_packages(
+                            package.dependency
+                        )
+                    )
+                except StopIteration:
+                    raise e from e
             requires = package.requires
         else:
             requires = package.requires
@@ -555,7 +617,7 @@ class Provider:
         # of source type, reference etc. are taking into consideration when duplicates
         # are identified.
         duplicates: dict[
-            tuple[str, str | None, str | None, str | None], list[Dependency]
+            tuple[str, str | None, str | None, str | None, str | None], list[Dependency]
         ] = {}
         for dep in dependencies:
             key = (
@@ -563,6 +625,7 @@ class Provider:
                 dep.source_type,
                 dep.source_url,
                 dep.source_reference,
+                dep.source_subdirectory,
             )
             if key not in duplicates:
                 duplicates[key] = []

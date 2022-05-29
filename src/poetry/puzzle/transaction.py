@@ -42,8 +42,19 @@ class Transaction:
                 if result_package.name == installed_package.name:
                     installed = True
 
+                    # We have to perform an update if the version or another
+                    # attribute of the package has changed (source type, url, ref, ...).
                     if result_package.version != installed_package.version or (
                         (
+                            # This has to be done because installed packages cannot
+                            # have type "legacy". If a package with type "legacy"
+                            # is installed, the installed package has no source_type.
+                            # Thus, if installed_package has no source_type and
+                            # the result_package has source_type "legacy" (negation of
+                            # the following condition), update must not be performed.
+                            # This quirk has the side effect that when switching
+                            # from PyPI to legacy (or vice versa),
+                            # no update is performed.
                             installed_package.source_type
                             or result_package.source_type != "legacy"
                         )

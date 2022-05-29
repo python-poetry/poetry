@@ -42,7 +42,7 @@ poetry install
 {{% /note %}}
 
 {{% note %}}
-Since version 1.2, Poetry no longer supports managing environments for Python 2.7. 
+Since version 1.2, Poetry no longer supports managing environments for Python 2.7.
 {{% /note %}}
 
 ## Switching between environments
@@ -120,6 +120,12 @@ will output something like the following:
 ```text
 test-O3eWbxRl-py3.6
 test-O3eWbxRl-py3.7 (Activated)
+```
+
+You can pass the option `--full-path` to display the full path to the environments:
+
+```bash
+poetry env list --full-path
 ```
 
 ## Deleting the environments

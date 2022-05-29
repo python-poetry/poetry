@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterable
-from typing import Sequence
 
 from cleo.io.null_io import NullIO
 
@@ -20,6 +18,9 @@ from poetry.utils.helpers import pluralize
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Sequence
+
     from cleo.io.io import IO
     from poetry.core.packages.project_package import ProjectPackage
 
@@ -521,8 +522,8 @@ class Installer:
 
             if self._update:
                 extras = {}
-                for extra, deps in self._package.extras.items():
-                    extras[extra] = [dep.name for dep in deps]
+                for extra, dependencies in self._package.extras.items():
+                    extras[extra] = [dependency.name for dependency in dependencies]
             else:
                 extras = {}
                 for extra, deps in self._locker.lock_data.get("extras", {}).items():

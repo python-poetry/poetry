@@ -10,8 +10,6 @@ import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ContextManager
-from typing import Iterator
 from typing import cast
 
 import pkginfo
@@ -31,6 +29,8 @@ from poetry.utils.setup_reader import SetupReader
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
+    from contextlib import AbstractContextManager
 
     from poetry.core.packages.project_package import ProjectPackage
 
@@ -131,11 +131,6 @@ class PackageInfo:
         cache_version = data.pop("_cache_version", None)
         return cls(cache_version=cache_version, **data)
 
-    @classmethod
-    def _log(cls, msg: str, level: str = "info") -> None:
-        """Internal helper method to log information."""
-        getattr(logger, level)(f"<debug>{cls.__name__}:</debug> {msg}")
-
     def to_package(
         self,
         name: str | None = None,
@@ -154,6 +149,9 @@ class PackageInfo:
         """
         name = name or self.name
 
+        if not name:
+            raise RuntimeError("Unable to create package with no name")
+
         if not self.version:
             # The version could not be determined, so we raise an error since it is
             # mandatory.
@@ -166,7 +164,8 @@ class PackageInfo:
             source_url=self._source_url,
             source_reference=self._source_reference,
         )
-        package.description = self.summary
+        if self.summary is not None:
+            package.description = self.summary
         package.root_dir = root_dir
         package.python_versions = self.requires_python or "*"
         package.files = self.files
@@ -196,10 +195,9 @@ class PackageInfo:
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except ValueError:
                 # Likely unable to parse constraint so we skip it
-                self._log(
+                logger.debug(
                     f"Invalid constraint ({req}) found in"
                     f" {package.name}-{package.version} dependencies, skipping",
-                    level="warning",
                 )
                 continue
 
@@ -281,7 +279,9 @@ class PackageInfo:
         # So, we unpack and introspect
         suffix = path.suffix
 
-        context: Callable[[str], ContextManager[zipfile.ZipFile | tarfile.TarFile]]
+        context: Callable[
+            [str], AbstractContextManager[zipfile.ZipFile | tarfile.TarFile]
+        ]
         if suffix == ".zip":
             context = zipfile.ZipFile
         else:
@@ -422,10 +422,7 @@ class PackageInfo:
             except ValueError:
                 return None
 
-        info = cls._from_distribution(dist=dist)
-        if info:
-            return info
-        return None
+        return cls._from_distribution(dist=dist)
 
     @classmethod
     def from_package(cls, package: Package) -> PackageInfo:
@@ -489,7 +486,6 @@ class PackageInfo:
 
                     # we discovered PkgInfo but no requirements were listed
 
-        assert info
         info._source_type = "directory"
         info._source_url = path.as_posix()
 

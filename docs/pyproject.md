@@ -17,6 +17,9 @@ The `tool.poetry` section of the `pyproject.toml` file is composed of multiple s
 
 The name of the package. **Required**
 
+This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-0508/#names).
+
+
 ```toml
 name = "my-package"
 ```
@@ -69,13 +72,12 @@ The recommended notation for the most common licenses is (alphabetical):
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
-{{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
-{{% /note %}}
-
 ```toml
 license = "MIT"
 ```
+{{% note %}}
+If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+{{% /note %}}
 
 ## authors
 
@@ -97,7 +99,8 @@ This is a list of maintainers and should be distinct from authors. Maintainers m
 
 ```toml
 maintainers = [
-    "Richard Brave <email@example.org>",
+    "John Smith <johnsmith@example.org>",
+    "Jane Smith <janesmith@example.org>",
 ]
 ```
 
@@ -232,6 +235,10 @@ The globs specified in the exclude field identify a set of files that are not in
 
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
 
+{{% note %}}
+Explicitly declaring entries in `include` will negate VCS' ignore settings.
+{{% /note %}}
+
 ```toml
 [tool.poetry]
 # ...
@@ -257,7 +264,7 @@ exclude = ["my_package/excluded.py"]
 
 ## dependencies and dependency groups
 
-Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
+Poetry is configured to look for dependencies on [PyPI](https://pypi.org) by default.
 Only the name and a version string are required in this case.
 
 ```toml

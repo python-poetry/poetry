@@ -183,6 +183,61 @@ baz = "^1.0.0"
     assert "[tool.poetry.group]" not in content.as_string()
 
 
+def test_remove_canonicalized_named_removes_dependency_correctly(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    installed: Repository,
+):
+    """
+    Removing a dependency using a canonicalized named removes the dependency.
+    """
+    installed.add_package(Package("foo-bar", "2.0.0"))
+    repo.add_package(Package("foo-bar", "2.0.0"))
+    repo.add_package(Package("baz", "1.0.0"))
+
+    content = app.poetry.file.read()
+
+    groups_content = tomlkit.parse(
+        """\
+[tool.poetry.group.bar.dependencies]
+foo-bar = "^2.0.0"
+baz = "^1.0.0"
+
+"""
+    )
+    content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^2.0.0"
+    content["tool"]["poetry"].value._insert_after(
+        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
+    )
+    app.poetry.file.write(content)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^2.0.0"))
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo-bar", "^2.0.0", groups=["bar"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("baz", "^1.0.0", groups=["bar"])
+    )
+
+    tester.execute("Foo_Bar")
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+    assert "foo-bar" not in content["dependencies"]
+    assert "foo-bar" not in content["group"]["bar"]["dependencies"]
+    assert "baz" in content["group"]["bar"]["dependencies"]
+
+    expected = """\
+
+[tool.poetry.group.bar.dependencies]
+baz = "^1.0.0"
+
+"""
+
+    assert expected in content.as_string()
+
+
 def test_remove_command_should_not_write_changes_upon_installer_errors(
     tester: CommandTester,
     app: PoetryTestApplication,

@@ -8,7 +8,7 @@ from typing import Any
 from cachy import CacheManager
 from poetry.core.semver.helpers import parse_constraint
 
-from poetry.locations import REPOSITORY_CACHE_DIR
+from poetry.config.config import Config
 from poetry.repositories.repository import Repository
 
 
@@ -21,10 +21,12 @@ if TYPE_CHECKING:
 class CachedRepository(Repository, ABC):
     CACHE_VERSION = parse_constraint("1.0.0")
 
-    def __init__(self, name: str, disable_cache: bool = False) -> None:
+    def __init__(
+        self, name: str, disable_cache: bool = False, config: Config | None = None
+    ) -> None:
         super().__init__(name)
         self._disable_cache = disable_cache
-        self._cache_dir = REPOSITORY_CACHE_DIR / name
+        self._cache_dir = (config or Config.create()).repository_cache_directory / name
         self._cache = CacheManager(
             {
                 "default": "releases",

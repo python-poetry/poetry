@@ -42,16 +42,19 @@ class DependencyCache:
     def __init__(self, provider: Provider) -> None:
         self.provider = provider
         self.cache: dict[
-            tuple[str, str | None, str | None, str | None], list[DependencyPackage]
+            tuple[str, str | None, str | None, str | None, str | None],
+            list[DependencyPackage],
         ] = {}
 
-    @functools.lru_cache(maxsize=128)
-    def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
+        self.search_for = functools.lru_cache(maxsize=128)(self._search_for)
+
+    def _search_for(self, dependency: Dependency) -> list[DependencyPackage]:
         key = (
             dependency.complete_name,
             dependency.source_type,
             dependency.source_url,
             dependency.source_reference,
+            dependency.source_subdirectory,
         )
 
         packages = self.cache.get(key)

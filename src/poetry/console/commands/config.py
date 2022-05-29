@@ -53,13 +53,13 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.config.config import boolean_normalizer
         from poetry.config.config import boolean_validator
         from poetry.config.config import int_normalizer
-        from poetry.locations import CACHE_DIR
+        from poetry.locations import DEFAULT_CACHE_DIR
 
         unique_config_values = {
             "cache-dir": (
                 str,
                 lambda val: str(Path(val)),
-                str(CACHE_DIR / "virtualenvs"),
+                str(DEFAULT_CACHE_DIR / "virtualenvs"),
             ),
             "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
@@ -86,7 +86,7 @@ To remove a repository (repo is a short alias for repositories):
             "virtualenvs.path": (
                 str,
                 lambda val: str(Path(val)),
-                str(CACHE_DIR / "virtualenvs"),
+                str(DEFAULT_CACHE_DIR / "virtualenvs"),
             ),
             "virtualenvs.prefer-active-python": (
                 boolean_validator,
@@ -107,6 +107,11 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: int(val) > 0,
                 int_normalizer,
                 None,
+            ),
+            "virtualenvs.prompt": (
+                str,
+                lambda val: str(val),
+                "{project_name}-py{python_version}",
             ),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,

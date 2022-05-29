@@ -20,7 +20,6 @@ from cachecontrol.caches import FileCache
 
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
-from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
 from poetry.utils.password_manager import HTTPAuthCredential
@@ -99,10 +98,17 @@ class Authenticator:
         self._password_manager = PasswordManager(self._config)
         self._cache_control = (
             FileCache(
-                str(REPOSITORY_CACHE_DIR / (cache_id or "_default_cache") / "_http")
+                str(
+                    self._config.repository_cache_directory
+                    / (cache_id or "_default_cache")
+                    / "_http"
+                )
             )
             if not disable_cache
             else None
+        )
+        self.get_repository_config_for_url = functools.lru_cache(maxsize=None)(
+            self._get_repository_config_for_url
         )
 
     @property
@@ -211,7 +217,7 @@ class Authenticator:
                     raise e
             else:
                 if resp.status_code not in [502, 503, 504] or is_last_attempt:
-                    if resp.status_code is not None and raise_for_status:
+                    if raise_for_status:
                         resp.raise_for_status()
                     return resp
 
@@ -351,8 +357,7 @@ class Authenticator:
             self._certs[url] = self._get_certs_for_url(url)
         return self._certs[url]
 
-    @functools.lru_cache(maxsize=None)
-    def get_repository_config_for_url(
+    def _get_repository_config_for_url(
         self, url: str, exact_match: bool = False
     ) -> AuthenticatorRepositoryConfig | None:
         parsed_url = urllib.parse.urlsplit(url)
@@ -384,7 +389,7 @@ class Authenticator:
             logger.debug(
                 "Multiple source configurations found for %s - %s",
                 parsed_url.netloc,
-                ", ".join(map(lambda c: c.name, candidates)),
+                ", ".join(c.name for c in candidates),
             )
             # prefer the more specific path
             candidates.sort(

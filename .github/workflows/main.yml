@@ -111,3 +111,8 @@ jobs:
 
       - name: Run pytest (poetry-plugin-export)
         run: poetry run python -m pytest -p no:sugar -q poetry-plugin-export/tests/
+
+      - name: Check for clean working tree
+        run: |
+          git diff --exit-code --stat HEAD
+          git -C poetry-plugin-export diff --exit-code --stat HEAD

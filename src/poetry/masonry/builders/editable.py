@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 
@@ -40,14 +41,14 @@ WINDOWS_CMD_TEMPLATE = """\
 """
 
 
-class EditableBuilder(Builder):  # type: ignore[misc]
+class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self) -> None:
+    def build(self, target_dir: Path | None = None) -> Path:
         self._debug(
             f"  - Building package <c1>{self._package.name}</c1> in"
             " <info>editable</info> mode"
@@ -58,7 +59,9 @@ class EditableBuilder(Builder):  # type: ignore[misc]
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-                return self._setup_build()
+                self._setup_build()
+                path: Path = self._path
+                return path
 
             self._run_build_script(self._package.build_script)
 
@@ -74,6 +77,9 @@ class EditableBuilder(Builder):  # type: ignore[misc]
         added_files += self._add_pth()
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
+
+        path = self._path
+        return path
 
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
@@ -235,6 +241,18 @@ class EditableBuilder(Builder):  # type: ignore[misc]
                 builder._write_entry_points(f)
 
             added_files.append(dist_info.joinpath("entry_points.txt"))
+
+        # write PEP 610 metadata
+        direct_url_json = dist_info.joinpath("direct_url.json")
+        direct_url_json.write_text(
+            json.dumps(
+                {
+                    "dir_info": {"editable": True},
+                    "url": self._poetry.file.path.parent.as_uri(),
+                }
+            )
+        )
+        added_files.append(direct_url_json)
 
         record = dist_info.joinpath("RECORD")
         with record.open("w", encoding="utf-8") as f:
