@@ -1,4 +1,6 @@
-<!-- The content of this file is manually kept in sync with ../CONTRIBUTING.md. There are formatting differences because this file uses Hugo templating. -->
+<!--
+The content of this file is manually kept in sync with ../CONTRIBUTING.md. There are formatting differences because this file uses Hugo templating.
+-->
 
 ---
 title: "Contributing to Poetry"

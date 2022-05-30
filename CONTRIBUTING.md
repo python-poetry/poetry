@@ -1,4 +1,6 @@
-<!-- The content of this file is manually kept in sync with docs/contributing.md. There are formatting differences because this file uses plain markdown. -->
+<!--
+The content of this file is manually kept in sync with docs/contributing.md. There are formatting differences because this file uses plain markdown.
+-->
 
 # Contributing to Poetry
 
