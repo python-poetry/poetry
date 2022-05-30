@@ -57,6 +57,26 @@ class Pool(Repository):
 
         raise ValueError(f'Repository "{name}" does not exist.')
 
+    @property
+    def default_repository(self) -> Repository | None:
+        if self.has_default() and self._repositories:
+            return self._repositories[0]
+        return None
+
+    @property
+    def primary_repositories(self) -> list[Repository]:
+        if self._secondary_start_idx is None:
+            return self.repositories
+
+        return self._repositories[: self._secondary_start_idx]
+
+    @property
+    def secondary_repositories(self) -> list[Repository]:
+        if self._secondary_start_idx is None:
+            return []
+
+        return self._repositories[self._secondary_start_idx :]
+
     def add_repository(
         self, repository: Repository, default: bool = False, secondary: bool = False
     ) -> Pool:

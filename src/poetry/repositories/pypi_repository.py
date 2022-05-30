@@ -36,7 +36,7 @@ class PyPiRepository(HTTPRepository):
         fallback: bool = True,
     ) -> None:
         super().__init__(
-            "PyPI", url.rstrip("/") + "/simple/", disable_cache=disable_cache
+            "pypi", url.rstrip("/") + "/simple/", disable_cache=disable_cache
         )
 
         self._base_url = url

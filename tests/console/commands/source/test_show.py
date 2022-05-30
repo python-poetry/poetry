@@ -40,6 +40,11 @@ name       : two
 url        : https://two.com
 default    : no
 secondary  : no
+
+name       : pypi
+url        : https://pypi.org/simple/
+default    : no
+secondary  : yes
 """.splitlines()
     assert [
         line.strip() for line in tester.io.fetch_output().strip().splitlines()
