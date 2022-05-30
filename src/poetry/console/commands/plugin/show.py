@@ -19,6 +19,7 @@ class PluginShowCommand(Command):
         "<warning>This command is deprecated. Use <c2>self show plugins</> "
         "command instead.</warning>"
     )
+    hidden = True
 
     def handle(self) -> int:
         self.line_error(self.help)
