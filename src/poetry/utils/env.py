@@ -224,6 +224,12 @@ print(json.dumps(paths))
 """
 
 
+# This should be dropped when Poetry removes python2 support completely
+def _is_python2_exec(executable: str) -> bool:
+    print(f"HERE --------- {executable} -------------")
+    return re.match(r".2.|.2\..", executable) is not None
+
+
 class SitePackages:
     def __init__(
         self,
@@ -948,6 +954,12 @@ class EnvManager:
 
                 python = "python" + python_to_try
 
+                if _is_python2_exec(python):
+                    error_message = """
+                    Poetry no longer supports Python 2.7 environments.
+                    """
+                    raise PoetryException(error_message)
+
                 if io.is_debug():
                     io.write_line(f"<debug>Trying {python}</debug>")
 
@@ -1075,6 +1087,12 @@ class EnvManager:
 
         if isinstance(executable, Path):
             executable = executable.resolve().as_posix()
+
+        if _is_python2_exec(executable):
+            error_message = """
+                Poetry no longer supports Python 2.7 environments.
+                """
+            raise PoetryException(error_message)
 
         args = [
             "--no-download",
