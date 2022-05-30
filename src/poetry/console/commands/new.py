@@ -53,7 +53,7 @@ class NewCommand(InitCommand):
         ),
     ]
 
-    def handle(self) -> None:
+    def handle(self) -> int:
         from pathlib import Path
 
         from poetry.core.vcs.git import GitConfig
@@ -136,3 +136,5 @@ class NewCommand(InitCommand):
             f"Created package <info>{layout_._package_name}</> in"
             f" <fg=blue>{path.as_posix()}</>"
         )
+
+        return 0
