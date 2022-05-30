@@ -43,6 +43,7 @@ It works similarly to the <c1>add</c1> command:
 
 {deprecation}
 """
+    hidden = True
 
     def handle(self) -> int:
         self.line_error(self.deprecation)

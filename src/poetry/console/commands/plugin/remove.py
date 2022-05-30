@@ -36,6 +36,8 @@ class PluginRemoveCommand(Command):
         "</warning>"
     )
 
+    hidden = True
+
     def handle(self) -> int:
         self.line_error(self.help)
 
