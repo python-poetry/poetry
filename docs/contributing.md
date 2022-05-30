@@ -124,7 +124,7 @@ the code base, join us on our [Discord Server](https://discordapp.com/invite/awx
 You will need Poetry to start contributing on the Poetry codebase. Refer to the [documentation](https://python-poetry.org/docs/#introduction) to start using Poetry.
 
 {{% note %}}
-Local development of poetry requires Python 3.8 or newer.
+Local development of Poetry requires Python 3.8 or newer.
 {{% /note %}}
 
 You will first need to clone the repository using `git` and place yourself in its directory:
