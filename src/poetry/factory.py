@@ -11,6 +11,7 @@ from typing import cast
 
 from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from tomlkit.toml_document import TOMLDocument
@@ -20,12 +21,6 @@ from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 
 if TYPE_CHECKING:

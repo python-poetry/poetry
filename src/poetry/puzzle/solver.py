@@ -9,11 +9,7 @@ from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
 
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure

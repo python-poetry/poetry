@@ -3,12 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.env_command import EnvCommand
 
