@@ -39,8 +39,12 @@ poetry source add foo https://pypi.example.org/simple/
 Then, assuming the repository requires authentication, configure credentials for it.
 
 ```bash
-poetry config http-basic.foo username password
+poetry config http-basic.foo <username> <password>
 ```
+
+{{% warning %}}
+Depending on your systems configuration, credentials might be saved in your command lines history.
+{{% /warning %}}
 
 Once this is done, you can add dependencies to your project from this source.
 
@@ -66,7 +70,7 @@ recommended to use a different name for your publishing repository.
 
 ```bash
 poetry config repositories.foo-pub https://pypi.example.org/legacy/
-poetry config http-basic.foo-pub username password
+poetry config http-basic.foo-pub <username> <password>
 ```
 
 {{% /note %}}
@@ -303,7 +307,7 @@ well as the path (`/legacy`) are different to it's simple API (`https://test.pyp
 If you want to store your credentials for a specific repository, you can do so easily:
 
 ```bash
-poetry config http-basic.foo username password
+poetry config http-basic.foo <username> <password>
 ```
 
 If you do not specify the password you will be prompted to write it.
@@ -324,7 +328,7 @@ If you still want to use your username and password, you can do so with the foll
 call to `config`.
 
 ```bash
-poetry config http-basic.pypi username password
+poetry config http-basic.pypi <username> <password>
 ```
 
 {{% /note %}}
@@ -355,8 +359,8 @@ Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
 export POETRY_PYPI_TOKEN_PYPI=my-token
-export POETRY_HTTP_BASIC_PYPI_USERNAME=username
-export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
+export POETRY_HTTP_BASIC_PYPI_USERNAME=<username>
+export POETRY_HTTP_BASIC_PYPI_PASSWORD=<password>
 ```
 
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
