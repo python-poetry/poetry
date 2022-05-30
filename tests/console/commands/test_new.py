@@ -23,16 +23,18 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 def verify_project_directory(
-    path: Path, package_name: str, package_path: str, include_from: str | None = None
+    path: Path,
+    package_name: str,
+    package_path: str,
+    include_from: str | None = None,
 ) -> Poetry:
-    module_name = package_name.replace("-", "_")
     package_path = Path(package_path)
     assert path.is_dir()
 
     pyproject = path / "pyproject.toml"
     assert pyproject.is_file()
 
-    init_file = path / module_name / "__init__.py"
+    init_file = path / package_path / "__init__.py"
     assert init_file.is_file()
 
     tests_init_file = path / "tests" / "__init__.py"
@@ -47,7 +49,7 @@ def verify_project_directory(
             "from": include_from,
         }
     else:
-        package_include = {"include": module_name}
+        package_include = {"include": package_path.parts[0]}
 
     packages = poetry.local_config.get("packages")
 
@@ -181,11 +183,11 @@ def test_command_new_with_dependencies(
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    package_path = "package-path"
+    package_path = "custompackage"
     path = Path(tmp_dir) / package_path
     options = [
         path.as_posix(),
-        "--name custom-package",
+        "--name custompackage",
         "--package-version 1.2.3",
         "--description 'My Description'",
         "--author 'Your Name <you@example.com>' ",
@@ -195,17 +197,16 @@ def test_command_new_with_dependencies(
         "--dev-dependency pytest",
     ]
     tester.execute(" ".join(options))
-    poetry = verify_project_directory(path, "custom-package", package_path, None)
+    poetry = verify_project_directory(path, "custompackage", package_path, None)
 
     expected = """\
 [tool.poetry]
-name = "custom-package"
+name = "custompackage"
 version = "1.2.3"
 description = "My Description"
 authors = ["Your Name <you@example.com>"]
 license = "My License"
 readme = "README.md"
-packages = [{include = "custom_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
