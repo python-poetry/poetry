@@ -247,25 +247,41 @@ class Locker:
         """
         decided = decided or {}
 
-        # Get the packages that are consistent with this dependency.
-        packages = [
-            package
-            for package in packages_by_name.get(dependency.name, [])
-            if package.python_constraint.allows_all(dependency.python_constraint)
-            and dependency.constraint.allows(package.version)
-        ]
+        candidates = packages_by_name.get(dependency.name, [])
 
-        # If we've previously made a choice that is compatible with the current
-        # requirement, stick with it.
-        for package in packages:
+        # If we've previously chosen a version of this package that is compatible with
+        # the current requirement, we are forced to stick with it.  (Else we end up with
+        # different versions of the same package at the same time.)
+        overlapping_candidates = set()
+        for package in candidates:
             old_decision = decided.get(package)
             if (
                 old_decision is not None
                 and not old_decision.marker.intersect(dependency.marker).is_empty()
             ):
-                return package
+                overlapping_candidates.add(package)
 
-        return next(iter(packages), None)
+        # If we have more than one overlapping candidate, we've run into trouble.
+        if len(overlapping_candidates) > 1:
+            return None
+
+        # Get the packages that are consistent with this dependency.
+        compatible_candidates = [
+            package
+            for package in candidates
+            if package.python_constraint.allows_all(dependency.python_constraint)
+            and dependency.constraint.allows(package.version)
+        ]
+
+        # If we have an overlapping candidate, we must use it.
+        if overlapping_candidates:
+            compatible_candidates = [
+                package
+                for package in compatible_candidates
+                if package in overlapping_candidates
+            ]
+
+        return next(iter(compatible_candidates), None)
 
     @classmethod
     def __walk_dependencies(
