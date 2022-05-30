@@ -4,13 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 from poetry.factory import Factory
 from tests.helpers import get_package

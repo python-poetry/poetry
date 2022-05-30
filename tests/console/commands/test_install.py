@@ -5,12 +5,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester

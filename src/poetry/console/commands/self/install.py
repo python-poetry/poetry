@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.install import InstallCommand
 from poetry.console.commands.self.self_command import SelfCommand
