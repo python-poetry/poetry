@@ -107,7 +107,7 @@ my-package
 * `--author`: Author of the package.
 * `--python`: Compatible Python versions.
 * `--license`: License of the package.
-* `--dependency`: Package to require with an optional version constraint, e.g. `requests:^2.10.0` or `requests=2.11.1`. (see [add]({{< relref "#add" >}}).
+* `--dependency`: Package to require with an optional version constraint, e.g. `requests:^2.10.0` or `requests=2.11.1`. (see [add]({{< relref "#add" >}})).
 * `--dev-dependency`: Development requirements, see `--dependency`.
 * `--src`: Use the src layout for the project.
 * `--readme`: Specify the readme file format. One of `md` (default) or `rst`.
