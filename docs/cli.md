@@ -129,7 +129,7 @@ poetry init
 * `--name`: Name of the package.
 * `--description`: Description of the package.
 * `--author`: Author of the package.
-* `--python` Compatible Python versions.
+* `--python`: Compatible Python versions.
 * `--dependency`: Package to require with an optional version constraint, e.g. `requests:^2.10.0` or `requests=2.11.1`. (see [add]({{< relref "#add" >}})).
 * `--dev-dependency`: Development requirements, see `--dependency`.
 
