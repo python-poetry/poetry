@@ -105,6 +105,7 @@ lines_between_types = 1
 lines_after_imports = 2
 src_paths = ["src", "tests"]
 extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
 
 
 [tool.black]
@@ -117,6 +118,9 @@ force-exclude = '''
 
 [tool.mypy]
 files = "src"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
 show_error_codes = true
 strict = true
 enable_error_code = [
