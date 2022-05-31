@@ -1346,6 +1346,7 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(
     else:
         assert venv_name1 != venv_name2
 
+
 def test_generate_env_name_without_path_hash(manager: EnvManager, config: Config):
     config.merge({"virtualenvs": {"path-independent_naming": True}})
     venv_name = manager.generate_env_name("simple-project", "PathName")
