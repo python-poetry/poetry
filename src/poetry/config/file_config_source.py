@@ -3,7 +3,6 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 
 from tomlkit import document
 from tomlkit import table
@@ -12,6 +11,8 @@ from poetry.config.config_source import ConfigSource
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poetry.core.toml.file import TOMLFile
     from tomlkit.toml_document import TOMLDocument
 
@@ -30,7 +31,8 @@ class FileConfigSource(ConfigSource):
         return self._file
 
     def add_property(self, key: str, value: Any) -> None:
-        with self.secure() as config:
+        with self.secure() as toml:
+            config: dict[str, Any] = toml
             keys = key.split(".")
 
             for i, key in enumerate(keys):
@@ -44,7 +46,8 @@ class FileConfigSource(ConfigSource):
                 config = config[key]
 
     def remove_property(self, key: str) -> None:
-        with self.secure() as config:
+        with self.secure() as toml:
+            config: dict[str, Any] = toml
             keys = key.split(".")
 
             current_config = config

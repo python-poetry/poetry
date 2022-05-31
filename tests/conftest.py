@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -10,13 +11,11 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import TextIO
 
 import httpretty
 import pytest
 
-from cleo.testers.command_tester import CommandTester
 from keyring.backend import KeyringBackend
 
 from poetry.config.config import Config as BaseConfig
@@ -24,32 +23,48 @@ from poetry.config.dict_config_source import DictConfigSource
 from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
-from poetry.installation import Installer
 from poetry.layouts import layout
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
-from tests.helpers import TestExecutor
+from poetry.utils.helpers import remove_directory
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
+from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from _pytest.config import Config as PyTestConfig
+    from _pytest.config.argparsing import Parser
     from pytest_mock import MockerFixture
 
-    from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
-    from poetry.utils.env import Env
-    from poetry.utils.env import MockEnv
-    from tests.helpers import PoetryTestApplication
-    from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+
+
+def pytest_addoption(parser: Parser) -> None:
+    parser.addoption(
+        "--integration",
+        action="store_true",
+        dest="integration",
+        default=False,
+        help="enable integration tests",
+    )
+
+
+def pytest_configure(config: PyTestConfig) -> None:
+    config.addinivalue_line("markers", "integration: mark integration tests")
+
+    if not config.option.integration:
+        config.option.markexpr = "not integration"
 
 
 class Config(BaseConfig):
@@ -116,10 +131,31 @@ def with_fail_keyring() -> None:
 
 
 @pytest.fixture()
-def with_chained_keyring(mocker: MockerFixture) -> None:
+def with_null_keyring() -> None:
+    import keyring
+
+    from keyring.backends.null import Keyring
+
+    keyring.set_keyring(Keyring())
+
+
+@pytest.fixture()
+def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
+    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    import keyring
+
+    from keyring.backends.chainer import ChainerBackend
+
+    keyring.set_keyring(ChainerBackend())
+
+
+@pytest.fixture()
+def with_chained_null_keyring(mocker: MockerFixture) -> None:
+    from keyring.backends.null import Keyring
+
+    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
@@ -154,7 +190,7 @@ def auth_config_source() -> DictConfigSource:
     return source
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def config(
     config_source: DictConfigSource,
     auth_config_source: DictConfigSource,
@@ -171,19 +207,21 @@ def config(
     c.set_config_source(config_source)
     c.set_auth_config_source(auth_config_source)
 
-    mocker.patch("poetry.factory.Factory.create_config", return_value=c)
+    mocker.patch("poetry.config.config.Config.create", return_value=c)
     mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
 
 
+@pytest.fixture()
+def config_dir(tmp_dir: str) -> Path:
+    return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
+
+
 @pytest.fixture(autouse=True)
-def mock_user_config_dir(mocker: MockerFixture) -> Iterator[None]:
-    config_dir = tempfile.mkdtemp(prefix="poetry_config_")
+def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
-    mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
-    yield
-    shutil.rmtree(config_dir, ignore_errors=True)
+    mocker.patch("poetry.config.config.CONFIG_DIR", new=config_dir)
 
 
 @pytest.fixture(autouse=True)
@@ -191,39 +229,44 @@ def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
     mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
-    mocker.patch("poetry.repositories.pypi_repository.download_file", new=mock_download)
+    mocker.patch("poetry.repositories.http.download_file", new=mock_download)
 
 
 @pytest.fixture(autouse=True)
 def pep517_metadata_mock(mocker: MockerFixture) -> None:
-    @classmethod
-    def _pep517_metadata(cls: PackageInfo, path: Path) -> PackageInfo:
+    def get_pep517_metadata(path: Path) -> PackageInfo:
         with suppress(PackageInfoError):
             return PackageInfo.from_setup_files(path)
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata",
-        _pep517_metadata,
+        "poetry.inspection.info.get_pep517_metadata",
+        get_pep517_metadata,
     )
 
 
 @pytest.fixture
 def environ() -> Iterator[None]:
-    original_environ = dict(os.environ)
+    with isolated_environment():
+        yield
 
-    yield
 
-    os.environ.clear()
-    os.environ.update(original_environ)
+@pytest.fixture(autouse=True)
+def isolate_environ() -> Iterator[None]:
+    """Ensure the environment is isolated from user configuration."""
+    with isolated_environment():
+        for var in os.environ:
+            if var.startswith("POETRY_") or var in {"PYTHONPATH", "VIRTUAL_ENV"}:
+                del os.environ[var]
+
+        yield
 
 
 @pytest.fixture(autouse=True)
 def git_mock(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
+    p = mocker.patch("poetry.vcs.git.Git.get_revision")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
 
@@ -257,7 +300,7 @@ def tmp_dir() -> Iterator[str]:
 
     yield dir_
 
-    shutil.rmtree(dir_)
+    remove_directory(dir_, force=True)
 
 
 @pytest.fixture
@@ -385,60 +428,16 @@ def project_factory(
 
 
 @pytest.fixture
-def command_tester_factory(
-    app: PoetryTestApplication, env: MockEnv
-) -> CommandTesterFactory:
-    def _tester(
-        command: str,
-        poetry: Poetry | None = None,
-        installer: Installer | None = None,
-        executor: Executor | None = None,
-        environment: Env | None = None,
-    ) -> CommandTester:
-        command = app.find(command)
-        tester = CommandTester(command)
-
-        # Setting the formatter from the application
-        # TODO: Find a better way to do this in Cleo
-        app_io = app.create_io()
-        formatter = app_io.output.formatter
-        tester.io.output.set_formatter(formatter)
-        tester.io.error_output.set_formatter(formatter)
-
-        if poetry:
-            app._poetry = poetry
-
-        poetry = app.poetry
-        command._pool = poetry.pool
-
-        if hasattr(command, "set_env"):
-            command.set_env(environment or env)
-
-        if hasattr(command, "set_installer"):
-            installer = installer or Installer(
-                tester.io,
-                env,
-                poetry.package,
-                poetry.locker,
-                poetry.pool,
-                poetry.config,
-                executor=executor
-                or TestExecutor(env, poetry.pool, poetry.config, tester.io),
-            )
-            installer.use_executor(True)
-            command.set_installer(installer)
-
-        return tester
-
-    return _tester
-
-
-@pytest.fixture
-def do_lock(command_tester_factory: CommandTesterFactory, poetry: Poetry) -> None:
-    command_tester_factory("lock").execute()
-    assert poetry.locker.lock.exists()
-
-
-@pytest.fixture
 def project_root() -> Path:
     return Path(__file__).parent.parent
+
+
+@pytest.fixture(autouse=True)
+def set_simple_log_formatter() -> None:
+    """
+    This fixture removes any formatting added via IOFormatter.
+    """
+    for name in logging.Logger.manager.loggerDict:
+        for handler in logging.getLogger(name).handlers:
+            # replace formatter with simple formatter for testing
+            handler.setFormatter(logging.Formatter(fmt="%(message)s"))

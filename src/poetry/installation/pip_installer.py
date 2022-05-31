@@ -10,15 +10,18 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.core.semver.version import Version
 
 from poetry.installation.base_installer import BaseInstaller
+from poetry.repositories.http import HTTPRepository
 from poetry.utils._compat import encode
-from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
     from poetry.repositories.pool import Pool
@@ -48,36 +51,50 @@ class PipInstaller(BaseInstaller):
             package.source_type not in {"git", "directory", "file", "url"}
             and package.source_url
         ):
+            assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
             parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
+                assert parsed.hostname is not None
                 self._io.write_error(
                     "    <warning>Installing from unsecure host:"
                     f" {parsed.hostname}</warning>"
                 )
                 args += ["--trusted-host", parsed.hostname]
 
-            if repository.cert:
-                args += ["--cert", str(repository.cert)]
+            if isinstance(repository, HTTPRepository):
+                certificates = repository.certificates
 
-            if repository.client_cert:
-                args += ["--client-cert", str(repository.client_cert)]
+                if certificates.cert:
+                    args += ["--cert", str(certificates.cert)]
 
-            index_url = repository.authenticated_url
+                if parsed.scheme == "https" and not certificates.verify:
+                    assert parsed.hostname is not None
+                    args += ["--trusted-host", parsed.hostname]
 
-            args += ["--index-url", index_url]
+                if certificates.client_cert:
+                    args += ["--client-cert", str(certificates.client_cert)]
+
+                index_url = repository.authenticated_url
+
+                args += ["--index-url", index_url]
+
             if (
                 self._pool.has_default()
                 and repository.name != self._pool.repositories[0].name
             ):
-                args += [
-                    "--extra-index-url",
-                    self._pool.repositories[0].authenticated_url,
-                ]
+                first_repository = self._pool.repositories[0]
+
+                if isinstance(first_repository, HTTPRepository):
+                    args += [
+                        "--extra-index-url",
+                        first_repository.authenticated_url,
+                    ]
 
         if update:
             args.append("-U")
 
+        req: str | list[str]
         if package.files and not package.source_url:
             # Format as a requirements.txt
             # We need to create a requirements.txt file
@@ -128,12 +145,12 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
-                safe_rmtree(str(src_dir))
+                remove_directory(src_dir, force=True)
 
-    def run(self, *args: Any, **kwargs: Any) -> str:
+    def run(self, *args: Any, **kwargs: Any) -> int | str:
         return self._env.run_pip(*args, **kwargs)
 
-    def requirement(self, package: Package, formatted: bool = False) -> str:
+    def requirement(self, package: Package, formatted: bool = False) -> str | list[str]:
         if formatted and not package.source_type:
             req = f"{package.name}=={package.version}"
             for f in package.files:
@@ -149,13 +166,14 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type in ["file", "directory"]:
+            assert package.source_url is not None
             if package.root_dir:
                 req = (package.root_dir / package.source_url).as_posix()
             else:
                 req = os.path.realpath(package.source_url)
 
             if package.develop and package.source_type == "directory":
-                req = ["-e", req]
+                return ["-e", req]
 
             return req
 
@@ -166,7 +184,7 @@ class PipInstaller(BaseInstaller):
             )
 
             if package.develop:
-                req = ["-e", req]
+                return ["-e", req]
 
             return req
 
@@ -177,9 +195,12 @@ class PipInstaller(BaseInstaller):
 
     def create_temporary_requirement(self, package: Package) -> str:
         fd, name = tempfile.mkstemp("reqs.txt", f"{package.name}-{package.version}")
+        req = self.requirement(package, formatted=True)
+        if isinstance(req, list):
+            req = " ".join(req)
 
         try:
-            os.write(fd, encode(self.requirement(package, formatted=True)))
+            os.write(fd, encode(req))
         finally:
             os.close(fd)
 
@@ -190,10 +211,9 @@ class PipInstaller(BaseInstaller):
 
         from poetry.factory import Factory
 
-        req: Path
-
+        assert package.source_url is not None
         if package.root_dir:
-            req = (package.root_dir / package.source_url).as_posix()
+            req = package.root_dir / package.source_url
         else:
             req = Path(package.source_url).resolve(strict=False)
 
@@ -204,11 +224,10 @@ class PipInstaller(BaseInstaller):
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
-            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
-                19, 0, 0
-            )
+            legacy_pip = self._env.pip_version < Version.from_parts(19, 0, 0)
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
+            builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
 
@@ -231,7 +250,7 @@ class PipInstaller(BaseInstaller):
                 with builder.setup_py():
                     if package.develop:
                         return pip_install(
-                            directory=req,
+                            path=req,
                             environment=self._env,
                             upgrade=True,
                             editable=True,
@@ -242,33 +261,26 @@ class PipInstaller(BaseInstaller):
 
         if package.develop:
             return pip_install(
-                directory=req, environment=self._env, upgrade=True, editable=True
+                path=req, environment=self._env, upgrade=True, editable=True
             )
         return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package
-        from poetry.core.vcs.git import Git
 
-        src_dir = self._env.path / "src" / package.name
-        if src_dir.exists():
-            safe_rmtree(str(src_dir))
+        from poetry.vcs.git import Git
 
-        src_dir.parent.mkdir(exist_ok=True)
-
-        git = Git()
-        git.clone(package.source_url, src_dir)
-
-        reference = package.source_resolved_reference
-        if not reference:
-            reference = package.source_reference
-
-        git.checkout(reference, src_dir)
+        assert package.source_url is not None
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
 
         # Now we just need to install from the source directory
         pkg = Package(package.name, package.version)
         pkg._source_type = "directory"
-        pkg._source_url = str(src_dir)
+        pkg._source_url = str(source.path)
         pkg.develop = package.develop
 
         self.install_directory(pkg)

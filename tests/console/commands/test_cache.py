@@ -13,18 +13,13 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
     from cleo.testers.command_tester import CommandTester
 
+    from tests.conftest import Config
     from tests.types import CommandTesterFactory
 
 
 @pytest.fixture
-def repository_cache_dir(monkeypatch: MonkeyPatch, tmpdir: Path) -> Path:
-    from pathlib import Path
-
-    import poetry.locations
-
-    path = Path(str(tmpdir))
-    monkeypatch.setattr(poetry.locations, "REPOSITORY_CACHE_DIR", path)
-    return path
+def repository_cache_dir(monkeypatch: MonkeyPatch, config: Config) -> Path:
+    return config.repository_cache_directory
 
 
 @pytest.fixture
@@ -41,8 +36,8 @@ def repository_two() -> str:
 def mock_caches(
     repository_cache_dir: Path, repository_one: str, repository_two: str
 ) -> None:
-    (repository_cache_dir / repository_one).mkdir()
-    (repository_cache_dir / repository_two).mkdir()
+    (repository_cache_dir / repository_one).mkdir(parents=True)
+    (repository_cache_dir / repository_two).mkdir(parents=True)
 
 
 @pytest.fixture

@@ -9,10 +9,10 @@ from poetry.puzzle.transaction import Transaction
 
 
 if TYPE_CHECKING:
-    from poetry.installation.operations import OperationTypes
+    from poetry.installation.operations.operation import Operation
 
 
-def check_operations(ops: list[OperationTypes], expected: list[dict[str, Any]]) -> None:
+def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> None:
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False

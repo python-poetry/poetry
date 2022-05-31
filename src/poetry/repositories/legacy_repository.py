@@ -1,244 +1,43 @@
 from __future__ import annotations
 
-import cgi
-import hashlib
-import re
-import urllib.parse
-import warnings
-
-from collections import defaultdict
-from html import unescape
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
-from urllib.parse import quote
 
-import requests.auth
-import requests.exceptions
-
-from cachecontrol import CacheControl
-from cachecontrol.caches.file_cache import FileCache
-from cachy import CacheManager
 from poetry.core.packages.package import Package
-from poetry.core.packages.utils.link import Link
-from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
-from poetry.core.semver.version_constraint import VersionConstraint
-from poetry.core.semver.version_range import VersionRange
 
-from poetry.config.config import Config
 from poetry.inspection.info import PackageInfo
-from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.exceptions import RepositoryError
-from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils.authenticator import Authenticator
+from poetry.repositories.http import HTTPRepository
+from poetry.repositories.link_sources.html import SimpleRepositoryPage
 from poetry.utils.helpers import canonicalize_name
-from poetry.utils.helpers import download_file
-from poetry.utils.helpers import temporary_directory
-from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.utils.link import Link
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import html5lib
-
-
-class Page:
-
-    VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
-    SUPPORTED_FORMATS = [
-        ".tar.gz",
-        ".whl",
-        ".zip",
-        ".tar.bz2",
-        ".tar.xz",
-        ".tar.Z",
-        ".tar",
-    ]
-
-    def __init__(self, url: str, content: str, headers: dict[str, Any]) -> None:
-        if not url.endswith("/"):
-            url += "/"
-
-        self._url = url
-        encoding = None
-        if headers and "Content-Type" in headers:
-            content_type, params = cgi.parse_header(headers["Content-Type"])
-
-            if "charset" in params:
-                encoding = params["charset"]
-
-        self._content = content
-
-        if encoding is None:
-            self._parsed = html5lib.parse(content, namespaceHTMLElements=False)
-        else:
-            self._parsed = html5lib.parse(
-                content, transport_encoding=encoding, namespaceHTMLElements=False
-            )
-
-    @property
-    def versions(self) -> Iterator[Version]:
-        seen = set()
-        for link in self.links:
-            version = self.link_version(link)
-
-            if not version:
-                continue
-
-            if version in seen:
-                continue
-
-            seen.add(version)
-
-            yield version
-
-    @property
-    def links(self) -> Iterator[Link]:
-        for anchor in self._parsed.findall(".//a"):
-            if anchor.get("href"):
-                href = anchor.get("href")
-                url = self.clean_link(urllib.parse.urljoin(self._url, href))
-                pyrequire = anchor.get("data-requires-python")
-                pyrequire = unescape(pyrequire) if pyrequire else None
-
-                link = Link(url, self, requires_python=pyrequire)
-
-                if link.ext not in self.SUPPORTED_FORMATS:
-                    continue
-
-                yield link
-
-    def links_for_version(self, version: Version) -> Iterator[Link]:
-        for link in self.links:
-            if self.link_version(link) == version:
-                yield link
-
-    def link_version(self, link: Link) -> Version | None:
-        m = wheel_file_re.match(link.filename)
-        if m:
-            version = m.group("ver")
-        else:
-            info, ext = link.splitext()
-            match = self.VERSION_REGEX.match(info)
-            if not match:
-                return None
-
-            version = match.group(2)
-
-        try:
-            version = Version.parse(version)
-        except ValueError:
-            return None
-
-        return version
-
-    _clean_re = re.compile(r"[^a-z0-9$&+,/:;=?@.#%_\\|-]", re.I)
-
-    def clean_link(self, url: str) -> str:
-        """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
-        the link, it will be rewritten to %20 (while not over-quoting
-        % or other characters)."""
-        return self._clean_re.sub(lambda match: f"%{ord(match.group(0)):02x}", url)
+    from poetry.config.config import Config
 
 
-# TODO: revisit whether the LegacyRepository should inherit from PyPiRepository.
-# <https://github.com/python-poetry/poetry/pull/4755#discussion_r748865374>.
-class LegacyRepository(PyPiRepository):
+class LegacyRepository(HTTPRepository):
     def __init__(
         self,
         name: str,
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
-        cert: Path | None = None,
-        client_cert: Path | None = None,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        self._packages = []
-        self._name = name
-        self._url = url.rstrip("/")
-        self._client_cert = client_cert
-        self._cert = cert
-        self._cache_dir = REPOSITORY_CACHE_DIR / name
-        self._cache = CacheManager(
-            {
-                "default": "releases",
-                "serializer": "json",
-                "stores": {
-                    "releases": {"driver": "file", "path": str(self._cache_dir)},
-                    "packages": {"driver": "dict"},
-                    "matches": {"driver": "dict"},
-                },
-            }
-        )
-
-        self._authenticator = Authenticator(
-            config=config or Config(use_environment=True)
-        )
-
-        self._session = CacheControl(
-            self._authenticator.session, cache=FileCache(str(self._cache_dir / "_http"))
-        )
-
-        username, password = self._authenticator.get_credentials_for_url(self._url)
-        if username is not None and password is not None:
-            self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
-                username, password
-            )
-
-        if self._cert:
-            self._authenticator.session.verify = str(self._cert)
-
-        if self._client_cert:
-            self._authenticator.session.cert = str(self._client_cert)
-
-        self._disable_cache = disable_cache
-
-    @property
-    def cert(self) -> Path | None:
-        return self._cert
-
-    @property
-    def client_cert(self) -> Path | None:
-        return self._client_cert
-
-    @property
-    def authenticated_url(self) -> str:
-        if not self._session.auth:
-            return self.url
-
-        parsed = urllib.parse.urlparse(self.url)
-        username = quote(self._session.auth.username, safe="")
-        password = quote(self._session.auth.password, safe="")
-
-        return f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
+        super().__init__(name, url.rstrip("/"), config, disable_cache)
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
-
-        constraint = dependency.constraint
-        if constraint is None:
-            constraint = "*"
-
-        if not isinstance(constraint, VersionConstraint):
-            constraint = parse_constraint(constraint)
-
-        allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange) and (
-            constraint.max is not None
-            and constraint.max.is_unstable()
-            or constraint.min is not None
-            and constraint.min.is_unstable()
-        ):
-            allow_prereleases = True
+        constraint, allow_prereleases = self._get_constraints_from_dependency(
+            dependency
+        )
 
         key = dependency.name
         if not constraint.is_any():
@@ -254,7 +53,7 @@ class LegacyRepository(PyPiRepository):
                 return []
 
             versions = []
-            for version in page.versions:
+            for version in page.versions(dependency.name):
                 if version.is_unstable() and not allow_prereleases:
                     if constraint.is_any():
                         # we need this when all versions of the package are pre-releases
@@ -320,103 +119,31 @@ class LegacyRepository(PyPiRepository):
         if page is None:
             return []
 
-        return list(page.links_for_version(package.version))
+        return list(page.links_for_version(package.name, package.version))
 
-    def _get_release_info(self, name: str, version: str) -> dict:
+    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
         page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
-        data = PackageInfo(
-            name=name,
-            version=version,
-            summary="",
-            platform=None,
-            requires_dist=[],
-            requires_python=None,
-            files=[],
-            cache_version=str(self.CACHE_VERSION),
+        links = list(page.links_for_version(name, Version.parse(version)))
+
+        return self._links_to_data(
+            links,
+            PackageInfo(
+                name=name,
+                version=version,
+                summary="",
+                platform=None,
+                requires_dist=[],
+                requires_python=None,
+                files=[],
+                cache_version=str(self.CACHE_VERSION),
+            ),
         )
 
-        links = list(page.links_for_version(Version.parse(version)))
-        if not links:
-            raise PackageNotFound(
-                f'No valid distribution links found for package: "{name}" version:'
-                f' "{version}"'
-            )
-        urls = defaultdict(list)
-        files = []
-        for link in links:
-            if link.is_wheel:
-                urls["bdist_wheel"].append(link.url)
-            elif link.filename.endswith(
-                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
-            ):
-                urls["sdist"].append(link.url)
-
-            file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
-
-            if not link.hash or (
-                link.hash_name not in ("sha256", "sha384", "sha512")
-                and hasattr(hashlib, link.hash_name)
-            ):
-                with temporary_directory() as temp_dir:
-                    filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, str(filepath))
-
-                    known_hash = (
-                        getattr(hashlib, link.hash_name)() if link.hash_name else None
-                    )
-                    required_hash = hashlib.sha256()
-
-                    chunksize = 4096
-                    with filepath.open("rb") as f:
-                        while True:
-                            chunk = f.read(chunksize)
-                            if not chunk:
-                                break
-                            if known_hash:
-                                known_hash.update(chunk)
-                            required_hash.update(chunk)
-
-                    if not known_hash or known_hash.hexdigest() == link.hash:
-                        file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
-
-            files.append({"file": link.filename, "hash": file_hash})
-
-        data.files = files
-
-        info = self._get_info_from_urls(urls)
-
-        data.summary = info.summary
-        data.requires_dist = info.requires_dist
-        data.requires_python = info.requires_python
-
-        return data.asdict()
-
-    def _get_page(self, endpoint: str) -> Page | None:
-        url = self._url + endpoint
-        try:
-            response = self.session.get(url)
-            if response.status_code in (401, 403):
-                self._log(
-                    f"Authorization error accessing {url}",
-                    level="warning",
-                )
-                return None
-            if response.status_code == 404:
-                return None
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise RepositoryError(e)
-
-        if response.url != url:
-            self._log(
-                f"Response URL {response.url} differs from request URL {url}",
-                level="debug",
-            )
-
-        return Page(response.url, response.content, response.headers)
-
-    def _download(self, url: str, dest: str) -> None:
-        return download_file(url, dest, session=self.session)
+    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
+        response = self._get_response(endpoint)
+        if not response:
+            return None
+        return SimpleRepositoryPage(response.url, response.text)

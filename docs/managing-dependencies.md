@@ -37,10 +37,10 @@ the dependencies logically.
 {{% /note %}}
 
 {{% note %}}
-The dependencies declared in `tool.poetry.dependencies` are part of an implicit `default` group.
+The dependencies declared in `tool.poetry.dependencies` are part of an implicit `main` group.
 
 ```toml
-[tool.poetry.dependencies]  # Default dependency group
+[tool.poetry.dependencies]  # main dependency group
 httpx = "*"
 pendulum = "*"
 
@@ -115,7 +115,7 @@ If the group does not already exist, it will be created automatically.
 `poetry install`.
 
 {{% note %}}
-The default set of dependencies for a project includes the implicit `default` group defined in
+The default set of dependencies for a project includes the implicit `main` group defined in
 `tool.poetry.dependencies` as well as all groups that are not explicitly marked as an
 [optional group]({{< relref "#optional-groups" >}}).
 {{% /note %}}
@@ -151,10 +151,10 @@ poetry install --only docs
 
 {{% note %}}
 If you only want to install the project's runtime dependencies, you can do so  with the
-`--only default` notation:
+`--only main` notation:
 
 ```bash
-poetry install --only default
+poetry install --only main
 ```
 {{% /note %}}
 

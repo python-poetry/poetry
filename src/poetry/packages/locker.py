@@ -9,12 +9,15 @@ from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
+from typing import Any
+from typing import cast
 
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.package import Package
+from poetry.core.packages.url_dependency import URLDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
@@ -26,15 +29,19 @@ from tomlkit import inline_table
 from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
+from tomlkit.items import Array
+from tomlkit.items import Table
 
 from poetry.packages import DependencyPackage
 from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver.version_constraint import VersionConstraint
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+
     from poetry.core.version.markers import BaseMarker
-    from tomlkit.items import InlineTable
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories import Repository
@@ -46,12 +53,13 @@ class Locker:
 
     _VERSION = "1.1"
 
-    _relevant_keys = ["dependencies", "group", "source", "extras"]
+    _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
+    _relevant_keys = [*_legacy_keys, "group"]
 
-    def __init__(self, lock: str | Path, local_config: dict) -> None:
+    def __init__(self, lock: str | Path, local_config: dict[str, Any]) -> None:
         self._lock = TOMLFile(lock)
         self._local_config = local_config
-        self._lock_data = None
+        self._lock_data: TOMLDocument | None = None
         self._content_hash = self._get_content_hash()
 
     @property
@@ -82,11 +90,12 @@ class Locker:
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
-            return self._content_hash == lock["metadata"]["content-hash"]
+            fresh: bool = self._content_hash == metadata["content-hash"]
+            return fresh
 
         return False
 
-    def locked_repository(self, with_dev_reqs: bool = False) -> Repository:
+    def locked_repository(self) -> Repository:
         """
         Searches and returns a repository of locked packages.
         """
@@ -98,13 +107,7 @@ class Locker:
 
         lock_data = self.lock_data
         packages = Repository()
-
-        if with_dev_reqs:
-            locked_packages = lock_data["package"]
-        else:
-            locked_packages = [
-                p for p in lock_data["package"] if p["category"] == "main"
-            ]
+        locked_packages = cast("list[dict[str, Any]]", lock_data["package"])
 
         if not locked_packages:
             return packages
@@ -127,16 +130,16 @@ class Locker:
             )
             package.description = info.get("description", "")
             package.category = info.get("category", "main")
-            package.groups = info.get("groups", ["default"])
             package.optional = info["optional"]
-            if "hashes" in lock_data["metadata"]:
+            metadata = cast("dict[str, Any]", lock_data["metadata"])
+            name = info["name"]
+            if "hashes" in metadata:
                 # Old lock so we create dummy files from the hashes
-                package.files = [
-                    {"name": h, "hash": h}
-                    for h in lock_data["metadata"]["hashes"][info["name"]]
-                ]
+                hashes = cast("dict[str, Any]", metadata["hashes"])
+                package.files = [{"name": h, "hash": h} for h in hashes[name]]
             else:
-                package.files = lock_data["metadata"]["files"][info["name"]]
+                files = metadata["files"][name]
+                package.files = files
 
             package.python_versions = info["python-versions"]
             extras = info.get("extras", {})
@@ -182,6 +185,7 @@ class Locker:
                 if package.source_type == "directory":
                     # root dir should be the source of the package relative to the lock
                     # path
+                    assert package.source_url is not None
                     root_dir = Path(package.source_url)
 
                 if isinstance(constraint, list):
@@ -257,18 +261,22 @@ class Locker:
             if not locked_package:
                 raise RuntimeError(f"Dependency walk failed at {requirement}")
 
+            if requirement.extras:
+                locked_package = locked_package.with_features(requirement.extras)
+
             # create dependency from locked package to retain dependency metadata
             # if this is not done, we can end-up with incorrect nested dependencies
             constraint = requirement.constraint
             marker = requirement.marker
-            extras = requirement.extras
             requirement = locked_package.to_dependency()
             requirement.marker = requirement.marker.intersect(marker)
 
             requirement.set_constraint(constraint)
 
             for require in locked_package.requires:
-                if require.in_extras and extras.isdisjoint(require.in_extras):
+                if require.in_extras and locked_package.features.isdisjoint(
+                    require.in_extras
+                ):
                     continue
 
                 require = deepcopy(require)
@@ -304,7 +312,10 @@ class Locker:
 
         # Put higher versions first so that we prefer them.
         for packages in packages_by_name.values():
-            packages.sort(key=lambda package: package.version, reverse=True)
+            packages.sort(
+                key=lambda package: package.version,
+                reverse=True,
+            )
 
         nested_dependencies = cls.__walk_dependencies(
             dependencies=project_requires,
@@ -316,8 +327,7 @@ class Locker:
     def get_project_dependency_packages(
         self,
         project_requires: list[Dependency],
-        project_python_marker: VersionConstraint | None = None,
-        dev: bool = False,
+        project_python_marker: BaseMarker | None = None,
         extras: bool | Sequence[str] | None = None,
     ) -> Iterator[DependencyPackage]:
         # Apply the project python marker to all requirements.
@@ -329,7 +339,7 @@ class Locker:
                 marked_requires.append(require)
             project_requires = marked_requires
 
-        repository = self.locked_repository(with_dev_reqs=dev)
+        repository = self.locked_repository()
 
         # Build a set of all packages required by our selected extras
         extra_package_names: set[str] | None = None
@@ -363,16 +373,13 @@ class Locker:
             project_requires=selected,
             locked_packages=repository.packages,
         ):
-            for extra in dependency.extras:
-                package.requires_extras.append(extra)
-
             yield DependencyPackage(dependency=dependency, package=package)
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
-        files = table()
-        packages = self._lock_packages(packages)
+        files: dict[str, Any] = table()
+        package_specs = self._lock_packages(packages)
         # Retrieving hashes
-        for package in packages:
+        for package in package_specs:
             if package["name"] not in files:
                 files[package["name"]] = []
 
@@ -384,12 +391,14 @@ class Locker:
                 files[package["name"]].append(file_metadata)
 
             if files[package["name"]]:
-                files[package["name"]] = item(files[package["name"]]).multiline(True)
+                package_files = item(files[package["name"]])
+                assert isinstance(package_files, Array)
+                files[package["name"]] = package_files.multiline(True)
 
             del package["files"]
 
         lock = document()
-        lock["package"] = packages
+        lock["package"] = package_specs
 
         if root.extras:
             lock["extras"] = {
@@ -428,24 +437,26 @@ class Locker:
 
         relevant_content = {}
         for key in self._relevant_keys:
-            relevant_content[key] = content.get(key)
+            data = content.get(key)
 
-        content_hash = sha256(
-            json.dumps(relevant_content, sort_keys=True).encode()
-        ).hexdigest()
+            if data is None and key not in self._legacy_keys:
+                continue
 
-        return content_hash
+            relevant_content[key] = data
+
+        return sha256(json.dumps(relevant_content, sort_keys=True).encode()).hexdigest()
 
     def _get_lock_data(self) -> TOMLDocument:
         if not self._lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
         try:
-            lock_data = self._lock.read()
+            lock_data: TOMLDocument = self._lock.read()
         except TOMLKitError as e:
             raise RuntimeError(f"Unable to read the lock file ({e}).")
 
-        lock_version = Version.parse(lock_data["metadata"].get("lock-version", "1.0"))
+        metadata = cast(Table, lock_data["metadata"])
+        lock_version = Version.parse(metadata.get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
         # We expect the locker to be able to read lock files
         # from the same semantic versioning range
@@ -469,32 +480,55 @@ class Locker:
 
         return lock_data
 
-    def _lock_packages(self, packages: list[Package]) -> list:
+    def _lock_packages(self, packages: list[Package]) -> list[dict[str, Any]]:
         locked = []
 
-        for package in sorted(packages, key=lambda x: x.name):
+        for package in sorted(
+            packages,
+            key=lambda x: (
+                x.name,
+                x.version,
+                x.source_type or "",
+                x.source_url or "",
+                x.source_subdirectory or "",
+                x.source_reference or "",
+                x.source_resolved_reference or "",
+            ),
+        ):
             spec = self._dump_package(package)
 
             locked.append(spec)
 
         return locked
 
-    def _dump_package(self, package: Package) -> dict:
-        dependencies: dict[str, list[InlineTable]] = {}
-        for dependency in sorted(package.requires, key=lambda d: d.name):
+    def _dump_package(self, package: Package) -> dict[str, Any]:
+        dependencies: dict[str, list[Any]] = {}
+        for dependency in sorted(
+            package.requires,
+            key=lambda d: d.name,
+        ):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
             constraint = inline_table()
 
-            if dependency.is_directory() or dependency.is_file():
+            if dependency.is_directory():
+                dependency = cast(DirectoryDependency, dependency)
                 constraint["path"] = dependency.path.as_posix()
 
-                if dependency.is_directory() and dependency.develop:
+                if dependency.develop:
                     constraint["develop"] = True
+
+            elif dependency.is_file():
+                dependency = cast(FileDependency, dependency)
+                constraint["path"] = dependency.path.as_posix()
+
             elif dependency.is_url():
+                dependency = cast(URLDependency, dependency)
                 constraint["url"] = dependency.url
+
             elif dependency.is_vcs():
+                dependency = cast(VCSDependency, dependency)
                 constraint[dependency.vcs] = dependency.source
 
                 if dependency.branch:
@@ -519,23 +553,26 @@ class Locker:
 
         # All the constraints should have the same type,
         # but we want to simplify them if it's possible
-        for dependency, constraints in tuple(dependencies.items()):
+        for dependency_name, constraints in dependencies.items():
             if all(
                 len(constraint) == 1 and "version" in constraint
                 for constraint in constraints
             ):
-                dependencies[dependency] = [
+                dependencies[dependency_name] = [
                     constraint["version"] for constraint in constraints
                 ]
 
-        data = {
+        data: dict[str, Any] = {
             "name": package.pretty_name,
             "version": package.pretty_version,
             "description": package.description or "",
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "files": sorted(package.files, key=lambda x: x["file"]),
+            "files": sorted(
+                package.files,
+                key=lambda x: x["file"],  # type: ignore[no-any-return]
+            ),
         }
 
         if dependencies:

@@ -129,9 +129,7 @@ def test_lock_no_update(
     )
     poetry_with_old_lockfile.set_locker(locker)
 
-    locked_repository = poetry_with_old_lockfile.locker.locked_repository(
-        with_dev_reqs=True
-    )
+    locked_repository = poetry_with_old_lockfile.locker.locked_repository()
     assert (
         poetry_with_old_lockfile.locker.lock_data["metadata"].get("lock-version")
         == "1.0"
@@ -144,7 +142,7 @@ def test_lock_no_update(
         lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
         local_config={},
     )
-    packages = locker.locked_repository(True).packages
+    packages = locker.locked_repository().packages
 
     assert len(packages) == len(locked_repository.packages)
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 
+from typing import Any
+
 import jsonschema
 
 
@@ -14,17 +16,20 @@ class ValidationError(ValueError):
     pass
 
 
-def validate_object(obj: dict, schema_name: str) -> list[str]:
-    schema = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
+def validate_object(obj: dict[str, Any], schema_name: str) -> list[str]:
+    schema_file = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
 
-    if not os.path.exists(schema):
+    if not os.path.exists(schema_file):
         raise ValueError(f"Schema {schema_name} does not exist.")
 
-    with open(schema, encoding="utf-8") as f:
+    with open(schema_file, encoding="utf-8") as f:
         schema = json.loads(f.read())
 
     validator = jsonschema.Draft7Validator(schema)
-    validation_errors = sorted(validator.iter_errors(obj), key=lambda e: e.path)
+    validation_errors = sorted(
+        validator.iter_errors(obj),
+        key=lambda e: e.path,  # type: ignore[no-any-return]
+    )
 
     errors = []
 

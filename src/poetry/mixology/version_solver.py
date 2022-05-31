@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import time
 
 from contextlib import suppress
@@ -17,16 +18,57 @@ from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
 from poetry.mixology.term import Term
+from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.puzzle.provider import Provider
 
 
 _conflict = object()
+
+
+class DependencyCache:
+    """
+    A cache of the valid dependencies.
+
+    The key observation here is that during the search - except at backtracking
+    - once we have decided that a dependency is invalid, we never need check it
+    again.
+    """
+
+    def __init__(self, provider: Provider) -> None:
+        self.provider = provider
+        self.cache: dict[
+            tuple[str, str | None, str | None, str | None, str | None],
+            list[DependencyPackage],
+        ] = {}
+
+        self.search_for = functools.lru_cache(maxsize=128)(self._search_for)
+
+    def _search_for(self, dependency: Dependency) -> list[DependencyPackage]:
+        key = (
+            dependency.complete_name,
+            dependency.source_type,
+            dependency.source_url,
+            dependency.source_reference,
+            dependency.source_subdirectory,
+        )
+
+        packages = self.cache.get(key)
+        if packages is None:
+            packages = self.provider.search_for(dependency)
+        else:
+            packages = [p for p in packages if dependency.constraint.allows(p.version)]
+
+        self.cache[key] = packages
+
+        return packages
+
+    def clear(self) -> None:
+        self.cache.clear()
 
 
 class VersionSolver:
@@ -42,11 +84,12 @@ class VersionSolver:
         self,
         root: ProjectPackage,
         provider: Provider,
-        locked: dict[str, Package] = None,
-        use_latest: list[str] = None,
-    ):
+        locked: dict[str, list[DependencyPackage]] | None = None,
+        use_latest: list[str] | None = None,
+    ) -> None:
         self._root = root
         self._provider = provider
+        self._dependency_cache = DependencyCache(provider)
         self._locked = locked or {}
 
         if use_latest is None:
@@ -55,6 +98,7 @@ class VersionSolver:
         self._use_latest = use_latest
 
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
+        self._contradicted_incompatibilities: set[Incompatibility] = set()
         self._solution = PartialSolution()
 
     @property
@@ -75,7 +119,7 @@ class VersionSolver:
         )
 
         try:
-            next = self._root.name
+            next: str | None = self._root.name
             while next is not None:
                 self._propagate(next)
                 next = self._choose_package_version()
@@ -103,6 +147,9 @@ class VersionSolver:
             # we can derive stronger assignments sooner and more eagerly find
             # conflicts.
             for incompatibility in reversed(self._incompatibilities[package]):
+                if incompatibility in self._contradicted_incompatibilities:
+                    continue
+
                 result = self._propagate_incompatibility(incompatibility)
 
                 if result is _conflict:
@@ -122,7 +169,7 @@ class VersionSolver:
                     changed.add(str(self._propagate_incompatibility(root_cause)))
                     break
                 elif result is not None:
-                    changed.add(result)
+                    changed.add(str(result))
 
     def _propagate_incompatibility(
         self, incompatibility: Incompatibility
@@ -149,6 +196,7 @@ class VersionSolver:
                 # If term is already contradicted by _solution, then
                 # incompatibility is contradicted as well and there's nothing new we
                 # can deduce from it.
+                self._contradicted_incompatibilities.add(incompatibility)
                 return None
             elif relation == SetRelation.OVERLAPPING:
                 # If more than one term is inconclusive, we can't deduce anything about
@@ -166,6 +214,8 @@ class VersionSolver:
         if unsatisfied is None:
             return _conflict
 
+        self._contradicted_incompatibilities.add(incompatibility)
+
         adverb = "not " if unsatisfied.is_positive() else ""
         self._log(f"derived: {adverb}{unsatisfied.dependency}")
 
@@ -173,7 +223,8 @@ class VersionSolver:
             unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
         )
 
-        return unsatisfied.dependency.complete_name
+        complete_name: str = unsatisfied.dependency.complete_name
+        return complete_name
 
     def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
@@ -250,11 +301,16 @@ class VersionSolver:
             # than a derivation), then incompatibility is the root cause. We then
             # backjump to previous_satisfier_level, where incompatibility is
             # guaranteed to allow _propagate to produce more assignments.
+
+            # using assert to suppress mypy [union-attr]
+            assert most_recent_satisfier is not None
             if (
                 previous_satisfier_level < most_recent_satisfier.decision_level
                 or most_recent_satisfier.cause is None
             ):
                 self._solution.backtrack(previous_satisfier_level)
+                self._contradicted_incompatibilities.clear()
+                self._dependency_cache.clear()
                 if new_incompatibility:
                     self._add_incompatibility(incompatibility)
 
@@ -326,11 +382,7 @@ class VersionSolver:
                 return not dependency.marker.is_any(), 1
 
             locked = self._get_locked(dependency)
-            if locked and (
-                dependency.constraint.allows(locked.version)
-                or locked.is_prerelease()
-                and dependency.constraint.allows(locked.version.next_patch())
-            ):
+            if locked:
                 return not dependency.marker.is_any(), 1
 
             # VCS, URL, File or Directory dependencies
@@ -346,7 +398,7 @@ class VersionSolver:
             try:
                 return (
                     not dependency.marker.is_any(),
-                    len(self._provider.search_for(dependency)),
+                    len(self._dependency_cache.search_for(dependency)),
                 )
             except ValueError:
                 return not dependency.marker.is_any(), 0
@@ -357,21 +409,22 @@ class VersionSolver:
             dependency = min(*unsatisfied, key=_get_min)
 
         locked = self._get_locked(dependency)
-        if locked is None or not dependency.constraint.allows(locked.version):
+        if locked is None:
             try:
-                packages = self._provider.search_for(dependency)
+                packages = self._dependency_cache.search_for(dependency)
             except ValueError as e:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
                 )
-                return dependency.complete_name
+                complete_name: str = dependency.complete_name
+                return complete_name
 
             package = None
             if dependency.name not in self._use_latest:
                 # prefer locked version of compatible (not exact same) dependency;
                 # required in order to not unnecessarily update dependencies with
                 # extras, e.g. "coverage" vs. "coverage[toml]"
-                locked = self._locked.get(dependency.name, None)
+                locked = self._get_locked(dependency, allow_similar=True)
             if locked is not None:
                 package = next(
                     (p for p in packages if p.version == locked.version), None
@@ -387,7 +440,8 @@ class VersionSolver:
                     Incompatibility([Term(dependency, True)], NoVersionsCause())
                 )
 
-                return dependency.complete_name
+                complete_name = dependency.complete_name
+                return complete_name
         else:
             package = locked
 
@@ -409,12 +463,13 @@ class VersionSolver:
             )
 
         if not conflict:
-            self._solution.decide(package)
+            self._solution.decide(package.package)
             self._log(
                 f"selecting {package.complete_name} ({package.full_pretty_version})"
             )
 
-        return dependency.complete_name
+        complete_name = dependency.complete_name
+        return complete_name
 
     def _result(self) -> SolverResult:
         """
@@ -445,18 +500,21 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency: Dependency) -> Package | None:
+    def _get_locked(
+        self, dependency: Dependency, *, allow_similar: bool = False
+    ) -> DependencyPackage | None:
         if dependency.name in self._use_latest:
             return None
 
-        locked = self._locked.get(dependency.name)
-        if not locked:
-            return None
-
-        if not dependency.is_same_package_as(locked):
-            return None
-
-        return locked
+        locked = self._locked.get(dependency.name, [])
+        for package in locked:
+            if (allow_similar or dependency.is_same_package_as(package.package)) and (
+                dependency.constraint.allows(package.version)
+                or package.is_prerelease()
+                and dependency.constraint.allows(package.version.next_patch())
+            ):
+                return DependencyPackage(dependency, package.package)
+        return None
 
     def _log(self, text: str) -> None:
         self._provider.debug(text, self._solution.attempted_solutions)
