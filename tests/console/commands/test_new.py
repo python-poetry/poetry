@@ -215,4 +215,5 @@ pendulum = "^2.0.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
-    assert expected in poetry.pyproject.data.as_string()
+    # Replacing possible \r\n because as_string adds them on Windows
+    assert expected in poetry.pyproject.data.as_string().replace("\r\n", "\n")
