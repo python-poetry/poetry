@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 import logging
 import tempfile
+import uuid
 
+from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -42,6 +45,8 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
+    package_a2 = get_package("A", "2.0.0")
+    package_a2.files = [{"file": "baz", "hash": "345"}]
     package_git = Package(
         "git-package",
         "1.2.3",
@@ -50,14 +55,34 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         source_reference="develop",
         source_resolved_reference="123456",
     )
-    packages = [package_a, get_package("B", "1.2"), package_git]
+    package_url_linux = Package(
+        "url-package",
+        "1.0",
+        source_type="url",
+        source_url="https://example.org/url-package-1.0-cp39-manylinux_2_17_x86_64.whl",
+    )
+    package_url_win32 = Package(
+        "url-package",
+        "1.0",
+        source_type="url",
+        source_url="https://example.org/url-package-1.0-cp39-win_amd64.whl",
+    )
+    packages = [
+        package_a2,
+        package_a,
+        get_package("B", "1.2"),
+        package_git,
+        package_url_win32,
+        package_url_linux,
+    ]
 
     locker.set_lock_data(root, packages)
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """[[package]]
+    expected = """\
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -67,6 +92,14 @@ python-versions = "*"
 
 [package.dependencies]
 B = "^1.0"
+
+[[package]]
+name = "A"
+version = "2.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "B"
@@ -91,18 +124,44 @@ url = "https://github.com/python-poetry/poetry.git"
 reference = "develop"
 resolved_reference = "123456"
 
+[[package]]
+name = "url-package"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "url"
+url = "https://example.org/url-package-1.0-cp39-manylinux_2_17_x86_64.whl"
+
+[[package]]
+name = "url-package"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "url"
+url = "https://example.org/url-package-1.0-cp39-win_amd64.whl"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = [
     {file = "bar", hash = "123"},
     {file = "foo", hash = "456"},
+    {file = "baz", hash = "345"},
 ]
 B = []
 git-package = []
+url-package = []
 """
 
     assert content == expected
@@ -303,7 +362,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -343,7 +402,7 @@ foo = ["B (>=1.0.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -373,7 +432,7 @@ foo = ["bar"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -420,7 +479,7 @@ reference = "legacy"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -504,7 +563,7 @@ B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -598,7 +657,7 @@ F = {git = "https://github.com/python-poetry/poetry.git", branch = "foo"}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -651,3 +710,46 @@ lib-b = []
     assert root_dir.match("*/lib/libA")
     # relative_to raises an exception if not relative - is_relative_to comes in py3.9
     assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None
+
+
+@pytest.mark.parametrize(
+    ("local_config", "fresh"),
+    [
+        ({}, True),
+        ({"dependencies": [uuid.uuid4().hex]}, True),
+        (
+            {
+                "dependencies": [uuid.uuid4().hex],
+                "dev-dependencies": [uuid.uuid4().hex],
+            },
+            True,
+        ),
+        (
+            {
+                "dependencies": [uuid.uuid4().hex],
+                "dev-dependencies": None,
+            },
+            True,
+        ),
+        ({"dependencies": [uuid.uuid4().hex], "groups": [uuid.uuid4().hex]}, False),
+    ],
+)
+def test_content_hash_with_legacy_is_compatible(
+    local_config: dict[str, list[str]], fresh: bool, locker: Locker
+) -> None:
+    # old hash generation
+    relevant_content = {}
+    for key in locker._legacy_keys:
+        relevant_content[key] = local_config.get(key)
+
+    locker = locker.__class__(
+        lock=locker.lock.path,
+        local_config=local_config,
+    )
+
+    old_content_hash = sha256(
+        json.dumps(relevant_content, sort_keys=True).encode()
+    ).hexdigest()
+    content_hash = locker._get_content_hash()
+
+    assert (content_hash == old_content_hash) or fresh

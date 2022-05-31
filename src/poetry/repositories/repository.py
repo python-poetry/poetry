@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import logging
+
 from typing import TYPE_CHECKING
 
-from poetry.repositories.base_repository import BaseRepository
+from poetry.core.semver.helpers import parse_constraint
+from poetry.core.semver.version_constraint import VersionConstraint
+from poetry.core.semver.version_range import VersionRange
+
+from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
@@ -11,54 +17,30 @@ if TYPE_CHECKING:
     from poetry.core.packages.utils.link import Link
 
 
-class Repository(BaseRepository):
-    def __init__(self, packages: list[Package] = None, name: str = None) -> None:
-        super().__init__()
-
+class Repository:
+    def __init__(
+        self, name: str | None = None, packages: list[Package] | None = None
+    ) -> None:
         self._name = name
+        self._packages: list[Package] = []
 
-        if packages is None:
-            packages = []
-
-        for package in packages:
+        for package in packages or []:
             self.add_package(package)
 
     @property
     def name(self) -> str | None:
         return self._name
 
-    def package(
-        self, name: str, version: str, extras: list[str] | None = None
-    ) -> Package:
-        name = name.lower()
-
-        for package in self.packages:
-            if name == package.name and package.version.text == version:
-                return package.clone()
+    @property
+    def packages(self) -> list[Package]:
+        return self._packages
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
-        from poetry.core.semver.helpers import parse_constraint
-        from poetry.core.semver.version_constraint import VersionConstraint
-        from poetry.core.semver.version_range import VersionRange
-
-        constraint = dependency.constraint
         packages = []
         ignored_pre_release_packages = []
-
-        if constraint is None:
-            constraint = "*"
-
-        if not isinstance(constraint, VersionConstraint):
-            constraint = parse_constraint(constraint)
-
-        allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange) and (
-            constraint.max is not None
-            and constraint.max.is_unstable()
-            or constraint.min is not None
-            and constraint.min.is_unstable()
-        ):
-            allow_prereleases = True
+        constraint, allow_prereleases = self._get_constraints_from_dependency(
+            dependency
+        )
 
         for package in self.packages:
             if dependency.name == package.name:
@@ -103,9 +85,6 @@ class Repository(BaseRepository):
         if index is not None:
             del self._packages[index]
 
-    def find_links_for_package(self, package: Package) -> list[Link]:
-        return []
-
     def search(self, query: str) -> list[Package]:
         results: list[Package] = []
 
@@ -115,5 +94,45 @@ class Repository(BaseRepository):
 
         return results
 
+    @staticmethod
+    def _get_constraints_from_dependency(
+        dependency: Dependency,
+    ) -> tuple[VersionConstraint, bool]:
+        constraint = dependency.constraint
+        if constraint is None:
+            constraint = "*"
+
+        if not isinstance(constraint, VersionConstraint):
+            constraint = parse_constraint(constraint)
+
+        allow_prereleases = dependency.allows_prereleases()
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
+
+        return constraint, allow_prereleases
+
+    def _log(self, msg: str, level: str = "info") -> None:
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        getattr(logger, level)(f"<c1>Source ({self.name}):</c1> {msg}")
+
     def __len__(self) -> int:
         return len(self._packages)
+
+    def find_links_for_package(self, package: Package) -> list[Link]:
+        return []
+
+    def package(
+        self, name: str, version: str, extras: list[str] | None = None
+    ) -> Package:
+        name = name.lower()
+
+        for package in self.packages:
+            if name == package.name and package.version.text == version:
+                return package.clone()
+
+        raise PackageNotFound(f"Package {name} ({version}) not found.")

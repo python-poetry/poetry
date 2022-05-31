@@ -4,7 +4,6 @@ import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 import pytest
 
@@ -12,6 +11,8 @@ from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from tests.helpers import PoetryTestApplication
 
 

@@ -41,10 +41,9 @@ url        : https://two.com
 default    : no
 secondary  : no
 """.splitlines()
-    assert (
-        list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
-        == expected
-    )
+    assert [
+        line.strip() for line in tester.io.fetch_output().strip().splitlines()
+    ] == expected
     assert tester.status_code == 0
 
 
@@ -57,10 +56,9 @@ url        : https://one.com
 default    : no
 secondary  : no
 """.splitlines()
-    assert (
-        list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
-        == expected
-    )
+    assert [
+        line.strip() for line in tester.io.fetch_output().strip().splitlines()
+    ] == expected
     assert tester.status_code == 0
 
 
@@ -78,10 +76,9 @@ url        : https://two.com
 default    : no
 secondary  : no
 """.splitlines()
-    assert (
-        list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
-        == expected
-    )
+    assert [
+        line.strip() for line in tester.io.fetch_output().strip().splitlines()
+    ] == expected
     assert tester.status_code == 0
 
 

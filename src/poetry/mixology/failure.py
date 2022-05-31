@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from poetry.core.semver.helpers import parse_constraint
 
@@ -62,7 +63,7 @@ class _Writer:
             buffer.append("")
 
         if isinstance(self._root.cause, ConflictCause):
-            self._visit(self._root, {})
+            self._visit(self._root)
         else:
             self._write(self._root, f"Because {self._root}, version solving failed.")
 
@@ -107,15 +108,14 @@ class _Writer:
     def _visit(
         self,
         incompatibility: Incompatibility,
-        details_for_incompatibility: dict,
         conclusion: bool = False,
     ) -> None:
         numbered = conclusion or self._derivations[incompatibility] > 1
         conjunction = "So," if conclusion or incompatibility == self._root else "And"
         incompatibility_string = str(incompatibility)
 
-        cause = incompatibility.cause
-        details_for_cause = {}
+        cause: ConflictCause = cast(ConflictCause, incompatibility.cause)
+
         if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
             cause.other.cause, ConflictCause
         ):
@@ -124,7 +124,7 @@ class _Writer:
 
             if conflict_line is not None and other_line is not None:
                 reason = cause.conflict.and_to_string(
-                    cause.other, details_for_cause, conflict_line, other_line
+                    cause.other, conflict_line, other_line
                 )
                 self._write(
                     incompatibility,
@@ -136,12 +136,12 @@ class _Writer:
                     with_line = cause.conflict
                     without_line = cause.other
                     line = conflict_line
-                else:
+                elif other_line is not None:
                     with_line = cause.other
                     without_line = cause.conflict
                     line = other_line
 
-                self._visit(without_line, details_for_cause)
+                self._visit(without_line)
                 self._write(
                     incompatibility,
                     f"{conjunction} because {with_line!s} ({line}),"
@@ -155,18 +155,18 @@ class _Writer:
                 if single_line_other or single_line_conflict:
                     first = cause.conflict if single_line_other else cause.other
                     second = cause.other if single_line_other else cause.conflict
-                    self._visit(first, details_for_cause)
-                    self._visit(second, details_for_cause)
+                    self._visit(first)
+                    self._visit(second)
                     self._write(
                         incompatibility,
                         f"Thus, {incompatibility_string}.",
                         numbered=numbered,
                     )
                 else:
-                    self._visit(cause.conflict, {}, conclusion=True)
+                    self._visit(cause.conflict, conclusion=True)
                     self._lines.append(("", None))
 
-                    self._visit(cause.other, details_for_cause)
+                    self._visit(cause.other)
 
                     self._write(
                         incompatibility,
@@ -191,16 +191,14 @@ class _Writer:
 
             derived_line = self._line_numbers.get(derived)
             if derived_line is not None:
-                reason = ext.and_to_string(
-                    derived, details_for_cause, None, derived_line
-                )
+                reason = ext.and_to_string(derived, None, derived_line)
                 self._write(
                     incompatibility,
                     f"Because {reason}, {incompatibility_string}.",
                     numbered=numbered,
                 )
             elif self._is_collapsible(derived):
-                derived_cause: ConflictCause = derived.cause
+                derived_cause: ConflictCause = cast(ConflictCause, derived.cause)
                 if isinstance(derived_cause.conflict.cause, ConflictCause):
                     collapsed_derived = derived_cause.conflict
                     collapsed_ext = derived_cause.other
@@ -209,26 +207,22 @@ class _Writer:
 
                     collapsed_ext = derived_cause.conflict
 
-                details_for_cause = {}
-
-                self._visit(collapsed_derived, details_for_cause)
-                reason = collapsed_ext.and_to_string(ext, details_for_cause, None, None)
+                self._visit(collapsed_derived)
+                reason = collapsed_ext.and_to_string(ext, None, None)
                 self._write(
                     incompatibility,
                     f"{conjunction} because {reason}, {incompatibility_string}.",
                     numbered=numbered,
                 )
             else:
-                self._visit(derived, details_for_cause)
+                self._visit(derived)
                 self._write(
                     incompatibility,
                     f"{conjunction} because {ext!s}, {incompatibility_string}.",
                     numbered=numbered,
                 )
         else:
-            reason = cause.conflict.and_to_string(
-                cause.other, details_for_cause, None, None
-            )
+            reason = cause.conflict.and_to_string(cause.other, None, None)
             self._write(
                 incompatibility,
                 f"Because {reason}, {incompatibility_string}.",
@@ -239,7 +233,7 @@ class _Writer:
         if self._derivations[incompatibility] > 1:
             return False
 
-        cause: ConflictCause = incompatibility.cause
+        cause: ConflictCause = cast(ConflictCause, incompatibility.cause)
         if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
             cause.other.cause, ConflictCause
         ):

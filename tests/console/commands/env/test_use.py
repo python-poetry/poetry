@@ -71,10 +71,13 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     mock_build_env.assert_called_with(
         venv_py37,
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(venv_cache / "envs.toml")

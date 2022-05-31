@@ -4,8 +4,6 @@ import os
 import re
 
 from typing import TYPE_CHECKING
-from typing import Callable
-from typing import Iterator
 
 import pytest
 
@@ -17,6 +15,8 @@ from poetry.config.config import int_normalizer
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Iterator
     from pathlib import Path
 
 

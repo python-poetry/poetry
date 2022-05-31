@@ -25,6 +25,21 @@ if TYPE_CHECKING:
     from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
+
+
+@pytest.fixture
+def poetry_with_up_to_date_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("up_to_date_lock")
+
+    return project_factory(
+        name="foobar",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
+    )
 
 
 @pytest.fixture()
@@ -940,6 +955,30 @@ If you prefer to upgrade it to the latest available version,\
     assert expected in tester.io.fetch_output()
 
 
+def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
+    app.poetry.file.write(content)
+
+    repo.add_package(get_package("foo-bar", "1.1.2"))
+    tester.execute("Foo_Bar")
+
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • Foo_Bar
+
+If you want to update it to the latest compatible version,\
+ you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version,\
+ you can use `poetry add package@latest`.
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
@@ -981,7 +1020,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available(
     tester.execute("foo")
 
     expected = """\
-Using version ^1.2.3-beta.1 for foo
+Using version ^1.2.3b1 for foo
 
 Updating dependencies
 Resolving dependencies...
@@ -992,7 +1031,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3b1)
 """
-
     assert expected in tester.io.fetch_output()
 
 
@@ -1912,7 +1950,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
     old_tester.execute("foo")
 
     expected = """\
-Using version ^1.2.3-beta.1 for foo
+Using version ^1.2.3b1 for foo
 
 Updating dependencies
 Resolving dependencies...
@@ -1923,7 +1961,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
 """
-
     assert expected in old_tester.io.fetch_output()
 
 
@@ -1977,34 +2014,54 @@ Writing lock file
 
 
 def test_add_keyboard_interrupt_restore_content(
-    app: PoetryTestApplication,
+    poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
-    installer: NoopInstaller,
-    tester: CommandTester,
+    command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ):
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+
     mocker.patch(
         "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
     )
-    original_content = app.poetry.file.read()
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
 
-    tester.execute("cachy --dry-run")
+    tester.execute("cachy")
 
-    assert original_content == app.poetry.file.read()
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert (
+        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
+    )
 
 
-def test_dry_run_restore_original_content(
-    app: PoetryTestApplication,
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cachy --dry-run",
+        "cachy --lock --dry-run",
+    ],
+)
+def test_add_with_dry_run_keep_files_intact(
+    command: str,
+    poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
-    installer: NoopInstaller,
-    tester: CommandTester,
+    command_tester_factory: CommandTesterFactory,
 ):
-    original_content = app.poetry.file.read()
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
 
-    tester.execute("cachy --dry-run")
+    tester.execute(command)
 
-    assert original_content == app.poetry.file.read()
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert (
+        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
+    )

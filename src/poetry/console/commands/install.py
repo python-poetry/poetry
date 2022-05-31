@@ -73,14 +73,14 @@ dependencies and not including the current project, run the command with the
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
-        from poetry.masonry.builders import EditableBuilder
+        from poetry.masonry.builders.editable import EditableBuilder
 
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
 
         extras = []
-        for extra in self.option("extras"):
+        for extra in self.option("extras", []):
             if " " in extra:
                 extras += [e.strip() for e in extra.split(" ")]
             else:

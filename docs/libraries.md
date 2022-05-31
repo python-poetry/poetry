@@ -17,11 +17,19 @@ This chapter will tell you how to make your library installable through Poetry.
 
 ## Versioning
 
-While Poetry does not enforce any convention regarding package versioning,
-it **strongly** recommends to follow [semantic versioning](https://semver.org).
+Poetry requires [PEP 440](https://peps.python.org/pep-0440)-compliant versions for all projects.
 
-This has many advantages for the end users and allows them to set appropriate
-[version constraints]({{< relref "dependency-specification#version-constraints" >}}).
+While Poetry does not enforce any release convention, it does encourage the use of
+[semantic versioning](https://semver.org/) within the scope of
+[PEP 440](https://peps.python.org/pep-0440/#semantic-versioning). This has many advantages for the end users
+and allows them to set appropriate [version constraints]({{< relref "dependency-specification#version-constraints" >}}).
+
+{{% note %}}
+
+As an example, `1.0.0-hotfix.1` is not compatible with [PEP 440](https://peps.python.org/pep-0440). You can instead
+choose to use `1.0.0-post1` or `1.0.0.post1`.
+
+{{% /note %}}
 
 ## Lock file
 

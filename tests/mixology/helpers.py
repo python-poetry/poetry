@@ -11,7 +11,8 @@ from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
 
@@ -44,7 +45,9 @@ def check_solver_result(
     use_latest: list[str] | None = None,
 ) -> None:
     if locked is not None:
-        locked = {k: DependencyPackage(l.to_dependency(), l) for k, l in locked.items()}
+        locked = {
+            k: [DependencyPackage(l.to_dependency(), l)] for k, l in locked.items()
+        }
 
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
     try:

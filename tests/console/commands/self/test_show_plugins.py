@@ -33,7 +33,7 @@ class EntryPoint(_EntryPoint):
 
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("plugin show")
+    return command_tester_factory("self show plugins")
 
 
 @pytest.fixture()
