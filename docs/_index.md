@@ -57,8 +57,8 @@ Note that the installer does not support Python < 3.7.
 {{% /note %}}
 
 {{% warning %}}
-The previous `get-poetry.py` installer is now deprecated, if you are currently using it
-you should migrate to the new, supported, `install-poetry.py` installer.
+The previous `get-poetry.py` and `install-poetry.py` installers are now deprecated. if you are currently using them
+you should migrate to the new, supported, installer through `https://install.python-poetry.org`.
 {{% /warning %}}
 {{< /step >}}
 {{< step >}}
@@ -137,8 +137,8 @@ poetry self update 1.2.0
 ```
 
 {{% warning %}}
-Poetry versions installed using the now deprecated `get-poetry.py` installer will not be able to use this
-command to update to 1.2 releases or later. Migrate to using the `install-poetry.py` installer or `pipx`.
+Poetry versions installed using the deprecated `get-poetry.py` installer will not be able to use this
+command to update to 1.2 releases or later. Migrate to using `https://install.python-poetry.org` or `pipx`.
 {{% /warning %}}
 {{< /step >}}
 
