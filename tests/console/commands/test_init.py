@@ -822,10 +822,8 @@ line-length = 88
     repo.add_package(get_package("foo", "1.19.2"))
 
     tester.execute(
-        "--author 'Your Name <you@example.com>' "
-        "--name 'my-package' "
-        "--python '^3.6' "
-        "--dependency foo",
+        "--author 'Your Name <you@example.com>' --name 'my-package' --python '^3.6'"
+        " --dependency foo",
         interactive=False,
     )
 
@@ -861,3 +859,36 @@ build-backend = "setuptools.build_meta"
         == "A pyproject.toml file with a defined build-system already exists."
     )
     assert existing_section in pyproject_file.read_text()
+
+
+def test_python_prefix_config_tilde(tester: CommandTester, poetry: Poetry):
+
+    poetry.config.config["default-python-prefix"] = "~"
+
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+
+    python = ".".join(str(c) for c in sys.version_info[:2])
+    expected = f"""\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{{include = "my_package"}}]
+
+[tool.poetry.dependencies]
+python = "~{python}"
+"""
+    assert expected in tester.io.fetch_output()

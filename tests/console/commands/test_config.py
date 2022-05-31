@@ -51,6 +51,7 @@ def test_list_displays_default_value_if_not_set(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+default-python-prefix = null
 experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
@@ -80,6 +81,7 @@ def test_list_displays_set_get_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+default-python-prefix = null
 experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
@@ -133,6 +135,7 @@ def test_list_displays_set_get_local_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+default-python-prefix = null
 experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null

@@ -127,6 +127,7 @@ class Config:
         },
         "experimental": {"new-installer": True, "system-git-client": False},
         "installer": {"parallel": True, "max-workers": None, "no-binary": None},
+        "default-python-prefix": None,
     }
 
     def __init__(

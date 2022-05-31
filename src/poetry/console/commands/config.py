@@ -116,6 +116,11 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.normalize,
                 None,
             ),
+            "default-python-prefix": (
+                lambda val: val in {"^", "~"},
+                lambda val: str(val),
+                None,
+            ),
         }
 
         return unique_config_values
@@ -227,8 +232,8 @@ To remove a repository (repo is a short alias for repositories):
                 return 0
 
             raise ValueError(
-                "You must pass the url. "
-                "Example: poetry config repositories.foo https://bar.com"
+                "You must pass the url. Example: poetry config repositories.foo"
+                " https://bar.com"
             )
 
         # handle auth
@@ -252,8 +257,8 @@ To remove a repository (repo is a short alias for repositories):
                     password = self.secret("Password:")
                 elif len(values) != 2:
                     raise ValueError(
-                        "Expected one or two arguments "
-                        f"(username, password), got {len(values)}"
+                        "Expected one or two arguments (username, password), got"
+                        f" {len(values)}"
                     )
                 else:
                     username = values[0]

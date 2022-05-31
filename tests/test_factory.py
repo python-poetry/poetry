@@ -304,8 +304,8 @@ def test_validate_fails():
     content["this key is not in the schema"] = ""
 
     expected = (
-        "Additional properties are not allowed "
-        "('this key is not in the schema' was unexpected)"
+        "Additional properties are not allowed ('this key is not in the schema' was"
+        " unexpected)"
     )
 
     assert Factory.validate(content) == {"errors": [expected], "warnings": []}
@@ -333,6 +333,7 @@ def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter):
     assert not poetry.config.get("virtualenvs.options.no-pip")
     assert not poetry.config.get("virtualenvs.options.no-setuptools")
     assert not poetry.config.get("virtualenvs.options.system-site-packages")
+    assert not poetry.config.get("default-python-prefix")
 
 
 def test_create_poetry_with_plugins(mocker: MockerFixture):

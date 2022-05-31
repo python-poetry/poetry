@@ -52,6 +52,7 @@ which will give you something similar to this:
 
 ```toml
 cache-dir = "/path/to/cache/directory"
+default-python-prefix = null
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
@@ -359,3 +360,10 @@ repository.
 Set client certificate for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
 for more information.
+
+### `default-python-prefix`:
+
+**Type**: string
+
+When a new project is created, its Python version specification uses the `^` prefix to allow major version changes.
+This option sets a different default. Currently accepted values are: `^` (default), `~`. If unset, defaults to `^`.
