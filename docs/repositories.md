@@ -43,7 +43,8 @@ poetry config http-basic.foo <username> <password>
 ```
 
 {{% warning %}}
-Depending on your system's configuration, credentials might be saved in your command line history.
+Depending on your system configuration, credentials might be saved in your command line history.
+Many shells avoid saving command to history if it is prefixed by a space character. For more information, please refer to your shells manual.
 {{% /warning %}}
 
 Once this is done, you can add dependencies to your project from this source.
