@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import base64
+import dataclasses
 import hashlib
 import itertools
 import json
+import logging
 import os
 import platform
 import re
@@ -34,6 +36,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
+from poetry.__version__ import __version__
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
@@ -217,6 +220,8 @@ if site.check_enableusersite() and hasattr(obj, "install_usersite"):
 
 print(json.dumps(paths))
 """
+
+logger = logging.getLogger(__name__)
 
 
 class SitePackages:
@@ -504,6 +509,11 @@ class InvalidCurrentPythonVersionError(EnvError):
         super().__init__(message)
 
 
+@dataclasses.dataclass
+class OverlayConfig:
+    poetry: Poetry
+
+
 class EnvManager:
     """
     Environments manager
@@ -665,6 +675,15 @@ class EnvManager:
                 envs_file.write(envs)
 
     def get(self, reload: bool = False) -> Env:
+        env = self._get(reload=reload)
+
+        project_cache = ProjectCache(self._poetry)
+        project_cache.ensure()
+        env.project_cache = project_cache
+
+        return env
+
+    def _get(self, reload: bool = False) -> Env:
         if self._env is not None and not reload:
             return self._env
 
@@ -1113,6 +1132,23 @@ class EnvManager:
                 remove_directory(file_path, force=True)
 
     @classmethod
+    def load_project_plugins(cls) -> None:
+        system_env = EnvManager.get_system_env(naive=True)
+
+        project_base = Path.cwd().joinpath(".poetry") / "plugins"
+
+        purelib = project_base / system_env.site_packages.purelib.relative_to(
+            system_env.path
+        )
+        platlib = project_base / system_env.site_packages.platlib.relative_to(
+            system_env.path
+        )
+
+        for libdir in [purelib, platlib]:
+            if libdir.exists() and str(libdir) not in sys.path:
+                sys.path.insert(0, str(libdir))
+
+    @classmethod
     def get_system_env(cls, naive: bool = False) -> Env:
         """
         Retrieve the current Python environment.
@@ -1200,6 +1236,7 @@ class Env:
         self._script_dirs: list[Path] | None = None
 
         self._embedded_pip_path: str | None = None
+        self._project_cache: ProjectCache | None = None
 
     @property
     def path(self) -> Path:
@@ -1235,6 +1272,14 @@ class Env:
     @property
     def parent_env(self) -> GenericEnv:
         return GenericEnv(self.base, child_env=self)
+
+    @property
+    def project_cache(self) -> ProjectCache | None:
+        return self._project_cache
+
+    @project_cache.setter
+    def project_cache(self, value: ProjectCache) -> None:
+        self._project_cache = value
 
     def _find_python_executable(self) -> None:
         bin_dir = self._bin_dir
@@ -1531,6 +1576,11 @@ class Env:
 
                 if bin_path.exists():
                     return str(bin_path)
+
+            if self._project_cache is not None:
+                _tool_bin = self._project_cache.find_tool_executable(bin)
+                if _tool_bin:
+                    return _tool_bin
 
             return bin
 
@@ -2013,3 +2063,158 @@ class MockEnv(NullEnv):
 
     def is_venv(self) -> bool:
         return self._is_venv
+
+
+class ProjectCache:
+    def __init__(self, poetry: Poetry) -> None:
+        self._poetry = poetry
+        self._path = poetry.file.path.parent.joinpath(".poetry")
+        self._config_file = self._path.joinpath("config.toml")
+        self._plugins_overlay_path = self._path.joinpath("plugin")
+        self._tools_base_path = self._path.joinpath("tools")
+
+    def config(self) -> dict[str, Any]:
+        if self._config_file.exists():
+            return TOMLFile(self._config_file).read().value.get("config", {})
+
+        return {}
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    @property
+    def plugins_overlay_path(self) -> Path:
+        return self._plugins_overlay_path
+
+    @property
+    def tools_base_path(self) -> Path:
+        return self._tools_base_path
+
+    def tool_venv_path(self, name: str) -> Path:
+        return self._tools_base_path.joinpath(name)
+
+    def find_tool_executable(self, name: str) -> str | None:
+        for path in self.tools_base_path.glob("*"):
+            executable_path = VirtualEnv(path)._bin(name)
+            if Path(executable_path).exists():
+                return executable_path
+        return None
+
+    def _write_config(self, config: dict[str, Any]) -> None:
+        if not self._config_file.parent.exists():
+            self._config_file.parent.mkdir(parents=True)
+
+        document = tomlkit.document()
+        section = document["config"] = tomlkit.table()
+
+        for key, value in config.items():
+            section[key] = value
+
+        TOMLFile(self._config_file).write(data=document)
+
+    def _ensure_plugins(self, config: dict[str, Any]) -> None:
+        if "plugins" not in config:
+            config["plugins"] = {}
+
+        # TODO: replace with proper section
+        plugins = self._poetry.pyproject.data.get("overlay", {}).get("plugins", [])
+        plugins_hash = hashlib.sha256(";".join(plugins).encode()).hexdigest()
+        plugins_hash_old = config.get("plugins", {}).get("hash")
+
+        if self._plugins_overlay_path.exists() and (
+            config.get("python") != sys.version
+            or config.get("poetry") != __version__
+            or plugins_hash_old != plugins_hash
+        ):
+            remove_directory(self._plugins_overlay_path, force=True)
+
+        if not self._plugins_overlay_path.exists() and plugins:
+            logger.info(
+                "Installing missing project plugins %s ...",
+                ", ".join(f"<c1>{name}</>" for name in plugins),
+            )
+
+            self._plugins_overlay_path.mkdir(parents=True)
+
+            # TODO: Use Solver and Executor
+            EnvManager.get_system_env(naive=True).run_pip(
+                "install",
+                "--disable-pip-version-check",
+                "--upgrade",
+                "--prefix",
+                str(self._plugins_overlay_path),
+                *plugins,
+            )
+
+        config["plugins"]["hash"] = plugins_hash
+
+    def _ensure_tools(self, config: dict[str, Any]) -> None:
+        if self._tools_base_path.exists() and (config.get("python") != sys.version):
+            remove_directory(self._tools_base_path, force=True)
+
+        # TODO: replace with proper section
+        tools = self._poetry.pyproject.data.get("overlay", {}).get("tools", {})
+
+        if "tools" not in config:
+            config["tools"] = {}
+
+        for name, deps in tools.items():
+            tool_venv_path = self.tool_venv_path(name)
+
+            if tool_venv_path.exists():
+                continue
+
+            logger.info(
+                "Creating <c1>%s</> environment with %s ...",
+                name,
+                ", ".join(f"<c1>{name}</>" for name in deps),
+            )
+
+            tool_hash = hashlib.sha256(";".join(deps).encode()).hexdigest()
+            tool_venv_path.mkdir(parents=True, exist_ok=True)
+            EnvManager.build_venv(
+                tool_venv_path,
+                with_wheel=False,
+                with_pip=False,
+                with_setuptools=False,
+                prompt=name,
+            )
+
+            # TODO: Use Solver and Executor
+            VirtualEnv(tool_venv_path).run_pip(
+                "install",
+                "--disable-pip-version-check",
+                "--upgrade",
+                "--prefix",
+                str(tool_venv_path),
+                *deps,
+            )
+
+            if name not in config["tools"]:
+                config["tools"][name] = {}
+
+            config["tools"][name]["hash"] = tool_hash
+
+        for name in config["tools"]:
+            if name not in tools:
+                tool_venv_path = self.tool_venv_path(name)
+
+                if tool_venv_path.exists():
+                    remove_directory(tool_venv_path, force=True)
+
+                del config["tools"][name]
+
+    def ensure(self) -> None:
+        config = self.config()
+
+        self._ensure_plugins(config)
+        self._ensure_tools(config)
+
+        config["python"] = sys.version
+        config["poetry"] = __version__
+
+        # TODO: only write if modified
+        self._write_config(config)
+
+        logger.info("Completed syncing overlay environments")
