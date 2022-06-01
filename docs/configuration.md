@@ -365,5 +365,5 @@ for more information.
 
 **Type**: string
 
-When a new project is created, its Python version specification uses the `^` prefix to allow major version changes.
+When a new project is created, its Python version specification uses the `^` prefix to allow minor version changes.
 This option sets a different default. Currently accepted values are: `^` (default), `~`. If unset, defaults to `^`.
