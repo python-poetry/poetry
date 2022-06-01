@@ -458,15 +458,18 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == expected
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["git/github.com/demo/pyproject-demo"]],
+)
 def test_add_directory_with_poetry(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    fixture_base: Path,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    path = fixture_base.joinpath("git/github.com/demo/pyproject-demo").as_posix()
+    path = "../git/github.com/demo/pyproject-demo"
     tester.execute(f"{path}")
 
     expected = f"""\
