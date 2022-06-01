@@ -11,14 +11,11 @@ from cleo.io.null_io import NullIO
 from cleo.testers.application_tester import ApplicationTester
 from cleo.testers.command_tester import CommandTester
 
-from poetry.factory import Factory
 from poetry.installation import Installer
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.repositories import Pool
 from poetry.utils.env import MockEnv
 from tests.helpers import PoetryTestApplication
 from tests.helpers import TestExecutor
-from tests.helpers import TestLocker
 from tests.helpers import mock_clone
 
 
@@ -32,8 +29,8 @@ if TYPE_CHECKING:
     from poetry.repositories import Repository
     from poetry.utils.env import Env
     from tests.conftest import Config
-    from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
+    from tests.types import ProjectFactory
 
 
 @pytest.fixture()
@@ -98,26 +95,11 @@ def project_directory() -> str:
 
 
 @pytest.fixture
-def poetry(repo: TestRepository, project_directory: str, config: Config) -> Poetry:
-
-    p = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / project_directory
+def poetry(project_directory: str, project_factory: ProjectFactory) -> Poetry:
+    return project_factory(
+        name="simple",
+        source=Path(__file__).parent.parent / "fixtures" / project_directory,
     )
-    p.set_locker(TestLocker(p.locker.lock.path, p.locker._local_config))
-
-    with p.file.path.open(encoding="utf-8") as f:
-        content = f.read()
-
-    p.set_config(config)
-
-    pool = Pool()
-    pool.add_repository(repo)
-    p.set_pool(pool)
-
-    yield p
-
-    with p.file.path.open("w", encoding="utf-8") as f:
-        f.write(content)
 
 
 @pytest.fixture

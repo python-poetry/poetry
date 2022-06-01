@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from tests.conftest import Config
+    from tests.types import ProjectFactory
 
 MINIMAL_SCRIPT = """\
 
@@ -73,13 +74,9 @@ class MockVirtualEnv(VirtualEnv):
 
 
 @pytest.fixture()
-def poetry(config: Config) -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / "simple_project"
-    )
-    poetry.set_config(config)
-
-    return poetry
+def poetry(project_factory: ProjectFactory) -> Poetry:
+    fixture = Path(__file__).parent.parent / "fixtures" / "simple_project"
+    return project_factory("simple", source=fixture)
 
 
 @pytest.fixture()

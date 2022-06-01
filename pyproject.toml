@@ -75,6 +75,7 @@ pytest = "^7.1"
 pytest-cov = "^3.0"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
+pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 pre-commit = "^2.6"
 deepdiff = "^5.0"
 httpretty = "^1.0"
