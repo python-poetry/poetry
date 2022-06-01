@@ -304,8 +304,8 @@ def test_validate_fails():
     content["this key is not in the schema"] = ""
 
     expected = (
-        "Additional properties are not allowed ('this key is not in the schema' was"
-        " unexpected)"
+        "Additional properties are not allowed "
+        "('this key is not in the schema' was unexpected)"
     )
 
     assert Factory.validate(content) == {"errors": [expected], "warnings": []}

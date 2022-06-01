@@ -41,16 +41,16 @@ class InitCommand(Command):
         option(
             "dependency",
             None,
-            "Package to require, with an optional version constraint, e.g."
-            " requests:^2.10.0 or requests=2.11.1.",
+            "Package to require, with an optional version constraint, "
+            "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
         ),
         option(
             "dev-dependency",
             None,
-            "Package to require for development, with an optional version constraint,"
-            " e.g. requests:^2.10.0 or requests=2.11.1.",
+            "Package to require for development, with an optional version constraint, "
+            "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
         ),
@@ -334,8 +334,8 @@ You can specify a package in the following forms:
                 # no constraint yet, determine the best version automatically
                 if package and "version" not in constraint:
                     question = self.create_question(
-                        "Enter the version constraint to require (or leave blank to use"
-                        " the latest version):"
+                        "Enter the version constraint to require "
+                        "(or leave blank to use the latest version):"
                     )
                     question.attempts = 3
                     question.validator = lambda x: (x or "").strip() or False
@@ -458,8 +458,8 @@ You can specify a package in the following forms:
         m = AUTHOR_REGEX.match(author)
         if not m:
             raise ValueError(
-                "Invalid author string. Must be in the format: John Smith"
-                " <john@example.com>"
+                "Invalid author string. Must be in the format: "
+                "John Smith <john@example.com>"
             )
 
         return author

@@ -822,8 +822,10 @@ line-length = 88
     repo.add_package(get_package("foo", "1.19.2"))
 
     tester.execute(
-        "--author 'Your Name <you@example.com>' --name 'my-package' --python '^3.6'"
-        " --dependency foo",
+        "--author 'Your Name <you@example.com>' "
+        "--name 'my-package' "
+        "--python '^3.6' "
+        "--dependency foo",
         interactive=False,
     )
 
