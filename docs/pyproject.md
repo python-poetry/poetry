@@ -106,7 +106,7 @@ maintainers = [
 
 ## readme
 
-The path to the readme file of the package. **Optional**
+The path, or array of paths, to the readme file(s) of the package. **Optional**
 
 The file should be in either Markdown (.md) or reStructuredText (.rst)
 format. The path is relative to the directory containing the
@@ -114,16 +114,18 @@ format. The path is relative to the directory containing the
 
 The file contents becomes the
 [Description field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
-in a PyPI build (similar to `long_description` in setuptools).
+in a PyPI build (similar to `long_description` in setuptools). When specifying multiple readmes, their texts will be combined, separated by newlines.
 
 ```toml
 [tool.poetry]
 # ...
-readme = "README.md"
+readme = "README.md" # or "README.rst"
 ```
 
 ```toml
-readme = "README.md" # or "README.rst"
+[tool.poetry]
+# ...
+readme = ["docs/README1.md", "docs/README2.md"]
 ```
 
 ## homepage
