@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from poetry.console.commands.command import Command
@@ -23,9 +25,9 @@ class CheckCommand(Command):
             return 0
 
         for error in check_result["errors"]:
-            self.line(f"<error>Error: {error}</error>")
+            self.line_error(f"<error>Error: {error}</error>")
 
         for error in check_result["warnings"]:
-            self.line(f"<warning>Warning: {error}</warning>")
+            self.line_error(f"<warning>Warning: {error}</warning>")
 
         return 1

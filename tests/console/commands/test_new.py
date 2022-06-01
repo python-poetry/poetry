@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
 
 import pytest
 
@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("new")
 
 
 def verify_project_directory(
-    path: Path, package_name: str, package_path: str, include_from: Optional[str] = None
-) -> "Poetry":
+    path: Path, package_name: str, package_path: str, include_from: str | None = None
+) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
 
@@ -143,12 +143,12 @@ def verify_project_directory(
     ],
 )
 def test_command_new(
-    options: List[str],
+    options: list[str],
     directory: str,
     package_name: str,
     package_path: str,
-    include_from: Optional[str],
-    tester: "CommandTester",
+    include_from: str | None,
+    tester: CommandTester,
     tmp_dir: str,
 ):
     path = Path(tmp_dir) / directory
@@ -157,10 +157,8 @@ def test_command_new(
     verify_project_directory(path, package_name, package_path, include_from)
 
 
-@pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",)])
-def test_command_new_with_readme(
-    fmt: Optional[str], tester: "CommandTester", tmp_dir: str
-):
+@pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
+def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir: str):
     package = "package"
     path = Path(tmp_dir) / package
     options = [path.as_posix()]

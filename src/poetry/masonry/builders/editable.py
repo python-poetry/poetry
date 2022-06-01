@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import hashlib
+import json
 import os
 import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
@@ -14,14 +16,15 @@ from poetry.core.semver.version import Version
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
+from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
-from poetry.utils.pip import pip_editable_install
+from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
-    from poetry.core.poetry import Poetry
 
+    from poetry.poetry import Poetry
     from poetry.utils.env import Env
 
 SCRIPT_TEMPLATE = """\
@@ -39,13 +42,13 @@ WINDOWS_CMD_TEMPLATE = """\
 
 
 class EditableBuilder(Builder):
-    def __init__(self, poetry: "Poetry", env: "Env", io: "IO") -> None:
+    def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
         super().__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self) -> None:
+    def build(self, target_dir: Path | None = None) -> Path:
         self._debug(
             f"  - Building package <c1>{self._package.name}</c1> in"
             " <info>editable</info> mode"
@@ -56,7 +59,9 @@ class EditableBuilder(Builder):
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-                return self._setup_build()
+                self._setup_build()
+                path: Path = self._path
+                return path
 
             self._run_build_script(self._package.build_script)
 
@@ -73,9 +78,13 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script: Path) -> None:
-        self._debug(f"  - Executing build script: <b>{build_script}</b>")
-        self._env.run("python", str(self._path.joinpath(build_script)), call=True)
+        path = self._path
+        return path
+
+    def _run_build_script(self, build_script: str) -> None:
+        with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
+            self._debug(f"  - Executing build script: <b>{build_script}</b>")
+            env.run("python", str(self._path.joinpath(build_script)), call=True)
 
     def _setup_build(self) -> None:
         builder = SdistBuilder(self._poetry)
@@ -83,7 +92,7 @@ class EditableBuilder(Builder):
         has_setup = setup.exists()
 
         if has_setup:
-            self._io.write_line(
+            self._io.write_error_line(
                 "<warning>A setup.py file already exists. Using it.</warning>"
             )
         else:
@@ -92,14 +101,14 @@ class EditableBuilder(Builder):
 
         try:
             if self._env.pip_version < Version.from_parts(19, 0):
-                pip_editable_install(self._path, self._env)
+                pip_install(self._path, self._env, upgrade=True, editable=True)
             else:
                 # Temporarily rename pyproject.toml
                 shutil.move(
                     str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
                 )
                 try:
-                    pip_editable_install(self._path, self._env)
+                    pip_install(self._path, self._env, upgrade=True, editable=True)
                 finally:
                     shutil.move(
                         str(self._poetry.file.with_suffix(".tmp")),
@@ -109,7 +118,7 @@ class EditableBuilder(Builder):
             if not has_setup:
                 os.remove(str(setup))
 
-    def _add_pth(self) -> List[Path]:
+    def _add_pth(self) -> list[Path]:
         paths = {
             include.base.resolve().as_posix()
             for include in self._module.includes
@@ -147,7 +156,7 @@ class EditableBuilder(Builder):
             )
             return []
 
-    def _add_scripts(self) -> List[Path]:
+    def _add_scripts(self) -> list[Path]:
         added = []
         entry_points = self.convert_entry_points()
 
@@ -202,7 +211,7 @@ class EditableBuilder(Builder):
 
         return added
 
-    def _add_dist_info(self, added_files: List[Path]) -> None:
+    def _add_dist_info(self, added_files: list[Path]) -> None:
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]
@@ -232,6 +241,18 @@ class EditableBuilder(Builder):
                 builder._write_entry_points(f)
 
             added_files.append(dist_info.joinpath("entry_points.txt"))
+
+        # write PEP 610 metadata
+        direct_url_json = dist_info.joinpath("direct_url.json")
+        direct_url_json.write_text(
+            json.dumps(
+                {
+                    "dir_info": {"editable": True},
+                    "url": self._poetry.file.path.parent.as_uri(),
+                }
+            )
+        )
+        added_files.append(direct_url_json)
 
         record = dist_info.joinpath("RECORD")
         with record.open("w", encoding="utf-8") as f:

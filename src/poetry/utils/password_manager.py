@@ -1,9 +1,10 @@
+from __future__ import annotations
+
+import dataclasses
 import logging
 
 from contextlib import suppress
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 
 if TYPE_CHECKING:
@@ -17,12 +18,18 @@ class PasswordManagerError(Exception):
     pass
 
 
-class KeyRingError(Exception):
+class PoetryKeyringError(Exception):
 
     pass
 
 
-class KeyRing:
+@dataclasses.dataclass
+class HTTPAuthCredential:
+    username: str | None = dataclasses.field(default=None)
+    password: str | None = dataclasses.field(default=None)
+
+
+class PoetryKeyring:
     def __init__(self, namespace: str) -> None:
         self._namespace = namespace
         self._is_available = True
@@ -32,7 +39,26 @@ class KeyRing:
     def is_available(self) -> bool:
         return self._is_available
 
-    def get_password(self, name: str, username: str) -> Optional[str]:
+    def get_credential(
+        self, *names: str, username: str | None = None
+    ) -> HTTPAuthCredential:
+        default = HTTPAuthCredential(username=username, password=None)
+
+        if not self.is_available():
+            return default
+
+        import keyring
+
+        for name in names:
+            credential = keyring.get_credential(name, username)
+            if credential:
+                return HTTPAuthCredential(
+                    username=credential.username, password=credential.password
+                )
+
+        return default
+
+    def get_password(self, name: str, username: str) -> str | None:
         if not self.is_available():
             return None
 
@@ -44,7 +70,7 @@ class KeyRing:
         try:
             return keyring.get_password(name, username)
         except (RuntimeError, keyring.errors.KeyringError):
-            raise KeyRingError(
+            raise PoetryKeyringError(
                 f"Unable to retrieve the password for {name} from the key ring"
             )
 
@@ -60,7 +86,7 @@ class KeyRing:
         try:
             keyring.set_password(name, username, password)
         except (RuntimeError, keyring.errors.KeyringError) as e:
-            raise KeyRingError(
+            raise PoetryKeyringError(
                 f"Unable to store the password for {name} in the key ring: {e}"
             )
 
@@ -68,7 +94,6 @@ class KeyRing:
         if not self.is_available():
             return
 
-        import keyring
         import keyring.errors
 
         name = self.get_entry_name(name)
@@ -76,7 +101,7 @@ class KeyRing:
         try:
             keyring.delete_password(name, username)
         except (RuntimeError, keyring.errors.KeyringError):
-            raise KeyRingError(
+            raise PoetryKeyringError(
                 f"Unable to delete the password for {name} from the key ring"
             )
 
@@ -94,7 +119,7 @@ class KeyRing:
 
         backend = keyring.get_keyring()
         name = backend.name.split(" ")[0]
-        if name == "fail":
+        if name in ("fail", "null"):
             logger.debug("No suitable keyring backend found")
             self._is_available = False
         elif "plaintext" in backend.name.lower():
@@ -107,7 +132,7 @@ class KeyRing:
                 backends = keyring.backend.get_all_keyring()
 
                 self._is_available = any(
-                    b.name.split(" ")[0] not in ["chainer", "fail"]
+                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
                     and "plaintext" not in b.name.lower()
                     for b in backends
                 )
@@ -115,34 +140,42 @@ class KeyRing:
                 self._is_available = False
 
         if not self._is_available:
-            logger.warning("No suitable keyring backends were found")
+            logger.debug("No suitable keyring backends were found")
 
 
 class PasswordManager:
-    def __init__(self, config: "Config") -> None:
+    def __init__(self, config: Config) -> None:
         self._config = config
-        self._keyring = None
+        self._keyring: PoetryKeyring | None = None
 
     @property
-    def keyring(self) -> Optional[KeyRing]:
+    def keyring(self) -> PoetryKeyring:
         if self._keyring is None:
-            self._keyring = KeyRing("poetry-repository")
+            self._keyring = PoetryKeyring("poetry-repository")
+
             if not self._keyring.is_available():
-                logger.warning(
-                    "Using a plaintext file to store and retrieve credentials"
+                logger.debug(
+                    "<warning>Keyring is not available, credentials will be stored and "
+                    "retrieved from configuration files as plaintext.</>"
                 )
 
         return self._keyring
 
+    @staticmethod
+    def warn_plaintext_credentials_stored() -> None:
+        logger.warning("Using a plaintext file to store credentials")
+
     def set_pypi_token(self, name: str, token: str) -> None:
         if not self.keyring.is_available():
+            self.warn_plaintext_credentials_stored()
             self._config.auth_config_source.add_property(f"pypi-token.{name}", token)
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str:
+    def get_pypi_token(self, name: str) -> str | None:
         if not self.keyring.is_available():
-            return self._config.get(f"pypi-token.{name}")
+            token: str | None = self._config.get(f"pypi-token.{name}")
+            return token
 
         return self.keyring.get_password(name, "__token__")
 
@@ -152,7 +185,7 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
+    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
@@ -173,6 +206,7 @@ class PasswordManager:
         auth = {"username": username}
 
         if not self.keyring.is_available():
+            self.warn_plaintext_credentials_stored()
             auth["password"] = password
         else:
             self.keyring.set_password(name, username, password)
@@ -181,10 +215,14 @@ class PasswordManager:
 
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
-        if not auth or "username" not in auth:
+        if not auth:
             return
 
-        with suppress(KeyRingError):
-            self.keyring.delete_password(name, auth["username"])
+        username = auth.get("username")
+        if username is None:
+            return
+
+        with suppress(PoetryKeyringError):
+            self.keyring.delete_password(name, username)
 
         self._config.auth_config_source.remove_property(f"http-basic.{name}")

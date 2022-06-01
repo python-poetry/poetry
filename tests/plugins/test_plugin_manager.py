@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
 
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
 from entrypoints import EntryPoint
+from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.packages.locker import Locker
-from poetry.packages.project_package import ProjectPackage
 from poetry.plugins import ApplicationPlugin
 from poetry.plugins import Plugin
 from poetry.plugins.plugin_manager import PluginManager
@@ -25,20 +26,18 @@ CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
 class ManagerFactory(Protocol):
-    def __call__(self, type: str = "plugin") -> PluginManager:
+    def __call__(self, group: str = Plugin.group) -> PluginManager:
         ...
 
 
 class MyPlugin(Plugin):
     def activate(self, poetry: Poetry, io: BufferedIO) -> None:
-        io.write_line("Updating version")
-        poetry.package.set_version("9.9.9")
+        io.write_line("Setting readmes")
+        poetry.package.readmes = ("README.md",)
 
 
 class MyCommandPlugin(ApplicationPlugin):
-    @property
-    def commands(self) -> List[str]:
-        return []
+    commands = []
 
 
 class InvalidPlugin:
@@ -48,7 +47,7 @@ class InvalidPlugin:
 
 
 @pytest.fixture()
-def poetry(tmp_dir: str, config: "Config") -> Poetry:
+def poetry(tmp_dir: str, config: Config) -> Poetry:
     poetry = Poetry(
         CWD / "pyproject.toml",
         {},
@@ -67,22 +66,22 @@ def io() -> BufferedIO:
 
 @pytest.fixture()
 def manager_factory(poetry: Poetry, io: BufferedIO) -> ManagerFactory:
-    def _manager(type: str = "plugin") -> PluginManager:
-        return PluginManager(type)
+    def _manager(group: str = Plugin.group) -> PluginManager:
+        return PluginManager(group)
 
     return _manager
 
 
 @pytest.fixture()
 def no_plugin_manager(poetry: Poetry, io: BufferedIO) -> PluginManager:
-    return PluginManager("plugin", disable_plugins=True)
+    return PluginManager(Plugin.group, disable_plugins=True)
 
 
 def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     manager = manager_factory()
 
@@ -96,15 +95,15 @@ def test_load_plugins_and_activate(
     manager.load_plugins()
     manager.activate(poetry, io)
 
-    assert poetry.package.version.text == "9.9.9"
-    assert io.fetch_output() == "Updating version\n"
+    assert poetry.package.readmes == ("README.md",)
+    assert io.fetch_output() == "Setting readmes\n"
 
 
 def test_load_plugins_with_invalid_plugin(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     manager = manager_factory()
 
@@ -125,7 +124,7 @@ def test_load_plugins_with_plugins_disabled(
     no_plugin_manager: PluginManager,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -6,13 +9,14 @@ from tests.mixology.helpers import check_solver_result
 
 
 if TYPE_CHECKING:
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
 
 
 def test_no_version_matching_constraint(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "^1.0"))
 
@@ -30,7 +34,7 @@ def test_no_version_matching_constraint(
 
 
 def test_no_version_that_matches_combined_constraints(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
@@ -53,7 +57,7 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
 
 
 def test_disjoint_constraints(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
@@ -75,7 +79,7 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
 
 
 def test_disjoint_root_constraints(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("foo", "2.0.0"))
@@ -89,9 +93,26 @@ Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving faile
     check_solver_result(root, provider, error=error)
 
 
-def test_no_valid_solution(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+def test_disjoint_root_constraints_path_dependencies(
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
+    provider.set_package_python_versions("^3.7")
+    fixtures = Path(__file__).parent.parent.parent / "fixtures"
+    project_dir = fixtures.joinpath("with_conditional_path_deps")
+    path1 = project_dir / "demo_one"
+    root.add_dependency(Factory.create_dependency("demo", {"path": path1}))
+    path2 = project_dir / "demo_two"
+    root.add_dependency(Factory.create_dependency("demo", {"path": path2}))
+
+    error = (
+        f"Because myapp depends on both demo (1.2.3 {path1.as_posix()}) "
+        f"and demo (1.2.3 {path2.as_posix()}), version solving failed."
+    )
+
+    check_solver_result(root, provider, error=error)
+
+
+def test_no_valid_solution(root: ProjectPackage, provider: Provider, repo: Repository):
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
 
@@ -113,7 +134,7 @@ So, because myapp depends on b (*), version solving failed."""
 
 
 def test_package_with_the_same_name_gives_clear_error_message(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     pkg_name = "a"
     root.add_dependency(Factory.create_dependency(pkg_name, "*"))

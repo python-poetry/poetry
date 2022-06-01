@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import signal
 import subprocess
@@ -6,7 +8,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Optional
 
 import pexpect
 
@@ -41,7 +42,7 @@ class Shell:
         return self._path
 
     @classmethod
-    def get(cls) -> "Shell":
+    def get(cls) -> Shell:
         """
         Retrieve the current shell.
         """
@@ -67,7 +68,7 @@ class Shell:
 
         return cls._shell
 
-    def activate(self, env: "VirtualEnv") -> Optional[int]:
+    def activate(self, env: VirtualEnv) -> int | None:
         activate_script = self._get_activate_script()
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script

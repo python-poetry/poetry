@@ -1,7 +1,6 @@
-import os
+from __future__ import annotations
 
-from typing import Optional
-
+from poetry.config.config import Config
 from poetry.console.commands.command import Command
 
 
@@ -10,15 +9,14 @@ class CacheListCommand(Command):
     name = "cache list"
     description = "List Poetry's caches."
 
-    def handle(self) -> Optional[int]:
-        from poetry.locations import REPOSITORY_CACHE_DIR
-
-        if os.path.exists(str(REPOSITORY_CACHE_DIR)):
-            caches = sorted(REPOSITORY_CACHE_DIR.iterdir())
+    def handle(self) -> int | None:
+        config = Config.create()
+        if config.repository_cache_directory.exists():
+            caches = sorted(config.repository_cache_directory.iterdir())
             if caches:
                 for cache in caches:
                     self.line(f"<info>{cache.name}</>")
                 return 0
 
-        self.line("<warning>No caches found</>")
+        self.line_error("<warning>No caches found</>")
         return None

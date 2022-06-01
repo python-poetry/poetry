@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from poetry.plugins.base_plugin import BasePlugin
@@ -12,11 +15,10 @@ if TYPE_CHECKING:
 class Plugin(BasePlugin):
     """
     Generic plugin not related to the console application.
-    The activate() method must be implemented and receives
-    the Poetry instance.
     """
 
-    type = "plugin"
+    group = "poetry.plugin"
 
-    def activate(self, poetry: "Poetry", io: "IO") -> None:
+    @abstractmethod
+    def activate(self, poetry: Poetry, io: IO) -> None:
         raise NotImplementedError()

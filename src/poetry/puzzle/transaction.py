@@ -1,22 +1,21 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
-    from poetry.installation.operations import OperationTypes
+    from poetry.installation.operations.operation import Operation
 
 
 class Transaction:
     def __init__(
         self,
-        current_packages: List["Package"],
-        result_packages: List[Tuple["Package", int]],
-        installed_packages: Optional[List["Package"]] = None,
-        root_package: Optional["Package"] = None,
+        current_packages: list[Package],
+        result_packages: list[tuple[Package, int]],
+        installed_packages: list[Package] | None = None,
+        root_package: Package | None = None,
     ) -> None:
         self._current_packages = current_packages
         self._result_packages = result_packages
@@ -29,12 +28,12 @@ class Transaction:
 
     def calculate_operations(
         self, with_uninstalls: bool = True, synchronize: bool = False
-    ) -> List["OperationTypes"]:
-        from poetry.installation.operations.install import Install
-        from poetry.installation.operations.uninstall import Uninstall
-        from poetry.installation.operations.update import Update
+    ) -> list[Operation]:
+        from poetry.installation.operations import Install
+        from poetry.installation.operations import Uninstall
+        from poetry.installation.operations import Update
 
-        operations: List["OperationTypes"] = []
+        operations: list[Operation] = []
 
         for result_package, priority in self._result_packages:
             installed = False
@@ -43,8 +42,19 @@ class Transaction:
                 if result_package.name == installed_package.name:
                     installed = True
 
+                    # We have to perform an update if the version or another
+                    # attribute of the package has changed (source type, url, ref, ...).
                     if result_package.version != installed_package.version or (
                         (
+                            # This has to be done because installed packages cannot
+                            # have type "legacy". If a package with type "legacy"
+                            # is installed, the installed package has no source_type.
+                            # Thus, if installed_package has no source_type and
+                            # the result_package has source_type "legacy" (negation of
+                            # the following condition), update must not be performed.
+                            # This quirk has the side effect that when switching
+                            # from PyPI to legacy (or vice versa),
+                            # no update is performed.
                             installed_package.source_type
                             or result_package.source_type != "legacy"
                         )

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 
 from cleo.helpers import option
 
@@ -28,6 +29,11 @@ class PublishCommand(Command):
         ),
         option("build", None, "Build the package before publishing."),
         option("dry-run", None, "Perform all actions except upload the package."),
+        option(
+            "skip-existing",
+            None,
+            "Ignore errors from files already existing in the repository.",
+        ),
     ]
 
     help = """The publish command builds and uploads the package to a remote repository.
@@ -41,7 +47,7 @@ the config command.
 
     loggers = ["poetry.masonry.publishing.publisher"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)
@@ -81,6 +87,7 @@ the config command.
             cert,
             client_cert,
             self.option("dry-run"),
+            self.option("skip-existing"),
         )
 
         return None

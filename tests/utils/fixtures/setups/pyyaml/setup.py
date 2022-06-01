@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 NAME = "PyYAML"
 VERSION = "3.13"
 DESCRIPTION = "YAML parser and emitter for Python"
@@ -53,21 +56,23 @@ int main(void) {
 """
 
 
-import sys, os.path, platform
+import os.path
+import platform
+import sys
 
 from distutils import log
-from distutils.core import setup, Command
+from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
+from distutils.command.build_ext import build_ext as _build_ext
+from distutils.core import Command
 from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
+from distutils.core import setup
 from distutils.dir_util import mkpath
-from distutils.command.build_ext import build_ext as _build_ext
-from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
-from distutils.errors import (
-    DistutilsError,
-    CompileError,
-    LinkError,
-    DistutilsPlatformError,
-)
+from distutils.errors import CompileError
+from distutils.errors import DistutilsError
+from distutils.errors import DistutilsPlatformError
+from distutils.errors import LinkError
+
 
 if "setuptools.extension" in sys.modules:
     _Extension = sys.modules["setuptools.extension"]._Extension
@@ -77,8 +82,8 @@ if "setuptools.extension" in sys.modules:
 
 with_cython = False
 try:
-    from Cython.Distutils.extension import Extension as _Extension
     from Cython.Distutils import build_ext as _build_ext
+    from Cython.Distutils.extension import Extension as _Extension
 
     with_cython = True
 except ImportError:

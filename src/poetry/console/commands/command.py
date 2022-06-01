@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
+from typing import Any
 
 from cleo.commands.command import Command as BaseCommand
+from cleo.exceptions import ValueException
 
 
 if TYPE_CHECKING:
@@ -10,23 +12,30 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
 
 
-class Command(BaseCommand):
-    loggers: List[str] = []
+class Command(BaseCommand):  # type: ignore[misc]
+    loggers: list[str] = []
 
-    _poetry: Optional["Poetry"] = None
+    _poetry: Poetry | None = None
 
     @property
-    def poetry(self) -> "Poetry":
+    def poetry(self) -> Poetry:
         if self._poetry is None:
             return self.get_application().poetry
 
         return self._poetry
 
-    def set_poetry(self, poetry: "Poetry") -> None:
+    def set_poetry(self, poetry: Poetry) -> None:
         self._poetry = poetry
 
-    def get_application(self) -> "Application":
-        return self.application
+    def get_application(self) -> Application:
+        application: Application = self.application
+        return application
 
     def reset_poetry(self) -> None:
         self.get_application().reset_poetry()
+
+    def option(self, name: str, default: Any = None) -> Any:
+        try:
+            return super().option(name)
+        except ValueException:
+            return default

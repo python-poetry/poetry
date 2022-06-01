@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Union
 
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path
@@ -15,12 +16,12 @@ if TYPE_CHECKING:
 
 
 def pip_install(
-    path: Union["Path", Link],
-    environment: "Env",
+    path: Path | Link,
+    environment: Env,
     editable: bool = False,
     deps: bool = False,
     upgrade: bool = False,
-) -> Union[int, str]:
+) -> int | str:
     path = url_to_path(path.url) if isinstance(path, Link) else path
     is_wheel = path.suffix == ".whl"
 
@@ -30,7 +31,7 @@ def pip_install(
     # lot of packages.
     args = ["install", "--disable-pip-version-check", "--prefix", str(environment.path)]
 
-    if not is_wheel:
+    if not is_wheel and not editable:
         args.insert(1, "--use-pep517")
 
     if upgrade:
@@ -52,11 +53,3 @@ def pip_install(
         return environment.run_pip(*args)
     except EnvCommandError as e:
         raise PoetryException(f"Failed to install {path.as_posix()}") from e
-
-
-def pip_editable_install(
-    directory: Union["Path", Link], environment: "Env"
-) -> Union[int, str]:
-    return pip_install(
-        path=directory, environment=environment, editable=True, deps=False, upgrade=True
-    )

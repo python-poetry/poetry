@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
 
 from poetry.installation.base_installer import BaseInstaller
 
@@ -10,27 +11,27 @@ if TYPE_CHECKING:
 
 class NoopInstaller(BaseInstaller):
     def __init__(self) -> None:
-        self._installs: List["Package"] = []
-        self._updates: List["Package"] = []
-        self._removals: List["Package"] = []
+        self._installs: list[Package] = []
+        self._updates: list[tuple[Package, Package]] = []
+        self._removals: list[Package] = []
 
     @property
-    def installs(self) -> List["Package"]:
+    def installs(self) -> list[Package]:
         return self._installs
 
     @property
-    def updates(self) -> List["Package"]:
+    def updates(self) -> list[tuple[Package, Package]]:
         return self._updates
 
     @property
-    def removals(self) -> List["Package"]:
+    def removals(self) -> list[Package]:
         return self._removals
 
-    def install(self, package: "Package") -> None:
+    def install(self, package: Package) -> None:
         self._installs.append(package)
 
-    def update(self, source: "Package", target: "Package") -> None:
+    def update(self, source: Package, target: Package) -> None:
         self._updates.append((source, target))
 
-    def remove(self, package: "Package") -> None:
+    def remove(self, package: Package) -> None:
         self._removals.append(package)

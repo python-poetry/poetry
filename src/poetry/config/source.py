@@ -1,7 +1,6 @@
-import dataclasses
+from __future__ import annotations
 
-from typing import Dict
-from typing import Union
+import dataclasses
 
 
 @dataclasses.dataclass(order=True, eq=True)
@@ -11,5 +10,5 @@ class Source:
     default: bool = dataclasses.field(default=False)
     secondary: bool = dataclasses.field(default=False)
 
-    def to_dict(self) -> Dict[str, Union[str, bool]]:
+    def to_dict(self) -> dict[str, str | bool]:
         return dataclasses.asdict(self)

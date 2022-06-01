@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 from poetry.console.commands.command import Command
@@ -23,4 +25,5 @@ class DebugInfoCommand(Command):
         )
         command = self.application.get("env info")
 
-        return command.run(self._io)
+        exit_code: int = command.run(self._io)
+        return exit_code

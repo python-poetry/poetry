@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 import os
 import re
 
 from typing import TYPE_CHECKING
-from typing import Callable
-from typing import Iterator
-from typing import Tuple
 
 import pytest
 
@@ -16,6 +15,8 @@ from poetry.config.config import int_normalizer
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Iterator
     from pathlib import Path
 
 
@@ -35,12 +36,12 @@ def test_config_get_default_value(config: Config, name: str, value: bool):
 
 
 def test_config_get_processes_depended_on_values(
-    config: Config, config_cache_dir: "Path"
+    config: Config, config_cache_dir: Path
 ):
     assert str(config_cache_dir / "virtualenvs") == config.get("virtualenvs.path")
 
 
-def generate_environment_variable_tests() -> Iterator[Tuple[str, str, str, bool]]:
+def generate_environment_variable_tests() -> Iterator[tuple[str, str, str, bool]]:
     for normalizer, values in [
         (boolean_normalizer, [("true", True), ("false", False)]),
         (int_normalizer, [("4", 4), ("2", 2)]),

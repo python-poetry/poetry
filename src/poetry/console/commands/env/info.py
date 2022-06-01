@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import option
 
@@ -17,7 +18,7 @@ class EnvInfoCommand(Command):
 
     options = [option("path", "p", "Only display the environment's path.")]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         from poetry.utils.env import EnvManager
 
         env = EnvManager(self.poetry).get()
@@ -33,7 +34,7 @@ class EnvInfoCommand(Command):
         self._display_complete_info(env)
         return None
 
-    def _display_complete_info(self, env: "Env") -> None:
+    def _display_complete_info(self, env: Env) -> None:
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.line("")
         self.line("<b>Virtualenv</b>")

@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from cleo.helpers import argument
 
@@ -18,7 +18,7 @@ class SourceShowCommand(Command):
         ),
     ]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int | None:
         sources = self.poetry.get_sources()
         names = self.argument("source")
 
@@ -26,7 +26,7 @@ class SourceShowCommand(Command):
             self.line("No sources configured for this project.")
             return 0
 
-        if names and not any(map(lambda s: s.name in names, sources)):
+        if names and not any(s.name in names for s in sources):
             self.line_error(f"No source found with name(s): {', '.join(names)}")
             return 1
 

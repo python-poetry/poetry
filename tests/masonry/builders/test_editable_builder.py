@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import json
 import os
 import shutil
 
@@ -7,12 +10,16 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
+from deepdiff import DeepDiff
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
+from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
@@ -22,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def simple_poetry() -> "Poetry":
+def simple_poetry() -> Poetry:
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
     )
@@ -31,7 +38,7 @@ def simple_poetry() -> "Poetry":
 
 
 @pytest.fixture()
-def project_with_include() -> "Poetry":
+def project_with_include() -> Poetry:
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "with-include"
     )
@@ -40,7 +47,7 @@ def project_with_include() -> "Poetry":
 
 
 @pytest.fixture()
-def extended_poetry() -> "Poetry":
+def extended_poetry() -> Poetry:
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
     )
@@ -49,7 +56,7 @@ def extended_poetry() -> "Poetry":
 
 
 @pytest.fixture()
-def extended_without_setup_poetry() -> "Poetry":
+def extended_without_setup_poetry() -> Poetry:
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent
         / "fixtures"
@@ -60,7 +67,7 @@ def extended_without_setup_poetry() -> "Poetry":
 
 
 @pytest.fixture()
-def env_manager(simple_poetry: "Poetry") -> EnvManager:
+def env_manager(simple_poetry: Poetry) -> EnvManager:
     return EnvManager(simple_poetry)
 
 
@@ -77,7 +84,7 @@ def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
 
 
 def test_builder_installs_proper_files_for_standard_packages(
-    simple_poetry: "Poetry", tmp_venv: VirtualEnv
+    simple_poetry: Poetry, tmp_venv: VirtualEnv
 ):
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
@@ -100,6 +107,15 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert dist_info.joinpath("METADATA").exists()
     assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("entry_points.txt").exists()
+    assert dist_info.joinpath("direct_url.json").exists()
+
+    assert not DeepDiff(
+        {
+            "dir_info": {"editable": True},
+            "url": simple_poetry.file.path.parent.as_uri(),
+        },
+        json.loads(dist_info.joinpath("direct_url.json").read_text()),
+    )
 
     assert dist_info.joinpath("INSTALLER").read_text() == "poetry"
     assert (
@@ -152,6 +168,7 @@ My Package
     assert str(dist_info.joinpath("INSTALLER")) in records
     assert str(dist_info.joinpath("entry_points.txt")) in records
     assert str(dist_info.joinpath("RECORD")) in records
+    assert str(dist_info.joinpath("direct_url.json")) in records
 
     baz_script = f"""\
 #!{tmp_venv.python}
@@ -188,23 +205,56 @@ if __name__ == '__main__':
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    mocker: "MockerFixture", extended_poetry: "Poetry", tmp_dir: str
+    mocker: MockerFixture, extended_poetry: Poetry, tmp_dir: str
 ):
-    pip_editable_install = mocker.patch(
-        "poetry.masonry.builders.editable.pip_editable_install"
-    )
+    pip_install = mocker.patch("poetry.masonry.builders.editable.pip_install")
     env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
-    pip_editable_install.assert_called_once_with(
-        extended_poetry.pyproject.file.path.parent, env
+    pip_install.assert_called_once_with(
+        extended_poetry.pyproject.file.path.parent, env, upgrade=True, editable=True
     )
     assert [] == env.executed
 
 
+def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str):
+    # create an isolated copy of the project
+    fixture = Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
+    extended_project = Path(tmp_dir) / "extended_project"
+
+    shutil.copytree(fixture, extended_project)
+    assert extended_project.exists()
+
+    poetry = Factory().create_poetry(extended_project)
+
+    # we need a venv with setuptools since we are verifying setup.py builds
+    with ephemeral_environment(flags={"no-setuptools": False}) as venv:
+        builder = EditableBuilder(poetry, venv, NullIO())
+        builder.build()
+
+        # is the package installed?
+        repository = InstalledRepository.load(venv)
+        assert repository.package("extended-project", "1.2.3")
+
+        # check for the module built by build.py
+        try:
+            output = venv.run_python_script(
+                "from extended_project import built; print(built.__file__)"
+            ).strip()
+        except EnvCommandError:
+            pytest.fail("Unable to import built module")
+        else:
+            built_py = Path(output).resolve()
+
+        expected = extended_project / "extended_project" / "built.py"
+
+        # ensure the package was installed as editable
+        assert built_py == expected.resolve()
+
+
 def test_builder_installs_proper_files_when_packages_configured(
-    project_with_include: "Poetry", tmp_venv: VirtualEnv
+    project_with_include: Poetry, tmp_venv: VirtualEnv
 ):
     builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
     builder.build()
@@ -229,9 +279,13 @@ def test_builder_installs_proper_files_when_packages_configured(
 
 
 def test_builder_should_execute_build_scripts(
-    extended_without_setup_poetry: "Poetry", tmp_dir: str
+    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_dir: str
 ):
     env = MockEnv(path=Path(tmp_dir) / "foo")
+    mocker.patch(
+        "poetry.masonry.builders.editable.build_environment"
+    ).return_value.__enter__.return_value = env
+
     builder = EditableBuilder(extended_without_setup_poetry, env, NullIO())
 
     builder.build()

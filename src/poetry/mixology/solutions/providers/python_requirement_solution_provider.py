@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import re
 
 from typing import TYPE_CHECKING
-from typing import List
 
 from crashtest.contracts.has_solutions_for_exception import HasSolutionsForException
 
@@ -9,8 +10,10 @@ from crashtest.contracts.has_solutions_for_exception import HasSolutionsForExcep
 if TYPE_CHECKING:
     from crashtest.contracts.solution import Solution
 
+    from poetry.puzzle.exceptions import SolverProblemError
 
-class PythonRequirementSolutionProvider(HasSolutionsForException):
+
+class PythonRequirementSolutionProvider(HasSolutionsForException):  # type: ignore[misc]
     def can_solve(self, exception: Exception) -> bool:
         from poetry.puzzle.exceptions import SolverProblemError
 
@@ -25,7 +28,7 @@ class PythonRequirementSolutionProvider(HasSolutionsForException):
 
         return bool(m)
 
-    def get_solutions(self, exception: Exception) -> List["Solution"]:
+    def get_solutions(self, exception: SolverProblemError) -> list[Solution]:
         from poetry.mixology.solutions.solutions.python_requirement_solution import (
             PythonRequirementSolution,
         )

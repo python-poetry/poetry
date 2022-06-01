@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from pathlib import Path
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
 
 
 def test_publish_publishes_to_pypi_by_default(
-    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -36,15 +38,15 @@ def test_publish_publishes_to_pypi_by_default(
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("https://upload.pypi.org/legacy/",),
-        {"cert": None, "client_cert": None, "dry_run": False},
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args
 
 
 @pytest.mark.parametrize("fixture_name", ["sample_project", "with_default_source"])
 def test_publish_can_publish_to_given_repository(
-    fixture_dir: "FixtureDirGetter",
-    mocker: "MockerFixture",
-    config: "Config",
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    config: Config,
     fixture_name: str,
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
@@ -57,7 +59,7 @@ def test_publish_can_publish_to_given_repository(
         }
     )
 
-    mocker.patch("poetry.factory.Factory.create_config", return_value=config)
+    mocker.patch("poetry.config.config.Config.create", return_value=config)
     poetry = Factory().create_poetry(fixture_dir(fixture_name))
 
     io = BufferedIO()
@@ -68,13 +70,13 @@ def test_publish_can_publish_to_given_repository(
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("http://foo.bar",),
-        {"cert": None, "client_cert": None, "dry_run": False},
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args
     assert "Publishing my-package (1.2.3) to foo" in io.fetch_output()
 
 
 def test_publish_raises_error_for_undefined_repository(
-    fixture_dir: "FixtureDirGetter", config: "Config"
+    fixture_dir: FixtureDirGetter, config: Config
 ):
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
@@ -88,7 +90,7 @@ def test_publish_raises_error_for_undefined_repository(
 
 
 def test_publish_uses_token_if_it_exists(
-    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -102,12 +104,12 @@ def test_publish_uses_token_if_it_exists(
     assert [("__token__", "my-token")] == uploader_auth.call_args
     assert [
         ("https://upload.pypi.org/legacy/",),
-        {"cert": None, "client_cert": None, "dry_run": False},
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args
 
 
 def test_publish_uses_cert(
-    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
 ):
     cert = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
@@ -128,12 +130,17 @@ def test_publish_uses_cert(
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("https://foo.bar",),
-        {"cert": Path(cert), "client_cert": None, "dry_run": False},
+        {
+            "cert": Path(cert),
+            "client_cert": None,
+            "dry_run": False,
+            "skip_existing": False,
+        },
     ] == uploader_upload.call_args
 
 
 def test_publish_uses_client_cert(
-    fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
 ):
     client_cert = "path/to/client.pem"
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -151,15 +158,20 @@ def test_publish_uses_client_cert(
 
     assert [
         ("https://foo.bar",),
-        {"cert": None, "client_cert": Path(client_cert), "dry_run": False},
+        {
+            "cert": True,
+            "client_cert": Path(client_cert),
+            "dry_run": False,
+            "skip_existing": False,
+        },
     ] == uploader_upload.call_args
 
 
 def test_publish_read_from_environment_variable(
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
     environ: None,
-    mocker: "MockerFixture",
-    config: "Config",
+    mocker: MockerFixture,
+    config: Config,
 ):
     os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
@@ -174,5 +186,5 @@ def test_publish_read_from_environment_variable(
     assert [("bar", "baz")] == uploader_auth.call_args
     assert [
         ("https://foo.bar",),
-        {"cert": None, "client_cert": None, "dry_run": False},
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args

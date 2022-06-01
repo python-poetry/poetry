@@ -1,10 +1,11 @@
+from __future__ import annotations
+
+import base64
+import re
 import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
-from typing import Type
 
 import pytest
 import requests
@@ -15,7 +16,7 @@ from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.legacy_repository import Page
+from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 try:
@@ -28,6 +29,13 @@ if TYPE_CHECKING:
 
     from _pytest.monkeypatch import MonkeyPatch
 
+    from poetry.config.config import Config
+
+
+@pytest.fixture(autouse=True)
+def _use_simple_keyring(with_simple_keyring: None) -> None:
+    pass
+
 
 class MockRepository(LegacyRepository):
 
@@ -36,7 +44,7 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint: str) -> Optional[Page]:
+    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -45,7 +53,7 @@ class MockRepository(LegacyRepository):
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return Page(self._url + endpoint, f.read(), {})
+            return SimpleRepositoryPage(self._url + endpoint, f.read())
 
     def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -72,6 +80,46 @@ def test_page_absolute_links_path_are_correct():
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
+
+
+def test_page_clean_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/relative")
+
+    cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
+    assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
+
+
+def test_page_invalid_version_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/invalid-version")
+
+    links = list(page.links)
+    assert len(links) == 2
+
+    versions = list(page.versions("poetry"))
+    assert len(versions) == 1
+    assert versions[0].to_string() == "0.1.0"
+
+    invalid_link = None
+
+    for link in links:
+        if link.filename.startswith("poetry-21"):
+            invalid_link = link
+            break
+
+    links_010 = list(page.links_for_version("poetry", versions[0]))
+    assert invalid_link not in links_010
+
+    assert invalid_link
+    assert not page.link_package_data(invalid_link)
+
+    packages = list(page.packages)
+    assert len(packages) == 1
+    assert packages[0].name == "poetry"
+    assert packages[0].version.to_string() == "0.1.0"
 
 
 def test_sdist_format_support():
@@ -247,6 +295,16 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     assert str(required[5].marker) == 'sys_platform != "win32"'
 
 
+def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint():
+    repo = MockRepository()
+
+    package = repo.package("poetry-test-py2-py3-metadata-merge", "0.1.0")
+
+    assert package.name == "poetry-test-py2-py3-metadata-merge"
+    assert package.version.text == "0.1.0"
+    assert package.python_versions == ">=2.7,<2.8 || >=3.7,<4.0"
+
+
 def test_get_package_with_dist_and_universal_py3_wheel():
     repo = MockRepository()
 
@@ -331,7 +389,9 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 class MockHttpRepository(LegacyRepository):
-    def __init__(self, endpoint_responses: Dict, http: Type["httpretty.httpretty"]):
+    def __init__(
+        self, endpoint_responses: dict, http: type[httpretty.httpretty]
+    ) -> None:
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
@@ -340,20 +400,20 @@ class MockHttpRepository(LegacyRepository):
             http.register_uri(http.GET, url, status=response)
 
 
-def test_get_200_returns_page(http: Type["httpretty.httpretty"]):
+def test_get_200_returns_page(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 200}, http)
 
     assert repo._get_page("/foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
-def test_get_40x_and_returns_none(http: Type["httpretty.httpretty"], status_code: int):
+def test_get_40x_and_returns_none(http: type[httpretty.httpretty], status_code: int):
     repo = MockHttpRepository({"/foo": status_code}, http)
 
     assert repo._get_page("/foo") is None
 
 
-def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
+def test_get_5xx_raises(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 500}, http)
 
     with pytest.raises(RepositoryError):
@@ -361,12 +421,12 @@ def test_get_5xx_raises(http: Type["httpretty.httpretty"]):
 
 
 def test_get_redirected_response_url(
-    http: Type["httpretty.httpretty"], monkeypatch: "MonkeyPatch"
+    http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
 ):
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
-    def get_mock(url: str) -> requests.Response:
+    def get_mock(url: str, raise_for_status: bool = True) -> requests.Response:
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"
@@ -374,3 +434,42 @@ def test_get_redirected_response_url(
 
     monkeypatch.setattr(repo.session, "get", get_mock)
     assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+
+
+@pytest.mark.parametrize(
+    ("repositories",),
+    [
+        ({},),
+        # ensure path is respected
+        ({"publish": {"url": "https://foo.bar/legacy"}},),
+        # ensure path length does not give incorrect results
+        ({"publish": {"url": "https://foo.bar/upload/legacy"}},),
+    ],
+)
+def test_authenticator_with_implicit_repository_configuration(
+    http: type[httpretty.httpretty],
+    config: Config,
+    repositories: dict[str, dict[str, str]],
+) -> None:
+    http.register_uri(
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
+    )
+
+    config.merge(
+        {
+            "repositories": repositories,
+            "http-basic": {
+                "source": {"username": "foo", "password": "bar"},
+                "publish": {"username": "baz", "password": "qux"},
+            },
+        }
+    )
+
+    repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
+    repo._get_page("/foo")
+
+    request = http.last_request()
+
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"

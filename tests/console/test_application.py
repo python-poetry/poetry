@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import re
 
 from typing import TYPE_CHECKING
+
+import pytest
 
 from cleo.testers.application_tester import ApplicationTester
 from entrypoints import EntryPoint
@@ -26,11 +30,10 @@ class FooCommand(Command):
 
 
 class AddCommandPlugin(ApplicationPlugin):
-    def activate(self, application: Application) -> None:
-        application.command_loader.register_factory("foo", lambda: FooCommand())
+    commands = [FooCommand]
 
 
-def test_application_with_plugins(mocker: "MockerFixture"):
+def test_application_with_plugins(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -49,7 +52,7 @@ def test_application_with_plugins(mocker: "MockerFixture"):
     assert tester.status_code == 0
 
 
-def test_application_with_plugins_disabled(mocker: "MockerFixture"):
+def test_application_with_plugins_disabled(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -68,7 +71,7 @@ def test_application_with_plugins_disabled(mocker: "MockerFixture"):
     assert tester.status_code == 0
 
 
-def test_application_execute_plugin_command(mocker: "MockerFixture"):
+def test_application_execute_plugin_command(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -88,7 +91,7 @@ def test_application_execute_plugin_command(mocker: "MockerFixture"):
 
 
 def test_application_execute_plugin_command_with_plugins_disabled(
-    mocker: "MockerFixture",
+    mocker: MockerFixture,
 ):
     mocker.patch(
         "entrypoints.get_group_all",
@@ -107,3 +110,23 @@ def test_application_execute_plugin_command_with_plugins_disabled(
     assert tester.io.fetch_output() == ""
     assert tester.io.fetch_error() == '\nThe command "foo" does not exist.\n'
     assert tester.status_code == 1
+
+
+@pytest.mark.parametrize("disable_cache", [True, False])
+def test_application_verify_source_cache_flag(disable_cache: bool):
+    app = Application()
+
+    tester = ApplicationTester(app)
+    command = "debug info"
+
+    if disable_cache:
+        command = f"{command} --no-cache"
+
+    assert not app._poetry
+
+    tester.execute(command)
+
+    assert app.poetry.pool.repositories
+
+    for repo in app.poetry.pool.repositories:
+        assert repo._disable_cache == disable_cache

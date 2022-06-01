@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -6,13 +8,14 @@ from tests.mixology.helpers import check_solver_result
 
 
 if TYPE_CHECKING:
-    from poetry.packages.project_package import ProjectPackage
+    from poetry.core.packages.project_package import ProjectPackage
+
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
 
 
 def test_circular_dependency_on_older_version(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("a", ">=1.0.0"))
 
@@ -24,7 +27,7 @@ def test_circular_dependency_on_older_version(
 
 
 def test_diamond_dependency_graph(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
@@ -43,7 +46,7 @@ def test_diamond_dependency_graph(
 
 
 def test_backjumps_after_partial_satisfier(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     # c 2.0.0 is incompatible with y 2.0.0 because it requires x 1.0.0, but that
     # requirement only exists because of both a and b. The solver should be able
@@ -68,7 +71,7 @@ def test_backjumps_after_partial_satisfier(
 
 
 def test_rolls_back_leaf_versions_first(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     # The latest versions of a and b disagree on c. An older version of either
     # will resolve the problem. This test validates that b, which is farther
@@ -85,9 +88,7 @@ def test_rolls_back_leaf_versions_first(
     check_solver_result(root, provider, {"a": "2.0.0", "b": "1.0.0", "c": "2.0.0"})
 
 
-def test_simple_transitive(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
-):
+def test_simple_transitive(root: ProjectPackage, provider: Provider, repo: Repository):
     # Only one version of baz, so foo and bar will have to downgrade
     # until they reach it
     root.add_dependency(Factory.create_dependency("foo", "*"))
@@ -108,7 +109,7 @@ def test_simple_transitive(
 
 
 def test_backjump_to_nearer_unsatisfied_package(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     # This ensures it doesn't exhaustively search all versions of b when it's
     # a-2.0.0 whose dependency on c-2.0.0-nonexistent led to the problem. We
@@ -130,7 +131,7 @@ def test_backjump_to_nearer_unsatisfied_package(
 
 
 def test_traverse_into_package_with_fewer_versions_first(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     # Dependencies are ordered so that packages with fewer versions are tried
     # first. Here, there are two valid solutions (either a or b must be
@@ -156,7 +157,7 @@ def test_traverse_into_package_with_fewer_versions_first(
 
 
 def test_backjump_past_failed_package_on_disjoint_constraint(
-    root: "ProjectPackage", provider: "Provider", repo: "Repository"
+    root: ProjectPackage, provider: Provider, repo: Repository
 ):
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("foo", ">2.0.0"))

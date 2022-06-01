@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 import json
 import shutil
 
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
 
 import pytest
 
@@ -22,15 +22,20 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+@pytest.fixture(autouse=True)
+def _use_simple_keyring(with_simple_keyring: None) -> None:
+    pass
+
+
 class MockRepository(PyPiRepository):
 
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
-    def __init__(self, fallback: bool = False):
+    def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
-    def _get(self, url: str) -> Optional[Dict]:
+    def _get(self, url: str) -> dict | None:
         parts = url.split("/")[1:]
         name = parts[0]
         if len(parts) == 3:
@@ -214,14 +219,15 @@ def test_invalid_versions_ignored():
     assert len(packages) == 1
 
 
-def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: "MockerFixture"):
+def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: MockerFixture):
     delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
 
     response = Response()
+    response.status_code = 200
     response.encoding = "utf-8"
     response.raw = BytesIO(encode('{"foo": "bar"}'))
     mocker.patch(
-        "cachecontrol.adapter.CacheControlAdapter.send",
+        "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],
     )
     repository = PyPiRepository()

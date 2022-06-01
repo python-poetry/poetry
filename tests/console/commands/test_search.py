@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Type
 
 import pytest
 
@@ -19,17 +20,17 @@ FIXTURES_DIRECTORY = (
 
 
 @pytest.fixture(autouse=True)
-def mock_search_http_response(http: Type["httpretty.httpretty"]) -> None:
+def mock_search_http_response(http: type[httpretty.httpretty]) -> None:
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
         http.register_uri("GET", "https://pypi.org/search", f.read())
 
 
 @pytest.fixture
-def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("search")
 
 
-def test_search(tester: "CommandTester", http: Type["httpretty.httpretty"]):
+def test_search(tester: CommandTester, http: type[httpretty.httpretty]):
     tester.execute("sqlalchemy")
 
     expected = """
@@ -51,7 +52,7 @@ paginate-sqlalchemy (0.3.0)
 sqlalchemy-audit (0.1.0)
  sqlalchemy-audit provides an easy way to set up revision tracking for your data.
 
-transmogrify.sqlalchemy (1.0.2)
+transmogrify-sqlalchemy (1.0.2)
  Feed data from SQLAlchemy into a transmogrifier pipeline
 
 sqlalchemy-schemadisplay (1.3)
@@ -95,4 +96,6 @@ sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
 """
 
-    assert tester.io.fetch_output() == expected
+    output = tester.io.fetch_output()
+
+    assert output == expected

@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from typing import Any
-from typing import Dict
-from typing import List
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.packages.dependency_group import MAIN_GROUP
+from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 class RemoveCommand(InstallerCommand):
@@ -36,16 +39,15 @@ list of installed packages
         packages = self.argument("packages")
 
         if self.option("dev"):
-            self.line(
+            self.line_error(
                 "<warning>The --dev option is deprecated, "
                 "use the `--group dev` notation instead.</warning>"
             )
-            self.line("")
             group = "dev"
         else:
-            group = self.option("group")
+            group = self.option("group", self.default_group)
 
-        content = self.poetry.file.read()
+        content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
         if group is None:
@@ -56,10 +58,10 @@ list of installed packages
             ]
 
             for group_name, section in [
-                ("default", poetry_content["dependencies"])
+                (MAIN_GROUP, poetry_content["dependencies"])
             ] + group_sections:
                 removed += self._remove_packages(packages, section, group_name)
-                if group_name != "default":
+                if group_name != MAIN_GROUP:
                     if not section:
                         del poetry_content["group"][group_name]
                     else:
@@ -73,12 +75,17 @@ list of installed packages
             if not poetry_content["dev-dependencies"]:
                 del poetry_content["dev-dependencies"]
         else:
-            removed = self._remove_packages(
-                packages, poetry_content["group"][group].get("dependencies", {}), group
-            )
+            removed = []
+            if "group" in poetry_content:
+                if group in poetry_content["group"]:
+                    removed = self._remove_packages(
+                        packages,
+                        poetry_content["group"][group].get("dependencies", {}),
+                        group,
+                    )
 
-            if not poetry_content["group"][group]:
-                del poetry_content["group"][group]
+                if not poetry_content["group"][group]:
+                    del poetry_content["group"][group]
 
         if "group" in poetry_content and not poetry_content["group"]:
             del poetry_content["group"]
@@ -96,12 +103,8 @@ list of installed packages
         )
         self._installer.set_locker(self.poetry.locker)
 
-        # Update packages
-        self._installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
-
-        self._installer.dry_run(self.option("dry-run"))
+        self._installer.set_package(self.poetry.package)
+        self._installer.dry_run(self.option("dry-run", False))
         self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
         self._installer.whitelist(removed_set)
@@ -109,20 +112,21 @@ list of installed packages
         status = self._installer.run()
 
         if not self.option("dry-run") and status == 0:
+            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
 
         return status
 
     def _remove_packages(
-        self, packages: List[str], section: Dict[str, Any], group_name: str
-    ) -> List[str]:
+        self, packages: list[str], section: dict[str, Any], group_name: str
+    ) -> list[str]:
         removed = []
         group = self.poetry.package.dependency_group(group_name)
         section_keys = list(section.keys())
 
         for package in packages:
             for existing_package in section_keys:
-                if existing_package.lower() == package.lower():
+                if canonicalize_name(existing_package) == canonicalize_name(package):
                     del section[existing_package]
                     removed.append(package)
                     group.remove_dependency(package)

@@ -1,18 +1,20 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Mapping
-from typing import Sequence
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+    from typing import Mapping
+
     from poetry.core.packages.package import Package
 
 
 def get_extra_package_names(
-    packages: Sequence["Package"],
-    extras: Mapping[str, List[str]],
+    packages: Sequence[Package],
+    extras: Mapping[str, list[str]],
     extra_names: Sequence[str],
 ) -> Iterable[str]:
     """

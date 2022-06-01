@@ -27,3 +27,7 @@ generate-setup-file = false
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+
+[build-system]
+requires = ["poetry-core", "cython"]
+build-backend = "poetry.core.masonry.api"

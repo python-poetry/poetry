@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
 
 import pytest
 
@@ -25,6 +22,8 @@ if TYPE_CHECKING:
     import httpretty
 
     from httpretty.core import HTTPrettyRequest
+
+    from tests.conftest import Config
 
 
 JSON_FIXTURES = (
@@ -45,10 +44,10 @@ def env() -> MockEnv:
 
 
 @pytest.fixture()
-def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
+def mock_pypi(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> Optional[List[Union[int, Dict[str, Any], str]]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str] | None:
         parts = uri.rsplit("/")
 
         name = parts[-3]
@@ -72,10 +71,10 @@ def mock_pypi(http: Type["httpretty.httpretty"]) -> None:
 
 
 @pytest.fixture()
-def mock_legacy(http: Type["httpretty.httpretty"]) -> None:
+def mock_legacy(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
-    ) -> List[Union[int, Dict[str, Any], str]]:
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str]:
         parts = uri.rsplit("/")
         name = parts[-2]
 
@@ -122,6 +121,46 @@ def test_chooser_chooses_universal_wheel_link_if_available(
     link = chooser.choose_for(package)
 
     assert link.filename == "pytest-3.5.0-py2.py3-none-any.whl"
+
+
+@pytest.mark.parametrize(
+    ("policy", "filename"),
+    [
+        (":all:", "pytest-3.5.0.tar.gz"),
+        (":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("black", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("pytest", "pytest-3.5.0.tar.gz"),
+        ("pytest,black", "pytest-3.5.0.tar.gz"),
+    ],
+)
+@pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_no_binary_policy(
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: Pool,
+    policy: str,
+    filename: str,
+    config: Config,
+):
+    config.merge({"installer": {"no-binary": policy.split(",")}})
+
+    chooser = Chooser(pool, env, config)
+
+    package = Package("pytest", "3.5.0")
+    if source_type == "legacy":
+        package = Package(
+            package.name,
+            package.version.text,
+            source_type="legacy",
+            source_reference="foo",
+            source_url="https://foo.bar/simple/",
+        )
+
+    link = chooser.choose_for(package)
+
+    assert link.filename == filename
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])

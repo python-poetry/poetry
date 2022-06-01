@@ -1,13 +1,15 @@
-import os
+from __future__ import annotations
 
 from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from cleo.io.inputs.string_input import StringInput
+from cleo.io.io import IO
 
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
-from poetry.console.commands.remove import RemoveCommand
+from poetry.console.commands.self.remove import SelfRemoveCommand
 
 
 class PluginRemoveCommand(Command):
@@ -29,38 +31,32 @@ class PluginRemoveCommand(Command):
         )
     ]
 
+    help = (
+        "<warning>This command is deprecated. Use <c2>self remove</> command instead."
+        "</warning>"
+    )
+
+    hidden = True
+
     def handle(self) -> int:
-        from pathlib import Path
+        self.line_error(self.help)
 
-        from cleo.io.inputs.string_input import StringInput
-        from cleo.io.io import IO
-
-        from poetry.factory import Factory
-        from poetry.utils.env import EnvManager
-
-        plugins = self.argument("plugins")
-
-        system_env = EnvManager.get_system_env(naive=True)
-        env_dir = Path(os.getenv("POETRY_HOME") or system_env.path)
-
-        # From this point forward, all the logic will be deferred to
-        # the remove command, by using the global `pyproject.toml` file.
         application = cast(Application, self.application)
-        remove_command: RemoveCommand = cast(RemoveCommand, application.find("remove"))
-        # We won't go through the event dispatching done by the application
-        # so we need to configure the command manually
-        remove_command.set_poetry(Factory().create_poetry(env_dir))
-        remove_command.set_env(system_env)
-        application._configure_installer(remove_command, self._io)
+        command: SelfRemoveCommand = cast(
+            SelfRemoveCommand, application.find("self remove")
+        )
+        application.configure_installer_for_command(command, self.io)
 
-        argv = ["remove"] + plugins
-        if self.option("dry-run"):
+        argv: list[str] = ["remove", *self.argument("plugins")]
+
+        if self.option("--dry-run"):
             argv.append("--dry-run")
 
-        return remove_command.run(
+        exit_code: int = command.run(
             IO(
                 StringInput(" ".join(argv)),
                 self._io.output,
                 self._io.error_output,
             )
         )
+        return exit_code

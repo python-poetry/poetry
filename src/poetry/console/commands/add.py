@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 import contextlib
 
-from typing import Dict
-from typing import List
+from typing import Any
 from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.packages.dependency_group import MAIN_GROUP
+from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 class AddCommand(InstallerCommand, InitCommand):
@@ -23,7 +27,7 @@ class AddCommand(InstallerCommand, InitCommand):
             "-G",
             "The group to add the dependency to.",
             flag=False,
-            default="default",
+            default=MAIN_GROUP,
         ),
         option("dev", "D", "Add as a development dependency."),
         option("editable", "e", "Add vcs/path dependencies as editable."),
@@ -62,10 +66,7 @@ class AddCommand(InstallerCommand, InitCommand):
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
-    help = """\
-The add command adds required packages to your <comment>pyproject.toml</> and installs\
- them.
-
+    examples = """\
 If you do not specify a version constraint, poetry will choose a suitable one based on\
  the available package versions.
 
@@ -82,6 +83,12 @@ You can specify a package in the following forms:
   - A directory (<b>../my-package/</b>)
   - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
 """
+    help = f"""\
+The add command adds required packages to your <comment>pyproject.toml</> and installs\
+ them.
+
+{examples}
+"""
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
@@ -95,39 +102,41 @@ You can specify a package in the following forms:
 
         packages = self.argument("name")
         if self.option("dev"):
-            self.line(
+            self.line_error(
                 "<warning>The --dev option is deprecated, "
                 "use the `--group dev` notation instead.</warning>"
             )
-            self.line("")
             group = "dev"
         else:
-            group = self.option("group")
+            group = self.option("group", self.default_group or MAIN_GROUP)
 
         if self.option("extras") and len(packages) > 1:
             raise ValueError(
                 "You can only specify one package when using the --extras option"
             )
 
-        content = self.poetry.file.read()
+        # tomlkit types are awkward to work with, treat content as a mostly untyped
+        # dictionary.
+        content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
-        if group == "default":
+        if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
                 poetry_content["dependencies"] = table()
 
             section = poetry_content["dependencies"]
         else:
             if "group" not in poetry_content:
-                group_table = table()
-                group_table._is_super_table = True
-                poetry_content.value._insert_after("dependencies", "group", group_table)
+                poetry_content.value._insert_after(
+                    "dependencies", "group", table(is_super_table=True)
+                )
 
             groups = poetry_content["group"]
             if group not in groups:
-                group_table = parse_toml(
+                dependencies_toml: dict[str, Any] = parse_toml(
                     f"[tool.poetry.group.{group}.dependencies]\n\n"
-                )["tool"]["poetry"]["group"][group]
+                )
+                group_table = dependencies_toml["tool"]["poetry"]["group"][group]
                 poetry_content["group"][group] = group_table
 
             if "dependencies" not in poetry_content["group"][group]:
@@ -153,11 +162,13 @@ You can specify a package in the following forms:
         )
 
         for _constraint in requirements:
-            if "version" in _constraint:
+            version = _constraint.get("version")
+            if version is not None:
                 # Validate version constraint
-                parse_constraint(_constraint["version"])
+                assert isinstance(version, str)
+                parse_constraint(version)
 
-            constraint = inline_table()
+            constraint: dict[str, Any] = inline_table()
             for name, value in _constraint.items():
                 if name == "name":
                     continue
@@ -205,16 +216,18 @@ You can specify a package in the following forms:
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            section[_constraint["name"]] = constraint
+            constraint_name = _constraint["name"]
+            assert isinstance(constraint_name, str)
+            section[constraint_name] = constraint
 
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(
-                    _constraint["name"]
+                    constraint_name
                 )
 
             self.poetry.package.add_dependency(
                 Factory.create_dependency(
-                    _constraint["name"],
+                    constraint_name,
                     constraint,
                     groups=[group],
                     root_dir=self.poetry.file.parent,
@@ -242,31 +255,36 @@ You can specify a package in the following forms:
         status = self._installer.run()
 
         if status == 0 and not self.option("dry-run"):
+            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
 
         return status
 
     def get_existing_packages_from_input(
-        self, packages: List[str], section: Dict
-    ) -> List[str]:
+        self, packages: list[str], section: dict[str, Any]
+    ) -> list[str]:
         existing_packages = []
 
         for name in packages:
             for key in section:
-                if key.lower() == name.lower():
+                if canonicalize_name(key) == canonicalize_name(name):
                     existing_packages.append(name)
 
         return existing_packages
 
-    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
+    @property
+    def _hint_update_packages(self) -> str:
+        return (
+            "\nIf you want to update it to the latest compatible version, you can use"
+            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
+            " available version, you can use `poetry add package@latest`.\n"
+        )
+
+    def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(
             "The following packages are already present in the pyproject.toml and will"
             " be skipped:\n"
         )
         for name in existing_packages:
             self.line(f"  • <c1>{name}</c1>")
-        self.line(
-            "\nIf you want to update it to the latest compatible version, you can use"
-            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
-            " available version, you can use `poetry add package@latest`.\n"
-        )
+        self.line(self._hint_update_packages)

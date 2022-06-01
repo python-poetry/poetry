@@ -1,16 +1,12 @@
-import os
-import re
+from __future__ import annotations
+
 import sys
-import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
-from typing import List
 from typing import Mapping
-from typing import Optional
-from typing import Tuple
 from typing import Union
 
 from cleo.helpers import option
@@ -18,6 +14,7 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.dependency_specification import parse_dependency_specification
 from poetry.utils.helpers import canonicalize_name
 
 
@@ -26,6 +23,8 @@ if TYPE_CHECKING:
     from tomlkit.items import InlineTable
 
     from poetry.repositories import Pool
+
+Requirements = Dict[str, Union[str, Mapping[str, Any]]]
 
 
 class InitCommand(Command):
@@ -66,7 +65,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def __init__(self) -> None:
         super().__init__()
 
-        self._pool: Optional["Pool"] = None
+        self._pool: Pool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -81,14 +80,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
-                self.line(
+                self.line_error(
                     "<error>A pyproject.toml file with a poetry section already"
                     " exists.</error>"
                 )
                 return 1
 
             if pyproject.data.get("build-system"):
-                self.line(
+                self.line_error(
                     "<error>A pyproject.toml file with a defined build-system already"
                     " exists.</error>"
                 )
@@ -127,7 +126,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         description = self.ask(question)
 
         author = self.option("author")
-        if not author and vcs_config and vcs_config.get("user.name"):
+        if not author and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
@@ -167,7 +166,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if self.io.is_interactive():
             self.line("")
 
-        requirements = {}
+        requirements: Requirements = {}
         if self.option("dependency"):
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
@@ -197,7 +196,7 @@ You can specify a package in the following forms:
             if self.io.is_interactive():
                 self.line("")
 
-        dev_requirements: Dict[str, str] = {}
+        dev_requirements: Requirements = {}
         if self.option("dev-dependency"):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
@@ -235,7 +234,7 @@ You can specify a package in the following forms:
             self.line("")
 
         if not self.confirm("Do you confirm generation?", True):
-            self.line("<error>Command aborted</error>")
+            self.line_error("<error>Command aborted</error>")
 
             return 1
 
@@ -245,8 +244,8 @@ You can specify a package in the following forms:
         return 0
 
     def _generate_choice_list(
-        self, matches: List["Package"], canonicalized_name: str
-    ) -> List[str]:
+        self, matches: list[Package], canonicalized_name: str
+    ) -> list[str]:
         choices = []
         matches_names = [p.name for p in matches]
         exact_match = canonicalized_name in matches_names
@@ -266,12 +265,12 @@ You can specify a package in the following forms:
 
     def _determine_requirements(
         self,
-        requires: List[str],
+        requires: list[str],
         allow_prereleases: bool = False,
-        source: Optional[str] = None,
-    ) -> List[Dict[str, Union[str, List[str]]]]:
+        source: str | None = None,
+    ) -> list[dict[str, Any]]:
         if not requires:
-            requires = []
+            result = []
 
             package = self.ask(
                 "Search for package to add (or leave blank to continue):"
@@ -285,14 +284,14 @@ You can specify a package in the following forms:
                     or "version" in constraint
                 ):
                     self.line(f"Adding <info>{package}</info>")
-                    requires.append(constraint)
+                    result.append(constraint)
                     package = self.ask("\nAdd a package:")
                     continue
 
                 canonicalized_name = canonicalize_name(constraint["name"])
                 matches = self._get_pool().search(canonicalized_name)
                 if not matches:
-                    self.line("<error>Unable to find package</error>")
+                    self.line_error("<error>Unable to find package</error>")
                     package = False
                 else:
                     choices = self._generate_choice_list(matches, canonicalized_name)
@@ -307,19 +306,26 @@ You can specify a package in the following forms:
 
                     self.line(info_string)
 
+                    # Default to an empty value to signal no package was selected
+                    choices.append("")
+
                     package = self.choice(
                         "\nEnter package # to add, or the complete package name if it"
                         " is not listed",
                         choices,
                         attempts=3,
+                        default=len(choices) - 1,
                     )
 
+                    if not package:
+                        self.line("<warning>No package selected</warning>")
+
                     # package selected by user, set constraint name to package name
-                    if package is not False:
+                    if package:
                         constraint["name"] = package
 
                 # no constraint yet, determine the best version automatically
-                if package is not False and "version" not in constraint:
+                if package and "version" not in constraint:
                     question = self.create_question(
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
@@ -341,17 +347,16 @@ You can specify a package in the following forms:
 
                     constraint["version"] = package_constraint
 
-                if package is not False:
-                    requires.append(constraint)
+                if package:
+                    result.append(constraint)
 
                 if self.io.is_interactive():
                     package = self.ask("\nAdd a package:")
 
-            return requires
+            return result
 
-        requires = self._parse_requirements(requires)
         result = []
-        for requirement in requires:
+        for requirement in self._parse_requirements(requires):
             if "git" in requirement or "url" in requirement or "path" in requirement:
                 result.append(requirement)
                 continue
@@ -385,10 +390,10 @@ You can specify a package in the following forms:
     def _find_best_version_for_package(
         self,
         name: str,
-        required_version: Optional[str] = None,
+        required_version: str | None = None,
         allow_prereleases: bool = False,
-        source: Optional[str] = None,
-    ) -> Tuple[str, str]:
+        source: str | None = None,
+    ) -> tuple[str, str]:
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self._get_pool())
@@ -402,143 +407,28 @@ You can specify a package in the following forms:
 
         return package.pretty_name, selector.find_recommended_require_version(package)
 
-    def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, Any]]:
+    def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException
-
-        from poetry.puzzle.provider import Provider
-
-        result = []
 
         try:
             cwd = self.poetry.file.parent
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
 
-        for requirement in requirements:
-            requirement = requirement.strip()
-            extras = []
-            extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
-            if extras_m:
-                extras = [e.strip() for e in extras_m.group(1).split(",")]
-                requirement, _ = requirement.split("[")
-
-            url_parsed = urllib.parse.urlparse(requirement)
-            if url_parsed.scheme and url_parsed.netloc:
-                # Url
-                if url_parsed.scheme in ["git+https", "git+ssh"]:
-                    from poetry.core.vcs.git import Git
-                    from poetry.core.vcs.git import ParsedUrl
-
-                    parsed = ParsedUrl.parse(requirement)
-                    url = Git.normalize_url(requirement)
-
-                    pair = {"name": parsed.name, "git": url.url}
-                    if parsed.rev:
-                        pair["rev"] = url.revision
-
-                    if extras:
-                        pair["extras"] = extras
-
-                    package = Provider.get_package_from_vcs(
-                        "git", url.url, rev=pair.get("rev")
-                    )
-                    pair["name"] = package.name
-                    result.append(pair)
-
-                    continue
-                elif url_parsed.scheme in ["http", "https"]:
-                    package = Provider.get_package_from_url(requirement)
-
-                    pair = {"name": package.name, "url": package.source_url}
-                    if extras:
-                        pair["extras"] = extras
-
-                    result.append(pair)
-                    continue
-            elif (os.path.sep in requirement or "/" in requirement) and (
-                cwd.joinpath(requirement).exists()
-                or Path(requirement).expanduser().exists()
-                and Path(requirement).expanduser().is_absolute()
-            ):
-                path = Path(requirement).expanduser()
-                is_absolute = path.is_absolute()
-
-                if not path.is_absolute():
-                    path = cwd.joinpath(requirement)
-
-                if path.is_file():
-                    package = Provider.get_package_from_file(path.resolve())
-                else:
-                    package = Provider.get_package_from_directory(path.resolve())
-
-                result.append(
-                    dict(
-                        [
-                            ("name", package.name),
-                            (
-                                "path",
-                                path.relative_to(cwd).as_posix()
-                                if not is_absolute
-                                else path.as_posix(),
-                            ),
-                        ]
-                        + ([("extras", extras)] if extras else [])
-                    )
-                )
-
-                continue
-
-            pair = re.sub(
-                "^([^@=: ]+)(?:@|==|(?<![<>~!])=|:| )(.*)$", "\\1 \\2", requirement
+        return [
+            parse_dependency_specification(
+                requirement=requirement,
+                env=self.env if isinstance(self, EnvCommand) else None,
+                cwd=cwd,
             )
-            pair = pair.strip()
+            for requirement in requirements
+        ]
 
-            require: Dict[str, str] = {}
-            if " " in pair:
-                name, version = pair.split(" ", 2)
-                extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-                if extras_m:
-                    extras = [e.strip() for e in extras_m.group(1).split(",")]
-                    name, _ = name.split("[")
-
-                require["name"] = name
-                if version != "latest":
-                    require["version"] = version
-            else:
-                m = re.match(
-                    r"^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
-                )
-                if m:
-                    name, constraint = m.group(1), m.group(2)
-                    extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-                    if extras_m:
-                        extras = [e.strip() for e in extras_m.group(1).split(",")]
-                        name, _ = name.split("[")
-
-                    require["name"] = name
-                    require["version"] = constraint
-                else:
-                    extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
-                    if extras_m:
-                        extras = [e.strip() for e in extras_m.group(1).split(",")]
-                        pair, _ = pair.split("[")
-
-                    require["name"] = pair
-
-            if extras:
-                require["extras"] = extras
-
-            result.append(require)
-
-        return result
-
-    def _format_requirements(
-        self, requirements: List[Dict[str, str]]
-    ) -> Mapping[str, Union[str, Mapping[str, str]]]:
-        requires = {}
+    def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
+        requires: Requirements = {}
         for requirement in requirements:
             name = requirement.pop("name")
-            constraint: Union[str, "InlineTable"]
+            constraint: str | InlineTable
             if "version" in requirement and len(requirement) == 1:
                 constraint = requirement["version"]
             else:
@@ -550,7 +440,7 @@ You can specify a package in the following forms:
 
         return requires
 
-    def _validate_author(self, author: str, default: str) -> Optional[str]:
+    def _validate_author(self, author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
 
         author = author or default
@@ -575,7 +465,7 @@ You can specify a package in the following forms:
 
         return license
 
-    def _get_pool(self) -> "Pool":
+    def _get_pool(self) -> Pool:
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 

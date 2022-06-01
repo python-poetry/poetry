@@ -1,14 +1,11 @@
+from __future__ import annotations
+
 import logging
 
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
-from typing import Union
 
 from poetry.publishing.uploader import Uploader
 from poetry.utils.authenticator import Authenticator
-from poetry.utils.helpers import get_cert
-from poetry.utils.helpers import get_client_cert
 
 
 if TYPE_CHECKING:
@@ -27,7 +24,7 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry: "Poetry", io: Union["BufferedIO", "ConsoleIO"]) -> None:
+    def __init__(self, poetry: Poetry, io: BufferedIO | ConsoleIO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -35,17 +32,18 @@ class Publisher:
         self._authenticator = Authenticator(poetry.config, self._io)
 
     @property
-    def files(self) -> List["Path"]:
+    def files(self) -> list[Path]:
         return self._uploader.files
 
     def publish(
         self,
-        repository_name: Optional[str],
-        username: Optional[str],
-        password: Optional[str],
-        cert: Optional["Path"] = None,
-        client_cert: Optional["Path"] = None,
+        repository_name: str | None,
+        username: str | None,
+        password: str | None,
+        cert: Path | None = None,
+        client_cert: Path | None = None,
         dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> None:
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
@@ -69,14 +67,15 @@ class Publisher:
                     logger.debug(
                         f"Found authentication information for {repository_name}."
                     )
-                    username = auth["username"]
-                    password = auth["password"]
+                    username = auth.username
+                    password = auth.password
 
-        resolved_client_cert = client_cert or get_client_cert(
-            self._poetry.config, repository_name
-        )
+        certificates = self._authenticator.get_certs_for_repository(repository_name)
+        resolved_cert = cert or certificates.cert or certificates.verify
+        resolved_client_cert = client_cert or certificates.client_cert
+
         # Requesting missing credentials but only if there is not a client cert defined.
-        if not resolved_client_cert:
+        if not resolved_client_cert and hasattr(self._io, "ask"):
             if username is None:
                 username = self._io.ask("Username:")
 
@@ -96,7 +95,8 @@ class Publisher:
 
         self._uploader.upload(
             url,
-            cert=cert or get_cert(self._poetry.config, repository_name),
+            cert=resolved_cert,
             client_cert=resolved_client_cert,
             dry_run=dry_run,
+            skip_existing=skip_existing,
         )

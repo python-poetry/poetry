@@ -1,17 +1,10 @@
-from pathlib import Path
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
 import pytest
 
 from poetry.core.utils.helpers import parse_requires
 
 from poetry.utils.helpers import canonicalize_name
-from poetry.utils.helpers import get_cert
-from poetry.utils.helpers import get_client_cert
-
-
-if TYPE_CHECKING:
-    from tests.conftest import Config
 
 
 def test_parse_requires():
@@ -68,20 +61,6 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
     ]
     # fmt: on
     assert result == expected
-
-
-def test_get_cert(config: "Config"):
-    ca_cert = "path/to/ca.pem"
-    config.merge({"certificates": {"foo": {"cert": ca_cert}}})
-
-    assert get_cert(config, "foo") == Path(ca_cert)
-
-
-def test_get_client_cert(config: "Config"):
-    client_cert = "path/to/client.pem"
-    config.merge({"certificates": {"foo": {"client-cert": client_cert}}})
-
-    assert get_client_cert(config, "foo") == Path(client_cert)
 
 
 test_canonicalize_name_cases = [

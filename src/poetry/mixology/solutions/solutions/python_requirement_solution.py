@@ -1,22 +1,24 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from typing import List
 
 from crashtest.contracts.solution import Solution
 
 
 if TYPE_CHECKING:
-    from poetry.mixology.incompatibility_cause import PackageNotFoundCause
+    from poetry.mixology.failure import SolveFailure
+    from poetry.puzzle.exceptions import SolverProblemError
 
 
-class PythonRequirementSolution(Solution):
-    def __init__(self, exception: "PackageNotFoundCause") -> None:
+class PythonRequirementSolution(Solution):  # type: ignore[misc]
+    def __init__(self, exception: SolverProblemError) -> None:
         from poetry.core.semver.helpers import parse_constraint
 
         from poetry.mixology.incompatibility_cause import PythonCause
 
         self._title = "Check your dependencies Python requirement."
 
-        failure = exception.error
+        failure: SolveFailure = exception.error
         version_solutions = []
         for incompatibility in failure._incompatibility.external_incompatibilities:
             if isinstance(incompatibility.cause, PythonCause):
@@ -54,7 +56,7 @@ class PythonRequirementSolution(Solution):
         return self._description
 
     @property
-    def documentation_links(self) -> List[str]:
+    def documentation_links(self) -> list[str]:
         return [
             "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",  # noqa: E501
             "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",  # noqa: E501

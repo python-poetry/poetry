@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import subprocess
 
 from typing import TYPE_CHECKING
@@ -18,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def test_pip_install_successful(
-    tmp_dir: str, tmp_venv: "VirtualEnv", fixture_dir: "FixtureDirGetter"
+    tmp_dir: str, tmp_venv: VirtualEnv, fixture_dir: FixtureDirGetter
 ):
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     result = pip_install(file_path, tmp_venv)
@@ -27,7 +29,7 @@ def test_pip_install_successful(
 
 
 def test_pip_install_link(
-    tmp_dir: str, tmp_venv: "VirtualEnv", fixture_dir: "FixtureDirGetter"
+    tmp_dir: str, tmp_venv: VirtualEnv, fixture_dir: FixtureDirGetter
 ):
     file_path = Link(
         path_to_url(fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl"))
@@ -39,9 +41,9 @@ def test_pip_install_link(
 
 def test_pip_install_with_keyboard_interrupt(
     tmp_dir: str,
-    tmp_venv: "VirtualEnv",
-    fixture_dir: "FixtureDirGetter",
-    mocker: "MockerFixture",
+    tmp_venv: VirtualEnv,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
 ):
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())

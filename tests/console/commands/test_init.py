@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 import os
 import shutil
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
-from typing import List
 
 import pytest
 
@@ -19,6 +19,8 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from _pytest.fixtures import FixtureRequest
     from poetry.core.packages.package import Package
     from pytest_mock import MockerFixture
@@ -40,7 +42,7 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
-def patches(mocker: "MockerFixture", source_dir: Path, repo: "TestRepository") -> None:
+def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
@@ -97,9 +99,9 @@ def test_basic_interactive(
 
 def test_noninteractive(
     app: PoetryTestApplication,
-    mocker: "MockerFixture",
-    poetry: "Poetry",
-    repo: "TestRepository",
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
     tmp_path: Path,
 ):
     command = app.find("init")
@@ -123,7 +125,7 @@ def test_noninteractive(
     assert 'pytest = "^3.6.0"' in toml_content
 
 
-def test_interactive_with_dependencies(tester: CommandTester, repo: "TestRepository"):
+def test_interactive_with_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -175,6 +177,50 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+# Regression test for https://github.com/python-poetry/poetry/issues/2355
+def test_interactive_with_dependencies_and_no_selection(
+    tester: CommandTester, repo: TestRepository
+):
+    repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "",  # Interactive packages
+        "pendulu",  # Search for package
+        "",  # Do not select an option
+        "",  # Stop searching for packages
+        "",  # Interactive dev packages
+        "pytest",  # Search for package
+        "",  # Do not select an option
+        "",
+        "",
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_empty_license(tester: CommandTester):
     inputs = [
         "my-package",  # Package name
@@ -205,9 +251,7 @@ python = "^{python}"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies(
-    tester: CommandTester, repo: "TestRepository"
-):
+def test_interactive_with_git_dependencies(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -251,7 +295,7 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-_generate_choice_list_packages_params: List[List["Package"]] = [
+_generate_choice_list_packages_params: list[list[Package]] = [
     [
         get_package("flask-blacklist", "1.0.0"),
         get_package("Flask-Shelve", "1.0.0"),
@@ -276,7 +320,7 @@ _generate_choice_list_packages_params: List[List["Package"]] = [
 
 
 @pytest.fixture(params=_generate_choice_list_packages_params)
-def _generate_choice_list_packages(request: "FixtureRequest") -> List["Package"]:
+def _generate_choice_list_packages(request: FixtureRequest) -> list[Package]:
     return request.param
 
 
@@ -284,7 +328,7 @@ def _generate_choice_list_packages(request: "FixtureRequest") -> List["Package"]
 def test_generate_choice_list(
     tester: CommandTester,
     package_name: str,
-    _generate_choice_list_packages: List["Package"],
+    _generate_choice_list_packages: list[Package],
 ):
     init_command = tester.command
 
@@ -297,7 +341,7 @@ def test_generate_choice_list(
 
 
 def test_interactive_with_git_dependencies_with_reference(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -343,7 +387,7 @@ pytest = "^3.6.0"
 
 
 def test_interactive_with_git_dependencies_and_other_name(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -390,9 +434,9 @@ pytest = "^3.6.0"
 
 def test_interactive_with_directory_dependency(
     tester: CommandTester,
-    repo: "TestRepository",
+    repo: TestRepository,
     source_dir: Path,
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -441,9 +485,9 @@ pytest = "^3.6.0"
 
 def test_interactive_with_directory_dependency_and_other_name(
     tester: CommandTester,
-    repo: "TestRepository",
+    repo: TestRepository,
     source_dir: Path,
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -493,9 +537,9 @@ pytest = "^3.6.0"
 
 def test_interactive_with_file_dependency(
     tester: CommandTester,
-    repo: "TestRepository",
+    repo: TestRepository,
     source_dir: Path,
-    fixture_dir: "FixtureDirGetter",
+    fixture_dir: FixtureDirGetter,
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -573,7 +617,7 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dependency(tester: CommandTester, repo: "TestRepository"):
+def test_predefined_dependency(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pendulum", "2.0.0"))
 
     inputs = [
@@ -608,7 +652,7 @@ pendulum = "^2.0.0"
 
 
 def test_predefined_and_interactive_dependencies(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
@@ -650,7 +694,7 @@ python = "~2.7 || ^3.6"
     assert 'pyramid = "^1.10"' in output
 
 
-def test_predefined_dev_dependency(tester: CommandTester, repo: "TestRepository"):
+def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository):
     repo.add_package(get_package("pytest", "3.6.0"))
 
     inputs = [
@@ -688,7 +732,7 @@ pytest = "^3.6.0"
 
 
 def test_predefined_and_interactive_dev_dependencies(
-    tester: CommandTester, repo: "TestRepository"
+    tester: CommandTester, repo: TestRepository
 ):
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
@@ -744,6 +788,7 @@ def test_add_package_with_extras_and_whitespace(tester: CommandTester):
     assert "sqlite" in result[0]["extras"]
 
 
+@pytest.mark.xfail(sys.platform == "win32", reason="regression in tomlkit")
 def test_init_existing_pyproject_simple(
     tester: CommandTester,
     source_dir: Path,
@@ -760,11 +805,12 @@ line-length = 88
     assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
 
+@pytest.mark.xfail(sys.platform == "win32", reason="regression in tomlkit")
 def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    repo: "TestRepository",
+    repo: TestRepository,
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -811,7 +857,7 @@ build-backend = "setuptools.build_meta"
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
     assert (
-        tester.io.fetch_output().strip()
+        tester.io.fetch_error().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
     assert existing_section in pyproject_file.read_text()
