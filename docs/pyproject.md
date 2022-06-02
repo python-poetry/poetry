@@ -115,7 +115,7 @@ in mind. README paths are implicitly relative to `pyproject.toml`.
 
 The contents of the README file(s) are used to populate the
 [Description field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
-in a PyPI build (similar to `long_description` in setuptools). When specifying multiple readmes, their texts will be combined, separated by newlines.
+of your distribution's metadata (similar to `long_description` in setuptools). When specifying multiple files are specified, they are concatenated with newlines.
 
 ```toml
 [tool.poetry]
