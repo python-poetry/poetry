@@ -40,7 +40,7 @@ environment.
         application = cast(Application, self.application)
         add_command: AddCommand = cast(AddCommand, application.find("add"))
         add_command.set_env(self.env)
-        application.configure_installer_for_command(add_command, self._io)
+        application.configure_installer_for_command(add_command, self.io)
 
         argv = ["add", f"poetry@{self.argument('version')}"]
 
@@ -53,8 +53,8 @@ environment.
         exit_code: int = add_command.run(
             IO(
                 StringInput(" ".join(argv)),
-                self._io.output,
-                self._io.error_output,
+                self.io.output,
+                self.io.error_output,
             )
         )
         return exit_code

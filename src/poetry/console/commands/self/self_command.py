@@ -83,7 +83,7 @@ class SelfCommand(InstallerCommand):
         with directory(self.system_pyproject.parent):
             self.generate_system_pyproject()
             self._poetry = Factory().create_poetry(
-                self.system_pyproject.parent, io=self._io, disable_plugins=True
+                self.system_pyproject.parent, io=self.io, disable_plugins=True
             )
 
     @property

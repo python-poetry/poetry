@@ -101,7 +101,7 @@ dependencies and not including the current project, run the command with the
         self._installer.only_groups(self.activated_groups)
         self._installer.dry_run(self.option("dry-run"))
         self._installer.requires_synchronization(with_synchronization)
-        self._installer.verbose(self._io.is_verbose())
+        self._installer.verbose(self.io.is_verbose())
 
         return_code = self._installer.run()
 
@@ -112,7 +112,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, self._io)
+            builder = EditableBuilder(self.poetry, self._env, self.io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
@@ -124,7 +124,7 @@ dependencies and not including the current project, run the command with the
             f" <c1>{self.poetry.package.pretty_name}</c1>"
             f" (<{{tag}}>{self.poetry.package.pretty_version}</>)"
         )
-        overwrite = self._io.output.is_decorated() and not self.io.is_debug()
+        overwrite = self.io.output.is_decorated() and not self.io.is_debug()
         self.line("")
         self.write(log_install.format(tag="c2"))
         if not overwrite:
