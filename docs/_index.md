@@ -57,7 +57,7 @@ Note that the installer does not support Python < 3.7.
 {{% /note %}}
 
 {{% warning %}}
-The previous `get-poetry.py` and `install-poetry.py` installers are now deprecated. if you are currently using them
+The previous `get-poetry.py` and `install-poetry.py` installers are now deprecated. If you are currently using them
 you should migrate to the new, supported, installer through `https://install.python-poetry.org`.
 {{% /warning %}}
 {{< /step >}}
