@@ -86,7 +86,7 @@ class DebugResolveCommand(InitCommand):
 
         pool = self.poetry.pool
 
-        solver = Solver(package, pool, Repository(), Repository(), self._io)
+        solver = Solver(package, pool, Repository(), Repository(), self.io)
 
         ops = solver.solve().calculate_operations()
 

@@ -18,7 +18,7 @@ class ShellCommand(EnvCommand):
 If one doesn't exist yet, it will be created.
 """
 
-    def handle(self) -> None:
+    def handle(self) -> int:
         from poetry.utils.shell import Shell
 
         # Check if it's already activated or doesn't exist and won't be created
@@ -30,7 +30,7 @@ If one doesn't exist yet, it will be created.
                 f"Virtual environment already activated: <info>{self.env.path}</>"
             )
 
-            return
+            return 0
 
         self.line(f"Spawning shell within <info>{self.env.path}</>")
 
@@ -39,3 +39,5 @@ If one doesn't exist yet, it will be created.
         shell = Shell.get()
         shell.activate(self.env)  # type: ignore[arg-type]
         environ.pop("POETRY_ACTIVE")
+
+        return 0

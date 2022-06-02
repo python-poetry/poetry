@@ -18,7 +18,7 @@ class SourceShowCommand(Command):
         ),
     ]
 
-    def handle(self) -> int | None:
+    def handle(self) -> int:
         sources = self.poetry.get_sources()
         names = self.argument("source")
 
