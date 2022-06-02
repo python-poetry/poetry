@@ -293,14 +293,15 @@ class Factory(BaseFactory):
         if extras_section:
             content["extras"] = extras_section
 
-        pyproject.add(tomlkit.nl())  # type: ignore[attr-defined]
+        pyproject = cast(TOMLDocument, pyproject)
+        pyproject.add(tomlkit.nl())
 
         if path:
             path.joinpath("pyproject.toml").write_text(
-                pyproject.as_string(), encoding="utf-8"  # type: ignore[attr-defined]
+                pyproject.as_string(), encoding="utf-8"
             )
 
-        return cast(TOMLDocument, pyproject)
+        return pyproject
 
     @classmethod
     def validate(
