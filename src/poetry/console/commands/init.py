@@ -74,7 +74,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.core.vcs.git import GitConfig
 
         from poetry.layouts import layout
-        from poetry.utils.env import SystemEnv
 
         pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
 
@@ -153,17 +152,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         python = self.option("python")
         if not python:
-            current_env = SystemEnv(Path(sys.executable))
-
-            from poetry.config.config import Config
-
-            config = Config.create()
-            prefix = config.get("default-python-prefix")
-            if prefix is None:
-                prefix = "^"
-            default_python = prefix + ".".join(
-                str(v) for v in current_env.version_info[:2]
-            )
+            default_python = self._get_default_python_dependency()
             question = self.create_question(
                 f"Compatible Python versions [<comment>{default_python}</comment>]: ",
                 default=default_python,
@@ -484,3 +473,19 @@ You can specify a package in the following forms:
             self._pool.add_repository(PyPiRepository())
 
         return self._pool
+
+    @staticmethod
+    def _get_default_python_dependency() -> str:
+        from poetry.config.config import Config
+        from poetry.utils.env import SystemEnv
+
+        current_env = SystemEnv(Path(sys.executable))
+
+        config = Config.create()
+        prefix = config.get("default-python-prefix")
+        if prefix is None:
+            prefix = "^"
+
+        default_python = prefix + ".".join(str(v) for v in current_env.version_info[:2])
+
+        return default_python
