@@ -106,7 +106,7 @@ maintainers = [
 
 ## readme
 
-The path, or array of paths, to the readme file(s) of the package. **Optional**
+A path, or list of paths corresponding to the README file(s) of the package. **Optional**
 
 The file can be any format, but if you intend to publish to PyPI keep the
 [recommendations for a PyPI-friendly README](
