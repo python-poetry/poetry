@@ -106,16 +106,16 @@ maintainers = [
 
 ## readme
 
-The path, or array of paths, to the readme file(s) of the package. **Optional**
+A path, or list of paths corresponding to the README file(s) of the package. **Optional**
 
-The file can be any format, but if you intend to publish to PyPI keep the
+The file(s) can be of any format, but if you intend to publish to PyPI keep the
 [recommendations for a PyPI-friendly README](
 https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
-in mind. The path is relative to the directory containing the `pyproject.toml`.
+in mind. README paths are implicitly relative to `pyproject.toml`.
 
-The file contents becomes the
+The contents of the README file(s) are used to populate the
 [Description field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
-in a PyPI build (similar to `long_description` in setuptools). When specifying multiple readmes, their texts will be combined, separated by newlines.
+of your distribution's metadata (similar to `long_description` in setuptools). When specifying multiple files are specified, they are concatenated with newlines.
 
 ```toml
 [tool.poetry]
