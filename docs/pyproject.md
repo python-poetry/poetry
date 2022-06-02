@@ -106,12 +106,29 @@ maintainers = [
 
 ## readme
 
-The readme file of the package. **Optional**
+A path, or list of paths corresponding to the README file(s) of the package.
+**Optional**
 
-The file can be either `README.rst` or `README.md`.
+The file(s) can be of any format, but if you intend to publish to PyPI keep the
+[recommendations for a PyPI-friendly README](
+https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/) in
+mind. README paths are implicitly relative to `pyproject.toml`.
+
+The contents of the README file(s) are used to populate the [Description
+field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
+of your distribution's metadata (similar to `long_description` in setuptools).
+When multiple files are specified they are concatenated with newlines.
 
 ```toml
-readme = "README.md" # or "README.rst"
+[tool.poetry]
+# ...
+readme = "README.md"
+```
+
+```toml
+[tool.poetry]
+# ...
+readme = ["docs/README1.md", "docs/README2.md"]
 ```
 
 ## homepage
