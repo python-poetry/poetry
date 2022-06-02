@@ -111,7 +111,7 @@ A path, or list of paths corresponding to the README file(s) of the package. **O
 The file(s) can be of any format, but if you intend to publish to PyPI keep the
 [recommendations for a PyPI-friendly README](
 https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
-in mind. The path is relative to the directory containing the `pyproject.toml`.
+in mind. README paths are implicitly relative to `pyproject.toml`.
 
 The file contents becomes the
 [Description field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
