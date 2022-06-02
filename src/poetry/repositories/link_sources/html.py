@@ -3,6 +3,7 @@ from __future__ import annotations
 import urllib.parse
 import warnings
 
+from html import unescape
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.utils.link import Link
@@ -30,7 +31,9 @@ class HTMLPage(LinkSource):
             if anchor.get("href"):
                 href = anchor.get("href")
                 url = self.clean_link(urllib.parse.urljoin(self._url, href))
-                link = Link(url)
+                pyrequire = anchor.get("data-requires-python")
+                pyrequire = unescape(pyrequire) if pyrequire else None
+                link = Link(url, requires_python=pyrequire)
 
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue
