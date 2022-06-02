@@ -482,7 +482,7 @@ You can specify a package in the following forms:
         current_env = SystemEnv(Path(sys.executable))
 
         config = Config.create()
-        prefix = config.get("default-python-prefix")
+        prefix: str | None = config.get("default-python-prefix")
         if prefix is None:
             prefix = "^"
 
