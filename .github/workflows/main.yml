@@ -88,13 +88,13 @@ jobs:
         run: poetry run pip install pytest-github-actions-annotate-failures
 
       - name: Run pytest
-        run: poetry run python -m pytest -p no:sugar -q tests/
+        run: poetry run python -m pytest -n auto -p no:sugar -q tests/
 
       - name: Run pytest (integration suite)
         env:
           POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
           POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: poetry run python -m pytest -p no:sugar -q --integration tests/integration
+        run: poetry run python -m pytest -n auto -p no:sugar -q --integration tests/integration
 
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
