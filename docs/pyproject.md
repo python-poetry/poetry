@@ -113,7 +113,7 @@ The file(s) can be of any format, but if you intend to publish to PyPI keep the
 https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
 in mind. README paths are implicitly relative to `pyproject.toml`.
 
-The file contents becomes the
+The contents of the README file(s) are used to populate the
 [Description field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
 in a PyPI build (similar to `long_description` in setuptools). When specifying multiple readmes, their texts will be combined, separated by newlines.
 
