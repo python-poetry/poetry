@@ -48,7 +48,7 @@ poetry-core = "^1.1.0b1"
 poetry-plugin-export = "^1.0.4"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
-cleo = "^1.0.0a4"
+cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
 entrypoints = "^0.4"
 html5lib = "^1.0"
