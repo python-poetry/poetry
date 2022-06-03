@@ -237,7 +237,7 @@ Note the trailing `/simple/`. This is important when configuring
 
 {{% /note %}}
 
-Repositories following the [PEP503](https://peps.python.org/pep-0503/)
+Repositories following the [PEP 503](https://peps.python.org/pep-0503/)
 specification should expose a root page with individual links for each
 package it serves. This isn't reliably implemented everywhere, which
 leads to increased network traffic and slower resolve times. If you're
