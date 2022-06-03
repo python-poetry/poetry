@@ -49,7 +49,7 @@ class SimpleRepositoryPage(HTMLPage):
 
 
 class SimpleIndexPage:
-    """Describes the root page of a PEP503 compliant repository.
+    """Describes the root page of a PEP 503 compliant repository.
 
     This contains a list of links, each one corresponding to a served project.
     """
