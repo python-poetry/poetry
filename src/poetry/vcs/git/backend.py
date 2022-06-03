@@ -198,13 +198,13 @@ class Git:
             kwargs["username"] = credentials.username
             kwargs["password"] = credentials.password
 
-        config = ConfigDict()
+        config: ConfigDict = ConfigDict()  # type: ignore[no-untyped-call]
 
-        config.set("http", "sslCAInfo", certs.cert)
-        kwargs["cert_file"] = certs.client_cert
+        config.set("http", "sslCAInfo", certs.cert)  # type: ignore[no-untyped-call]
+        kwargs["cert_file"] = str(certs.client_cert)
 
         if not certs.verify:
-            config.set("http", "sslVerify", False)
+            config.set("http", "sslVerify", False)  # type: ignore[no-untyped-call]
 
         client, path = get_transport_and_path(url, **kwargs)
 
