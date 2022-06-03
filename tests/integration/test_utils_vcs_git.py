@@ -7,11 +7,13 @@ from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 import pytest
 
 from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
+from dulwich.config import ConfigDict
 from dulwich.repo import Repo
 from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -294,6 +296,77 @@ def test_configured_repository_http_auth(
         location=source_url,
         username=GIT_USERNAME,
         password=GIT_PASSWORD,
+    )
+    spy_get_transport_and_path.assert_called_once()
+
+
+def test_configured_repository_certificates(
+    mocker: MockerFixture, source_url: str, config: Config
+) -> None:
+    from poetry.vcs.git import backend
+
+    spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
+    spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
+
+    configured_cert = "/path/to/cert"
+    configured_client_cert = "/path/to/client-cert"
+    netloc = urlparse(source_url).netloc
+    config.merge(
+        {
+            "repositories": {"git-repo": {"url": source_url}},
+            "certificates": {
+                netloc: {"cert": configured_cert, "client-cert": configured_client_cert}
+            },
+        }
+    )
+
+    mocker.patch(
+        "poetry.vcs.git.backend.get_default_authenticator",
+        return_value=Authenticator(config=config),
+    )
+
+    with Git.clone(url=source_url, branch="0.1") as repo:
+        assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
+
+    spy_clone_legacy.assert_not_called()
+    git_config = ConfigDict()
+    git_config.set("http", "sslCAInfo", configured_cert)
+
+    spy_get_transport_and_path.assert_called_with(
+        location=source_url, config=git_config, cert_file=configured_client_cert
+    )
+    spy_get_transport_and_path.assert_called_once()
+
+
+def test_configured_repository_tls_disabled(
+    mocker: MockerFixture, source_url: str, config: Config
+) -> None:
+    from poetry.vcs.git import backend
+
+    spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
+    spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
+    netloc = urlparse(source_url).netloc
+    config.merge(
+        {
+            "repositories": {"git-repo": {"url": source_url}},
+            "certificates": {netloc: {"cert": False}},
+        }
+    )
+
+    mocker.patch(
+        "poetry.vcs.git.backend.get_default_authenticator",
+        return_value=Authenticator(config=config),
+    )
+
+    with Git.clone(url=source_url, branch="0.1") as repo:
+        assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
+
+    spy_clone_legacy.assert_not_called()
+    git_config = ConfigDict()
+    git_config.set("http", "sslVerify", False)
+
+    spy_get_transport_and_path.assert_called_with(
+        location=source_url, config=git_config
     )
     spy_get_transport_and_path.assert_called_once()
 
