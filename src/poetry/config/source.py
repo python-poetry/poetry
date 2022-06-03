@@ -9,6 +9,7 @@ class Source:
     url: str
     default: bool = dataclasses.field(default=False)
     secondary: bool = dataclasses.field(default=False)
+    indexed: bool = dataclasses.field(default=False)
 
     def to_dict(self) -> dict[str, str | bool]:
         return dataclasses.asdict(self)
