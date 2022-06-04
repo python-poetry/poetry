@@ -8,8 +8,6 @@ from cleo.exceptions import ValueException
 
 
 if TYPE_CHECKING:
-    from cleo.io.io import IO
-
     from poetry.console.application import Application
     from poetry.poetry import Poetry
 
@@ -18,17 +16,6 @@ class Command(BaseCommand):  # type: ignore[misc]
     loggers: list[str] = []
 
     _poetry: Poetry | None = None
-
-    def run(self, io: IO) -> int:
-        """
-        Temporarily fix for issue where io.input.stream is unset by cleo.
-        """
-        # FIXME: Remove method after upstream merge for cleo
-        # https://github.com/sdispater/cleo/pull/135
-        if io.input.stream is None and self.application._input is not None:
-            io.input.set_stream(self.application._input.stream)
-        status_code: int = super().run(io)
-        return status_code
 
     @property
     def poetry(self) -> Poetry:
