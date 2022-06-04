@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 
 from poetry.mixology.term import Term
 
@@ -41,7 +40,7 @@ class Assignment(Term):
         return self._index
 
     @property
-    def cause(self) -> Incompatibility:
+    def cause(self) -> Incompatibility | None:
         return self._cause
 
     @classmethod
@@ -51,7 +50,7 @@ class Assignment(Term):
     @classmethod
     def derivation(
         cls,
-        dependency: Any,
+        dependency: Dependency,
         is_positive: bool,
         cause: Incompatibility,
         decision_level: int,

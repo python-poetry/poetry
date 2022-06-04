@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
 
 if TYPE_CHECKING:
@@ -71,23 +72,23 @@ def tester(
 @pytest.mark.parametrize(
     ("options", "groups"),
     [
-        ("", {"default", "foo", "bar", "baz", "bim"}),
-        ("--only default", {"default"}),
+        ("", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        (f"--only {MAIN_GROUP}", {MAIN_GROUP}),
         ("--only foo", {"foo"}),
         ("--only foo,bar", {"foo", "bar"}),
         ("--only bam", {"bam"}),
-        ("--with bam", {"default", "foo", "bar", "baz", "bim", "bam"}),
-        ("--without foo,bar", {"default", "baz", "bim"}),
-        ("--without default", {"foo", "bar", "baz", "bim"}),
+        ("--with bam", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam"}),
+        ("--without foo,bar", {MAIN_GROUP, "baz", "bim"}),
+        (f"--without {MAIN_GROUP}", {"foo", "bar", "baz", "bim"}),
         ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
         # net result zero options
-        ("--with foo", {"default", "foo", "bar", "baz", "bim"}),
-        ("--without bam", {"default", "foo", "bar", "baz", "bim"}),
-        ("--with bam --without bam", {"default", "foo", "bar", "baz", "bim"}),
-        ("--with foo --without foo", {"default", "bar", "baz", "bim"}),
+        ("--with foo", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--with bam --without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--with foo --without foo", {MAIN_GROUP, "bar", "baz", "bim"}),
         # deprecated options
-        ("--default", {"default"}),
-        ("--no-dev", {"default"}),
+        ("--default", {MAIN_GROUP}),
+        ("--no-dev", {MAIN_GROUP}),
         ("--dev-only", {"foo", "bar", "baz", "bim"}),
     ],
 )
@@ -104,7 +105,8 @@ def test_group_options_are_passed_to_the_installer(
     """
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     editable_builder_mock = mocker.patch(
-        "poetry.masonry.builders.EditableBuilder", side_effect=ModuleOrPackageNotFound()
+        "poetry.masonry.builders.editable.EditableBuilder",
+        side_effect=ModuleOrPackageNotFound(),
     )
 
     if not with_root:

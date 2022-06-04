@@ -74,7 +74,7 @@ dependencies and not including the current project, run the command with the
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
-        from poetry.masonry.builders import EditableBuilder
+        from poetry.masonry.builders.editable import EditableBuilder
 
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
@@ -92,7 +92,7 @@ dependencies and not including the current project, run the command with the
             extras = list(self.poetry.package.extras.keys())
         else:
             extras = []
-            for extra in self.option("extras"):
+            for extra in self.option("extras", []):
                 if " " in extra:
                     extras += [e.strip() for e in extra.split(" ")]
                 else:
@@ -113,7 +113,7 @@ dependencies and not including the current project, run the command with the
         self._installer.only_groups(self.activated_groups)
         self._installer.dry_run(self.option("dry-run"))
         self._installer.requires_synchronization(with_synchronization)
-        self._installer.verbose(self._io.is_verbose())
+        self._installer.verbose(self.io.is_verbose())
 
         return_code = self._installer.run()
 
@@ -124,7 +124,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, self._io)
+            builder = EditableBuilder(self.poetry, self._env, self.io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
@@ -136,7 +136,7 @@ dependencies and not including the current project, run the command with the
             f" <c1>{self.poetry.package.pretty_name}</c1>"
             f" (<{{tag}}>{self.poetry.package.pretty_version}</>)"
         )
-        overwrite = self._io.output.is_decorated() and not self.io.is_debug()
+        overwrite = self.io.output.is_decorated() and not self.io.is_debug()
         self.line("")
         self.write(log_install.format(tag="c2"))
         if not overwrite:

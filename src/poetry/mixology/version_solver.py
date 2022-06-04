@@ -22,7 +22,6 @@ from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.puzzle.provider import Provider
@@ -40,20 +39,31 @@ class DependencyCache:
     again.
     """
 
-    def __init__(self, provider: Provider):
+    def __init__(self, provider: Provider) -> None:
         self.provider = provider
-        self.cache: dict[str, list[Package]] = {}
+        self.cache: dict[
+            tuple[str, str | None, str | None, str | None, str | None],
+            list[DependencyPackage],
+        ] = {}
 
-    @functools.lru_cache(maxsize=128)
-    def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
-        complete_name = dependency.complete_name
-        packages = self.cache.get(complete_name)
+        self.search_for = functools.lru_cache(maxsize=128)(self._search_for)
+
+    def _search_for(self, dependency: Dependency) -> list[DependencyPackage]:
+        key = (
+            dependency.complete_name,
+            dependency.source_type,
+            dependency.source_url,
+            dependency.source_reference,
+            dependency.source_subdirectory,
+        )
+
+        packages = self.cache.get(key)
         if packages is None:
             packages = self.provider.search_for(dependency)
         else:
             packages = [p for p in packages if dependency.constraint.allows(p.version)]
 
-        self.cache[complete_name] = packages
+        self.cache[key] = packages
 
         return packages
 
@@ -74,9 +84,9 @@ class VersionSolver:
         self,
         root: ProjectPackage,
         provider: Provider,
-        locked: dict[str, list[Package]] = None,
-        use_latest: list[str] = None,
-    ):
+        locked: dict[str, list[DependencyPackage]] | None = None,
+        use_latest: list[str] | None = None,
+    ) -> None:
         self._root = root
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)
@@ -109,7 +119,7 @@ class VersionSolver:
         )
 
         try:
-            next = self._root.name
+            next: str | None = self._root.name
             while next is not None:
                 self._propagate(next)
                 next = self._choose_package_version()
@@ -159,7 +169,7 @@ class VersionSolver:
                     changed.add(str(self._propagate_incompatibility(root_cause)))
                     break
                 elif result is not None:
-                    changed.add(result)
+                    changed.add(str(result))
 
     def _propagate_incompatibility(
         self, incompatibility: Incompatibility
@@ -213,7 +223,8 @@ class VersionSolver:
             unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
         )
 
-        return unsatisfied.dependency.complete_name
+        complete_name: str = unsatisfied.dependency.complete_name
+        return complete_name
 
     def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
@@ -290,6 +301,9 @@ class VersionSolver:
             # than a derivation), then incompatibility is the root cause. We then
             # backjump to previous_satisfier_level, where incompatibility is
             # guaranteed to allow _propagate to produce more assignments.
+
+            # using assert to suppress mypy [union-attr]
+            assert most_recent_satisfier is not None
             if (
                 previous_satisfier_level < most_recent_satisfier.decision_level
                 or most_recent_satisfier.cause is None
@@ -402,7 +416,8 @@ class VersionSolver:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
                 )
-                return dependency.complete_name
+                complete_name: str = dependency.complete_name
+                return complete_name
 
             package = None
             if dependency.name not in self._use_latest:
@@ -425,7 +440,8 @@ class VersionSolver:
                     Incompatibility([Term(dependency, True)], NoVersionsCause())
                 )
 
-                return dependency.complete_name
+                complete_name = dependency.complete_name
+                return complete_name
         else:
             package = locked
 
@@ -447,12 +463,13 @@ class VersionSolver:
             )
 
         if not conflict:
-            self._solution.decide(package)
+            self._solution.decide(package.package)
             self._log(
                 f"selecting {package.complete_name} ({package.full_pretty_version})"
             )
 
-        return dependency.complete_name
+        complete_name = dependency.complete_name
+        return complete_name
 
     def _result(self) -> SolverResult:
         """
@@ -491,7 +508,7 @@ class VersionSolver:
 
         locked = self._locked.get(dependency.name, [])
         for package in locked:
-            if (allow_similar or dependency.is_same_package_as(package)) and (
+            if (allow_similar or dependency.is_same_package_as(package.package)) and (
                 dependency.constraint.allows(package.version)
                 or package.is_prerelease()
                 and dependency.constraint.allows(package.version.next_patch())

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.repositories.exceptions import PackageNotFound
@@ -47,9 +46,7 @@ class Pool(Repository):
         return self._has_primary_repositories
 
     def has_repository(self, name: str) -> bool:
-        name = name.lower() if name is not None else None
-
-        return name in self._lookup
+        return name.lower() in self._lookup
 
     def repository(self, name: str) -> Repository:
         if name is not None:
@@ -123,7 +120,11 @@ class Pool(Repository):
         raise NotImplementedError()
 
     def package(
-        self, name: str, version: str, extras: list[str] = None, repository: str = None
+        self,
+        name: str,
+        version: str,
+        extras: list[str] | None = None,
+        repository: str | None = None,
     ) -> Package:
         if repository is not None:
             repository = repository.lower()
@@ -136,19 +137,15 @@ class Pool(Repository):
             raise ValueError(f'Repository "{repository}" does not exist.')
 
         if repository is not None and not self._ignore_repository_names:
-            with suppress(PackageNotFound):
-                return self.repository(repository).package(name, version, extras=extras)
-        else:
-            for repo in self._repositories:
-                try:
-                    package = repo.package(name, version, extras=extras)
-                except PackageNotFound:
-                    continue
+            return self.repository(repository).package(name, version, extras=extras)
 
-                if package:
-                    self._packages.append(package)
+        for repo in self._repositories:
+            try:
+                package = repo.package(name, version, extras=extras)
+            except PackageNotFound:
+                continue
 
-                    return package
+            return package
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")
 

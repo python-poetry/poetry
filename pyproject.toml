@@ -1,9 +1,19 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.0-beta.1"
+version = "1.2.0-beta.2.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    "Sébastien Eustace <sebastien@eustace.io>",
+]
+maintainers = [
+    "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
+    "Bjorn Neergaard <bjorn@neersighted.com>",
+    "Branch Vincent <branchevincent@gmail.com>",
+    "Bryce Drennan <github@accounts.brycedrennan.com>",
+    "Daniel Eades <danieleades@hotmail.com>",
+    "Randy Döring <radoering.poetry@gmail.com>",
+    "Steph Samson <hello@stephsamson.com>",
+    "finswimmer <finswimmer77@gmail.com>",
 ]
 license = "MIT"
 
@@ -34,18 +44,22 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "^1.1.0a7"
+poetry-core = "^1.1.0b1"
+poetry-plugin-export = "^1.0.4"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
-cleo = "^1.0.0a4"
+cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
-entrypoints = "^0.3"
+entrypoints = "^0.4"
 html5lib = "^1.0"
 importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
+# keyring uses calver, so version is unclamped
 keyring = ">=21.2.0"
-packaging = "^20.4"
+# packaging uses calver, so version is unclamped
+packaging = ">=20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.5"
+platformdirs = "^2.5.2"
 requests = "^2.18"
 requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"
@@ -53,19 +67,26 @@ tomlkit = ">=0.7.0,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 urllib3 = "^1.26.0"
+dulwich = "^0.20.35"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
-pytest = "^6.2"
-pytest-cov = "^2.8"
+pytest = "^7.1"
+pytest-cov = "^3.0"
 pytest-mock = "^3.5"
 pytest-sugar = "^0.9"
+pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 pre-commit = "^2.6"
 deepdiff = "^5.0"
 httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
 flatdict = "^4.0.1"
+mypy = ">=0.960"
+types-entrypoints = ">=0.3.7"
+types-html5lib = ">=1.1.7"
+types-jsonschema = ">=4.4.4"
+types-requests = ">=2.27.11"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
@@ -85,6 +106,7 @@ lines_between_types = 1
 lines_after_imports = 2
 src_paths = ["src", "tests"]
 extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
 
 
 [tool.black]
@@ -96,46 +118,46 @@ force-exclude = '''
 
 
 [tool.mypy]
-check_untyped_defs = true
-ignore_missing_imports = true
-show_error_codes = true
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unused_ignores = true
 files = "src"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+show_error_codes = true
+strict = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+]
 
-# The following whitelist is used to allow for incremental adoption
-# of Mypy. Modules should be removed from this whitelist as and when
-# their respective type errors have been addressed. No new modules
-# should be added to this whitelist.
-# see https://github.com/python-poetry/poetry/pull/4510.
+# use of importlib-metadata backport at python3.7 makes it impossible to
+# satisfy mypy without some ignores: but we get a different set of ignores at
+# different python versions.
+#
+# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
+# warning.
+[[tool.mypy.overrides]]
+module = [
+  'poetry.installation.executor',
+  'poetry.mixology.version_solver',
+  'poetry.repositories.installed_repository',
+  'poetry.utils.env',
+]
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.commands.init',
-  'poetry.inspection.info',
-  'poetry.installation.chef',
-  'poetry.installation.chooser',
-  'poetry.installation.executor',
-  'poetry.installation.installer',
-  'poetry.installation.pip_installer',
-  'poetry.mixology.assignment',
-  'poetry.mixology.failure',
-  'poetry.mixology.incompatibility',
-  'poetry.mixology.partial_solution',
-  'poetry.mixology.solutions.providers.python_requirement_solution_provider',
-  'poetry.mixology.solutions.solutions.python_requirement_solution',
-  'poetry.mixology.term',
-  'poetry.mixology.version_solver',
-  'poetry.repositories.installed_repository',
-  'poetry.utils.appdirs',
-  'poetry.utils.authenticator',
-  'poetry.utils.env',
-  'poetry.utils.exporter',
-  'poetry.utils.setup_reader',
+  'cachecontrol.*',
+  'cachy.*',
+  'cleo.*',
+  'crashtest.*',
+  'pexpect.*',
+  'pkginfo.*',
+  'requests_toolbelt.*',
+  'shellingham.*',
+  'virtualenv.*',
 ]
-ignore_errors = true
-
+ignore_missing_imports = true
 
 [tool.coverage.report]
 exclude_lines = [

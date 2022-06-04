@@ -4,6 +4,7 @@ import logging
 
 from typing import TYPE_CHECKING
 
+from poetry.console.logging.filters import POETRY_FILTER
 from poetry.console.logging.formatters import FORMATTERS
 
 
@@ -30,6 +31,10 @@ class IOFormatter(logging.Formatter):
             elif level in self._colors:
                 msg = f"<{self._colors[level]}>{msg}</>"
 
-            return msg
+            record.msg = msg
+
+        if not POETRY_FILTER.filter(record):
+            # prefix third-party packages with name for easier debugging
+            record.msg = f"[{record.name}] {record.msg}"
 
         return super().format(record)

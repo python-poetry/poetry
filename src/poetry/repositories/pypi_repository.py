@@ -4,6 +4,7 @@ import logging
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Any
 
 import requests
 
@@ -87,7 +88,7 @@ class PyPiRepository(HTTPRepository):
                     ignored_pre_release_packages.append(package)
                 continue
 
-            if not constraint or (constraint and constraint.allows(package.version)):
+            if constraint.allows(package.version):
                 packages.append(package)
 
         self._log(
@@ -105,20 +106,33 @@ class PyPiRepository(HTTPRepository):
         response = requests.session().get(self._base_url + "search", params=search)
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
-            name = result.find("h3/*[@class='package-snippet__name']").text
-            version = result.find("h3/*[@class='package-snippet__version']").text
+            name_element = result.find("h3/*[@class='package-snippet__name']")
+            version_element = result.find("h3/*[@class='package-snippet__version']")
 
-            if not name or not version:
+            if (
+                name_element is None
+                or version_element is None
+                or not name_element.text
+                or not version_element.text
+            ):
                 continue
 
-            description = result.find("p[@class='package-snippet__description']").text
-            if not description:
-                description = ""
+            name = name_element.text
+            version = version_element.text
+
+            description_element = result.find(
+                "p[@class='package-snippet__description']"
+            )
+            description = (
+                description_element.text
+                if description_element is not None and description_element.text
+                else ""
+            )
 
             try:
-                result = Package(name, version, description)
-                result.description = to_str(description.strip())
-                results.append(result)
+                package = Package(name, version)
+                package.description = to_str(description.strip())
+                results.append(package)
             except InvalidVersion:
                 self._log(
                     f'Unable to parse version "{version}" for the {name} package,'
@@ -128,7 +142,7 @@ class PyPiRepository(HTTPRepository):
 
         return results
 
-    def get_package_info(self, name: str) -> dict:
+    def get_package_info(self, name: str) -> dict[str, Any]:
         """
         Return the package information given its name.
 
@@ -138,11 +152,12 @@ class PyPiRepository(HTTPRepository):
         if self._disable_cache:
             return self._get_package_info(name)
 
-        return self._cache.store("packages").remember_forever(
+        package_info: dict[str, Any] = self._cache.store("packages").remember_forever(
             name, lambda: self._get_package_info(name)
         )
+        return package_info
 
-    def _get_package_info(self, name: str) -> dict:
+    def _get_package_info(self, name: str) -> dict[str, Any]:
         data = self._get(f"pypi/{name}/json")
         if data is None:
             raise PackageNotFound(f"Package [{name}] not found.")
@@ -226,16 +241,21 @@ class PyPiRepository(HTTPRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint: str) -> dict | None:
+    def _get(self, endpoint: str) -> dict[str, Any] | None:
         try:
-            json_response = self.session.get(self._base_url + endpoint)
+            json_response = self.session.get(
+                self._base_url + endpoint, raise_for_status=False
+            )
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
-            self._cache_control_cache.delete(self._base_url + endpoint)
-            json_response = self.session.get(self._base_url + endpoint)
+            self.session.delete_cache(self._base_url + endpoint)
+            json_response = self.session.get(
+                self._base_url + endpoint, raise_for_status=False
+            )
 
-        if json_response.status_code == 404:
+        if json_response.status_code != 200:
             return None
 
-        return json_response.json()
+        json: dict[str, Any] = json_response.json()
+        return json

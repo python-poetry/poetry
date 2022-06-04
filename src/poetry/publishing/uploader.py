@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -15,18 +16,16 @@ from poetry.core.utils.helpers import normalize_version
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
-from requests.packages.urllib3 import util
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
+from urllib3 import util
 
 from poetry.__version__ import __version__
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.io.null_io import NullIO
 
     from poetry.poetry import Poetry
@@ -60,7 +59,8 @@ class Uploader:
 
     @property
     def user_agent(self) -> str:
-        return user_agent("poetry", __version__)
+        agent: str = user_agent("poetry", __version__)
+        return agent
 
     @property
     def adapter(self) -> adapters.HTTPAdapter:
@@ -113,15 +113,14 @@ class Uploader:
     def upload(
         self,
         url: str,
-        cert: Path | None = None,
+        cert: Path | bool = True,
         client_cert: Path | None = None,
         dry_run: bool = False,
         skip_existing: bool = False,
     ) -> None:
         session = self.make_session()
 
-        if cert:
-            session.verify = str(cert)
+        session.verify = str(cert) if isinstance(cert, Path) else cert
 
         if client_cert:
             session.cert = str(client_cert)
@@ -327,7 +326,7 @@ class Uploader:
 
         return resp
 
-    def _prepare_data(self, data: dict) -> list[tuple[str, str]]:
+    def _prepare_data(self, data: dict[str, Any]) -> list[tuple[str, str]]:
         data_to_send = []
         for key, value in data.items():
             if not isinstance(value, (list, tuple)):

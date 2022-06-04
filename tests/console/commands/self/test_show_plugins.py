@@ -33,7 +33,7 @@ class EntryPoint(_EntryPoint):
 
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("plugin show")
+    return command_tester_factory("self show plugins")
 
 
 @pytest.fixture()
@@ -43,7 +43,7 @@ def plugin_package() -> Package:
 
 @pytest.fixture()
 def plugin_distro(plugin_package: Package) -> Distribution:
-    return Distribution(plugin_package.name, plugin_package.version.to_string(True))
+    return Distribution(plugin_package.name, plugin_package.version.to_string())
 
 
 @pytest.mark.parametrize("entrypoint_name", ["poetry-plugin", "not-package-name"])

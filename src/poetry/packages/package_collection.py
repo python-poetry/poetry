@@ -1,20 +1,23 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import List
 
 from poetry.packages.dependency_package import DependencyPackage
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
 
-class PackageCollection(list):
+class PackageCollection(List[DependencyPackage]):
     def __init__(
         self,
         dependency: Dependency,
-        packages: list[Package | DependencyPackage] = None,
+        packages: Sequence[Package | DependencyPackage] | None = None,
     ) -> None:
         self._dependency = dependency
 

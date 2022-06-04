@@ -4,12 +4,15 @@ import urllib.parse
 import warnings
 
 from html import unescape
-from typing import Iterator
+from typing import TYPE_CHECKING
 
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -30,7 +33,7 @@ class HTMLPage(LinkSource):
                 url = self.clean_link(urllib.parse.urljoin(self._url, href))
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
-                link = Link(url, self, requires_python=pyrequire)
+                link = Link(url, requires_python=pyrequire)
 
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue

@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import Iterator
 
 import pytest
 import tomlkit
@@ -19,22 +16,30 @@ from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory
+from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import WINDOWS
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv
 from poetry.utils.env import InvalidCurrentPythonVersionError
+from poetry.utils.env import MockEnv
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.env import build_environment
+from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Iterator
+
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.conftest import Config
+    from tests.types import ProjectFactory
 
 MINIMAL_SCRIPT = """\
 
@@ -55,7 +60,7 @@ class MockVirtualEnv(VirtualEnv):
         path: Path,
         base: Path | None = None,
         sys_path: list[str] | None = None,
-    ):
+    ) -> None:
         super().__init__(path, base=base)
 
         self._sys_path = sys_path
@@ -69,13 +74,9 @@ class MockVirtualEnv(VirtualEnv):
 
 
 @pytest.fixture()
-def poetry(config: Config) -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / "simple_project"
-    )
-    poetry.set_config(config)
-
-    return poetry
+def poetry(project_factory: ProjectFactory) -> Poetry:
+    fixture = Path(__file__).parent.parent / "fixtures" / "simple_project"
+    return project_factory("simple", source=fixture)
 
 
 @pytest.fixture()
@@ -117,6 +118,18 @@ def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
     )
     venv_base_prefix_path = Path(str(venv.get_base_prefix()))
     assert run_output_path.resolve() == venv_base_prefix_path.resolve()
+
+
+def test_env_get_supported_tags_matches_inside_virtualenv(
+    tmp_dir: str, manager: EnvManager
+):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path))
+    venv = VirtualEnv(venv_path)
+
+    import packaging.tags
+
+    assert venv.get_supported_tags() == list(packaging.tags.sys_tags())
 
 
 @pytest.fixture
@@ -196,10 +209,13 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -331,10 +347,13 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.6",
         executable="/usr/bin/python3.6",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.6",
     )
 
     assert envs_file.exists()
@@ -392,10 +411,13 @@ def test_activate_activates_recreates_for_different_patch(
     build_venv_m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.7",
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / f"{venv_name}-py3.7")
 
@@ -692,19 +714,19 @@ def test_remove_keeps_dir_if_not_deleteable(
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    original_rmtree = shutil.rmtree
-
-    def err_on_rm_venv_only(path: str, *args: Any, **kwargs: Any) -> None:
-        if path == str(venv_path):
+    def err_on_rm_venv_only(path: Path | str, *args: Any, **kwargs: Any) -> None:
+        if str(path) == str(venv_path):
             raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
         else:
-            original_rmtree(path)
+            remove_directory(path)
 
-    m = mocker.patch("shutil.rmtree", side_effect=err_on_rm_venv_only)
+    m = mocker.patch(
+        "poetry.utils.env.remove_directory", side_effect=err_on_rm_venv_only
+    )
 
     venv = manager.remove(f"{venv_name}-py3.6")
 
-    m.assert_any_call(str(venv_path))
+    m.assert_any_call(venv_path)
 
     assert venv_path == venv.path
     assert venv_path.exists()
@@ -713,7 +735,7 @@ def test_remove_keeps_dir_if_not_deleteable(
     assert not file1_path.exists()
     assert not file2_path.exists()
 
-    m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
+    m.side_effect = remove_directory  # Avoid teardown using `err_on_rm_venv_only`
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
@@ -827,10 +849,13 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
         executable="python3",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.7",
     )
 
 
@@ -858,10 +883,13 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.9",
         executable="python3.9",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.9",
     )
 
 
@@ -948,10 +976,13 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
         executable=None,
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt=f"simple-project-py{version.major}.{version.minor}",
     )
 
 
@@ -987,10 +1018,13 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor - 1}",
         executable=f"python{version.major}.{version.minor - 1}",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt=f"simple-project-py{version.major}.{version.minor - 1}",
     )
 
 
@@ -1055,10 +1089,13 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     m.assert_called_with(
         poetry.file.parent / ".venv",
         executable="/usr/bin/python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
@@ -1104,6 +1141,36 @@ def test_env_system_packages(tmp_path: Path, poetry: Poetry):
     EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
 
     assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
+
+
+@pytest.mark.parametrize(
+    ("flags", "packages"),
+    [
+        ({"no-pip": False}, {"pip", "wheel"}),
+        ({"no-pip": False, "no-wheel": True}, {"pip"}),
+        ({"no-pip": True}, set()),
+        ({"no-setuptools": False}, {"setuptools"}),
+        ({"no-setuptools": True}, set()),
+        ({"no-pip": True, "no-setuptools": False}, {"setuptools"}),
+        ({"no-wheel": False}, {"wheel"}),
+        ({}, set()),
+    ],
+)
+def test_env_no_pip(
+    tmp_path: Path, poetry: Poetry, flags: dict[str, bool], packages: set[str]
+):
+    venv_path = tmp_path / "venv"
+    EnvManager(poetry).build_venv(path=venv_path, flags=flags)
+    env = VirtualEnv(venv_path)
+    installed_repository = InstalledRepository.load(env=env, with_dependencies=True)
+    installed_packages = {
+        package.name
+        for package in installed_repository.packages
+        # workaround for BSD test environments
+        if package.name != "sqlite3"
+    }
+
+    assert installed_packages == packages
 
 
 def test_env_finds_the_correct_executables(tmp_dir: str, manager: EnvManager):
@@ -1256,10 +1323,13 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.5",
         executable="python3.5",
-        flags={"always-copy": False, "system-site-packages": False},
-        with_pip=True,
-        with_setuptools=True,
-        with_wheel=True,
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.5",
     )
 
 
@@ -1270,3 +1340,51 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(tmp_dir: str):
         assert venv_name1 == venv_name2
     else:
         assert venv_name1 != venv_name2
+
+
+@pytest.fixture()
+def extended_without_setup_poetry() -> Poetry:
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / "extended_project_without_setup"
+    )
+
+    return poetry
+
+
+def test_build_environment_called_build_script_specified(
+    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_dir: str
+):
+    project_env = MockEnv(path=Path(tmp_dir) / "project")
+    ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
+
+    mocker.patch(
+        "poetry.utils.env.ephemeral_environment"
+    ).return_value.__enter__.return_value = ephemeral_env
+
+    with build_environment(extended_without_setup_poetry, project_env) as env:
+        assert env == ephemeral_env
+        assert env.executed == [
+            [
+                "python",
+                env.pip_embedded,
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                *extended_without_setup_poetry.pyproject.build_system.requires,
+            ]
+        ]
+
+
+def test_build_environment_not_called_without_build_script_specified(
+    mocker: MockerFixture, poetry: Poetry, tmp_dir: str
+):
+    project_env = MockEnv(path=Path(tmp_dir) / "project")
+    ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
+
+    mocker.patch(
+        "poetry.utils.env.ephemeral_environment"
+    ).return_value.__enter__.return_value = ephemeral_env
+
+    with build_environment(poetry, project_env) as env:
+        assert env == project_env
+        assert not env.executed

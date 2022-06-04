@@ -54,7 +54,7 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self, lock_path: str | Path):
+    def __init__(self, lock_path: str | Path) -> None:
         self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
@@ -832,6 +832,7 @@ def test_installer_with_pypi_repository(
     installer.run()
 
     expected = fixture("with-pypi-repository")
+
     assert not DeepDiff(expected, locker.written_data, ignore_order=True)
 
 

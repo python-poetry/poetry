@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
@@ -13,8 +14,6 @@ from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.utils.link import Link
 
@@ -28,15 +27,11 @@ class LegacyRepository(HTTPRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
-        cert: Path | None = None,
-        client_cert: Path | None = None,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        super().__init__(
-            name, url.rstrip("/"), config, disable_cache, cert, client_cert
-        )
+        super().__init__(name, url.rstrip("/"), config, disable_cache)
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
@@ -126,7 +121,7 @@ class LegacyRepository(HTTPRepository):
 
         return list(page.links_for_version(package.name, package.version))
 
-    def _get_release_info(self, name: str, version: str) -> dict:
+    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
         page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')

@@ -2,17 +2,21 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 from tomlkit import dumps
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
+from tomlkit.toml_document import TOMLDocument
 
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
+    from typing import Mapping
+
     from poetry.core.pyproject.toml import PyProjectTOML
     from tomlkit.items import InlineTable
 
@@ -37,8 +41,6 @@ BUILD_SYSTEM_MAX_VERSION: str | None = None
 
 
 class Layout:
-    ACCEPTED_README_FORMATS = {"md", "rst"}
-
     def __init__(
         self,
         project: str,
@@ -48,9 +50,9 @@ class Layout:
         author: str | None = None,
         license: str | None = None,
         python: str = "*",
-        dependencies: dict[str, str] | None = None,
-        dev_dependencies: dict[str, str] | None = None,
-    ):
+        dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+        dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+    ) -> None:
         self._project = canonicalize_name(project).replace(".", "-")
         self._package_path_relative = Path(
             *(module_name(part) for part in canonicalize_name(project).split("."))
@@ -60,12 +62,6 @@ class Layout:
         self._description = description
 
         self._readme_format = readme_format.lower()
-        if self._readme_format not in self.ACCEPTED_README_FORMATS:
-            accepted_readme_formats = ", ".join(self.ACCEPTED_README_FORMATS)
-            raise ValueError(
-                f"Invalid readme format '{readme_format}', use one of"
-                f" {accepted_readme_formats}."
-            )
 
         self._license = license
         self._python = python
@@ -88,11 +84,21 @@ class Layout:
     def get_package_include(self) -> InlineTable | None:
         package = inline_table()
 
-        include = self._package_path_relative.parts[0]
-        package.append("include", include)
+        # If a project is created in the root directory (this is reasonable inside a
+        # docker container, eg <https://github.com/python-poetry/poetry/issues/5103>)
+        # then parts will be empty.
+        parts = self._package_path_relative.parts
+        if not parts:
+            return None
+
+        include = parts[0]
+        package.append("include", include)  # type: ignore[no-untyped-call]
 
         if self.basedir != Path():
-            package.append("from", self.basedir.as_posix())
+            package.append(  # type: ignore[no-untyped-call]
+                "from",
+                self.basedir.as_posix(),
+            )
         else:
             if include == self._project:
                 # package include and package name are the same,
@@ -115,7 +121,7 @@ class Layout:
     def generate_poetry_content(self, original: PyProjectTOML | None = None) -> str:
         template = POETRY_DEFAULT
 
-        content = loads(template)
+        content: dict[str, Any] = loads(template)
 
         poetry_content = content["tool"]["poetry"]
         poetry_content["name"] = self._project
@@ -162,14 +168,15 @@ class Layout:
         build_system.add("requires", ["poetry-core" + build_system_version])
         build_system.add("build-backend", "poetry.core.masonry.api")
 
+        assert isinstance(content, TOMLDocument)
         content.add("build-system", build_system)
 
-        content = dumps(content)
+        text = dumps(content)
 
         if original and original.file.exists():
-            content = dumps(original.data) + "\n" + content
+            text = dumps(original.data) + "\n" + text
 
-        return content
+        return text
 
     def _create_default(self, path: Path, src: bool = True) -> None:
         package_path = path / self.package_path

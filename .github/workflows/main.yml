@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.cirrus.yml'
+      - '.github/workflows/docs.yml'
     branches:
       - master
       - develop
@@ -12,6 +13,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.cirrus.yml'
+      - '.github/workflows/docs.yml'
     branches:
       - '**'
 
@@ -26,14 +28,14 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
         include:
           - os: Ubuntu
-            image: ubuntu-latest
+            image: ubuntu-22.04
           - os: Windows
             image: windows-2022
           - os: macOS
-            image: macos-11
+            image: macos-12
       fail-fast: false
     defaults:
       run:
@@ -79,8 +81,38 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
+      - name: Run mypy
+        run: poetry run mypy
+
       - name: Install pytest plugin
         run: poetry run pip install pytest-github-actions-annotate-failures
 
       - name: Run pytest
-        run: poetry run python -m pytest -p no:sugar -q tests/
+        run: poetry run python -m pytest -n auto -p no:sugar -q tests/
+
+      - name: Run pytest (integration suite)
+        env:
+          POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
+          POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: poetry run python -m pytest -n auto -p no:sugar -q --integration tests/integration
+
+      - name: Get Plugin Version (poetry-plugin-export)
+        id: poetry-plugin-export-version
+        run: |
+          echo ::set-output name=version::$(\
+            poetry show poetry-plugin-export  | grep version | cut -d : -f 2 | xargs)
+
+      - name: Checkout Plugin Source (poetry-plugin-export)
+        uses: actions/checkout@v2
+        with:
+          path: poetry-plugin-export
+          repository: python-poetry/poetry-plugin-export
+          ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
+
+      - name: Run pytest (poetry-plugin-export)
+        run: poetry run python -m pytest -p no:sugar -q poetry-plugin-export/tests/
+
+      - name: Check for clean working tree
+        run: |
+          git diff --exit-code --stat HEAD
+          git -C poetry-plugin-export diff --exit-code --stat HEAD

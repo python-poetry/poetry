@@ -5,6 +5,7 @@ import os
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from poetry.config.config import Config
 from poetry.console.commands.command import Command
 
 
@@ -19,17 +20,16 @@ class CacheClearCommand(Command):
     def handle(self) -> int:
         from cachy import CacheManager
 
-        from poetry.locations import REPOSITORY_CACHE_DIR
-
         cache = self.argument("cache")
 
         parts = cache.split(":")
         root = parts[0]
 
-        cache_dir = REPOSITORY_CACHE_DIR / root
+        config = Config.create()
+        cache_dir = config.repository_cache_directory / root
 
         try:
-            cache_dir.relative_to(REPOSITORY_CACHE_DIR)
+            cache_dir.relative_to(config.repository_cache_directory)
         except ValueError:
             raise ValueError(f"{root} is not a valid repository cache")
 

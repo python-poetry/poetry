@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import contextlib
+import logging
 import re
 
 from abc import abstractmethod
 from typing import TYPE_CHECKING
-from typing import Iterator
 
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
@@ -16,7 +15,12 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poetry.core.packages.utils.link import Link
+
+
+logger = logging.getLogger(__name__)
 
 
 class LinkSource:
@@ -46,7 +50,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name == name and pkg.version and pkg.version not in seen:
+            if pkg and pkg.name == name and pkg.version not in seen:
                 seen.add(pkg.version)
                 yield pkg.version
 
@@ -55,7 +59,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name and pkg.version:
+            if pkg:
                 yield pkg
 
     @property
@@ -63,23 +67,34 @@ class LinkSource:
     def links(self) -> Iterator[Link]:
         raise NotImplementedError()
 
-    def link_package_data(self, link: Link) -> Package:
-        name, version = None, None
+    @classmethod
+    def link_package_data(cls, link: Link) -> Package | None:
+        name, version_string, version = None, None, None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:
             name = canonicalize_name(m.group("name"))
-            version = m.group("ver")
+            version_string = m.group("ver")
         else:
             info, ext = link.splitext()
-            match = self.VERSION_REGEX.match(info)
+            match = cls.VERSION_REGEX.match(info)
             if match:
-                version = match.group(2)
+                name = match.group(1)
+                version_string = match.group(2)
 
-        with contextlib.suppress(ValueError):
-            version = Version.parse(version)
+        if version_string:
+            try:
+                version = Version.parse(version_string)
+            except ValueError:
+                logger.debug(
+                    "Skipping url (%s) due to invalid version (%s)", link.url, version
+                )
+                return None
 
-        return Package(name, version, source_url=link.url)
+        pkg = None
+        if name and version:
+            pkg = Package(name, version, source_url=link.url)
+        return pkg
 
     def links_for_version(self, name: str, version: Version) -> Iterator[Link]:
         name = canonicalize_name(name)
@@ -87,7 +102,7 @@ class LinkSource:
         for link in self.links:
             pkg = self.link_package_data(link)
 
-            if pkg.name == name and pkg.version and pkg.version == version:
+            if pkg and pkg.name == name and pkg.version == version:
                 yield link
 
     def clean_link(self, url: str) -> str:
