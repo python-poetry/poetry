@@ -288,7 +288,7 @@ class Locker:
     def _write_lock_data(self, data: TOMLDocument) -> None:
         if self.contains_credential:
             logger.warning(
-                "A package URL contains credentials, which will be included in poetry.lock."
+                "A package URL contains credentials and will be written to poetry.lock."
             )
         lockfile = TOMLFile(self.lock)
         lockfile.write(data)
