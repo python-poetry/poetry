@@ -1,19 +1,23 @@
+from __future__ import annotations
+
 import os
 import platform
 import re
 import sys
+
 from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError
 from distutils.errors import DistutilsExecError
 from distutils.errors import DistutilsPlatformError
-from setuptools import Distribution as _Distribution, Extension
-from setuptools import setup
+
+from setuptools import Distribution as _Distribution
+from setuptools import Extension
 from setuptools import find_packages
+from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
+
 cmdclass = {}
-if sys.version_info < (2, 7):
-    raise Exception("SQLAlchemy requires Python 2.7 or higher.")
 
 cpython = platform.python_implementation() == "CPython"
 

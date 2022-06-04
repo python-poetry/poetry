@@ -1,64 +1,84 @@
+from __future__ import annotations
+
+import contextlib
 import os
+import re
 import shutil
+import sys
 import urllib.parse
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
 
-from poetry.console.application import Application
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
+
+from poetry.config.config import Config
+from poetry.console.application import Application
 from poetry.factory import Factory
 from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.utils._compat import WINDOWS
 
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.semver.version import Version
+    from tomlkit.toml_document import TOMLDocument
+
+    from poetry.installation.operations.operation import Operation
+    from poetry.poetry import Poetry
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
-def get_package(name, version):
+def get_package(name: str, version: str | Version) -> Package:
     return Package(name, version)
 
 
 def get_dependency(
-    name, constraint=None, category="main", optional=False, allows_prereleases=False
-):
-    return Dependency(
-        name,
-        constraint or "*",
-        category=category,
-        optional=optional,
-        allows_prereleases=allows_prereleases,
-    )
+    name: str,
+    constraint: str | dict[str, Any] | None = None,
+    groups: list[str] | None = None,
+    optional: bool = False,
+    allows_prereleases: bool = False,
+) -> Dependency:
+    if constraint is None:
+        constraint = "*"
+
+    if isinstance(constraint, str):
+        constraint = {"version": constraint}
+
+    constraint["optional"] = optional
+    constraint["allow-prereleases"] = allows_prereleases
+
+    return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
-def fixture(path=None):
+def fixture(path: str | None = None) -> Path:
     if path:
         return FIXTURE_PATH / path
     else:
         return FIXTURE_PATH
 
 
-def copy_or_symlink(source, dest):
-    if dest.exists():
-        if dest.is_symlink():
-            os.unlink(str(dest))
-        elif dest.is_dir():
-            shutil.rmtree(str(dest))
-        else:
-            os.unlink(str(dest))
+def copy_or_symlink(source: Path, dest: Path) -> None:
+    if dest.is_symlink() or dest.is_file():
+        dest.unlink()  # missing_ok is only available in Python >= 3.8
+    elif dest.is_dir():
+        shutil.rmtree(dest)
 
-    # Python2 does not support os.symlink on Windows whereas Python3 does.
     # os.symlink requires either administrative privileges or developer mode on Win10,
     # throwing an OSError if neither is active.
-    if WINDOWS:
+    if sys.platform == "win32":
         try:
             os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
         except OSError:
@@ -70,22 +90,37 @@ def copy_or_symlink(source, dest):
         os.symlink(str(source), str(dest))
 
 
-def mock_clone(_, source, dest):
-    # Checking source to determine which folder we need to copy
-    parsed = ParsedUrl.parse(source)
+class MockDulwichRepo:
+    def __init__(self, root: Path | str, **__: Any) -> None:
+        self.path = str(root)
 
-    folder = (
-        Path(__file__).parent
-        / "fixtures"
-        / "git"
-        / parsed.resource
-        / parsed.pathname.lstrip("/").rstrip(".git")
-    )
+    def head(self) -> bytes:
+        return b"9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
+
+def mock_clone(
+    url: str,
+    *_: Any,
+    source_root: Path | None = None,
+    **__: Any,
+) -> MockDulwichRepo:
+    # Checking source to determine which folder we need to copy
+    parsed = ParsedUrl.parse(url)
+    path = re.sub(r"(.git)?$", "", parsed.pathname.lstrip("/"))
+
+    folder = Path(__file__).parent / "fixtures" / "git" / parsed.resource / path
+
+    if not source_root:
+        source_root = Path(Config.create().get("cache-dir")) / "src"
+
+    dest = source_root / path
+    dest.parent.mkdir(parents=True, exist_ok=True)
 
     copy_or_symlink(folder, dest)
+    return MockDulwichRepo(dest)
 
 
-def mock_download(url, dest, **__):
+def mock_download(url: str, dest: str, **__: Any) -> None:
     parts = urllib.parse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"
@@ -95,47 +130,47 @@ def mock_download(url, dest, **__):
 
 
 class TestExecutor(Executor):
-    def __init__(self, *args, **kwargs):
-        super(TestExecutor, self).__init__(*args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
         self._installs = []
         self._updates = []
         self._uninstalls = []
 
     @property
-    def installations(self):
+    def installations(self) -> list[Package]:
         return self._installs
 
     @property
-    def updates(self):
+    def updates(self) -> list[Package]:
         return self._updates
 
     @property
-    def removals(self):
+    def removals(self) -> list[Package]:
         return self._uninstalls
 
-    def _do_execute_operation(self, operation):
-        super(TestExecutor, self)._do_execute_operation(operation)
+    def _do_execute_operation(self, operation: Operation) -> None:
+        super()._do_execute_operation(operation)
 
         if not operation.skipped:
-            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+            getattr(self, f"_{operation.job_type}s").append(operation.package)
 
-    def _execute_install(self, operation):
+    def _execute_install(self, operation: Operation) -> int:
         return 0
 
-    def _execute_update(self, operation):
+    def _execute_update(self, operation: Operation) -> int:
         return 0
 
-    def _execute_remove(self, operation):
+    def _execute_remove(self, operation: Operation) -> int:
         return 0
 
 
-class TestApplication(Application):
-    def __init__(self, poetry):
-        super(TestApplication, self).__init__()
+class PoetryTestApplication(Application):
+    def __init__(self, poetry: Poetry) -> None:
+        super().__init__()
         self._poetry = poetry
 
-    def reset_poetry(self):
+    def reset_poetry(self) -> None:
         poetry = self._poetry
         self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
         self._poetry.set_pool(poetry.pool)
@@ -146,7 +181,7 @@ class TestApplication(Application):
 
 
 class TestLocker(Locker):
-    def __init__(self, lock, local_config):  # noqa
+    def __init__(self, lock: str | Path, local_config: dict) -> None:
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
@@ -155,28 +190,28 @@ class TestLocker(Locker):
         self._lock_data = None
         self._write = False
 
-    def write(self, write=True):
+    def write(self, write: bool = True) -> None:
         self._write = write
 
-    def is_locked(self):
+    def is_locked(self) -> bool:
         return self._locked
 
-    def locked(self, is_locked=True):
+    def locked(self, is_locked: bool = True) -> TestLocker:
         self._locked = is_locked
 
         return self
 
-    def mock_lock_data(self, data):
+    def mock_lock_data(self, data: dict) -> None:
         self.locked()
 
         self._lock_data = data
 
-    def is_fresh(self):
+    def is_fresh(self) -> bool:
         return True
 
-    def _write_lock_data(self, data):
+    def _write_lock_data(self, data: TOMLDocument) -> None:
         if self._write:
-            super(TestLocker, self)._write_lock_data(data)
+            super()._write_lock_data(data)
             self._locked = True
             return
 
@@ -184,18 +219,35 @@ class TestLocker(Locker):
 
 
 class TestRepository(Repository):
-    def find_packages(self, dependency):
-        packages = super(TestRepository, self).find_packages(dependency)
+    def find_packages(self, dependency: Dependency) -> list[Package]:
+        packages = super().find_packages(dependency)
         if len(packages) == 0:
-            raise PackageNotFound("Package [{}] not found.".format(dependency.name))
+            raise PackageNotFound(f"Package [{dependency.name}] not found.")
 
         return packages
 
-    def find_links_for_package(self, package):
+    def find_links_for_package(self, package: Package) -> list[Link]:
         return [
             Link(
-                "https://foo.bar/files/{}-{}-py2.py3-none-any.whl".format(
-                    escape_name(package.name), escape_version(package.version.text)
-                )
+                f"https://foo.bar/files/{escape_name(package.name)}"
+                f"-{escape_version(package.version.text)}-py2.py3-none-any.whl"
             )
         ]
+
+
+@contextlib.contextmanager
+def isolated_environment(
+    environ: dict[str, Any] | None = None, clear: bool = False
+) -> Iterator[None]:
+    original_environ = dict(os.environ)
+
+    if clear:
+        os.environ.clear()
+
+    if environ:
+        os.environ.update(environ)
+
+    yield
+
+    os.environ.clear()
+    os.environ.update(original_environ)

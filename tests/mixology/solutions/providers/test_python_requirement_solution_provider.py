@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from poetry.core.packages.dependency import Dependency
+
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import NoVersionsCause

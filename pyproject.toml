@@ -1,14 +1,27 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.0a1"
+version = "1.2.0-beta.2.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    "Sébastien Eustace <sebastien@eustace.io>",
+]
+maintainers = [
+    "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
+    "Bjorn Neergaard <bjorn@neersighted.com>",
+    "Branch Vincent <branchevincent@gmail.com>",
+    "Bryce Drennan <github@accounts.brycedrennan.com>",
+    "Daniel Eades <danieleades@hotmail.com>",
+    "Randy Döring <radoering.poetry@gmail.com>",
+    "Steph Samson <hello@stephsamson.com>",
+    "finswimmer <finswimmer77@gmail.com>",
 ]
 license = "MIT"
 
 readme = "README.md"
 
+packages = [
+    { include = "poetry", from = "src" }
+]
 include = [
     { path = "tests", format = "sdist" }
 ]
@@ -29,38 +42,51 @@ generate-setup-file = false
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 
-poetry-core = "~1.1.0a5"
-cleo = "^1.0.0a1"
-crashtest = "^0.3.0"
-requests = "^2.18"
+poetry-core = "^1.1.0b1"
+poetry-plugin-export = "^1.0.4"
+cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
-requests-toolbelt = "^0.9.1"
-cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
-pkginfo = "^1.5"
+cleo = "^1.0.0a5"
+crashtest = "^0.3.0"
+entrypoints = "^0.4"
 html5lib = "^1.0"
+importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
+# keyring uses calver, so version is unclamped
+keyring = ">=21.2.0"
+# packaging uses calver, so version is unclamped
+packaging = ">=20.4"
+pexpect = "^4.7.0"
+pkginfo = "^1.5"
+platformdirs = "^2.5.2"
+requests = "^2.18"
+requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
-pexpect = "^4.7.0"
-packaging = "^20.4"
-# temporarily clamped due to https://github.com/pypa/pip/issues/9953
-virtualenv = ">=20.4.3,<20.4.5"
-keyring = ">=21.2.0"
-entrypoints = "^0.3"
-importlib-metadata = {version = "^1.6.0", python = "<3.8"}
-dataclasses = {version = "^0.8", python = "~3.6"}
+# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
+virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
+urllib3 = "^1.26.0"
+dulwich = "^0.20.35"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2"
-pytest-cov = "^2.8"
+tox = "^3.18"
+pytest = "^7.1"
+pytest-cov = "^3.0"
 pytest-mock = "^3.5"
-pre-commit = { version = "^2.6", python = "^3.6.1" }
-tox = "^3.0"
 pytest-sugar = "^0.9"
-httpretty = "^1.0"
-zipp = { version = "^3.4", python = "<3.8"}
+pytest-xdist = { version = "^2.5", extras = ["psutil"] }
+pre-commit = "^2.6"
 deepdiff = "^5.0"
+httpretty = "^1.0"
+typing-extensions = { version = "^4.0.0", python = "<3.8" }
+zipp = { version = "^3.4", python = "<3.8" }
+flatdict = "^4.0.1"
+mypy = ">=0.960"
+types-entrypoints = ">=0.3.7"
+types-html5lib = ">=1.1.7"
+types-jsonschema = ">=4.4.4"
+types-requests = ">=2.27.11"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
@@ -72,37 +98,66 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]
+py_version = 37
 profile = "black"
 force_single_line = true
-atomic = true
-include_trailing_comma = true
-lines_after_imports = 2
+combine_as_imports = true
 lines_between_types = 1
-use_parentheses = true
-src_paths = ["poetry", "tests"]
-skip_glob = ["*/setup.py"]
-filter_files = true
-known_first_party = "poetry"
+lines_after_imports = 2
+src_paths = ["src", "tests"]
+extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
 
 
 [tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/.*/setup.py
-)/
+target-version = ['py37']
+preview = true
+force-exclude = '''
+.*/setup\.py$
 '''
+
+
+[tool.mypy]
+files = "src"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+show_error_codes = true
+strict = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+]
+
+# use of importlib-metadata backport at python3.7 makes it impossible to
+# satisfy mypy without some ignores: but we get a different set of ignores at
+# different python versions.
+#
+# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
+# warning.
+[[tool.mypy.overrides]]
+module = [
+  'poetry.installation.executor',
+  'poetry.mixology.version_solver',
+  'poetry.repositories.installed_repository',
+  'poetry.utils.env',
+]
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+  'cachecontrol.*',
+  'cachy.*',
+  'cleo.*',
+  'crashtest.*',
+  'pexpect.*',
+  'pkginfo.*',
+  'requests_toolbelt.*',
+  'shellingham.*',
+  'virtualenv.*',
+]
+ignore_missing_imports = true
 
 [tool.coverage.report]
 exclude_lines = [

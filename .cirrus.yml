@@ -1,5 +1,7 @@
 freebsd_instance:
-  image_family: freebsd-12-2
+  image_family: freebsd-13-0
+  cpu: 1
+  memory: 4G
 
 test_task:
   name: "Tests / FreeBSD / "
@@ -7,18 +9,25 @@ test_task:
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
-      - PYTHON: python3.6
+      - PYTHON: python3.7
       - PYTHON: python3.8
-  python_script:
+      - PYTHON: python3.9
+      - PYTHON: python3.10
+  pkg_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
-    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+    - pkg install -y git-lite curl $PYPACKAGE $SQLPACKAGE
   pip_script:
     - $PYTHON -m ensurepip
-    - $PYTHON -m pip install -U pip tox
-    - $PYTHON -m pip install -U --pre poetry
+    - $PYTHON -m pip --disable-pip-version-check install -U pip
+  env_script:
+    - echo "PATH=/.local/bin:${PATH}" >> $CIRRUS_ENV
+  poetry_script:
+    - curl -sL https://install.python-poetry.org | $PYTHON - -y
     - poetry config virtualenvs.in-project true
-  tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
+  test_script:
+    - poetry install
+    - poetry run pytest -n auto -q --junitxml=junit.xml tests
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml

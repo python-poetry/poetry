@@ -1,58 +1,68 @@
+from __future__ import annotations
+
 import uuid
+
+from typing import TYPE_CHECKING
 
 import pytest
 
 
-@pytest.fixture
-def repository_cache_dir(monkeypatch, tmpdir):
+if TYPE_CHECKING:
     from pathlib import Path
 
-    import poetry.locations
+    from _pytest.monkeypatch import MonkeyPatch
+    from cleo.testers.command_tester import CommandTester
 
-    path = Path(str(tmpdir))
-    monkeypatch.setattr(poetry.locations, "REPOSITORY_CACHE_DIR", path)
-    return path
-
-
-@pytest.fixture
-def repository_one():
-    return "01_{}".format(uuid.uuid4())
+    from tests.conftest import Config
+    from tests.types import CommandTesterFactory
 
 
 @pytest.fixture
-def repository_two():
-    return "02_{}".format(uuid.uuid4())
+def repository_cache_dir(monkeypatch: MonkeyPatch, config: Config) -> Path:
+    return config.repository_cache_directory
 
 
 @pytest.fixture
-def mock_caches(repository_cache_dir, repository_one, repository_two):
-    (repository_cache_dir / repository_one).mkdir()
-    (repository_cache_dir / repository_two).mkdir()
+def repository_one() -> str:
+    return f"01_{uuid.uuid4()}"
 
 
 @pytest.fixture
-def tester(command_tester_factory):
+def repository_two() -> str:
+    return f"02_{uuid.uuid4()}"
+
+
+@pytest.fixture
+def mock_caches(
+    repository_cache_dir: Path, repository_one: str, repository_two: str
+) -> None:
+    (repository_cache_dir / repository_one).mkdir(parents=True)
+    (repository_cache_dir / repository_two).mkdir(parents=True)
+
+
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("cache list")
 
 
-def test_cache_list(tester, mock_caches, repository_one, repository_two):
+def test_cache_list(
+    tester: CommandTester, mock_caches: None, repository_one: str, repository_two: str
+):
     tester.execute()
 
-    expected = """\
-{}
-{}
-""".format(
-        repository_one, repository_two
-    )
+    expected = f"""\
+{repository_one}
+{repository_two}
+"""
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_cache_list_empty(tester, repository_cache_dir):
+def test_cache_list_empty(tester: CommandTester, repository_cache_dir: Path):
     tester.execute()
 
     expected = """\
 No caches found
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_error() == expected
