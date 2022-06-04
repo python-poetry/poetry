@@ -3539,3 +3539,55 @@ def test_solver_keeps_multiple_locked_dependencies_for_same_package(
             {"job": "install", "package": a12},
         ],
     )
+
+
+def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    """
+    Another package requires the same dependency with extras that is required
+    by the project as direct origin dependency without any extras.
+    """
+    pendulum = get_package("pendulum", "2.0.3")  # required by demo
+    cleo = get_package("cleo", "1.0.0")  # required by demo[foo]
+    demo_foo = get_package("demo-foo", "1.2.3")
+    demo_foo.add_dependency(
+        Factory.create_dependency("demo", {"version": ">=0.1", "extras": ["foo"]})
+    )
+    repo.add_package(demo_foo)
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    # project requires path dependency of demo while demo-foo requires demo[foo]
+    package.add_dependency(Factory.create_dependency("demo", {"path": path}))
+    package.add_dependency(Factory.create_dependency("demo-foo", "^1.2.3"))
+
+    transaction = solver.solve()
+
+    demo = Package("demo", "0.1.2", source_type="directory", source_url=path)
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": demo},
+            {"job": "install", "package": demo_foo},
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.2"
+    assert op.package.source_type == "directory"
+    assert op.package.source_url == path
