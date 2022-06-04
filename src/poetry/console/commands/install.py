@@ -84,7 +84,7 @@ dependencies and not including the current project, run the command with the
             self.line_error(
                 "<error>You cannot specify explicit"
                 " `<fg=yellow;options=bold>--extras</>` while installing"
-                " `<fg=yellow;options=bold>--all-extras</>`.</error>"
+                " `using <fg=yellow;options=bold>--all-extras</>`.</error>"
             )
             return 1
 
