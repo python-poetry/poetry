@@ -384,6 +384,12 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+Or, you can install all extras with the `--all-extras` option:
+
+```bash
+poetry install --all-extras
+```
+
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
 
