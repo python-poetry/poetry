@@ -89,7 +89,6 @@ def tester(
         # deprecated options
         ("--default", {MAIN_GROUP}),
         ("--no-dev", {MAIN_GROUP}),
-        ("--dev-only", {"foo", "bar", "baz", "bim"}),
     ],
 )
 @pytest.mark.parametrize("with_root", [True, False])

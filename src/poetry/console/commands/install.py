@@ -19,12 +19,6 @@ class InstallCommand(InstallerCommand):
             " (<warning>Deprecated</warning>)",
         ),
         option(
-            "dev-only",
-            None,
-            "Only install the development dependencies."
-            " (<warning>Deprecated</warning>)",
-        ),
-        option(
             "sync",
             None,
             "Synchronize the environment with the locked packages and the specified"
