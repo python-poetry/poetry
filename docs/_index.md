@@ -40,9 +40,12 @@ Install Poetry by downloading and executing the [installation script](https://in
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
+{{% note %}}
+Note: On some systems, `python` may still refer to Python 2 instead of Python 3. Please always use the
+`python3` binary to ensure the right major version of Python is used.
+{{% /note %}}
 
 **Windows (Powershell)**
-
 ```powershell
 (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
