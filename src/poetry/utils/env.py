@@ -1491,6 +1491,7 @@ class Env:
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
 
+        kwargs["shell"] = True
         exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
         exe.communicate()
         return exe.returncode
