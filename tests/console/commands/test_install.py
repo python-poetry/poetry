@@ -175,5 +175,6 @@ def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture
     assert tester.status_code == 1
     assert (
         tester.io.fetch_error()
-        == "You cannot specify explicit `--extras` while installing using `--all-extras`.\n"
+        == "You cannot specify explicit `--extras` while installing using"
+        " `--all-extras`.\n"
     )
