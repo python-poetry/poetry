@@ -1006,6 +1006,7 @@ class EnvManager:
         cli_result = virtualenv.cli_run(args)
 
         # Exclude the venv folder from from macOS Time Machine backups
+        # TODO: Add backup-ignore markers for other platforms too
         if sys.platform == "darwin":
             import xattr
 
