@@ -151,10 +151,6 @@ class Term:
         """
         return self.intersect(other.inverse)
 
-    @staticmethod
-    def _is_direct_origin(dependency: Dependency) -> bool:
-        return dependency.source_type in ["directory", "file", "url", "git"]
-
     def _compatible_dependency(self, other: Dependency) -> bool:
         return (
             self.dependency.is_root
@@ -164,8 +160,7 @@ class Term:
                 # we do this here to indicate direct origin dependencies are
                 # compatible with NVR dependencies
                 self.dependency.complete_name == other.complete_name
-                and self._is_direct_origin(self.dependency)
-                != self._is_direct_origin(other)
+                and self.dependency.is_direct_origin() != other.is_direct_origin()
             )
         )
 
@@ -178,8 +173,8 @@ class Term:
         # when creating a new term prefer direct-reference dependencies
         dependency = (
             other.dependency
-            if not self._is_direct_origin(self.dependency)
-            and self._is_direct_origin(other.dependency)
+            if not self.dependency.is_direct_origin()
+            and other.dependency.is_direct_origin()
             else self.dependency
         )
         return Term(dependency.with_constraint(constraint), is_positive)
