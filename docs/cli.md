@@ -167,10 +167,6 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
-{{% note %}}
-The `--dev-only` option is now deprecated. You should use the `--only dev` notation instead.
-{{% /note %}}
-
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
@@ -231,7 +227,6 @@ option is used.
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**)
-* `--dev-only`: Only install dev dependencies. (**Deprecated**)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
 
 {{% note %}}
