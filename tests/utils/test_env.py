@@ -96,6 +96,27 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
     assert venv.run("python", "-V", shell=True).startswith("Python")
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
+def test_venv_backup_exclusion(tmp_dir: str, manager: EnvManager):
+    import xattr
+
+    venv_path = Path(tmp_dir) / "Virtual Env"
+
+    manager.build_venv(str(venv_path))
+
+    value = (
+        b"bplist00_\x10\x11com.apple.backupd"
+        b"\x08\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00"
+        b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c"
+    )
+    assert (
+        xattr.getxattr(
+            str(venv_path), "com.apple.metadata:com_apple_backup_excludeItem"
+        )
+        == value
+    )
+
+
 def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     tmp_dir: str, manager: EnvManager
 ):

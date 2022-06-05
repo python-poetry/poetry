@@ -878,6 +878,17 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "xattr"
+version = "0.9.7"
+description = "Python wrapper for extended filesystem attributes"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+cffi = ">=1.0.0"
+
+[[package]]
 name = "zipp"
 version = "3.8.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -1478,6 +1489,12 @@ virtualenv = [
 webencodings = [
     {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
+]
+xattr = [
+    {file = "xattr-0.9.7-cp27-cp27m-macosx_10_13_x86_64.whl", hash = "sha256:1b2cd125150aa9bbfb02929627101b3303920a68487e9c865ddd170188ddd796"},
+    {file = "xattr-0.9.7-cp36-cp36m-macosx_10_13_x86_64.whl", hash = "sha256:e2c72a3a501bac715489180ca2b646e48a1ca3a794c1103dd6f0f987d43f570c"},
+    {file = "xattr-0.9.7-cp37-cp37m-macosx_10_13_x86_64.whl", hash = "sha256:1e11ba8ab86dfe74419704c53722ea9b5915833db07416e7c10db5dfb02218bb"},
+    {file = "xattr-0.9.7.tar.gz", hash = "sha256:b0bbca828e04ef2d484a6522ae7b3a7ccad5e43fa1c6f54d78e24bb870f49d44"},
 ]
 zipp = [
     {file = "zipp-3.8.0-py3-none-any.whl", hash = "sha256:c4f6e5bbf48e74f7a38e7cc5b0480ff42b0ae5178957d564d18932525d5cf099"},

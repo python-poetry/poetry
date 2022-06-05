@@ -6,6 +6,7 @@ import itertools
 import json
 import os
 import platform
+import plistlib
 import re
 import subprocess
 import sys
@@ -1087,7 +1088,20 @@ class EnvManager:
 
         args.append(str(path))
 
-        return virtualenv.cli_run(args)
+        cli_result = virtualenv.cli_run(args)
+
+        # Exclude the venv folder from from macOS Time Machine backups
+        # TODO: Add backup-ignore markers for other platforms too
+        if sys.platform == "darwin":
+            import xattr
+
+            xattr.setxattr(
+                str(path),
+                "com.apple.metadata:com_apple_backup_excludeItem",
+                plistlib.dumps("com.apple.backupd", fmt=plistlib.FMT_BINARY),
+            )
+
+        return cli_result
 
     @classmethod
     def remove_venv(cls, path: Path | str) -> None:
