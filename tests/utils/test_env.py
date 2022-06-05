@@ -110,16 +110,6 @@ def test_venv_backup_exclusion(tmp_dir, manager):
         == b"bplist00_\x10\x11com.apple.backupd\x08\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c"
     )
 
-
-def test_env_commands_with_spaces_in_their_arg_work_as_expected(tmp_dir, manager):
-    venv_path = Path(tmp_dir) / "Virtual Env"
-    manager.build_venv(str(venv_path))
-    venv = VirtualEnv(venv_path)
-    assert venv.run("python", venv.pip, "--version", shell=True).startswith(
-        "pip {} from ".format(venv.pip_version)
-    )
-
-
 def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     tmp_dir: str, manager: EnvManager
 ):
