@@ -14,6 +14,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
+from tests.console.commands.env.helpers import find_python_wrapper
 
 
 if TYPE_CHECKING:
@@ -34,18 +35,25 @@ def setup(mocker: MockerFixture) -> None:
 def mock_subprocess_calls(
     setup: None, current_python: tuple[int, int, int], mocker: MockerFixture
 ) -> None:
+    version = Version.from_parts(*current_python)
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.from_parts(*current_python)),
+        side_effect=check_output_wrapper(version),
     )
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python",
+        side_effect=find_python_wrapper(version),
+    )
 
 
 @pytest.fixture
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+def tester(
+    command_tester_factory: CommandTesterFactory, find_python_mode: None
+) -> CommandTester:
     return command_tester_factory("env use")
 
 
@@ -59,6 +67,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
+    )
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python", side_effect=find_python_wrapper()
     )
 
     mock_build_env = mocker.patch(

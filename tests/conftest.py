@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
+    from _pytest.fixtures import FixtureRequest
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -486,3 +487,16 @@ def load_required_fixtures(
 ) -> None:
     for fixture in required_fixtures:
         fixture_copier(fixture)
+
+
+@pytest.fixture(params=[True, False])
+def find_python_mode(config: Config, request: FixtureRequest) -> None:
+    config.merge(
+        {
+            "experimental": {
+                # param is an optional attribute present
+                # when fixtures are parameterized
+                "python-finder": request.param  # type: ignore
+            }
+        }
+    )

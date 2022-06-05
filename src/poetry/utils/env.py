@@ -34,6 +34,7 @@ from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
+from pythonfinder import Finder
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
 from poetry.utils._compat import WINDOWS
@@ -505,6 +506,13 @@ class InvalidCurrentPythonVersionError(EnvError):
         super().__init__(message)
 
 
+class InterpreterNotFound(EnvError):
+    def __init__(self, python: str) -> None:
+        message = f"Python interpreter not found for input ({python})"
+
+        super().__init__(message)
+
+
 class EnvManager:
     """
     Environments manager
@@ -551,23 +559,7 @@ class EnvManager:
             )
         return executable
 
-    def activate(self, python: str, io: IO) -> Env:
-        venv_path = self._poetry.config.virtualenvs_path
-        cwd = self._poetry.file.parent
-
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
-
-        try:
-            python_version = Version.parse(python)
-            python = f"python{python_version.major}"
-            if python_version.precision > 1:
-                python += f".{python_version.minor}"
-        except ValueError:
-            # Executable in PATH or full executable path
-            pass
-
-        python = self._full_python_path(python)
-
+    def _get_python_versions(self, python: str) -> tuple[str, str]:
         try:
             python_version_string = decode(
                 subprocess.check_output(
@@ -581,6 +573,52 @@ class EnvManager:
         python_version = Version.parse(python_version_string.strip())
         minor = f"{python_version.major}.{python_version.minor}"
         patch = python_version.text
+        return minor, patch
+
+    def _find_python(self, python: str) -> tuple[str, str, str]:
+        # Handle full path
+        path = Path(python)
+        if path.is_absolute():
+            if path.exists():
+                minor, patch = self._get_python_versions(python)
+                return python, minor, patch
+            else:
+                raise InterpreterNotFound(python)
+
+        # python is either <major>[.<minor>] or python[<major>[.<minor>]]
+        # both are supported as first parameter to Finder.find_python_version
+        finder = Finder(sort_by_path=True)
+        try:
+            result = finder.find_python_version(python)
+            if result:
+                minor = f"{result.py_version.major}.{result.py_version.minor}"
+                patch = f"{minor}.{result.py_version.patch}"
+                return str(result.path), minor, patch
+        except ValueError:
+            pass
+
+        raise InterpreterNotFound(python)
+
+    def activate(self, python: str, io: IO) -> Env:
+        venv_path = self._poetry.config.virtualenvs_path
+        cwd = self._poetry.file.parent
+
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
+
+        experimental_finder = self._poetry.config.get("experimental.python-finder")
+        if experimental_finder:
+            python, minor, patch = self._find_python(python)
+        else:
+            try:
+                python_version = Version.parse(python)
+                python = f"python{python_version.major}"
+                if python_version.precision > 1:
+                    python += f".{python_version.minor}"
+            except ValueError:
+                # Executable in PATH or full executable path
+                pass
+            python = self._full_python_path(python)
+            minor, patch = self._get_python_versions(python)
 
         create = False
         is_root_venv = self._poetry.config.get("virtualenvs.in-project")

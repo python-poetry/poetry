@@ -124,7 +124,11 @@ class Config:
             "prefer-active-python": False,
             "prompt": "{project_name}-py{python_version}",
         },
-        "experimental": {"new-installer": True, "system-git-client": False},
+        "experimental": {
+            "new-installer": True,
+            "system-git-client": False,
+            "python-finder": True,
+        },
         "installer": {"parallel": True, "max-workers": None, "no-binary": None},
     }
 
@@ -266,6 +270,7 @@ class Config:
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.new-installer",
+            "experimental.python-finder",
             "experimental.system-git-client",
             "installer.parallel",
         }:

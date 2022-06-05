@@ -202,12 +202,23 @@ def check_output_wrapper(
     return check_output
 
 
+def find_python_wrapper(
+    version: Version = VERSION_3_7_1,
+) -> Callable[[str], tuple[str, str, str]]:
+    def find_python_output(python: str) -> tuple[str, str, str]:
+        path = f"/usr/bin/python{version.major}.{version.minor}"
+        return path, f"{version.major}.{version.minor}", version.text
+
+    return find_python_output
+
+
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tmp_dir: str,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -222,6 +233,11 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None)],
     )
+
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python", side_effect=find_python_wrapper()
+    )
+
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
     env = manager.activate("python3.7", NullIO())
@@ -255,6 +271,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -272,6 +289,9 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None)],
+    )
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python", side_effect=find_python_wrapper()
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
@@ -295,6 +315,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -318,6 +339,9 @@ def test_activate_activates_same_virtualenv_with_envs_file(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None)],
     )
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python", side_effect=find_python_wrapper()
+    )
     m = mocker.patch("poetry.utils.env.EnvManager.create_venv")
 
     env = manager.activate("python3.7", NullIO())
@@ -339,6 +363,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -360,6 +385,10 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
+    )
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python",
+        side_effect=find_python_wrapper(Version.parse("3.6.6")),
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
@@ -392,6 +421,7 @@ def test_activate_activates_recreates_for_different_patch(
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -427,6 +457,9 @@ def test_activate_activates_recreates_for_different_patch(
         "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
     )
 
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python", side_effect=find_python_wrapper()
+    )
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
@@ -458,6 +491,7 @@ def test_activate_does_not_recreate_when_switching_minor(
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -480,6 +514,10 @@ def test_activate_does_not_recreate_when_switching_minor(
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
+    )
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python",
+        side_effect=find_python_wrapper(Version.parse("3.6.6")),
     )
     build_venv_m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
@@ -1081,6 +1119,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     config: Config,
     tmp_dir: str,
     mocker: MockerFixture,
+    find_python_mode: None,
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1101,6 +1140,10 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None)],
+    )
+
+    mocker.patch(
+        "poetry.utils.env.EnvManager._find_python", side_effect=find_python_wrapper()
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
 

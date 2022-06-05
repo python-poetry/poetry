@@ -33,3 +33,13 @@ def check_output_wrapper(
             return str(Path("/prefix"))
 
     return check_output
+
+
+def find_python_wrapper(
+    version: PEP440Version = VERSION_3_7_1,
+) -> Callable[[str], tuple[str, str, str]]:
+    def find_python_output(python: str) -> tuple[str, str, str]:
+        path = f"/usr/bin/python{version.major}.{version.minor}"
+        return path, f"{version.major}.{version.minor}", version.text
+
+    return find_python_output

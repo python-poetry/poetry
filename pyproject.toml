@@ -68,6 +68,7 @@ virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 dulwich = "^0.20.44"
+pythonfinder = "^1.2.10"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
@@ -155,6 +156,7 @@ module = [
   'crashtest.*',
   'pexpect.*',
   'pkginfo.*',
+  'pythonfinder',
   'requests_toolbelt.*',
   'shellingham.*',
   'virtualenv.*',
