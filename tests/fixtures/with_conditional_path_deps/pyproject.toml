@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "sample"
+version = "1.0.0"
+description = "Sample Project"
+authors = []
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+demo = [
+    { path = "demo_one", platform = "linux" },
+    { path = "demo_two", platform = "win32" },
+]

@@ -1,7 +1,9 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from distutils.core import setup
 
-from build import *
+from build import *  # nopycln: import
+
 
 packages = [
     "pendulum",

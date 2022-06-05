@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import annotations
 
 import json
 import os
@@ -11,8 +11,10 @@ from collections import defaultdict
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
+
 try:
-    from setuptools import setup, find_packages
+    from setuptools import find_packages
+    from setuptools import setup
     from setuptools.command.build_py import build_py as BuildPy
     from setuptools.command.install_lib import install_lib as InstallLib
     from setuptools.command.install_scripts import install_scripts as InstallScripts
@@ -26,7 +28,8 @@ except ImportError:
     sys.exit(1)
 
 sys.path.insert(0, os.path.abspath("lib"))
-from ansible.release import __version__, __author__
+from ansible.release import __author__
+from ansible.release import __version__
 
 
 SYMLINK_CACHE = "SYMLINK_CACHE.json"
@@ -63,9 +66,9 @@ def _maintain_symlinks(symlink_type, base_path):
     try:
         # Try the cache first because going from git checkout to sdist is the
         # only time we know that we're going to cache correctly
-        with open(SYMLINK_CACHE, "r") as f:
+        with open(SYMLINK_CACHE) as f:
             symlink_data = json.load(f)
-    except (IOError, OSError) as e:
+    except OSError as e:
         # IOError on py2, OSError on py3.  Both have errno
         if e.errno == 2:
             # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
@@ -139,7 +142,7 @@ class SDistCommand(SDist):
 
 def read_file(file_name):
     """Read file and return its contents."""
-    with open(file_name, "r") as f:
+    with open(file_name) as f:
         return f.read()
 
 

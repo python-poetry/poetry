@@ -1,27 +1,35 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
+from deepdiff import DeepDiff
 from entrypoints import EntryPoint
-
+from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
+
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 
 
+if TYPE_CHECKING:
+    from cleo.io.io import IO
+    from pytest_mock import MockerFixture
+
+    from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
+
 fixtures_dir = Path(__file__).parent / "fixtures"
 
 
 class MyPlugin(Plugin):
-    def activate(self, poetry, io):
-        io.write_line("Updating version")
-        poetry.package.set_version("9.9.9")
+    def activate(self, poetry: Poetry, io: IO) -> None:
+        io.write_line("Setting readmes")
+        poetry.package.readmes = ("README.md",)
 
 
 def test_create_poetry():
@@ -34,10 +42,12 @@ def test_create_poetry():
     assert package.description == "Some description."
     assert package.authors == ["Sébastien Eustace <sebastien@eustace.io>"]
     assert package.license.id == "MIT"
-    assert (
-        package.readme.relative_to(fixtures_dir).as_posix()
-        == "sample_project/README.rst"
-    )
+
+    for readme in package.readmes:
+        assert (
+            readme.relative_to(fixtures_dir).as_posix() == "sample_project/README.rst"
+        )
+
     assert package.homepage == "https://python-poetry.org"
     assert package.repository_url == "https://github.com/python-poetry/poetry"
     assert package.keywords == ["packaging", "dependency", "poetry"]
@@ -70,7 +80,7 @@ def test_create_poetry():
 
     pathlib2 = dependencies["pathlib2"]
     assert pathlib2.pretty_constraint == "^2.2"
-    assert pathlib2.python_versions == "~2.7"
+    assert parse_constraint(pathlib2.python_versions) == parse_constraint("~2.7")
     assert not pathlib2.is_optional()
 
     demo = dependencies["demo"]
@@ -98,7 +108,8 @@ def test_create_poetry():
     assert functools32.pretty_constraint == "^3.2.3"
     assert (
         str(functools32.marker)
-        == 'python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5"'
+        == 'python_version ~= "2.7" and sys_platform == "win32" or python_version in'
+        ' "3.4 3.5"'
     )
 
     assert "db" in package.extras
@@ -123,6 +134,34 @@ def test_create_poetry():
         "Topic :: Software Development :: Build Tools",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
+
+
+@pytest.mark.parametrize(
+    ("project",),
+    [
+        ("simple_project",),
+        ("project_with_extras",),
+    ],
+)
+def test_create_pyproject_from_package(project: str):
+    poetry = Factory().create_poetry(fixtures_dir / project)
+    package = poetry.package
+
+    pyproject = Factory.create_pyproject_from_package(package)
+
+    result = pyproject["tool"]["poetry"]
+    expected = poetry.pyproject.poetry_config
+
+    # packages do not support this at present
+    expected.pop("scripts", None)
+
+    # remove any empty sections
+    sections = list(expected.keys())
+    for section in sections:
+        if not expected[section]:
+            expected.pop(section)
+
+    assert not DeepDiff(expected, result)
 
 
 def test_create_poetry_with_packages_and_includes():
@@ -156,13 +195,13 @@ def test_create_poetry_with_multi_constraints_dependency():
     assert len(package.requires) == 2
 
 
-def test_poetry_with_default_source(with_simple_keyring):
+def test_poetry_with_default_source(with_simple_keyring: None):
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
-    assert 1 == len(poetry.pool.repositories)
+    assert len(poetry.pool.repositories) == 1
 
 
-def test_poetry_with_non_default_source(with_simple_keyring):
+def test_poetry_with_non_default_source(with_simple_keyring: None):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -176,7 +215,7 @@ def test_poetry_with_non_default_source(with_simple_keyring):
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
 
 
-def test_poetry_with_non_default_secondary_source(with_simple_keyring):
+def test_poetry_with_non_default_secondary_source(with_simple_keyring: None):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -192,7 +231,7 @@ def test_poetry_with_non_default_secondary_source(with_simple_keyring):
     assert isinstance(repository, LegacyRepository)
 
 
-def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring):
+def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring: None):
     poetry = Factory().create_poetry(
         fixtures_dir / "with_non_default_multiple_secondary_sources"
     )
@@ -214,7 +253,7 @@ def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring)
     assert isinstance(repository, LegacyRepository)
 
 
-def test_poetry_with_non_default_multiple_sources(with_simple_keyring):
+def test_poetry_with_non_default_multiple_sources(with_simple_keyring: None):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_multiple_sources")
 
     assert len(poetry.pool.repositories) == 3
@@ -245,11 +284,11 @@ def test_poetry_with_no_default_source():
     assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
-def test_poetry_with_two_default_sources(with_simple_keyring):
+def test_poetry_with_two_default_sources(with_simple_keyring: None):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 
-    assert "Only one repository can be the default" == str(e.value)
+    assert str(e.value) == "Only one repository can be the default"
 
 
 def test_validate():
@@ -282,19 +321,21 @@ def test_create_poetry_fails_on_invalid_configuration():
 The Poetry configuration is invalid:
   - 'description' is a required property
 """
-    assert expected == str(e.value)
+    assert str(e.value) == expected
 
 
-def test_create_poetry_with_local_config(fixture_dir):
+def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter):
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
 
     assert not poetry.config.get("virtualenvs.in-project")
     assert not poetry.config.get("virtualenvs.create")
     assert not poetry.config.get("virtualenvs.options.always-copy")
+    assert not poetry.config.get("virtualenvs.options.no-pip")
+    assert not poetry.config.get("virtualenvs.options.no-setuptools")
     assert not poetry.config.get("virtualenvs.options.system-site-packages")
 
 
-def test_create_poetry_with_plugins(mocker):
+def test_create_poetry_with_plugins(mocker: MockerFixture):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[EntryPoint("my-plugin", "tests.test_factory", "MyPlugin")],
@@ -302,4 +343,4 @@ def test_create_poetry_with_plugins(mocker):
 
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
-    assert "9.9.9" == poetry.package.version.text
+    assert poetry.package.readmes == ("README.md",)

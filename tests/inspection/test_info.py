@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Set
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,6 +12,9 @@ from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
 
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 FIXTURE_DIR_BASE = Path(__file__).parent.parent / "fixtures"
 FIXTURE_DIR_INSPECTIONS = FIXTURE_DIR_BASE / "inspection"
@@ -32,7 +37,7 @@ def demo_wheel() -> Path:
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
-    yield Path(tmp_path.as_posix())
+    return Path(tmp_path.as_posix())
 
 
 @pytest.fixture
@@ -46,7 +51,7 @@ def demo_setup(source_dir: Path) -> Path:
             'install_requires=["package"])'
         )
     )
-    yield source_dir
+    return source_dir
 
 
 @pytest.fixture
@@ -65,7 +70,7 @@ def demo_setup_cfg(source_dir: Path) -> Path:
             )
         )
     )
-    yield source_dir
+    return source_dir
 
 
 @pytest.fixture
@@ -79,19 +84,19 @@ def demo_setup_complex(source_dir: Path) -> Path:
             'install_requires=[i for i in ["package"]])'
         )
     )
-    yield source_dir
+    return source_dir
 
 
 @pytest.fixture
 def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
     pyproject_toml.write_text(
-        decode("[build-system]\n" 'requires = ["setuptools", "wheel"]')
+        decode('[build-system]\nrequires = ["setuptools", "wheel"]')
     )
-    yield demo_setup_complex
+    return demo_setup_complex
 
 
-def demo_check_info(info: PackageInfo, requires_dist: Set[str] = None) -> None:
+def demo_check_info(info: PackageInfo, requires_dist: set[str] = None) -> None:
     assert info.name == "demo"
     assert info.version == "0.1.0"
     assert info.requires_dist
@@ -104,17 +109,17 @@ def demo_check_info(info: PackageInfo, requires_dist: Set[str] = None) -> None:
     assert set(info.requires_dist) == requires_dist
 
 
-def test_info_from_sdist(demo_sdist):
+def test_info_from_sdist(demo_sdist: Path):
     info = PackageInfo.from_sdist(demo_sdist)
     demo_check_info(info)
 
 
-def test_info_from_wheel(demo_wheel):
+def test_info_from_wheel(demo_wheel: Path):
     info = PackageInfo.from_wheel(demo_wheel)
     demo_check_info(info)
 
 
-def test_info_from_bdist(demo_wheel):
+def test_info_from_bdist(demo_wheel: Path):
     info = PackageInfo.from_bdist(demo_wheel)
     demo_check_info(info)
 
@@ -133,12 +138,12 @@ def test_info_from_requires_txt():
     demo_check_info(info)
 
 
-def test_info_from_setup_py(demo_setup):
+def test_info_from_setup_py(demo_setup: Path):
     info = PackageInfo.from_setup_files(demo_setup)
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_from_setup_cfg(demo_setup_cfg):
+def test_info_from_setup_cfg(demo_setup_cfg: Path):
     info = PackageInfo.from_setup_files(demo_setup_cfg)
     demo_check_info(info, requires_dist={"package"})
 
@@ -153,26 +158,28 @@ def test_info_no_setup_pkg_info_no_deps():
     assert info.requires_dist is None
 
 
-def test_info_setup_simple(mocker, demo_setup):
+def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path):
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
     assert spy.call_count == 0
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_setup_cfg(mocker, demo_setup_cfg):
+def test_info_setup_cfg(mocker: MockerFixture, demo_setup_cfg: Path):
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup_cfg)
     assert spy.call_count == 0
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_setup_complex(demo_setup_complex):
+def test_info_setup_complex(demo_setup_complex: Path):
     info = PackageInfo.from_directory(demo_setup_complex)
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_setup_complex_pep517_error(mocker, demo_setup_complex):
+def test_info_setup_complex_pep517_error(
+    mocker: MockerFixture, demo_setup_complex: Path
+):
     mocker.patch(
         "poetry.utils.env.VirtualEnv.run",
         autospec=True,
@@ -183,12 +190,14 @@ def test_info_setup_complex_pep517_error(mocker, demo_setup_complex):
         PackageInfo.from_directory(demo_setup_complex)
 
 
-def test_info_setup_complex_pep517_legacy(demo_setup_complex_pep517_legacy):
+def test_info_setup_complex_pep517_legacy(demo_setup_complex_pep517_legacy: Path):
     info = PackageInfo.from_directory(demo_setup_complex_pep517_legacy)
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_setup_complex_disable_build(mocker, demo_setup_complex):
+def test_info_setup_complex_disable_build(
+    mocker: MockerFixture, demo_setup_complex: Path
+):
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup_complex, disable_build=True)
     assert spy.call_count == 0
@@ -199,7 +208,7 @@ def test_info_setup_complex_disable_build(mocker, demo_setup_complex):
 
 @pytest.mark.parametrize("missing", ["version", "name", "install_requires"])
 def test_info_setup_missing_mandatory_should_trigger_pep517(
-    mocker, source_dir, missing
+    mocker: MockerFixture, source_dir: Path, missing: str
 ):
     setup = "from setuptools import setup; "
     setup += "setup("

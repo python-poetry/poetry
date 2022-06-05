@@ -38,3 +38,5 @@ MANIFEST.in
 /releases/*
 pip-wheel-metadata
 /poetry.toml
+
+poetry/core/*

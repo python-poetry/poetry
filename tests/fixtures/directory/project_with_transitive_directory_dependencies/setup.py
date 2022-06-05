@@ -1,5 +1,7 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from distutils.core import setup
+
 
 packages = ["project_with_extras"]
 

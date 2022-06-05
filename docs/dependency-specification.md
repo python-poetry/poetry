@@ -116,6 +116,34 @@ To use an SSH connection, for example in the case of private repositories, use t
 requests = { git = "git@github.com:requests/requests.git" }
 ```
 
+To use HTTP basic authentication with your git repositories, you can configure credentials similar to
+how [repository credentials]({{< relref "repositories#configuring-credentials" >}}) are configured.
+
+```bash
+poetry config repositories.git-org-project https://github.com/org/project.git
+poetry config http-basic.git-org-project username token
+poetry add git+https://github.com/org/project.git
+```
+
+{{% note %}}
+With Poetry 1.2 releases, the default git client used is [Dulwich](https://www.dulwich.io/).
+
+We fall back to legacy system git client implementation in cases where
+[gitcredentials](https://git-scm.com/docs/gitcredentials) is used. This fallback will be removed in
+a future release where `gitcredentials` helpers can be better supported natively.
+
+In cases where you encounter issues with the default implementation that used to work prior to
+Poetry 1.2, you may wish to explicitly configure the use of the system git client via a shell
+subprocess call.
+
+```bash
+poetry config experimental.system-git-client true
+```
+
+Keep in mind however, that doing so will surface bugs that existed in versions prior to 1.2 which
+were caused due to the use of the system git client.
+{{% /note %}}
+
 ## `path` dependencies
 
 To depend on a library located in a local directory or file,
@@ -152,6 +180,46 @@ with the corresponding `add` call:
 poetry add https://example.com/my-package-0.1.0.tar.gz
 ```
 
+## Dependency `extras`
+
+You can specify [PEP-508 Extras](https://www.python.org/dev/peps/pep-0508/#extras)
+for a dependency as shown here.
+
+```toml
+[tool.poetry.dependencies]
+gunicorn = { version = "^20.1", extras = ["gevent"] }
+```
+
+{{% note %}}
+These activate extra defined for the dependency, to configure an optional dependency
+for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
+{{% /note %}}
+
+## `source` dependencies
+
+To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
+you can use the `source` property:
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+secondary = true
+
+[tool.poetry.dependencies]
+my-cool-package = { version = "*", source = "foo" }
+```
+
+with the corresponding `add` call:
+
+```sh
+poetry add my-cool-package --source foo
+```
+
+{{% note %}}
+In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository)
+for further information.
+{{% /note %}}
 
 ## Python restricted dependencies
 
@@ -178,7 +246,6 @@ via the `markers` property:
 pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
 ```
 
-
 ## Multiple constraints dependencies
 
 Sometimes, one of your dependency may have different version ranges depending
@@ -192,7 +259,7 @@ you would declare it like so:
 [tool.poetry.dependencies]
 foo = [
     {version = "<=1.9", python = "^2.7"},
-    {version = "^2.0", python = "^3.4"}
+    {version = "^2.0", python = "^3.8"}
 ]
 ```
 
@@ -211,7 +278,7 @@ An example where this might be useful is the following:
 
 ```toml
 [tool.poetry.group.dev.dependencies]
-black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.7", markers = "platform_python_implementation == 'CPython'"}
 ```
 
 As a single line, this is a lot to digest. To make this a bit easier to
@@ -221,7 +288,7 @@ work with, you can do the following:
 [tool.poetry.group.dev.dependencies.black]
 version = "19.10b0"
 allow-prereleases = true
-python = "^3.6"
+python = "^3.7"
 markers = "platform_python_implementation == 'CPython'"
 ```
 

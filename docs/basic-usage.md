@@ -27,12 +27,11 @@ This will create the `poetry-demo` directory with the following content:
 ```text
 poetry-demo
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── poetry_demo
 │   └── __init__.py
 └── tests
-    ├── __init__.py
-    └── test_poetry_demo.py
+    └── __init__.py
 ```
 
 The `pyproject.toml` file is what is the most important here. This will orchestrate
@@ -44,13 +43,22 @@ name = "poetry-demo"
 version = "0.1.0"
 description = ""
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
+readme = "README.md"
+packages = [{include = "poetry_demo"}]
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^3.7"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 ```
+
+Poetry assumes your package contains a package with the same name as `tool.poetry.name`.
+If this is not the case, populate `tool.poetry.packages` to specify your package or packages.
+
+See [Packages]({{< relref "pyproject#packages" >}}) for more information.
 
 ### Initialising a pre-existing project
 
@@ -74,7 +82,7 @@ pendulum = "^2.1"
 As you can see, it takes a mapping of **package names** and **version constraints**.
 
 Poetry uses this information to search for the right set of files in package "repositories" that you register
-in the `tool.poetry.repositories` section, or on [PyPI](https://pypi.org) by default.
+in the `tool.poetry.source` section, or on [PyPI](https://pypi.org) by default.
 
 Also, instead of modifying the `pyproject.toml` file by hand, you can use the `add` command.
 
@@ -123,15 +131,15 @@ in order for the subsequent commands to run from within the virtual environment.
 
 
 Alternatively, to avoid creating a new shell, you can manually activate the
-virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.bat` on Windows).
+virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` on Windows PowerShell).
 To get the path to your virtual environment run `poetry env info --path`.
 You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                     | Windows                               | Exit/Deactivate |
+|                   | POSIX Shell                                     | Windows (PowerShell)                  | Exit/Deactivate |
 | ----------------- | ----------------------------------------------- | ------------------------------------- | --------------- |
 | New Shell         | `poetry shell`                                  | `poetry shell`                        | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.bat` | `deactivate`    |
+| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1` | `deactivate`    |
 | One-liner         | `source $(poetry env info --path)/bin/activate` |                                       | `deactivate`    |
 
 
