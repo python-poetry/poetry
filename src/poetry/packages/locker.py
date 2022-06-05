@@ -5,7 +5,6 @@ import logging
 import os
 import re
 
-from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -339,7 +338,7 @@ class Locker:
                     for region_marker in region_markers:
                         marker = region_marker.intersect(base_marker)
                         if not marker.is_empty():
-                            require2 = deepcopy(require)
+                            require2 = require.clone()
                             require2.marker = marker
                             dependencies.append(require2)
 
@@ -391,7 +390,7 @@ class Locker:
         if project_python_marker is not None:
             marked_requires: list[Dependency] = []
             for require in project_requires:
-                require = deepcopy(require)
+                require = require.clone()
                 require.marker = require.marker.intersect(project_python_marker)
                 marked_requires.append(require)
             project_requires = marked_requires
