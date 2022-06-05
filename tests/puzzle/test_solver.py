@@ -793,6 +793,38 @@ def test_solver_finds_extras_next_to_non_extras(
     )
 
 
+def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
+    solver: Solver, repo: Repository, pool: Pool, package: ProjectPackage
+):
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "source": "legacy"})
+    )
+    package.add_dependency(Factory.create_dependency("B", {"version": "*"}))
+
+    package_a = get_package("A", "1.0")
+    package_a.extras = {"foo": []}
+
+    repo.add_package(package_a)
+
+    package_b = Package("B", "1.0", source_type="legacy")
+    package_b.add_dependency(package_a.with_features(["foo"]).to_dependency())
+
+    package_a = Package("A", "1.0", source_type="legacy")
+    package_a.extras = {"foo": []}
+
+    repo = Repository("legacy")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    pool.add_repository(repo)
+
+    transaction = solver.solve()
+
+    ops = transaction.calculate_operations(synchronize=True)
+
+    assert len(ops[0].package.requires) == 0, "a should not require itself"
+
+
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
