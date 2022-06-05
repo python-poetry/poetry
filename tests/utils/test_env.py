@@ -10,7 +10,8 @@ from typing import Any
 
 import pytest
 import tomlkit
-import xattr
+if sys.platform == "darwin":
+    import xattr
 
 from cleo.io.null_io import NullIO
 from poetry.core.semver.version import Version
