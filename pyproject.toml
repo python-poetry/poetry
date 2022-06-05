@@ -158,6 +158,7 @@ module = [
   'requests_toolbelt.*',
   'shellingham.*',
   'virtualenv.*',
+  'xattr.*',
 ]
 ignore_missing_imports = true
 

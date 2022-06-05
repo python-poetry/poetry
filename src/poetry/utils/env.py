@@ -1093,7 +1093,7 @@ class EnvManager:
         # Exclude the venv folder from from macOS Time Machine backups
         # TODO: Add backup-ignore markers for other platforms too
         if sys.platform == "darwin":
-            import xattr  # type: ignore[import]
+            import xattr
 
             xattr.setxattr(
                 str(path),
