@@ -97,7 +97,7 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
-def test_venv_backup_exclusion(tmp_dir, manager):
+def test_venv_backup_exclusion(tmp_dir: str, manager: EnvManager):
     import xattr
 
     venv_path = Path(tmp_dir) / "Virtual Env"
