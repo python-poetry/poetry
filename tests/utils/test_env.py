@@ -10,8 +10,6 @@ from typing import Any
 
 import pytest
 import tomlkit
-if sys.platform == "darwin":
-    import xattr
 
 from cleo.io.null_io import NullIO
 from poetry.core.semver.version import Version
@@ -100,6 +98,8 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
 def test_venv_backup_exclusion(tmp_dir, manager):
+    import xattr
+
     venv_path = Path(tmp_dir) / "Virtual Env"
 
     manager.build_venv(str(venv_path))
