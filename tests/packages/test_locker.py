@@ -1201,7 +1201,7 @@ def test_credentials_in_lock_file(
 
     locker.set_lock_data(root, [package])
 
-    assert locker.contains_credential is True
+    assert locker._contains_credential is True
 
 
 def test_no_credentials_in_lock_file(
@@ -1217,4 +1217,4 @@ def test_no_credentials_in_lock_file(
 
     locker.set_lock_data(root, [package])
 
-    assert locker.contains_credential is False
+    assert locker._contains_credential is False
