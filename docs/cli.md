@@ -844,7 +844,7 @@ To add a keyring provider `artifacts-keyring`, you can run:
 poetry self add artifacts-keyring
 ```
 
-### Options
+#### Options
 
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
@@ -865,7 +865,7 @@ is different in that the packages managed are for Poetry's runtime environment.
 poetry self update
 ```
 
-### Options
+#### Options
 
 * `--preview`: Allow the installation of pre-release versions.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -879,7 +879,7 @@ dependencies are locked in the corresponding `poetry.lock` file.
 poetry self lock
 ```
 
-### Options
+#### Options
 
 * `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
 * `--no-update`: Do not update locked versions, only refresh lock file.
@@ -897,7 +897,7 @@ dependencies use `self show --addons`.
 poetry self show
 ```
 
-### Options
+#### Options
 
 * `--addons`: List only add-on packages installed.
 * `--tree`: List the dependencies as a tree.
@@ -938,7 +938,7 @@ is different in that the packages managed are for Poetry's runtime environment.
 poetry self install --sync
 ```
 
-### Options
+#### Options
 
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
