@@ -97,15 +97,16 @@ dependencies and not including the current project, run the command with the
             return 1
 
         if self.option("only-root") and any(
-            [self.option(key) for key in {"with", "without", "only"}]
+            self.option(key) for key in {"with", "without", "only"}
         ):
             self.line_error(
-                "<warning>The `<fg=yellow;options=bold>--with</>`,"
+                "<error>The `<fg=yellow;options=bold>--with</>`,"
                 " `<fg=yellow;options=bold>--without</>` and"
-                " `<fg=yellow;options=bold>--only</>` options are ignored when used"
-                " along with the `<fg=yellow;options=bold>--only-root</>`"
-                " option.</warning>"
+                " `<fg=yellow;options=bold>--only</>` options cannot be used with"
+                " the `<fg=yellow;options=bold>--only-root</>`"
+                " option.</error>"
             )
+            return 1
 
         if self.option("only-root") and self.option("no-root"):
             self.line_error(
