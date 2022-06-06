@@ -119,7 +119,7 @@ default = false
 secondary = false
 ```
 
-Any package source defined like this takes precedence over [PyPI](https://pypi.org).
+Any package source not marked as `secondary` will take precedence over [PyPI](https://pypi.org).
 
 
 {{% note %}}
@@ -177,7 +177,7 @@ All package sources (including secondary sources) will be searched during the pa
 process. These network requests will occur for all sources, regardless of if the package is
 found at one or more sources.
 
-In order to limit the search for a specific package to a particular package source, you can explicitly specify what source to use.
+In order to limit the search for a specific package to a particular package repository, you can specify the source explicitly. This is strongly suggested for all private packages to avoid dependency confusion attacks.
 
 ```bash
 poetry add --source internal-pypi httpx
