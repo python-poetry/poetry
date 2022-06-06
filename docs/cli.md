@@ -712,7 +712,7 @@ poetry cache clear pypi:requests:2.24.0
 
 The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
 
-### `source add`
+### source add
 
 The `source add` command adds source configuration to the project.
 
@@ -735,7 +735,7 @@ You cannot use the name `pypi` as it is reserved for use by the default PyPI sou
 You cannot set a source as both `default` and `secondary`.
 {{% /note %}}
 
-### `source show`
+### source show
 
 The `source show` command displays information on all configured sources for the project.
 
@@ -753,7 +753,7 @@ poetry source show pypi-test
 This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
 {{% /note %}}
 
-### `source remove`
+### source remove
 
 The `source remove` command removes a configured source from your `pyproject.toml`.
 
@@ -812,7 +812,7 @@ Use of these commands will create the required `pyproject.toml` and `poetry.lock
 [configuration directory]({{< relref "configuration" >}}).
 {{% /note %}}
 
-### `self add`
+### self add
 
 The `self add` command installs Poetry plugins and make them available at runtime. Additionally, it can
 also be used to upgrade Poetry's own dependencies or inject additional packages into the runtime
@@ -852,7 +852,7 @@ poetry self add artifacts-keyring
 * `--source`: Name of the source to use to install the package.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 
-### `self update`
+### self update
 
 The `self update` command updates Poetry version in its current runtime environment.
 
@@ -870,7 +870,7 @@ poetry self update
 * `--preview`: Allow the installation of pre-release versions.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 
-### `self lock`
+### self lock
 
 The `self lock` command reads this Poetry installation's system `pyproject.toml` file. The system
 dependencies are locked in the corresponding `poetry.lock` file.
@@ -884,7 +884,7 @@ poetry self lock
 * `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
-### `self show`
+### self show
 
 The `self show` command behaves similar to the show command, but
 working within Poetry's runtime environment. This lists all packages installed within
@@ -904,7 +904,7 @@ poetry self show
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 
-### `self show plugins`
+### self show plugins
 
 The `self show plugins` command lists all the currently installed plugins.
 
@@ -912,7 +912,7 @@ The `self show plugins` command lists all the currently installed plugins.
 poetry self show plugins
 ```
 
-### `self remove`
+### self remove
 
 The `self remove` command removes an installed addon package.
 
@@ -924,7 +924,7 @@ poetry self remove poetry-plugin-export
 
 * `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
 
-### `self install`
+### self install
 
 The `self install` command ensures all additional packages specified are installed in the current
 runtime environment.
