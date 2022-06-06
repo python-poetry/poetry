@@ -43,6 +43,13 @@ class GroupCommand(EnvCommand):
                 flag=False,
                 multiple=True,
             ),
+            option(
+                "only-root",
+                None,
+                "Exclude all dependencies.",
+                flag=True,
+                multiple=False,
+            ),
         ]
 
     @property
@@ -76,6 +83,18 @@ class GroupCommand(EnvCommand):
     @property
     def activated_groups(self) -> set[str]:
         groups = {}
+
+        group_keys = {"with", "without", "only"}
+        if self.option("only-root") and any([self.option(key) for key in group_keys]):
+            self.line_error(
+                "<warning>The `<fg=yellow;options=bold>--with</>`,"
+                " `<fg=yellow;options=bold>--without</>` and"
+                " `<fg=yellow;options=bold>--only</>` options are ignored when used"
+                " along with the `<fg=yellow;options=bold>--only-root</>` option."
+            )
+
+        if self.option("only-root"):
+            return {}
 
         for key in {"with", "without", "only"}:
             groups[key] = {

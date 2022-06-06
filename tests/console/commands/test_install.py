@@ -73,6 +73,7 @@ def tester(
     ("options", "groups"),
     [
         ("", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--only-root", set()),
         (f"--only {MAIN_GROUP}", {MAIN_GROUP}),
         ("--only foo", {"foo"}),
         ("--only foo,bar", {"foo", "bar"}),
