@@ -94,7 +94,7 @@ class GroupCommand(EnvCommand):
             )
 
         if self.option("only-root"):
-            return {}
+            return set()
 
         for key in group_keys:
             groups[key] = {
