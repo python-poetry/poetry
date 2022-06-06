@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
@@ -25,63 +26,109 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
-def test_show_basic_with_installed_packages(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-):
+@dataclass
+class TestPackage:
+    name: str
+    version: str
+    description: str
+    package: Package = None
+    category: str = "main"
+
+    def __post_init__(self):
+        if self.description is None:
+            self.description = f"{self.name} package."
+
+        self.package = get_package(self.name, self.version)
+
+    @property
+    def lock(self):
+        return {
+            "name": self.name,
+            "version": self.version,
+            "description": self.description,
+            "category": self.category,
+            "platform": "*",
+            "python-versions": "*",
+            "checksum": [],
+        }
+
+
+@pytest.fixture
+def cachy_lock(poetry: Poetry, installed: Repository) -> dict:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-    poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "^3.7.3", groups=["dev"])
-    )
 
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
 
+    installed.add_package(cachy_010)
+
+    return {
+        "name": "cachy",
+        "version": "0.1.0",
+        "description": "Cachy package",
+        "category": "main",
+        "optional": False,
+        "platform": "*",
+        "python-versions": "*",
+        "checksum": [],
+    }
+
+
+@pytest.fixture
+def pendulum_lock(poetry: Poetry, installed: Repository) -> dict:
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     pendulum_200 = get_package("pendulum", "2.0.0")
     pendulum_200.description = "Pendulum package"
+
+    installed.add_package(pendulum_200)
+
+    return {
+        "name": "pendulum",
+        "version": "2.0.0",
+        "description": "Pendulum package",
+        "category": "main",
+        "optional": False,
+        "platform": "*",
+        "python-versions": "*",
+        "checksum": [],
+    }
+
+
+@pytest.fixture
+def pytest_lock(poetry: Poetry, installed: Repository) -> dict:
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "^3.7.3", groups=["dev"])
+    )
 
     pytest_373 = get_package("pytest", "3.7.3")
     pytest_373.description = "Pytest package"
     pytest_373.category = "dev"
 
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
+    return {
+        "name": "pytest",
+        "version": "3.7.3",
+        "description": "Pytest package",
+        "category": "dev",
+        "optional": False,
+        "platform": "*",
+        "python-versions": "*",
+        "checksum": [],
+    }
 
+
+def test_show_basic_with_installed_packages(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    cachy_lock: dict,
+    pendulum_lock: dict,
+    pytest_lock: dict,
+):
     poetry.locker.mock_lock_data(
         {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
+            "package": [cachy_lock, pendulum_lock, pytest_lock],
             "metadata": {
                 "python-versions": "*",
                 "platform": "*",
