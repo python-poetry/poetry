@@ -254,6 +254,7 @@ pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """,
         ),
+        ("--only-root", ""),
     ],
 )
 def test_show_basic_with_group_options(
@@ -1447,79 +1448,6 @@ def test_show_non_dev_with_basic_installed_packages(
 cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 """
-
-    assert tester.io.fetch_output() == expected
-
-
-def test_show_with_group_only_root(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-    poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "*", groups=["dev"])
-    )
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-    pytest_373.category = "dev"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--only-root")
-
-    expected = ""
 
     assert tester.io.fetch_output() == expected
 
