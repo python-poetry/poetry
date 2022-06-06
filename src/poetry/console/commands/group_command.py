@@ -96,7 +96,7 @@ class GroupCommand(EnvCommand):
         if self.option("only-root"):
             return {}
 
-        for key in {"with", "without", "only"}:
+        for key in group_keys:
             groups[key] = {
                 group.strip()
                 for groups in self.option(key, "")
