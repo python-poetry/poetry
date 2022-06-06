@@ -254,7 +254,6 @@ pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """,
         ),
-        ("--only-root", ""),
     ],
 )
 def test_show_basic_with_group_options(

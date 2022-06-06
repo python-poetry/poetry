@@ -47,6 +47,13 @@ class InstallCommand(InstallerCommand):
             multiple=True,
         ),
         option("all-extras", None, "Install all extra dependencies."),
+        option(
+            "only-root",
+            None,
+            "Exclude all dependencies.",
+            flag=True,
+            multiple=False,
+        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -65,6 +72,13 @@ dependencies and not including the current project, run the command with the
 
     _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
+    @property
+    def activated_groups(self) -> set[str]:
+        if self.option("only-root"):
+            return set()
+        else:
+            return super().activated_groups
+
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
@@ -79,6 +93,24 @@ dependencies and not including the current project, run the command with the
                 "<error>You cannot specify explicit"
                 " `<fg=yellow;options=bold>--extras</>` while installing"
                 " using `<fg=yellow;options=bold>--all-extras</>`.</error>"
+            )
+            return 1
+
+        if self.option("only-root") and any(
+            [self.option(key) for key in {"with", "without", "only"}]
+        ):
+            self.line_error(
+                "<warning>The `<fg=yellow;options=bold>--with</>`,"
+                " `<fg=yellow;options=bold>--without</>` and"
+                " `<fg=yellow;options=bold>--only</>` options are ignored when used"
+                " along with the `<fg=yellow;options=bold>--only-root</>`"
+                " option.</warning>"
+            )
+
+        if self.option("only-root") and self.option("no-root"):
+            self.line_error(
+                "<error>You cannot specify `<fg=yellow;options=bold>--no-root</>`"
+                " when using `<fg=yellow;options=bold>--only-root</>`.</error>"
             )
             return 1
 
