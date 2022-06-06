@@ -15,9 +15,6 @@ inputs:
 runs:
   using: "composite"
 
-  defaults:
-    shell: bash
-
   steps:
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v2
@@ -26,21 +23,26 @@ runs:
 
     - name: Get full Python version
       id: full-python-version
+      shell: bash
       run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
     - name: Bootstrap poetry
+      shell: bash
       run: |
         curl -sL https://install.python-poetry.org | python - -y ${{ inputs.bootstrap-args }}
 
     - name: Update PATH
       if: ${{ runner.os != 'Windows' }}
+      shell: bash
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Update Path for Windows
       if: ${{ runner.os == 'Windows' }}
+      shell: bash
       run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
     - name: Configure poetry
+      shell: bash
       run: |
         poetry config virtualenvs.in-project true
 
@@ -53,4 +55,5 @@ runs:
 
     - name: Ensure cache is healthy
       if: steps.cache.outputs.cache-hit == 'true'
+      shell: bash
       run: timeout 10s poetry run python --version || rm -rf .venv
