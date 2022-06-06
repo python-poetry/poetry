@@ -1,0 +1,56 @@
+name: "Setup Poetry"
+description: >
+  Setup Poetry for use within a workflow job. This is for using within the Poetry
+  project repository only.
+
+inputs:
+  python-version:
+    description: "Python version to setup"
+    required: true
+  bootstrap-args:
+    description: "Installer bootstrap arguments"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+
+  defaults:
+    shell: bash
+
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Get full Python version
+      id: full-python-version
+      run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
+
+    - name: Bootstrap poetry
+      run: |
+        curl -sL https://install.python-poetry.org | python - -y ${{ inputs.bootstrap-args }}
+
+    - name: Update PATH
+      if: ${{ runner.os != 'Windows' }}
+      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Update Path for Windows
+      if: ${{ runner.os == 'Windows' }}
+      run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
+
+    - name: Configure poetry
+      run: |
+        poetry config virtualenvs.in-project true
+
+    - name: Set up cache
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Ensure cache is healthy
+      if: steps.cache.outputs.cache-hit == 'true'
+      run: timeout 10s poetry run python --version || rm -rf .venv
