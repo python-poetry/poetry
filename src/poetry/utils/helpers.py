@@ -160,7 +160,7 @@ def pluralize(count: int, word: str = "") -> str:
 
 
 def safe_extra(extra: str) -> str:
-    """Convert an arbitrary string to a standard 'extra' name
+    """Convert an arbitrary string to a standard 'extra' name.
 
     Any runs of non-alphanumeric characters are replaced with a single '_',
     and the result is always lowercased.
