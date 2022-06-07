@@ -36,6 +36,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import safe_extra
 from poetry.vcs.git import Git
 
 
@@ -563,6 +564,7 @@ class Provider:
         # to the current package
         if package.dependency.extras:
             for extra in package.dependency.extras:
+                extra = safe_extra(extra)
                 if extra not in package.extras:
                     continue
 
@@ -585,7 +587,9 @@ class Provider:
                 (dep.is_optional() and dep.name not in optional_dependencies)
                 or (
                     dep.in_extras
-                    and not set(dep.in_extras).intersection(package.dependency.extras)
+                    and not set(dep.in_extras).intersection(
+                        {safe_extra(extra) for extra in package.dependency.extras}
+                    )
                 )
             ):
                 continue

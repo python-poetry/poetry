@@ -157,3 +157,15 @@ def pluralize(count: int, word: str = "") -> str:
     if count == 1:
         return word
     return word + "s"
+
+
+def safe_extra(extra: str) -> str:
+    """Convert an arbitrary string to a standard 'extra' name.
+
+    Any runs of non-alphanumeric characters are replaced with a single '_',
+    and the result is always lowercased.
+
+    See
+    https://github.com/pypa/setuptools/blob/452e13c/pkg_resources/__init__.py#L1423-L1431.
+    """
+    return re.sub("[^A-Za-z0-9.-]+", "_", extra).lower()
