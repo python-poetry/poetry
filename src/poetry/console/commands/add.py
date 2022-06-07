@@ -7,18 +7,12 @@ from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
-
-from poetry.utils.helpers import canonicalize_name
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.utils.helpers import canonicalize_name
 
 
 class AddCommand(InstallerCommand, InitCommand):
@@ -72,10 +66,7 @@ class AddCommand(InstallerCommand, InitCommand):
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
-    help = """\
-The add command adds required packages to your <comment>pyproject.toml</> and installs\
- them.
-
+    examples = """\
 If you do not specify a version constraint, poetry will choose a suitable one based on\
  the available package versions.
 
@@ -91,6 +82,12 @@ You can specify a package in the following forms:
   - A file path (<b>../my-package/my-package.whl</b>)
   - A directory (<b>../my-package/</b>)
   - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
+"""
+    help = f"""\
+The add command adds required packages to your <comment>pyproject.toml</> and installs\
+ them.
+
+{examples}
 """
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
@@ -248,7 +245,7 @@ You can specify a package in the following forms:
 
         self._installer.set_package(self.poetry.package)
         self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self._io.is_verbose())
+        self._installer.verbose(self.io.is_verbose())
         self._installer.update(True)
         if self.option("lock"):
             self._installer.lock()
@@ -275,6 +272,14 @@ You can specify a package in the following forms:
 
         return existing_packages
 
+    @property
+    def _hint_update_packages(self) -> str:
+        return (
+            "\nIf you want to update it to the latest compatible version, you can use"
+            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
+            " available version, you can use `poetry add package@latest`.\n"
+        )
+
     def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(
             "The following packages are already present in the pyproject.toml and will"
@@ -282,8 +287,4 @@ You can specify a package in the following forms:
         )
         for name in existing_packages:
             self.line(f"  • <c1>{name}</c1>")
-        self.line(
-            "\nIf you want to update it to the latest compatible version, you can use"
-            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
-            " available version, you can use `poetry add package@latest`.\n"
-        )
+        self.line(self._hint_update_packages)

@@ -25,6 +25,21 @@ if TYPE_CHECKING:
     from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
+
+
+@pytest.fixture
+def poetry_with_up_to_date_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("up_to_date_lock")
+
+    return project_factory(
+        name="foobar",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
+    )
 
 
 @pytest.fixture()
@@ -399,17 +414,17 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == expected
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["git/github.com/demo/demo"]],
+)
 @pytest.mark.parametrize("editable", [False, True])
 def test_add_directory_constraint(
     editable: bool,
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    mocker: MockerFixture,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__).parent
-
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -436,22 +451,22 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
 
-    expected = {"path": "../git/github.com/demo/demo"}
+    expected = {"path": path}
     if editable:
         expected["develop"] = True
 
     assert content["dependencies"]["demo"] == expected
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["git/github.com/demo/pyproject-demo"]],
+)
 def test_add_directory_with_poetry(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    mocker: MockerFixture,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__) / ".."
-
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
@@ -474,16 +489,16 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.command.installer.executor.installations_count == 2
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["distributions/demo-0.1.0-py2.py3-none-any.whl"]],
+)
 def test_add_file_constraint_wheel(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    mocker: MockerFixture,
     poetry: Poetry,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = poetry.file.parent
-
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -508,20 +523,18 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
-        "path": "../distributions/demo-0.1.0-py2.py3-none-any.whl"
-    }
+    assert content["dependencies"]["demo"] == {"path": path}
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["distributions/demo-0.1.0.tar.gz"]],
+)
 def test_add_file_constraint_sdist(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    mocker: MockerFixture,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__) / ".."
-
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
@@ -546,9 +559,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
-        "path": "../distributions/demo-0.1.0.tar.gz"
-    }
+    assert content["dependencies"]["demo"] == {"path": path}
 
 
 def test_add_constraint_with_extras_option(
@@ -1364,16 +1375,16 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["git/github.com/demo/demo"]],
+)
 def test_add_directory_constraint_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
-    mocker: MockerFixture,
     old_tester: CommandTester,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__) / ".."
-
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1400,19 +1411,19 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {"path": "../git/github.com/demo/demo"}
+    assert content["dependencies"]["demo"] == {"path": path}
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["git/github.com/demo/pyproject-demo"]],
+)
 def test_add_directory_with_poetry_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
-    mocker: MockerFixture,
     old_tester: CommandTester,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__) / ".."
-
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
@@ -1436,16 +1447,16 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert len(installer.installs) == 2
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["distributions/demo-0.1.0-py2.py3-none-any.whl"]],
+)
 def test_add_file_constraint_wheel_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
-    mocker: MockerFixture,
     old_tester: CommandTester,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__) / ".."
-
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -1471,21 +1482,19 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
-        "path": "../distributions/demo-0.1.0-py2.py3-none-any.whl"
-    }
+    assert content["dependencies"]["demo"] == {"path": path}
 
 
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["distributions/demo-0.1.0.tar.gz"]],
+)
 def test_add_file_constraint_sdist_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
-    mocker: MockerFixture,
     old_tester: CommandTester,
 ):
-    p = mocker.patch("pathlib.Path.cwd")
-    p.return_value = Path(__file__) / ".."
-
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
@@ -1511,9 +1520,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
-        "path": "../distributions/demo-0.1.0.tar.gz"
-    }
+    assert content["dependencies"]["demo"] == {"path": path}
 
 
 def test_add_constraint_with_extras_option_old_installer(
@@ -1999,34 +2006,54 @@ Writing lock file
 
 
 def test_add_keyboard_interrupt_restore_content(
-    app: PoetryTestApplication,
+    poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
-    installer: NoopInstaller,
-    tester: CommandTester,
+    command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ):
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+
     mocker.patch(
         "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
     )
-    original_content = app.poetry.file.read()
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
 
-    tester.execute("cachy --dry-run")
+    tester.execute("cachy")
 
-    assert original_content == app.poetry.file.read()
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert (
+        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
+    )
 
 
-def test_dry_run_restore_original_content(
-    app: PoetryTestApplication,
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cachy --dry-run",
+        "cachy --lock --dry-run",
+    ],
+)
+def test_add_with_dry_run_keep_files_intact(
+    command: str,
+    poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
-    installer: NoopInstaller,
-    tester: CommandTester,
+    command_tester_factory: CommandTesterFactory,
 ):
-    original_content = app.poetry.file.read()
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
 
-    tester.execute("cachy --dry-run")
+    tester.execute(command)
 
-    assert original_content == app.poetry.file.read()
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert (
+        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
+    )

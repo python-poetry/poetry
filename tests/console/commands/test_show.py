@@ -4,13 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 from poetry.factory import Factory
 from tests.helpers import get_package
@@ -937,7 +932,15 @@ pendulum 2.0.0 2.0.1 Pendulum package
     assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize("project_directory", ["project_with_local_dependencies"])
+@pytest.mark.parametrize(
+    ("project_directory", "required_fixtures"),
+    [
+        (
+            "project_with_local_dependencies",
+            ["distributions/demo-0.1.0-py2.py3-none-any.whl", "project_with_setup"],
+        ),
+    ],
+)
 def test_show_outdated_local_dependencies(
     tester: CommandTester,
     poetry: Poetry,
@@ -957,13 +960,13 @@ def test_show_outdated_local_dependencies(
     demo_010 = get_package("demo", "0.1.0")
     demo_010.description = ""
 
-    my_package_012 = get_package("project-with-setup", "0.1.2")
-    my_package_012.description = "Demo project."
+    my_package_011 = get_package("project-with-setup", "0.1.1")
+    my_package_011.description = "Demo project."
 
     installed.add_package(cachy_020)
     installed.add_package(pendulum_200)
     installed.add_package(demo_010)
-    installed.add_package(my_package_012)
+    installed.add_package(my_package_011)
 
     repo.add_package(cachy_020)
     repo.add_package(cachy_030)

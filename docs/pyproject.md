@@ -72,13 +72,12 @@ The recommended notation for the most common licenses is (alphabetical):
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
-{{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
-{{% /note %}}
-
 ```toml
 license = "MIT"
 ```
+{{% note %}}
+If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+{{% /note %}}
 
 ## authors
 
@@ -100,18 +99,36 @@ This is a list of maintainers and should be distinct from authors. Maintainers m
 
 ```toml
 maintainers = [
-    "Richard Brave <email@example.org>",
+    "John Smith <johnsmith@example.org>",
+    "Jane Smith <janesmith@example.org>",
 ]
 ```
 
 ## readme
 
-The readme file of the package. **Optional**
+A path, or list of paths corresponding to the README file(s) of the package.
+**Optional**
 
-The file can be either `README.rst` or `README.md`.
+The file(s) can be of any format, but if you intend to publish to PyPI keep the
+[recommendations for a PyPI-friendly README](
+https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/) in
+mind. README paths are implicitly relative to `pyproject.toml`.
+
+The contents of the README file(s) are used to populate the [Description
+field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
+of your distribution's metadata (similar to `long_description` in setuptools).
+When multiple files are specified they are concatenated with newlines.
 
 ```toml
-readme = "README.md" # or "README.rst"
+[tool.poetry]
+# ...
+readme = "README.md"
+```
+
+```toml
+[tool.poetry]
+# ...
+readme = ["docs/README1.md", "docs/README2.md"]
 ```
 
 ## homepage
@@ -365,6 +382,12 @@ When installing packages with Poetry, you can specify extras by using the `-E|--
 ```bash
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
+```
+
+Or, you can install all extras with the `--all-extras` option:
+
+```bash
+poetry install --all-extras
 ```
 
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated

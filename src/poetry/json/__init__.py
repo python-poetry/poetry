@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import os
 
+from pathlib import Path
 from typing import Any
 
 import jsonschema
+
+from poetry.core.json import SCHEMA_DIR as CORE_SCHEMA_DIR
 
 
 SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
@@ -16,14 +19,9 @@ class ValidationError(ValueError):
     pass
 
 
-def validate_object(obj: dict[str, Any], schema_name: str) -> list[str]:
-    schema_file = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
-
-    if not os.path.exists(schema_file):
-        raise ValueError(f"Schema {schema_name} does not exist.")
-
-    with open(schema_file, encoding="utf-8") as f:
-        schema = json.loads(f.read())
+def validate_object(obj: dict[str, Any]) -> list[str]:
+    schema_file = Path(SCHEMA_DIR, "poetry.json")
+    schema = json.loads(schema_file.read_text(encoding="utf-8"))
 
     validator = jsonschema.Draft7Validator(schema)
     validation_errors = sorted(
@@ -40,5 +38,18 @@ def validate_object(obj: dict[str, Any], schema_name: str) -> list[str]:
             message = f"[{path}] {message}"
 
         errors.append(message)
+
+    core_schema = json.loads(
+        Path(CORE_SCHEMA_DIR, "poetry-schema.json").read_text(encoding="utf-8")
+    )
+
+    if core_schema["additionalProperties"]:
+        # TODO: make this un-conditional once core update to >1.1.0b2
+        properties = {*schema["properties"].keys(), *core_schema["properties"].keys()}
+        additional_properties = set(obj.keys()) - properties
+        for key in additional_properties:
+            errors.append(
+                f"Additional properties are not allowed ('{key}' was unexpected)"
+            )
 
     return errors

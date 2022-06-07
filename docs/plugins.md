@@ -191,30 +191,30 @@ Installed plugin packages are automatically loaded when Poetry starts up.
 
 You have multiple ways to install plugins for Poetry
 
-### The `plugin add` command
+### The `self add` command
 
 This is the easiest way and should account for all the ways Poetry can be installed.
 
 ```bash
-poetry plugin add poetry-plugin
+poetry self add poetry-plugin
 ```
 
-The `plugin add` command will ensure that the plugin is compatible with the current version of Poetry
+The `self add` command will ensure that the plugin is compatible with the current version of Poetry
 and install the needed packages for the plugin to work.
 
-The package specification formats supported by the `plugin add` command are the same as the ones supported
+The package specification formats supported by the `self add` command are the same as the ones supported
 by the [`add` command]({{< relref "cli#add" >}}).
 
-If you no longer need a plugin and want to uninstall it, you can use the `plugin remove` command.
+If you no longer need a plugin and want to uninstall it, you can use the `self remove` command.
 
 ```shell
-poetry plugin remove poetry-plugin
+poetry self remove poetry-plugin
 ```
 
 You can also list all currently installed plugins by running:
 
 ```shell
-poetry plugin show
+poetry self show
 ```
 
 ### With `pipx inject`

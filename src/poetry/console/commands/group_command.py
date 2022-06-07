@@ -3,12 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.env_command import EnvCommand
 
@@ -85,7 +80,7 @@ class GroupCommand(EnvCommand):
         for key in {"with", "without", "only"}:
             groups[key] = {
                 group.strip()
-                for groups in self.option(key)
+                for groups in self.option(key, "")
                 for group in groups.split(",")
             }
 
@@ -93,7 +88,6 @@ class GroupCommand(EnvCommand):
             ("default", "only", MAIN_GROUP),
             ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
-            ("dev-only", "without", MAIN_GROUP),
         ]:
             if self.io.input.has_option(opt) and self.option(opt):
                 self.line_error(

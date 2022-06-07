@@ -514,26 +514,24 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
     }
 
 
-def test_complete_package_preserves_source_type(provider: Provider) -> None:
+def test_complete_package_preserves_source_type(
+    provider: Provider, root: ProjectPackage
+) -> None:
     fixtures = Path(__file__).parent.parent / "fixtures"
     project_dir = fixtures.joinpath("with_conditional_path_deps")
-    poetry = Factory().create_poetry(cwd=project_dir)
+    for folder in ["demo_one", "demo_two"]:
+        path = (project_dir / folder).as_posix()
+        root.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
     complete_package = provider.complete_package(
-        DependencyPackage(poetry.package.to_dependency(), poetry.package)
+        DependencyPackage(root.to_dependency(), root)
     )
 
     requires = complete_package.package.all_requires
-
     assert len(requires) == 2
-
     assert {requires[0].source_url, requires[1].source_url} == {
         project_dir.joinpath("demo_one").as_posix(),
         project_dir.joinpath("demo_two").as_posix(),
-    }
-    assert {str(requires[0].marker), str(requires[1].marker)} == {
-        'sys_platform == "linux"',
-        'sys_platform == "win32"',
     }
 
 
@@ -545,7 +543,6 @@ def test_complete_package_preserves_source_type_with_subdirectories(
         {
             "git": "https://github.com/demo/subdirectories.git",
             "subdirectory": "one",
-            "platform": "linux",
         },
     )
     dependency_one_copy = Factory.create_dependency(
@@ -553,7 +550,6 @@ def test_complete_package_preserves_source_type_with_subdirectories(
         {
             "git": "https://github.com/demo/subdirectories.git",
             "subdirectory": "one-copy",
-            "platform": "win32",
         },
     )
     dependency_two = Factory.create_dependency(
@@ -567,7 +563,6 @@ def test_complete_package_preserves_source_type_with_subdirectories(
             {
                 "git": "https://github.com/demo/subdirectories.git",
                 "subdirectory": "one",
-                "platform": "linux",
             },
         )
     )

@@ -793,6 +793,38 @@ def test_solver_finds_extras_next_to_non_extras(
     )
 
 
+def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
+    solver: Solver, repo: Repository, pool: Pool, package: ProjectPackage
+):
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "source": "legacy"})
+    )
+    package.add_dependency(Factory.create_dependency("B", {"version": "*"}))
+
+    package_a = get_package("A", "1.0")
+    package_a.extras = {"foo": []}
+
+    repo.add_package(package_a)
+
+    package_b = Package("B", "1.0", source_type="legacy")
+    package_b.add_dependency(package_a.with_features(["foo"]).to_dependency())
+
+    package_a = Package("A", "1.0", source_type="legacy")
+    package_a.extras = {"foo": []}
+
+    repo = Repository("legacy")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    pool.add_repository(repo)
+
+    transaction = solver.solve()
+
+    ops = transaction.calculate_operations(synchronize=True)
+
+    assert len(ops[0].package.requires) == 0, "a should not require itself"
+
+
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
@@ -1418,7 +1450,7 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
 
     assert len(complete_package.all_requires) == 2
 
-    git, pypi = complete_package.all_requires
+    pypi, git = complete_package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi
@@ -1630,6 +1662,63 @@ def test_solver_duplicate_dependencies_sub_dependencies(
             {"job": "install", "package": package_a},
         ],
     )
+
+
+def test_duplicate_path_dependencies(solver: Solver, package: ProjectPackage) -> None:
+    solver.provider.set_package_python_versions("^3.7")
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    project_dir = fixtures / "with_conditional_path_deps"
+
+    path1 = (project_dir / "demo_one").as_posix()
+    demo1 = Package("demo", "1.2.3", source_type="directory", source_url=path1)
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"path": path1, "markers": "sys_platform == 'linux'"}
+        )
+    )
+
+    path2 = (project_dir / "demo_two").as_posix()
+    demo2 = Package("demo", "1.2.3", source_type="directory", source_url=path2)
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"path": path2, "markers": "sys_platform == 'win32'"}
+        )
+    )
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": demo1},
+            {"job": "install", "package": demo2},
+        ],
+    )
+
+
+def test_duplicate_path_dependencies_same_path(
+    solver: Solver, package: ProjectPackage
+) -> None:
+    solver.provider.set_package_python_versions("^3.7")
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    project_dir = fixtures / "with_conditional_path_deps"
+
+    path1 = (project_dir / "demo_one").as_posix()
+    demo1 = Package("demo", "1.2.3", source_type="directory", source_url=path1)
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"path": path1, "markers": "sys_platform == 'linux'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"path": path1, "markers": "sys_platform == 'win32'"}
+        )
+    )
+
+    transaction = solver.solve()
+
+    check_solver_result(transaction, [{"job": "install", "package": demo1}])
 
 
 def test_solver_fails_if_dependency_name_does_not_match_package(

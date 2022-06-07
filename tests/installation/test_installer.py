@@ -15,16 +15,11 @@ from cleo.io.null_io import NullIO
 from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
 from deepdiff import DeepDiff
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
@@ -2229,6 +2224,56 @@ def test_run_installs_with_url_file(
     assert locker.written_data == expected
 
     assert installer.executor.installations_count == 2
+
+
+@pytest.mark.parametrize("env_platform", ["linux", "win32"])
+def test_run_installs_with_same_version_url_files(
+    pool: Pool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    repo: Repository,
+    package: ProjectPackage,
+    env_platform: str,
+) -> None:
+    urls = {
+        "linux": "https://python-poetry.org/distributions/demo-0.1.0.tar.gz",
+        "win32": (
+            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        ),
+    }
+    for platform, url in urls.items():
+        package.add_dependency(
+            Factory.create_dependency(
+                "demo",
+                {"url": url, "markers": f"sys_platform == '{platform}'"},
+            )
+        )
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(platform=env_platform),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(platform=env_platform),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    installer.use_executor(True)
+    installer.run()
+
+    expected = fixture("with-same-version-url-dependencies")
+    assert locker.written_data == expected
+    assert installer.executor.installations_count == 2
+    demo_package = next(p for p in installer.executor.installations if p.name == "demo")
+    assert demo_package.source_url == urls[env_platform]
 
 
 def test_installer_uses_prereleases_if_they_are_compatible(

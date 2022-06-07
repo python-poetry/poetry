@@ -40,9 +40,12 @@ Install Poetry by downloading and executing the [installation script](https://in
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
+{{% note %}}
+Note: On some systems, `python` may still refer to Python 2 instead of Python 3. Please always use the
+`python3` binary to ensure the right major version of Python is used.
+{{% /note %}}
 
 **Windows (Powershell)**
-
 ```powershell
 (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
@@ -57,8 +60,8 @@ Note that the installer does not support Python < 3.7.
 {{% /note %}}
 
 {{% warning %}}
-The previous `get-poetry.py` installer is now deprecated, if you are currently using it
-you should migrate to the new, supported, `install-poetry.py` installer.
+The previous `get-poetry.py` and `install-poetry.py` installers are now deprecated. If you are currently using them
+you should migrate to the new, supported, installer through `https://install.python-poetry.org`.
 {{% /warning %}}
 {{< /step >}}
 {{< step >}}
@@ -137,8 +140,8 @@ poetry self update 1.2.0
 ```
 
 {{% warning %}}
-Poetry versions installed using the now deprecated `get-poetry.py` installer will not be able to use this
-command to update to 1.2 releases or later. Migrate to using the `install-poetry.py` installer or `pipx`.
+Poetry versions installed using the deprecated `get-poetry.py` installer will not be able to use this
+command to update to 1.2 releases or later. Migrate to using `https://install.python-poetry.org` or `pipx`.
 {{% /warning %}}
 {{< /step >}}
 

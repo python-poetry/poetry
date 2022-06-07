@@ -19,12 +19,6 @@ class InstallCommand(InstallerCommand):
             " (<warning>Deprecated</warning>)",
         ),
         option(
-            "dev-only",
-            None,
-            "Only install the development dependencies."
-            " (<warning>Deprecated</warning>)",
-        ),
-        option(
             "sync",
             None,
             "Synchronize the environment with the locked packages and the specified"
@@ -52,6 +46,7 @@ class InstallCommand(InstallerCommand):
             flag=False,
             multiple=True,
         ),
+        option("all-extras", None, "Install all extra dependencies."),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -79,12 +74,23 @@ dependencies and not including the current project, run the command with the
             self.poetry.config.get("experimental.new-installer", False)
         )
 
-        extras = []
-        for extra in self.option("extras", []):
-            if " " in extra:
-                extras += [e.strip() for e in extra.split(" ")]
-            else:
-                extras.append(extra)
+        if self.option("extras") and self.option("all-extras"):
+            self.line_error(
+                "<error>You cannot specify explicit"
+                " `<fg=yellow;options=bold>--extras</>` while installing"
+                " using `<fg=yellow;options=bold>--all-extras</>`.</error>"
+            )
+            return 1
+
+        if self.option("all-extras"):
+            extras = list(self.poetry.package.extras.keys())
+        else:
+            extras = []
+            for extra in self.option("extras", []):
+                if " " in extra:
+                    extras += [e.strip() for e in extra.split(" ")]
+                else:
+                    extras.append(extra)
 
         self._installer.extras(extras)
 
@@ -101,7 +107,7 @@ dependencies and not including the current project, run the command with the
         self._installer.only_groups(self.activated_groups)
         self._installer.dry_run(self.option("dry-run"))
         self._installer.requires_synchronization(with_synchronization)
-        self._installer.verbose(self._io.is_verbose())
+        self._installer.verbose(self.io.is_verbose())
 
         return_code = self._installer.run()
 
@@ -112,7 +118,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, self._io)
+            builder = EditableBuilder(self.poetry, self._env, self.io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
@@ -124,7 +130,7 @@ dependencies and not including the current project, run the command with the
             f" <c1>{self.poetry.package.pretty_name}</c1>"
             f" (<{{tag}}>{self.poetry.package.pretty_version}</>)"
         )
-        overwrite = self._io.output.is_decorated() and not self.io.is_debug()
+        overwrite = self.io.output.is_decorated() and not self.io.is_debug()
         self.line("")
         self.write(log_install.format(tag="c2"))
         if not overwrite:

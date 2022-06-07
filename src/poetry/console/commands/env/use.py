@@ -12,16 +12,18 @@ class EnvUseCommand(Command):
 
     arguments = [argument("python", "The python executable to use.")]
 
-    def handle(self) -> None:
+    def handle(self) -> int:
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)
 
         if self.argument("python") == "system":
-            manager.deactivate(self._io)
+            manager.deactivate(self.io)
 
-            return
+            return 0
 
-        env = manager.activate(self.argument("python"), self._io)
+        env = manager.activate(self.argument("python"), self.io)
 
         self.line(f"Using virtualenv: <comment>{env.path}</>")
+
+        return 0

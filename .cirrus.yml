@@ -27,7 +27,7 @@ test_task:
     - poetry config virtualenvs.in-project true
   test_script:
     - poetry install
-    - poetry run pytest -q --junitxml=junit.xml tests
+    - poetry run pytest -n auto -q --junitxml=junit.xml tests
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml
