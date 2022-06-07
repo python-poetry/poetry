@@ -33,7 +33,7 @@ class IndexedLegacyRepository(LegacyRepository):
 
         return super().find_packages(dependency)
 
-    def _get_index_page(self) -> SimpleIndexPage | None:
+    def _get_index_page(self) -> SimpleIndexPage:
         response = self._get_response("")
         if not response:
             raise RepositoryError(
