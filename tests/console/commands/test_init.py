@@ -14,6 +14,7 @@ from cleo.testers.command_tester import CommandTester
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.requirements import parse_requirements
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
@@ -780,7 +781,7 @@ pytest-requests = "^0.2.0"
 
 
 def test_add_package_with_extras_and_whitespace(tester: CommandTester):
-    result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
+    result = parse_requirements(["databases[postgresql, sqlite]"], tester.command, None)
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2

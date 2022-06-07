@@ -2,29 +2,25 @@ from __future__ import annotations
 
 import sys
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Mapping
-from typing import Union
 
 from cleo.helpers import option
-from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.dependency_specification import parse_dependency_specification
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.requirements import determine_requirements_from_list
+from poetry.utils.requirements import find_best_version_for_package
+from poetry.utils.requirements import format_requirements
+from poetry.utils.requirements import parse_requirements
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
-    from tomlkit.items import InlineTable
 
     from poetry.repositories import Pool
-
-Requirements = Dict[str, Union[str, Mapping[str, Any]]]
+    from poetry.utils.requirements import Requirements
 
 
 class InitCommand(Command):
@@ -168,7 +164,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         requirements: Requirements = {}
         if self.option("dependency"):
-            requirements = self._format_requirements(
+            requirements = format_requirements(
                 self._determine_requirements(self.option("dependency"))
             )
 
@@ -190,15 +186,13 @@ You can specify a package in the following forms:
             if self.io.is_interactive():
                 self.line(help_message)
                 help_displayed = True
-            requirements.update(
-                self._format_requirements(self._determine_requirements([]))
-            )
+            requirements.update(format_requirements(self._determine_requirements([])))
             if self.io.is_interactive():
                 self.line("")
 
         dev_requirements: Requirements = {}
         if self.option("dev-dependency"):
-            dev_requirements = self._format_requirements(
+            dev_requirements = format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
             )
 
@@ -210,7 +204,7 @@ You can specify a package in the following forms:
                 self.line(help_message)
 
             dev_requirements.update(
-                self._format_requirements(self._determine_requirements([]))
+                format_requirements(self._determine_requirements([]))
             )
             if self.io.is_interactive():
                 self.line("")
@@ -263,6 +257,90 @@ You can specify a package in the following forms:
 
         return choices
 
+    def _determine_requirements_interactive(self) -> list[dict[str, Any]]:
+        result = []
+
+        package = self.ask("Search for package to add (or leave blank to continue):")
+        while package:
+            constraint = parse_requirements([package], self, None)[0]
+            if (
+                "git" in constraint
+                or "url" in constraint
+                or "path" in constraint
+                or "version" in constraint
+            ):
+                self.line(f"Adding <info>{package}</info>")
+                result.append(constraint)
+                package = self.ask("\nAdd a package:")
+                continue
+
+            canonicalized_name = canonicalize_name(constraint["name"])
+            matches = self._get_pool().search(canonicalized_name)
+            if not matches:
+                self.line_error("<error>Unable to find package</error>")
+                package = False
+            else:
+                choices = self._generate_choice_list(matches, canonicalized_name)
+
+                info_string = (
+                    f"Found <info>{len(matches)}</info> packages matching"
+                    f" <c1>{package}</c1>"
+                )
+
+                if len(matches) > 10:
+                    info_string += "\nShowing the first 10 matches"
+
+                self.line(info_string)
+
+                # Default to an empty value to signal no package was selected
+                choices.append("")
+
+                package = self.choice(
+                    "\nEnter package # to add, or the complete package name if it"
+                    " is not listed",
+                    choices,
+                    attempts=3,
+                    default=len(choices) - 1,
+                )
+
+                if not package:
+                    self.line("<warning>No package selected</warning>")
+
+                # package selected by user, set constraint name to package name
+                if package:
+                    constraint["name"] = package
+
+            # no constraint yet, determine the best version automatically
+            if package and "version" not in constraint:
+                question = self.create_question(
+                    "Enter the version constraint to require "
+                    "(or leave blank to use the latest version):"
+                )
+                question.attempts = 3
+                question.validator = lambda x: (x or "").strip() or False
+
+                package_constraint = self.ask(question)
+
+                if package_constraint is None:
+                    _, package_constraint = find_best_version_for_package(
+                        self._get_pool(), package
+                    )
+
+                    self.line(
+                        f"Using version <b>{package_constraint}</b> for"
+                        f" <c1>{package}</c1>"
+                    )
+
+                constraint["version"] = package_constraint
+
+            if package:
+                result.append(constraint)
+
+            if self.io.is_interactive():
+                package = self.ask("\nAdd a package:")
+
+        return result
+
     def _determine_requirements(
         self,
         requires: list[str],
@@ -270,175 +348,11 @@ You can specify a package in the following forms:
         source: str | None = None,
     ) -> list[dict[str, Any]]:
         if not requires:
-            result = []
-
-            package = self.ask(
-                "Search for package to add (or leave blank to continue):"
+            return self._determine_requirements_interactive()
+        else:
+            return determine_requirements_from_list(
+                self, self._get_pool(), requires, allow_prereleases, source
             )
-            while package:
-                constraint = self._parse_requirements([package])[0]
-                if (
-                    "git" in constraint
-                    or "url" in constraint
-                    or "path" in constraint
-                    or "version" in constraint
-                ):
-                    self.line(f"Adding <info>{package}</info>")
-                    result.append(constraint)
-                    package = self.ask("\nAdd a package:")
-                    continue
-
-                canonicalized_name = canonicalize_name(constraint["name"])
-                matches = self._get_pool().search(canonicalized_name)
-                if not matches:
-                    self.line_error("<error>Unable to find package</error>")
-                    package = False
-                else:
-                    choices = self._generate_choice_list(matches, canonicalized_name)
-
-                    info_string = (
-                        f"Found <info>{len(matches)}</info> packages matching"
-                        f" <c1>{package}</c1>"
-                    )
-
-                    if len(matches) > 10:
-                        info_string += "\nShowing the first 10 matches"
-
-                    self.line(info_string)
-
-                    # Default to an empty value to signal no package was selected
-                    choices.append("")
-
-                    package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it"
-                        " is not listed",
-                        choices,
-                        attempts=3,
-                        default=len(choices) - 1,
-                    )
-
-                    if not package:
-                        self.line("<warning>No package selected</warning>")
-
-                    # package selected by user, set constraint name to package name
-                    if package:
-                        constraint["name"] = package
-
-                # no constraint yet, determine the best version automatically
-                if package and "version" not in constraint:
-                    question = self.create_question(
-                        "Enter the version constraint to require "
-                        "(or leave blank to use the latest version):"
-                    )
-                    question.attempts = 3
-                    question.validator = lambda x: (x or "").strip() or False
-
-                    package_constraint = self.ask(question)
-
-                    if package_constraint is None:
-                        _, package_constraint = self._find_best_version_for_package(
-                            package
-                        )
-
-                        self.line(
-                            f"Using version <b>{package_constraint}</b> for"
-                            f" <c1>{package}</c1>"
-                        )
-
-                    constraint["version"] = package_constraint
-
-                if package:
-                    result.append(constraint)
-
-                if self.io.is_interactive():
-                    package = self.ask("\nAdd a package:")
-
-            return result
-
-        result = []
-        for requirement in self._parse_requirements(requires):
-            if "git" in requirement or "url" in requirement or "path" in requirement:
-                result.append(requirement)
-                continue
-            elif "version" not in requirement:
-                # determine the best version automatically
-                name, version = self._find_best_version_for_package(
-                    requirement["name"],
-                    allow_prereleases=allow_prereleases,
-                    source=source,
-                )
-                requirement["version"] = version
-                requirement["name"] = name
-
-                self.line(f"Using version <b>{version}</b> for <c1>{name}</c1>")
-            else:
-                # check that the specified version/constraint exists
-                # before we proceed
-                name, _ = self._find_best_version_for_package(
-                    requirement["name"],
-                    requirement["version"],
-                    allow_prereleases=allow_prereleases,
-                    source=source,
-                )
-
-                requirement["name"] = name
-
-            result.append(requirement)
-
-        return result
-
-    def _find_best_version_for_package(
-        self,
-        name: str,
-        required_version: str | None = None,
-        allow_prereleases: bool = False,
-        source: str | None = None,
-    ) -> tuple[str, str]:
-        from poetry.version.version_selector import VersionSelector
-
-        selector = VersionSelector(self._get_pool())
-        package = selector.find_best_candidate(
-            name, required_version, allow_prereleases=allow_prereleases, source=source
-        )
-
-        if not package:
-            # TODO: find similar
-            raise ValueError(f"Could not find a matching version of package {name}")
-
-        return package.pretty_name, selector.find_recommended_require_version(package)
-
-    def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
-        from poetry.core.pyproject.exceptions import PyProjectException
-
-        try:
-            cwd = self.poetry.file.parent
-        except (PyProjectException, RuntimeError):
-            cwd = Path.cwd()
-
-        return [
-            parse_dependency_specification(
-                requirement=requirement,
-                env=self.env if isinstance(self, EnvCommand) else None,
-                cwd=cwd,
-            )
-            for requirement in requirements
-        ]
-
-    def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
-        requires: Requirements = {}
-        for requirement in requirements:
-            name = requirement.pop("name")
-            constraint: str | InlineTable
-            if "version" in requirement and len(requirement) == 1:
-                constraint = requirement["version"]
-            else:
-                constraint = inline_table()
-                constraint.trivia.trail = "\n"
-                constraint.update(requirement)
-
-            requires[name] = constraint
-
-        return requires
 
     def _validate_author(self, author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX

@@ -8,14 +8,18 @@ from typing import TYPE_CHECKING
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.console.commands.init import InitCommand
+from poetry.console.commands.command import Command
+from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.requirements import determine_requirements_from_list
+from poetry.utils.requirements import format_requirements
 
 
 if TYPE_CHECKING:
-    from poetry.console.commands.init import Requirements
+    from poetry.repositories import Pool
+    from poetry.utils.requirements import Requirements
 
 
-class NewCommand(InitCommand):
+class NewCommand(Command):
 
     name = "new"
     description = "Creates a new Python project at <path>."
@@ -52,6 +56,11 @@ class NewCommand(InitCommand):
             flag=False,
         ),
     ]
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._pool: Pool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -104,14 +113,18 @@ class NewCommand(InitCommand):
 
         requirements: Requirements = {}
         if self.option("dependency"):
-            requirements = self._format_requirements(
-                self._determine_requirements(self.option("dependency"))
+            requirements = format_requirements(
+                determine_requirements_from_list(
+                    self, self._get_pool(), self.option("dependency")
+                )
             )
 
         dev_requirements: Requirements = {}
         if self.option("dev-dependency"):
-            dev_requirements = self._format_requirements(
-                self._determine_requirements(self.option("dev-dependency"))
+            dev_requirements = format_requirements(
+                determine_requirements_from_list(
+                    self, self._get_pool(), self.option("dev-dependency")
+                )
             )
 
         layout_ = layout_cls(
@@ -138,3 +151,17 @@ class NewCommand(InitCommand):
         )
 
         return 0
+
+    # TODO this code is duplicated with init.py. how to abstract nicely?
+    def _get_pool(self) -> Pool:
+        from poetry.repositories import Pool
+        from poetry.repositories.pypi_repository import PyPiRepository
+
+        if isinstance(self, EnvCommand):
+            return self.poetry.pool
+
+        if self._pool is None:
+            self._pool = Pool()
+            self._pool.add_repository(PyPiRepository())
+
+        return self._pool
