@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
+from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ class SimpleIndexPage:
             if text is None:
                 continue
 
-            yield text.lower().replace("-", "_")
+            yield canonicalize_name(text)
 
     def serves_package(self, name: str) -> bool:
-        return name.lower().replace("-", "_") in self._cached_packages
+        return canonicalize_name(name) in self._cached_packages
