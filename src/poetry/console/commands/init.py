@@ -54,7 +54,7 @@ class InitCommand(Command):
             flag=False,
             multiple=True,
         ),
-        option("license", "l", "License of the package.", flag=False),
+        option("license", "License of the package.", flag=False),
     ]
 
     help = """\
