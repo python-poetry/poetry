@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 
+import contextlib
 import itertools
 import os
 import threading
@@ -8,6 +9,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from subprocess import CalledProcessError
+from typing import List
 
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
@@ -485,9 +487,46 @@ class Executor(object):
 
         return archive
 
-    def _install_directory(self, operation):
+    def _install_poetry_package(self, pyproject: PyProjectTOML, package, args: List[str], req: str):
         from poetry.factory import Factory
 
+        # Even if there is a build system specified
+        # some versions of pip (< 19.0.0) don't understand it
+        # so we need to check the version of pip to know
+        # if we can rely on the build system
+        legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
+            19, 0, 0
+        )
+        package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+
+        if package.develop and not package_poetry.package.build_script:
+            from poetry.masonry.builders.editable import EditableBuilder
+
+            # This is a Poetry package in editable mode
+            # we can use the EditableBuilder without going through pip
+            # to install it, unless it has a build script.
+            builder = EditableBuilder(package_poetry, self._env, NullIO())
+            builder.build()
+
+            return 0
+        elif legacy_pip or package_poetry.package.build_script:
+            from poetry.core.masonry.builders.sdist import SdistBuilder
+
+            # We need to rely on creating a temporary setup.py
+            # file since the version of pip does not support
+            # build-systems
+            # We also need it for non-PEP-517 packages
+            builder = SdistBuilder(package_poetry)
+
+            with builder.setup_py():
+                if package.develop:
+                    args.append("-e")
+
+                args.append(req)
+
+                return self.run_pip(*args)
+
+    def _install_directory(self, operation):
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -506,41 +545,8 @@ class Executor(object):
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
         if pyproject.is_poetry_project():
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
-                19, 0, 0
-            )
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
-
-            if package.develop and not package_poetry.package.build_script:
-                from poetry.masonry.builders.editable import EditableBuilder
-
-                # This is a Poetry package in editable mode
-                # we can use the EditableBuilder without going through pip
-                # to install it, unless it has a build script.
-                builder = EditableBuilder(package_poetry, self._env, NullIO())
-                builder.build()
-
-                return 0
-            elif legacy_pip or package_poetry.package.build_script:
-                from poetry.core.masonry.builders.sdist import SdistBuilder
-
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
-                builder = SdistBuilder(package_poetry)
-
-                with builder.setup_py():
-                    if package.develop:
-                        args.append("-e")
-
-                    args.append(req)
-
-                    return self.run_pip(*args)
+            with contextlib.suppress(RuntimeError):
+                return self._install_poetry_package(pyproject, package, args, req)
 
         if package.develop:
             args.append("-e")
