@@ -330,3 +330,25 @@ def test_use_pypi_pretty_name() -> None:
     package = repo.find_packages(Factory.create_dependency("twisted", "*"))
     assert len(package) == 1
     assert package[0].pretty_name == "Twisted"
+
+
+def test_find_links_for_package_of_supported_types():
+    repo = MockRepository()
+    package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))
+
+    assert len(package) == 1
+
+    links = repo.find_links_for_package(package[0])
+
+    assert len(links) == 1
+    assert links[0].is_sdist
+    assert links[0].show_url == "hbmqtt-0.9.6.tar.gz"
+
+
+def test_get_release_info_includes_only_supported_types():
+    repo = MockRepository()
+
+    release_info = repo._get_release_info(name="hbmqtt", version="0.9.6")
+
+    assert len(release_info["files"]) == 1
+    assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"
