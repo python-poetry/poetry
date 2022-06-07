@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.core.packages.package import Package
-
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.link_sources.html import SimpleIndexPage
@@ -11,6 +9,7 @@ from poetry.repositories.link_sources.html import SimpleIndexPage
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
 
