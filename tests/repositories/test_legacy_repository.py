@@ -15,6 +15,7 @@ from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
+from poetry.repositories.indexed import IndexedLegacyRepository
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.link_sources.html import SimpleIndexPage
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
@@ -42,10 +43,8 @@ class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self, indexed: bool = False) -> None:
-        super().__init__(
-            "legacy", url="http://legacy.foo.bar", disable_cache=True, indexed=indexed
-        )
+    def __init__(self) -> None:
+        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
     def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
@@ -391,15 +390,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
     ] == package.files
 
 
-def test_unindexed_has_no_root_page():
-    repo = MockRepository()
-    assert not repo._index_page
-
-
-class MockIndexedRepository(MockRepository):
-    def __init__(self) -> None:
-        super().__init__(True)
-
+class MockIndexedRepository(MockRepository, IndexedLegacyRepository):
     def _get_index_page(self) -> SimpleIndexPage | None:
         fixture = self.FIXTURES / "index.html"
         if not fixture.exists():
@@ -407,11 +398,6 @@ class MockIndexedRepository(MockRepository):
 
         with fixture.open(encoding="utf-8") as f:
             return SimpleIndexPage(self._url + "/", f.read())
-
-
-def test_indexed_has_root_page():
-    repo = MockIndexedRepository()
-    assert repo._index_page
 
 
 def test_indexed_root_page_has_valid_content():
@@ -447,6 +433,19 @@ def test_indexed_pep426_case_insensitive():
 
     # 'black' in the index
     assert repo._index_page.serves_package("Black")
+
+
+def test_indexed_retrieves_package_with_no_hashes():
+    repo = MockIndexedRepository()
+
+    package = repo.package("jupyter", "1.0.0")
+
+    assert [
+        {
+            "file": "jupyter-1.0.0.tar.gz",
+            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
+        }
+    ] == package.files
 
 
 class MockHttpRepository(LegacyRepository):

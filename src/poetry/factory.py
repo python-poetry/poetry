@@ -174,6 +174,7 @@ class Factory(BaseFactory):
     def create_package_source(
         cls, source: dict[str, str], auth_config: Config, disable_cache: bool = False
     ) -> LegacyRepository:
+        from poetry.repositories.indexed import IndexedLegacyRepository
         from poetry.repositories.legacy_repository import LegacyRepository
         from poetry.repositories.single_page_repository import SinglePageRepository
 
@@ -191,13 +192,18 @@ class Factory(BaseFactory):
 
         if re.match(r".*\.(htm|html)$", url):
             repository_class = SinglePageRepository
+            if indexed:
+                raise RuntimeError(
+                    "cannot set indexed=True for a single-page repository"
+                )
+        elif indexed:
+            repository_class = IndexedLegacyRepository
 
         return repository_class(
             name,
             url,
             config=auth_config,
             disable_cache=disable_cache,
-            indexed=indexed,
         )
 
     @classmethod
