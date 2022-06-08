@@ -426,7 +426,7 @@ class Provider:
         return _dependencies
 
     def incompatibilities_for(
-        self, package: DependencyPackage
+        self, dependency_package: DependencyPackage
     ) -> list[Incompatibility]:
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
@@ -437,6 +437,7 @@ class Provider:
         won't return incompatibilities that have already been returned by a
         previous call to _incompatibilities_for().
         """
+        package = dependency_package.package
         if package.is_root():
             dependencies = package.all_requires
         else:
@@ -444,7 +445,7 @@ class Provider:
 
             if not package.python_constraint.allows_all(self._python_constraint):
                 transitive_python_constraint = get_python_constraint_from_marker(
-                    package.dependency.transitive_marker
+                    dependency_package.dependency.transitive_marker
                 )
                 intersection = package.python_constraint.intersect(
                     transitive_python_constraint
@@ -457,7 +458,7 @@ class Provider:
                 if (
                     transitive_python_constraint.is_any()
                     or self._python_constraint.intersect(
-                        package.dependency.python_constraint
+                        dependency_package.dependency.python_constraint
                     ).is_empty()
                     or intersection.is_empty()
                     or not difference.is_empty()
@@ -478,7 +479,9 @@ class Provider:
             and self._python_constraint.allows_any(dep.python_constraint)
             and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
-        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
+        dependencies = self._get_dependencies_with_overrides(
+            _dependencies, dependency_package
+        )
 
         return [
             Incompatibility(
@@ -489,10 +492,10 @@ class Provider:
         ]
 
     def complete_package(self, package: DependencyPackage) -> DependencyPackage:
-        if package.is_root():
+        if package.package.is_root():
             package = package.clone()
-            requires = package.all_requires
-        elif not package.is_root() and package.source_type not in {
+            requires = package.package.all_requires
+        elif not package.package.is_root() and package.package.source_type not in {
             "directory",
             "file",
             "url",
@@ -502,8 +505,8 @@ class Provider:
                 package = DependencyPackage(
                     package.dependency,
                     self._pool.package(
-                        package.name,
-                        package.version.text,
+                        package.package.name,
+                        package.package.version.text,
                         extras=list(package.dependency.extras),
                         repository=package.dependency.source_name,
                     ),
@@ -521,9 +524,9 @@ class Provider:
                     )
                 except StopIteration:
                     raise e from e
-            requires = package.requires
+            requires = package.package.requires
         else:
-            requires = package.requires
+            requires = package.package.requires
 
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies
@@ -540,13 +543,13 @@ class Provider:
         if package.dependency.extras:
             for extra in package.dependency.extras:
                 extra = safe_extra(extra)
-                if extra not in package.extras:
+                if extra not in package.package.extras:
                     continue
 
-                optional_dependencies += [d.name for d in package.extras[extra]]
+                optional_dependencies += [d.name for d in package.package.extras[extra]]
 
             package = package.with_features(list(package.dependency.extras))
-            _dependencies.append(package.without_features().to_dependency())
+            _dependencies.append(package.package.without_features().to_dependency())
 
         for dep in requires:
             if not self._python_constraint.allows_any(dep.python_constraint):
@@ -558,7 +561,7 @@ class Provider:
             if self._env and not dep.marker.validate(self._env.marker_env):
                 continue
 
-            if not package.is_root() and (
+            if not package.package.is_root() and (
                 (dep.is_optional() and dep.name not in optional_dependencies)
                 or (
                     dep.in_extras
@@ -764,11 +767,11 @@ class Provider:
             clean_dependencies.append(dep)
 
         package = DependencyPackage(
-            package.dependency, package.with_dependency_groups([], only=True)
+            package.dependency, package.package.with_dependency_groups([], only=True)
         )
 
         for dep in clean_dependencies:
-            package.add_dependency(dep)
+            package.package.add_dependency(dep)
 
         return package
 
