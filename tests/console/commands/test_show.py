@@ -97,18 +97,80 @@ def mock_lock_data(poetry: Poetry, packages: list[TestPackage]):
     poetry.locker.mock_lock_data(lockfile)
 
 
+def mock_package(
+    package_name: str,
+    version: str,
+    description: str | None = None,
+    category: str | None = None,
+    groups: list[str] | None = None,
+    dependencies: dict[str, str] | None = None,
+    poetry: Poetry | None = None,
+):
+    dependencies = dependencies or {}
+    if poetry is not None:
+        poetry.package.add_dependency(
+            Factory.create_dependency(package_name, f"^{version}", groups=groups)
+        )
+    package = get_package(package_name, version)
+    package.description = description or f"{package_name.capitalize()} package"
+
+    if groups:
+        package.groups = groups
+
+    if category:
+        package.category = category
+
+    for dependency_name, dependency_constraint in dependencies.items():
+        package.add_dependency(
+            Factory.create_dependency(dependency_name, dependency_constraint)
+        )
+
+    return package
+
+
+def mock_install(repo: Repository, packages: list[Package]) -> None:
+    for package in packages:
+        repo.add_package(package)
+
+
+def mock_lock(packages: list[Package]) -> dict:
+    lockfile = {
+        "package": [
+            {
+                "name": package.name,
+                "version": str(package.version),
+                "description": package.description,
+                "category": package.category,
+                "optional": package.optional,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            }
+            for package in packages
+        ],
+        "metadata": {
+            "python-versions": "*",
+            "platform": "*",
+            "content-hash": "123456789",
+            "hashes": {package.name: [] for package in packages},
+        },
+    }
+    return lockfile
+
+
 def test_show_basic_with_installed_packages(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
 ):
     packages = [
-        setup_package(poetry, "cachy", "0.1.0", installed=installed),
-        setup_package(poetry, "pendulum", "2.0.0", installed=installed),
-        setup_package(poetry, "pytest", "3.7.3", installed=installed),
+        mock_package("cachy", "0.1.0", poetry=poetry),
+        mock_package("pendulum", "2.0.0", poetry=poetry),
+        mock_package("pytest", "3.7.3", poetry=poetry),
     ]
-
-    mock_lock_data(poetry, packages)
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute()
 
@@ -214,26 +276,15 @@ def test_show_basic_with_group_options(
     poetry.package.add_dependency_group(DependencyGroup(name="time", optional=True))
 
     packages = [
-        setup_package(poetry, "cachy", "0.1.0", installed=installed),
-        setup_package(
-            poetry,
-            "pendulum",
-            "2.0.0",
-            installed=installed,
-            category="dev",
-            groups=["time"],
+        mock_package("cachy", "0.1.0", poetry=poetry),
+        mock_package(
+            "pendulum", "2.0.0", category="dev", groups=["time"], poetry=poetry
         ),
-        setup_package(
-            poetry,
-            "pytest",
-            "3.7.3",
-            installed=installed,
-            category="dev",
-            groups=["test"],
-        ),
+        mock_package("pytest", "3.7.3", category="dev", groups=["test"], poetry=poetry),
     ]
-
-    mock_lock_data(poetry, packages)
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute(options)
 
@@ -244,10 +295,11 @@ def test_show_basic_with_installed_packages_single(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     packages = [
-        setup_package(poetry, "cachy", "0.1.0", installed=installed),
+        mock_package("cachy", "0.1.0", poetry=poetry),
     ]
-
-    mock_lock_data(poetry, packages)
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("cachy")
 
@@ -262,10 +314,11 @@ def test_show_basic_with_installed_packages_single_canonicalized(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ):
     packages = [
-        setup_package(poetry, "foo-bar", "0.1.0", installed=installed),
+        mock_package("foo-bar", "0.1.0", poetry=poetry),
     ]
-
-    mock_lock_data(poetry, packages)
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("Foo_Bar")
 
@@ -302,86 +355,60 @@ def test_show_basic_with_not_installed_packages_decorations(
     decorated: bool,
     expected: str,
 ):
-    packages = [
-        setup_package(poetry, "cachy", "0.1.0", installed=installed),
-        setup_package(poetry, "pendulum", "2.0.0"),
-    ]
-
-    mock_lock_data(poetry, packages)
+    cachy_010 = mock_package("cachy", "0.1.0", poetry=poetry)
+    pendulum_200 = mock_package("pendulum", "2.0.0", poetry=poetry)
+    mock_install(installed, [cachy_010])
+    lockfile = mock_lock([cachy_010, pendulum_200])
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute(decorated=decorated)
 
     assert tester.io.fetch_output() == expected
 
 
-def test_show_latest_decorated(
-    tester: CommandTester,
-    poetry: Poetry,
-    installed: Repository,
-    repo: TestRepository,
-):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-    pendulum_201 = get_package("pendulum", "2.0.1")
-    pendulum_201.description = "Pendulum package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-
-    repo.add_package(cachy_010)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
-    repo.add_package(pendulum_201)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
-
-    tester.execute("--latest", decorated=True)
-
-    expected = """\
+@pytest.mark.parametrize(
+    ("decorated", "expected"),
+    [
+        (
+            False,
+            """\
+cachy    0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 Pendulum package
+""",
+        ),
+        (
+            True,
+            """\
 \033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m\
  \033[33m0.2.0\033[39m Cachy package
 \033[36mpendulum\033[39m \033[39;1m2.0.0\033[39;22m\
  \033[31m2.0.1\033[39m Pendulum package
-"""
+""",
+        ),
+    ],
+)
+def test_show_latest_decorations(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
+    decorated: bool,
+    expected: str,
+):
+    installed_packages = [
+        mock_package("cachy", "0.1.0", poetry=poetry),
+        mock_package("pendulum", "2.0.0", poetry=poetry),
+    ]
+    new_packages = [
+        mock_package("cachy", "0.2.0"),
+        mock_package("pendulum", "2.0.1"),
+    ]
+    mock_install(installed, installed_packages)
+    mock_install(repo, installed_packages + new_packages)
+    lockfile = mock_lock(installed_packages)
+    poetry.locker.mock_lock_data(lockfile)
+
+    tester.execute("--latest", decorated=decorated)
 
     assert tester.io.fetch_output() == expected
 
@@ -392,56 +419,17 @@ def test_show_outdated(
     installed: Repository,
     repo: TestRepository,
 ):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-
-    repo.add_package(cachy_010)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
+    installed_packages = [
+        mock_package("cachy", "0.1.0", poetry=poetry),
+        mock_package("pendulum", "2.0.0", poetry=poetry),
+    ]
+    new_packages = [
+        mock_package("cachy", "0.2.0"),
+    ]
+    mock_install(installed, installed_packages)
+    mock_install(repo, installed_packages + new_packages)
+    lockfile = mock_lock(installed_packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--outdated")
 
@@ -458,34 +446,13 @@ def test_show_outdated_with_only_up_to_date_packages(
     installed: Repository,
     repo: TestRepository,
 ):
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-
-    installed.add_package(cachy_020)
-    repo.add_package(cachy_020)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": []},
-            },
-        }
-    )
+    packages = [
+        mock_package("cachy", "0.1.0", poetry=poetry),
+    ]
+    mock_install(installed, packages)
+    mock_install(repo, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--outdated")
 
@@ -500,61 +467,18 @@ def test_show_outdated_has_prerelease_but_not_allowed(
     installed: Repository,
     repo: TestRepository,
 ):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-    cachy_030dev = get_package("cachy", "0.3.0.dev123")
-    cachy_030dev.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-
-    # sorting isn't used, so this has to be the first element to
-    # replicate the issue in PR #1548
-    repo.add_package(cachy_030dev)
-    repo.add_package(cachy_010)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
+    installed_packages = [
+        mock_package("cachy", "0.1.0", poetry=poetry),
+        mock_package("pendulum", "2.0.0", poetry=poetry),
+    ]
+    new_packages = [
+        mock_package("cachy", "0.2.0"),
+        mock_package("cachy", "0.3.0.dev123"),
+    ]
+    mock_install(installed, installed_packages)
+    mock_install(repo, installed_packages + new_packages)
+    lockfile = mock_lock(installed_packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--outdated")
 
@@ -576,60 +500,20 @@ def test_show_outdated_has_prerelease_and_allowed(
             "cachy", {"version": ">=0.0.1", "allow-prereleases": True}
         )
     )
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
-    cachy_010dev = get_package("cachy", "0.1.0.dev1")
-    cachy_010dev.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-    cachy_030dev = get_package("cachy", "0.3.0.dev123")
-    cachy_030dev.description = "Cachy package"
+    pendulum_200 = mock_package("pendulum", "2.0.0", poetry=poetry)
 
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
+    cachy_010dev = mock_package("cachy", "0.1.0.dev1")
+    cachy_020 = mock_package("cachy", "0.2.0")
+    cachy_030dev = mock_package("cachy", "0.3.0.dev123")
 
-    installed.add_package(cachy_010dev)
-    installed.add_package(pendulum_200)
-
-    # sorting isn't used, so this has to be the first element to
+    mock_install(installed, [cachy_010dev, pendulum_200])
+    # sorting isn't used, so cachy_030dev has to be the first element to
     # replicate the issue in PR #1548
-    repo.add_package(cachy_030dev)
-    repo.add_package(cachy_010dev)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
+    mock_install(repo, [cachy_030dev, cachy_020, cachy_010dev, pendulum_200])
 
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0.dev1",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
+    lockfile = mock_lock([cachy_010dev, pendulum_200])
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--outdated")
 
@@ -646,59 +530,18 @@ def test_show_outdated_formatting(
     installed: Repository,
     repo: TestRepository,
 ):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-    pendulum_201 = get_package("pendulum", "2.0.1")
-    pendulum_201.description = "Pendulum package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-
-    repo.add_package(cachy_010)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
-    repo.add_package(pendulum_201)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
+    installed_packages = [
+        mock_package("cachy", "0.1.0", poetry=poetry),
+        mock_package("pendulum", "2.0.0", poetry=poetry),
+    ]
+    new_packages = [
+        mock_package("cachy", "0.2.0"),
+        mock_package("pendulum", "2.0.1"),
+    ]
+    mock_install(installed, installed_packages)
+    mock_install(repo, installed_packages + new_packages)
+    lockfile = mock_lock(installed_packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--outdated")
 
@@ -725,102 +568,36 @@ def test_show_outdated_local_dependencies(
     installed: Repository,
     repo: TestRepository,
 ):
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-    cachy_030 = get_package("cachy", "0.3.0")
-    cachy_030.description = "Cachy package"
+    installed_packages = [
+        mock_package("cachy", "0.2.0"),
+        mock_package("pendulum", "2.0.0"),
+    ]
+    local_packages = [
+        mock_package("demo", "0.1.0", description=""),
+        mock_package("project-with-setup", "0.1.1", description="Demo project."),
+    ]
+    new_packages = [mock_package("cachy", "0.3.0")]
+    mock_install(installed, installed_packages + local_packages)
+    mock_install(repo, installed_packages + new_packages)
+    lockfile = mock_lock(installed_packages + local_packages)
 
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    demo_010 = get_package("demo", "0.1.0")
-    demo_010.description = ""
-
-    my_package_011 = get_package("project-with-setup", "0.1.1")
-    my_package_011.description = "Demo project."
-
-    installed.add_package(cachy_020)
-    installed.add_package(pendulum_200)
-    installed.add_package(demo_010)
-    installed.add_package(my_package_011)
-
-    repo.add_package(cachy_020)
-    repo.add_package(cachy_030)
-    repo.add_package(pendulum_200)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "demo",
-                    "version": "0.1.0",
-                    "description": "Demo package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "source": {
-                        "type": "file",
-                        "reference": "",
-                        "url": "../distributions/demo-0.1.0-py2.py3-none-any.whl",
-                    },
-                },
-                {
-                    "name": "project-with-setup",
-                    "version": "0.1.1",
-                    "description": "Demo project.",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {
-                        "pendulum": "pendulum>=1.4.4",
-                        "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
-                    },
-                    "source": {
-                        "type": "directory",
-                        "reference": "",
-                        "url": "../project_with_setup",
-                    },
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {
-                    "cachy": [],
-                    "pendulum": [],
-                    "demo": [],
-                    "project-with-setup": [],
-                },
-            },
-        }
-    )
+    # demo==0.1.0
+    lockfile["package"][2]["source"] = {
+        "type": "file",
+        "reference": "",
+        "url": "../distributions/demo-0.1.0-py2.py3-none-any.whl",
+    }
+    # project-with-setup==0.1.1
+    lockfile["package"][3]["dependencies"] = {
+        "pendulum": "pendulum>=1.4.4",
+        "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
+    }
+    lockfile["package"][3]["source"] = {
+        "type": "directory",
+        "reference": "",
+        "url": "../project_with_setup",
+    }
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--outdated")
 
@@ -835,201 +612,54 @@ project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+@pytest.mark.parametrize(
+    ("category", "option", "expected"),
+    [
+        (
+            "main",
+            "--outdated",
+            """\
+cachy 0.1.0         0.2.0         Cachy package
+demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
+""",
+        ),
+        (
+            "dev",
+            "--outdated --without dev",
+            """\
+cachy 0.1.0 0.2.0 Cachy package
+""",
+        ),
+    ],
+)
 def test_show_outdated_git_dev_dependency(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
+    category: str,
+    option: str,
+    expected: str,
 ):
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
+    installed_packages = [
+        mock_package("cachy", "0.1.0"),
+        mock_package("pendulum", "2.0.0"),
+        mock_package("pytest", "3.4.3"),
+    ]
+    git_packages = [mock_package("demo", "0.1.1", category=category)]
+    new_packages = [mock_package("cachy", "0.2.0", category=category)]
+    mock_install(installed, installed_packages + git_packages)
+    mock_install(repo, installed_packages + new_packages)
+    lockfile = mock_lock(installed_packages + git_packages)
+    lockfile["package"][3]["source"] = {
+        "type": "git",
+        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        "resolved_reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        "url": "https://github.com/demo/demo.git",
+    }
+    poetry.locker.mock_lock_data(lockfile)
 
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    demo_011 = get_package("demo", "0.1.1")
-    demo_011.description = "Demo package"
-
-    pytest = get_package("pytest", "3.4.3")
-    pytest.description = "Pytest"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(demo_011)
-    installed.add_package(pytest)
-
-    repo.add_package(cachy_010)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
-    repo.add_package(pytest)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "demo",
-                    "version": "0.1.1",
-                    "description": "Demo package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "source": {
-                        "type": "git",
-                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                        "resolved_reference": (
-                            "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                        ),
-                        "url": "https://github.com/demo/demo.git",
-                    },
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.4.3",
-                    "description": "Pytest",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--outdated")
-
-    expected = """\
-cachy 0.1.0         0.2.0         Cachy package
-demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
-"""
-
-    assert tester.io.fetch_output() == expected
-
-
-@pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
-def test_show_outdated_no_dev_git_dev_dependency(
-    tester: CommandTester,
-    poetry: Poetry,
-    installed: Repository,
-    repo: TestRepository,
-):
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-    cachy_020 = get_package("cachy", "0.2.0")
-    cachy_020.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    demo_011 = get_package("demo", "0.1.1")
-    demo_011.description = "Demo package"
-
-    pytest = get_package("pytest", "3.4.3")
-    pytest.description = "Pytest"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(demo_011)
-    installed.add_package(pytest)
-
-    repo.add_package(cachy_010)
-    repo.add_package(cachy_020)
-    repo.add_package(pendulum_200)
-    repo.add_package(pytest)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "demo",
-                    "version": "0.1.1",
-                    "description": "Demo package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "source": {
-                        "type": "git",
-                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                        "url": "https://github.com/demo/pyproject-demo.git",
-                    },
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.4.3",
-                    "description": "Pytest",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--outdated --without dev")
-
-    expected = """\
-cachy 0.1.0 0.2.0 Cachy package
-"""
+    tester.execute(option)
 
     assert tester.io.fetch_output() == expected
 
@@ -1038,53 +668,17 @@ def test_show_hides_incompatible_package(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
 ):
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
     )
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    installed.add_package(pendulum_200)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
+    packages = [
+        mock_package("cachy", "0.1.0"),
+        mock_package("pendulum", "2.0.0", poetry=poetry),
+    ]
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute()
 
@@ -1101,47 +695,17 @@ def test_show_all_shows_incompatible_package(
     installed: Repository,
     repo: TestRepository,
 ):
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
 
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
+    cachy_010 = mock_package("cachy", "0.1.0")
+    pendulum_200 = mock_package("pendulum", "2.0.0")
 
     installed.add_package(pendulum_200)
 
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "requirements": {"python": "1.0"},
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
-            },
-        }
-    )
+    lockfile = mock_lock([cachy_010, pendulum_200])
+    # cachy==0.1.0
+    lockfile["package"][0]["requirements"] = {"python": "1.0"}
+
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--all")
 
@@ -1153,84 +717,30 @@ pendulum  2.0.0 Pendulum package
     assert tester.io.fetch_output() == expected
 
 
-def test_show_non_dev_with_basic_installed_packages(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-    poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "*", groups=["dev"])
-    )
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-    pytest_373.category = "dev"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--without dev")
-
-    expected = """\
+@pytest.mark.parametrize(
+    ("option", "expected"),
+    [
+        (
+            "--without dev",
+            """\
 cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
-"""
-
-    assert tester.io.fetch_output() == expected
-
-
-def test_show_with_group_only(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+""",
+        ),
+        (
+            "--only dev",
+            """\
+pytest 3.7.3 Pytest package
+""",
+        ),
+    ],
+)
+def test_show_non_dev_with_without_basic_installed_packages(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    option: str,
+    expected: str,
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -1238,68 +748,16 @@ def test_show_with_group_only(
         Factory.create_dependency("pytest", "*", groups=["dev"])
     )
 
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
+    packages = [
+        mock_package("cachy", "0.1.0"),
+        mock_package("pendulum", "2.0.0"),
+        mock_package("pytest", "3.7.3", category="dev"),
+    ]
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-    pytest_373.category = "dev"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--only dev")
-
-    expected = """\
-pytest 3.7.3 Pytest package
-"""
+    tester.execute(option)
 
     assert tester.io.fetch_output() == expected
 
@@ -1313,62 +771,14 @@ def test_show_with_optional_group(
     group.add_dependency(Factory.create_dependency("pytest", "*", groups=["dev"]))
     poetry.package.add_dependency_group(group)
 
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-    pytest_373.category = "dev"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
+    packages = [
+        mock_package("cachy", "0.1.0"),
+        mock_package("pendulum", "2.0.0"),
+        mock_package("pytest", "3.7.3", category="dev"),
+    ]
+    mock_install(installed, packages)
+    lockfile = mock_lock(packages)
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute()
 
