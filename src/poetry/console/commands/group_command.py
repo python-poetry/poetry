@@ -88,7 +88,6 @@ class GroupCommand(EnvCommand):
             ("default", "only", MAIN_GROUP),
             ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
-            ("dev-only", "without", MAIN_GROUP),
         ]:
             if self.io.input.has_option(opt) and self.option(opt):
                 self.line_error(

@@ -15,7 +15,7 @@ class AboutCommand(Command):
 
     description = "Shows information about Poetry."
 
-    def handle(self) -> None:
+    def handle(self) -> int:
         from poetry.utils._compat import metadata
 
         # The metadata.version that we import for Python 3.7 is untyped, work around
@@ -34,3 +34,5 @@ Poetry-Core Version: {version('poetry-core')}</info>
 See <fg=blue>https://github.com/python-poetry/poetry</> for more information.</comment>\
 """
         )
+
+        return 0

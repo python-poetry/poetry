@@ -5,6 +5,7 @@ import pytest
 from poetry.core.utils.helpers import parse_requires
 
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import safe_extra
 
 
 def test_parse_requires():
@@ -77,3 +78,10 @@ test_canonicalize_name_cases = [
 def test_canonicalize_name(test: str, expected: str):
     canonicalized_name = canonicalize_name(test)
     assert canonicalized_name == expected
+
+
+def test_safe_extra():
+    extra = "pandas.CSVDataSet"
+    result = safe_extra(extra)
+    expected = "pandas.csvdataset"
+    assert result == expected

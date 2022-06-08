@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
@@ -298,7 +299,7 @@ def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
 def tmp_dir() -> Iterator[str]:
     dir_ = tempfile.mkdtemp(prefix="poetry_")
 
-    yield dir_
+    yield Path(dir_).resolve().as_posix()
 
     remove_directory(dir_, force=True)
 
@@ -366,6 +367,7 @@ def project_factory(
     repo: TestRepository,
     installed: Repository,
     default_python: str,
+    load_required_fixtures: None,
 ) -> ProjectFactory:
     workspace = Path(tmp_dir)
 
@@ -376,17 +378,25 @@ def project_factory(
         pyproject_content: str | None = None,
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
+        source: Path | None = None,
+        locker_config: dict[str, Any] | None = None,
     ) -> Poetry:
         project_dir = workspace / f"poetry-fixture-{name}"
         dependencies = dependencies or {}
         dev_dependencies = dev_dependencies or {}
 
-        if pyproject_content:
-            project_dir.mkdir(parents=True, exist_ok=True)
-            with project_dir.joinpath("pyproject.toml").open(
-                "w", encoding="utf-8"
-            ) as f:
-                f.write(pyproject_content)
+        if pyproject_content or source:
+            if source:
+                project_dir.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(source, project_dir)
+            else:
+                project_dir.mkdir(parents=True, exist_ok=True)
+
+            if pyproject_content:
+                with project_dir.joinpath("pyproject.toml").open(
+                    "w", encoding="utf-8"
+                ) as f:
+                    f.write(pyproject_content)
         else:
             layout("src")(
                 name,
@@ -404,7 +414,9 @@ def project_factory(
 
         poetry = Factory().create_poetry(project_dir)
 
-        locker = TestLocker(poetry.locker.lock.path, poetry.locker._local_config)
+        locker = TestLocker(
+            poetry.locker.lock.path, locker_config or poetry.locker._local_config
+        )
         locker.write()
 
         poetry.set_locker(locker)
@@ -441,3 +453,36 @@ def set_simple_log_formatter() -> None:
         for handler in logging.getLogger(name).handlers:
             # replace formatter with simple formatter for testing
             handler.setFormatter(logging.Formatter(fmt="%(message)s"))
+
+
+@pytest.fixture
+def fixture_copier(fixture_base: Path, tmp_dir: str) -> FixtureCopier:
+    def _copy(relative_path: str, target: Path | None = None) -> Path:
+        path = fixture_base.joinpath(relative_path)
+        target = target or Path(tmp_dir, relative_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        if target.exists():
+            return target
+
+        if path.is_dir():
+            shutil.copytree(path, target)
+        else:
+            shutil.copyfile(path, target)
+
+        return target
+
+    return _copy
+
+
+@pytest.fixture
+def required_fixtures() -> list[str]:
+    return []
+
+
+@pytest.fixture(autouse=True)
+def load_required_fixtures(
+    required_fixtures: list[str], fixture_copier: FixtureCopier
+) -> None:
+    for fixture in required_fixtures:
+        fixture_copier(fixture)

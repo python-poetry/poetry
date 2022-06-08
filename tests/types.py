@@ -45,10 +45,16 @@ class ProjectFactory(Protocol):
         pyproject_content: str | None = None,
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
+        source: Path | None = None,
     ) -> Poetry:
         ...
 
 
 class FixtureDirGetter(Protocol):
     def __call__(self, name: str) -> Path:
+        ...
+
+
+class FixtureCopier(Protocol):
+    def __call__(self, relative_path: str, target: Path | None = None) -> Path:
         ...

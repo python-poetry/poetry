@@ -12,7 +12,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -37,6 +36,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import safe_extra
 from poetry.vcs.git import Git
 
 
@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
 
+    from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.specification import PackageSpecification
@@ -125,7 +126,7 @@ class Provider:
         self,
         package: Package,
         pool: Pool,
-        io: Any,
+        io: IO,
         env: Env | None = None,
         installed: Repository | None = None,
     ) -> None:
@@ -563,6 +564,7 @@ class Provider:
         # to the current package
         if package.dependency.extras:
             for extra in package.dependency.extras:
+                extra = safe_extra(extra)
                 if extra not in package.extras:
                     continue
 
@@ -585,7 +587,9 @@ class Provider:
                 (dep.is_optional() and dep.name not in optional_dependencies)
                 or (
                     dep.in_extras
-                    and not set(dep.in_extras).intersection(package.dependency.extras)
+                    and not set(dep.in_extras).intersection(
+                        {safe_extra(extra) for extra in package.dependency.extras}
+                    )
                 )
             ):
                 continue

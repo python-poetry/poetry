@@ -9,7 +9,7 @@ class CacheListCommand(Command):
     name = "cache list"
     description = "List Poetry's caches."
 
-    def handle(self) -> int | None:
+    def handle(self) -> int:
         config = Config.create()
         if config.repository_cache_directory.exists():
             caches = sorted(config.repository_cache_directory.iterdir())
@@ -19,4 +19,4 @@ class CacheListCommand(Command):
                 return 0
 
         self.line_error("<warning>No caches found</>")
-        return None
+        return 0

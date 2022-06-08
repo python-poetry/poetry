@@ -32,8 +32,8 @@ class PluginShowCommand(Command):
         exit_code: int = command.run(
             IO(
                 StringInput(""),
-                self._io.output,
-                self._io.error_output,
+                self.io.output,
+                self.io.error_output,
             )
         )
         return exit_code

@@ -21,7 +21,7 @@ class BuildCommand(EnvCommand):
         "poetry.core.masonry.builders.wheel",
     ]
 
-    def handle(self) -> None:
+    def handle(self) -> int:
         from poetry.core.masonry.builder import Builder
 
         with build_environment(poetry=self.poetry, env=self.env, io=self.io) as env:
@@ -33,3 +33,5 @@ class BuildCommand(EnvCommand):
 
             builder = Builder(self.poetry)
             builder.build(fmt, executable=env.python)
+
+        return 0
