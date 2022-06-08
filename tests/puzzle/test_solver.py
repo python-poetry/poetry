@@ -1448,9 +1448,9 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         DependencyPackage(package.to_dependency(), package)
     )
 
-    assert len(complete_package.all_requires) == 2
+    assert len(complete_package.package.all_requires) == 2
 
-    pypi, git = complete_package.all_requires
+    pypi, git = complete_package.package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi
