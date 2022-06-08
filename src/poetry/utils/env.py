@@ -6,6 +6,7 @@ import itertools
 import json
 import os
 import platform
+import plistlib
 import re
 import subprocess
 import sys
@@ -1099,7 +1100,20 @@ class EnvManager:
 
         args.append(str(path))
 
-        return virtualenv.cli_run(args)
+        cli_result = virtualenv.cli_run(args)
+
+        # Exclude the venv folder from from macOS Time Machine backups
+        # TODO: Add backup-ignore markers for other platforms too
+        if sys.platform == "darwin":
+            import xattr
+
+            xattr.setxattr(
+                str(path),
+                "com.apple.metadata:com_apple_backup_excludeItem",
+                plistlib.dumps("com.apple.backupd", fmt=plistlib.FMT_BINARY),
+            )
+
+        return cli_result
 
     @classmethod
     def remove_venv(cls, path: Path | str) -> None:
@@ -1486,13 +1500,14 @@ class Env:
 
         return decode(output)
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int | None:
+    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)
         env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
 
+        kwargs["shell"] = True
         exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
         exe.communicate()
         return exe.returncode
@@ -1755,7 +1770,7 @@ class VirtualEnv(Env):
 
         return environ
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int | None:
+    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super().execute(bin, *args, **kwargs)
 
@@ -1838,7 +1853,7 @@ class GenericEnv(VirtualEnv):
         paths: dict[str, str] = json.loads(output)
         return paths
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int | None:
+    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)
         env = kwargs.pop("env", dict(os.environ))
 
@@ -1882,12 +1897,12 @@ class NullEnv(SystemEnv):
             return super()._run(cmd, **kwargs)
         return 0
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int | None:
+    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         self.executed.append([bin] + list(args))
 
         if self._execute:
             return super().execute(bin, *args, **kwargs)
-        return None
+        return 0
 
     def _bin(self, bin: str) -> str:
         return bin

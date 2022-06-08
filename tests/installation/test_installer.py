@@ -1001,11 +1001,11 @@ def test_run_with_dependencies_nested_extras(
     )
     dependency_a = Factory.create_dependency("A", {"version": "^1.0", "extras": ["B"]})
 
-    package_b.extras = {"C": [dependency_c]}
+    package_b.extras = {"c": [dependency_c]}
     package_b.add_dependency(dependency_c)
 
     package_a.add_dependency(dependency_b)
-    package_a.extras = {"B": [dependency_b]}
+    package_a.extras = {"b": [dependency_b]}
 
     repo.add_package(package_a)
     repo.add_package(package_b)

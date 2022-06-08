@@ -49,7 +49,7 @@ class SourceAddCommand(Command):
         source_table.add(nl())
         return source_table
 
-    def handle(self) -> int | None:
+    def handle(self) -> int:
         from poetry.factory import Factory
         from poetry.repositories import Pool
 

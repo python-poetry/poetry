@@ -245,7 +245,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         self._installer.set_package(self.poetry.package)
         self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self._io.is_verbose())
+        self._installer.verbose(self.io.is_verbose())
         self._installer.update(True)
         if self.option("lock"):
             self._installer.lock()

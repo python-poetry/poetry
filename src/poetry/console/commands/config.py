@@ -125,7 +125,7 @@ To remove a repository (repo is a short alias for repositories):
 
         return unique_config_values
 
-    def handle(self) -> int | None:
+    def handle(self) -> int:
         from pathlib import Path
 
         from poetry.core.pyproject.exceptions import PyProjectException
@@ -200,7 +200,7 @@ To remove a repository (repo is a short alias for repositories):
         if setting_key in unique_config_values:
             if self.option("unset"):
                 config.config_source.remove_property(setting_key)
-                return None
+                return 0
 
             return self._handle_single_value(
                 config.config_source,

@@ -36,7 +36,7 @@ class SourceRemoveCommand(Command):
         source_table.add(nl())
         return source_table
 
-    def handle(self) -> int | None:
+    def handle(self) -> int:
         name = self.argument("name")
 
         sources = AoT([])

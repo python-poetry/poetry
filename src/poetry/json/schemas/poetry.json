@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": true,
+  "type": "object",
+  "required": [],
+  "properties": {
+    "source": {
+      "type": "array",
+      "description": "A set of additional repositories where packages can be found.",
+      "additionalProperties": {
+        "$ref": "#/definitions/repository"
+      },
+      "items": {
+        "$ref": "#/definitions/repository"
+      }
+    }
+  },
+  "definitions": {
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "url"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the repository"
+        },
+        "url": {
+          "type": "string",
+          "description": "The url of the repository",
+          "format": "uri"
+        },
+        "default": {
+          "type": "boolean",
+          "description": "Make this repository the default (disable PyPI)"
+        },
+        "secondary": {
+          "type": "boolean",
+          "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
+        },
+        "links": {
+          "type": "boolean",
+          "description": "Declare this as a link source. Links at uri/path can point to sdist or bdist archives."
+        },
+        "indexed": {
+          "type": "boolean",
+          "description": "For PEP 503 simple API repositories, pre-fetch and index the available packages. (experimental)"
+        }
+      }
+    }
+  }
+}
