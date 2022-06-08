@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
@@ -25,76 +24,6 @@ if TYPE_CHECKING:
 @pytest.fixture
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
-
-
-@dataclass
-class TestPackage:
-    name: str
-    version: str
-    description: str
-    package: Package
-    category: str | None = None
-    groups: list[str] | None = None
-    installed: bool = True
-    optional: bool = False
-
-    @property
-    def lock(self):
-        return {
-            "name": self.name,
-            "version": self.version,
-            "description": self.description,
-            "category": self.category,
-            "optional": self.optional,
-            "platform": "*",
-            "python-versions": "*",
-            "checksum": [],
-        }
-
-
-def setup_package(
-    poetry: Poetry,
-    name: str,
-    version: str,
-    installed: Repository | None = None,
-    category: str = "main",
-    optional: bool = False,
-    groups: list[str] | None = None,
-    description: str | None = None,
-) -> TestPackage:
-    description = description or f"{name.capitalize()} package"
-
-    package = get_package(name, version)
-    package.description = description
-    package.category = category
-
-    poetry.package.add_dependency(
-        Factory.create_dependency(name, f"^{version}", groups=groups)
-    )
-    if installed is not None:
-        installed.add_package(package)
-
-    return TestPackage(
-        name=name,
-        version=version,
-        category=category,
-        optional=optional,
-        package=package,
-        description=description,
-    )
-
-
-def mock_lock_data(poetry: Poetry, packages: list[TestPackage]):
-    lockfile = {
-        "package": [package.lock for package in packages],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "hashes": {package.name: [] for package in packages},
-        },
-    }
-    poetry.locker.mock_lock_data(lockfile)
 
 
 def mock_package(
