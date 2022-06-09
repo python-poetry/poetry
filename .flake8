@@ -18,7 +18,6 @@ extend-ignore =
     # ANN102: Missing type annotation for cls in classmethod
     ANN102,
 per-file-ignores =
-    # F401: Module imported by unused (non-implicit modules)
     # TC002: Move third-party import '...' into a type-checking block
     __init__.py:TC002,
     # ANN201: Missing return type annotation for public function
