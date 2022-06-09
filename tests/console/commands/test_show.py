@@ -12,6 +12,8 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from cleo.testers.command_tester import CommandTester
     from poetry.core.packages.package import Package
 
@@ -26,20 +28,18 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
+def mock_install(repo: Repository, packages: list[Package]):
+    for package in packages:
+        repo.add_package(package)
+
+
 def mock_package(
     package_name: str,
     version: str,
     description: str | None = None,
     category: str | None = None,
     groups: list[str] | None = None,
-    dependencies: dict[str, str] | None = None,
-    poetry: Poetry | None = None,
 ):
-    dependencies = dependencies or {}
-    if poetry is not None:
-        poetry.package.add_dependency(
-            Factory.create_dependency(package_name, f"^{version}", groups=groups)
-        )
     package = get_package(package_name, version)
 
     package.description = (
@@ -54,20 +54,28 @@ def mock_package(
     if category is not None:
         package.category = category
 
-    for dependency_name, dependency_constraint in dependencies.items():
-        package.add_dependency(
-            Factory.create_dependency(dependency_name, dependency_constraint)
-        )
-
     return package
 
 
-def mock_install(repo: Repository, packages: list[Package]) -> None:
-    for package in packages:
-        repo.add_package(package)
+@pytest.fixture()
+def cachy_010(poetry: Poetry):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    return mock_package("cachy", "0.1.0")
 
 
-def _mock_lock_package(package: Package) -> dict:
+@pytest.fixture()
+def pendulum_200(poetry: Poetry):
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+    return mock_package("pendulum", "2.0.0")
+
+
+@pytest.fixture()
+def pytest_373(poetry: Poetry):
+    poetry.package.add_dependency(Factory.create_dependency("pytest", "^3.7.3"))
+    return mock_package("pytest", "3.7.3")
+
+
+def _mock_lock_package(package: Package, override: dict | None = None) -> dict:
     package_lock = {
         "name": package.name,
         "version": str(package.version),
@@ -79,17 +87,24 @@ def _mock_lock_package(package: Package) -> dict:
         "checksum": [],
     }
     for group in package._dependency_groups.values():
-        print([str(dependency.constraint) for dependency in group.dependencies])
         package_lock["dependencies"] = {
-            dependency.name: " ".join(str(dependency.constraint).split(","))
+            dependency.name: dependency.pretty_constraint
             for dependency in group.dependencies
         }
+    if override is not None:
+        package_lock.update(override)
     return package_lock
 
 
-def mock_lock(packages: list[Package]) -> dict:
+def mock_lock_data(
+    poetry: Poetry, packages: list[Package], override: dict[str, Any] = None
+) -> None:
+    override = override or {}
     lockfile = {
-        "package": [_mock_lock_package(package) for package in packages],
+        "package": [
+            _mock_lock_package(package, override.get(package.name))
+            for package in packages
+        ],
         "metadata": {
             "python-versions": "*",
             "platform": "*",
@@ -97,22 +112,21 @@ def mock_lock(packages: list[Package]) -> dict:
             "hashes": {package.name: [] for package in packages},
         },
     }
-    return lockfile
+    poetry.locker.mock_lock_data(lockfile)
 
 
 def test_show_basic_with_installed_packages(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
+    cachy_010: Package,
+    pendulum_200: Package,
+    pytest_373: Package,
 ):
-    packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-        mock_package("pendulum", "2.0.0", poetry=poetry),
-        mock_package("pytest", "3.7.3", poetry=poetry),
-    ]
+    packages = [cachy_010, pendulum_200, pytest_373]
+
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute()
 
@@ -214,19 +228,23 @@ def test_show_basic_with_group_options(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
+    cachy_010: Package,
 ):
     poetry.package.add_dependency_group(DependencyGroup(name="time", optional=True))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pendulum", "^2.0.0", groups=["time"])
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "^3.7.3", groups=["test"])
+    )
 
-    packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-        mock_package(
-            "pendulum", "2.0.0", category="dev", groups=["time"], poetry=poetry
-        ),
-        mock_package("pytest", "3.7.3", category="dev", groups=["test"], poetry=poetry),
-    ]
+    pendulum_200 = mock_package("pendulum", "2.0.0", category="dev", groups=["time"])
+    pytest_373 = mock_package("pytest", "3.7.3", category="dev", groups=["test"])
+
+    packages = [cachy_010, pendulum_200, pytest_373]
+
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute(options)
 
@@ -234,14 +252,12 @@ def test_show_basic_with_group_options(
 
 
 def test_show_basic_with_installed_packages_single(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    tester: CommandTester, poetry: Poetry, installed: Repository, cachy_010: Package
 ):
-    packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-    ]
+    packages = [cachy_010]
+
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute("cachy")
 
@@ -255,12 +271,12 @@ def test_show_basic_with_installed_packages_single(
 def test_show_basic_with_installed_packages_single_canonicalized(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ):
+    poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^0.1.0"))
     packages = [
-        mock_package("foo-bar", "0.1.0", poetry=poetry),
+        mock_package("foo-bar", "0.1.0"),
     ]
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute("Foo_Bar")
 
@@ -296,12 +312,11 @@ def test_show_basic_with_not_installed_packages_decorations(
     installed: Repository,
     decorated: bool,
     expected: str,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    cachy_010 = mock_package("cachy", "0.1.0", poetry=poetry)
-    pendulum_200 = mock_package("pendulum", "2.0.0", poetry=poetry)
     mock_install(installed, [cachy_010])
-    lockfile = mock_lock([cachy_010, pendulum_200])
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, [cachy_010, pendulum_200])
 
     tester.execute(decorated=decorated)
 
@@ -336,19 +351,17 @@ def test_show_latest_decorations(
     repo: TestRepository,
     decorated: bool,
     expected: str,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    installed_packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-        mock_package("pendulum", "2.0.0", poetry=poetry),
-    ]
+    installed_packages = [cachy_010, pendulum_200]
     new_packages = [
         mock_package("cachy", "0.2.0"),
         mock_package("pendulum", "2.0.1"),
     ]
     mock_install(installed, installed_packages)
     mock_install(repo, installed_packages + new_packages)
-    lockfile = mock_lock(installed_packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, installed_packages)
 
     tester.execute("--latest", decorated=decorated)
 
@@ -360,18 +373,16 @@ def test_show_outdated(
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    installed_packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-        mock_package("pendulum", "2.0.0", poetry=poetry),
-    ]
+    installed_packages = [cachy_010, pendulum_200]
     new_packages = [
         mock_package("cachy", "0.2.0"),
     ]
     mock_install(installed, installed_packages)
     mock_install(repo, installed_packages + new_packages)
-    lockfile = mock_lock(installed_packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, installed_packages)
 
     tester.execute("--outdated")
 
@@ -387,14 +398,12 @@ def test_show_outdated_with_only_up_to_date_packages(
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
+    cachy_010: Package,
 ):
-    packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-    ]
+    packages = [cachy_010]
     mock_install(installed, packages)
     mock_install(repo, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute("--outdated")
 
@@ -408,19 +417,17 @@ def test_show_outdated_has_prerelease_but_not_allowed(
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    installed_packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-        mock_package("pendulum", "2.0.0", poetry=poetry),
-    ]
+    installed_packages = [cachy_010, pendulum_200]
     new_packages = [
         mock_package("cachy", "0.2.0"),
         mock_package("cachy", "0.3.0.dev123"),
     ]
     mock_install(installed, installed_packages)
     mock_install(repo, installed_packages + new_packages)
-    lockfile = mock_lock(installed_packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, installed_packages)
 
     tester.execute("--outdated")
 
@@ -436,14 +443,13 @@ def test_show_outdated_has_prerelease_and_allowed(
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
+    pendulum_200: Package,
 ):
     poetry.package.add_dependency(
         Factory.create_dependency(
             "cachy", {"version": ">=0.0.1", "allow-prereleases": True}
         )
     )
-
-    pendulum_200 = mock_package("pendulum", "2.0.0", poetry=poetry)
 
     cachy_010dev = mock_package("cachy", "0.1.0.dev1")
     cachy_020 = mock_package("cachy", "0.2.0")
@@ -454,8 +460,7 @@ def test_show_outdated_has_prerelease_and_allowed(
     # replicate the issue in PR #1548
     mock_install(repo, [cachy_030dev, cachy_020, cachy_010dev, pendulum_200])
 
-    lockfile = mock_lock([cachy_010dev, pendulum_200])
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, [cachy_010dev, pendulum_200])
 
     tester.execute("--outdated")
 
@@ -471,19 +476,17 @@ def test_show_outdated_formatting(
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    installed_packages = [
-        mock_package("cachy", "0.1.0", poetry=poetry),
-        mock_package("pendulum", "2.0.0", poetry=poetry),
-    ]
+    installed_packages = [cachy_010, pendulum_200]
     new_packages = [
         mock_package("cachy", "0.2.0"),
         mock_package("pendulum", "2.0.1"),
     ]
     mock_install(installed, installed_packages)
     mock_install(repo, installed_packages + new_packages)
-    lockfile = mock_lock(installed_packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, installed_packages)
 
     tester.execute("--outdated")
 
@@ -514,32 +517,41 @@ def test_show_outdated_local_dependencies(
         mock_package("cachy", "0.2.0"),
         mock_package("pendulum", "2.0.0"),
     ]
+    demo = mock_package("demo", "0.1.0", description="")
+    project_with_setup = mock_package(
+        "project-with-setup", "0.1.1", description="Demo project."
+    )
     local_packages = [
-        mock_package("demo", "0.1.0", description=""),
-        mock_package("project-with-setup", "0.1.1", description="Demo project."),
+        demo,
+        project_with_setup,
     ]
     new_packages = [mock_package("cachy", "0.3.0")]
     mock_install(installed, installed_packages + local_packages)
     mock_install(repo, installed_packages + new_packages)
-    lockfile = mock_lock(installed_packages + local_packages)
-
-    # demo==0.1.0
-    lockfile["package"][2]["source"] = {
-        "type": "file",
-        "reference": "",
-        "url": "../distributions/demo-0.1.0-py2.py3-none-any.whl",
-    }
-    # project-with-setup==0.1.1
-    lockfile["package"][3]["dependencies"] = {
-        "pendulum": "pendulum>=1.4.4",
-        "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
-    }
-    lockfile["package"][3]["source"] = {
-        "type": "directory",
-        "reference": "",
-        "url": "../project_with_setup",
-    }
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(
+        poetry,
+        installed_packages + local_packages,
+        override={
+            "demo": {
+                "source": {
+                    "type": "file",
+                    "reference": "",
+                    "url": "../distributions/demo-0.1.0-py2.py3-none-any.whl",
+                },
+            },
+            "project-with-setup": {
+                "source": {
+                    "type": "directory",
+                    "reference": "",
+                    "url": "../project_with_setup",
+                },
+                "dependencies": {
+                    "pendulum": "pendulum>=1.4.4",
+                    "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
+                },
+            },
+        },
+    )
 
     tester.execute("--outdated")
 
@@ -592,14 +604,20 @@ def test_show_outdated_git_dev_dependency(
     new_packages = [mock_package("cachy", "0.2.0", category=category)]
     mock_install(installed, installed_packages + git_packages)
     mock_install(repo, installed_packages + new_packages)
-    lockfile = mock_lock(installed_packages + git_packages)
-    lockfile["package"][3]["source"] = {
-        "type": "git",
-        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-        "resolved_reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-        "url": "https://github.com/demo/demo.git",
-    }
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(
+        poetry,
+        installed_packages + git_packages,
+        override={
+            "demo": {
+                "source": {
+                    "type": "git",
+                    "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                    "resolved_reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                    "url": "https://github.com/demo/demo.git",
+                }
+            }
+        },
+    )
 
     tester.execute(option)
 
@@ -610,17 +628,14 @@ def test_show_hides_incompatible_package(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
+    pendulum_200: Package,
 ):
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
     )
-    packages = [
-        mock_package("cachy", "0.1.0"),
-        mock_package("pendulum", "2.0.0", poetry=poetry),
-    ]
+    packages = [mock_package("cachy", "0.1.0"), pendulum_200]
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute()
 
@@ -637,17 +652,15 @@ def test_show_all_shows_incompatible_package(
     installed: Repository,
     repo: TestRepository,
 ):
-
     cachy_010 = mock_package("cachy", "0.1.0")
     pendulum_200 = mock_package("pendulum", "2.0.0")
 
     installed.add_package(pendulum_200)
-
-    lockfile = mock_lock([cachy_010, pendulum_200])
-    # cachy==0.1.0
-    lockfile["package"][0]["requirements"] = {"python": "1.0"}
-
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(
+        poetry,
+        [cachy_010, pendulum_200],
+        override={"cachy": {"requirements": {"python": "1.0"}}},
+    )
 
     tester.execute("--all")
 
@@ -683,21 +696,20 @@ def test_show_non_dev_with_without_basic_installed_packages(
     installed: Repository,
     option: str,
     expected: str,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     poetry.package.add_dependency(
         Factory.create_dependency("pytest", "*", groups=["dev"])
     )
 
     packages = [
-        mock_package("cachy", "0.1.0"),
-        mock_package("pendulum", "2.0.0"),
+        cachy_010,
+        pendulum_200,
         mock_package("pytest", "3.7.3", category="dev"),
     ]
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute(option)
 
@@ -705,22 +717,23 @@ def test_show_non_dev_with_without_basic_installed_packages(
 
 
 def test_show_with_optional_group(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    cachy_010: Package,
+    pendulum_200: Package,
 ):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     group = DependencyGroup("dev", optional=True)
     group.add_dependency(Factory.create_dependency("pytest", "*", groups=["dev"]))
     poetry.package.add_dependency_group(group)
 
     packages = [
-        mock_package("cachy", "0.1.0"),
-        mock_package("pendulum", "2.0.0"),
+        cachy_010,
+        pendulum_200,
         mock_package("pytest", "3.7.3", category="dev"),
     ]
     mock_install(installed, packages)
-    lockfile = mock_lock(packages)
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, packages)
 
     tester.execute()
 
@@ -750,9 +763,7 @@ def test_show_tree(tester: CommandTester, poetry: Poetry, installed: Repository)
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
     mock_install(installed, [cachy2])
-    lockfile = mock_lock([cachy2, msgpack_python051])
-
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, [cachy2, msgpack_python051])
 
     tester.execute("--tree", supports_utf8=False)
 
@@ -765,17 +776,18 @@ cachy 0.2.0
 
 
 def test_show_tree_no_dev(tester: CommandTester, poetry: Poetry, installed: Repository):
-    cachy2 = mock_package("cachy", "0.2.0", description="", poetry=poetry)
-    pytest610 = mock_package(
-        "pytest", "6.1.0", groups=["dev"], category="dev", poetry=poetry
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "^6.1.0", groups=["dev"])
     )
+    cachy2 = mock_package("cachy", "0.2.0", description="")
+    pytest610 = mock_package("pytest", "6.1.0", groups=["dev"], category="dev")
     msgpack_python051 = mock_package("msgpack-python", "0.5.1")
 
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
     mock_install(installed, [cachy2, pytest610])
-    lockfile = mock_lock([cachy2, pytest610, msgpack_python051])
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, [cachy2, pytest610, msgpack_python051])
 
     tester.execute("--tree --without dev")
 
@@ -819,14 +831,13 @@ def test_show_tree_why_package(
     a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
 
     b = get_package("b", "0.0.1")
-    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
     installed.add_package(b)
 
     c = get_package("c", "0.0.1")
     installed.add_package(c)
 
-    lockfile = mock_lock([a, b, c])
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, [a, b, c])
 
     tester.execute(option)
 
@@ -843,17 +854,14 @@ def test_show_required_by_deps(
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
     pendulum = get_package("pendulum", "2.0.0")
-    pendulum.add_dependency(Factory.create_dependency("CachY", "^0.2.0"))
+    pendulum.add_dependency(Factory.create_dependency("CachY", ">=0.2.0 <0.3.0"))
 
     msgpack_python = get_package("msgpack-python", "0.5.1")
 
     installed.add_package(cachy2)
     installed.add_package(pendulum)
 
-    lockfile = mock_lock([cachy2, pendulum, msgpack_python])
-    lockfile["package"][0]["dependencies"] = {"msgpack-python": ">=0.5 <0.6"}
-    lockfile["package"][1]["dependencies"] = {"cachy": ">=0.2.0 <0.3.0"}
-    poetry.locker.mock_lock_data(lockfile)
+    mock_lock_data(poetry, [cachy2, pendulum, msgpack_python])
 
     tester.execute("cachy")
 
