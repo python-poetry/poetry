@@ -41,12 +41,17 @@ def mock_package(
             Factory.create_dependency(package_name, f"^{version}", groups=groups)
         )
     package = get_package(package_name, version)
-    package.description = description or f"{package_name.capitalize()} package"
 
-    if groups:
+    package.description = (
+        description
+        if description is not None
+        else f"{package_name.capitalize()} package"
+    )
+
+    if groups is not None:
         package.groups = groups
 
-    if category:
+    if category is not None:
         package.category = category
 
     for dependency_name, dependency_constraint in dependencies.items():
@@ -62,21 +67,29 @@ def mock_install(repo: Repository, packages: list[Package]) -> None:
         repo.add_package(package)
 
 
+def _mock_lock_package(package: Package) -> dict:
+    package_lock = {
+        "name": package.name,
+        "version": str(package.version),
+        "description": package.description,
+        "category": package.category,
+        "optional": package.optional,
+        "platform": "*",
+        "python-versions": "*",
+        "checksum": [],
+    }
+    for group in package._dependency_groups.values():
+        print([str(dependency.constraint) for dependency in group.dependencies])
+        package_lock["dependencies"] = {
+            dependency.name: " ".join(str(dependency.constraint).split(","))
+            for dependency in group.dependencies
+        }
+    return package_lock
+
+
 def mock_lock(packages: list[Package]) -> dict:
     lockfile = {
-        "package": [
-            {
-                "name": package.name,
-                "version": str(package.version),
-                "description": package.description,
-                "category": package.category,
-                "optional": package.optional,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            }
-            for package in packages
-        ],
+        "package": [_mock_lock_package(package) for package in packages],
         "metadata": {
             "python-versions": "*",
             "platform": "*",
@@ -731,45 +744,15 @@ pytest   3.7.3 Pytest package
 
 def test_show_tree(tester: CommandTester, poetry: Poetry, installed: Repository):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
-
     cachy2 = get_package("cachy", "0.2.0")
+    msgpack_python051 = get_package("msgpack-python", "0.5.1")
+
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
-    installed.add_package(cachy2)
+    mock_install(installed, [cachy2])
+    lockfile = mock_lock([cachy2, msgpack_python051])
 
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
-                },
-                {
-                    "name": "msgpack-python",
-                    "version": "0.5.1",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "msgpack-python": []},
-            },
-        }
-    )
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--tree", supports_utf8=False)
 
@@ -782,61 +765,17 @@ cachy 0.2.0
 
 
 def test_show_tree_no_dev(tester: CommandTester, poetry: Poetry, installed: Repository):
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
-    poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "^6.1.0", groups=["dev"])
+    cachy2 = mock_package("cachy", "0.2.0", description="", poetry=poetry)
+    pytest610 = mock_package(
+        "pytest", "6.1.0", groups=["dev"], category="dev", poetry=poetry
     )
+    msgpack_python051 = mock_package("msgpack-python", "0.5.1")
 
-    cachy2 = get_package("cachy", "0.2.0")
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
-    installed.add_package(cachy2)
 
-    pytest = get_package("pytest", "6.1.1")
-    installed.add_package(pytest)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
-                },
-                {
-                    "name": "msgpack-python",
-                    "version": "0.5.1",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "6.1.1",
-                    "description": "",
-                    "category": "dev",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "msgpack-python": [], "pytest": []},
-            },
-        }
-    )
+    mock_install(installed, [cachy2, pytest610])
+    lockfile = mock_lock([cachy2, pytest610, msgpack_python051])
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("--tree --without dev")
 
@@ -848,8 +787,30 @@ cachy 0.2.0
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ("option", "expected"),
+    [
+        (
+            "--tree --why b",
+            """\
+a 0.0.1
+└── b =0.0.1
+    └── c =0.0.1 \n""",
+        ),
+        (
+            "--why",
+            # this has to be on a single line due to the padding
+            # whitespace, which gets stripped by pre-commit.
+            """a 0.0.1        \nb 0.0.1 from a \nc 0.0.1 from b \n""",
+        ),
+    ],
+)
 def test_show_tree_why_package(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    option: str,
+    expected: str,
 ):
     poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
 
@@ -864,101 +825,10 @@ def test_show_tree_why_package(
     c = get_package("c", "0.0.1")
     installed.add_package(c)
 
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "a",
-                    "version": "0.0.1",
-                    "dependencies": {"b": "=0.0.1"},
-                    "python-versions": "*",
-                    "optional": False,
-                },
-                {
-                    "name": "b",
-                    "version": "0.0.1",
-                    "dependencies": {"c": "=0.0.1"},
-                    "python-versions": "*",
-                    "optional": False,
-                },
-                {
-                    "name": "c",
-                    "version": "0.0.1",
-                    "python-versions": "*",
-                    "optional": False,
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"a": [], "b": [], "c": []},
-            },
-        }
-    )
+    lockfile = mock_lock([a, b, c])
+    poetry.locker.mock_lock_data(lockfile)
 
-    tester.execute("--tree --why b")
-
-    expected = """\
-a 0.0.1
-└── b =0.0.1
-    └── c =0.0.1 \n"""
-
-    assert tester.io.fetch_output() == expected
-
-
-def test_show_tree_why(tester: CommandTester, poetry: Poetry, installed: Repository):
-    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
-
-    a = get_package("a", "0.0.1")
-    installed.add_package(a)
-    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
-
-    b = get_package("b", "0.0.1")
-    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
-    installed.add_package(b)
-
-    c = get_package("c", "0.0.1")
-    installed.add_package(c)
-
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "a",
-                    "version": "0.0.1",
-                    "dependencies": {"b": "=0.0.1"},
-                    "python-versions": "*",
-                    "optional": False,
-                },
-                {
-                    "name": "b",
-                    "version": "0.0.1",
-                    "dependencies": {"c": "=0.0.1"},
-                    "python-versions": "*",
-                    "optional": False,
-                },
-                {
-                    "name": "c",
-                    "version": "0.0.1",
-                    "python-versions": "*",
-                    "optional": False,
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"a": [], "b": [], "c": []},
-            },
-        }
-    )
-
-    tester.execute("--why")
-
-    # this has to be on a single line due to the padding whitespace, which gets stripped
-    # by pre-commit.
-    expected = """a 0.0.1        \nb 0.0.1 from a \nc 0.0.1 from b \n"""
+    tester.execute(option)
 
     assert tester.io.fetch_output() == expected
 
@@ -975,53 +845,15 @@ def test_show_required_by_deps(
     pendulum = get_package("pendulum", "2.0.0")
     pendulum.add_dependency(Factory.create_dependency("CachY", "^0.2.0"))
 
+    msgpack_python = get_package("msgpack-python", "0.5.1")
+
     installed.add_package(cachy2)
     installed.add_package(pendulum)
 
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"cachy": ">=0.2.0 <0.3.0"},
-                },
-                {
-                    "name": "msgpack-python",
-                    "version": "0.5.1",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "msgpack-python": []},
-            },
-        }
-    )
+    lockfile = mock_lock([cachy2, pendulum, msgpack_python])
+    lockfile["package"][0]["dependencies"] = {"msgpack-python": ">=0.5 <0.6"}
+    lockfile["package"][1]["dependencies"] = {"cachy": ">=0.2.0 <0.3.0"}
+    poetry.locker.mock_lock_data(lockfile)
 
     tester.execute("cachy")
 
