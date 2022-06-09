@@ -288,17 +288,17 @@ configuration unlike [package sources](#package-sources). Poetry, today, only su
 your project.
 
 These are configured using the [`config`]({{< relref "cli#config" >}}) command, under the
-`repository` key.
+`repositories` key.
 
 ```bash
-poetry config repository.testpypi https://upload.test.pypi.org/legacy/
+poetry config repositories.testpypi https://test.pypi.org/legacy/
 ```
 
 {{% note %}}
 
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
-in the example of [Test PyPI](https://test.pypi.org/), both the host (`upload.test.pypi.org`) as
+in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
 well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
