@@ -20,7 +20,7 @@ extend-ignore =
 per-file-ignores =
     # F401: Module imported by unused (non-implicit modules)
     # TC002: Move third-party import '...' into a type-checking block
-    __init__.py:F401,TC002,
+    __init__.py:TC002,
     # ANN201: Missing return type annotation for public function
     tests/test_*:ANN201
     tests/**/test_*:ANN201
