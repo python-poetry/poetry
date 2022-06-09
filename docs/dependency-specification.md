@@ -77,9 +77,24 @@ You can specify the exact version of a package.
 This will tell Poetry to install this version and this version only.
 If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
 
-#### Multiple requirements
+### Multiple requirements
 
 Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
+
+### `@` operator
+
+You can specify requirements, using `@` operator. This is understood the same way as `==` specifier, with one difference.
+After `@` symbol, you can use any specifiers that are valid in `pyproject.toml` file. For example:
+
+```shell
+poetry add django@^4.0.0
+```
+
+Would translate to following entry in `pyproject.toml`:
+```toml
+Django = "^4.0.0"
+```
+
 
 ## `git` dependencies
 
