@@ -272,8 +272,9 @@ class Locker:
             requirement.constraint = constraint
 
             for require in locked_package.requires:
-                if require.in_extras and locked_package.features.isdisjoint(
-                    require.in_extras
+                if require.is_optional() and not any(
+                    require in locked_package.extras[feature]
+                    for feature in locked_package.features
                 ):
                     continue
 
