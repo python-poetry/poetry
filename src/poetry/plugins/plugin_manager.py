@@ -42,6 +42,10 @@ class PluginManager:
     def get_plugin_entry_points(
         self, env: Env | None = None
     ) -> list[entrypoints.EntryPoint]:
+        from poetry.utils.env import EnvManager
+
+        EnvManager.load_project_plugins()
+
         entry_points: list[entrypoints.EntryPoint] = entrypoints.get_group_all(
             self._group, path=env.sys_path if env else sys.path
         )
