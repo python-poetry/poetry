@@ -67,7 +67,10 @@ def _mock_lock_package(package: Package, override: dict | None = None) -> dict:
         "python-versions": "*",
         "checksum": [],
     }
-    for group in package._dependency_groups.values():
+
+    # Basic dependency addition. Uses the main dependency group.
+    if package._dependency_groups:
+        group = package.dependency_group("main")
         package_lock["dependencies"] = {
             dependency.name: dependency.pretty_constraint
             for dependency in group.dependencies
