@@ -353,7 +353,7 @@ my-package = {path = "../my/path", develop = true}
 ```
 
 {{% note %}}
-Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicitly,
 to make sure the behavior is the same for all poetry versions.
 {{% /note %}}
 
