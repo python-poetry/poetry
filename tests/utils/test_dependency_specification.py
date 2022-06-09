@@ -44,6 +44,15 @@ if TYPE_CHECKING:
                 "subdirectory": "two",
             },
         ),
+        (
+            "https://python-poetry.org/distributions/demo-0.1.0.zip"
+            + "#subdirectory=subdir",
+            {
+                "url": "https://python-poetry.org/distributions/demo-0.1.0.zip",
+                "name": "demo",
+                "subdirectory": "subdir",
+            },
+        ),
         ("demo", {"name": "demo"}),
         ("demo@1.0.0", {"name": "demo", "version": "1.0.0"}),
         ("demo@^1.0.0", {"name": "demo", "version": "^1.0.0"}),

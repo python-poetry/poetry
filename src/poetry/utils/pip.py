@@ -52,7 +52,7 @@ def pip_install(
         args.append("-e")
 
     if subdirectory:
-        path = f"file:{str(path)}#subdirectory={subdirectory}"
+        path = f"file:{str(path)}#subdirectory={subdirectory}"  # type: ignore[assignment] # noqa: E501
 
     args.append(str(path))
 
