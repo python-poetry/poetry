@@ -50,7 +50,6 @@ cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
-entrypoints = "^0.4"
 html5lib = "^1.0"
 importlib-metadata = { version = "^4.4", python = "<3.10" }
 # keyring uses calver, so version is unclamped
@@ -85,7 +84,6 @@ typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
 flatdict = "^4.0.1"
 mypy = ">=0.960"
-types-entrypoints = ">=0.3.7"
 types-html5lib = ">=1.1.7"
 types-jsonschema = ">=4.4.4"
 types-requests = ">=2.27.11"
@@ -140,8 +138,10 @@ enable_error_code = [
 # warning.
 [[tool.mypy.overrides]]
 module = [
+  'poetry.console.commands.self.show.plugins',
   'poetry.installation.executor',
   'poetry.mixology.version_solver',
+  'poetry.plugins.plugin_manager',
   'poetry.repositories.installed_repository',
   'poetry.utils.env',
 ]
