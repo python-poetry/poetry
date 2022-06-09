@@ -70,7 +70,14 @@ def _parse_dependency_specification_url(
     if url_parsed.scheme in ["http", "https"]:
         package = Provider.get_package_from_url(requirement)
         assert package.source_url is not None
-        return {"name": package.name, "url": package.source_url}
+        if package.source_subdirectory:
+            return {
+                "name": package.name,
+                "url": package.source_url,
+                "subdirectory": package.source_subdirectory,
+            }
+        else:
+            return {"name": package.name, "url": package.source_url}
 
     return None
 

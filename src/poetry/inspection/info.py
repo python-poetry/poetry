@@ -92,6 +92,7 @@ class PackageInfo:
         self._source_type: str | None = None
         self._source_url: str | None = None
         self._source_reference: str | None = None
+        self._source_subdirectory: str | None = None
 
     @property
     def cache_version(self) -> str | None:
@@ -167,6 +168,7 @@ class PackageInfo:
             source_type=self._source_type,
             source_url=self._source_url,
             source_reference=self._source_reference,
+            source_subdirectory=self._source_subdirectory,
             yanked=self.yanked,
         )
         if self.summary is not None:
@@ -263,6 +265,9 @@ class PackageInfo:
         info._source_type = "file"
         info._source_url = Path(dist.filename).resolve().as_posix()
 
+        if hasattr(cls, "_source_subdirectory") and cls._source_subdirectory:
+            info._source_subdirectory = cls._source_subdirectory
+
         return info
 
     @classmethod
@@ -320,6 +325,13 @@ class PackageInfo:
                 sdist_dir = tmp / path.name.rstrip(suffix)
                 if not sdist_dir.is_dir():
                     sdist_dir = tmp
+
+            if (
+                hasattr(cls, "_source_subdirectory")
+                and cls._source_subdirectory
+                and sdist_dir.joinpath(cls._source_subdirectory).is_dir()
+            ):
+                sdist_dir = sdist_dir.joinpath(cls._source_subdirectory)
 
             # now this is an unpacked directory we know how to deal with
             new_info = cls.from_directory(path=sdist_dir)
@@ -503,6 +515,9 @@ class PackageInfo:
 
         info._source_type = "directory"
         info._source_url = path.as_posix()
+
+        if hasattr(cls, "_source_subdirectory") and cls._source_subdirectory:
+            info._source_subdirectory = cls._source_subdirectory
 
         return info
 

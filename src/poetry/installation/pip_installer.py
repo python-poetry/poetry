@@ -190,7 +190,10 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "url":
-            return f"{package.source_url}#egg={package.name}"
+            req = f"{package.source_url}#egg={package.name}"
+            if package.source_subdirectory:
+                req += f"&subdirectory={package.source_subdirectory}"
+            return req
 
         return f"{package.name}=={package.version}"
 
