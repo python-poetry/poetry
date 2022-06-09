@@ -157,6 +157,20 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
 
+### `experimental.system-git-client`
+
+**Type**: boolean
+
+*Introduced in 1.2.0*
+
+Use system git client backend for git related tasks.
+
+Poetry uses `dulwich` by default for git related tasks to not rely on the availability of a git client.
+
+If you encounter any problems with it, set to `true` to use the system git backend.
+
+Defaults to `false`.
+
 ### `installer.parallel`
 
 **Type**: boolean
