@@ -96,6 +96,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 True,
             ),
+            "experimental.system-git-client": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
             "installer.parallel": (
                 boolean_validator,
                 boolean_normalizer,
