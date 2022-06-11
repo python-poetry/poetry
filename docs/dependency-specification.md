@@ -81,20 +81,38 @@ If other dependencies require a different version, the solver will ultimately fa
 
 Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
 
-### `@` operator
+### Using the `@` operator
 
-You can specify requirements, using `@` operator. This is understood the same way as `==` specifier, with one difference.
-After `@` symbol, you can use any specifiers that are valid in `pyproject.toml` file. For example:
+You can specify requirements, using the `@` operator. This is understood the same way as `==` specifier, with one difference.
+After the `@` operator, you can use any specifiers that are valid in `pyproject.toml` file. For example:
 
 ```shell
 poetry add django@^4.0.0
 ```
 
-Would translate to following entry in `pyproject.toml`:
+Would translate to the following entry in `pyproject.toml`:
 ```toml
 Django = "^4.0.0"
 ```
 
+This operator, can also be used with in conjunction with word `latest`, to specify latest available version.
+For example:
+```shell
+poetry add django@latest
+```
+
+Would translate to the following entry in `pyproject.toml`:
+```toml
+Django = "^4.0.5"
+```
+
+#### Extras
+
+To use extras for package using the `@` operator, formula is: `package[extra]@version`, for example:
+
+```shell
+poetry add django[bcrypt]@^4.0.0
+```
 
 ## `git` dependencies
 
