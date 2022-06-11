@@ -139,7 +139,7 @@ def test_noninteractive_with_sort(
     command = app.find("init")
     command._pool = poetry.pool
 
-    repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
+    repo.add_package(get_package("django-pendulum", "0.1.5"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -164,7 +164,7 @@ def test_noninteractive_with_sort(
     )
     tester.execute(args=args, interactive=False)
     expected_output = (
-        "Using version ^0.1.6-preview.4 for django-pendulum\n"
+        "Using version ^0.1.5 for django-pendulum\n"
         "Using version ^2.0.0 for pendulum\n"
         "Using version ^2.0.0 for flask\n"
         "Using version ^0.2.0 for pytest-requests\n"
@@ -185,7 +185,7 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-django-pendulum = "^0.1.6-preview.4"
+django-pendulum = "^0.1.5"
 flask = "^2.0.0"
 pendulum = "^2.0.0"
 
@@ -303,7 +303,7 @@ def test_interactive_with_dependencies_and_sort(
     mocker.patch.dict(os.environ, clear=True)
     os.environ["POETRY_DEPENDENCIES_SORT"] = "true"
 
-    repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
+    repo.add_package(get_package("django-pendulum", "0.1.5"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -351,7 +351,7 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-django-pendulum = "^0.1.6-preview.4"
+django-pendulum = "^0.1.5"
 flask = "^2.0.0"
 pendulum = "^2.0.0"
 
