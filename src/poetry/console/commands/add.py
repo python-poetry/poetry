@@ -235,7 +235,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             sorted_dependencies = OrderedDict(sorted(section.items()))
             if sorted_dependencies.get("python"):
                 sorted_dependencies.move_to_end("python", last=False)
-            if group == "default":
+            if group == MAIN_GROUP:
                 poetry_content["dependencies"] = sorted_dependencies
             else:
                 poetry_content["group"][group]["dependencies"] = sorted_dependencies

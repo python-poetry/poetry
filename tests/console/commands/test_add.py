@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.semver.version import Version
 
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -820,7 +821,7 @@ Package operations: 1 install, 0 updates, 0 removals
     }
 
 
-@pytest.mark.parametrize("group", ("default", "dev", "test"))
+@pytest.mark.parametrize("group", (MAIN_GROUP, "dev", "test"))
 @pytest.mark.parametrize("sort_config_value", ("true", "false", None))
 def test_add_constraint_with_sort(
     group: str,
@@ -831,7 +832,7 @@ def test_add_constraint_with_sort(
 ):
     if sort_config_value:
         os.environ["POETRY_DEPENDENCIES_SORT"] = sort_config_value
-    group_option = f" --group {group}" if group != "default" else ""
+    group_option = f" --group {group}" if group != MAIN_GROUP else ""
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -863,7 +864,7 @@ Package operations: 3 installs, 0 updates, 0 removals
         if sort_config_value == "true"
         else OrderedDict(pendulum="1.4.4", cachy="0.2.0", cleo="0.6.5")
     )
-    if group == "default":
+    if group == MAIN_GROUP:
         expected_content.update(python="~2.7 || ^3.4")
         expected_content.move_to_end("python", last=False)
         poetry_content = OrderedDict(
