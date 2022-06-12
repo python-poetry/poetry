@@ -11,6 +11,7 @@ import pytest
 
 from cleo.testers.command_tester import CommandTester
 
+from poetry.console.commands.init import InitCommand
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
 from poetry.utils.helpers import canonicalize_name
@@ -587,6 +588,56 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+def test_interactive_with_wrong_dependency_inputs(
+    tester: CommandTester, repo: TestRepository
+):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "^3.8",  # Python
+        "",  # Interactive packages
+        "pendulum 2.0.0 foo",  # Package name and constraint (invalid)
+        "pendulum 2.0.0",  # Package name and constraint (invalid)
+        "pendulum 2.0.0",  # Package name and constraint (invalid)
+        "pendulum 2.0.0",  # Package name and constraint (invalid)
+        "pendulum@^2.0.0",  # Package name and constraint (valid)
+        "",  # End package selection
+        "",  # Interactive dev packages
+        "pytest 3.6.0 foo",  # Dev package name and constraint (invalid)
+        "pytest 3.6.0",  # Dev package name and constraint (invalid)
+        "pytest@3.6.0",  # Dev package name and constraint (valid)
+        "",  # End package selection
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pendulum = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "3.6.0"
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_python_option(tester: CommandTester):
     inputs = [
         "my-package",  # Package name
@@ -906,3 +957,29 @@ build-backend = "setuptools.build_meta"
         == "A pyproject.toml file with a defined build-system already exists."
     )
     assert existing_section in pyproject_file.read_text()
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        None,
+        "",
+        "foo",
+        "   foo  ",
+        "foo==2.0",
+        "foo@2.0",
+        "  foo@2.0   ",
+        "foo 2.0",
+        "   foo 2.0  ",
+    ],
+)
+def test__validate_package_valid(name: str | None):
+    assert InitCommand._validate_package(name) == name
+
+
+@pytest.mark.parametrize(
+    "name", ["foo bar 2.0", "   foo bar 2.0   ", "foo bar foobar 2.0"]
+)
+def test__validate_package_invalid(name: str):
+    with pytest.raises(ValueError):
+        assert InitCommand._validate_package(name)

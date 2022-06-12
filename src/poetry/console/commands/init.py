@@ -265,9 +265,12 @@ You can specify a package in the following forms:
         if not requires:
             result = []
 
-            package = self.ask(
+            question = self.create_question(
                 "Search for package to add (or leave blank to continue):"
             )
+            question.set_validator(self._validate_package)
+
+            package = self.ask(question)
             while package:
                 constraint = self._parse_requirements([package])[0]
                 if (
@@ -449,6 +452,13 @@ You can specify a package in the following forms:
             )
 
         return author
+
+    @staticmethod
+    def _validate_package(package: str | None) -> str | None:
+        if package and len(package.split()) > 2:
+            raise ValueError("Invalid package definition.")
+
+        return package
 
     def _get_pool(self) -> Pool:
         from poetry.repositories import Pool
