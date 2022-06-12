@@ -145,7 +145,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question = self.create_question(
             f"License [<comment>{license}</comment>]: ", default=license
         )
-        question.set_validator(self._validate_license)
         license = self.ask(question)
 
         python = self.option("python")
@@ -453,14 +452,6 @@ You can specify a package in the following forms:
             )
 
         return author
-
-    def _validate_license(self, license: str) -> str:
-        from poetry.core.spdx.helpers import license_by_id
-
-        if license:
-            license_by_id(license)
-
-        return license
 
     def _get_pool(self) -> Pool:
         from poetry.repositories import Pool
