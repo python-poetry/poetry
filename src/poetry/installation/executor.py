@@ -761,7 +761,7 @@ class Executor:
 
                 record = dist_path / "RECORD"
                 if record.exists():
-                    with record.open(mode="a", encoding="utf-8") as f:
+                    with record.open(mode="a", encoding="utf-8", newline="") as f:
                         writer = csv.writer(f)
                         path = url.relative_to(record.parent.parent)
                         writer.writerow([str(path), "", ""])
