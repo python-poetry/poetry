@@ -168,7 +168,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question = "Would you like to define your main dependencies interactively?"
         help_message = """\
 You can specify a package in the following forms:
-  - A single name (<b>requests</b>)
+  - A single name (<b>requests</b>): this will search for matches on PyPI
   - A name and a constraint (<b>requests@^2.23.0</b>)
   - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
   - A git url with a revision\
@@ -266,7 +266,7 @@ You can specify a package in the following forms:
             result = []
 
             question = self.create_question(
-                "Search for package to add (or leave blank to continue):"
+                "Package to add or search for (leave blank to skip):"
             )
             question.set_validator(self._validate_package)
 
