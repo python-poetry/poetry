@@ -779,6 +779,53 @@ pytest-requests = "^0.2.0"
     assert 'pytest = "^3.6.0"' in output
 
 
+def test_predefined_all_options(tester: CommandTester, repo: TestRepository):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Description
+        "",  # Author
+        "",  # License
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'This is a description' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--python '^3.8' "
+        "--license MIT "
+        "--dependency pendulum "
+        "--dev-dependency pytest",
+        inputs="\n".join(inputs),
+    )
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Foo Bar <foo@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pendulum = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^3.6.0"
+"""
+
+    output = tester.io.fetch_output()
+    assert expected in output
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester):
     result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
 
