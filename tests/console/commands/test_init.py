@@ -785,7 +785,6 @@ def test_predefined_all_options(tester: CommandTester, repo: TestRepository):
 
     inputs = [
         "1.2.3",  # Version
-        "",  # Description
         "",  # Author
         "",  # License
         "n",  # Interactive packages

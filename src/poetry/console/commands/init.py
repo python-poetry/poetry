@@ -118,12 +118,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         )
         version = self.ask(question)
 
-        description = self.option("description") or ""
-        question = self.create_question(
-            f"Description [<comment>{description}</comment>]: ",
-            default=description,
-        )
-        description = self.ask(question)
+        description = self.option("description")
+        if not description:
+            description = self.ask(self.create_question("Description []: ", default=""))
 
         author = self.option("author")
         if not author and vcs_config.get("user.name"):
