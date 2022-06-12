@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import re
 import shutil
@@ -400,12 +401,14 @@ def verify_installed_distribution(
 
     if url_reference is not None:
         record_file = distribution._path.joinpath("RECORD")
+        with open(record_file, encoding="utf-8", newline="") as f:
+            reader = csv.reader(f)
+            rows = list(reader)
+        assert all(len(row) == 3 for row in rows)
+        record_entries = {row[0] for row in rows}
         direct_url_entry = direct_url_file.relative_to(record_file.parent.parent)
         assert direct_url_file.exists()
-        assert str(direct_url_entry) in {
-            row.split(",")[0]
-            for row in record_file.read_text(encoding="utf-8").splitlines()
-        }
+        assert str(direct_url_entry) in record_entries
         assert json.loads(direct_url_file.read_text(encoding="utf-8")) == url_reference
     else:
         assert not direct_url_file.exists()
