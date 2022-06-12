@@ -140,12 +140,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         else:
             authors = [author]
 
-        license = self.option("license") or ""
-
-        question = self.create_question(
-            f"License [<comment>{license}</comment>]: ", default=license
-        )
-        license = self.ask(question)
+        license = self.option("license")
+        if not license:
+            license = self.ask(self.create_question("License []: ", default=""))
 
         python = self.option("python")
         if not python:
