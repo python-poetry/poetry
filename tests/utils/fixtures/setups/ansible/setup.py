@@ -8,6 +8,7 @@ import sys
 import warnings
 
 from collections import defaultdict
+from contextlib import suppress
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
@@ -204,12 +205,10 @@ def read_extras():
         extra_req_file_path = os.path.join(
             extra_requirements_dir, extra_requirements_filename
         )
-        try:
+        with suppress(RuntimeError):
             extras[filename_match.group(1)] = read_file(
                 extra_req_file_path
             ).splitlines()
-        except RuntimeError:
-            pass
     return extras
 
 

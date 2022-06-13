@@ -60,6 +60,7 @@ import os.path
 import platform
 import sys
 
+from contextlib import suppress
 from distutils import log
 from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
 from distutils.command.build_ext import build_ext as _build_ext
@@ -81,13 +82,11 @@ if "setuptools.extension" in sys.modules:
     sys.modules["distutils.command.build_ext"].Extension = _Extension
 
 with_cython = False
-try:
+with suppress(ImportError):
     from Cython.Distutils import build_ext as _build_ext
     from Cython.Distutils.extension import Extension as _Extension
 
     with_cython = True
-except ImportError:
-    pass
 
 try:
     from wheel.bdist_wheel import bdist_wheel

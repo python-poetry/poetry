@@ -14,6 +14,7 @@ import sysconfig
 import warnings
 
 from contextlib import contextmanager
+from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -279,11 +280,9 @@ class SitePackages:
         candidates = self._candidates if not writable_only else self.writable_candidates
         if path.is_absolute():
             for candidate in candidates:
-                try:
+                with suppress(ValueError):
                     path.relative_to(candidate)
                     return [path]
-                except ValueError:
-                    pass
             site_type = "writable " if writable_only else ""
             raise ValueError(
                 f"{path} is not relative to any discovered {site_type}sites"
@@ -1369,11 +1368,9 @@ class Env:
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         for lib_path in [self.purelib, self.platlib]:
-            try:
+            with suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
-            except ValueError:
-                pass
 
         return False
 

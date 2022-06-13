@@ -30,7 +30,7 @@ import tarfile
 import tempfile
 
 from contextlib import closing
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from functools import cmp_to_key
 from gzip import GzipFile
 from io import UnsupportedOperation
@@ -46,10 +46,8 @@ except ImportError:
     from urllib2 import Request
     from urllib2 import urlopen
 
-try:
+with suppress(NameError):
     input = raw_input
-except NameError:
-    pass
 
 
 try:
