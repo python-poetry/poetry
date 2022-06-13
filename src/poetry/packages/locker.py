@@ -49,7 +49,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 _GENERATED_IDENTIFIER = "@" + "generated"
-GENERATED_COMMENT = f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be changed by hand."
+GENERATED_COMMENT = (
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
+    " changed by hand."
+)
+
 
 class Locker:
 
