@@ -78,6 +78,7 @@ class Executor:
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
         self._sections: dict[int, SectionOutput] = {}
+        self._yanked_warnings: list[str] = []
         self._lock = threading.Lock()
         self._shutdown = False
         self._hashes: dict[str, str] = {}
@@ -140,6 +141,7 @@ class Executor:
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
         self._sections = {}
+        self._yanked_warnings = []
         for _, group in groups:
             tasks = []
             serial_operations = []
@@ -178,6 +180,9 @@ class Executor:
                 self._executor.shutdown(wait=True)
 
                 break
+
+        for warning in self._yanked_warnings:
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
         return 1 if self._shutdown else 0
 
@@ -610,6 +615,18 @@ class Executor:
 
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
+
+        if link.yanked:
+            # Store yanked warnings in a list and print after installing, so they can't
+            # be overlooked. Further, printing them in the concerning section would have
+            # the risk of overwriting the warning, so it is only briefly visible.
+            message = (
+                f"The file chosen for install of {operation.package.pretty_name} "
+                f"{operation.package.pretty_version} ({link.show_url}) is yanked."
+            )
+            if link.yanked_reason:
+                message += f" Reason for being yanked: {link.yanked_reason}"
+            self._yanked_warnings.append(message)
 
         return self._download_link(operation, link)
 
