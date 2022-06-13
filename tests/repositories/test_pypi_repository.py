@@ -96,6 +96,24 @@ def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     assert len(packages) == count
 
 
+@pytest.mark.parametrize(
+    ["constraint", "expected"],
+    [
+        # yanked 21.11b0 is ignored except for pinned version
+        ("*", ["19.10b0"]),
+        (">=19.0a0", ["19.10b0"]),
+        (">=20.0a0", []),
+        (">=21.11b0", []),
+        ("==21.11b0", ["21.11b0"]),
+    ],
+)
+def test_find_packages_yanked(constraint: str, expected: list[str]) -> None:
+    repo = MockRepository()
+    packages = repo.find_packages(Factory.create_dependency("black", constraint))
+
+    assert [str(p.version) for p in packages] == expected
+
+
 def test_package() -> None:
     repo = MockRepository()
 
@@ -126,6 +144,47 @@ def test_package() -> None:
         == 'sys_platform == "win32" and (python_version == "2.7"'
         ' or python_version == "2.6") and extra == "socks"'
     )
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_package_yanked(
+    package_name: str, version: str, yanked: bool, yanked_reason: str
+) -> None:
+    repo = MockRepository()
+
+    package = repo.package(package_name, version)
+
+    assert package.name == package_name
+    assert str(package.version) == version
+    assert package.yanked is yanked
+    assert package.yanked_reason == yanked_reason
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_find_links_for_package_yanked(
+    package_name: str, version: str, yanked: bool, yanked_reason: str
+) -> None:
+    repo = MockRepository()
+
+    package = repo.package(package_name, version)
+    links = repo.find_links_for_package(package)
+
+    assert len(links) == 2
+    for link in links:
+        assert link.yanked == yanked
+        assert link.yanked_reason == yanked_reason
 
 
 def test_fallback_on_downloading_packages() -> None:

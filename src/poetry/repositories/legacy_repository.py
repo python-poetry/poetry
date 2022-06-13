@@ -72,7 +72,7 @@ class LegacyRepository(HTTPRepository):
         """
         Find packages on the remote server.
         """
-        versions: list[Version]
+        versions: list[tuple[Version, str | bool]]
 
         key: str = name
         if not constraint.is_any():
@@ -90,7 +90,9 @@ class LegacyRepository(HTTPRepository):
                 return []
 
             versions = [
-                version for version in page.versions(name) if constraint.allows(version)
+                (version, page.yanked(name, version))
+                for version in page.versions(name)
+                if constraint.allows(version)
             ]
             self._cache.store("matches").put(key, versions, 5)
 
@@ -101,8 +103,9 @@ class LegacyRepository(HTTPRepository):
                 source_type="legacy",
                 source_reference=self.name,
                 source_url=self._url,
+                yanked=yanked,
             )
-            for version in versions
+            for version, yanked in versions
         ]
 
     def _get_release_info(
@@ -113,6 +116,7 @@ class LegacyRepository(HTTPRepository):
             raise PackageNotFound(f'No package named "{name}"')
 
         links = list(page.links_for_version(name, version))
+        yanked = page.yanked(name, version)
 
         return self._links_to_data(
             links,
@@ -124,6 +128,7 @@ class LegacyRepository(HTTPRepository):
                 requires_dist=[],
                 requires_python=None,
                 files=[],
+                yanked=yanked,
                 cache_version=str(self.CACHE_VERSION),
             ),
         )
