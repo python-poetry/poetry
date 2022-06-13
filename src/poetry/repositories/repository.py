@@ -5,6 +5,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from poetry.core.semver.helpers import parse_constraint
+from poetry.core.semver.version import Version
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 
@@ -16,7 +17,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version import Version
 
 
 class Repository:
@@ -43,6 +43,11 @@ class Repository:
         ignored_pre_release_packages = []
 
         for package in self._find_packages(dependency.name, constraint):
+            if package.yanked and not isinstance(constraint, Version):
+                # PEP 592: yanked files are always ignored, unless they are the only
+                # file that matches a version specifier that "pins" to an exact
+                # version
+                continue
             if (
                 package.is_prerelease()
                 and not allow_prereleases

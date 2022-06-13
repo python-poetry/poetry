@@ -234,6 +234,24 @@ def test_find_packages_only_prereleases_empty_when_not_any() -> None:
     assert len(packages) == 0
 
 
+@pytest.mark.parametrize(
+    ["constraint", "expected"],
+    [
+        # yanked 21.11b0 is ignored except for pinned version
+        ("*", ["19.10b0"]),
+        (">=19.0a0", ["19.10b0"]),
+        (">=20.0a0", []),
+        (">=21.11b0", []),
+        ("==21.11b0", ["21.11b0"]),
+    ],
+)
+def test_find_packages_yanked(constraint: str, expected: list[str]) -> None:
+    repo = MockRepository()
+    packages = repo.find_packages(Factory.create_dependency("black", constraint))
+
+    assert [str(p.version) for p in packages] == expected
+
+
 def test_get_package_information_chooses_correct_distribution() -> None:
     repo = MockRepository()
 
@@ -400,6 +418,62 @@ def test_get_package_retrieves_packages_with_no_hashes() -> None:
             "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
         }
     ] == package.files
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_package_yanked(
+    package_name: str, version: str, yanked: bool, yanked_reason: str
+) -> None:
+    repo = MockRepository()
+
+    package = repo.package(canonicalize_name(package_name), Version.parse(version))
+
+    assert package.name == package_name
+    assert str(package.version) == version
+    assert package.yanked is yanked
+    assert package.yanked_reason == yanked_reason
+
+
+def test_package_partial_yank():
+    class SpecialMockRepository(MockRepository):
+        def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
+            return super()._get_page(f"/{endpoint.strip('/')}_partial_yank/")
+
+    repo = MockRepository()
+    package = repo.package(canonicalize_name("futures"), Version.parse("3.2.0"))
+    assert len(package.files) == 2
+
+    repo = SpecialMockRepository()
+    package = repo.package(canonicalize_name("futures"), Version.parse("3.2.0"))
+    assert len(package.files) == 1
+    assert package.files[0]["file"].endswith(".tar.gz")
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_find_links_for_package_yanked(
+    package_name: str, version: str, yanked: bool, yanked_reason: str
+) -> None:
+    repo = MockRepository()
+
+    package = repo.package(canonicalize_name(package_name), Version.parse(version))
+    links = repo.find_links_for_package(package)
+
+    assert len(links) == 1
+    for link in links:
+        assert link.yanked == yanked
+        assert link.yanked_reason == yanked_reason
 
 
 class MockHttpRepository(LegacyRepository):

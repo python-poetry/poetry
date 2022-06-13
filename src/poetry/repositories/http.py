@@ -210,6 +210,9 @@ class HTTPRepository(CachedRepository, ABC):
         urls = defaultdict(list)
         files: list[dict[str, Any]] = []
         for link in links:
+            if link.yanked and not data.yanked:
+                # drop yanked files unless the entire release is yanked
+                continue
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
             elif link.filename.endswith(
