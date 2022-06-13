@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -3680,3 +3681,44 @@ def test_update_with_prerelease_and_no_solution(
 
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+def test_solver_yanked_warning(
+    package: ProjectPackage,
+    installed: InstalledRepository,
+    locked: Repository,
+    pool: Pool,
+    repo: Repository,
+) -> None:
+    package.add_dependency(Factory.create_dependency("foo", "==1"))
+    package.add_dependency(Factory.create_dependency("bar", "==2"))
+    package.add_dependency(Factory.create_dependency("baz", "==3"))
+    foo = get_package("foo", "1", yanked=False)
+    bar = get_package("bar", "2", yanked=True)
+    baz = get_package("baz", "3", yanked="just wrong")
+    repo.add_package(foo)
+    repo.add_package(bar)
+    repo.add_package(baz)
+
+    io = BufferedIO(decorated=False)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": bar},
+            {"job": "install", "package": baz},
+            {"job": "install", "package": foo},
+        ],
+    )
+    error = io.fetch_error()
+    assert "foo" not in error
+    assert "The locked version 2 for bar is a yanked version." in error
+    assert (
+        "The locked version 3 for baz is a yanked version. Reason for being yanked:"
+        " just wrong"
+        in error
+    )
+    assert error.count("is a yanked version") == 2
+    assert error.count("Reason for being yanked") == 1
