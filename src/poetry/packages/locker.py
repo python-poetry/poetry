@@ -48,7 +48,8 @@ if TYPE_CHECKING:
     from poetry.repositories import Repository
 
 logger = logging.getLogger(__name__)
-
+_GENERATED_IDENTIFIER = "@" + "generated"
+GENERATED_COMMENT = f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be changed by hand."
 
 class Locker:
 
@@ -399,7 +400,7 @@ class Locker:
             del package["files"]
 
         lock = document()
-        lock.add(comment("@" + "generated"))
+        lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
 
         if root.extras:
