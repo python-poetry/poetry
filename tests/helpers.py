@@ -45,8 +45,10 @@ FIXTURE_PATH = Path(__file__).parent / "fixtures"
 MOCK_DEFAULT_GIT_REVISION = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
 
-def get_package(name: str, version: str | Version) -> Package:
-    return Package(name, version)
+def get_package(
+    name: str, version: str | Version, yanked: str | bool = False
+) -> Package:
+    return Package(name, version, yanked=yanked)
 
 
 def get_dependency(

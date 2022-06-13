@@ -13,6 +13,7 @@ from poetry.packages import DependencyPackage
 if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.mixology import SolverResult
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
 
@@ -23,8 +24,9 @@ def add_to_repo(
     version: str,
     deps: dict[str, str] | None = None,
     python: str | None = None,
+    yanked: bool = False,
 ) -> None:
-    package = Package(name, version)
+    package = Package(name, version, yanked=yanked)
     if python:
         package.python_versions = python
 
@@ -43,7 +45,7 @@ def check_solver_result(
     tries: int | None = None,
     locked: dict[str, Package] | None = None,
     use_latest: list[str] | None = None,
-) -> None:
+) -> SolverResult | None:
     if locked is not None:
         locked = {
             k: [DependencyPackage(l.to_dependency(), l)] for k, l in locked.items()
@@ -59,20 +61,22 @@ def check_solver_result(
             if tries is not None:
                 assert solver.solution.attempted_solutions == tries
 
-            return
+            return None
 
         raise
     except AssertionError as e:
         if error:
             assert str(e) == error
-            return
+            return None
         raise
 
     packages = {}
     for package in solution.packages:
         packages[package.name] = str(package.version)
 
-    assert result == packages
+    assert packages == result
 
     if tries is not None:
         assert solution.attempted_solutions == tries
+
+    return solution

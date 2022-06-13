@@ -290,6 +290,7 @@ class Provider:
 
         packages.sort(
             key=lambda p: (
+                not p.yanked,
                 not p.is_prerelease() and not dependency.allows_prereleases(),
                 p.version,
             ),
