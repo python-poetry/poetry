@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import glob
 import logging
@@ -7,7 +8,6 @@ import os
 import tarfile
 import zipfile
 
-from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -557,7 +557,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
     :param path: Path to package source to build and read metadata for.
     """
     info = None
-    with suppress(PackageInfoError):
+    with contextlib.suppress(PackageInfoError):
         info = PackageInfo.from_setup_files(path)
         if all([info.version, info.name, info.requires_dist]):
             return info

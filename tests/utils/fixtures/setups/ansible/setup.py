@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import os.path
@@ -8,7 +9,6 @@ import sys
 import warnings
 
 from collections import defaultdict
-from contextlib import suppress
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
@@ -205,7 +205,7 @@ def read_extras():
         extra_req_file_path = os.path.join(
             extra_requirements_dir, extra_requirements_filename
         )
-        with suppress(RuntimeError):
+        with contextlib.suppress(RuntimeError):
             extras[filename_match.group(1)] = read_file(
                 extra_req_file_path
             ).splitlines()
