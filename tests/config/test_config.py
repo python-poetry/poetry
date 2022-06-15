@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,7 +18,6 @@ from poetry.config.config import int_normalizer
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
-    from pathlib import Path
 
 
 def get_options_based_on_normalizer(normalizer: Callable) -> str:
@@ -66,3 +66,14 @@ def test_config_get_from_environment_variable(
 ):
     os.environ[env_var] = env_value
     assert config.get(name) is value
+
+
+@pytest.mark.parametrize(
+    ("path_config", "expected"),
+    [("~/.venvs", Path.home() / ".venvs"), ("venv", Path("venv"))],
+)
+def test_config_expands_tilde_for_virtualenvs_path(
+    config: Config, path_config: str, expected: Path
+):
+    config.merge({"virtualenvs": {"path": path_config}})
+    assert config.virtualenvs_path == expected
