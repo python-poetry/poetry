@@ -167,7 +167,7 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
-To only install the project itself with no dependencies, use the `only-root` flag.
+To only install the project itself with no dependencies, use the `--only-root` flag.
 
 ```bash
 poetry install --only-root

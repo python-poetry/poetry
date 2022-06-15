@@ -159,7 +159,7 @@ poetry install --only main
 {{% /note %}}
 
 {{% note %}}
-If you only want to install the project root, and no other dependencies, you can use
+If you want to install the project root, and no other dependencies, you can use
 the `--only-root` option.
 
 ```bash
