@@ -167,6 +167,12 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
+To only install the project itself with no dependencies, use the `--only-root` flag.
+
+```bash
+poetry install --only-root
+```
+
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
@@ -220,6 +226,7 @@ option is used.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
+* `--only-root`: Install only the root project, exclude all dependencies.
 * `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
