@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import os.path
@@ -204,12 +205,10 @@ def read_extras():
         extra_req_file_path = os.path.join(
             extra_requirements_dir, extra_requirements_filename
         )
-        try:
+        with contextlib.suppress(RuntimeError):
             extras[filename_match.group(1)] = read_file(
                 extra_req_file_path
             ).splitlines()
-        except RuntimeError:
-            pass
     return extras
 
 
