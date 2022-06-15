@@ -846,6 +846,13 @@ class EnvManager:
 
         return VirtualEnv(venv_path, venv_path)
 
+    def get_formatted_prompt(self, python_version: str) -> str:
+        venv_prompt = self._poetry.config.get("virtualenvs.prompt")
+        return venv_prompt.format(
+            project_name=self._poetry.package.name or "virtualenv",
+            python_version=python_version,
+        )
+
     def create_venv(
         self,
         io: IO,
@@ -982,9 +989,7 @@ class EnvManager:
             venv = venv_path / name
 
         if venv_prompt is not None:
-            venv_prompt = venv_prompt.format(
-                project_name=self._poetry.package.name, python_version=python_minor
-            )
+            venv_prompt = self.get_formatted_prompt(python_minor)
 
         if not venv.exists():
             if create_venv is False:
