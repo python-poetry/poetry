@@ -22,6 +22,11 @@ on Linux, macOS and Windows.
 
 ## Installation
 
+{{% note %}}
+You are currently browsing documentation for version of Poetry that is still in preview release.
+Please check "Install Poetry" and "Update Poetry" sections below for instructions on how to install or update to that version.
+{{% /note %}}
+
 {{< tabs tabTotal="3" tabID1="installing-with-the-official-installer" tabID2="installing-with-pipx" tabID3="installing-with-pip" tabName1="With the official installer" tabName2="With pipx" tabName3="With pip" >}}
 
 {{< tab tabID="installing-with-the-official-installer" >}}
@@ -53,10 +58,6 @@ Note: On some systems, `python` may still refer to Python 2 instead of Python 3.
 {{% note %}}
 If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
 above.
-{{% /note %}}
-
-{{% note %}}
-Note that the installer does not support Python < 3.7.
 {{% /note %}}
 
 {{% warning %}}
@@ -140,8 +141,8 @@ poetry self update 1.2.0
 ```
 
 {{% warning %}}
-Poetry versions installed using the deprecated `get-poetry.py` installer will not be able to use this
-command to update to 1.2 releases or later. Migrate to using `https://install.python-poetry.org` or `pipx`.
+Poetry `1.1` versions are not able to update to `1.2` releases or later using `poetry self update`.
+Migrate to `1.2` using `https://install.python-poetry.org` script or `pipx`.
 {{% /warning %}}
 {{< /step >}}
 
