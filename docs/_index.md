@@ -216,23 +216,21 @@ pipx install poetry
 pipx install poetry==1.2.0
 ```
 
-`pipx` can also install versions of Poetry in parallel, which allows for easy testing of different or prerelease
+`pipx` can also install versions of Poetry in parallel, which allows for easy testing of alternate or prerelease
 versions. Each version is given a unique, user-specified suffix, which will be used to create a unique binary name:
-
-```bash
-pipx install --suffix=@preview --pip-args=--pre poetry
-poetry@preview --version
-```
-
-or
 
 ```bash
 pipx install --suffix=@1.2.0 poetry==1.2.0
 poetry@1.2.0 --version
 ```
 
-Finally, `pipx` can install any valid Python URL spec, which allows for installations of the development version from `git`,
-or even the local testing of Pull Requests:
+```bash
+pipx install --suffix=@preview --pip-args=--pre poetry
+poetry@preview --version
+```
+
+Finally, `pipx` can install any valid [pip requirement spec](https://pip.pypa.io/en/stable/cli/pip_install/), which
+allows for installations of the development version from `git`, or even for local testing of pull requests:
 
 ```
 pipx install --suffix @master git+https://github.com/python-poetry/poetry.git@master
@@ -272,8 +270,6 @@ $VENV_PATH/bin/pip install poetry
 ```
 
 Poetry will be available at `$VENV_PATH/bin/poetry` and can be invoked directly or symlinked elsewhere.
-
-As this install is effectively managed by Poetry, `poetry self` commands will still be able to manipulate it.
 
 To uninstall Poetry, simply delete the entire `$VENV_PATH` directory.
 
