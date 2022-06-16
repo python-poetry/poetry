@@ -242,10 +242,11 @@ poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 You may need to restart your shell in order for the changes to take effect.
 {{% /note %}}
 
-For `zsh`, you must then add the following line in your `~/.zshrc` before `compinit`:
+For `zsh`, you must then add the following lines in your `~/.zshrc`
 
 ```bash
 fpath+=~/.zfunc
+autoload -Uz compinit && compinit
 ```
 
 For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
