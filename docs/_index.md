@@ -222,7 +222,11 @@ versions. Each version is given a unique, user-specified suffix, which will be u
 ```bash
 pipx install --suffix=@preview --pip-args=--pre poetry
 poetry@preview --version
+```
 
+or
+
+```bash
 pipx install --suffix=@1.2.0 poetry==1.2.0
 poetry@1.2.0 --version
 ```
