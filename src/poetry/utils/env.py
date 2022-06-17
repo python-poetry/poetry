@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import contextlib
 import hashlib
 import itertools
 import json
@@ -14,6 +13,7 @@ import sys
 import sysconfig
 import warnings
 
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -279,9 +279,11 @@ class SitePackages:
         candidates = self._candidates if not writable_only else self.writable_candidates
         if path.is_absolute():
             for candidate in candidates:
-                with contextlib.suppress(ValueError):
+                try:
                     path.relative_to(candidate)
                     return [path]
+                except ValueError:
+                    pass
             site_type = "writable " if writable_only else ""
             raise ValueError(
                 f"{path} is not relative to any discovered {site_type}sites"
@@ -1332,9 +1334,11 @@ class Env:
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         for lib_path in [self.purelib, self.platlib]:
-            with contextlib.suppress(ValueError):
+            try:
                 path.relative_to(lib_path)
                 return True
+            except ValueError:
+                pass
 
         return False
 
@@ -1733,7 +1737,7 @@ class VirtualEnv(Env):
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super().execute(bin, *args, **kwargs)
 
-    @contextlib.contextmanager
+    @contextmanager
     def temp_environ(self) -> Iterator[None]:
         environ = dict(os.environ)
         try:
@@ -1867,7 +1871,7 @@ class NullEnv(SystemEnv):
         return bin
 
 
-@contextlib.contextmanager
+@contextmanager
 def ephemeral_environment(
     executable: str | Path | None = None,
     flags: dict[str, bool] | None = None,
@@ -1883,7 +1887,7 @@ def ephemeral_environment(
         yield VirtualEnv(venv_dir, venv_dir)
 
 
-@contextlib.contextmanager
+@contextmanager
 def build_environment(
     poetry: CorePoetry, env: Env | None = None, io: IO | None = None
 ) -> Iterator[Env]:

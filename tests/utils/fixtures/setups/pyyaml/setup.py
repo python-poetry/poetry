@@ -56,7 +56,6 @@ int main(void) {
 """
 
 
-import contextlib
 import os.path
 import platform
 import sys
@@ -82,11 +81,13 @@ if "setuptools.extension" in sys.modules:
     sys.modules["distutils.command.build_ext"].Extension = _Extension
 
 with_cython = False
-with contextlib.suppress(ImportError):
+try:
     from Cython.Distutils import build_ext as _build_ext
     from Cython.Distutils.extension import Extension as _Extension
 
     with_cython = True
+except ImportError:
+    pass
 
 try:
     from wheel.bdist_wheel import bdist_wheel
