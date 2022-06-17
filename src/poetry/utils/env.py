@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import itertools
 import json
@@ -279,11 +280,9 @@ class SitePackages:
         candidates = self._candidates if not writable_only else self.writable_candidates
         if path.is_absolute():
             for candidate in candidates:
-                try:
+                with contextlib.suppress(ValueError):
                     path.relative_to(candidate)
                     return [path]
-                except ValueError:
-                    pass
             site_type = "writable " if writable_only else ""
             raise ValueError(
                 f"{path} is not relative to any discovered {site_type}sites"
@@ -1334,11 +1333,9 @@ class Env:
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         for lib_path in [self.purelib, self.platlib]:
-            try:
+            with contextlib.suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
-            except ValueError:
-                pass
 
         return False
 
