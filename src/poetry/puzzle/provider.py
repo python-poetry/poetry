@@ -221,16 +221,7 @@ class Provider:
         )
         return packages
 
-    def search_for(
-        self,
-        dependency: (
-            Dependency
-            | VCSDependency
-            | FileDependency
-            | DirectoryDependency
-            | URLDependency
-        ),
-    ) -> list[DependencyPackage]:
+    def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
         """
         Search for the specifications that match the given dependency.
 
