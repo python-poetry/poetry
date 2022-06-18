@@ -25,15 +25,10 @@ class Chef:
             Path(config.get("cache-dir")).expanduser().joinpath("artifacts")
         )
 
-    def get_cached_archive_for_link(self, link: Link) -> Link:
-        # If the archive is already a wheel, there is no need to cache it.
-        if link.is_wheel:
-            return link
-
+    def get_cached_archive_for_link(self, link: Link) -> Link | None:
         archives = self.get_cached_archives_for_link(link)
-
         if not archives:
-            return link
+            return None
 
         candidates: list[tuple[float | None, Link]] = []
         for archive in archives:
@@ -54,7 +49,7 @@ class Chef:
             )
 
         if not candidates:
-            return link
+            return None
 
         return min(candidates)[1]
 
