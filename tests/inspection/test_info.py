@@ -220,13 +220,24 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup_py = source_dir / "setup.py"
     setup_py.write_text(decode(setup))
 
-    spy = mocker.spy(VirtualEnv, "run")
+    # We look at run_pip instead of run because run_pip raises an EnvCommandError
+    # if python3-venv isn't installed on Debian distributions. However, the 
+    # behavior we care about is that we get to the part of the get_pep517_metadata
+    # method that is running the PEP 517 build, which run_pip gets us to.
+    spy = mocker.spy(VirtualEnv, "run_pip")
     try:
         PackageInfo.from_directory(source_dir)
     except PackageInfoError:
-        assert spy.call_count == 3
-    else:
-        assert spy.call_count == 2
+        pass
+    
+    vir_env_dir = mocker.ANY
+    from poetry.inspection.info import PEP517_META_BUILD_DEPS
+
+    spy.assert_any_call(vir_env_dir, 
+                        "install", 
+                        "--disable-pip-version-check", 
+                        "--ignore-installed", 
+                        *PEP517_META_BUILD_DEPS)
 
 
 def test_info_prefer_poetry_config_over_egg_info():
