@@ -219,11 +219,13 @@ You can specify a package in the following forms:
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content(original=pyproject)
+        content = layout_.generate_poetry_content()
+        for section in content:
+            pyproject.data.append(section, content[section])
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
-            self.line(content)
+            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
             self.line("")
 
         if not self.confirm("Do you confirm generation?", True):
@@ -231,8 +233,7 @@ You can specify a package in the following forms:
 
             return 1
 
-        with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
-            f.write(content)
+        pyproject.save()
 
         return 0
 
