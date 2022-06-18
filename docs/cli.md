@@ -293,6 +293,7 @@ You also can specify a constraint when adding a package, like so:
 ```bash
 poetry add pendulum@^2.0.5
 poetry add "pendulum>=2.0.5"
+poetry add "pendulum==2.0.5"
 ```
 
 If you try to add a package that is already present, you will get an error.
