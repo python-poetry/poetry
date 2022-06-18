@@ -369,7 +369,7 @@ def test_executor_should_delete_incomplete_downloads(
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cached_archive_for_link",
-        side_effect=lambda link: link,
+        side_effect=lambda link: None,
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cache_directory_for_link",
