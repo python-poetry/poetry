@@ -71,6 +71,10 @@ Here are some examples of inequality requirements:
 != 1.2.3
 ```
 
+#### Multiple requirements
+
+Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
+
 ### Exact requirements
 
 You can specify the exact version of a package.
@@ -79,10 +83,6 @@ You can specify the exact version of a package.
 
 This will tell Poetry to install this version and this version only.
 If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
-
-### Multiple requirements
-
-Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
 
 ## `git` dependencies
 
