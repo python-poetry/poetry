@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 
 from typing import TYPE_CHECKING
@@ -49,8 +50,14 @@ class SystemGit:
             ) + args
 
         git_command = find_git_command()
+        env = os.environ.copy()
+        env["GIT_TERMINAL_PROMPT"] = "0"
         return (
-            subprocess.check_output(git_command + list(args), stderr=subprocess.STDOUT)
+            subprocess.check_output(
+                git_command + list(args),
+                stderr=subprocess.STDOUT,
+                env=env,
+            )
             .decode()
             .strip()
         )
