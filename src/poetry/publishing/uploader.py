@@ -22,6 +22,7 @@ from requests_toolbelt.multipart import MultipartEncoderMonitor
 from urllib3 import util
 
 from poetry.__version__ import __version__
+from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -262,7 +263,7 @@ class Uploader:
                         data=monitor,
                         allow_redirects=False,
                         headers={"Content-Type": monitor.content_type},
-                        timeout=5,
+                        timeout=REQUESTS_TIMEOUT,
                     )
                 if resp is None or 200 <= resp.status_code < 300:
                     bar.set_format(
@@ -321,7 +322,7 @@ class Uploader:
             data=encoder,
             allow_redirects=False,
             headers={"Content-Type": encoder.content_type},
-            timeout=5,
+            timeout=REQUESTS_TIMEOUT,
         )
 
         resp.raise_for_status()
