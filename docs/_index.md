@@ -316,7 +316,7 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 poetry completions zsh > ~/.zfunc/_poetry
 ```
 
-For `zsh`, you must then add the following lines in your `~/.zshrc`
+You must then add the following lines in your `~/.zshrc`
 
 ```bash
 fpath+=~/.zfunc
@@ -329,7 +329,7 @@ autoload -Uz compinit && compinit
 mkdir $ZSH_CUSTOM/plugins/poetry
 poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 ```
-For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
+You must then enable poetry in your `~/.zshrc` plugins
 
 ```text
 plugins(
