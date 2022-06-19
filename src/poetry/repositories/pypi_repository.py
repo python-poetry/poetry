@@ -103,7 +103,9 @@ class PyPiRepository(HTTPRepository):
 
         search = {"q": query}
 
-        response = requests.session().get(self._base_url + "search", params=search)
+        response = requests.session().get(
+            self._base_url + "search", params=search, timeout=5
+        )
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
             name_element = result.find("h3/*[@class='package-snippet__name']")
@@ -244,14 +246,14 @@ class PyPiRepository(HTTPRepository):
     def _get(self, endpoint: str) -> dict[str, Any] | None:
         try:
             json_response = self.session.get(
-                self._base_url + endpoint, raise_for_status=False
+                self._base_url + endpoint, raise_for_status=False, timeout=5
             )
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
             self.session.delete_cache(self._base_url + endpoint)
             json_response = self.session.get(
-                self._base_url + endpoint, raise_for_status=False
+                self._base_url + endpoint, raise_for_status=False, timeout=5
             )
 
         if json_response.status_code != 200:

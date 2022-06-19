@@ -262,6 +262,7 @@ class Uploader:
                         data=monitor,
                         allow_redirects=False,
                         headers={"Content-Type": monitor.content_type},
+                        timeout=5,
                     )
                 if resp is None or 200 <= resp.status_code < 300:
                     bar.set_format(
@@ -320,6 +321,7 @@ class Uploader:
             data=encoder,
             allow_redirects=False,
             headers={"Content-Type": encoder.content_type},
+            timeout=5,
         )
 
         resp.raise_for_status()

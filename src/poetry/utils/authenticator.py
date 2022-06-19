@@ -219,7 +219,7 @@ class Authenticator:
 
         # Send the request.
         send_kwargs = {
-            "timeout": kwargs.get("timeout"),
+            "timeout": kwargs.get("timeout", 5),
             "allow_redirects": kwargs.get("allow_redirects", True),
         }
         send_kwargs.update(settings)

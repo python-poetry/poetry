@@ -260,7 +260,9 @@ class HTTPRepository(CachedRepository, ABC):
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
         try:
-            response: requests.Response = self.session.get(url, raise_for_status=False)
+            response: requests.Response = self.session.get(
+                url, raise_for_status=False, timeout=5
+            )
             if response.status_code in (401, 403):
                 self._log(
                     f"Authorization error accessing {url}",

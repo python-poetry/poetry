@@ -426,7 +426,9 @@ def test_get_redirected_response_url(
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
-    def get_mock(url: str, raise_for_status: bool = True) -> requests.Response:
+    def get_mock(
+        url: str, raise_for_status: bool = True, timeout: int = 5
+    ) -> requests.Response:
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"
