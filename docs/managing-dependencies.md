@@ -158,6 +158,15 @@ poetry install --only main
 ```
 {{% /note %}}
 
+{{% note %}}
+If you want to install the project root, and no other dependencies, you can use
+the `--only-root` option.
+
+```bash
+poetry install --only-root
+```
+{{% /note %}}
+
 ### Removing dependencies from a group
 
 The [`remove`]({{< relref "cli#remove" >}}) command supports a `--group` option

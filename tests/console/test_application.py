@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.testers.application_tester import ApplicationTester
-from entrypoints import EntryPoint
 
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
+from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
@@ -33,16 +33,12 @@ class AddCommandPlugin(ApplicationPlugin):
     commands = [FooCommand]
 
 
-def test_application_with_plugins(mocker: MockerFixture):
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint(
-                "my-plugin", "tests.console.test_application", "AddCommandPlugin"
-            )
-        ],
-    )
+@pytest.fixture
+def with_add_command_plugin(mocker: MockerFixture) -> None:
+    mock_metadata_entry_points(mocker, AddCommandPlugin)
 
+
+def test_application_with_plugins(with_add_command_plugin: None):
     app = Application()
 
     tester = ApplicationTester(app)
@@ -52,16 +48,7 @@ def test_application_with_plugins(mocker: MockerFixture):
     assert tester.status_code == 0
 
 
-def test_application_with_plugins_disabled(mocker: MockerFixture):
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint(
-                "my-plugin", "tests.console.test_application", "AddCommandPlugin"
-            )
-        ],
-    )
-
+def test_application_with_plugins_disabled(with_add_command_plugin: None):
     app = Application()
 
     tester = ApplicationTester(app)
@@ -71,16 +58,7 @@ def test_application_with_plugins_disabled(mocker: MockerFixture):
     assert tester.status_code == 0
 
 
-def test_application_execute_plugin_command(mocker: MockerFixture):
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint(
-                "my-plugin", "tests.console.test_application", "AddCommandPlugin"
-            )
-        ],
-    )
-
+def test_application_execute_plugin_command(with_add_command_plugin: None):
     app = Application()
 
     tester = ApplicationTester(app)
@@ -91,17 +69,8 @@ def test_application_execute_plugin_command(mocker: MockerFixture):
 
 
 def test_application_execute_plugin_command_with_plugins_disabled(
-    mocker: MockerFixture,
+    with_add_command_plugin: None,
 ):
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint(
-                "my-plugin", "tests.console.test_application", "AddCommandPlugin"
-            )
-        ],
-    )
-
     app = Application()
 
     tester = ApplicationTester(app)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import glob
 import logging
@@ -556,12 +557,10 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
     :param path: Path to package source to build and read metadata for.
     """
     info = None
-    try:
+    with contextlib.suppress(PackageInfoError):
         info = PackageInfo.from_setup_files(path)
         if all([info.version, info.name, info.requires_dist]):
             return info
-    except PackageInfoError:
-        pass
 
     with ephemeral_environment(
         flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}

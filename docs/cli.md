@@ -167,6 +167,12 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
+To only install the project itself with no dependencies, use the `--only-root` flag.
+
+```bash
+poetry install --only-root
+```
+
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
@@ -220,6 +226,7 @@ option is used.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
+* `--only-root`: Install only the root project, exclude all dependencies.
 * `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
@@ -281,17 +288,28 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
-You also can specify a constraint when adding a package, like so:
+You can also specify a constraint when adding a package:
 
 ```bash
+# Allow >=2.0.5, <3.0.0 versions
 poetry add pendulum@^2.0.5
+
+# Allow >=2.0.5, <2.1.0 versions
+poetry add pendulum@~2.0.5
+
+# Allow >=2.0.5 versions, without upper bound
 poetry add "pendulum>=2.0.5"
+
+# Allow only 2.0.5 version
+poetry add pendulum==2.0.5
 ```
 
 If you try to add a package that is already present, you will get an error.
 However, if you specify a constraint, like above, the dependency will be updated
-by using the specified constraint. If you want to get the latest version of an already
-present dependency you can use the special `latest` constraint:
+by using the specified constraint.
+
+If you want to get the latest version of an already
+present dependency, you can use the special `latest` constraint:
 
 ```bash
 poetry add pendulum@latest
@@ -312,8 +330,7 @@ or use ssh instead of https:
 ```bash
 poetry add git+ssh://git@github.com/sdispater/pendulum.git
 
-or alternatively:
-
+# or alternatively:
 poetry add git+ssh://git@github.com:sdispater/pendulum.git
 ```
 
@@ -324,8 +341,7 @@ you can specify it when using `add`:
 poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 
-or using SSH instead:
-
+# or using SSH instead:
 poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
