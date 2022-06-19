@@ -17,7 +17,6 @@ from typing import cast
 from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
-from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.chef import Chef
@@ -114,7 +113,7 @@ class Executor:
         return self
 
     def pip_install(
-        self, req: Path | Link, upgrade: bool = False, editable: bool = False
+        self, req: Path, upgrade: bool = False, editable: bool = False
     ) -> int:
         try:
             pip_install(req, self._env, upgrade=upgrade, editable=editable)
@@ -463,7 +462,7 @@ class Executor:
         if package.source_type == "git":
             return self._install_git(operation)
 
-        archive: Link | Path
+        archive: Path
         if package.source_type == "file":
             archive = self._prepare_file(operation)
         elif package.source_type == "url":
@@ -606,15 +605,15 @@ class Executor:
 
         return status_code
 
-    def _download(self, operation: Install | Update) -> Link | Path:
+    def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation: Install | Update, link: Link) -> Link | Path:
+    def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        archive: Link | Path | None
+        archive: Path | None
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is None:
             # No cached distributions was found, so we download and prepare it
@@ -638,20 +637,14 @@ class Executor:
         return archive
 
     @staticmethod
-    def _validate_archive_hash(archive: Path | Link, package: Package) -> str:
-        archive_path = (
-            url_to_path(archive.url) if isinstance(archive, Link) else archive
-        )
-        file_dep = FileDependency(
-            package.name,
-            archive_path,
-        )
+    def _validate_archive_hash(archive: Path, package: Package) -> str:
+        file_dep = FileDependency(package.name, archive)
         archive_hash: str = "sha256:" + file_dep.hash()
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
-                f"Hash for {package} from archive {archive_path.name} not found in"
+                f"Hash for {package} from archive {archive.name} not found in"
                 f" known hashes (was: {archive_hash})"
             )
 

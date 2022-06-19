@@ -436,11 +436,8 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     config: Config,
     io: BufferedIO,
 ):
-    link_cached = Link(
-        fixture_dir("distributions")
-        .joinpath("demo-0.1.0-py2.py3-none-any.whl")
-        .as_uri()
-    )
+    link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
     mocker.patch(
         "poetry.installation.executor.Executor._download", return_value=link_cached
     )
@@ -564,12 +561,8 @@ def test_executor_should_use_cached_link_and_hash(
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
 ):
-    # Produce a file:/// URI that is a valid link
-    link_cached = Link(
-        fixture_dir("distributions")
-        .joinpath("demo-0.1.0-py2.py3-none-any.whl")
-        .as_uri()
-    )
+    link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
     mocker.patch(
         "poetry.installation.chef.Chef.get_cached_archive_for_link",
         return_value=link_cached,
