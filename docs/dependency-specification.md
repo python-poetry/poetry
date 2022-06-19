@@ -86,7 +86,7 @@ If other dependencies require a different version, the solver will ultimately fa
 
 ### Using the `@` operator
 
-When adding dependencies via CLI `add` command, you can use the `@` operator.
+When adding dependencies via `poetry add`, you can use the `@` operator.
 This is understood similarly to the `==` syntax, but also allows prefixing any
 specifiers that are valid in `pyproject.toml`. For example:
 
