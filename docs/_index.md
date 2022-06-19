@@ -282,29 +282,39 @@ To uninstall Poetry, simply delete the entire `$VENV_PATH` directory.
 `poetry` supports generating completion scripts for Bash, Fish, and Zsh.
 See `poetry help completions` for full details, but the gist is as simple as using one of the following:
 
+### Bash
+
+There are few options in `bash`, choose the one that suits your workflow.
+
+#### Local, recommended
 
 ```bash
-# Bash
-poetry completions bash > /etc/bash_completion.d/poetry
-
-# Fish
-poetry completions fish > ~/.config/fish/completions/poetry.fish
-
-# Zsh
-poetry completions zsh > ~/.zfunc/_poetry
-
-# Oh-My-Zsh
-mkdir $ZSH_CUSTOM/plugins/poetry
-poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
-
-# prezto
-poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
-
+poetry completions bash >> ~/.bash_completion
 ```
 
-{{% note %}}
-You may need to restart your shell in order for the changes to take effect.
-{{% /note %}}
+#### Local, based on XDG directory spec
+
+```bash
+poetry completions bash > ${XDG_DATA_HOME:~/.local/share}/bash_completion/completions/poetry
+```
+
+#### Global, might require root priviledges
+
+```bash
+poetry completions bash > /etc/bash_completion.d/poetry
+```
+
+### Fish
+
+```fish
+poetry completions fish > ~/.config/fish/completions/poetry.fish
+```
+
+### Zsh
+
+```zsh
+poetry completions zsh > ~/.zfunc/_poetry
+```
 
 For `zsh`, you must then add the following lines in your `~/.zshrc`
 
@@ -313,6 +323,12 @@ fpath+=~/.zfunc
 autoload -Uz compinit && compinit
 ```
 
+#### Oh-My-Zsh
+
+```zsh
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
+```
 For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
 
 ```text
@@ -321,3 +337,13 @@ plugins(
 	...
 	)
 ```
+
+#### prezto
+
+```zsh
+poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
+```
+
+{{% note %}}
+You may need to restart your shell in order for the changes to take effect.
+{{% /note %}}
