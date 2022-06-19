@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poetry.core.packages.package import Package
 
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
 from poetry.factory import Factory
 from poetry.utils.extras import get_extra_package_names
+from poetry.utils.extras import strtobool
 
 
 _PACKAGE_FOO = Package("foo", "0.1.0")
@@ -68,3 +75,30 @@ def test_get_extra_package_names(
         list(get_extra_package_names(packages, extras, extra_names))
         == expected_extra_package_names
     )
+
+
+@pytest.mark.parametrize(
+    ["var", "expected_result"],
+    [
+        ("true", True),
+        ("True", True),
+        ("TRUE", True),
+        ("1", True),
+        ("false", False),
+        ("False", False),
+        ("FALSE", False),
+        ("0", False),
+        ("on", True),
+        ("On", True),
+        ("ON", True),
+        ("off", False),
+        ("Off", False),
+        ("OFF", False),
+        ("y", True),
+        ("Y", True),
+        ("n", False),
+        ("N", False),
+    ],
+)
+def test_strtobool(var: str, expected_result: Literal[0, 1]):
+    assert strtobool(var) == expected_result

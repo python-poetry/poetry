@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import sys
 
-from distutils.util import strtobool
 from os import environ
 
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.extras import strtobool
 
 
 class ShellCommand(EnvCommand):
