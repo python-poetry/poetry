@@ -86,8 +86,9 @@ If other dependencies require a different version, the solver will ultimately fa
 
 ### Using the `@` operator
 
-You can specify requirements, using the `@` operator. This is understood the same way as `==` specifier, with one difference.
-After the `@` operator, you can use any specifiers that are valid in `pyproject.toml` file. For example:
+When adding dependencies via CLI `add` command, you can use `@` operator.
+This is understood the same way as `==` specifier, with one difference. After the `@` operator, you can use any
+specifiers that are valid in `pyproject.toml` file. For example:
 
 ```shell
 poetry add django@^4.0.0
