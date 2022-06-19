@@ -86,33 +86,32 @@ If other dependencies require a different version, the solver will ultimately fa
 
 ### Using the `@` operator
 
-When adding dependencies via CLI `add` command, you can use `@` operator.
-This is understood the same way as `==` specifier, with one difference. After the `@` operator, you can use any
-specifiers that are valid in `pyproject.toml` file. For example:
+When adding dependencies via CLI `add` command, you can use the `@` operator.
+This is understood similarly to the `==` syntax, but also allows prefixing any
+specifiers that are valid in `pyproject.toml`. For example:
 
 ```shell
 poetry add django@^4.0.0
 ```
 
-Would translate to the following entry in `pyproject.toml`:
+The above would translate to the following entry in `pyproject.toml`:
 ```toml
 Django = "^4.0.0"
 ```
 
-This operator, can also be used with in conjunction with word `latest`, to specify latest available version.
-For example:
+The special keyword `latest` is also understood by the `@` operator:
 ```shell
 poetry add django@latest
 ```
 
-Would translate to the following entry in `pyproject.toml`:
+The above would translate to the following entry in `pyproject.toml`, assuming the latest release of `django` is `4.0.5`:
 ```toml
 Django = "^4.0.5"
 ```
 
 #### Extras
 
-To use extras for package using the `@` operator, formula is: `package[extra]@version`, for example:
+Extras and `@` can be combined as one might expect (`package[extra]@version`):
 
 ```shell
 poetry add django[bcrypt]@^4.0.0

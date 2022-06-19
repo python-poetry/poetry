@@ -305,7 +305,7 @@ poetry add pendulum==2.0.5
 ```
 
 {{% note %}}
-See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more information about `@` operator.
+See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more information about the `@` operator.
 {{% /note %}}
 
 If you try to add a package that is already present, you will get an error.
