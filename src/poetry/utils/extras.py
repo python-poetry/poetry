@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from typing import Mapping
 
     from poetry.core.packages.package import Package
-    from typing_extensions import Literal
 
 
 def get_extra_package_names(
@@ -67,7 +66,7 @@ def get_extra_package_names(
     return _extra_packages(extra_package_names)
 
 
-def strtobool(val: str) -> Literal[0, 1]:
+def str_to_bool(val: str) -> bool:
     """Convert a string representation of truth to true (1) or false (0).
 
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
@@ -76,8 +75,8 @@ def strtobool(val: str) -> Literal[0, 1]:
     """
     val = val.lower()
     if val in ("y", "yes", "t", "true", "on", "1"):
-        return 1
+        return True
     elif val in ("n", "no", "f", "false", "off", "0"):
-        return 0
+        return False
     else:
         raise ValueError(f"invalid truth value {val!r}")

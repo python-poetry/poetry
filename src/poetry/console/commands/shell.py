@@ -5,7 +5,7 @@ import sys
 from os import environ
 
 from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.extras import strtobool
+from poetry.utils.extras import str_to_bool
 
 
 class ShellCommand(EnvCommand):
@@ -22,7 +22,7 @@ If one doesn't exist yet, it will be created.
         from poetry.utils.shell import Shell
 
         # Check if it's already activated or doesn't exist and won't be created
-        venv_activated = strtobool(environ.get("POETRY_ACTIVE", "0")) or getattr(
+        venv_activated = str_to_bool(environ.get("POETRY_ACTIVE", "0")) or getattr(
             sys, "real_prefix", sys.prefix
         ) == str(self.env.path)
         if venv_activated:

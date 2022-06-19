@@ -1,18 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from poetry.core.packages.package import Package
 
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
-
 from poetry.factory import Factory
 from poetry.utils.extras import get_extra_package_names
-from poetry.utils.extras import strtobool
+from poetry.utils.extras import str_to_bool
 
 
 _PACKAGE_FOO = Package("foo", "0.1.0")
@@ -100,5 +94,5 @@ def test_get_extra_package_names(
         ("N", False),
     ],
 )
-def test_strtobool(var: str, expected_result: Literal[0, 1]):
-    assert strtobool(var) == expected_result
+def test_strtobool(var: str, expected_result: bool):
+    assert str_to_bool(var) == expected_result
