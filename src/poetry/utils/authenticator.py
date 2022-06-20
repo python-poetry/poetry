@@ -21,6 +21,7 @@ from cachecontrol.caches import FileCache
 
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
+from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 
@@ -219,7 +220,7 @@ class Authenticator:
 
         # Send the request.
         send_kwargs = {
-            "timeout": kwargs.get("timeout"),
+            "timeout": kwargs.get("timeout", REQUESTS_TIMEOUT),
             "allow_redirects": kwargs.get("allow_redirects", True),
         }
         send_kwargs.update(settings)

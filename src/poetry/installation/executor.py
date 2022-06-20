@@ -515,8 +515,6 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
-        archive = self._chef.prepare(archive)
-
         return archive
 
     def _install_directory(self, operation: Install | Update) -> int:
@@ -631,11 +629,6 @@ class Executor:
                     cached_file.unlink()
 
                 raise
-
-            # TODO: Check readability of the created archive
-
-            if not link.is_wheel:
-                archive = self._chef.prepare(archive)
 
         if package.files:
             archive_hash = self._validate_archive_hash(archive, package)
