@@ -286,7 +286,7 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 There are few options in `bash`, choose the one that suits your workflow.
 
-#### Local, recommended
+#### Auto-loaded (recommended)
 
 ```bash
 poetry completions bash >> ~/.bash_completion
@@ -316,7 +316,7 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 poetry completions zsh > ~/.zfunc/_poetry
 ```
 
-You must then add the following lines in your `~/.zshrc`
+You must then add the following lines in your `~/.zshrc`, if they do not already exist:
 
 ```bash
 fpath+=~/.zfunc
@@ -329,7 +329,7 @@ autoload -Uz compinit && compinit
 mkdir $ZSH_CUSTOM/plugins/poetry
 poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 ```
-You must then enable poetry in your `~/.zshrc` plugins
+You must then add `poetry` to your plugins array in `~/.zshrc`:
 
 ```text
 plugins(
@@ -345,5 +345,5 @@ poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 ```
 
 {{% note %}}
-You may need to restart your shell in order for the changes to take effect.
+You may need to restart your shell in order for these changes to take effect.
 {{% /note %}}
