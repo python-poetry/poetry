@@ -292,7 +292,7 @@ There are few options in `bash`, choose the one that suits your workflow.
 poetry completions bash >> ~/.bash_completion
 ```
 
-#### Local, based on XDG directory spec
+#### Lazy-loaded
 
 ```bash
 poetry completions bash > ${XDG_DATA_HOME:~/.local/share}/bash_completion/completions/poetry
@@ -323,7 +323,7 @@ fpath+=~/.zfunc
 autoload -Uz compinit && compinit
 ```
 
-#### Oh-My-Zsh
+#### Oh My Zsh
 
 ```zsh
 mkdir $ZSH_CUSTOM/plugins/poetry
