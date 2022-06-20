@@ -284,8 +284,6 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 ### Bash
 
-There are few options in `bash`, choose the one that suits your workflow.
-
 #### Auto-loaded (recommended)
 
 ```bash
@@ -296,12 +294,6 @@ poetry completions bash >> ~/.bash_completion
 
 ```bash
 poetry completions bash > ${XDG_DATA_HOME:~/.local/share}/bash_completion/completions/poetry
-```
-
-#### Global, might require root priviledges
-
-```bash
-poetry completions bash > /etc/bash_completion.d/poetry
 ```
 
 ### Fish
