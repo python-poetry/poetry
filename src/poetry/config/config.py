@@ -207,6 +207,13 @@ class Config:
     def repository_cache_directory(self) -> Path:
         return Path(self.get("cache-dir")) / "cache" / "repositories"
 
+    @property
+    def virtualenvs_path(self) -> Path:
+        path = self.get("virtualenvs.path")
+        if path is None:
+            path = Path(self.get("cache-dir")) / "virtualenvs"
+        return Path(path).expanduser()
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
         Retrieve a setting value.

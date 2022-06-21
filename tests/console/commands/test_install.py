@@ -73,6 +73,7 @@ def tester(
     ("options", "groups"),
     [
         ("", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--only-root", set()),
         (f"--only {MAIN_GROUP}", {MAIN_GROUP}),
         ("--only foo", {"foo"}),
         ("--only foo,bar", {"foo", "bar"}),
@@ -111,7 +112,13 @@ def test_group_options_are_passed_to_the_installer(
     if not with_root:
         options = f"--no-root {options}"
 
-    tester.execute(options)
+    status_code = tester.execute(options)
+
+    if options == "--no-root --only-root":
+        assert status_code == 1
+        return
+    else:
+        assert status_code == 0
 
     package_groups = set(tester.command.poetry.package._dependency_groups.keys())
     installer_groups = set(tester.command.installer._groups)

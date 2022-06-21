@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from deepdiff import DeepDiff
-from entrypoints import EntryPoint
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
 
@@ -14,6 +13,7 @@ from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
+from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
@@ -337,10 +337,7 @@ def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter):
 
 
 def test_create_poetry_with_plugins(mocker: MockerFixture):
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[EntryPoint("my-plugin", "tests.test_factory", "MyPlugin")],
-    )
+    mock_metadata_entry_points(mocker, MyPlugin)
 
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 

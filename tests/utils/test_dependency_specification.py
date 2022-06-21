@@ -46,8 +46,11 @@ if TYPE_CHECKING:
         ("../demo", {"name": "demo", "path": "../demo"}),
         ("../demo/demo.whl", {"name": "demo", "path": "../demo/demo.whl"}),
         (
-            "https://example.com/packages/demo-0.1.0.tar.gz",
-            {"name": "demo", "url": "https://example.com/packages/demo-0.1.0.tar.gz"},
+            "https://example.com/distributions/demo-0.1.0.tar.gz",
+            {
+                "name": "demo",
+                "url": "https://example.com/distributions/demo-0.1.0.tar.gz",
+            },
         ),
         # PEP 508 inputs
         (
