@@ -327,7 +327,8 @@ mkdocs = "*"
 ```
 
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for a more in-depth look
-at how to manage dependency groups.
+at how to manage dependency groups and [Dependency specification]({{< relref "dependency-specification" >}})
+for more information on other keys and specifying version ranges.
 
 ## `scripts`
 

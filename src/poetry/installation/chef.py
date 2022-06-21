@@ -20,26 +20,10 @@ if TYPE_CHECKING:
 
 class Chef:
     def __init__(self, config: Config, env: Env) -> None:
-        self._config = config
         self._env = env
         self._cache_dir = (
             Path(config.get("cache-dir")).expanduser().joinpath("artifacts")
         )
-
-    def prepare(self, archive: Path) -> Path:
-        return archive
-
-    def prepare_sdist(self, archive: Path) -> Path:
-        return archive
-
-    def prepare_wheel(self, archive: Path) -> Path:
-        return archive
-
-    def should_prepare(self, archive: Path) -> bool:
-        return not self.is_wheel(archive)
-
-    def is_wheel(self, archive: Path) -> bool:
-        return archive.suffix == ".whl"
 
     def get_cached_archive_for_link(self, link: Link) -> Link:
         # If the archive is already a wheel, there is no need to cache it.

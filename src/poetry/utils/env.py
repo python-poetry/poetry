@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import itertools
 import json
@@ -279,11 +280,9 @@ class SitePackages:
         candidates = self._candidates if not writable_only else self.writable_candidates
         if path.is_absolute():
             for candidate in candidates:
-                try:
+                with contextlib.suppress(ValueError):
                     path.relative_to(candidate)
                     return [path]
-                except ValueError:
-                    pass
             site_type = "writable " if writable_only else ""
             raise ValueError(
                 f"{path} is not relative to any discovered {site_type}sites"
@@ -552,12 +551,7 @@ class EnvManager:
         return executable
 
     def activate(self, python: str, io: IO) -> Env:
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
-
+        venv_path = self._poetry.config.virtualenvs_path
         cwd = self._poetry.file.parent
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
@@ -645,12 +639,7 @@ class EnvManager:
         return self.get(reload=True)
 
     def deactivate(self, io: IO) -> None:
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
-
+        venv_path = self._poetry.config.virtualenvs_path
         name = self._poetry.package.name
         name = self.generate_env_name(name, str(self._poetry.file.parent))
 
@@ -671,11 +660,7 @@ class EnvManager:
 
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
 
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
+        venv_path = self._poetry.config.virtualenvs_path
 
         cwd = self._poetry.file.parent
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
@@ -712,11 +697,7 @@ class EnvManager:
             if not create_venv:
                 return self.get_system_env()
 
-            venv_path = self._poetry.config.get("virtualenvs.path")
-            if venv_path is None:
-                venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-            else:
-                venv_path = Path(venv_path)
+            venv_path = self._poetry.config.virtualenvs_path
 
             name = f"{base_env_name}-py{python_minor.strip()}"
 
@@ -741,13 +722,7 @@ class EnvManager:
             name = self._poetry.package.name
 
         venv_name = self.generate_env_name(name, str(self._poetry.file.parent))
-
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
-
+        venv_path = self._poetry.config.virtualenvs_path
         env_list = [
             VirtualEnv(Path(p)) for p in sorted(venv_path.glob(f"{venv_name}-py*"))
         ]
@@ -762,11 +737,7 @@ class EnvManager:
         return env_list
 
     def remove(self, python: str) -> Env:
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
+        venv_path = self._poetry.config.virtualenvs_path
 
         cwd = self._poetry.file.parent
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
@@ -875,7 +846,6 @@ class EnvManager:
 
         create_venv = self._poetry.config.get("virtualenvs.create")
         root_venv = self._poetry.config.get("virtualenvs.in-project")
-        venv_path = self._poetry.config.get("virtualenvs.path")
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
@@ -884,13 +854,7 @@ class EnvManager:
         if not executable and prefer_active_python:
             executable = self._detect_active_python(io)
 
-        if root_venv:
-            venv_path = cwd / ".venv"
-        elif venv_path is None:
-            venv_path = self._poetry.config.get("cache-dir") / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
-
+        venv_path = cwd / ".venv" if root_venv else self._poetry.config.virtualenvs_path
         if not name:
             name = self._poetry.package.name
         assert name is not None
@@ -1369,11 +1333,9 @@ class Env:
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         for lib_path in [self.purelib, self.platlib]:
-            try:
+            with contextlib.suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
-            except ValueError:
-                pass
 
         return False
 

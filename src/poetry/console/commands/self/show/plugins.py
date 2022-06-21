@@ -8,15 +8,32 @@ from poetry.console.commands.self.self_command import SelfCommand
 
 
 if TYPE_CHECKING:
-    from entrypoints import EntryPoint
     from poetry.core.packages.package import Package
+
+    from poetry.utils._compat import metadata
 
 
 @dataclasses.dataclass
 class PluginPackage:
     package: Package
-    plugins: list[EntryPoint] = dataclasses.field(default_factory=list)
-    application_plugins: list[EntryPoint] = dataclasses.field(default_factory=list)
+    plugins: list[metadata.EntryPoint] = dataclasses.field(default_factory=list)
+    application_plugins: list[metadata.EntryPoint] = dataclasses.field(
+        default_factory=list
+    )
+
+    def append(self, entry_point: metadata.EntryPoint) -> None:
+        from poetry.plugins.application_plugin import ApplicationPlugin
+        from poetry.plugins.plugin import Plugin
+
+        group = entry_point.group  # type: ignore[attr-defined]
+
+        if group == ApplicationPlugin.group:
+            self.application_plugins.append(entry_point)
+        elif group == Plugin.group:
+            self.plugins.append(entry_point)
+        else:
+            name = entry_point.name  # type: ignore[attr-defined]
+            raise ValueError(f"Unknown plugin group ({group}) for {name}")
 
 
 class SelfShowPluginsCommand(SelfCommand):
@@ -43,9 +60,6 @@ commands respectively.
         plugins: dict[str, PluginPackage] = {}
 
         system_env = EnvManager.get_system_env(naive=True)
-        entry_points = PluginManager(ApplicationPlugin.group).get_plugin_entry_points(
-            env=system_env
-        ) + PluginManager(Plugin.group).get_plugin_entry_points(env=system_env)
         installed_repository = InstalledRepository.load(
             system_env, with_dependencies=True
         )
@@ -54,21 +68,20 @@ commands respectively.
             pkg.name: pkg for pkg in installed_repository.packages
         }
 
-        for entry_point in entry_points:
-            plugin = entry_point.load()
+        for group in [ApplicationPlugin.group, Plugin.group]:
+            for entry_point in PluginManager(group).get_plugin_entry_points(
+                env=system_env
+            ):
+                assert entry_point.dist is not None
 
-            assert entry_point.distro is not None
-            package = packages_by_name[canonicalize_name(entry_point.distro.name)]
+                package = packages_by_name[canonicalize_name(entry_point.dist.name)]
 
-            name = package.pretty_name
-            info = plugins.get(name) or PluginPackage(package=package)
+                name = package.pretty_name
 
-            if issubclass(plugin, ApplicationPlugin):
-                info.application_plugins.append(entry_point)
-            else:
-                info.plugins.append(entry_point)
+                info = plugins.get(name) or PluginPackage(package=package)
+                info.append(entry_point)
 
-            plugins[name] = info
+                plugins[name] = info
 
         for name, info in plugins.items():
             package = info.package

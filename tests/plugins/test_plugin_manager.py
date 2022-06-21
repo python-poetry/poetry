@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
-from entrypoints import EntryPoint
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.packages.locker import Locker
@@ -15,6 +14,7 @@ from poetry.plugins import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
 from tests.compat import Protocol
+from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
@@ -81,17 +81,9 @@ def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: MockerFixture,
+    with_my_plugin: None,
 ):
     manager = manager_factory()
-
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint("my-plugin", "tests.plugins.test_plugin_manager", "MyPlugin")
-        ],
-    )
-
     manager.load_plugins()
     manager.activate(poetry, io)
 
@@ -99,22 +91,23 @@ def test_load_plugins_and_activate(
     assert io.fetch_output() == "Setting readmes\n"
 
 
+@pytest.fixture
+def with_my_plugin(mocker: MockerFixture) -> None:
+    mock_metadata_entry_points(mocker, MyPlugin)
+
+
+@pytest.fixture
+def with_invalid_plugin(mocker: MockerFixture) -> None:
+    mock_metadata_entry_points(mocker, InvalidPlugin)
+
+
 def test_load_plugins_with_invalid_plugin(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: MockerFixture,
+    with_invalid_plugin: None,
 ):
     manager = manager_factory()
-
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint(
-                "my-plugin", "tests.plugins.test_plugin_manager", "InvalidPlugin"
-            )
-        ],
-    )
 
     with pytest.raises(ValueError):
         manager.load_plugins()
@@ -124,15 +117,8 @@ def test_load_plugins_with_plugins_disabled(
     no_plugin_manager: PluginManager,
     poetry: Poetry,
     io: BufferedIO,
-    mocker: MockerFixture,
+    with_my_plugin: None,
 ):
-    mocker.patch(
-        "entrypoints.get_group_all",
-        return_value=[
-            EntryPoint("my-plugin", "tests.plugins.test_plugin_manager", "MyPlugin")
-        ],
-    )
-
     no_plugin_manager.load_plugins()
 
     assert poetry.package.version.text == "1.2.3"

@@ -25,6 +25,7 @@ from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.utils._compat import metadata
 
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.semver.version import Version
+    from pytest_mock import MockerFixture
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.installation.operations.operation import Operation
@@ -251,3 +253,31 @@ def isolated_environment(
 
     os.environ.clear()
     os.environ.update(original_environ)
+
+
+def make_entry_point_from_plugin(
+    name: str, cls: type[Any], dist: metadata.Distribution | None = None
+) -> metadata.EntryPoint:
+    ep = metadata.EntryPoint(
+        name=name,
+        group=getattr(cls, "group", None),
+        value=f"{cls.__module__}:{cls.__name__}",
+    )
+
+    if dist:
+        return ep._for(dist)
+
+    return ep
+
+
+def mock_metadata_entry_points(
+    mocker: MockerFixture,
+    cls: type[Any],
+    name: str = "my-plugin",
+    dist: metadata.Distribution | None = None,
+) -> None:
+    mocker.patch.object(
+        metadata,
+        "entry_points",
+        return_value=[make_entry_point_from_plugin(name, cls, dist)],
+    )
