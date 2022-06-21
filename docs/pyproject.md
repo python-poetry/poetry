@@ -106,12 +106,29 @@ maintainers = [
 
 ## readme
 
-The readme file of the package. **Optional**
+A path, or list of paths corresponding to the README file(s) of the package.
+**Optional**
 
-The file can be either `README.rst` or `README.md`.
+The file(s) can be of any format, but if you intend to publish to PyPI keep the
+[recommendations for a PyPI-friendly README](
+https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/) in
+mind. README paths are implicitly relative to `pyproject.toml`.
+
+The contents of the README file(s) are used to populate the [Description
+field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
+of your distribution's metadata (similar to `long_description` in setuptools).
+When multiple files are specified they are concatenated with newlines.
 
 ```toml
-readme = "README.md" # or "README.rst"
+[tool.poetry]
+# ...
+readme = "README.md"
+```
+
+```toml
+[tool.poetry]
+# ...
+readme = ["docs/README1.md", "docs/README2.md"]
 ```
 
 ## homepage
@@ -310,7 +327,8 @@ mkdocs = "*"
 ```
 
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for a more in-depth look
-at how to manage dependency groups.
+at how to manage dependency groups and [Dependency specification]({{< relref "dependency-specification" >}})
+for more information on other keys and specifying version ranges.
 
 ## `scripts`
 
@@ -318,10 +336,10 @@ This section describes the scripts or executables that will be installed when in
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry.console:run'
+my_package_cli = 'my_package.console:run'
 ```
 
-Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
 
 To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
 
@@ -365,6 +383,12 @@ When installing packages with Poetry, you can specify extras by using the `-E|--
 ```bash
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
+```
+
+Or, you can install all extras with the `--all-extras` option:
+
+```bash
+poetry install --all-extras
 ```
 
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated

@@ -39,8 +39,13 @@ poetry source add foo https://pypi.example.org/simple/
 Then, assuming the repository requires authentication, configure credentials for it.
 
 ```bash
-poetry config http-basic.foo username password
+poetry config http-basic.foo <username> <password>
 ```
+
+{{% warning %}}
+Depending on your system configuration, credentials might be saved in your command line history.
+Many shells do not save commands to history when they are prefixed by a space character. For more information, please refer to your shell's documentation.
+{{% /warning %}}
 
 Once this is done, you can add dependencies to your project from this source.
 
@@ -66,7 +71,7 @@ recommended to use a different name for your publishing repository.
 
 ```bash
 poetry config repositories.foo-pub https://pypi.example.org/legacy/
-poetry config http-basic.foo-pub username password
+poetry config http-basic.foo-pub <username> <password>
 ```
 
 {{% /note %}}
@@ -283,17 +288,17 @@ configuration unlike [package sources](#package-sources). Poetry, today, only su
 your project.
 
 These are configured using the [`config`]({{< relref "cli#config" >}}) command, under the
-`repository` key.
+`repositories` key.
 
 ```bash
-poetry config repository.testpypi https://upload.test.pypi.org/legacy/
+poetry config repositories.testpypi https://test.pypi.org/legacy/
 ```
 
 {{% note %}}
 
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
-in the example of [Test PyPI](https://test.pypi.org/), both the host (`upload.test.pypi.org`) as
+in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
 well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
@@ -303,7 +308,7 @@ well as the path (`/legacy`) are different to it's simple API (`https://test.pyp
 If you want to store your credentials for a specific repository, you can do so easily:
 
 ```bash
-poetry config http-basic.foo username password
+poetry config http-basic.foo <username> <password>
 ```
 
 If you do not specify the password you will be prompted to write it.
@@ -324,7 +329,7 @@ If you still want to use your username and password, you can do so with the foll
 call to `config`.
 
 ```bash
-poetry config http-basic.pypi username password
+poetry config http-basic.pypi <username> <password>
 ```
 
 {{% /note %}}
@@ -355,8 +360,8 @@ Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
 export POETRY_PYPI_TOKEN_PYPI=my-token
-export POETRY_HTTP_BASIC_PYPI_USERNAME=username
-export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
+export POETRY_HTTP_BASIC_PYPI_USERNAME=<username>
+export POETRY_HTTP_BASIC_PYPI_PASSWORD=<password>
 ```
 
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
@@ -384,6 +389,21 @@ poetry config certificates.foo.cert /path/to/ca.pem
 poetry config certificates.foo.client-cert /path/to/client.pem
 ```
 
+{{% note %}}
+The value of `certificates.<repository>.cert` can be set to `false` if certificate verification is
+required to be skipped. This is useful for cases where a package source with self-signed certificates
+are used.
+
+```bash
+poetry config certificates.foo.cert false
+```
+
+{{% warning %}}
+Disabling certificate verification is not recommended as it is does not conform to security
+best practices.
+{{% /warning %}}
+{{% /note %}}
+
 ## Caches
 
 Poetry employs multiple caches for package sources in order to improve user experience and avoid duplicate network
@@ -406,5 +426,5 @@ poetry --no-cache add pycowsay
 If this solves your issue, you can consider clearing your cache using the [`cache`]({{< relref "cli#cache-clear" >}})
 command.
 
-Alternatively, you could also consider enabling very verbose loging `-vvv` along with the `--no-cache` to see network
+Alternatively, you could also consider enabling very verbose logging `-vvv` along with the `--no-cache` to see network
 requests being made in the logs.

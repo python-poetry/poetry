@@ -175,16 +175,26 @@ def test_set_client_cert(
     )
 
 
+@pytest.mark.parametrize(
+    ("value", "result"),
+    [
+        ("path/to/ca.pem", "path/to/ca.pem"),
+        ("true", True),
+        ("false", False),
+    ],
+)
 def test_set_cert(
     tester: CommandTester,
     auth_config_source: DictConfigSource,
     mocker: MockerFixture,
+    value: str,
+    result: str | bool,
 ):
     mocker.spy(ConfigSource, "__init__")
 
-    tester.execute("certificates.foo.cert path/to/ca.pem")
+    tester.execute(f"certificates.foo.cert {value}")
 
-    assert auth_config_source.config["certificates"]["foo"]["cert"] == "path/to/ca.pem"
+    assert auth_config_source.config["certificates"]["foo"]["cert"] == result
 
 
 def test_config_installer_parallel(

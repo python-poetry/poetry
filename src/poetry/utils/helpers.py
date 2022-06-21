@@ -6,10 +6,14 @@ import shutil
 import stat
 import tempfile
 
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 from typing import Mapping
+
+from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
 if TYPE_CHECKING:
@@ -18,7 +22,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from requests import Session
 
-    from poetry.config.config import Config
     from poetry.utils.authenticator import Authenticator
 
 
@@ -33,20 +36,14 @@ def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
 
 
-def get_cert(config: Config, repository_name: str) -> Path | None:
-    cert = config.get(f"certificates.{repository_name}.cert")
-    if cert:
-        return Path(cert)
-    else:
-        return None
-
-
-def get_client_cert(config: Config, repository_name: str) -> Path | None:
-    client_cert = config.get(f"certificates.{repository_name}.client-cert")
-    if client_cert:
-        return Path(client_cert)
-    else:
-        return None
+@contextmanager
+def directory(path: Path) -> Iterator[Path]:
+    cwd = Path.cwd()
+    try:
+        os.chdir(path)
+        yield path
+    finally:
+        os.chdir(cwd)
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:
@@ -94,7 +91,7 @@ def download_file(
 
     get = requests.get if not session else session.get
 
-    response = get(url, stream=True)
+    response = get(url, stream=True, timeout=REQUESTS_TIMEOUT)
     response.raise_for_status()
 
     set_indicator = False
@@ -162,3 +159,15 @@ def pluralize(count: int, word: str = "") -> str:
     if count == 1:
         return word
     return word + "s"
+
+
+def safe_extra(extra: str) -> str:
+    """Convert an arbitrary string to a standard 'extra' name.
+
+    Any runs of non-alphanumeric characters are replaced with a single '_',
+    and the result is always lowercased.
+
+    See
+    https://github.com/pypa/setuptools/blob/452e13c/pkg_resources/__init__.py#L1423-L1431.
+    """
+    return re.sub("[^A-Za-z0-9.-]+", "_", extra).lower()

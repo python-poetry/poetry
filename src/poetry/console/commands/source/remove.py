@@ -1,19 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
-from tomlkit import nl
-from tomlkit import table
 from tomlkit.items import AoT
 
 from poetry.console.commands.command import Command
-
-
-if TYPE_CHECKING:
-    from tomlkit.items import Table
-
-    from poetry.config.source import Source
 
 
 class SourceRemoveCommand(Command):
@@ -28,15 +18,9 @@ class SourceRemoveCommand(Command):
         ),
     ]
 
-    @staticmethod
-    def source_to_table(source: Source) -> Table:
-        source_table: Table = table()
-        for key, value in source.to_dict().items():
-            source_table.add(key, value)
-        source_table.add(nl())
-        return source_table
+    def handle(self) -> int:
+        from poetry.utils.source import source_to_table
 
-    def handle(self) -> int | None:
         name = self.argument("name")
 
         sources = AoT([])
@@ -47,7 +31,7 @@ class SourceRemoveCommand(Command):
                 self.line(f"Removing source with name <c1>{source.name}</c1>.")
                 removed = True
                 continue
-            sources.append(self.source_to_table(source))
+            sources.append(source_to_table(source))
 
         if not removed:
             self.line_error(

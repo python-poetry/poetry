@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 
 from cleo.helpers import argument
 
@@ -21,7 +20,7 @@ class RunCommand(EnvCommand):
         argument("args", "The command and arguments/options to run.", multiple=True)
     ]
 
-    def handle(self) -> Any:
+    def handle(self) -> int:
         args = self.argument("args")
         script = args[0]
         scripts = self.poetry.local_config.get("scripts")
@@ -46,7 +45,7 @@ class RunCommand(EnvCommand):
 
         return module
 
-    def run_script(self, script: str | dict[str, str], args: str) -> Any:
+    def run_script(self, script: str | dict[str, str], args: str) -> int:
         if isinstance(script, dict):
             script = script["callable"]
 

@@ -1,0 +1,54 @@
+[[package]]
+name = "demo"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.source]
+type = "url"
+url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+
+[package.dependencies]
+pendulum = ">=1.4.4"
+
+[package.extras]
+bar = ["tomlkit"]
+foo = ["cleo"]
+
+[[package]]
+name = "demo"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.source]
+type = "url"
+url = "https://python-poetry.org/distributions/demo-0.1.0.tar.gz"
+
+[package.dependencies]
+pendulum = ">=1.4.4"
+
+[package.extras]
+bar = ["tomlkit"]
+foo = ["cleo"]
+
+[[package]]
+name = "pendulum"
+version = "1.4.4"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+demo = []
+pendulum = []

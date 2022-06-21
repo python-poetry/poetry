@@ -160,7 +160,7 @@ class Git:
             url = ""
             if config.has_section(section):
                 value = config.get(section, b"url")
-                assert value is not None
+                assert isinstance(value, bytes)
                 url = value.decode("utf-8")
 
             return url

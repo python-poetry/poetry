@@ -9,11 +9,7 @@ from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
 
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
@@ -28,12 +24,8 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.packages.directory_dependency import DirectoryDependency
-    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
-    from poetry.core.packages.url_dependency import URLDependency
-    from poetry.core.packages.vcs_dependency import VCSDependency
 
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import Pool
@@ -168,21 +160,20 @@ class Solver:
             if package.features:
                 for _package in packages:
                     if (
-                        _package.name == package.name
-                        and not _package.is_same_package_as(package)
+                        not _package.features
+                        and _package.name == package.name
                         and _package.version == package.version
                     ):
                         for dep in package.requires:
-                            if dep.is_same_package_as(_package):
+                            # Prevent adding base package as a dependency to itself
+                            if _package.name == dep.name:
                                 continue
 
                             if dep not in _package.requires:
                                 _package.add_dependency(dep)
-
-                continue
-
-            final_packages.append(package)
-            depths.append(results[package])
+            else:
+                final_packages.append(package)
+                depths.append(results[package])
 
         # Return the packages in their original order with associated depths
         return final_packages, depths
@@ -253,22 +244,8 @@ class PackageNode(DFSNode):
         package: Package,
         packages: list[Package],
         previous: PackageNode | None = None,
-        previous_dep: None
-        | (
-            DirectoryDependency
-            | FileDependency
-            | URLDependency
-            | VCSDependency
-            | Dependency
-        ) = None,
-        dep: None
-        | (
-            DirectoryDependency
-            | FileDependency
-            | URLDependency
-            | VCSDependency
-            | Dependency
-        ) = None,
+        previous_dep: Dependency | None = None,
+        dep: Dependency | None = None,
     ) -> None:
         self.package = package
         self.packages = packages

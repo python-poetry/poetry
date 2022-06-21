@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.0-beta.2.dev0"
+version = "1.2.0b3.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>",
@@ -44,15 +44,14 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "^1.1.0b1"
+poetry-core = "^1.1.0b2"
 poetry-plugin-export = "^1.0.4"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
-cleo = "^1.0.0a4"
+cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
-entrypoints = "^0.4"
 html5lib = "^1.0"
-importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
+importlib-metadata = { version = "^4.4", python = "<3.10" }
 # keyring uses calver, so version is unclamped
 keyring = ">=21.2.0"
 # packaging uses calver, so version is unclamped
@@ -66,6 +65,7 @@ shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
+xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 dulwich = "^0.20.35"
 
@@ -74,7 +74,9 @@ tox = "^3.18"
 pytest = "^7.1"
 pytest-cov = "^3.0"
 pytest-mock = "^3.5"
+pytest-randomly = "^3.10"
 pytest-sugar = "^0.9"
+pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 pre-commit = "^2.6"
 deepdiff = "^5.0"
 httpretty = "^1.0"
@@ -82,7 +84,6 @@ typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
 flatdict = "^4.0.1"
 mypy = ">=0.960"
-types-entrypoints = ">=0.3.7"
 types-html5lib = ">=1.1.7"
 types-jsonschema = ">=4.4.4"
 types-requests = ">=2.27.11"
@@ -105,6 +106,7 @@ lines_between_types = 1
 lines_after_imports = 2
 src_paths = ["src", "tests"]
 extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
 
 
 [tool.black]
@@ -117,6 +119,9 @@ force-exclude = '''
 
 [tool.mypy]
 files = "src"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
 show_error_codes = true
 strict = true
 enable_error_code = [
@@ -133,8 +138,10 @@ enable_error_code = [
 # warning.
 [[tool.mypy.overrides]]
 module = [
+  'poetry.console.commands.self.show.plugins',
   'poetry.installation.executor',
   'poetry.mixology.version_solver',
+  'poetry.plugins.plugin_manager',
   'poetry.repositories.installed_repository',
   'poetry.utils.env',
 ]
@@ -151,6 +158,7 @@ module = [
   'requests_toolbelt.*',
   'shellingham.*',
   'virtualenv.*',
+  'xattr.*',
 ]
 ignore_missing_imports = true
 

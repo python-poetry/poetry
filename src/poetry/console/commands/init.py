@@ -118,12 +118,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         )
         version = self.ask(question)
 
-        description = self.option("description") or ""
-        question = self.create_question(
-            f"Description [<comment>{description}</comment>]: ",
-            default=description,
-        )
-        description = self.ask(question)
+        description = self.option("description")
+        if not description:
+            description = self.ask(self.create_question("Description []: ", default=""))
 
         author = self.option("author")
         if not author and vcs_config.get("user.name"):
@@ -143,13 +140,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         else:
             authors = [author]
 
-        license = self.option("license") or ""
-
-        question = self.create_question(
-            f"License [<comment>{license}</comment>]: ", default=license
-        )
-        question.set_validator(self._validate_license)
-        license = self.ask(question)
+        license = self.option("license")
+        if not license:
+            license = self.ask(self.create_question("License []: ", default=""))
 
         python = self.option("python")
         if not python:
@@ -175,7 +168,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question = "Would you like to define your main dependencies interactively?"
         help_message = """\
 You can specify a package in the following forms:
-  - A single name (<b>requests</b>)
+  - A single name (<b>requests</b>): this will search for matches on PyPI
   - A name and a constraint (<b>requests@^2.23.0</b>)
   - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
   - A git url with a revision\
@@ -272,9 +265,12 @@ You can specify a package in the following forms:
         if not requires:
             result = []
 
-            package = self.ask(
-                "Search for package to add (or leave blank to continue):"
+            question = self.create_question(
+                "Package to add or search for (leave blank to skip):"
             )
+            question.set_validator(self._validate_package)
+
+            package = self.ask(question)
             while package:
                 constraint = self._parse_requirements([package])[0]
                 if (
@@ -457,13 +453,12 @@ You can specify a package in the following forms:
 
         return author
 
-    def _validate_license(self, license: str) -> str:
-        from poetry.core.spdx.helpers import license_by_id
+    @staticmethod
+    def _validate_package(package: str | None) -> str | None:
+        if package and len(package.split()) > 2:
+            raise ValueError("Invalid package definition.")
 
-        if license:
-            license_by_id(license)
-
-        return license
+        return package
 
     def _get_pool(self) -> Pool:
         from poetry.repositories import Pool

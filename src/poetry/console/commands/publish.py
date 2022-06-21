@@ -47,7 +47,7 @@ the config command.
 
     loggers = ["poetry.masonry.publishing.publisher"]
 
-    def handle(self) -> int | None:
+    def handle(self) -> int:
         from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)
@@ -90,4 +90,4 @@ the config command.
             self.option("skip-existing"),
         )
 
-        return None
+        return 0

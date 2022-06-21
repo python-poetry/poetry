@@ -6,51 +6,38 @@ import pytest
 
 from poetry.core.packages.package import Package
 
+from poetry.console.commands.self.self_command import SelfCommand
 from poetry.factory import Factory
+from tests.console.commands.self.utils import get_self_command_dependencies
 
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
-    from pytest_mock import MockerFixture
 
-    from poetry.console.commands.update import UpdateCommand
-    from poetry.repositories import Repository
-    from poetry.utils.env import MockEnv
-    from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
 
 
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("plugin add")
+    return command_tester_factory("self add")
 
 
 def assert_plugin_add_result(
     tester: CommandTester,
-    app: PoetryTestApplication,
-    env: MockEnv,
     expected: str,
     constraint: str | dict[str, str],
 ) -> None:
     assert tester.io.fetch_output() == expected
+    dependencies = get_self_command_dependencies()
 
-    update_command: UpdateCommand = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-    assert update_command.poetry.locker.lock.exists()
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == constraint
+    assert "poetry-plugin" in dependencies
+    assert dependencies["poetry-plugin"] == constraint
 
 
 def test_add_no_constraint(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
+    repo: TestRepository,
 ):
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
@@ -58,6 +45,7 @@ def test_add_no_constraint(
 
     expected = """\
 Using version ^0.1.0 for poetry-plugin
+
 Updating dependencies
 Resolving dependencies...
 
@@ -67,22 +55,19 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing poetry-plugin (0.1.0)
 """
-    assert_plugin_add_result(tester, app, env, expected, "^0.1.0")
+    assert_plugin_add_result(tester, expected, "^0.1.0")
 
 
 def test_add_with_constraint(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
+    repo: TestRepository,
 ):
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
 
     tester.execute("poetry-plugin@^0.2.0")
 
-    expected = """\
+    expected = """
 Updating dependencies
 Resolving dependencies...
 
@@ -93,21 +78,18 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing poetry-plugin (0.2.0)
 """
 
-    assert_plugin_add_result(tester, app, env, expected, "^0.2.0")
+    assert_plugin_add_result(tester, expected, "^0.2.0")
 
 
 def test_add_with_git_constraint(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
+    repo: TestRepository,
 ):
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git")
 
-    expected = """\
+    expected = """
 Updating dependencies
 Resolving dependencies...
 
@@ -120,23 +102,20 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert_plugin_add_result(
-        tester, app, env, expected, {"git": "https://github.com/demo/poetry-plugin.git"}
+        tester, expected, {"git": "https://github.com/demo/poetry-plugin.git"}
     )
 
 
 def test_add_with_git_constraint_with_extras(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
+    repo: TestRepository,
 ):
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git[foo]")
 
-    expected = """\
+    expected = """
 Updating dependencies
 Resolving dependencies...
 
@@ -151,8 +130,6 @@ Package operations: 3 installs, 0 updates, 0 removals
 
     assert_plugin_add_result(
         tester,
-        app,
-        env,
         expected,
         {
             "git": "https://github.com/demo/poetry-plugin.git",
@@ -162,24 +139,22 @@ Package operations: 3 installs, 0 updates, 0 removals
 
 
 def test_add_existing_plugin_warns_about_no_operation(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
+    repo: TestRepository,
+    installed: TestRepository,
 ):
-    env.path.joinpath("pyproject.toml").write_text(
-        """\
+    SelfCommand.get_default_system_pyproject_file().write_text(
+        f"""\
 [tool.poetry]
-name = "poetry"
+name = "poetry-instance"
 version = "1.2.0"
 description = "Python dependency management and packaging made easy."
-authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
-]
+authors = []
 
 [tool.poetry.dependencies]
 python = "^3.6"
+
+[tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
 """,
         encoding="utf-8",
@@ -191,46 +166,35 @@ poetry-plugin = "^1.2.3"
 
     tester.execute("poetry-plugin")
 
-    expected = """\
-The following plugins are already present in the pyproject.toml file and will be\
+    expected = f"""\
+The following packages are already present in the pyproject.toml and will be\
  skipped:
 
   • poetry-plugin
-
-If you want to update it to the latest compatible version,\
- you can use `poetry plugin update package`.
-If you prefer to upgrade it to the latest available version,\
- you can use `poetry plugin add package@latest`.
-
+{tester.command._hint_update_packages}
+Nothing to add.
 """
 
     assert tester.io.fetch_output() == expected
 
-    update_command: UpdateCommand = app.find("update")
-    # The update command should not have been called
-    assert update_command.poetry.file.parent != env.path
-
 
 def test_add_existing_plugin_updates_if_requested(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
-    mocker: MockerFixture,
+    repo: TestRepository,
+    installed: TestRepository,
 ):
-    env.path.joinpath("pyproject.toml").write_text(
-        """\
+    SelfCommand.get_default_system_pyproject_file().write_text(
+        f"""\
 [tool.poetry]
-name = "poetry"
+name = "poetry-instance"
 version = "1.2.0"
 description = "Python dependency management and packaging made easy."
-authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
-]
+authors = []
 
 [tool.poetry.dependencies]
 python = "^3.6"
+
+[tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
 """,
         encoding="utf-8",
@@ -245,6 +209,7 @@ poetry-plugin = "^1.2.3"
 
     expected = """\
 Using version ^2.3.4 for poetry-plugin
+
 Updating dependencies
 Resolving dependencies...
 
@@ -255,15 +220,13 @@ Package operations: 0 installs, 1 update, 0 removals
   • Updating poetry-plugin (1.2.3 -> 2.3.4)
 """
 
-    assert_plugin_add_result(tester, app, env, expected, "^2.3.4")
+    assert_plugin_add_result(tester, expected, "^2.3.4")
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
-    app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
-    installed: Repository,
+    repo: TestRepository,
+    installed: TestRepository,
 ):
     poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))
@@ -282,6 +245,7 @@ def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
 
     expected = """\
 Using version ^1.2.3 for poetry-plugin
+
 Updating dependencies
 Resolving dependencies...
 
@@ -293,4 +257,4 @@ Package operations: 1 install, 1 update, 0 removals
   • Installing poetry-plugin (1.2.3)
 """
 
-    assert_plugin_add_result(tester, app, env, expected, "^1.2.3")
+    assert_plugin_add_result(tester, expected, "^1.2.3")

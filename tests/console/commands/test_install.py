@@ -5,12 +5,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
@@ -34,6 +30,8 @@ readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+fizz = { version = "^1.0", optional = true }
+buzz = { version = "^2.0", optional = true }
 
 [tool.poetry.group.foo.dependencies]
 foo = "^1.0"
@@ -52,6 +50,10 @@ optional = true
 
 [tool.poetry.group.bam.dependencies]
 bam = "^1.4"
+
+[tool.poetry.extras]
+extras_a = [ "fizz" ]
+extras_b = [ "buzz" ]
 """
 
 
@@ -71,6 +73,7 @@ def tester(
     ("options", "groups"),
     [
         ("", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
+        ("--only-root", set()),
         (f"--only {MAIN_GROUP}", {MAIN_GROUP}),
         ("--only foo", {"foo"}),
         ("--only foo,bar", {"foo", "bar"}),
@@ -87,7 +90,6 @@ def tester(
         # deprecated options
         ("--default", {MAIN_GROUP}),
         ("--no-dev", {MAIN_GROUP}),
-        ("--dev-only", {"foo", "bar", "baz", "bim"}),
     ],
 )
 @pytest.mark.parametrize("with_root", [True, False])
@@ -110,7 +112,13 @@ def test_group_options_are_passed_to_the_installer(
     if not with_root:
         options = f"--no-root {options}"
 
-    tester.execute(options)
+    status_code = tester.execute(options)
+
+    if options == "--no-root --only-root":
+        assert status_code == 1
+        return
+    else:
+        assert status_code == 0
 
     package_groups = set(tester.command.poetry.package._dependency_groups.keys())
     installer_groups = set(tester.command.installer._groups)
@@ -136,3 +144,43 @@ def test_sync_option_is_passed_to_the_installer(
     tester.execute("--sync")
 
     assert tester.command.installer._requires_synchronization
+
+
+def test_no_all_extras_doesnt_populate_installer(
+    tester: CommandTester, mocker: MockerFixture
+):
+    """
+    Not passing --all-extras means the installer doesn't see any extras.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute()
+
+    assert not tester.command.installer._extras
+
+
+def test_all_extras_populates_installer(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --all-extras option results in extras passed to the installer.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--all-extras")
+
+    assert tester.command.installer._extras == ["extras_a", "extras_b"]
+
+
+def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --extras doesn't make sense with --all-extras.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    tester.execute("--extras foo --all-extras")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify explicit `--extras` while installing using"
+        " `--all-extras`.\n"
+    )

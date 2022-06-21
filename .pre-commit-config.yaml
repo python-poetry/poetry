@@ -3,7 +3,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.3.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -36,7 +36,6 @@ repos:
           - flake8-bugbear==22.4.25
           - flake8-comprehensions==3.10.0
           - flake8-eradicate==1.2.1
-          - flake8-no-pep420==2.3.0
           - flake8-quotes==3.3.1
           - flake8-simplify==0.19.2
           - flake8-tidy-imports==4.8.0
@@ -46,7 +45,7 @@ repos:
           - pep8-naming==0.12.1
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.1
+    rev: v2.34.0
     hooks:
       - id: pyupgrade
         args: [--py37-plus]

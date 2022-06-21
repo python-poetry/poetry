@@ -191,30 +191,30 @@ Installed plugin packages are automatically loaded when Poetry starts up.
 
 You have multiple ways to install plugins for Poetry
 
-### The `plugin add` command
+### The `self add` command
 
 This is the easiest way and should account for all the ways Poetry can be installed.
 
 ```bash
-poetry plugin add poetry-plugin
+poetry self add poetry-plugin
 ```
 
-The `plugin add` command will ensure that the plugin is compatible with the current version of Poetry
+The `self add` command will ensure that the plugin is compatible with the current version of Poetry
 and install the needed packages for the plugin to work.
 
-The package specification formats supported by the `plugin add` command are the same as the ones supported
+The package specification formats supported by the `self add` command are the same as the ones supported
 by the [`add` command]({{< relref "cli#add" >}}).
 
-If you no longer need a plugin and want to uninstall it, you can use the `plugin remove` command.
+If you no longer need a plugin and want to uninstall it, you can use the `self remove` command.
 
 ```shell
-poetry plugin remove poetry-plugin
+poetry self remove poetry-plugin
 ```
 
 You can also list all currently installed plugins by running:
 
 ```shell
-poetry plugin show
+poetry self show
 ```
 
 ### With `pipx inject`
@@ -233,14 +233,19 @@ pipx runpip poetry uninstall poetry-plugin
 
 ### With `pip`
 
-If you used `pip` to install Poetry you can add the plugin packages via the `pip install` command.
+The `pip` binary in Poetry's virtual environment can also be used to install and remove plugins.
+The environment variable `$POETRY_HOME` here is used to represent the path to the virtual environment.
+The [installation instructions](/docs/) can be referenced if you are not
+sure where Poetry has been installed.
+
+To add a plugin, you can use `pip install`:
 
 ```shell
-pip install --user poetry-plugin
+$POETRY_HOME/bin/pip install --user poetry-plugin
 ```
 
 If you want to uninstall a plugin, you can run:
 
 ```shell
-pip uninstall poetry-plugin
+$POETRY_HOME/bin/pip uninstall poetry-plugin
 ```

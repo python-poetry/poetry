@@ -24,6 +24,7 @@ from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import download_file
 from poetry.utils.patterns import wheel_file_re
 
@@ -31,6 +32,7 @@ from poetry.utils.patterns import wheel_file_re
 if TYPE_CHECKING:
     from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
+    from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
 class HTTPRepository(CachedRepository, ABC):
@@ -59,18 +61,8 @@ class HTTPRepository(CachedRepository, ABC):
         return self._url
 
     @property
-    def cert(self) -> Path | None:
-        cert = self._authenticator.get_certs_for_url(self.url).get("verify")
-        if cert:
-            return Path(cert)
-        return None
-
-    @property
-    def client_cert(self) -> Path | None:
-        cert = self._authenticator.get_certs_for_url(self.url).get("cert")
-        if cert:
-            return Path(cert)
-        return None
+    def certificates(self) -> RepositoryCertificateConfig:
+        return self._authenticator.get_certs_for_url(self.url)
 
     @property
     def authenticated_url(self) -> str:
@@ -269,7 +261,9 @@ class HTTPRepository(CachedRepository, ABC):
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
         try:
-            response: requests.Response = self.session.get(url, raise_for_status=False)
+            response: requests.Response = self.session.get(
+                url, raise_for_status=False, timeout=REQUESTS_TIMEOUT
+            )
             if response.status_code in (401, 403):
                 self._log(
                     f"Authorization error accessing {url}",

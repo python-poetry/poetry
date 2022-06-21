@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -21,12 +22,11 @@ from requests_toolbelt.multipart import MultipartEncoderMonitor
 from urllib3 import util
 
 from poetry.__version__ import __version__
+from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.io.null_io import NullIO
 
     from poetry.poetry import Poetry
@@ -114,15 +114,14 @@ class Uploader:
     def upload(
         self,
         url: str,
-        cert: Path | None = None,
+        cert: Path | bool = True,
         client_cert: Path | None = None,
         dry_run: bool = False,
         skip_existing: bool = False,
     ) -> None:
         session = self.make_session()
 
-        if cert:
-            session.verify = str(cert)
+        session.verify = str(cert) if isinstance(cert, Path) else cert
 
         if client_cert:
             session.cert = str(client_cert)
@@ -264,6 +263,7 @@ class Uploader:
                         data=monitor,
                         allow_redirects=False,
                         headers={"Content-Type": monitor.content_type},
+                        timeout=REQUESTS_TIMEOUT,
                     )
                 if resp is None or 200 <= resp.status_code < 300:
                     bar.set_format(
@@ -322,6 +322,7 @@ class Uploader:
             data=encoder,
             allow_redirects=False,
             headers={"Content-Type": encoder.content_type},
+            timeout=REQUESTS_TIMEOUT,
         )
 
         resp.raise_for_status()

@@ -99,14 +99,14 @@ def test_disjoint_root_constraints_path_dependencies(
     provider.set_package_python_versions("^3.7")
     fixtures = Path(__file__).parent.parent.parent / "fixtures"
     project_dir = fixtures.joinpath("with_conditional_path_deps")
-    path1 = project_dir / "demo_one"
-    root.add_dependency(Factory.create_dependency("demo", {"path": path1}))
-    path2 = project_dir / "demo_two"
-    root.add_dependency(Factory.create_dependency("demo", {"path": path2}))
+    dependency1 = Factory.create_dependency("demo", {"path": project_dir / "demo_one"})
+    root.add_dependency(dependency1)
+    dependency2 = Factory.create_dependency("demo", {"path": project_dir / "demo_two"})
+    root.add_dependency(dependency2)
 
     error = (
-        f"Because myapp depends on both demo (1.2.3 {path1.as_posix()}) "
-        f"and demo (1.2.3 {path2.as_posix()}), version solving failed."
+        f"Because myapp depends on both {str(dependency1).replace('*', '1.2.3')} "
+        f"and {str(dependency2).replace('*', '1.2.3')}, version solving failed."
     )
 
     check_solver_result(root, provider, error=error)

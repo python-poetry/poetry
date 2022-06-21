@@ -12,6 +12,7 @@ from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.repositories.lockfile_repository import LockfileRepository
 from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import pluralize
@@ -107,9 +108,7 @@ class Installer:
             self._write_lock = False
             self._execute_operations = False
 
-        local_repo = Repository()
-
-        return self._do_install(local_repo)
+        return self._do_install()
 
     def dry_run(self, dry_run: bool = True) -> Installer:
         self._dry_run = dry_run
@@ -204,14 +203,14 @@ class Installer:
         ):
             ops = solver.solve(use_latest=[]).calculate_operations()
 
-        local_repo = Repository()
-        self._populate_local_repo(local_repo, ops)
+        lockfile_repo = LockfileRepository()
+        self._populate_lockfile_repo(lockfile_repo, ops)
 
-        self._write_lock_file(local_repo, force=True)
+        self._write_lock_file(lockfile_repo, force=True)
 
         return 0
 
-    def _do_install(self, local_repo: Repository) -> int:
+    def _do_install(self) -> int:
         from poetry.puzzle.solver import Solver
 
         locked_repository = Repository()
@@ -266,10 +265,11 @@ class Installer:
             # currently installed
             ops = self._get_operations_from_lock(locked_repository)
 
-        self._populate_local_repo(local_repo, ops)
+        lockfile_repo = LockfileRepository()
+        self._populate_lockfile_repo(lockfile_repo, ops)
 
         if self._update:
-            self._write_lock_file(local_repo)
+            self._write_lock_file(lockfile_repo)
 
             if self._lock:
                 # If we are only in lock mode, no need to go any further
@@ -292,8 +292,8 @@ class Installer:
         # Making a new repo containing the packages
         # newly resolved and the ones from the current lock file
         repo = Repository()
-        for package in local_repo.packages + locked_repository.packages:
-            if not repo.has_package(package):
+        for package in lockfile_repo.packages + locked_repository.packages:
+            if not package.is_direct_origin() and not repo.has_package(package):
                 repo.add_package(package)
 
         pool.add_repository(repo)
@@ -318,7 +318,7 @@ class Installer:
 
             transaction = Transaction(
                 locked_repository.packages,
-                [(package, 0) for package in local_repo.packages],
+                [(package, 0) for package in lockfile_repo.packages],
                 installed_packages=self._installed_repository.packages,
                 root_package=root,
             )
@@ -332,13 +332,13 @@ class Installer:
         # We need to filter operations so that packages
         # not compatible with the current system,
         # or optional and not requested, are dropped
-        self._filter_operations(ops, local_repo)
+        self._filter_operations(ops, lockfile_repo)
 
         # Execute operations
         return self._execute(ops)
 
-    def _write_lock_file(self, repo: Repository, force: bool = True) -> None:
-        if force or (self._update and self._write_lock):
+    def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
+        if self._write_lock and (force or self._update):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:
@@ -460,8 +460,8 @@ class Installer:
 
         self._installer.remove(operation.package)
 
-    def _populate_local_repo(
-        self, local_repo: Repository, ops: Sequence[Operation]
+    def _populate_lockfile_repo(
+        self, repo: LockfileRepository, ops: Sequence[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
@@ -471,8 +471,8 @@ class Installer:
             else:
                 package = op.package
 
-            if not local_repo.has_package(package):
-                local_repo.add_package(package)
+            if not repo.has_package(package):
+                repo.add_package(package)
 
     def _get_operations_from_lock(
         self, locked_repository: Repository

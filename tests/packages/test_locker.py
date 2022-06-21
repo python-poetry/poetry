@@ -55,7 +55,26 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         source_reference="develop",
         source_resolved_reference="123456",
     )
-    packages = [package_a2, package_a, get_package("B", "1.2"), package_git]
+    package_url_linux = Package(
+        "url-package",
+        "1.0",
+        source_type="url",
+        source_url="https://example.org/url-package-1.0-cp39-manylinux_2_17_x86_64.whl",
+    )
+    package_url_win32 = Package(
+        "url-package",
+        "1.0",
+        source_type="url",
+        source_url="https://example.org/url-package-1.0-cp39-win_amd64.whl",
+    )
+    packages = [
+        package_a2,
+        package_a,
+        get_package("B", "1.2"),
+        package_git,
+        package_url_win32,
+        package_url_linux,
+    ]
 
     locker.set_lock_data(root, packages)
 
@@ -105,6 +124,30 @@ url = "https://github.com/python-poetry/poetry.git"
 reference = "develop"
 resolved_reference = "123456"
 
+[[package]]
+name = "url-package"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "url"
+url = "https://example.org/url-package-1.0-cp39-manylinux_2_17_x86_64.whl"
+
+[[package]]
+name = "url-package"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "url"
+url = "https://example.org/url-package-1.0-cp39-win_amd64.whl"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
@@ -118,6 +161,7 @@ A = [
 ]
 B = []
 git-package = []
+url-package = []
 """
 
     assert content == expected

@@ -167,9 +167,11 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
-{{% note %}}
-The `--dev-only` option is now deprecated. You should use the `--only dev` notation instead.
-{{% /note %}}
+To only install the project itself with no dependencies, use the `--only-root` flag.
+
+```bash
+poetry install --only-root
+```
 
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
@@ -190,11 +192,13 @@ poetry install --only dev
 ```
 
 You can also specify the extras you want installed
-by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info)
+by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info).
+Pass `--all-extras` to install all defined extras for a project.
 
 ```bash
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
+poetry install --all-extras
 ```
 
 By default `poetry` will install your project's package every time you run `install`:
@@ -222,13 +226,14 @@ option is used.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
+* `--only-root`: Install only the root project, exclude all dependencies.
 * `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--all-extras`: Install all extra features (conflicts with --extras).
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**)
-* `--dev-only`: Only install dev dependencies. (**Deprecated**)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
 
 {{% note %}}
@@ -283,17 +288,32 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
-You also can specify a constraint when adding a package, like so:
+You can also specify a constraint when adding a package:
 
 ```bash
+# Allow >=2.0.5, <3.0.0 versions
 poetry add pendulum@^2.0.5
+
+# Allow >=2.0.5, <2.1.0 versions
+poetry add pendulum@~2.0.5
+
+# Allow >=2.0.5 versions, without upper bound
 poetry add "pendulum>=2.0.5"
+
+# Allow only 2.0.5 version
+poetry add pendulum==2.0.5
 ```
+
+{{% note %}}
+See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more information about the `@` operator.
+{{% /note %}}
 
 If you try to add a package that is already present, you will get an error.
 However, if you specify a constraint, like above, the dependency will be updated
-by using the specified constraint. If you want to get the latest version of an already
-present dependency you can use the special `latest` constraint:
+by using the specified constraint.
+
+If you want to get the latest version of an already
+present dependency, you can use the special `latest` constraint:
 
 ```bash
 poetry add pendulum@latest
@@ -314,8 +334,7 @@ or use ssh instead of https:
 ```bash
 poetry add git+ssh://git@github.com/sdispater/pendulum.git
 
-or alternatively:
-
+# or alternatively:
 poetry add git+ssh://git@github.com:sdispater/pendulum.git
 ```
 
@@ -326,8 +345,7 @@ you can specify it when using `add`:
 poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 
-or using SSH instead:
-
+# or using SSH instead:
 poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
@@ -355,7 +373,7 @@ my-package = {path = "../my/path", develop = true}
 ```
 
 {{% note %}}
-Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicitly,
 to make sure the behavior is the same for all poetry versions.
 {{% /note %}}
 
@@ -710,58 +728,11 @@ To only remove a specific package from a cache, you have to specify the cache en
 poetry cache clear pypi:requests:2.24.0
 ```
 
-## plugin
-
-The `plugin` namespace regroups sub commands to manage Poetry plugins.
-
-### `plugin add`
-
-The `plugin add` command installs Poetry plugins and make them available at runtime.
-
-For example, to install the `poetry-plugin` plugin, you can run:
-
-```bash
-poetry plugin add poetry-plugin
-```
-
-The package specification formats supported by the `plugin add` command are the same as the ones supported
-by the [`add` command](#add).
-
-If you just want to check what would happen by installing a plugin, you can use the `--dry-run` option
-
-```bash
-poetry plugin add poetry-plugin --dry-run
-```
-
-#### Options
-
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
-
-### `plugin show`
-
-The `plugin show` command lists all the currently installed plugins.
-
-```bash
-poetry plugin show
-```
-
-### `plugin remove`
-
-The `plugin remove` command removes installed plugins.
-
-```bash
-poetry plugin remove poetry-plugin
-```
-
-#### Options
-
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
-
 ## source
 
 The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
 
-### `source add`
+### source add
 
 The `source add` command adds source configuration to the project.
 
@@ -784,7 +755,7 @@ You cannot use the name `pypi` as it is reserved for use by the default PyPI sou
 You cannot set a source as both `default` and `secondary`.
 {{% /note %}}
 
-### `source show`
+### source show
 
 The `source show` command displays information on all configured sources for the project.
 
@@ -802,7 +773,7 @@ poetry source show pypi-test
 This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
 {{% /note %}}
 
-### `source remove`
+### source remove
 
 The `source remove` command removes a configured source from your `pyproject.toml`.
 
@@ -851,3 +822,143 @@ The `list` command displays all the available Poetry commands.
 ```bash
 poetry list
 ```
+
+## self
+
+The `self` namespace regroups sub commands to manage the Poetry installation itself.
+
+{{% note %}}
+Use of these commands will create the required `pyproject.toml` and `poetry.lock` files in your
+[configuration directory]({{< relref "configuration" >}}).
+{{% /note %}}
+
+### self add
+
+The `self add` command installs Poetry plugins and make them available at runtime. Additionally, it can
+also be used to upgrade Poetry's own dependencies or inject additional packages into the runtime
+environment
+
+{{% note %}}
+The `self add` command works exactly like the [`add` command](#add). However, is different in that the packages
+managed are for Poetry's runtime environment.
+
+The package specification formats supported by the `self add` command are the same as the ones supported
+by the [`add` command](#add).
+{{% /note %}}
+
+For example, to install the `poetry-plugin-export` plugin, you can run:
+
+```bash
+poetry self add poetry-plugin-export
+```
+
+To update to the latest `poetry-core` version, you can run:
+
+```bash
+poetry self add poetry-core@latest
+```
+
+To add a keyring provider `artifacts-keyring`, you can run:
+
+```bash
+poetry self add artifacts-keyring
+```
+
+#### Options
+
+* `--editable (-e)`: Add vcs/path dependencies as editable.
+* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+* `--allow-prereleases`: Accept prereleases.
+* `--source`: Name of the source to use to install the package.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+
+### self update
+
+The `self update` command updates Poetry version in its current runtime environment.
+
+{{% note %}}
+The `self update` command works exactly like the [`update` command](#update). However,
+is different in that the packages managed are for Poetry's runtime environment.
+{{% /note %}}
+
+```bash
+poetry self update
+```
+
+#### Options
+
+* `--preview`: Allow the installation of pre-release versions.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+
+### self lock
+
+The `self lock` command reads this Poetry installation's system `pyproject.toml` file. The system
+dependencies are locked in the corresponding `poetry.lock` file.
+
+```bash
+poetry self lock
+```
+
+#### Options
+
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--no-update`: Do not update locked versions, only refresh lock file.
+
+### self show
+
+The `self show` command behaves similar to the show command, but
+working within Poetry's runtime environment. This lists all packages installed within
+the Poetry install environment.
+
+To show only additional packages that have been added via self add and their
+dependencies use `self show --addons`.
+
+```bash
+poetry self show
+```
+
+#### Options
+
+* `--addons`: List only add-on packages installed.
+* `--tree`: List the dependencies as a tree.
+* `--latest (-l)`: Show the latest version.
+* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+
+### self show plugins
+
+The `self show plugins` command lists all the currently installed plugins.
+
+```bash
+poetry self show plugins
+```
+
+### self remove
+
+The `self remove` command removes an installed addon package.
+
+```bash
+poetry self remove poetry-plugin-export
+```
+
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+
+### self install
+
+The `self install` command ensures all additional packages specified are installed in the current
+runtime environment.
+
+{{% note %}}
+The `self install` command works similar to the [`install` command](#install). However,
+is different in that the packages managed are for Poetry's runtime environment.
+{{% /note %}}
+
+```bash
+poetry self install --sync
+```
+
+#### Options
+
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).

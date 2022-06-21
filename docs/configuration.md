@@ -115,6 +115,34 @@ This also works for secret settings, like credentials:
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
 
+## Default Directories
+
+Poetry uses the following default directories:
+
+### Config Directory
+
+- Linux: `$XDG_CONFIG_HOME/pypoetry` or `~/.config/pypoetry`
+- Windows: `%APPDATA%\pypoetry`
+- MacOS: `~/Library/Preferences/pypoetry`
+
+You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
+
+### Data Directory
+
+- Linux: `$XDG_DATA_HOME/pypoetry` or `~/.local/share/pypoetry`
+- Windows: `%APPDATA%\pypoetry`
+- MacOS: `~/Library/Application Support/pypoetry`
+
+You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
+
+### Cache Directory
+
+- Linux: `$XDG_CACHE_HOME/pypoetry` or `~/.cache/pypoetry`
+- Windows: `%APPDATA%\pypoetry\Cache`
+- MacOS: `~/Library/Caches/pypoetry`
+
+You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
+
 ## Available settings
 
 ### `cache-dir`
@@ -128,6 +156,20 @@ Defaults to one of the following directories:
 - macOS:   `~/Library/Caches/pypoetry`
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
+
+### `experimental.system-git-client`
+
+**Type**: boolean
+
+*Introduced in 1.2.0*
+
+Use system git client backend for git related tasks.
+
+Poetry uses `dulwich` by default for git related tasks to not rely on the availability of a git client.
+
+If you encounter any problems with it, set to `true` to use the system git backend.
+
+Defaults to `false`.
 
 ### `installer.parallel`
 
@@ -315,11 +357,14 @@ for more information.
 
 ### `certificates.<name>.cert`:
 
-**Type**: string
+**Type**: string | bool
 
 Set custom certificate authority for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
 for more information.
+
+This configuration can be set to `false`, if TLS certificate verification should be skipped for this
+repository.
 
 ### `certificates.<name>.client-cert`:
 
