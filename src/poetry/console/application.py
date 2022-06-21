@@ -264,8 +264,6 @@ class Application(BaseApplication):  # type: ignore[misc]
         for name in loggers:
             logger = logging.getLogger(name)
 
-            logger.handlers = [handler]
-
             _level = level
             # The builders loggers are special and we can actually
             # start at the INFO level.
