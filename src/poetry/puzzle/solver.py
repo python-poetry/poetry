@@ -24,12 +24,8 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.packages.directory_dependency import DirectoryDependency
-    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
-    from poetry.core.packages.url_dependency import URLDependency
-    from poetry.core.packages.vcs_dependency import VCSDependency
 
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import Pool
@@ -248,22 +244,8 @@ class PackageNode(DFSNode):
         package: Package,
         packages: list[Package],
         previous: PackageNode | None = None,
-        previous_dep: None
-        | (
-            DirectoryDependency
-            | FileDependency
-            | URLDependency
-            | VCSDependency
-            | Dependency
-        ) = None,
-        dep: None
-        | (
-            DirectoryDependency
-            | FileDependency
-            | URLDependency
-            | VCSDependency
-            | Dependency
-        ) = None,
+        previous_dep: Dependency | None = None,
+        dep: Dependency | None = None,
     ) -> None:
         self.package = package
         self.packages = packages

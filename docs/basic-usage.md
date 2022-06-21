@@ -215,7 +215,7 @@ For libraries it is not necessary to commit the lock file.
 
 ### Installing dependencies only
 
-The current project is installed in [editable](https://pip.pypa.io/en/stable/cli/pip_install/#install-editable) mode by default.
+The current project is installed in [editable](https://pip.pypa.io/en/stable/topics/local-project-installs/) mode by default.
 
 If you want to install the dependencies only, run the `install` command with the `--no-root` flag:
 
