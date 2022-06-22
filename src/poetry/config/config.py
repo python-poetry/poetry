@@ -130,11 +130,10 @@ class Config:
     }
 
     def __init__(
-        self, use_environment: bool = True, base_dir: Path | None = None
+        self, use_environment: bool = True, _base_dir: Path | None = None
     ) -> None:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
-        self._base_dir = base_dir
         self._config_source: ConfigSource = DictConfigSource()
         self._auth_config_source: ConfigSource = DictConfigSource()
 
