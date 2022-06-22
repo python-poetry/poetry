@@ -5,6 +5,12 @@ authors = [
     "Foo <foo@bar.com>"
 ]
 license = "INVALID"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Clowns",
+    "Natural Language :: Ukranian",
+    "Topic :: Communications :: Chat :: AOL Instant Messenger",
+]
 
 [tool.poetry.dependencies]
 python = "*"
