@@ -129,9 +129,7 @@ class Config:
         "installer": {"parallel": True, "max-workers": None, "no-binary": None},
     }
 
-    def __init__(
-        self, use_environment: bool = True, _base_dir: Path | None = None
-    ) -> None:
+    def __init__(self, use_environment: bool = True) -> None:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
         self._config_source: ConfigSource = DictConfigSource()
