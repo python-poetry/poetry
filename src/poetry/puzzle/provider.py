@@ -138,7 +138,7 @@ class Provider:
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
         self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
-        self._deferred_cache: dict[Dependency, Package] = {}
+        self._deferred_cache: dict[int, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
         self._installed = installed
