@@ -221,6 +221,42 @@ class Provider:
         )
         return packages
 
+    def search_for_direct_origin_dependency(self, dependency: Dependency) -> Package:
+        cached = self._deferred_cache.get(dependency)
+        if cached is not None:
+            return cached
+
+        if dependency.is_vcs():
+            dependency = cast(VCSDependency, dependency)
+            package = self.search_for_vcs(dependency)
+            dependency._source_reference = package.source_reference
+            dependency._source_resolved_reference = package.source_resolved_reference
+            dependency._source_subdirectory = package.source_subdirectory
+
+        elif dependency.is_file():
+            dependency = cast(FileDependency, dependency)
+            package = self.search_for_file(dependency)
+
+        elif dependency.is_directory():
+            dependency = cast(DirectoryDependency, dependency)
+            package = self.search_for_directory(dependency)
+
+        elif dependency.is_url():
+            dependency = cast(URLDependency, dependency)
+            package = self.search_for_url(dependency)
+
+        else:
+            raise RuntimeError(
+                f"Unknown direct dependency type {dependency.source_type}"
+            )
+
+        dependency._constraint = package.version
+        dependency._pretty_constraint = package.version.text
+
+        self._deferred_cache[dependency] = package
+
+        return package
+
     def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
         """
         Search for the specifications that match the given dependency.
@@ -231,18 +267,9 @@ class Provider:
         if dependency.is_root:
             return PackageCollection(dependency, [self._package])
 
-        if dependency.is_vcs():
-            dependency = cast(VCSDependency, dependency)
-            packages = self.search_for_vcs(dependency)
-        elif dependency.is_file():
-            dependency = cast(FileDependency, dependency)
-            packages = self.search_for_file(dependency)
-        elif dependency.is_directory():
-            dependency = cast(DirectoryDependency, dependency)
-            packages = self.search_for_directory(dependency)
-        elif dependency.is_url():
-            dependency = cast(URLDependency, dependency)
-            packages = self.search_for_url(dependency)
+        if dependency.is_direct_origin():
+            packages = [self.search_for_direct_origin_dependency(dependency)]
+
         else:
             packages = self._pool.find_packages(dependency)
 
@@ -259,7 +286,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: VCSDependency) -> list[Package]:
+    def search_for_vcs(self, dependency: VCSDependency) -> Package:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -281,16 +308,7 @@ class Provider:
 
         package.develop = dependency.develop
 
-        dependency._constraint = package.version
-        dependency._pretty_constraint = package.version.text
-
-        dependency._source_reference = package.source_reference
-        dependency._source_resolved_reference = package.source_resolved_reference
-        dependency._source_subdirectory = package.source_subdirectory
-
-        self._deferred_cache[dependency] = package
-
-        return [package]
+        return package
 
     @staticmethod
     def get_package_from_vcs(
@@ -314,18 +332,8 @@ class Provider:
             source_root=source_root,
         )
 
-    def search_for_file(self, dependency: FileDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            _package = self._deferred_cache[dependency]
-
-            package = _package.clone()
-        else:
-            package = self.get_package_from_file(dependency.full_path)
-
-            dependency._constraint = package.version
-            dependency._pretty_constraint = package.version.text
-
-            self._deferred_cache[dependency] = package
+    def search_for_file(self, dependency: FileDependency) -> Package:
+        package = self.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -336,7 +344,7 @@ class Provider:
             {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
         ]
 
-        return [package]
+        return package
 
     @classmethod
     def get_package_from_file(cls, file_path: Path) -> Package:
@@ -351,18 +359,8 @@ class Provider:
 
         return package
 
-    def search_for_directory(self, dependency: DirectoryDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            _package = self._deferred_cache[dependency]
-
-            package = _package.clone()
-        else:
-            package = self.get_package_from_directory(dependency.full_path)
-
-            dependency._constraint = package.version
-            dependency._pretty_constraint = package.version.text
-
-            self._deferred_cache[dependency] = package
+    def search_for_directory(self, dependency: DirectoryDependency) -> Package:
+        package = self.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -371,16 +369,13 @@ class Provider:
         if dependency.base is not None:
             package.root_dir = dependency.base
 
-        return [package]
+        return package
 
     @classmethod
     def get_package_from_directory(cls, directory: Path) -> Package:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
-    def search_for_url(self, dependency: URLDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            return [self._deferred_cache[dependency]]
-
+    def search_for_url(self, dependency: URLDependency) -> Package:
         package = self.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -393,12 +388,7 @@ class Provider:
                 for extra_dep in package.extras[extra]:
                     package.add_dependency(extra_dep)
 
-        dependency._constraint = package.version
-        dependency._pretty_constraint = package.version.text
-
-        self._deferred_cache[dependency] = package
-
-        return [package]
+        return package
 
     @classmethod
     def get_package_from_url(cls, url: str) -> Package:
@@ -538,14 +528,8 @@ class Provider:
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies
             for r in requires:
-                if r.is_directory():
-                    self.search_for_directory(r)
-                elif r.is_file():
-                    self.search_for_file(r)
-                elif r.is_vcs():
-                    self.search_for_vcs(r)
-                elif r.is_url():
-                    self.search_for_url(r)
+                if r.is_direct_origin():
+                    self.search_for_direct_origin_dependency(r)
 
         optional_dependencies = []
         _dependencies = []

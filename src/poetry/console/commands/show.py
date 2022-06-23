@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.console.commands.group_command import GroupCommand
 from poetry.utils.helpers import canonicalize_name
@@ -499,16 +495,7 @@ lists all packages available."""
             for dep in requires:
                 if dep.name == package.name:
                     provider = Provider(root, self.poetry.pool, NullIO())
-
-                    if dep.is_vcs():
-                        dep = cast(VCSDependency, dep)
-                        return provider.search_for_vcs(dep)[0]
-                    if dep.is_file():
-                        dep = cast(FileDependency, dep)
-                        return provider.search_for_file(dep)[0]
-                    if dep.is_directory():
-                        dep = cast(DirectoryDependency, dep)
-                        return provider.search_for_directory(dep)[0]
+                    return provider.search_for_direct_origin_dependency(dep)
 
         name = package.name
         selector = VersionSelector(self.poetry.pool)
