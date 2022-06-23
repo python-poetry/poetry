@@ -288,7 +288,7 @@ class Provider:
         dependency._source_resolved_reference = package.source_resolved_reference
         dependency._source_subdirectory = package.source_subdirectory
 
-        self._deferred_cache[dependency] = package
+        self._deferred_cache[hash(dependency)] = package
 
         return [package]
 
@@ -315,8 +315,8 @@ class Provider:
         )
 
     def search_for_file(self, dependency: FileDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            _package = self._deferred_cache[dependency]
+        if hash(dependency) in self._deferred_cache:
+            _package = self._deferred_cache[hash(dependency)]
 
             package = _package.clone()
         else:
@@ -325,7 +325,7 @@ class Provider:
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
-            self._deferred_cache[dependency] = package
+            self._deferred_cache[hash(dependency)] = package
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -352,8 +352,8 @@ class Provider:
         return package
 
     def search_for_directory(self, dependency: DirectoryDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            _package = self._deferred_cache[dependency]
+        if hash(dependency) in self._deferred_cache:
+            _package = self._deferred_cache[hash(dependency)]
 
             package = _package.clone()
         else:
@@ -362,7 +362,7 @@ class Provider:
             dependency._constraint = package.version
             dependency._pretty_constraint = package.version.text
 
-            self._deferred_cache[dependency] = package
+            self._deferred_cache[hash(dependency)] = package
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -378,8 +378,8 @@ class Provider:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def search_for_url(self, dependency: URLDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            return [self._deferred_cache[dependency]]
+        if hash(dependency) in self._deferred_cache:
+            return [self._deferred_cache[hash(dependency)]]
 
         package = self.get_package_from_url(dependency.url)
 
@@ -396,7 +396,7 @@ class Provider:
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
 
-        self._deferred_cache[dependency] = package
+        self._deferred_cache[hash(dependency)] = package
 
         return [package]
 
