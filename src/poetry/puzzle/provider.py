@@ -222,16 +222,13 @@ class Provider:
         return packages
 
     def search_for_direct_origin_dependency(self, dependency: Dependency) -> Package:
-        cached = self._deferred_cache.get(dependency)
-        if cached is not None:
-            return cached
+        package = self._deferred_cache.get(dependency)
+        if package is not None:
+            pass
 
-        if dependency.is_vcs():
+        elif dependency.is_vcs():
             dependency = cast(VCSDependency, dependency)
             package = self._search_for_vcs(dependency)
-            dependency._source_reference = package.source_reference
-            dependency._source_resolved_reference = package.source_resolved_reference
-            dependency._source_subdirectory = package.source_subdirectory
 
         elif dependency.is_file():
             dependency = cast(FileDependency, dependency)
@@ -249,6 +246,11 @@ class Provider:
             raise RuntimeError(
                 f"Unknown direct dependency type {dependency.source_type}"
             )
+
+        if dependency.is_vcs():
+            dependency._source_reference = package.source_reference
+            dependency._source_resolved_reference = package.source_resolved_reference
+            dependency._source_subdirectory = package.source_subdirectory
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
