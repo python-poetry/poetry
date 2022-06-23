@@ -228,22 +228,22 @@ class Provider:
 
         if dependency.is_vcs():
             dependency = cast(VCSDependency, dependency)
-            package = self.search_for_vcs(dependency)
+            package = self._search_for_vcs(dependency)
             dependency._source_reference = package.source_reference
             dependency._source_resolved_reference = package.source_resolved_reference
             dependency._source_subdirectory = package.source_subdirectory
 
         elif dependency.is_file():
             dependency = cast(FileDependency, dependency)
-            package = self.search_for_file(dependency)
+            package = self._search_for_file(dependency)
 
         elif dependency.is_directory():
             dependency = cast(DirectoryDependency, dependency)
-            package = self.search_for_directory(dependency)
+            package = self._search_for_directory(dependency)
 
         elif dependency.is_url():
             dependency = cast(URLDependency, dependency)
-            package = self.search_for_url(dependency)
+            package = self._search_for_url(dependency)
 
         else:
             raise RuntimeError(
@@ -286,7 +286,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: VCSDependency) -> Package:
+    def _search_for_vcs(self, dependency: VCSDependency) -> Package:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -332,7 +332,7 @@ class Provider:
             source_root=source_root,
         )
 
-    def search_for_file(self, dependency: FileDependency) -> Package:
+    def _search_for_file(self, dependency: FileDependency) -> Package:
         package = self.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -359,7 +359,7 @@ class Provider:
 
         return package
 
-    def search_for_directory(self, dependency: DirectoryDependency) -> Package:
+    def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
         package = self.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -375,7 +375,7 @@ class Provider:
     def get_package_from_directory(cls, directory: Path) -> Package:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
-    def search_for_url(self, dependency: URLDependency) -> Package:
+    def _search_for_url(self, dependency: URLDependency) -> Package:
         package = self.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
