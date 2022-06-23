@@ -74,15 +74,6 @@ class Publisher:
         resolved_cert = cert or certificates.cert or certificates.verify
         resolved_client_cert = client_cert or certificates.client_cert
 
-        # Requesting missing credentials but only if there is not a client cert defined.
-        if not resolved_client_cert and hasattr(self._io, "ask"):
-            if username is None:
-                username = self._io.ask("Username:")
-
-            # skip password input if no username is provided, assume unauthenticated
-            if username and password is None:
-                password = self._io.ask_hidden("Password:")
-
         self._uploader.auth(username, password)
 
         if repository_name == "pypi":
