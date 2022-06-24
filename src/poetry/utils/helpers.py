@@ -13,6 +13,8 @@ from typing import Any
 from typing import Iterator
 from typing import Mapping
 
+from poetry.utils.constants import REQUESTS_TIMEOUT
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -89,7 +91,7 @@ def download_file(
 
     get = requests.get if not session else session.get
 
-    response = get(url, stream=True)
+    response = get(url, stream=True, timeout=REQUESTS_TIMEOUT)
     response.raise_for_status()
 
     set_indicator = False

@@ -288,17 +288,32 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
-You also can specify a constraint when adding a package, like so:
+You can also specify a constraint when adding a package:
 
 ```bash
+# Allow >=2.0.5, <3.0.0 versions
 poetry add pendulum@^2.0.5
+
+# Allow >=2.0.5, <2.1.0 versions
+poetry add pendulum@~2.0.5
+
+# Allow >=2.0.5 versions, without upper bound
 poetry add "pendulum>=2.0.5"
+
+# Allow only 2.0.5 version
+poetry add pendulum==2.0.5
 ```
+
+{{% note %}}
+See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more information about the `@` operator.
+{{% /note %}}
 
 If you try to add a package that is already present, you will get an error.
 However, if you specify a constraint, like above, the dependency will be updated
-by using the specified constraint. If you want to get the latest version of an already
-present dependency you can use the special `latest` constraint:
+by using the specified constraint.
+
+If you want to get the latest version of an already
+present dependency, you can use the special `latest` constraint:
 
 ```bash
 poetry add pendulum@latest
@@ -319,8 +334,7 @@ or use ssh instead of https:
 ```bash
 poetry add git+ssh://git@github.com/sdispater/pendulum.git
 
-or alternatively:
-
+# or alternatively:
 poetry add git+ssh://git@github.com:sdispater/pendulum.git
 ```
 
@@ -331,8 +345,7 @@ you can specify it when using `add`:
 poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 
-or using SSH instead:
-
+# or using SSH instead:
 poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```

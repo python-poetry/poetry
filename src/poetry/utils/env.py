@@ -14,6 +14,7 @@ import sys
 import sysconfig
 import warnings
 
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -1733,7 +1734,7 @@ class VirtualEnv(Env):
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super().execute(bin, *args, **kwargs)
 
-    @contextlib.contextmanager
+    @contextmanager
     def temp_environ(self) -> Iterator[None]:
         environ = dict(os.environ)
         try:
@@ -1867,7 +1868,7 @@ class NullEnv(SystemEnv):
         return bin
 
 
-@contextlib.contextmanager
+@contextmanager
 def ephemeral_environment(
     executable: str | Path | None = None,
     flags: dict[str, bool] | None = None,
@@ -1883,7 +1884,7 @@ def ephemeral_environment(
         yield VirtualEnv(venv_dir, venv_dir)
 
 
-@contextlib.contextmanager
+@contextmanager
 def build_environment(
     poetry: CorePoetry, env: Env | None = None, io: IO | None = None
 ) -> Iterator[Env]:
