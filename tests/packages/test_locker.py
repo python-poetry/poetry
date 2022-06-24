@@ -17,7 +17,8 @@ from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
-from poetry.packages.locker import Locker, GENERATED_COMMENT
+from poetry.packages.locker import GENERATED_COMMENT
+from poetry.packages.locker import Locker
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
