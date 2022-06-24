@@ -165,7 +165,7 @@ A = [
 B = []
 git-package = []
 url-package = []
-"""
+"""  # noqa: E800
 
     assert content == expected
 
@@ -201,7 +201,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 [metadata.files]
 cachecontrol = []
-"""
+"""  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
 
@@ -266,7 +266,7 @@ content-hash = "123456789"
 "a" = []
 "b" = []
 "c" = []
-"""
+"""  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
 
@@ -333,7 +333,7 @@ content-hash = "123456789"
 [metadata.files]
 "a" = []
 "b" = []
-"""
+"""  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
 
@@ -378,7 +378,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
 
     assert content == expected
 
@@ -421,7 +421,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -454,7 +454,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
     with locker.lock.open("w", encoding="utf-8") as f:
         f.write(content)
 
@@ -504,7 +504,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
 
     assert content == expected
 
@@ -552,7 +552,7 @@ python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
-"""
+"""  # noqa: E800
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker.lock.write(tomlkit.parse(content))
@@ -593,7 +593,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -724,7 +724,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 [metadata.files]
 lib-a = []
 lib-b = []
-"""
+"""  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
     create_dependency_patch = mocker.patch(

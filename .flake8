@@ -23,8 +23,6 @@ per-file-ignores =
     # ANN201: Missing return type annotation for public function
     tests/test_*:ANN201
     tests/**/test_*:ANN201
-    # E800: Found commented out code
-    tests/packages/test_locker.py:E800
 extend-exclude =
     # Frozen and not subject to change in this repo:
     get-poetry.py,
