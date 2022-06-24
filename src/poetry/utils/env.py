@@ -228,7 +228,6 @@ print(json.dumps(paths))
 
 # This should be dropped when Poetry removes python2 support completely
 def _is_python2_exec(executable: str) -> bool:
-    print(f"HERE --------- {executable} -------------")
     return re.match(r".2.|.2\..", executable) is not None
 
 
@@ -977,7 +976,6 @@ class EnvManager:
                 )
 
                 return self.get_system_env()
-            # todo: this MF
             io.write_line(f"Creating virtualenv <c1>{name}</> in {venv_path!s}")
         else:
             create_venv = False
