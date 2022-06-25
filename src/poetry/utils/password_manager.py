@@ -179,15 +179,8 @@ class PasswordManager:
         then the configured username/password and the
         available keyring.
 
-
-        Parameters
-        ----------
-        repo_name
-            Name of repository.
-
-        Returns
-        -------
-            Returns a token as a string if found, otherwise None.
+        :param repo_name:  Name of repository.
+        :return: Returns a token as a string if found, otherwise None.
         """
         token = self._config.get(f"pypi-token.{repo_name}")
         return (
