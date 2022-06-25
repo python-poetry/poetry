@@ -557,6 +557,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
     :param path: Path to package source to build and read metadata for.
     """
     info = None
+
     with contextlib.suppress(PackageInfoError):
         info = PackageInfo.from_setup_files(path)
         if all([info.version, info.name, info.requires_dist]):
