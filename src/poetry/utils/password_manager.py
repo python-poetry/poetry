@@ -174,6 +174,22 @@ class PasswordManager:
             self.keyring.set_password(name, "__token__", token)
 
     def get_pypi_token(self, name: str) -> str | None:
+        """Get PYPI token.
+
+        First checks the enviroment variables for a token,
+        then the configured username/password and last the
+        available keyring.
+
+
+        Parameters
+        ----------
+        name
+            PYPI username.
+
+        Returns
+        -------
+            Returns a token as a string if found, otherwise None.
+        """
         if os.getenv("POETRY_PYPI_TOKEN_PYPI"):
             return os.getenv("POETRY_PYPI_TOKEN_PYPI")
 
