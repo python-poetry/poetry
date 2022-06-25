@@ -62,6 +62,8 @@ class Pool(Repository):
         Adds a repository to the pool.
         """
         repository_name = repository.name.lower()
+        if repository_name in self._lookup:
+            raise ValueError(f"{repository_name} already added")
 
         if default:
             if self.has_default():
