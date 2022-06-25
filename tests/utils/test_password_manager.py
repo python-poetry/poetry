@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
 
@@ -231,3 +232,39 @@ def test_get_http_auth_from_environment_variables(
 
     assert auth["username"] == "bar"
     assert auth["password"] == "baz"
+
+
+def test_get_pypi_token_with_env_var_positive(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+):
+    sample_token = "sampletoken-1234"
+    manager = PasswordManager(config)
+
+    with mock.patch.dict(os.environ, {"POETRY_PYPI_TOKEN_PYPI": sample_token}):
+        result_token = manager.get_pypi_token("foo")
+
+    assert result_token == sample_token
+
+
+def test_get_pypi_token_with_env_var_negative(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+):
+    sample_token = "sampletoken-1234"
+    manager = PasswordManager(config)
+
+    with mock.patch.dict(
+        os.environ, {"POETRY_PYPI_TOKEN_PYPI": sample_token + "somestuff"}
+    ):
+        result_token = manager.get_pypi_token("foo")
+
+    assert result_token != sample_token
+
+
+def test_get_pypi_token_with_env_var_not_available(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+):
+    manager = PasswordManager(config)
+
+    result_token = manager.get_pypi_token("foo")
+
+    assert result_token is None
