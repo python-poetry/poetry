@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import os
 
 from contextlib import suppress
 from typing import TYPE_CHECKING
@@ -173,6 +174,9 @@ class PasswordManager:
             self.keyring.set_password(name, "__token__", token)
 
     def get_pypi_token(self, name: str) -> str | None:
+        if os.getenv("POETRY_PYPI_TOKEN_PYPI"):
+            return os.getenv("POETRY_PYPI_TOKEN_PYPI")
+
         if not self.keyring.is_available():
             token: str | None = self._config.get(f"pypi-token.{name}")
             return token
