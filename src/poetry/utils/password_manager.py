@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-import os
 
 from contextlib import suppress
 from typing import TYPE_CHECKING
@@ -173,31 +172,29 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str | None:
-        """Get PYPI token.
+    def get_pypi_token(self, repo_name: str) -> str | None:
+        """Get PyPi token.
 
-        First checks the enviroment variables for a token,
-        then the configured username/password and last the
+        First checks the environment variables for a token,
+        then the configured username/password and the
         available keyring.
 
 
         Parameters
         ----------
-        name
-            PYPI username.
+        repo_name
+            Name of repository.
 
         Returns
         -------
             Returns a token as a string if found, otherwise None.
         """
-        if os.getenv("POETRY_PYPI_TOKEN_PYPI"):
-            return os.getenv("POETRY_PYPI_TOKEN_PYPI")
-
-        if not self.keyring.is_available():
-            token: str | None = self._config.get(f"pypi-token.{name}")
-            return token
-
-        return self.keyring.get_password(name, "__token__")
+        token = self._config.get(f"pypi-token.{repo_name}")
+        return (
+            token
+            if token is not None
+            else self.keyring.get_password(repo_name, "__token__")
+        )
 
     def delete_pypi_token(self, name: str) -> None:
         if not self.keyring.is_available():
