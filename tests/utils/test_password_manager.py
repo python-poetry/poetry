@@ -238,10 +238,14 @@ def test_get_pypi_token_with_env_var_positive(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
 ):
     sample_token = "sampletoken-1234"
+    repo_name = "foo"
     manager = PasswordManager(config)
 
-    with mock.patch.dict(os.environ, {"POETRY_PYPI_TOKEN_PYPI": sample_token}):
-        result_token = manager.get_pypi_token("foo")
+    with mock.patch.dict(
+        os.environ,
+        {f"POETRY-PYPI-TOKEN-{repo_name}".upper().replace("-", "_"): sample_token},
+    ):
+        result_token = manager.get_pypi_token(repo_name)
 
     assert result_token == sample_token
 
@@ -250,12 +254,17 @@ def test_get_pypi_token_with_env_var_negative(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
 ):
     sample_token = "sampletoken-1234"
+    repo_name = "foo"
     manager = PasswordManager(config)
 
     with mock.patch.dict(
-        os.environ, {"POETRY_PYPI_TOKEN_PYPI": sample_token + "somestuff"}
+        os.environ,
+        {
+            "POETRY-PYPI-TOKEN-{repo_name}".upper().replace("-", "_"): sample_token
+            + "somestuff"
+        },
     ):
-        result_token = manager.get_pypi_token("foo")
+        result_token = manager.get_pypi_token(repo_name)
 
     assert result_token != sample_token
 
@@ -263,8 +272,9 @@ def test_get_pypi_token_with_env_var_negative(
 def test_get_pypi_token_with_env_var_not_available(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
 ):
+    repo_name = "foo"
     manager = PasswordManager(config)
 
-    result_token = manager.get_pypi_token("foo")
+    result_token = manager.get_pypi_token(repo_name)
 
     assert result_token is None
