@@ -2293,7 +2293,7 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
     locked: Repository,
     io: NullIO,
 ):
-    base = Path(__file__).parent.parent / "fixtures" / "project_with_nested_local"
+    base = Path(__file__).resolve().parent.parent / "fixtures" / "project_with_nested_local"
     poetry = Factory().create_poetry(cwd=base)
     package = poetry.package
 
