@@ -107,8 +107,6 @@
 - Improved documentation of the `readme` option, including multiple files and additional formats ([#5158](https://github.com/python-poetry/poetry/pull/5158))
 - Improved contributing documentation ([#5708](https://github.com/python-poetry/poetry/pull/5708))
 - Remove all references to `--dev-only` option ([#5771](https://github.com/python-poetry/poetry/pull/5771))
-- Added environment variable checking for PyPi token ([#5911](https://github.com/python-poetry/poetry/pull/5911))
-
 
 ## [1.2.0b1] - 2022-03-17
 
