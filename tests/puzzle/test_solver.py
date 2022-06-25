@@ -65,12 +65,12 @@ def installed() -> InstalledRepository:
 
 @pytest.fixture()
 def locked() -> Repository:
-    return Repository()
+    return Repository("locked")
 
 
 @pytest.fixture()
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture()
@@ -89,10 +89,10 @@ def solver(
     return Solver(
         package,
         pool,
-        installed,
-        locked,
+        installed.packages,
+        locked.packages,
         io,
-        provider=Provider(package, pool, io, installed=installed),
+        provider=Provider(package, pool, io, installed=installed.packages),
     )
 
 
@@ -2019,7 +2019,7 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    solver._locked = Repository([package_a])
+    solver._locked = Repository("locked", [package_a])
     transaction = solver.solve(use_latest=[package_b.name])
 
     check_solver_result(
@@ -2298,7 +2298,12 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
     package = poetry.package
 
     solver = Solver(
-        package, pool, installed, locked, io, provider=Provider(package, pool, io)
+        package,
+        pool,
+        installed.packages,
+        locked.packages,
+        io,
+        provider=Provider(package, pool, io),
     )
 
     transaction = solver.solve()
@@ -2539,7 +2544,7 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
     repo = MockLegacyRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
@@ -2586,7 +2591,7 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
     repo = MockLegacyRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
@@ -2620,7 +2625,7 @@ def test_solver_skips_invalid_versions(
     repo = MockPyPIRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("trackpy", "^0.4"))
 
@@ -2667,7 +2672,7 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
     repo = MockLegacyRepository()
     pool = Pool([repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2693,7 +2698,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
     repo = MockLegacyRepository()
     pool = Pool([repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2728,13 +2733,13 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
     )
 
-    repo = Repository()
+    repo = Repository("repo")
     foo = get_package("foo", "1.0.0")
     foo.add_dependency(Factory.create_dependency("tomlkit", "^0.5.0"))
     repo.add_package(foo)
     pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2774,7 +2779,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     pool.add_repository(MockPyPIRepository(), secondary=True)
     pool.add_repository(MockLegacyRepository())
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2826,7 +2831,7 @@ def test_solver_chooses_from_secondary_if_explicit(
     pool.add_repository(MockPyPIRepository(), secondary=True)
     pool.add_repository(MockLegacyRepository())
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2883,7 +2888,7 @@ def test_solver_discards_packages_with_empty_markers(
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2989,7 +2994,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
     repo.add_package(get_package("a", "1.2.3"))
     repo.add_package(Package("pendulum", "2.1.2"))
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -3067,7 +3072,7 @@ def test_solver_synchronize_single(
     locked: Repository,
     io: NullIO,
 ):
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
     package_a = get_package("a", "1.0")
     installed.add_package(package_a)
 
@@ -3086,7 +3091,7 @@ def test_solver_with_synchronization_keeps_critical_package(
     locked: Repository,
     io: NullIO,
 ):
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
     package_pip = get_package("setuptools", "1.0")
     installed.add_package(package_pip)
 

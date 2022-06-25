@@ -102,10 +102,10 @@ class Locker:
         from poetry.repositories import Repository
 
         if not self.is_locked():
-            return Repository()
+            return Repository("poetry-locked")
 
         lock_data = self.lock_data
-        packages = Repository()
+        packages = Repository("poetry-locked")
         locked_packages = cast("list[dict[str, Any]]", lock_data["package"])
 
         if not locked_packages:

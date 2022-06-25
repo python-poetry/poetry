@@ -17,12 +17,12 @@ class Pool(Repository):
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__("poetry-pool")
 
         if repositories is None:
             repositories = []
 
-        self._lookup: dict[str | None, int] = {}
+        self._lookup: dict[str, int] = {}
         self._repositories: list[Repository] = []
         self._default = False
         self._has_primary_repositories = False
@@ -32,8 +32,6 @@ class Pool(Repository):
             self.add_repository(repository)
 
         self._ignore_repository_names = ignore_repository_names
-
-        super().__init__()
 
     @property
     def repositories(self) -> list[Repository]:
@@ -49,11 +47,11 @@ class Pool(Repository):
         return name.lower() in self._lookup
 
     def repository(self, name: str) -> Repository:
-        if name is not None:
-            name = name.lower()
+        name = name.lower()
 
-        if name in self._lookup:
-            return self._repositories[self._lookup[name]]
+        lookup = self._lookup.get(name)
+        if lookup is not None:
+            return self._repositories[lookup]
 
         raise ValueError(f'Repository "{name}" does not exist.')
 
@@ -63,11 +61,8 @@ class Pool(Repository):
         """
         Adds a repository to the pool.
         """
-        # FIXME: surely it's a problem that the repository name can be None here?
-        # All nameless repositories will collide in self._lookup.
-        repository_name = (
-            repository.name.lower() if repository.name is not None else None
-        )
+        repository_name = repository.name.lower()
+
         if default:
             if self.has_default():
                 raise ValueError("Only one repository can be the default")

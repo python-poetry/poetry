@@ -39,7 +39,7 @@ def root() -> ProjectPackage:
 
 @pytest.fixture
 def repository() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture

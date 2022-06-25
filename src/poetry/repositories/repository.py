@@ -18,9 +18,7 @@ if TYPE_CHECKING:
 
 
 class Repository:
-    def __init__(
-        self, name: str | None = None, packages: list[Package] | None = None
-    ) -> None:
+    def __init__(self, name: str, packages: list[Package] | None = None) -> None:
         self._name = name
         self._packages: list[Package] = []
 
@@ -28,7 +26,7 @@ class Repository:
             self.add_package(package)
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> str:
         return self._name
 
     @property
