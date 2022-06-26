@@ -15,11 +15,7 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.empty_constraint import EmptyConstraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import AnyMarker
@@ -47,8 +43,12 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.specification import PackageSpecification
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
@@ -227,19 +227,19 @@ class Provider:
             pass
 
         elif dependency.is_vcs():
-            dependency = cast(VCSDependency, dependency)
+            dependency = cast("VCSDependency", dependency)
             package = self._search_for_vcs(dependency)
 
         elif dependency.is_file():
-            dependency = cast(FileDependency, dependency)
+            dependency = cast("FileDependency", dependency)
             package = self._search_for_file(dependency)
 
         elif dependency.is_directory():
-            dependency = cast(DirectoryDependency, dependency)
+            dependency = cast("DirectoryDependency", dependency)
             package = self._search_for_directory(dependency)
 
         elif dependency.is_url():
-            dependency = cast(URLDependency, dependency)
+            dependency = cast("URLDependency", dependency)
             package = self._search_for_url(dependency)
 
         else:
