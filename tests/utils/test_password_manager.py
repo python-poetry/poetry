@@ -243,7 +243,7 @@ def test_get_pypi_token_with_env_var_positive(
 
     with mock.patch.dict(
         os.environ,
-        {f"POETRY-PYPI-TOKEN-{repo_name}".upper().replace("-", "_"): sample_token},
+        {f"POETRY_PYPI_TOKEN_{repo_name.upper()}": sample_token},
     ):
         result_token = manager.get_pypi_token(repo_name)
 
