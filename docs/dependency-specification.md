@@ -161,6 +161,15 @@ poetry config http-basic.git-org-project username token
 poetry add git+https://github.com/org/project.git
 ```
 
+To use custom CA/client certificates or disable TLS verifications altogether, you can configure certificates similar to
+how [repository certificates]({{< relref "repositories#Certificates" >}}) are configured.
+For example, for the repository "https://myprivaterepo.com/org/project.git"
+
+```bash
+poetry config certificates.myprivaterepo.cert /path/to/ca.pem
+poetry config certificates.myprivaterepo.client-cert /path/to/client.pem
+```
+
 {{% note %}}
 With Poetry 1.2 releases, the default git client used is [Dulwich](https://www.dulwich.io/).
 
@@ -230,6 +239,8 @@ gunicorn = { version = "^20.1", extras = ["gevent"] }
 These activate extra defined for the dependency, to configure an optional dependency
 for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
 {{% /note %}}
+
+### Certificates
 
 ## `source` dependencies
 
