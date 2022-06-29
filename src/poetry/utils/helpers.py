@@ -240,3 +240,20 @@ def get_win_folder(csidl_name: str) -> Path:
         return Path(_get_win_folder(csidl_name))
 
     raise RuntimeError("Method can only be called on Windows.")
+
+
+def get_real_windows_path(path: str | Path) -> Path:
+    program_files = get_win_folder("CSIDL_PROGRAM_FILES")
+    local_appdata = get_win_folder("CSIDL_LOCAL_APPDATA")
+
+    path = Path(
+        str(path).replace(
+            str(program_files / "WindowsApps"),
+            str(local_appdata / "Microsoft/WindowsApps"),
+        )
+    )
+
+    if path.as_posix().startswith(local_appdata.as_posix()):
+        path = path.resolve()
+
+    return path
