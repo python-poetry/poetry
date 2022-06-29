@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 
 from typing import Any
-from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -250,7 +249,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         if self.option("lock"):
             self._installer.lock()
 
-        self._installer.whitelist([cast(str, r["name"]) for r in requirements])
+        self._installer.whitelist([r["name"] for r in requirements])
 
         status = self._installer.run()
 
