@@ -281,6 +281,12 @@ def test_configured_repository_http_auth(
         }
     )
 
+    dummy_git_config = ConfigFile()
+    mocker.patch(
+        "poetry.vcs.git.backend.Repo.get_config_stack",
+        return_value=dummy_git_config,
+    )
+
     mocker.patch(
         "poetry.vcs.git.backend.get_default_authenticator",
         return_value=Authenticator(config=config),
@@ -293,6 +299,7 @@ def test_configured_repository_http_auth(
 
     spy_get_transport_and_path.assert_called_with(
         location=source_url,
+        config=dummy_git_config,
         username=GIT_USERNAME,
         password=GIT_PASSWORD,
     )
