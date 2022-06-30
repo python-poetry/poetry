@@ -195,7 +195,8 @@ class Git:
             kwargs["username"] = credentials.username
             kwargs["password"] = credentials.password
 
-        client, path = get_transport_and_path(url, **kwargs)
+        config = local.get_config_stack()
+        client, path = get_transport_and_path(url, config=config, **kwargs)
 
         with local:
             result: FetchPackResult = client.fetch(
