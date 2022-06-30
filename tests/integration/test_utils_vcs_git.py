@@ -12,6 +12,7 @@ import pytest
 
 from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
+from dulwich.config import ConfigFile
 from dulwich.repo import Repo
 from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -306,6 +307,12 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
     spy_clone = mocker.spy(Git, "_clone")
     spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
 
+    dummy_git_config = ConfigFile()
+    mocker.patch(
+        "poetry.vcs.git.backend.Repo.get_config_stack",
+        return_value=dummy_git_config,
+    )
+
     with Git.clone(url=source_url, branch="0.1") as repo:
         assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
 
@@ -313,6 +320,7 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
 
     spy_get_transport_and_path.assert_called_with(
         location=source_url,
+        config=dummy_git_config,
     )
     spy_get_transport_and_path.assert_called_once()
 
