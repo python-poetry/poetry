@@ -330,7 +330,7 @@ class Git:
         modules_config = repo_root.joinpath(".gitmodules")
 
         if modules_config.exists():
-            config = ConfigFile.from_path(modules_config)
+            config = ConfigFile.from_path(str(modules_config))
 
             url: bytes
             path: bytes
