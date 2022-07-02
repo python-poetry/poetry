@@ -32,19 +32,25 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
-{{% note %}}
-The `get-poetry.py` script described here will be replaced in Poetry 1.2 by `install-poetry.py`.
-From Poetry **1.1.7 onwards**, you can already use this script as described [here]({{< relref "docs/master/#installation" >}}).
-{{% /note %}}
-
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python3 -
 ```
+
+{{% note %}}
+Note: On some systems, `python` may still refer to Python 2 instead of Python 3. We always suggest the
+`python3` binary to avoid ambiguity.
+{{% /note %}}
+
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
+above.
+{{% /note %}}
 
 {{% note %}}
 You only need to install Poetry once. It will automatically pick up the current
@@ -65,40 +71,50 @@ Finally, open a new shell and type the following:
 poetry --version
 ```
 
-If you see something like `Poetry 0.12.0` then you are ready to use Poetry.
+If you see something like `Poetry version 1.1.13` then you are ready to use Poetry.
 If you decide Poetry isn't your thing, you can completely remove it from your system
 by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
 ```bash
-python get-poetry.py --uninstall
-POETRY_UNINSTALL=1 python get-poetry.py
+curl -sSL https://install.python-poetry.org | python3 - --uninstall
+curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
+
+{{% warning %}}
+If you installed using the deprecated `get-poetry.py` script, you should use it to uninstall instead:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 - --uninstall
+```
+{{% /warning %}}
 
 By default, Poetry is installed into the user's platform-specific home directory. If you wish to change this, you may define the `POETRY_HOME` environment variable:
 
 ```bash
-POETRY_HOME=/etc/poetry python get-poetry.py
+curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python3 -
 ```
 
-If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
+If you want to install prerelease versions, you can do so by passing `--preview`
 or by using the `POETRY_PREVIEW` environment variable:
 
 ```bash
-python get-poetry.py --preview
-POETRY_PREVIEW=1 python get-poetry.py
+curl -sSL https://install.python-poetry.org | python3 - --preview
+curl -sSL https://install.python-poetry.org | POETRY_PREVIEW=1 python3 -
 ```
 
 Similarly, if you want to install a specific version, you can use `--version` or the `POETRY_VERSION`
 environment variable:
 
 ```bash
-python get-poetry.py --version 0.12.0
-POETRY_VERSION=0.12.0 python get-poetry.py
+curl -sSL https://install.python-poetry.org | python3 - --version 1.1.13
+curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.1.13 python3 -
 ```
 
 {{% note %}}
-Note that the installer does not support Poetry releases < 0.12.0.
+Note that the installer does not support Poetry releases < 1.1.7.
+If you need to install older versions down to 0.12.0, you can use:
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
 {{% /note %}}
 
 {{% note %}}
