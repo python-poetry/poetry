@@ -126,9 +126,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             section = poetry_content["dependencies"]
         else:
             if "group" not in poetry_content:
-                poetry_content.value._insert_after(
-                    "dependencies", "group", table(is_super_table=True)
-                )
+                poetry_content["group"] = table(is_super_table=True)
 
             groups = poetry_content["group"]
             if group not in groups:

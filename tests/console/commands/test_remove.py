@@ -67,9 +67,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -122,9 +120,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -177,9 +173,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
