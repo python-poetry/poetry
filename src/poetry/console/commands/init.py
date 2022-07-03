@@ -281,7 +281,7 @@ You can specify a package in the following forms:
                 ):
                     self.line(f"Adding <info>{package}</info>")
                     result.append(constraint)
-                    package = self.ask("\nAdd a package:")
+                    package = self.ask("\nAdd a package (leave blank to skip):")
                     continue
 
                 canonicalized_name = canonicalize_name(constraint["name"])
@@ -347,7 +347,7 @@ You can specify a package in the following forms:
                     result.append(constraint)
 
                 if self.io.is_interactive():
-                    package = self.ask("\nAdd a package:")
+                    package = self.ask("\nAdd a package (leave blank to skip):")
 
             return result
 
