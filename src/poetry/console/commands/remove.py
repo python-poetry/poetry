@@ -12,7 +12,6 @@ from poetry.utils.helpers import canonicalize_name
 
 
 class RemoveCommand(InstallerCommand):
-
     name = "remove"
     description = "Removes a package from the project dependencies."
 

@@ -456,7 +456,6 @@ class SitePackages:
 
 
 class EnvError(Exception):
-
     pass
 
 

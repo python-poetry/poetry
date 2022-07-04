@@ -5,7 +5,6 @@ from poetry.console.commands.command import Command
 
 
 class CacheListCommand(Command):
-
     name = "cache list"
     description = "List Poetry's caches."
 

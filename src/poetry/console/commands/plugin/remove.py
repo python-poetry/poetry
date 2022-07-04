@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 class PluginRemoveCommand(Command):
-
     name = "plugin remove"
 
     description = "Removes installed plugins"

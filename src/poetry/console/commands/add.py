@@ -15,7 +15,6 @@ from poetry.utils.helpers import canonicalize_name
 
 
 class AddCommand(InstallerCommand, InitCommand):
-
     name = "add"
     description = "Adds a new dependency to <comment>pyproject.toml</>."
 

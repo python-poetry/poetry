@@ -8,7 +8,6 @@ from poetry.console.commands.command import Command
 
 
 class PublishCommand(Command):
-
     name = "publish"
     description = "Publishes a package to a remote repository."
 
