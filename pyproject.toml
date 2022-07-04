@@ -67,7 +67,7 @@ tomlkit = ">=0.7.0,<1.0.0"
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
-dulwich = "^0.20.35"
+dulwich = "^0.20.44"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.18"
