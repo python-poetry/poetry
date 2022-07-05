@@ -76,8 +76,8 @@ class PyPiRepository(RemoteRepository):
         self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
         self._name = "PyPI"
 
-        self._pip_session = session = PipSession(
-            cache='/home/runner/.cache/pip/http',
+        self._pip_session = PipSession(
+            cache='%s/.cache/pip/http' % os.getenv('HOME'),
             retries=None,
             trusted_hosts=[],
             index_urls=['https://package-proxy.replit.com/pypi/simple/']
