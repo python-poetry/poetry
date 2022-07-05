@@ -30,6 +30,10 @@ from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
+from pip._internal.network.session import PipSession
+from pip._internal.network.download import Downloader as PipDownloader
+from pip._internal.models.link import Link as PipLink
+
 from ..inspection.info import PackageInfo
 from .exceptions import PackageNotFound
 from .remote_repository import RemoteRepository
@@ -71,6 +75,15 @@ class PyPiRepository(RemoteRepository):
 
         self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
         self._name = "PyPI"
+
+        home_dir = os.getenv('HOME')
+        pypi = os.getenv('REPLIT_POETRY_PYPI_REPOSITORY') or 'https://pypi.org/pypi/'
+        self._pip_session = PipSession(
+            cache='%s/.cache/pip/http' % home_dir,
+            retries=None,
+            trusted_hosts=[],
+            index_urls=['%ssimple/' % pypi]
+        )
 
     @property
     def session(self):
@@ -412,7 +425,7 @@ class PyPiRepository(RemoteRepository):
             if universal_python2_wheel:
                 return self._get_info_from_wheel(universal_python2_wheel)
 
-            if platform_specific_wheels and "sdist" not in urls:
+            if platform_specific_wheels:
                 # Pick the first wheel available and hope for the best
                 return self._get_info_from_wheel(platform_specific_wheels[0])
 
@@ -424,13 +437,10 @@ class PyPiRepository(RemoteRepository):
             level="debug",
         )
 
-        filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
-
         with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, str(filepath))
+            filepath = self._pip_download(url, temp_dir)
 
-            return PackageInfo.from_wheel(filepath)
+            return PackageInfo.from_wheel(Path(filepath))
 
     def _get_info_from_sdist(self, url):  # type: (str) -> PackageInfo
         self._log(
@@ -438,13 +448,16 @@ class PyPiRepository(RemoteRepository):
             level="debug",
         )
 
-        filename = os.path.basename(urlparse.urlparse(url).path)
-
         with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, str(filepath))
+            filepath = self._pip_download(url, temp_dir)
 
-            return PackageInfo.from_sdist(filepath)
+            return PackageInfo.from_sdist(Path(filepath))
+
+    def _pip_download(self, url, dest_dir):
+        downloader = PipDownloader(self._pip_session, "off")
+        link = PipLink(url)
+        filepath, _ = downloader(link, dest_dir)
+        return filepath
 
     def _download(self, url, dest):  # type: (str, str) -> None
         return download_file(url, dest, session=self.session)

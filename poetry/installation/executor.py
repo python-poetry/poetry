@@ -433,9 +433,12 @@ class Executor(object):
         if package.source_type == "file":
             archive = self._prepare_file(operation)
         elif package.source_type == "url":
-            archive = self._download_link(operation, Link(package.source_url))
+            # archive = self._download_link(operation, Link(package.source_url))
+            return self._pip_install(operation, package.source_url)
         else:
-            archive = self._download(operation)
+            # archive = self._download(operation)
+            url = str(self._chooser.choose_for(package))
+            return self._pip_install(operation, url)
 
         operation_message = self.get_operation_message(operation)
         message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
@@ -446,6 +449,17 @@ class Executor(object):
         args = ["install", "--no-deps", str(archive)]
         if operation.job_type == "update":
             args.insert(2, "-U")
+
+        return self.run_pip(*args)
+
+    def _pip_install(self, operation, spec):
+        operation_message = self.get_operation_message(operation)
+        message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
+            message=operation_message,
+        )
+        self._write(operation, message)
+
+        args = ["install", "--no-deps", spec]
 
         return self.run_pip(*args)
 
