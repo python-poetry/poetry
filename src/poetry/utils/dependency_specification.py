@@ -14,13 +14,14 @@ from typing import Union
 from typing import cast
 
 from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.vcs_dependency import VCSDependency
 from tomlkit.items import InlineTable
 
 from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.vcs_dependency import VCSDependency
+
     from poetry.utils.env import Env
 
 
@@ -68,7 +69,8 @@ def _parse_dependency_specification_url(
 
     if url_parsed.scheme in ["http", "https"]:
         package = Provider.get_package_from_url(requirement)
-        return {"name": package.name, "url": cast(str, package.source_url)}
+        assert package.source_url is not None
+        return {"name": package.name, "url": package.source_url}
 
     return None
 
@@ -153,14 +155,17 @@ def dependency_to_specification(
     dependency: Dependency, specification: BaseSpec
 ) -> BaseSpec:
     if dependency.is_vcs():
-        dependency = cast(VCSDependency, dependency)
-        specification[dependency.vcs] = cast(str, dependency.source_url)
+        dependency = cast("VCSDependency", dependency)
+        assert dependency.source_url is not None
+        specification[dependency.vcs] = dependency.source_url
         if dependency.reference:
             specification["rev"] = dependency.reference
     elif dependency.is_file() or dependency.is_directory():
-        specification["path"] = cast(str, dependency.source_url)
+        assert dependency.source_url is not None
+        specification["path"] = dependency.source_url
     elif dependency.is_url():
-        specification["url"] = cast(str, dependency.source_url)
+        assert dependency.source_url is not None
+        specification["url"] = dependency.source_url
     elif dependency.pretty_constraint != "*" and not dependency.constraint.is_empty():
         specification["version"] = dependency.pretty_constraint
 

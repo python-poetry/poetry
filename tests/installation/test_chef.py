@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
 
@@ -16,7 +18,22 @@ if TYPE_CHECKING:
     from tests.conftest import Config
 
 
-def test_get_cached_archive_for_link(config: Config, mocker: MockerFixture):
+@pytest.mark.parametrize(
+    ("link", "cached"),
+    [
+        (
+            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+        ),
+        (
+            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+        ),
+    ],
+)
+def test_get_cached_archive_for_link(
+    config: Config, mocker: MockerFixture, link: str, cached: str
+):
     chef = Chef(
         config,
         MockEnv(
@@ -33,18 +50,16 @@ def test_get_cached_archive_for_link(config: Config, mocker: MockerFixture):
         chef,
         "get_cached_archives_for_link",
         return_value=[
-            Link("file:///foo/demo-0.1.0-py2.py3-none-any"),
-            Link("file:///foo/demo-0.1.0.tar.gz"),
-            Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
-            Link("file:///foo/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
+            Path("/cache/demo-0.1.0-py2.py3-none-any"),
+            Path("/cache/demo-0.1.0.tar.gz"),
+            Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
+            Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
         ],
     )
 
-    archive = chef.get_cached_archive_for_link(
-        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
-    )
+    archive = chef.get_cached_archive_for_link(Link(link))
 
-    assert Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl") == archive
+    assert Path(cached) == archive
 
 
 def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
@@ -67,9 +82,7 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
     )
 
     assert archives
-    assert set(archives) == {
-        Link(path.as_uri()) for path in distributions.glob("demo-0.1.0*")
-    }
+    assert set(archives) == {Path(path) for path in distributions.glob("demo-0.1.0*")}
 
 
 def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
