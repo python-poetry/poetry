@@ -76,11 +76,13 @@ class PyPiRepository(RemoteRepository):
         self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
         self._name = "PyPI"
 
+        home_dir = os.getenv('HOME')
+        pypi = os.getenv('REPLIT_POETRY_PYPI_REPOSITORY') or 'https://pypi.org/pypi/'
         self._pip_session = PipSession(
-            cache='%s/.cache/pip/http' % os.getenv('HOME'),
+            cache='%s/.cache/pip/http' % home_dir,
             retries=None,
             trusted_hosts=[],
-            index_urls=['https://package-proxy.replit.com/pypi/simple/']
+            index_urls=['%ssimple/' % pypi]
         )
 
     @property
