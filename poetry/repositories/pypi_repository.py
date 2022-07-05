@@ -54,14 +54,17 @@ class PyPiRepository(RemoteRepository):
 
     CACHE_VERSION = parse_constraint("1.0.0")
 
-    def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
+    def __init__(self, config=None, url="https://pypi.org/", disable_cache=False, fallback=True):
         super(PyPiRepository, self).__init__(url.rstrip("/") + "/simple/")
 
+        self._config = config
         self._base_url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
 
         release_cache_dir = REPOSITORY_CACHE_DIR / "pypi"
+        if self._config:
+            release_cache_dir = Path(self._config.get("cache-dir")) / "pypi"
         self._cache = CacheManager(
             {
                 "default": "releases",
