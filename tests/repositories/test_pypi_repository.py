@@ -28,7 +28,6 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
 
 
 class MockRepository(PyPiRepository):
-
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 

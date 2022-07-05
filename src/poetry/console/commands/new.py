@@ -11,7 +11,6 @@ from poetry.console.commands.command import Command
 
 
 class NewCommand(Command):
-
     name = "new"
     description = "Creates a new Python project at <path>."
 

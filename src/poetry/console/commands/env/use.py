@@ -6,7 +6,6 @@ from poetry.console.commands.command import Command
 
 
 class EnvUseCommand(Command):
-
     name = "env use"
     description = "Activates or creates a new virtualenv for the current project."
 

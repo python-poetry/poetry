@@ -96,7 +96,6 @@ class Solver:
         overrides: tuple[dict[DependencyPackage, dict[str, Dependency]], ...],
         use_latest: list[str] | None = None,
     ) -> tuple[list[Package], list[int]]:
-
         packages = []
         depths = []
         for override in overrides:

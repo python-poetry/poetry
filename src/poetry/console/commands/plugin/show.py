@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 
 class PluginShowCommand(Command):
-
     name = "plugin show"
 
     description = "Shows information about the currently installed plugins."

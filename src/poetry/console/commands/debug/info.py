@@ -6,7 +6,6 @@ from poetry.console.commands.command import Command
 
 
 class DebugInfoCommand(Command):
-
     name = "debug info"
     description = "Shows debug information."
 
