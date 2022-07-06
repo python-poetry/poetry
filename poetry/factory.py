@@ -96,7 +96,7 @@ class Factory(BaseFactory):
                 io.write_line("Deactivating the PyPI repository")
         else:
             default = not poetry.pool.has_primary_repositories()
-            poetry.pool.add_repository(PyPiRepository(), default, not default)
+            poetry.pool.add_repository(PyPiRepository(config=poetry.config), default, not default)
 
         return poetry
 

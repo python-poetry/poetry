@@ -126,7 +126,7 @@ class SelfUpdateCommand(Command):
         from poetry.repositories.pypi_repository import PyPiRepository
 
         pool = Pool()
-        pool.add_repository(PyPiRepository(fallback=False))
+        pool.add_repository(PyPiRepository(config=self.poetry.config, fallback=False))
 
         self._pool = pool
 
