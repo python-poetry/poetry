@@ -14,7 +14,7 @@ menu:
 ### Why is the dependency resolution process slow?
 
 While the dependency resolver at the heart of Poetry is highly optimized and
-should be fast enough for most cases, with certain dependencies
+should be fast enough for most cases, with certain sets of dependencies
 it can take time to find a valid solution.
 
 This is due to the fact that not all libraries on PyPI have properly declared their metadata
