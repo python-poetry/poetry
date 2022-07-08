@@ -204,7 +204,7 @@ class PyPiRepository(HTTPRepository):
         )
 
         try:
-            version_info = json_data["releases"][version]
+            version_info = json_data["urls"]
         except KeyError:
             version_info = []
 
