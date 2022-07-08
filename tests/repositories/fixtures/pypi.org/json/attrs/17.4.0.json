@@ -61,42 +61,6 @@
         "version": "17.4.0"
     },
     "last_serial": 3451237,
-    "releases": {
-        "17.4.0": [
-            {
-                "comment_text": "",
-                "digests": {
-                    "md5": "5835a573b3f0316e1602dac3fd9c1daf",
-                    "sha256": "a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450"
-                },
-                "downloads": -1,
-                "filename": "attrs-17.4.0-py2.py3-none-any.whl",
-                "has_sig": true,
-                "md5_digest": "5835a573b3f0316e1602dac3fd9c1daf",
-                "packagetype": "bdist_wheel",
-                "python_version": "py2.py3",
-                "size": 31658,
-                "upload_time": "2017-12-30T08:20:05",
-                "url": "https://files.pythonhosted.org/packages/b5/60/4e178c1e790fd60f1229a9b3cb2f8bc2f4cc6ff2c8838054c142c70b5adc/attrs-17.4.0-py2.py3-none-any.whl"
-            },
-            {
-                "comment_text": "",
-                "digests": {
-                    "md5": "d7a89063b2e0fd36bd82389c4d82821d",
-                    "sha256": "1c7960ccfd6a005cd9f7ba884e6316b5e430a3f1a6c37c5f87d8b43f83b54ec9"
-                },
-                "downloads": -1,
-                "filename": "attrs-17.4.0.tar.gz",
-                "has_sig": true,
-                "md5_digest": "d7a89063b2e0fd36bd82389c4d82821d",
-                "packagetype": "sdist",
-                "python_version": "source",
-                "size": 97071,
-                "upload_time": "2017-12-30T08:20:08",
-                "url": "https://files.pythonhosted.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5/attrs-17.4.0.tar.gz"
-            }
-        ]
-    },
     "urls": [
         {
             "comment_text": "",

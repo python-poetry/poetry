@@ -46,26 +46,6 @@
         "version": "0.6.0"
     },
     "last_serial": 3361295,
-    "releases": {
-        "0.6.0": [
-            {
-                "comment_text": "",
-                "digests": {
-                    "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
-                    "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
-                },
-                "downloads": -1,
-                "filename": "pluggy-0.6.0.tar.gz",
-                "has_sig": false,
-                "md5_digest": "ffdde7c3a5ba9a440404570366ffb6d5",
-                "packagetype": "sdist",
-                "python_version": "source",
-                "size": 19678,
-                "upload_time": "2017-11-24T16:33:11",
-                "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"
-            }
-        ]
-    },
     "urls": [
         {
             "comment_text": "",
