@@ -1,0 +1,87 @@
+{
+  "info": {
+    "author": "Kenneth Reitz",
+    "author_email": "me@kennethreitz.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: Apache Software License",
+      "Natural Language :: English",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2.6",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy"
+    ],
+    "description": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": 0,
+      "last_month": 0,
+      "last_week": 0
+    },
+    "home_page": "http://python-requests.org",
+    "keywords": "",
+    "license": "Apache 2.0",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "requests",
+    "platform": "",
+    "project_url": "https://pypi.org/project/requests/",
+    "release_url": "https://pypi.org/project/requests/2.18.4/",
+    "requires_dist": [
+      "win-inet-pton; sys_platform == \"win32\" and (python_version == \"2.7\" or python_version == \"2.6\") and extra == 'socks'",
+      "PySocks (!=1.5.7,>=1.5.6); extra == 'socks'",
+      "pyOpenSSL (>=0.14); extra == 'security'",
+      "idna (>=2.0.0); extra == 'security'",
+      "cryptography (>=1.3.4); extra == 'security'",
+      "urllib3 (<1.23,>=1.21.1)",
+      "idna (>=2.5,<2.7)",
+      "chardet (>=3.0.2,<3.1.0)",
+      "certifi (>=2017.4.17)"
+    ],
+    "requires_python": "",
+    "summary": "Python HTTP for Humans.",
+    "version": "2.18.4"
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "eb9be71cc41fd73a51a7c9cd1adde5de",
+        "sha256": "6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b"
+      },
+      "downloads": -1,
+      "filename": "requests-2.18.4-py2.py3-none-any.whl",
+      "has_sig": true,
+      "md5_digest": "eb9be71cc41fd73a51a7c9cd1adde5de",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2.py3",
+      "size": 88704,
+      "upload_time": "2017-08-15T13:23:43",
+      "url": "https://files.pythonhosted.org/packages/49/df/50aa1999ab9bde74656c2919d9c0c085fd2b3775fd3eca826012bef76d8c/requests-2.18.4-py2.py3-none-any.whl"
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "081412b2ef79bdc48229891af13f4d82",
+        "sha256": "9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e"
+      },
+      "downloads": -1,
+      "filename": "requests-2.18.4.tar.gz",
+      "has_sig": true,
+      "md5_digest": "081412b2ef79bdc48229891af13f4d82",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "size": 126224,
+      "upload_time": "2017-08-15T13:23:46",
+      "url": "https://files.pythonhosted.org/packages/b0/e1/eab4fc3752e3d240468a8c0b284607899d2fbfb236a56b7377a329aa8d09/requests-2.18.4.tar.gz"
+    }
+  ]
+}
