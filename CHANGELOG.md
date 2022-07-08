@@ -1184,7 +1184,7 @@ Initial release
 
 
 [Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.14...1.1
-[1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.14
+[1.1.14]: https://github.com/python-poetry/poetry/releases/tag/1.1.14
 [1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.13
 [1.1.12]: https://github.com/python-poetry/poetry/releases/tag/1.1.12
 [1.1.11]: https://github.com/python-poetry/poetry/releases/tag/1.1.11
