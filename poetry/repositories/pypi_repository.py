@@ -286,7 +286,11 @@ class PyPiRepository(RemoteRepository):
         )
 
         try:
-            version_info = json_data["releases"][version]
+            releases = json_data["releases"]
+            if releases is not None:
+                version_info = releases[version]
+            else:
+                version_info = []
         except KeyError:
             version_info = []
 
