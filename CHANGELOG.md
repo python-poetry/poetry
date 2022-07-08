@@ -1,11 +1,17 @@
 # Change Log
 
+## [1.1.14] - 2022-07-08
+
+## Fixed
+
+- Fixed an issue where dependencies hashes could not be retrieved when locking due to a breaking change on PyPI JSON API ([#5973](https://github.com/python-poetry/poetry/pull/5973))
+
 ## [1.1.13] - 2022-02-09
 
 ## Fixed
 
-- Fixed an issue where envs in MSYS2 always reported as broken ([#4942](9https://github.com/python-poetry/poetry/pull/4942))
-- Fixed an issue where conda envs in windows are always reported as broken([#5008](https://github.com/python-poetry/poetry/pull/5008))
+- Fixed an issue where envs in MSYS2 always reported as broken ([#4942](https://github.com/python-poetry/poetry/pull/4942))
+- Fixed an issue where conda envs in windows are always reported as broken ([#5008](https://github.com/python-poetry/poetry/pull/5008))
 - Fixed an issue where Poetry doesn't find its own venv on `poetry self update` ([#5048](https://github.com/python-poetry/poetry/pull/5048))
 
 ## [1.1.12] - 2021-11-27
@@ -1177,7 +1183,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.13...1.1
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.14...1.1
+[1.1.14]: https://github.com/python-poetry/poetry/releases/tag/1.1.14
 [1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.13
 [1.1.12]: https://github.com/python-poetry/poetry/releases/tag/1.1.12
 [1.1.11]: https://github.com/python-poetry/poetry/releases/tag/1.1.11
