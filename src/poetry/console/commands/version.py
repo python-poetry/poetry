@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 class VersionCommand(Command):
-
     name = "version"
     description = (
         "Shows the version of the project or bumps it when a valid "

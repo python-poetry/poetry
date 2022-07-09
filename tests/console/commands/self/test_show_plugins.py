@@ -102,7 +102,6 @@ def entry_points(
     entry_point_values_by_group: dict[str, list[str]],
     plugin_distro: metadata.Distribution,
 ) -> Callable[[...], list[metadata.EntryPoint]]:
-
     by_group = {
         key: [
             EntryPoint(name=entry_point_name, group=key, value=value)._for(

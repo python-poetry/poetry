@@ -14,12 +14,12 @@ menu:
 ### Why is the dependency resolution process slow?
 
 While the dependency resolver at the heart of Poetry is highly optimized and
-should be fast enough for most cases, sometimes, with some specific set of dependencies,
+should be fast enough for most cases, with certain sets of dependencies
 it can take time to find a valid solution.
 
 This is due to the fact that not all libraries on PyPI have properly declared their metadata
 and, as such, they are not available via the PyPI JSON API. At this point, Poetry has no choice
-but downloading the packages and inspect them to get the necessary information. This is an expensive
+but to download the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
 At the moment there is no way around it.

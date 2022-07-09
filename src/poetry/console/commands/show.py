@@ -31,7 +31,6 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
 
 
 class ShowCommand(GroupCommand):
-
     name = "show"
     description = "Shows information about packages."
 

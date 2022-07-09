@@ -112,7 +112,6 @@ def test_authenticator_uses_empty_strings_as_default_password(
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
 ):
-
     config.merge(
         {
             "repositories": repo,
