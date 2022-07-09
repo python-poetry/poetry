@@ -50,7 +50,6 @@ logger = logging.getLogger(__name__)
 
 
 class Locker:
-
     _VERSION = "1.1"
 
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
@@ -180,7 +179,6 @@ class Locker:
                         package.marker = parse_marker(split_dep[1].strip())
 
             for dep_name, constraint in info.get("dependencies", {}).items():
-
                 root_dir = self._lock.path.parent
                 if package.source_type == "directory":
                     # root dir should be the source of the package relative to the lock

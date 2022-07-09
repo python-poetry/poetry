@@ -7,7 +7,6 @@ from poetry.console.commands.command import Command
 
 
 class SourceRemoveCommand(Command):
-
     name = "source remove"
     description = "Remove source configured for the project."
 

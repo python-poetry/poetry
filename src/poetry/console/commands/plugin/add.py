@@ -10,7 +10,6 @@ from poetry.console.commands.self.add import SelfAddCommand
 
 
 class PluginAddCommand(InitCommand):
-
     name = "plugin add"
 
     description = "Adds new plugins."
