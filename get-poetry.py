@@ -309,7 +309,6 @@ environment variable. This has not been done automatically.
 
 
 class Installer:
-
     CURRENT_PYTHON = sys.executable
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"

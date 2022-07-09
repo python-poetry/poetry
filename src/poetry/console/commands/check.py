@@ -6,7 +6,6 @@ from poetry.console.commands.command import Command
 
 
 class CheckCommand(Command):
-
     name = "check"
     description = "Checks the validity of the <comment>pyproject.toml</comment> file."
 

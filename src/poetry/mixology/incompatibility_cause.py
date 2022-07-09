@@ -14,17 +14,14 @@ class IncompatibilityCause(Exception):
 
 
 class RootCause(IncompatibilityCause):
-
     pass
 
 
 class NoVersionsCause(IncompatibilityCause):
-
     pass
 
 
 class DependencyCause(IncompatibilityCause):
-
     pass
 
 

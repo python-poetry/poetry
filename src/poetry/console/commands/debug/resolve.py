@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 
 class DebugResolveCommand(InitCommand):
-
     name = "debug resolve"
     description = "Debugs dependency resolution."
 

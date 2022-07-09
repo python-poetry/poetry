@@ -7,7 +7,6 @@ from poetry.utils.env import build_environment
 
 
 class BuildCommand(EnvCommand):
-
     name = "build"
     description = "Builds a package, as a tarball and a wheel by default."
 

@@ -119,7 +119,6 @@ def _get_package_from_git(
 
 
 class Provider:
-
     UNSAFE_PACKAGES: set[str] = set()
 
     def __init__(
