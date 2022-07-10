@@ -176,8 +176,17 @@ class Pool(Repository):
         if repository is not None and not self._ignore_repository_names:
             return self.repository(repository).find_packages(dependency)
 
-        packages = []
-        for repo in self._repositories:
+        packages: list[Package] = []
+        for index, repo in enumerate(self._repositories):
+            if (
+                self._secondary_start_idx is not None
+                and index >= self._secondary_start_idx
+                and packages
+            ):
+                # We've found packages in the primary repositories, don't search
+                # secondary repositories.
+                break
+
             packages += repo.find_packages(dependency)
 
         return packages

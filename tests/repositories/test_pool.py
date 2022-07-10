@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import pytest
 
+from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
+from poetry.factory import Factory
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
@@ -141,3 +143,22 @@ def test_repository_ordering():
     assert pool.repositories == [default1, primary1, primary3, secondary1, secondary3]
     with pytest.raises(ValueError):
         pool.add_repository(default2, default=True)
+
+
+def test_secondary_repository_is_not_always_searched() -> None:
+    package1 = Package("foo", "1.0.0")
+    primary = Repository("primary", [package1])
+
+    package2 = Package("foo", "2.0.0")
+    secondary = Repository("secondary", [package2])
+
+    pool = Pool()
+    pool.add_repository(primary)
+    pool.add_repository(secondary, secondary=True)
+
+    # Only the package in the primary repository is found, even though there's a newer
+    # version in a secondary repository.
+    dependency = Factory.create_dependency("foo", "*")
+    packages = pool.find_packages(dependency)
+    assert len(packages) == 1
+    assert packages[0].pretty_version == "1.0.0"

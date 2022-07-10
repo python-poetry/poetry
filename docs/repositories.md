@@ -168,12 +168,10 @@ There can be more than one secondary package source.
 
 {{% note %}}
 
-All package sources (including secondary sources) will be searched during the package lookup
-process. These network requests will occur for all sources, regardless of if the package is
-found at one or more sources.
+Secondary sources are searched only for packages that are not found in primary
+sources.
 
-If you wish to avoid this, you may explicitly specify which source to search in for a particular
-package.
+You may explicitly specify which source to search in for a particular package.
 
 ```bash
 poetry add --source pypi httpx
