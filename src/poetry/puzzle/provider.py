@@ -697,8 +697,8 @@ class Provider:
                 for dep_any in any_markers_dependencies:
                     dep_any.marker = inverted_marker
                     for dep_other in other_markers_dependencies:
-                        dep_other.set_constraint(
-                            dep_other.constraint.intersect(dep_any.constraint)
+                        dep_other.constraint = dep_other.constraint.intersect(
+                            dep_any.constraint
                         )
             elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
                 get_python_constraint_from_marker(inverted_marker)

@@ -269,7 +269,7 @@ class Locker:
             requirement = locked_package.to_dependency()
             requirement.marker = requirement.marker.intersect(marker)
 
-            requirement.set_constraint(constraint)
+            requirement.constraint = constraint
 
             for require in locked_package.requires:
                 if require.in_extras and locked_package.features.isdisjoint(
