@@ -45,14 +45,14 @@ repos:
           - pep8-naming==0.12.1
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.34.0
+    rev: v2.37.1
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
         exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v1.3.5
+    rev: v2.0.1
     hooks:
       - id: pycln
         args: [--all]
@@ -86,6 +86,6 @@ repos:
         additional_dependencies: *flake8_deps
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v2.19.0
+    rev: v2.20.0
     hooks:
       - id: validate_manifest
