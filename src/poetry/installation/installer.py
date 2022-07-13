@@ -193,8 +193,8 @@ class Installer:
         solver = Solver(
             self._package,
             self._pool,
-            locked_repository,
-            locked_repository,
+            locked_repository.packages,
+            locked_repository.packages,
             self._io,
         )
 
@@ -213,7 +213,7 @@ class Installer:
     def _do_install(self) -> int:
         from poetry.puzzle.solver import Solver
 
-        locked_repository = Repository()
+        locked_repository = Repository("poetry-locked")
         if self._update:
             if self._locker.is_locked() and not self._lock:
                 locked_repository = self._locker.locked_repository()
@@ -233,8 +233,8 @@ class Installer:
             solver = Solver(
                 self._package,
                 self._pool,
-                self._installed_repository,
-                locked_repository,
+                self._installed_repository.packages,
+                locked_repository.packages,
                 self._io,
             )
 
@@ -291,7 +291,7 @@ class Installer:
 
         # Making a new repo containing the packages
         # newly resolved and the ones from the current lock file
-        repo = Repository()
+        repo = Repository("poetry-repo")
         for package in lockfile_repo.packages + locked_repository.packages:
             if not package.is_direct_origin() and not repo.has_package(package):
                 repo.add_package(package)
@@ -299,7 +299,11 @@ class Installer:
         pool.add_repository(repo)
 
         solver = Solver(
-            root, pool, self._installed_repository, locked_repository, NullIO()
+            root,
+            pool,
+            self._installed_repository.packages,
+            locked_repository.packages,
+            NullIO(),
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)

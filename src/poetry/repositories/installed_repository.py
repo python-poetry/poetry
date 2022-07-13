@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 
 class InstalledRepository(Repository):
+    def __init__(self) -> None:
+        super().__init__("poetry-installed")
+
     @classmethod
     def get_package_paths(cls, env: Env, name: str) -> set[Path]:
         """
