@@ -33,7 +33,7 @@ from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
 {{% warning %}}
-The `get-poetry.py` script described here will be replaced in Poetry 1.2 by `install-poetry.py`.
+The `get-poetry.py` script described here will be replaced in Poetry 1.2 by `install.python-poetry.org`.
 From Poetry **1.1.7 onwards**, you can already use this script as described [here]({{< relref "docs/master/#installation" >}}).
 {{% /warning %}}
 
