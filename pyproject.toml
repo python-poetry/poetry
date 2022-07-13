@@ -62,7 +62,7 @@ platformdirs = "^2.5.2"
 requests = "^2.18"
 requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"
-tomlkit = ">=0.7.0,<1.0.0"
+tomlkit = ">=0.11.1,<1.0.0"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
