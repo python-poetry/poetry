@@ -243,7 +243,7 @@ class Provider:
 
         else:
             raise RuntimeError(
-                f"Unknown direct dependency type {dependency.source_type}"
+                f"{dependency}: unknown direct dependency type {dependency.source_type}"
             )
 
         if dependency.is_vcs():
