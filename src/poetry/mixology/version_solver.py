@@ -406,7 +406,11 @@ class VersionSolver:
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]
         else:
-            dependency = min(*unsatisfied, key=_get_min)
+            priority_deps = [dep for dep in unsatisfied if dep.resolve_order]
+            if len(priority_deps):
+                dependency = min(priority_deps, key=lambda dep: dep.resolve_order)
+            else:
+                dependency = min(*unsatisfied, key=_get_min)
 
         locked = self._get_locked(dependency)
         if locked is None:

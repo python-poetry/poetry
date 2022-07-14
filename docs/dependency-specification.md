@@ -195,6 +195,18 @@ These activate extra defined for the dependency, to configure an optional depend
 for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
 {{% /note %}}
 
+## Dependency `resolve-order`
+
+You can specify the solver's resolve order as shown here.
+
+```toml
+[tool.poetry.dependencies]
+gunicorn = { version = "^20.1", resolve-order = 1 }
+pathlib2 = "2.2"
+```
+
+This means that the solver will select `gunicorn` as starting point.
+
 ## `source` dependencies
 
 To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
