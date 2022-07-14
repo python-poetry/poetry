@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-from tomlkit import dumps
+from poetry.core.pyproject.toml import PyProjectTOML
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
@@ -17,7 +17,6 @@ from poetry.utils.helpers import module_name
 if TYPE_CHECKING:
     from typing import Mapping
 
-    from poetry.core.pyproject.toml import PyProjectTOML
     from tomlkit.items import InlineTable
 
 
@@ -118,7 +117,7 @@ class Layout:
 
         self._write_poetry(path)
 
-    def generate_poetry_content(self, original: PyProjectTOML | None = None) -> str:
+    def generate_poetry_content(self) -> TOMLDocument:
         template = POETRY_DEFAULT
 
         content: dict[str, Any] = loads(template)
@@ -171,12 +170,7 @@ class Layout:
         assert isinstance(content, TOMLDocument)
         content.add("build-system", build_system)
 
-        text = dumps(content)
-
-        if original and original.file.exists():
-            text = dumps(original.data) + "\n" + text
-
-        return text
+        return content
 
     def _create_default(self, path: Path, src: bool = True) -> None:
         package_path = path / self.package_path
@@ -199,9 +193,8 @@ class Layout:
         tests_init.touch(exist_ok=False)
 
     def _write_poetry(self, path: Path) -> None:
+        pyproject = PyProjectTOML(path / "pyproject.toml")
         content = self.generate_poetry_content()
-
-        poetry = path / "pyproject.toml"
-
-        with poetry.open("w", encoding="utf-8") as f:
-            f.write(content)
+        for section in content:
+            pyproject.data.append(section, content[section])
+        pyproject.save()
