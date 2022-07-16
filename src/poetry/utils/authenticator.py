@@ -194,12 +194,12 @@ class Authenticator:
         session = self.get_session(url=url)
         prepared_request = session.prepare_request(request)
 
-        proxies = kwargs.get("proxies", {})
-        stream = kwargs.get("stream")
+        proxies: dict[str, str] = kwargs.get("proxies", {})
+        stream: bool | None = kwargs.get("stream")
 
         certs = self.get_certs_for_url(url)
-        verify = kwargs.get("verify") or certs.cert or certs.verify
-        cert = kwargs.get("cert") or certs.client_cert
+        verify: bool | str | Path = kwargs.get("verify") or certs.cert or certs.verify
+        cert: str | Path | None = kwargs.get("cert") or certs.client_cert
 
         if cert is not None:
             cert = str(cert)
