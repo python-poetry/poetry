@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 
 from typing import Any
-from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -16,7 +15,6 @@ from poetry.utils.helpers import canonicalize_name
 
 
 class AddCommand(InstallerCommand, InitCommand):
-
     name = "add"
     description = "Adds a new dependency to <comment>pyproject.toml</>."
 
@@ -127,9 +125,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             section = poetry_content["dependencies"]
         else:
             if "group" not in poetry_content:
-                poetry_content.value._insert_after(
-                    "dependencies", "group", table(is_super_table=True)
-                )
+                poetry_content["group"] = table(is_super_table=True)
 
             groups = poetry_content["group"]
             if group not in groups:
@@ -250,7 +246,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         if self.option("lock"):
             self._installer.lock()
 
-        self._installer.whitelist([cast(str, r["name"]) for r in requirements])
+        self._installer.whitelist([r["name"] for r in requirements])
 
         status = self._installer.run()
 

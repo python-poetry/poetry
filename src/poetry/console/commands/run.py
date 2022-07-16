@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class RunCommand(EnvCommand):
-
     name = "run"
     description = "Runs a command in the appropriate environment."
 

@@ -6,7 +6,6 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 class InstallCommand(InstallerCommand):
-
     name = "install"
     description = "Installs the project dependencies."
 

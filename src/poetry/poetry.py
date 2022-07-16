@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 
 class Poetry(BasePoetry):
-
     VERSION = __version__
 
     def __init__(

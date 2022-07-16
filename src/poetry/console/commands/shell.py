@@ -9,7 +9,6 @@ from poetry.console.commands.env_command import EnvCommand
 
 
 class ShellCommand(EnvCommand):
-
     name = "shell"
     description = "Spawns a shell within the virtual environment."
 

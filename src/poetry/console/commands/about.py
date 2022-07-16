@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
 
 class AboutCommand(Command):
-
     name = "about"
 
     description = "Shows information about Poetry."

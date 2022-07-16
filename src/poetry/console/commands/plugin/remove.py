@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING
 
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.inputs.string_input import StringInput
 from cleo.io.io import IO
 
-from poetry.console.application import Application
 from poetry.console.commands.command import Command
-from poetry.console.commands.self.remove import SelfRemoveCommand
+
+
+if TYPE_CHECKING:
+    from poetry.console.commands.self.remove import SelfRemoveCommand
 
 
 class PluginRemoveCommand(Command):
-
     name = "plugin remove"
 
     description = "Removes installed plugins"
@@ -41,10 +42,8 @@ class PluginRemoveCommand(Command):
     def handle(self) -> int:
         self.line_error(self.help)
 
-        application = cast(Application, self.application)
-        command: SelfRemoveCommand = cast(
-            SelfRemoveCommand, application.find("self remove")
-        )
+        application = self.get_application()
+        command: SelfRemoveCommand = application.find("self remove")
         application.configure_installer_for_command(command, self.io)
 
         argv: list[str] = ["remove", *self.argument("plugins")]

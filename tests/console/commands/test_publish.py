@@ -114,7 +114,6 @@ def test_publish_dry_run_skip_existing(
 def test_skip_existing_output(
     app_tester: ApplicationTester, http: type[httpretty.httpretty]
 ):
-
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
     )

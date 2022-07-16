@@ -105,7 +105,6 @@ _default_config: Config | None = None
 
 
 class Config:
-
     default_config: dict[str, Any] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {

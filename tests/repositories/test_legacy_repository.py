@@ -38,7 +38,6 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
 
 
 class MockRepository(LegacyRepository):
-
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
     def __init__(self) -> None:
