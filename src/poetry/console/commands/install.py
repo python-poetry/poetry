@@ -84,7 +84,7 @@ dependencies and not including the current project, run the command with the
 
         from poetry.masonry.builders.editable import EditableBuilder
 
-        self._installer.use_executor(
+        self.installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
 
@@ -125,7 +125,7 @@ dependencies and not including the current project, run the command with the
                 else:
                     extras.append(extra)
 
-        self._installer.extras(extras)
+        self.installer.extras(extras)
 
         with_synchronization = self.option("sync")
         if self.option("remove-untracked"):
@@ -137,12 +137,12 @@ dependencies and not including the current project, run the command with the
 
             with_synchronization = True
 
-        self._installer.only_groups(self.activated_groups)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.requires_synchronization(with_synchronization)
-        self._installer.verbose(self.io.is_verbose())
+        self.installer.only_groups(self.activated_groups)
+        self.installer.dry_run(self.option("dry-run"))
+        self.installer.requires_synchronization(with_synchronization)
+        self.installer.verbose(self.io.is_verbose())
 
-        return_code = self._installer.run()
+        return_code = self.installer.run()
 
         if return_code != 0:
             return return_code

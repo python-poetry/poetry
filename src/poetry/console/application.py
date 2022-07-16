@@ -313,7 +313,7 @@ class Application(BaseApplication):  # type: ignore[misc]
 
         # If the command already has an installer
         # we skip this step
-        if command.installer is not None:
+        if command._installer is not None:
             return
 
         cls.configure_installer_for_command(command, event.io)
