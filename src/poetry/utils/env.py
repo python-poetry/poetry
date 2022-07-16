@@ -230,7 +230,7 @@ print(json.dumps(paths))
 
 # This should be dropped when Poetry removes python2 support completely
 def _is_python2_exec(executable: str) -> bool:
-    return re.match(r".2.|.2\..", executable) is not None
+    return re.match(r".*2.|.2\..", executable) is not None
 
 
 class SitePackages:
@@ -577,6 +577,10 @@ class EnvManager:
             pass
 
         python = self._full_python_path(python)
+
+        if _is_python2_exec(python):
+            io.write_line("check 1")
+            raise Exception("python 2 detected, can't use python 2")
 
         try:
             python_version_string = decode(
