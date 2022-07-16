@@ -233,6 +233,12 @@ def _is_python2_exec(executable: str) -> bool:
     return re.match(r".*2.|.2\..", executable) is not None
 
 
+def _can_use_python2() -> bool:
+    if "py2" in {t.interpreter[:3] for t in Env(__file__).get_supported_tags()}:
+        return True
+    return False
+
+
 class SitePackages:
     def __init__(
         self,
@@ -579,8 +585,7 @@ class EnvManager:
         python = self._full_python_path(python)
 
         if _is_python2_exec(python):
-            io.write_line("check 1")
-            raise Exception("python 2 detected, can't use python 2")
+            raise PoetryException("Poetry no longer supports Python 2.7 environments")
 
         try:
             python_version_string = decode(
@@ -907,7 +912,7 @@ class EnvManager:
             )
 
             for python_to_try in sorted(
-                self._poetry.package.AVAILABLE_PYTHONS - {"2", "2.7"},
+                self._poetry.package.AVAILABLE_PYTHONS,
                 key=lambda v: (v.startswith("3"), -len(v), v),
                 reverse=True,
             ):
@@ -924,9 +929,7 @@ class EnvManager:
                 python = "python" + python_to_try
 
                 if _is_python2_exec(python):
-                    error_message = """
-                    Poetry no longer supports Python 2.7 environments.
-                    """
+                    error_message = "Poetry no longer supports Python 2.7 environments."
                     raise PoetryException(error_message)
 
                 if io.is_debug():
@@ -1066,9 +1069,7 @@ class EnvManager:
             executable = executable.resolve().as_posix()
 
         if _is_python2_exec(executable):
-            error_message = """
-                Poetry no longer supports Python 2.7 environments.
-                """
+            error_message = "Poetry no longer supports Python 2.7 environments."
             raise PoetryException(error_message)
 
         args = [
