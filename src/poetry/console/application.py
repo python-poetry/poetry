@@ -285,7 +285,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         if not isinstance(command, EnvCommand):
             return
 
-        if command.env is not None:
+        if command._env is not None:
             return
 
         from poetry.utils.env import EnvManager

@@ -151,7 +151,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, self.io)
+            builder = EditableBuilder(self.poetry, self.env, self.io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
