@@ -43,7 +43,7 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
             ["group0"],
             ["bar", "foo"],
         ),
-        # Selecting multpile extras should get us the union of all package names
+        # Selecting multiple extras should get us the union of all package names
         (
             [_PACKAGE_FOO, _PACKAGE_SPAM, _PACKAGE_BAR],
             {"group0": ["bar"], "group1": ["spam"]},
