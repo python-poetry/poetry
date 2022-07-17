@@ -4,14 +4,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
+from packaging.utils import canonicalize_name
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.core.utils.helpers import module_name
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
 from tomlkit.toml_document import TOMLDocument
-
-from poetry.utils.helpers import canonicalize_name
-from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
@@ -52,9 +51,9 @@ class Layout:
         dependencies: dict[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
-        self._project = canonicalize_name(project).replace(".", "-")
+        self._project = canonicalize_name(project)
         self._package_path_relative = Path(
-            *(module_name(part) for part in canonicalize_name(project).split("."))
+            *(module_name(part) for part in project.split("."))
         )
         self._package_name = ".".join(self._package_path_relative.parts)
         self._version = version
