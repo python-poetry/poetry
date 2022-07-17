@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
@@ -14,7 +15,6 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
 from poetry.utils.extras import get_extra_package_names
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import pluralize
 
 

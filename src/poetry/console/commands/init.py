@@ -10,12 +10,12 @@ from typing import Mapping
 from typing import Union
 
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.dependency_specification import parse_dependency_specification
-from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
