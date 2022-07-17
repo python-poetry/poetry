@@ -173,7 +173,7 @@ def test_uninstall_git_package_nspkg_pth_cleanup(
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
-    # use a namepspace package
+    # use a namespace package
     package = Package(
         "namespace-package-one",
         "1.0.0",
