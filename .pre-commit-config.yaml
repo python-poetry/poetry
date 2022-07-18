@@ -52,7 +52,7 @@ repos:
         exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.0.1
+    rev: v2.0.4
     hooks:
       - id: pycln
         args: [--all]
