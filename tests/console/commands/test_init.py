@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.testers.command_tester import CommandTester
+from packaging.utils import canonicalize_name
 
 from poetry.console.commands.init import InitCommand
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
-from poetry.utils.helpers import canonicalize_name
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 

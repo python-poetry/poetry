@@ -27,17 +27,6 @@ if TYPE_CHECKING:
     from poetry.utils.authenticator import Authenticator
 
 
-_canonicalize_regex = re.compile("[-_]+")
-
-
-def canonicalize_name(name: str) -> str:
-    return _canonicalize_regex.sub("-", name).lower()
-
-
-def module_name(name: str) -> str:
-    return canonicalize_name(name).replace(".", "_").replace("-", "_")
-
-
 @contextmanager
 def directory(path: Path) -> Iterator[Path]:
     cwd = Path.cwd()

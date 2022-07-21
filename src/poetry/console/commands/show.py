@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 
 from poetry.console.commands.group_command import GroupCommand
-from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
