@@ -233,12 +233,6 @@ def _is_python2_exec(executable: str) -> bool:
     return re.match(r".*2.|.2\..", executable) is not None
 
 
-def _can_use_python2() -> bool:
-    if "py2" in {t.interpreter[:3] for t in Env(__file__).get_supported_tags()}:
-        return True
-    return False
-
-
 class SitePackages:
     def __init__(
         self,
@@ -585,7 +579,7 @@ class EnvManager:
         python = self._full_python_path(python)
 
         if _is_python2_exec(python):
-            raise PoetryException("Poetry no longer supports Python 2.7 environments")
+            io.write_error_line("Poetry no longer supports Python 2.7 environments")
 
         try:
             python_version_string = decode(
