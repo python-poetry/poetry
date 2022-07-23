@@ -44,7 +44,7 @@ class PartialSolution:
         # map.
         #
         # This is derived from self._assignments.
-        self._negative: dict[str, dict[str, Term]] = {}
+        self._negative: dict[str, Term] = {}
 
         # The number of distinct solutions that have been attempted so far.
         self._attempted_solutions = 1
@@ -162,9 +162,7 @@ class PartialSolution:
 
             return
 
-        ref = assignment.dependency.complete_name
-        negative_by_ref = self._negative.get(name)
-        old_negative = None if negative_by_ref is None else negative_by_ref.get(ref)
+        old_negative = self._negative.get(name)
         term = (
             assignment if old_negative is None else assignment.intersect(old_negative)
         )
@@ -176,10 +174,7 @@ class PartialSolution:
 
             self._positive[name] = term
         else:
-            if name not in self._negative:
-                self._negative[name] = {}
-
-            self._negative[name][ref] = term
+            self._negative[name] = term
 
     def satisfier(self, term: Term) -> Assignment:
         """
@@ -222,11 +217,7 @@ class PartialSolution:
         if positive is not None:
             return positive.relation(term)
 
-        by_ref = self._negative.get(term.dependency.complete_name)
-        if by_ref is None:
-            return SetRelation.OVERLAPPING
-
-        negative = by_ref[term.dependency.complete_name]
+        negative = self._negative.get(term.dependency.complete_name)
         if negative is None:
             return SetRelation.OVERLAPPING
 
