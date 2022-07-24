@@ -38,7 +38,8 @@ class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
             message = (
-                f"HTTP Error {error.response.status_code}: {error.response.reason}"
+                f"HTTP Error {error.response.status_code}: {error.response.reason} |"
+                f" {error.response.content!r}"
             )
         elif isinstance(error, ConnectionError):
             message = (
