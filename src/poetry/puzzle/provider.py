@@ -140,6 +140,7 @@ class Provider:
         self._load_deferred = True
         self._source_root: Path | None = None
         self._installed_packages = installed if installed is not None else []
+        self._direct_origin_packages: dict[str, Package] = {}
 
     @property
     def pool(self) -> Pool:
@@ -268,18 +269,33 @@ class Provider:
             return PackageCollection(dependency, [self._package])
 
         if dependency.is_direct_origin():
-            packages = [self.search_for_direct_origin_dependency(dependency)]
+            package = self.search_for_direct_origin_dependency(dependency)
+            self._direct_origin_packages[dependency.name] = package
+            return PackageCollection(dependency, [package])
 
-        else:
-            packages = self._pool.find_packages(dependency)
-
-            packages.sort(
-                key=lambda p: (
-                    not p.is_prerelease() and not dependency.allows_prereleases(),
-                    p.version,
-                ),
-                reverse=True,
+        # If we've previously found a direct-origin package that meets this dependency,
+        # use it.
+        #
+        # We rely on the VersionSolver resolving direct-origin dependencies first.
+        direct_origin_package = self._direct_origin_packages.get(dependency.name)
+        if direct_origin_package is not None:
+            package = direct_origin_package.with_features(dependency.features)
+            packages = (
+                [package]
+                if package.satisfies(dependency, ignore_source_type=True)
+                else []
             )
+            return PackageCollection(dependency, packages)
+
+        packages = self._pool.find_packages(dependency)
+
+        packages.sort(
+            key=lambda p: (
+                not p.is_prerelease() and not dependency.allows_prereleases(),
+                p.version,
+            ),
+            reverse=True,
+        )
 
         if not packages:
             packages = self.search_for_installed_packages(dependency)

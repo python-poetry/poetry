@@ -376,6 +376,12 @@ class VersionSolver:
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
         def _get_min(dependency: Dependency) -> tuple[bool, int]:
+            # Direct origin dependencies must be handled first: we don't want to resolve
+            # a regular dependency for some package only to find later that we had a
+            # direct-origin dependency.
+            if dependency.is_direct_origin():
+                return False, -1
+
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
@@ -383,16 +389,6 @@ class VersionSolver:
 
             locked = self._get_locked(dependency)
             if locked:
-                return not dependency.marker.is_any(), 1
-
-            # VCS, URL, File or Directory dependencies
-            # represent a single version
-            if (
-                dependency.is_vcs()
-                or dependency.is_url()
-                or dependency.is_file()
-                or dependency.is_directory()
-            ):
                 return not dependency.marker.is_any(), 1
 
             try:

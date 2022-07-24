@@ -3596,3 +3596,55 @@ def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
     assert op.package.version.text == "0.1.2"
     assert op.package.source_type == "directory"
     assert op.package.source_url == path
+
+
+def test_solver_incompatible_dependency_with_and_without_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    """
+    The solver first encounters a requirement for google-auth and then later an
+    incompatible requirement for google-auth[aiohttp].
+
+    Testcase derived from https://github.com/python-poetry/poetry/issues/6054.
+    """
+    # Incompatible requirements from foo and bar2.
+    foo = get_package("foo", "1.0.0")
+    foo.add_dependency(Factory.create_dependency("google-auth", {"version": "^1"}))
+
+    bar = get_package("bar", "1.0.0")
+
+    bar2 = get_package("bar", "2.0.0")
+    bar2.add_dependency(
+        Factory.create_dependency(
+            "google-auth", {"version": "^2", "extras": ["aiohttp"]}
+        )
+    )
+
+    baz = get_package("baz", "1.0.0")  # required by google-auth[aiohttp]
+
+    google_auth = get_package("google-auth", "1.2.3")
+    google_auth.extras = {"aiohttp": [get_dependency("baz", "^1.0")]}
+
+    google_auth2 = get_package("google-auth", "2.3.4")
+    google_auth2.extras = {"aiohttp": [get_dependency("baz", "^1.0")]}
+
+    repo.add_package(foo)
+    repo.add_package(bar)
+    repo.add_package(bar2)
+    repo.add_package(baz)
+    repo.add_package(google_auth)
+    repo.add_package(google_auth2)
+
+    package.add_dependency(Factory.create_dependency("foo", ">=1"))
+    package.add_dependency(Factory.create_dependency("bar", ">=1"))
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": google_auth},
+            {"job": "install", "package": bar},
+            {"job": "install", "package": foo},
+        ],
+    )
