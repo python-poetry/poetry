@@ -465,7 +465,7 @@ class VersionSolver:
         if not conflict:
             self._solution.decide(package.package)
             self._log(
-                f"selecting {package.complete_name} ({package.full_pretty_version})"
+                f"selecting: {package.complete_name} ({package.full_pretty_version})"
             )
 
         complete_name = dependency.complete_name

@@ -804,10 +804,10 @@ class Provider:
                     r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<c2>\\2</c2>)", message
                 )
                 message = f"<fg=blue>fact</>: {message.split('fact: ')[1]}"
-        elif message.startswith("selecting "):
+        elif message.startswith("selecting: "):
             message = re.sub(
-                r"selecting (.+?) \((.+?)\)",
-                "<fg=blue>selecting</> <c1>\\1</c1> (<c2>\\2</c2>)",
+                r"selecting: (.+?) \((.+?)\)",
+                "<fg=blue>selecting</>: <c1>\\1</c1> (<c2>\\2</c2>)",
                 message,
             )
         elif message.startswith("derived:"):
