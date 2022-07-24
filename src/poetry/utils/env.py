@@ -1425,7 +1425,7 @@ class Env:
         return self._run(cmd, **kwargs)
 
     def run_pip(self, *args: str, **kwargs: Any) -> int | str:
-        pip = self.get_pip_command(embedded=True)
+        pip = self.get_pip_command()
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
