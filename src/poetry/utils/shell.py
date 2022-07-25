@@ -119,13 +119,15 @@ class Shell:
             suffix = ".ps1"
         elif self._name == "cmd":
             suffix = ".bat"
+        elif self._name == "nu":
+            suffix = ".nu"
         else:
             suffix = ""
 
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if self._name in ("fish", "csh", "tcsh"):
+        if self._name in ("fish", "csh", "tcsh", "nu"):
             return "source"
         return "."
 
