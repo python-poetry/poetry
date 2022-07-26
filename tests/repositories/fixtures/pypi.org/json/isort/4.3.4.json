@@ -1,0 +1,117 @@
+{
+  "info": {
+    "author": "Timothy Crosley",
+    "author_email": "timothy.crosley@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 6 - Mature",
+      "Environment :: Console",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Natural Language :: English",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy",
+      "Topic :: Software Development :: Libraries",
+      "Topic :: Utilities"
+    ],
+    "description": ".. image:: https://raw.github.com/timothycrosley/isort/master/logo.png\n    :alt: isort\n\n########\n\n.. image:: https://badge.fury.io/py/isort.svg\n    :target: https://badge.fury.io/py/isort\n    :alt: PyPI version\n\n.. image:: https://travis-ci.org/timothycrosley/isort.svg?branch=master\n    :target: https://travis-ci.org/timothycrosley/isort\n    :alt: Build Status\n\n\n.. image:: https://coveralls.io/repos/timothycrosley/isort/badge.svg?branch=release%2F2.6.0&service=github\n  :target: https://coveralls.io/github/timothycrosley/isort?branch=release%2F2.6.0\n  :alt: Coverage\n\n.. image:: https://img.shields.io/github/license/mashape/apistatus.svg\n    :target: https://pypi.python.org/pypi/hug/\n    :alt: License\n\n.. image:: https://badges.gitter.im/Join%20Chat.svg\n   :alt: Join the chat at https://gitter.im/timothycrosley/isort\n   :target: https://gitter.im/timothycrosley/isort?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge\n\n\nisort your python imports for you so you don't have to.\n\nisort is a Python utility / library to sort imports alphabetically, and automatically separated into sections.\nIt provides a command line utility, Python library and `plugins for various editors <https://github.com/timothycrosley/isort/wiki/isort-Plugins>`_ to quickly sort all your imports.\nIt currently cleanly supports Python 2.7 - 3.6 without any dependencies.\n\n.. image:: https://raw.github.com/timothycrosley/isort/develop/example.gif\n   :alt: Example Usage\n\nBefore isort:\n\n.. code-block:: python\n\n    from my_lib import Object\n\n    print(\"Hey\")\n\n    import os\n\n    from my_lib import Object3\n\n    from my_lib import Object2\n\n    import sys\n\n    from third_party import lib15, lib1, lib2, lib3, lib4, lib5, lib6, lib7, lib8, lib9, lib10, lib11, lib12, lib13, lib14\n\n    import sys\n\n    from __future__ import absolute_import\n\n    from third_party import lib3\n\n    print(\"yo\")\n\nAfter isort:\n\n.. code-block:: python\n\n    from __future__ import absolute_import\n\n    import os\n    import sys\n\n    from third_party import (lib1, lib2, lib3, lib4, lib5, lib6, lib7, lib8,\n                             lib9, lib10, lib11, lib12, lib13, lib14, lib15)\n\n    from my_lib import Object, Object2, Object3\n\n    print(\"Hey\")\n    print(\"yo\")\n\nInstalling isort\n================\n\nInstalling isort is as simple as:\n\n.. code-block:: bash\n\n    pip install isort\n\nor if you prefer\n\n.. code-block:: bash\n\n    easy_install isort\n\nUsing isort\n===========\n\n**From the command line**:\n\n.. code-block:: bash\n\n    isort mypythonfile.py mypythonfile2.py\n\nor recursively:\n\n.. code-block:: bash\n\n    isort -rc .\n\n*which is equivalent to:*\n\n.. code-block:: bash\n\n    isort **/*.py\n\nor to see the proposed changes without applying them:\n\n.. code-block:: bash\n\n    isort mypythonfile.py --diff\n\nFinally, to atomically run isort against a project, only applying changes if they don't introduce syntax errors do:\n\n.. code-block:: bash\n\n    isort -rc --atomic .\n\n(Note: this is disabled by default as it keeps isort from being able to run against code written using a different version of Python)\n\n**From within Python**:\n\n.. code-block:: bash\n\n    from isort import SortImports\n\n    SortImports(\"pythonfile.py\")\n\nor:\n\n.. code-block:: bash\n\n    from isort import SortImports\n\n    new_contents = SortImports(file_contents=old_contents).output\n\n**From within Kate:**\n\n.. code-block:: bash\n\n    ctrl+[\n\nor:\n\n.. code-block:: bash\n\n    menu > Python > Sort Imports\n\nInstalling isort's Kate plugin\n==============================\n\nFor KDE 4.13+ / Pate 2.0+:\n\n.. code-block:: bash\n\n    wget https://raw.github.com/timothycrosley/isort/master/kate_plugin/isort_plugin.py --output-document ~/.kde/share/apps/kate/pate/isort_plugin.py\n    wget https://raw.github.com/timothycrosley/isort/master/kate_plugin/isort_plugin_ui.rc --output-document ~/.kde/share/apps/kate/pate/isort_plugin_ui.rc\n    wget https://raw.github.com/timothycrosley/isort/master/kate_plugin/katepart_isort.desktop --output-document ~/.kde/share/kde4/services/katepart_isort.desktop\n\nFor all older versions:\n\n.. code-block:: bash\n\n    wget https://raw.github.com/timothycrosley/isort/master/kate_plugin/isort_plugin_old.py --output-document ~/.kde/share/apps/kate/pate/isort_plugin.py\n\nYou will then need to restart kate and enable Python Plugins as well as the isort plugin itself.\n\nInstalling isort's for your preferred text editor\n=================================================\n\nSeveral plugins have been written that enable to use isort from within a variety of text-editors.\nYou can find a full list of them `on the isort wiki <https://github.com/timothycrosley/isort/wiki/isort-Plugins>`_.\nAdditionally, I will enthusiastically accept pull requests that include plugins for other text editors\nand add documentation for them as I am notified.\n\nHow does isort work?\n====================\n\nisort parses specified files for global level import lines (imports outside of try / except blocks, functions, etc..)\nand puts them all at the top of the file grouped together by the type of import:\n\n- Future\n- Python Standard Library\n- Third Party\n- Current Python Project\n- Explicitly Local (. before import, as in: ``from . import x``)\n- Custom Separate Sections (Defined by forced_separate list in configuration file)\n- Custom Sections (Defined by sections list in configuration file)\n\nInside of each section the imports are sorted alphabetically. isort automatically removes duplicate python imports,\nand wraps long from imports to the specified line length (defaults to 80).\n\nWhen will isort not work?\n=========================\n\nIf you ever have the situation where you need to have a try / except block in the middle of top-level imports or if\nyour import order is directly linked to precedence.\n\nFor example: a common practice in Django settings files is importing * from various settings files to form\na new settings file. In this case if any of the imports change order you are changing the settings definition itself.\n\nHowever, you can configure isort to skip over just these files - or even to force certain imports to the top.\n\nConfiguring isort\n=================\n\nIf you find the default isort settings do not work well for your project, isort provides several ways to adjust\nthe behavior.\n\nTo configure isort for a single user create a ``~/.isort.cfg`` file:\n\n.. code-block:: ini\n\n    [settings]\n    line_length=120\n    force_to_top=file1.py,file2.py\n    skip=file3.py,file4.py\n    known_future_library=future,pies\n    known_standard_library=std,std2\n    known_third_party=randomthirdparty\n    known_first_party=mylib1,mylib2\n    indent='    '\n    multi_line_output=3\n    length_sort=1\n    forced_separate=django.contrib,django.utils\n    default_section=FIRSTPARTY\n    no_lines_before=LOCALFOLDER\n\nAdditionally, you can specify project level configuration simply by placing a ``.isort.cfg`` file at the root of your\nproject. isort will look up to 25 directories up, from the file it is ran against, to find a project specific configuration.\n\nOr, if you prefer, you can add an isort section to your project's ``setup.cfg`` or ``tox.ini`` file with any desired settings.\n\nYou can then override any of these settings by using command line arguments, or by passing in override values to the\nSortImports class.\n\nFinally, as of version 3.0 isort supports editorconfig files using the standard syntax defined here:\nhttp://editorconfig.org/\n\nMeaning you place any standard isort configuration parameters within a .editorconfig file under the ``*.py`` section\nand they will be honored.\n\nFor a full list of isort settings and their meanings `take a look at the isort wiki <https://github.com/timothycrosley/isort/wiki/isort-Settings>`_.\n\nMulti line output modes\n=======================\n\nYou will notice above the \"multi_line_output\" setting. This setting defines how from imports wrap when they extend\npast the line_length limit and has 6 possible settings:\n\n**0 - Grid**\n\n.. code-block:: python\n\n    from third_party import (lib1, lib2, lib3,\n                             lib4, lib5, ...)\n\n**1 - Vertical**\n\n.. code-block:: python\n\n    from third_party import (lib1,\n                             lib2,\n                             lib3\n                             lib4,\n                             lib5,\n                             ...)\n\n**2 - Hanging Indent**\n\n.. code-block:: python\n\n    from third_party import \\\n        lib1, lib2, lib3, \\\n        lib4, lib5, lib6\n\n**3 - Vertical Hanging Indent**\n\n.. code-block:: python\n\n    from third_party import (\n        lib1,\n        lib2,\n        lib3,\n        lib4,\n    )\n\n**4 - Hanging Grid**\n\n.. code-block:: python\n\n    from third_party import (\n        lib1, lib2, lib3, lib4,\n        lib5, ...)\n\n**5 - Hanging Grid Grouped**\n\n.. code-block:: python\n\n    from third_party import (\n        lib1, lib2, lib3, lib4,\n        lib5, ...\n    )\n\n**6 - NOQA**\n\n.. code-block:: python\n\n    from third_party import lib1, lib2, lib3, ...  # NOQA\n\nAlternatively, you can set ``force_single_line`` to ``True`` (``-sl`` on the command line) and every import will appear on its\nown line:\n\n.. code-block:: python\n\n    from third_party import lib1\n    from third_party import lib2\n    from third_party import lib3\n    ...\n\nNote: to change the how constant indents appear - simply change the indent property with the following accepted formats:\n*   Number of spaces you would like. For example: 4 would cause standard 4 space indentation.\n*   Tab\n*   A verbatim string with quotes around it.\n\nFor example:\n\n.. code-block:: python\n\n    \"    \"\n\nis equivalent to 4.\n\nFor the import styles that use parentheses, you can control whether or not to\ninclude a trailing comma after the last import with the ``include_trailing_comma``\noption (defaults to ``False``).\n\nIntelligently Balanced Multi-line Imports\n=========================================\n\nAs of isort 3.1.0 support for balanced multi-line imports has been added.\nWith this enabled isort will dynamically change the import length to the one that produces the most balanced grid,\nwhile staying below the maximum import length defined.\n\nExample:\n\n.. code-block:: python\n\n    from __future__ import (absolute_import, division,\n                            print_function, unicode_literals)\n\nWill be produced instead of:\n\n.. code-block:: python\n\n    from __future__ import (absolute_import, division, print_function,\n                            unicode_literals)\n\nTo enable this set ``balanced_wrapping`` to ``True`` in your config or pass the ``-e`` option into the command line utility.\n\nCustom Sections and Ordering\n============================\n\nYou can change the section order with ``sections`` option from the default of:\n\n.. code-block:: ini\n\n    FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER\n\nto your preference:\n\n.. code-block:: ini\n\n    sections=FUTURE,STDLIB,FIRSTPARTY,THIRDPARTY,LOCALFOLDER\n\nYou also can define your own sections and their order.\n\nExample:\n\n.. code-block:: ini\n\n    known_django=django\n    known_pandas=pandas,numpy\n    sections=FUTURE,STDLIB,DJANGO,THIRDPARTY,PANDAS,FIRSTPARTY,LOCALFOLDER\n\nwould create two new sections with the specified known modules.\n\nThe ``no_lines_before`` option will prevent the listed sections from being split from the previous section by an empty line.\n\nExample:\n\n.. code-block:: ini\n\n   sections=FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER\n   no_lines_before=LOCALFOLDER\n\nwould produce a section with both FIRSTPARTY and LOCALFOLDER modules combined.\n\nAuto-comment import sections\n============================\n\nSome projects prefer to have import sections uniquely titled to aid in identifying the sections quickly\nwhen visually scanning. isort can automate this as well. To do this simply set the ``import_heading_{section_name}``\nsetting for each section you wish to have auto commented - to the desired comment.\n\nFor Example:\n\n.. code-block:: ini\n\n    import_heading_stdlib=Standard Library\n    import_heading_firstparty=My Stuff\n\nWould lead to output looking like the following:\n\n.. code-block:: python\n\n    # Standard Library\n    import os\n    import sys\n\n    import django.settings\n\n    # My Stuff\n    import myproject.test\n\nOrdering by import length\n=========================\n\nisort also makes it easy to sort your imports by length, simply by setting the ``length_sort`` option to ``True``.\nThis will result in the following output style:\n\n.. code-block:: python\n\n    from evn.util import (\n        Pool,\n        Dict,\n        Options,\n        Constant,\n        DecayDict,\n        UnexpectedCodePath,\n    )\n\nSkip processing of imports (outside of configuration)\n=====================================================\n\nTo make isort ignore a single import simply add a comment at the end of the import line containing the text ``isort:skip``:\n\n.. code-block:: python\n\n    import module  # isort:skip\n\nor:\n\n.. code-block:: python\n\n    from xyz import (abc,  # isort:skip\n                     yo,\n                     hey)\n\nTo make isort skip an entire file simply add ``isort:skip_file`` to the module's doc string:\n\n.. code-block:: python\n\n    \"\"\" my_module.py\n        Best module ever\n\n       isort:skip_file\n    \"\"\"\n\n    import b\n    import a\n\nAdding an import to multiple files\n==================================\n\nisort makes it easy to add an import statement across multiple files, while being assured it's correctly placed.\n\nFrom the command line:\n\n.. code-block:: bash\n\n    isort -a \"from __future__ import print_function\" *.py\n\nfrom within Kate:\n\n.. code-block::\n\n    ctrl+]\n\nor:\n\n.. code-block::\n\n    menu > Python > Add Import\n\nRemoving an import from multiple files\n======================================\n\nisort also makes it easy to remove an import from multiple files, without having to be concerned with how it was originally\nformatted.\n\nFrom the command line:\n\n.. code-block:: bash\n\n    isort -r \"os.system\" *.py\n\nfrom within Kate:\n\n.. code-block::\n\n    ctrl+shift+]\n\nor:\n\n.. code-block::\n\n    menu > Python > Remove Import\n\nUsing isort to verify code\n==========================\n\nThe ``--check-only`` option\n---------------------------\n\nisort can also be used to used to verify that code is correctly formatted by running it with ``-c``.\nAny files that contain incorrectly sorted and/or formatted imports will be outputted to ``stderr``.\n\n.. code-block:: bash\n\n    isort **/*.py -c -vb\n\n    SUCCESS: /home/timothy/Projects/Open_Source/isort/isort_kate_plugin.py Everything Looks Good!\n    ERROR: /home/timothy/Projects/Open_Source/isort/isort/isort.py Imports are incorrectly sorted.\n\nOne great place this can be used is with a pre-commit git hook, such as this one by @acdha:\n\nhttps://gist.github.com/acdha/8717683\n\nThis can help to ensure a certain level of code quality throughout a project.\n\n\nGit hook\n--------\n\nisort provides a hook function that can be integrated into your Git pre-commit script to check\nPython code before committing.\n\nTo cause the commit to fail if there are isort errors (strict mode), include the following in\n``.git/hooks/pre-commit``:\n\n.. code-block:: python\n\n    #!/usr/bin/env python\n    import sys\n    from isort.hooks import git_hook\n\n    sys.exit(git_hook(strict=True))\n\nIf you just want to display warnings, but allow the commit to happen anyway, call ``git_hook`` without\nthe `strict` parameter.\n\nSetuptools integration\n----------------------\n\nUpon installation, isort enables a ``setuptools`` command that checks Python files\ndeclared by your project.\n\nRunning ``python setup.py isort`` on the command line will check the files\nlisted in your ``py_modules`` and ``packages``.  If any warning is found,\nthe command will exit with an error code:\n\n.. code-block:: bash\n\n    $ python setup.py isort\n\nAlso, to allow users to be able to use the command without having to install\nisort themselves, add isort to the setup_requires of your ``setup()`` like so:\n\n.. code-block:: python\n\n    setup(\n        name=\"project\",\n        packages=[\"project\"],\n\n        setup_requires=[\n            \"isort\"\n        ]\n    )\n\n\nWhy isort?\n==========\n\nisort simply stands for import sort. It was originally called \"sortImports\" however I got tired of typing the extra\ncharacters and came to the realization camelCase is not pythonic.\n\nI wrote isort because in an organization I used to work in the manager came in one day and decided all code must\nhave alphabetically sorted imports. The code base was huge - and he meant for us to do it by hand. However, being a\nprogrammer - I'm too lazy to spend 8 hours mindlessly performing a function, but not too lazy to spend 16\nhours automating it. I was given permission to open source sortImports and here we are :)\n\n--------------------------------------------\n\nThanks and I hope you find isort useful!\n\n~Timothy Crosley\n",
+    "description_content_type": null,
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/timothycrosley/isort",
+    "keywords": "Refactor",
+    "license": "MIT",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "isort",
+    "package_url": "https://pypi.org/project/isort/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/isort/",
+    "project_urls": {
+      "Homepage": "https://github.com/timothycrosley/isort"
+    },
+    "release_url": "https://pypi.org/project/isort/4.3.4/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "A Python utility / library to sort Python imports.",
+    "version": "4.3.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 11968646,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "f0ad7704b6dc947073398ba290c3517f",
+        "sha256": "ec9ef8f4a9bc6f71eec99e1806bfa2de401650d996c59330782b89a5555c1497"
+      },
+      "downloads": -1,
+      "filename": "isort-4.3.4-py2-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "f0ad7704b6dc947073398ba290c3517f",
+      "packagetype": "bdist_wheel",
+      "python_version": "2.7",
+      "requires_python": null,
+      "size": 45393,
+      "upload_time": "2018-02-12T15:06:38",
+      "upload_time_iso_8601": "2018-02-12T15:06:38.441257Z",
+      "url": "https://files.pythonhosted.org/packages/41/d8/a945da414f2adc1d9e2f7d6e7445b27f2be42766879062a2e63616ad4199/isort-4.3.4-py2-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "fbaac4cd669ac21ea9e21ab1ea3180db",
+        "sha256": "1153601da39a25b14ddc54955dbbacbb6b2d19135386699e2ad58517953b34af"
+      },
+      "downloads": -1,
+      "filename": "isort-4.3.4-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "fbaac4cd669ac21ea9e21ab1ea3180db",
+      "packagetype": "bdist_wheel",
+      "python_version": "3.6",
+      "requires_python": null,
+      "size": 45352,
+      "upload_time": "2018-02-12T15:06:20",
+      "upload_time_iso_8601": "2018-02-12T15:06:20.089641Z",
+      "url": "https://files.pythonhosted.org/packages/1f/2c/22eee714d7199ae0464beda6ad5fedec8fee6a2f7ffd1e8f1840928fe318/isort-4.3.4-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "fb554e9c8f9aa76e333a03d470a5cf52",
+        "sha256": "b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8"
+      },
+      "downloads": -1,
+      "filename": "isort-4.3.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "fb554e9c8f9aa76e333a03d470a5cf52",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 56070,
+      "upload_time": "2018-02-12T15:06:16",
+      "upload_time_iso_8601": "2018-02-12T15:06:16.498194Z",
+      "url": "https://files.pythonhosted.org/packages/b1/de/a628d16fdba0d38cafb3d7e34d4830f2c9cb3881384ce5c08c44762e1846/isort-4.3.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
