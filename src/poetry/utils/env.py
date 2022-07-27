@@ -1909,7 +1909,10 @@ def build_environment(
     """
     if not env or poetry.package.build_script:
         with ephemeral_environment(executable=env.python if env else None) as venv:
-            overwrite = io and io.output.is_decorated() and not io.is_debug()
+            overwrite = (
+                io is not None and io.output.is_decorated() and not io.is_debug()
+            )
+
             if io:
                 if not overwrite:
                     io.write_line("")
@@ -1923,6 +1926,7 @@ def build_environment(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
+
             venv.run_pip(
                 "install",
                 "--disable-pip-version-check",
@@ -1931,6 +1935,7 @@ def build_environment(
             )
 
             if overwrite:
+                assert io is not None
                 io.write_line("")
 
             yield venv

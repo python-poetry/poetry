@@ -258,6 +258,7 @@ class Executor:
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
+                io: IO | SectionOutput
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
