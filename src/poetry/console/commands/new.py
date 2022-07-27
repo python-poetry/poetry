@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 
 from contextlib import suppress
@@ -48,6 +49,7 @@ class NewCommand(Command):
         name = self.option("name")
         if not name:
             name = path.name
+        name = re.sub(r"\s+", "_", name)
 
         if path.exists() and list(path.glob("*")):
             # Directory is not empty. Aborting.
