@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.inputs.string_input import StringInput
 from cleo.io.io import IO
 
 from poetry.console.commands.command import Command
-
-
-if TYPE_CHECKING:
-    from poetry.console.commands.self.remove import SelfRemoveCommand
+from poetry.console.commands.self.remove import SelfRemoveCommand
 
 
 class PluginRemoveCommand(Command):
@@ -43,7 +38,8 @@ class PluginRemoveCommand(Command):
         self.line_error(self.help)
 
         application = self.get_application()
-        command: SelfRemoveCommand = application.find("self remove")
+        command = application.find("self remove")
+        assert isinstance(command, SelfRemoveCommand)
         application.configure_installer_for_command(command, self.io)
 
         argv: list[str] = ["remove", *self.argument("plugins")]

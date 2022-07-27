@@ -79,6 +79,7 @@ class Indicator(ProgressIndicator):  # type: ignore[misc]
             return f" <c1>{Indicator.CONTEXT}</> "
 
     def _formatter_elapsed(self) -> str:
+        assert self._start_time is not None
         elapsed = time.time() - self._start_time
 
         return f"{elapsed:.1f}s"
