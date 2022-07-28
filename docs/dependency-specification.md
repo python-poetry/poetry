@@ -263,12 +263,12 @@ You can also specify that a dependency should be installed only for specific Pyt
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7" }
+pathlib2 = { version = "^2.0.1", python = "<3.11" }
 ```
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7 || ^3.2" }
+pathlib2 = { version = "^2.2", python = "^3.2" }
 ```
 
 ## Using environment markers
@@ -279,7 +279,7 @@ via the `markers` property:
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
+pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platform == 'win32'" }
 ```
 
 ## Multiple constraints dependencies
@@ -294,7 +294,7 @@ you would declare it like so:
 ```toml
 [tool.poetry.dependencies]
 foo = [
-    {version = "<=1.9", python = "^2.7"},
+    {version = "<=1.9", python = "^3.6"},
     {version = "^2.0", python = "^3.8"}
 ]
 ```
