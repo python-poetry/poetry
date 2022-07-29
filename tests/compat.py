@@ -4,7 +4,7 @@ from __future__ import annotations
 try:
     import zipp  # nopycln: import
 except ImportError:
-    import zipfile as zipp  # noqa: F401, TC002
+    import zipfile as zipp  # noqa: F401, TC003
 
 try:
     from typing import Protocol  # nopycln: import
