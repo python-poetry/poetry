@@ -670,10 +670,10 @@ class Provider:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
 
             def fmt_warning(d: Dependency) -> str:
-                marker = d.marker if not d.marker.is_any() else "*"
+                dependency_marker = d.marker if not d.marker.is_any() else "*"
                 return (
                     f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</>"
-                    f" with markers <b>{marker}</b>"
+                    f" with markers <b>{dependency_marker}</b>"
                 )
 
             warnings = ", ".join(fmt_warning(d) for d in deps[:-1])
