@@ -51,16 +51,6 @@ The new version should ideally be a valid semver string or a valid bump rule:
 patch, minor, major, prepatch, preminor, premajor, prerelease.
 """
 
-    RESERVED: ClassVar[set[str]] = {
-        "major",
-        "minor",
-        "patch",
-        "premajor",
-        "preminor",
-        "prepatch",
-        "prerelease",
-    }
-
     def handle(self) -> int:
         version = self.argument("version")
 

@@ -12,7 +12,6 @@ from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
-from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
@@ -102,14 +101,9 @@ class Factory(BaseFactory):
 
         plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
         plugin_manager.load_plugins()
-        poetry.set_plugin_manager(plugin_manager)
         plugin_manager.activate(poetry, io)
 
         return poetry
-
-    @classmethod
-    def get_package(cls, name: str, version: str) -> ProjectPackage:
-        return ProjectPackage(name, version)
 
     @classmethod
     def create_pool(

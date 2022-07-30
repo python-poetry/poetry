@@ -261,12 +261,6 @@ class Env:
 
         return Path(sys.prefix)
 
-    def get_version_info(self) -> tuple[Any, ...]:
-        raise NotImplementedError()
-
-    def get_python_implementation(self) -> str:
-        raise NotImplementedError()
-
     def get_marker_env(self) -> dict[str, Any]:
         raise NotImplementedError()
 
