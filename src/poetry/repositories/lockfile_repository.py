@@ -20,13 +20,3 @@ class LockfileRepository(Repository):
 
     def has_package(self, package: Package) -> bool:
         return any(p == package for p in self.packages)
-
-    def remove_package(self, package: Package) -> None:
-        index = None
-        for i, repo_package in enumerate(self.packages):
-            if repo_package == package:
-                index = i
-                break
-
-        if index is not None:
-            del self._packages[index]

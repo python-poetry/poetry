@@ -37,25 +37,3 @@ def test_has_package(packages: list[Package]) -> None:
     assert repo.has_package(deepcopy(url_package))
     assert repo.has_package(deepcopy(pypi_package))
     assert repo.has_package(deepcopy(url_package_2))
-
-
-def test_remove_package(packages: list[Package]) -> None:
-    url_package, pypi_package, url_package_2 = packages
-
-    repo = LockfileRepository()
-    repo.add_package(url_package)
-    repo.add_package(pypi_package)
-    repo.add_package(url_package_2)
-
-    assert len(repo.packages) == 3
-
-    repo.remove_package(deepcopy(pypi_package))
-    assert len(repo.packages) == 2
-    repo.remove_package(pypi_package)
-    assert len(repo.packages) == 2
-
-    repo.remove_package(deepcopy(url_package_2))
-    assert len(repo.packages) == 1
-    assert repo.packages[0] == url_package
-    repo.remove_package(url_package_2)
-    assert len(repo.packages) == 1

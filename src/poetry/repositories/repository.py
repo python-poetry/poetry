@@ -69,18 +69,6 @@ class Repository(AbstractRepository):
     def add_package(self, package: Package) -> None:
         self._packages.append(package)
 
-    def remove_package(self, package: Package) -> None:
-        package_id = package.unique_name
-
-        index = None
-        for i, repo_package in enumerate(self.packages):
-            if package_id == repo_package.unique_name:
-                index = i
-                break
-
-        if index is not None:
-            del self._packages[index]
-
     def search(self, query: str) -> list[Package]:
         results: list[Package] = []
 
