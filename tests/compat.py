@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import sys
 
-try:
-    import zipp  # nopycln: import
-except ImportError:
-    import zipfile as zipp  # noqa: F401, TC002
+
+if sys.version_info < (3, 8):
+    import zipp as zipfile  # nopycln: import
+else:
+    import zipfile  # noqa: F401
 
 try:
     from typing import Protocol  # nopycln: import
