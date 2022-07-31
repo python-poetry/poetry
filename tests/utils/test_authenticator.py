@@ -41,17 +41,27 @@ def mock_remote(http: type[httpretty.httpretty]) -> None:
     )
 
 
-def test_authenticator_uses_url_provided_credentials(
-    config: Config, mock_remote: None, http: type[httpretty.httpretty]
-):
+@pytest.fixture()
+def repo():
+    return {"foo": {"url": "https://foo.bar/simple/"}}
+
+
+@pytest.fixture
+def mock_config(config: Config, repo: dict[str, dict[str, str]]):
     config.merge(
         {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "repositories": repo,
             "http-basic": {"foo": {"username": "bar", "password": "baz"}},
         }
     )
 
-    authenticator = Authenticator(config, NullIO())
+    return config
+
+
+def test_authenticator_uses_url_provided_credentials(
+    mock_config: Config, mock_remote: None, http: type[httpretty.httpretty]
+):
+    authenticator = Authenticator(mock_config, NullIO())
     authenticator.request("get", "https://foo001:bar002@foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
@@ -60,16 +70,9 @@ def test_authenticator_uses_url_provided_credentials(
 
 
 def test_authenticator_uses_credentials_from_config_if_not_provided(
-    config: Config, mock_remote: None, http: type[httpretty.httpretty]
+    mock_config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ):
-    config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
-        }
-    )
-
-    authenticator = Authenticator(config, NullIO())
+    authenticator = Authenticator(mock_config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
@@ -78,19 +81,12 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
 
 
 def test_authenticator_uses_username_only_credentials(
-    config: Config,
+    mock_config: Config,
     mock_remote: None,
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
 ):
-    config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
-        }
-    )
-
-    authenticator = Authenticator(config, NullIO())
+    authenticator = Authenticator(mock_config, NullIO())
     authenticator.request("get", "https://foo001@foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
@@ -99,16 +95,9 @@ def test_authenticator_uses_username_only_credentials(
 
 
 def test_authenticator_uses_password_only_credentials(
-    config: Config, mock_remote: None, http: type[httpretty.httpretty]
+    mock_config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ):
-    config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
-        }
-    )
-
-    authenticator = Authenticator(config, NullIO())
+    authenticator = Authenticator(mock_config, NullIO())
     authenticator.request("get", "https://:bar002@foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
@@ -119,12 +108,13 @@ def test_authenticator_uses_password_only_credentials(
 def test_authenticator_uses_empty_strings_as_default_password(
     config: Config,
     mock_remote: None,
+    repo: dict[str, dict[str, str]],
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
 ):
     config.merge(
         {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "repositories": repo,
             "http-basic": {"foo": {"username": "bar"}},
         }
     )
@@ -138,11 +128,14 @@ def test_authenticator_uses_empty_strings_as_default_password(
 
 
 def test_authenticator_uses_empty_strings_as_default_username(
-    config: Config, mock_remote: None, http: type[httpretty.httpretty]
+    config: Config,
+    mock_remote: None,
+    repo: dict[str, dict[str, str]],
+    http: type[httpretty.httpretty],
 ):
     config.merge(
         {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "repositories": repo,
             "http-basic": {"foo": {"username": None, "password": "bar"}},
         }
     )
@@ -158,13 +151,14 @@ def test_authenticator_uses_empty_strings_as_default_username(
 def test_authenticator_falls_back_to_keyring_url(
     config: Config,
     mock_remote: None,
+    repo: dict[str, dict[str, str]],
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ):
     config.merge(
         {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "repositories": repo,
         }
     )
 
@@ -183,13 +177,14 @@ def test_authenticator_falls_back_to_keyring_url(
 def test_authenticator_falls_back_to_keyring_netloc(
     config: Config,
     mock_remote: None,
+    repo: dict[str, dict[str, str]],
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ):
     config.merge(
         {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "repositories": repo,
         }
     )
 
@@ -290,6 +285,7 @@ def test_authenticator_request_retries_on_status_code(
 
 def test_authenticator_uses_env_provided_credentials(
     config: Config,
+    repo: dict[str, dict[str, str]],
     environ: None,
     mock_remote: type[httpretty.httpretty],
     http: type[httpretty.httpretty],
@@ -298,7 +294,7 @@ def test_authenticator_uses_env_provided_credentials(
     monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_USERNAME", "bar")
     monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_PASSWORD", "baz")
 
-    config.merge({"repositories": {"foo": {"url": "https://foo.bar/simple/"}}})
+    config.merge({"repositories": repo})
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
@@ -320,6 +316,7 @@ def test_authenticator_uses_env_provided_credentials(
 def test_authenticator_uses_certs_from_config_if_not_provided(
     config: Config,
     mock_remote: type[httpretty.httpretty],
+    mock_config: Config,
     http: type[httpretty.httpretty],
     mocker: MockerFixture,
     cert: str | None,
@@ -327,17 +324,16 @@ def test_authenticator_uses_certs_from_config_if_not_provided(
 ):
     configured_cert = "/path/to/cert"
     configured_client_cert = "/path/to/client-cert"
-    config.merge(
+
+    mock_config.merge(
         {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
             "certificates": {
                 "foo": {"cert": configured_cert, "client-cert": configured_client_cert}
             },
         }
     )
 
-    authenticator = Authenticator(config, NullIO())
+    authenticator = Authenticator(mock_config, NullIO())
     url = "https://foo.bar/files/foo-0.1.0.tar.gz"
     session = authenticator.get_session(url)
     session_send = mocker.patch.object(session, "send")

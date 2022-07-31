@@ -1,5 +1,76 @@
 # Change Log
 
+## [1.2.0b3] - 2022-07-13
+
+**Important**: This release fixes a critical issue that prevented hashes from being retrieved when locking dependencies,
+due to a breaking change on PyPI JSON API (see [#5972](https://github.com/python-poetry/poetry/pull/5972)
+and [the upstream change](https://github.com/pypi/warehouse/pull/11775) for more details).
+
+After upgrading, you have to clear Poetry cache manually to get that feature working correctly again:
+
+```bash
+$ poetry cache clear pypi --all
+```
+
+### Added
+
+- Added `--only-root` to `poetry install` to install a project without its
+  dependencies ([#5783](https://github.com/python-poetry/poetry/pull/5783))
+
+### Changed
+
+- Improved user experience of `poetry init` ([#5838](https://github.com/python-poetry/poetry/pull/5838))
+- Added default timeout for all HTTP requests, to avoid hanging
+  requests ([#5881](https://github.com/python-poetry/poetry/pull/5881))
+- Updated `poetry init` to better specify how to skip adding
+  dependencies ([#5946](https://github.com/python-poetry/poetry/pull/5946))
+- Updated Poetry repository names to avoid clashes with user-defined
+  repositories ([#5910](https://github.com/python-poetry/poetry/pull/5910))
+
+### Fixed
+
+- Fixed an issue where extras where not handled if they did not match the case-sensitive name of the
+  packages ([#4122](https://github.com/python-poetry/poetry/pull/4122))
+- Fixed configuration of `experimental.system-git-client` option
+  through `poetry config` ([#5818](https://github.com/python-poetry/poetry/pull/5818))
+- Fixed uninstallation of git dependencies on Windows ([#5836](https://github.com/python-poetry/poetry/pull/5836))
+- Fixed an issue where `~` was not correctly expanded
+  in `virtualenvs.path` ([#5848](https://github.com/python-poetry/poetry/pull/5848))
+- Fixed an issue where installing/locking dependencies would hang when setting an incorrect git
+  repository ([#5880](https://github.com/python-poetry/poetry/pull/5880))
+- Fixed an issue in `poetry publish` when keyring was not properly
+  configured ([#5889](https://github.com/python-poetry/poetry/pull/5889))
+- Fixed duplicated line output in console ([#5890](https://github.com/python-poetry/poetry/pull/5890))
+- Fixed an issue where the same wheels where downloaded multiple times during
+  installation ([#5871](https://github.com/python-poetry/poetry/pull/5871))
+- Fixed an issue where dependencies hashes could not be retrieved when locking due to a breaking change on PyPI JSON
+  API ([#5973](https://github.com/python-poetry/poetry/pull/5973))
+- Fixed an issue where a dependency with non-requested extras could not be installed if it is requested with extras by
+  another dependency ([#5770](https://github.com/python-poetry/poetry/pull/5770))
+- Updated git backend to correctly read local/global git config when using dulwich as a git
+  backend ([#5935](https://github.com/python-poetry/poetry/pull/5935))
+- Fixed an issue where optional dependencies where not correctly exported when defining
+  groups ([#5819](https://github.com/python-poetry/poetry/pull/5819))
+
+### Docs
+
+- Fixed configuration instructions for repositories
+  specification ([#5809](https://github.com/python-poetry/poetry/pull/5809))
+- Added a link to dependency specification
+  from `pyproject.toml` ([#5815](https://github.com/python-poetry/poetry/pull/5815))
+- Improved `zsh` autocompletion instructions ([#5859](https://github.com/python-poetry/poetry/pull/5859))
+- Improved installation and update documentations ([#5857](https://github.com/python-poetry/poetry/pull/5857))
+- Improved exact requirements documentation ([#5874](https://github.com/python-poetry/poetry/pull/5874))
+- Added documentation for `@` operator ([#5822](https://github.com/python-poetry/poetry/pull/5822))
+- Improved autocompletion documentation ([#5879](https://github.com/python-poetry/poetry/pull/5879))
+- Improved `scripts` definition documentation ([#5884](https://github.com/python-poetry/poetry/pull/5884))
+
+## [1.1.14] - 2022-07-08
+
+## Fixed
+
+- Fixed an issue where dependencies hashes could not be retrieved when locking due to a breaking change on PyPI JSON API ([#5973](https://github.com/python-poetry/poetry/pull/5973))
+
 ## [1.2.0b2] - 2022-06-07
 
 ### Added
@@ -196,6 +267,7 @@
 -   Fixed the detection of the system environment when the setting `virtualenvs.create` is deactivated. ([#4507](https://github.com/python-poetry/poetry/pull/4507))
 -   Fixed an issue where unsafe parameters could be passed to `git` commands. ([python-poetry/poetry-core#203](https://github.com/python-poetry/poetry-core/pull/203))
 -   Fixed an issue where the wrong `git` executable could be used on Windows. ([python-poetry/poetry-core#205](https://github.com/python-poetry/poetry-core/pull/205))
+
 ## [1.1.8] - 2021-08-19
 
 ### Fixed
@@ -1375,11 +1447,12 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0b2...master
-[1.2.0b2]: https://github.com/python-poetry/poetry/compare/1.2.0b2
-[1.2.0b1]: https://github.com/python-poetry/poetry/compare/1.2.0b1
-[1.2.0a2]: https://github.com/python-poetry/poetry/compare/1.2.0a2
-[1.2.0a1]: https://github.com/python-poetry/poetry/compare/1.2.0a1
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0b3...master
+[1.2.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b3
+[1.2.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b2
+[1.2.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b1
+[1.2.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0a2
+[1.2.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0a1
 [1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.13
 [1.1.12]: https://github.com/python-poetry/poetry/releases/tag/1.1.12
 [1.1.11]: https://github.com/python-poetry/poetry/releases/tag/1.1.11

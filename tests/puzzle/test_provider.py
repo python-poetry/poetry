@@ -39,7 +39,7 @@ def root() -> ProjectPackage:
 
 @pytest.fixture
 def repository() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture
@@ -60,14 +60,14 @@ def test_search_for_vcs_retains_develop_flag(provider: Provider, value: bool):
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", develop=value
     )
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
     assert package.develop == value
 
 
 def test_search_for_vcs_setup_egg_info(provider: Provider):
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -87,7 +87,7 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider):
         "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
     )
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -107,7 +107,7 @@ def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture):
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -131,7 +131,7 @@ def test_search_for_vcs_read_setup_with_extras(
         "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
     )
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -153,7 +153,7 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(
     dependency = VCSDependency("demo", "git", "https://github.com/demo/no-version.git")
 
     with pytest.raises(RuntimeError):
-        provider.search_for_vcs(dependency)
+        provider.search_for_direct_origin_dependency(dependency)
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
@@ -168,7 +168,7 @@ def test_search_for_directory_setup_egg_info(provider: Provider, directory: str)
         / directory,
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -195,7 +195,7 @@ def test_search_for_directory_setup_egg_info_with_extras(provider: Provider):
         extras=["foo"],
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -228,7 +228,7 @@ def test_search_for_directory_setup_with_base(provider: Provider, directory: str
         / directory,
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -266,7 +266,7 @@ def test_search_for_directory_setup_read_setup(
         / "demo",
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -297,7 +297,7 @@ def test_search_for_directory_setup_read_setup_with_extras(
         extras=["foo"],
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -323,7 +323,7 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(provider: Pr
         / "no-dependencies",
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -337,7 +337,7 @@ def test_search_for_directory_poetry(provider: Provider):
         Path(__file__).parent.parent / "fixtures" / "project_with_extras",
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "project-with-extras"
     assert package.version.text == "1.2.3"
@@ -366,7 +366,7 @@ def test_search_for_directory_poetry_with_extras(provider: Provider):
         extras=["extras_a"],
     )
 
-    package = provider.search_for_directory(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "project-with-extras"
     assert package.version.text == "1.2.3"
@@ -397,7 +397,7 @@ def test_search_for_file_sdist(provider: Provider):
         / "demo-0.1.0.tar.gz",
     )
 
-    package = provider.search_for_file(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
@@ -429,7 +429,7 @@ def test_search_for_file_sdist_with_extras(provider: Provider):
         extras=["foo"],
     )
 
-    package = provider.search_for_file(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
@@ -460,7 +460,7 @@ def test_search_for_file_wheel(provider: Provider):
         / "demo-0.1.0-py2.py3-none-any.whl",
     )
 
-    package = provider.search_for_file(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
@@ -492,7 +492,7 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
         extras=["foo"],
     )
 
-    package = provider.search_for_file(dependency)[0]
+    package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"

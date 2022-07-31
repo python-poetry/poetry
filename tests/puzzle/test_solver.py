@@ -65,12 +65,12 @@ def installed() -> InstalledRepository:
 
 @pytest.fixture()
 def locked() -> Repository:
-    return Repository()
+    return Repository("locked")
 
 
 @pytest.fixture()
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture()
@@ -89,10 +89,10 @@ def solver(
     return Solver(
         package,
         pool,
-        installed,
-        locked,
+        installed.packages,
+        locked.packages,
         io,
-        provider=Provider(package, pool, io, installed=installed),
+        provider=Provider(package, pool, io, installed=installed.packages),
     )
 
 
@@ -1448,9 +1448,9 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         DependencyPackage(package.to_dependency(), package)
     )
 
-    assert len(complete_package.all_requires) == 2
+    assert len(complete_package.package.all_requires) == 2
 
-    pypi, git = complete_package.all_requires
+    pypi, git = complete_package.package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi
@@ -2019,7 +2019,7 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    solver._locked = Repository([package_a])
+    solver._locked = Repository("locked", [package_a])
     transaction = solver.solve(use_latest=[package_b.name])
 
     check_solver_result(
@@ -2298,7 +2298,12 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
     package = poetry.package
 
     solver = Solver(
-        package, pool, installed, locked, io, provider=Provider(package, pool, io)
+        package,
+        pool,
+        installed.packages,
+        locked.packages,
+        io,
+        provider=Provider(package, pool, io),
     )
 
     transaction = solver.solve()
@@ -2539,7 +2544,7 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
     repo = MockLegacyRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
@@ -2586,7 +2591,7 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
     repo = MockLegacyRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
@@ -2620,7 +2625,7 @@ def test_solver_skips_invalid_versions(
     repo = MockPyPIRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("trackpy", "^0.4"))
 
@@ -2667,7 +2672,7 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
     repo = MockLegacyRepository()
     pool = Pool([repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2693,7 +2698,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
     repo = MockLegacyRepository()
     pool = Pool([repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2728,13 +2733,13 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
     )
 
-    repo = Repository()
+    repo = Repository("repo")
     foo = get_package("foo", "1.0.0")
     foo.add_dependency(Factory.create_dependency("tomlkit", "^0.5.0"))
     repo.add_package(foo)
     pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2774,7 +2779,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     pool.add_repository(MockPyPIRepository(), secondary=True)
     pool.add_repository(MockLegacyRepository())
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2826,7 +2831,7 @@ def test_solver_chooses_from_secondary_if_explicit(
     pool.add_repository(MockPyPIRepository(), secondary=True)
     pool.add_repository(MockLegacyRepository())
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2883,7 +2888,7 @@ def test_solver_discards_packages_with_empty_markers(
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2989,7 +2994,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
     repo.add_package(get_package("a", "1.2.3"))
     repo.add_package(Package("pendulum", "2.1.2"))
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -3067,7 +3072,7 @@ def test_solver_synchronize_single(
     locked: Repository,
     io: NullIO,
 ):
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
     package_a = get_package("a", "1.0")
     installed.add_package(package_a)
 
@@ -3086,7 +3091,7 @@ def test_solver_with_synchronization_keeps_critical_package(
     locked: Repository,
     io: NullIO,
 ):
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
     package_pip = get_package("setuptools", "1.0")
     installed.add_package(package_pip)
 
@@ -3539,3 +3544,55 @@ def test_solver_keeps_multiple_locked_dependencies_for_same_package(
             {"job": "install", "package": a12},
         ],
     )
+
+
+def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    """
+    Another package requires the same dependency with extras that is required
+    by the project as direct origin dependency without any extras.
+    """
+    pendulum = get_package("pendulum", "2.0.3")  # required by demo
+    cleo = get_package("cleo", "1.0.0")  # required by demo[foo]
+    demo_foo = get_package("demo-foo", "1.2.3")
+    demo_foo.add_dependency(
+        Factory.create_dependency("demo", {"version": ">=0.1", "extras": ["foo"]})
+    )
+    repo.add_package(demo_foo)
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    # project requires path dependency of demo while demo-foo requires demo[foo]
+    package.add_dependency(Factory.create_dependency("demo", {"path": path}))
+    package.add_dependency(Factory.create_dependency("demo-foo", "^1.2.3"))
+
+    transaction = solver.solve()
+
+    demo = Package("demo", "0.1.2", source_type="directory", source_url=path)
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": demo},
+            {"job": "install", "package": demo_foo},
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.2"
+    assert op.package.source_type == "directory"
+    assert op.package.source_url == path

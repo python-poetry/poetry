@@ -54,42 +54,6 @@
     "version": "3.5.0"
   },
   "last_serial": 3697219,
-  "releases": {
-    "3.5.0": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "c0b6697b7130c495aba71cdfcf939cc9",
-          "sha256": "6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c"
-        },
-        "downloads": -1,
-        "filename": "pytest-3.5.0-py2.py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "c0b6697b7130c495aba71cdfcf939cc9",
-        "packagetype": "bdist_wheel",
-        "python_version": "py2.py3",
-        "size": 194247,
-        "upload_time": "2018-03-22T23:47:54",
-        "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "b8e13a4091f07ff1fda081cf40ff99f1",
-          "sha256": "fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1"
-        },
-        "downloads": -1,
-        "filename": "pytest-3.5.0.tar.gz",
-        "has_sig": false,
-        "md5_digest": "b8e13a4091f07ff1fda081cf40ff99f1",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 830816,
-        "upload_time": "2018-03-22T23:47:56",
-        "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz"
-      }
-    ]
-  },
   "urls": [
     {
       "comment_text": "",

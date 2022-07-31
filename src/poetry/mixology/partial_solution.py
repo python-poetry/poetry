@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from poetry.mixology.assignment import Assignment
 from poetry.mixology.set_relation import SetRelation
+from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:
@@ -11,7 +12,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.mixology.incompatibility import Incompatibility
-    from poetry.mixology.term import Term
 
 
 class PartialSolution:
@@ -44,7 +44,7 @@ class PartialSolution:
         # map.
         #
         # This is derived from self._assignments.
-        self._negative: dict[str, dict[str, Term]] = {}
+        self._negative: dict[str, Term] = {}
 
         # The number of distinct solutions that have been attempted so far.
         self._attempted_solutions = 1
@@ -146,6 +146,15 @@ class PartialSolution:
         """
         name = assignment.dependency.complete_name
         old_positive = self._positive.get(name)
+        if old_positive is None and assignment.dependency.features:
+            old_positive_without_features = self._positive.get(
+                assignment.dependency.name
+            )
+            if old_positive_without_features is not None:
+                dep = old_positive_without_features.dependency.with_features(
+                    assignment.dependency.features
+                )
+                old_positive = Term(dep, is_positive=True)
         if old_positive is not None:
             value = old_positive.intersect(assignment)
             assert value is not None
@@ -153,9 +162,7 @@ class PartialSolution:
 
             return
 
-        ref = assignment.dependency.complete_name
-        negative_by_ref = self._negative.get(name)
-        old_negative = None if negative_by_ref is None else negative_by_ref.get(ref)
+        old_negative = self._negative.get(name)
         term = (
             assignment if old_negative is None else assignment.intersect(old_negative)
         )
@@ -167,10 +174,7 @@ class PartialSolution:
 
             self._positive[name] = term
         else:
-            if name not in self._negative:
-                self._negative[name] = {}
-
-            self._negative[name][ref] = term
+            self._negative[name] = term
 
     def satisfier(self, term: Term) -> Assignment:
         """
@@ -213,11 +217,7 @@ class PartialSolution:
         if positive is not None:
             return positive.relation(term)
 
-        by_ref = self._negative.get(term.dependency.complete_name)
-        if by_ref is None:
-            return SetRelation.OVERLAPPING
-
-        negative = by_ref[term.dependency.complete_name]
+        negative = self._negative.get(term.dependency.complete_name)
         if negative is None:
             return SetRelation.OVERLAPPING
 

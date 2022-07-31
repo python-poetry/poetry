@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-from typing import cast
-
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.inputs.string_input import StringInput
 from cleo.io.io import IO
 
-from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.self.add import SelfAddCommand
 
 
 class PluginAddCommand(InitCommand):
-
     name = "plugin add"
 
     description = "Adds new plugins."
@@ -48,8 +44,9 @@ It works similarly to the <c1>add</c1> command:
     def handle(self) -> int:
         self.line_error(self.deprecation)
 
-        application = cast(Application, self.application)
-        command: SelfAddCommand = cast(SelfAddCommand, application.find("self add"))
+        application = self.get_application()
+        command = application.find("self add")
+        assert isinstance(command, SelfAddCommand)
         application.configure_installer_for_command(command, self.io)
 
         argv: list[str] = ["add", *self.argument("plugins")]

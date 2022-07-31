@@ -14,7 +14,6 @@ from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
-from tomlkit.toml_document import TOMLDocument
 
 from poetry.config.config import Config
 from poetry.json import validate_object
@@ -29,6 +28,7 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from poetry.core.packages.package import Package
+    from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.utils.dependency_specification import DependencySpec
@@ -45,6 +45,7 @@ class Factory(BaseFactory):
     def create_poetry(
         self,
         cwd: Path | None = None,
+        with_groups: bool = True,
         io: IO | None = None,
         disable_plugins: bool = False,
         disable_cache: bool = False,
@@ -52,7 +53,7 @@ class Factory(BaseFactory):
         if io is None:
             io = NullIO()
 
-        base_poetry = super().create_poetry(cwd)
+        base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
         locker = Locker(
             base_poetry.file.parent / "poetry.lock", base_poetry.local_config
@@ -293,7 +294,7 @@ class Factory(BaseFactory):
         if extras_section:
             content["extras"] = extras_section
 
-        pyproject = cast(TOMLDocument, pyproject)
+        pyproject = cast("TOMLDocument", pyproject)
         pyproject.add(tomlkit.nl())
 
         if path:

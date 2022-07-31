@@ -333,7 +333,7 @@ def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
 
 @pytest.fixture
 def installed() -> Repository:
-    return Repository()
+    return Repository("installed")
 
 
 @pytest.fixture(scope="session")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import os
@@ -255,14 +256,15 @@ class EditableBuilder(Builder):
         added_files.append(direct_url_json)
 
         record = dist_info.joinpath("RECORD")
-        with record.open("w", encoding="utf-8") as f:
+        with record.open("w", encoding="utf-8", newline="") as f:
+            csv_writer = csv.writer(f)
             for path in added_files:
                 hash = self._get_file_hash(path)
                 size = path.stat().st_size
-                f.write(f"{path!s},sha256={hash},{size}\n")
+                csv_writer.writerow((path, f"sha256={hash}", size))
 
             # RECORD itself is recorded with no hash or size
-            f.write(f"{record},,\n")
+            csv_writer.writerow((record, "", ""))
 
     def _get_file_hash(self, filepath: Path) -> str:
         hashsum = hashlib.sha256()

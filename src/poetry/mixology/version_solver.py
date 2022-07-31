@@ -61,7 +61,9 @@ class DependencyCache:
         if packages is None:
             packages = self.provider.search_for(dependency)
         else:
-            packages = [p for p in packages if dependency.constraint.allows(p.version)]
+            packages = [
+                p for p in packages if dependency.constraint.allows(p.package.version)
+            ]
 
         self.cache[key] = packages
 
@@ -427,7 +429,12 @@ class VersionSolver:
                 locked = self._get_locked(dependency, allow_similar=True)
             if locked is not None:
                 package = next(
-                    (p for p in packages if p.version == locked.version), None
+                    (
+                        p
+                        for p in packages
+                        if p.package.version == locked.package.version
+                    ),
+                    None,
                 )
             if package is None:
                 with suppress(IndexError):
@@ -465,7 +472,8 @@ class VersionSolver:
         if not conflict:
             self._solution.decide(package.package)
             self._log(
-                f"selecting {package.complete_name} ({package.full_pretty_version})"
+                f"selecting {package.package.complete_name}"
+                f" ({package.package.full_pretty_version})"
             )
 
         complete_name = dependency.complete_name
@@ -507,13 +515,14 @@ class VersionSolver:
             return None
 
         locked = self._locked.get(dependency.name, [])
-        for package in locked:
-            if (allow_similar or dependency.is_same_package_as(package.package)) and (
+        for dependency_package in locked:
+            package = dependency_package.package
+            if (allow_similar or dependency.is_same_package_as(package)) and (
                 dependency.constraint.allows(package.version)
                 or package.is_prerelease()
                 and dependency.constraint.allows(package.version.next_patch())
             ):
-                return DependencyPackage(dependency, package.package)
+                return DependencyPackage(dependency, package)
         return None
 
     def _log(self, text: str) -> None:

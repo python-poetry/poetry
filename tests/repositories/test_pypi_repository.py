@@ -28,7 +28,6 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
 
 
 class MockRepository(PyPiRepository):
-
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
@@ -105,6 +104,17 @@ def test_package():
     assert len([r for r in package.requires if r.is_optional()]) == 5
     assert len(package.extras["security"]) == 3
     assert len(package.extras["socks"]) == 2
+
+    assert package.files == [
+        {
+            "file": "requests-2.18.4-py2.py3-none-any.whl",
+            "hash": "sha256:6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b",  # noqa: E501
+        },
+        {
+            "file": "requests-2.18.4.tar.gz",
+            "hash": "sha256:9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e",  # noqa: E501
+        },
+    ]
 
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
