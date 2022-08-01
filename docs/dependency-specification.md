@@ -149,14 +149,14 @@ In cases where the package you want to install is located in a subdirectory of t
 
 ```toml
 [tool.poetry.dependencies]
-# Install a package named `subdir_package` from a folder called `subdir` within the repo
+# Install a package named `subdir_package` from a folder called `subdir` within the repository
 subdir_package = { git = "https://github.com/mypackage_with_subdirs.git", subdirectory = "subdir" }
 ```
 
-When using `poetry add` to achive the same options, you can use the same URL formatting that is also supported by [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments).
+with the corresponding `add` call:
 
 ```bash
-poetry add "https://github.com/mypackage_with_subdirs.git#subdirectory=subdir"
+poetry add "https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
 ```
 
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:
