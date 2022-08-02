@@ -42,8 +42,18 @@ if TYPE_CHECKING:
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
-def get_package(name: str, version: str | Version) -> Package:
-    return Package(name, version)
+def get_package(
+    name: str,
+    version: str | Version,
+    description: str | None = None,
+    category: str | None = None,
+) -> Package:
+    package = Package(name, version)
+    if description is not None:
+        package.description = description
+    if category is not None:
+        package.category = category
+    return package
 
 
 def get_dependency(
