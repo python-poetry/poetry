@@ -150,7 +150,7 @@ In cases where the package you want to install is located in a subdirectory of t
 ```toml
 [tool.poetry.dependencies]
 # Install a package named `subdir_package` from a folder called `subdir` within the repository
-subdir_package = { git = "https://github.com/mypackage_with_subdirs.git", subdirectory = "subdir" }
+subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", subdirectory = "subdir" }
 ```
 
 with the corresponding `add` call:
