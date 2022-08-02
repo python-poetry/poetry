@@ -27,7 +27,7 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    from cleo.io.null_io import NullIO
+    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -38,7 +38,8 @@ class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
             message = (
-                f"HTTP Error {error.response.status_code}: {error.response.reason}"
+                f"HTTP Error {error.response.status_code}: {error.response.reason} |"
+                f" {error.response.content!r}"
             )
         elif isinstance(error, ConnectionError):
             message = (
@@ -51,7 +52,7 @@ class UploadError(Exception):
 
 
 class Uploader:
-    def __init__(self, poetry: Poetry, io: NullIO) -> None:
+    def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io

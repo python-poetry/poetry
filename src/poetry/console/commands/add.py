@@ -6,16 +6,15 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.utils.helpers import canonicalize_name
 
 
 class AddCommand(InstallerCommand, InitCommand):
-
     name = "add"
     description = "Adds a new dependency to <comment>pyproject.toml</>."
 
@@ -126,9 +125,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             section = poetry_content["dependencies"]
         else:
             if "group" not in poetry_content:
-                poetry_content.value._insert_after(
-                    "dependencies", "group", table(is_super_table=True)
-                )
+                poetry_content["group"] = table(is_super_table=True)
 
             groups = poetry_content["group"]
             if group not in groups:

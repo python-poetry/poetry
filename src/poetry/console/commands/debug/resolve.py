@@ -1,20 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
 
 from poetry.console.commands.init import InitCommand
-
-
-if TYPE_CHECKING:
-    from poetry.console.commands.show import ShowCommand
+from poetry.console.commands.show import ShowCommand
 
 
 class DebugResolveCommand(InitCommand):
-
     name = "debug resolve"
     description = "Debugs dependency resolution."
 
@@ -86,7 +80,7 @@ class DebugResolveCommand(InitCommand):
 
         pool = self.poetry.pool
 
-        solver = Solver(package, pool, Repository(), Repository(), self.io)
+        solver = Solver(package, pool, [], [], self.io)
 
         ops = solver.solve().calculate_operations()
 
@@ -95,17 +89,17 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: ShowCommand = self.application.find("show")
+            show_command = self.application.find("show")
+            assert isinstance(show_command, ShowCommand)
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
-            repo = Repository(packages=packages)
 
             requires = package.all_requires
-            for pkg in repo.packages:
+            for pkg in packages:
                 for require in requires:
                     if pkg.name == require.name:
-                        show_command.display_package_tree(self.io, pkg, repo)
+                        show_command.display_package_tree(self.io, pkg, packages)
                         break
 
             return 0
@@ -117,13 +111,13 @@ class DebugResolveCommand(InitCommand):
         if self.option("install"):
             env = EnvManager(self.poetry).get()
             pool = Pool()
-            locked_repository = Repository()
+            locked_repository = Repository("poetry-locked")
             for op in ops:
                 locked_repository.add_package(op.package)
 
             pool.add_repository(locked_repository)
 
-            solver = Solver(package, pool, Repository(), Repository(), NullIO())
+            solver = Solver(package, pool, [], [], NullIO())
             with solver.use_environment(env):
                 ops = solver.solve().calculate_operations()
 

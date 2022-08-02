@@ -6,10 +6,10 @@ import re
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 
@@ -69,7 +69,9 @@ class LinkSource:
 
     @classmethod
     def link_package_data(cls, link: Link) -> Package | None:
-        name, version_string, version = None, None, None
+        name: str | None = None
+        version_string: str | None = None
+        version: Version | None = None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:

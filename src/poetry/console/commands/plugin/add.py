@@ -10,7 +10,6 @@ from poetry.console.commands.self.add import SelfAddCommand
 
 
 class PluginAddCommand(InitCommand):
-
     name = "plugin add"
 
     description = "Adds new plugins."
@@ -46,7 +45,8 @@ It works similarly to the <c1>add</c1> command:
         self.line_error(self.deprecation)
 
         application = self.get_application()
-        command: SelfAddCommand = application.find("self add")
+        command = application.find("self add")
+        assert isinstance(command, SelfAddCommand)
         application.configure_installer_for_command(command, self.io)
 
         argv: list[str] = ["add", *self.argument("plugins")]

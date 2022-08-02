@@ -67,9 +67,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -93,8 +91,12 @@ baz = "^1.0.0"
 baz = "^1.0.0"
 
 """
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
-    assert expected in content.as_string()
+    assert expected in string_content
 
 
 def test_remove_without_specific_group_removes_from_specific_groups(
@@ -122,9 +124,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -148,8 +148,12 @@ baz = "^1.0.0"
 baz = "^1.0.0"
 
 """
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
-    assert expected in content.as_string()
+    assert expected in string_content
 
 
 def test_remove_does_not_live_empty_groups(
@@ -177,9 +181,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -251,8 +253,12 @@ baz = "^1.0.0"
 baz = "^1.0.0"
 
 """
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
-    assert expected in content.as_string()
+    assert expected in string_content
 
 
 def test_remove_command_should_not_write_changes_upon_installer_errors(

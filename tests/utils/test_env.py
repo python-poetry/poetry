@@ -771,7 +771,6 @@ def test_run_with_input(tmp_dir: str, tmp_venv: VirtualEnv):
 
 
 def test_run_with_input_non_zero_return(tmp_dir: str, tmp_venv: VirtualEnv):
-
     with pytest.raises(EnvCommandError) as process_error:
         # Test command that will return non-zero returncode.
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)

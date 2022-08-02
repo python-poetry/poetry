@@ -14,12 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class PasswordManagerError(Exception):
-
     pass
 
 
 class PoetryKeyringError(Exception):
-
     pass
 
 

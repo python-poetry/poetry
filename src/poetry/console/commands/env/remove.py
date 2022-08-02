@@ -7,7 +7,6 @@ from poetry.console.commands.command import Command
 
 
 class EnvRemoveCommand(Command):
-
     name = "env remove"
     description = "Remove virtual environments associated with the project."
 
