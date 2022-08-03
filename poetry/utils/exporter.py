@@ -80,7 +80,7 @@ class Exporter(object):
                 line = requirement
             elif is_direct_local_reference:
                 dependency_uri = path_to_url(dependency.source_url)
-                line = "{} @ {}".format(dependency.name, dependency_uri)
+                line += "{} @ {}".format(dependency.name, dependency_uri)
             else:
                 line = "{}=={}".format(package.name, package.version)
 
