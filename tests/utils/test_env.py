@@ -1362,6 +1362,13 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(tmp_dir: str):
         assert venv_name1 != venv_name2
 
 
+def test_generate_env_name_uses_real_path(tmp_dir: str, mocker: MockerFixture):
+    mocker.patch("os.path.realpath", return_value="the_real_dir")
+    venv_name1 = EnvManager.generate_env_name("simple-project", "the_real_dir") 
+    venv_name2 = EnvManager.generate_env_name("simple-project", "linked_dir")
+    assert venv_name1 == venv_name2
+
+
 @pytest.fixture()
 def extended_without_setup_poetry() -> Poetry:
     poetry = Factory().create_poetry(
