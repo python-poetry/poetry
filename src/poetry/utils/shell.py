@@ -93,7 +93,7 @@ class Shell:
                 self._path, ["-i"], dimensions=(terminal.height, terminal.width)
             )
 
-        if self._name == "zsh":
+        if self._name in ["zsh", "nu"]:
             c.setecho(False)
 
         c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
