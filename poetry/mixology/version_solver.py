@@ -13,6 +13,8 @@ from poetry.core.packages import ProjectPackage
 from poetry.core.semver import Version
 from poetry.core.semver import VersionRange
 
+from poetry.packages.dependency_package import DependencyPackage
+
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
 from .incompatibility_cause import ConflictCause
@@ -386,6 +388,16 @@ class VersionSolver:
             except IndexError:
                 version = None
 
+            if dependency.name not in self._use_latest:
+                # prefer locked version of compatible (not exact same) dependency;
+                # required in order to not unnecessarily update dependencies with
+                # extras, e.g. "coverage" vs. "coverage[toml]"
+                locked = self._get_locked(dependency, allow_similar=True)
+            if locked is not None:
+                version = next(
+                    (p for p in packages if p.version == locked.version), None
+                )
+
             if version is None:
                 # If there are no versions that satisfy the constraint,
                 # add an incompatibility that indicates that.
@@ -458,7 +470,7 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency):  # type: (Dependency) -> Union[Package, None]
+    def _get_locked(self, dependency, allow_similar: bool = False):  # type: (Dependency, bool) -> Union[DependencyPackage, None]
         if dependency.name in self._use_latest:
             return
 
@@ -466,10 +478,10 @@ class VersionSolver:
         if not locked:
             return
 
-        if not dependency.is_same_package_as(locked):
+        if not (allow_similar or dependency.is_same_package_as(locked)):
             return
 
-        return locked
+        return DependencyPackage(dependency, locked)
 
     def _log(self, text):
         self._provider.debug(text, self._solution.attempted_solutions)

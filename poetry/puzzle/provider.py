@@ -8,6 +8,7 @@ from tempfile import mkdtemp
 from typing import Any
 from typing import List
 from typing import Optional
+from typing import cast
 
 from clikit.ui.components import ProgressIndicator
 
@@ -95,7 +96,7 @@ class Provider:
         self._env = original_env
         self._python_constraint = original_python_constraint
 
-    def search_for(self, dependency):  # type: (Dependency) -> List[Package]
+    def search_for(self, dependency):  # type: (Dependency) -> List[DependencyPackage]
         """
         Search for the specifications that match the given dependency.
 
@@ -128,13 +129,13 @@ class Provider:
                 return PackageCollection(dependency, packages)
 
         if dependency.is_vcs():
-            packages = self.search_for_vcs(dependency)
+            packages = self.search_for_vcs(cast(VCSDependency, dependency))
         elif dependency.is_file():
-            packages = self.search_for_file(dependency)
+            packages = self.search_for_file(cast(FileDependency, dependency))
         elif dependency.is_directory():
-            packages = self.search_for_directory(dependency)
+            packages = self.search_for_directory(cast(DirectoryDependency, dependency))
         elif dependency.is_url():
-            packages = self.search_for_url(dependency)
+            packages = self.search_for_url(cast(URLDependency, dependency))
         else:
             packages = self._pool.find_packages(dependency)
 
