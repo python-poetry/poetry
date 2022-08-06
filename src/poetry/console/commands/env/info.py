@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class EnvInfoCommand(Command):
-
     name = "env info"
     description = "Displays information about the current environment."
 

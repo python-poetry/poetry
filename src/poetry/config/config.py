@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
+from packaging.utils import canonicalize_name
 from poetry.core.toml import TOMLFile
-from poetry.core.utils.helpers import canonicalize_name
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
@@ -105,7 +105,6 @@ _default_config: Config | None = None
 
 
 class Config:
-
     default_config: dict[str, Any] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {

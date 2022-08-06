@@ -10,7 +10,6 @@ from poetry.console.commands.command import Command
 
 
 class SourceAddCommand(Command):
-
     name = "source add"
     description = "Add source configuration for project."
 

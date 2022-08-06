@@ -14,7 +14,6 @@ from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoException
 from cleo.formatters.style import Style
-from cleo.io.inputs.argv_input import ArgvInput
 from cleo.io.null_io import NullIO
 
 from poetry.__version__ import __version__
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from cleo.events.console_command_event import ConsoleCommandEvent
+    from cleo.io.inputs.argv_input import ArgvInput
     from cleo.io.inputs.definition import Definition
     from cleo.io.inputs.input import Input
     from cleo.io.io import IO
@@ -38,13 +38,13 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
 
 
-def load_command(name: str) -> Callable[[], type[Command]]:
-    def _load() -> type[Command]:
+def load_command(name: str) -> Callable[[], Command]:
+    def _load() -> Command:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
-        command_type: type[Command] = command_class()
-        return command_type
+        command: Command = command_class()
+        return command
 
     return _load
 
@@ -136,7 +136,8 @@ class Application(BaseApplication):  # type: ignore[misc]
 
     @property
     def command_loader(self) -> CommandLoader:
-        command_loader: CommandLoader = self._command_loader
+        command_loader: CommandLoader | None = self._command_loader
+        assert command_loader is not None
         return command_loader
 
     def reset_poetry(self) -> None:
@@ -199,7 +200,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         if name == "run":
             from poetry.console.io.inputs.run_argv_input import RunArgvInput
 
-            input = cast(ArgvInput, io.input)
+            input = cast("ArgvInput", io.input)
             run_input = RunArgvInput([self._name or ""] + input._tokens)
             # For the run command reset the definition
             # with only the set options (i.e. the options given before the command)
@@ -280,7 +281,7 @@ class Application(BaseApplication):  # type: ignore[misc]
     ) -> None:
         from poetry.console.commands.env_command import EnvCommand
 
-        command: EnvCommand = cast(EnvCommand, event.command)
+        command = event.command
         if not isinstance(command, EnvCommand):
             return
 
@@ -306,7 +307,7 @@ class Application(BaseApplication):  # type: ignore[misc]
     ) -> None:
         from poetry.console.commands.installer_command import InstallerCommand
 
-        command: InstallerCommand = cast(InstallerCommand, event.command)
+        command = event.command
         if not isinstance(command, InstallerCommand):
             return
 
@@ -333,7 +334,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
 
-    def _load_plugins(self, io: IO = None) -> None:
+    def _load_plugins(self, io: IO | None = None) -> None:
         if self._plugins_loaded:
             return
 

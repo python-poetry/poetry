@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
@@ -10,7 +11,6 @@ from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http import HTTPRepository
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
-from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:

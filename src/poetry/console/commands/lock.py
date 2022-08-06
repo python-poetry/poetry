@@ -6,7 +6,6 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 class LockCommand(InstallerCommand):
-
     name = "lock"
     description = "Locks the project dependencies."
 

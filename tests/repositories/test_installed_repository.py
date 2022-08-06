@@ -9,7 +9,7 @@ import pytest
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
 from poetry.utils.env import MockEnv as BaseMockEnv
-from tests.compat import zipp
+from tests.compat import zipfile
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "cleo-0.7.6.dist-info"),
     metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
     metadata.PathDistribution(
-        zipp.Path(str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
+        zipfile.Path(str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
     ),
     metadata.PathDistribution(VENDOR_DIR / "attrs-19.3.0.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "standard-1.2.3.dist-info"),

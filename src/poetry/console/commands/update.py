@@ -7,7 +7,6 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 class UpdateCommand(InstallerCommand):
-
     name = "update"
     description = (
         "Update the dependencies as according to the <comment>pyproject.toml</> file."

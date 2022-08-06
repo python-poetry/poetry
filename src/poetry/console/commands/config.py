@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
 
 class ConfigCommand(Command):
-
     name = "config"
     description = "Manages configuration settings."
 
