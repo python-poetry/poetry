@@ -151,6 +151,21 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
+    def _get_from_deferred_cache(self, dependency): # type (Dependency) -> Optional[Package]
+        if dependency not in self._deferred_cache:
+            return None
+
+        package = self._deferred_cache[dependency]
+        dependency._constraint = package.version
+        dependency._pretty_constraint = package.version.text
+
+        if not dependency._source_reference:
+            dependency._source_reference = package.source_reference
+        if not dependency._source_resolved_reference:
+            dependency._source_resolved_reference = package.source_resolved_reference
+
+        return package
+
     def search_for_vcs(self, dependency):  # type: (VCSDependency) -> List[Package]
         """
         Search for the specifications that match the given VCS dependency.
@@ -158,8 +173,9 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        if dependency in self._deferred_cache:
-            return [self._deferred_cache[dependency]]
+        cached = self._get_from_deferred_cache(dependency)
+        if cached is not None:
+            return [cached]
 
         package = self.get_package_from_vcs(
             dependency.vcs,
@@ -181,7 +197,7 @@ class Provider:
     @classmethod
     def get_package_from_vcs(
         cls, vcs, url, branch=None, tag=None, rev=None, name=None
-    ):  # type: (str, str, Optional[str], Optional[str]) -> Package
+    ):  # type: (str, str, Optional[str], Optional[str], Optional[str], Optional[str]) -> Package
         if vcs != "git":
             raise ValueError("Unsupported VCS dependency {}".format(vcs))
 
@@ -213,8 +229,9 @@ class Provider:
         return package
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
-        if dependency in self._deferred_cache:
-            dependency, _package = self._deferred_cache[dependency]
+        cached = self._get_from_deferred_cache(dependency)
+        if cached is not None:
+            dependency, _package = cached
 
             package = _package.clone()
         else:
@@ -258,8 +275,9 @@ class Provider:
     def search_for_directory(
         self, dependency
     ):  # type: (DirectoryDependency) -> List[Package]
-        if dependency in self._deferred_cache:
-            dependency, _package = self._deferred_cache[dependency]
+        cached = self._get_from_deferred_cache(dependency)
+        if cached is not None:
+            dependency, _package = cached
 
             package = _package.clone()
         else:
@@ -298,8 +316,9 @@ class Provider:
         return package
 
     def search_for_url(self, dependency):  # type: (URLDependency) -> List[Package]
-        if dependency in self._deferred_cache:
-            return [self._deferred_cache[dependency]]
+        cached = self._get_from_deferred_cache(dependency)
+        if cached is not None:
+            return [cached]
 
         package = self.get_package_from_url(dependency.url)
 
