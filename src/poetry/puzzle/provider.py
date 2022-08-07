@@ -603,7 +603,15 @@ class Provider:
             )
             package = dependency_package.package
             dependency = dependency_package.dependency
-            _dependencies.append(package.without_features().to_dependency())
+            new_dependency = package.without_features().to_dependency()
+
+            # When adding dependency foo[extra] -> foo, preserve foo's source, if it's
+            # specified. This prevents us from trying to get foo from PyPI
+            # when user explicitly set repo for foo[extra].
+            if not new_dependency.source_name and dependency.source_name:
+                new_dependency.source_name = dependency.source_name
+
+            _dependencies.append(new_dependency)
 
         for dep in requires:
             if not self._python_constraint.allows_any(dep.python_constraint):
