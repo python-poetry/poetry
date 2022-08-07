@@ -1,6 +1,7 @@
 from typing import Union
 
 from poetry.core.packages import Package
+
 from .dependency_package import DependencyPackage
 
 
@@ -16,7 +17,7 @@ class PackageCollection(list):
         for package in packages:
             self.append(package)
 
-    def append(self, package): # type: (Union[Package, DependencyPackage]) -> None
+    def append(self, package):  # type: (Union[Package, DependencyPackage]) -> None
         if isinstance(package, DependencyPackage):
             package = package.package
 

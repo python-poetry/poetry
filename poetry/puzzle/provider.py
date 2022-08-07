@@ -151,7 +151,9 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def _get_from_deferred_cache(self, dependency): # type (Dependency) -> Optional[Package]
+    def _get_from_deferred_cache(
+        self, dependency
+    ):  # type (Dependency) -> Optional[Package]
         if dependency not in self._deferred_cache:
             return None
 

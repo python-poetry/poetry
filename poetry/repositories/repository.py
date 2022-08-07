@@ -1,10 +1,10 @@
 from typing import List
 from typing import Optional
 
+from poetry.core.packages.package import Package
 from poetry.core.semver import VersionConstraint
 from poetry.core.semver import VersionRange
 from poetry.core.semver import parse_constraint
-from poetry.core.packages.package import Package
 
 from .base_repository import BaseRepository
 
@@ -25,7 +25,9 @@ class Repository(BaseRepository):
     def name(self):
         return self._name
 
-    def package(self, name, version, extras=None): # type: (str, str, Optional[List[str]]) -> Package
+    def package(
+        self, name, version, extras=None
+    ):  # type: (str, str, Optional[List[str]]) -> Package
         name = name.lower()
 
         for package in self.packages:

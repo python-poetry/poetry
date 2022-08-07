@@ -12,7 +12,6 @@ from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
 from poetry.core.semver import Version
 from poetry.core.semver import VersionRange
-
 from poetry.packages.dependency_package import DependencyPackage
 
 from .failure import SolveFailure
@@ -470,7 +469,9 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency, allow_similar: bool = False):  # type: (Dependency, bool) -> Union[DependencyPackage, None]
+    def _get_locked(
+        self, dependency, allow_similar: bool = False
+    ):  # type: (Dependency, bool) -> Union[DependencyPackage, None]
         if dependency.name in self._use_latest:
             return
 
