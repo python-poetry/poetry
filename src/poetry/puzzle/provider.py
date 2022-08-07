@@ -248,8 +248,23 @@ class Provider:
         )
         return packages
 
-    def search_for_direct_origin_dependency(self, dependency: Dependency) -> Package:
+    def _get_from_deferred_cache(self, dependency: Dependency) -> Package | None:
         package = self._deferred_cache.get(dependency)
+        if package is None:
+            return None
+
+        if dependency.is_vcs():
+            dependency._source_reference = package.source_reference
+            dependency._source_resolved_reference = package.source_resolved_reference
+            dependency._source_subdirectory = package.source_subdirectory
+
+        dependency._constraint = package.version
+        dependency._pretty_constraint = package.version.text
+
+        return package
+
+    def search_for_direct_origin_dependency(self, dependency: Dependency) -> Package:
+        package = self._get_from_deferred_cache(dependency)
         if package is not None:
             pass
 
@@ -572,20 +587,7 @@ class Provider:
             dependency = dependency_package.dependency
             requires = package.requires
 
-        if self._load_deferred:
-            # Retrieving constraints for deferred dependencies
-            for r in requires:
-                if r.is_direct_origin():
-                    locked = self.get_locked(r)
-                    # If lock file contains exactly the same URL and reference
-                    # (commit hash) of dependency as is requested,
-                    # do not analyze it again: nothing could have changed.
-                    if locked is not None and locked.package.is_same_package_as(r):
-                        continue
-                    self.search_for_direct_origin_dependency(r)
-
-        optional_dependencies = []
-        _dependencies = []
+        optional_dependencies: list[str] = []
 
         # If some extras/features were required, we need to
         # add a special dependency representing the base package
@@ -598,6 +600,40 @@ class Provider:
 
                 optional_dependencies += [d.name for d in package.extras[extra]]
 
+        if self._load_deferred:
+            # Retrieving constraints for deferred dependencies
+            for r in requires:
+                if r.is_direct_origin():
+                    locked = self.get_locked(r)
+                    # If lock file contains exactly the same URL and reference
+                    # (commit hash) of dependency as is requested,
+                    # do not analyze it again: nothing could have changed.
+                    if locked is not None and locked.package.is_same_package_as(r):
+                        continue
+
+                    # If there is an optional dependency and it's not requested,
+                    # do not try resolving it.
+                    # Saves time when dep is a large Git repository for example.
+                    if (
+                        not package.is_root()
+                        and r.is_optional()
+                        and r.name not in optional_dependencies
+                    ):
+                        # When we have foo[extra] dependency, we will later consider
+                        # foo (w/o extras), at that moment this code will fire
+                        # and skip `r`. Update r with version and reference if it was
+                        # resolved on the previous step.
+                        _ = self._get_from_deferred_cache(r)
+                        continue
+
+                    self.search_for_direct_origin_dependency(r)
+
+        _dependencies: list[Dependency] = []
+
+        # If some extras/features were required, we need to
+        # add a special dependency representing the base package
+        # to the current package
+        if dependency.extras:
             dependency_package = dependency_package.with_features(
                 list(dependency.extras)
             )
