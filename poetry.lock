@@ -455,14 +455,15 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "poetry-plugin-export"
-version = "1.0.5"
+version = "1.0.6"
 description = "Poetry plugin to export the dependencies to various formats"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-poetry = ">=1.2.0b1dev0,<2.0.0"
+poetry = ">=1.2.0b3,<2.0.0"
+poetry-core = ">=1.1.0b3,<2.0.0"
 
 [[package]]
 name = "pre-commit"
@@ -887,7 +888,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "33fbd283e96bc751b1f618e7b1c5b1738b3f570bc1e2081a0eb8dd873c219b11"
+content-hash = "5f82ec1a5c13c6bec3e428cb9468204f986d5ebcbe0b2d5e19e929c4f16e816b"
 
 [metadata.files]
 atomicwrites = [
@@ -1242,8 +1243,8 @@ poetry-core = [
     {file = "poetry_core-1.1.0b3-py3-none-any.whl", hash = "sha256:2b65b697e22fc6fc9b60afcadfd4421db796d30d558a003654b5e67e3b262eaa"},
 ]
 poetry-plugin-export = [
-    {file = "poetry-plugin-export-1.0.5.tar.gz", hash = "sha256:e7796292eaafac1316149f3a8070923c2a2214c98d046de1246b4d8eb0b0c84b"},
-    {file = "poetry_plugin_export-1.0.5-py3-none-any.whl", hash = "sha256:925088b27c5747c3e0d8cc2bbb692a533eb4569874a676ac0d0f5ab237b15aaa"},
+    {file = "poetry-plugin-export-1.0.6.tar.gz", hash = "sha256:af870afceb38e583afa57bcfadfa5cd35ebd74e35aacadcb802bb3a073c13adb"},
+    {file = "poetry_plugin_export-1.0.6-py3-none-any.whl", hash = "sha256:55ae87d4560a6a3f96e04eba63c78cadbd0410e9652dee0ee1cde93281e9cb48"},
 ]
 pre-commit = [
     {file = "pre_commit-2.19.0-py2.py3-none-any.whl", hash = "sha256:10c62741aa5704faea2ad69cb550ca78082efe5697d6f04e5710c3c229afdd10"},
