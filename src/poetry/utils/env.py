@@ -1150,7 +1150,7 @@ class EnvManager:
     def generate_env_name(cls, name: str, cwd: str) -> str:
         name = name.lower()
         sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
-        normalized_cwd = os.path.normcase(cwd)
+        normalized_cwd = os.path.normcase(os.path.realpath(cwd))
         h_bytes = hashlib.sha256(encode(normalized_cwd)).digest()
         h_str = base64.urlsafe_b64encode(h_bytes).decode()[:8]
 
