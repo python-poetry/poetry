@@ -27,7 +27,7 @@ repos:
       - id: python-check-blanket-noqa
 
   - repo: https://github.com/asottile/yesqa
-    rev: v1.3.0
+    rev: v1.4.0
     hooks:
       - id: yesqa
         additional_dependencies: &flake8_deps
@@ -45,14 +45,14 @@ repos:
           - pep8-naming==0.13.1
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.2
+    rev: v2.37.3
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
         exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.0.4
+    rev: v2.1.1
     hooks:
       - id: pycln
         args: [--all]
@@ -80,7 +80,7 @@ repos:
       - id: black
 
   - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies: *flake8_deps
