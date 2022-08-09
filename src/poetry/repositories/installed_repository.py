@@ -7,9 +7,9 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path
-from poetry.core.utils.helpers import canonicalize_name
 from poetry.core.utils.helpers import module_name
 
 from poetry.repositories.repository import Repository
@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 
 class InstalledRepository(Repository):
+    def __init__(self) -> None:
+        super().__init__("poetry-installed")
+
     @classmethod
     def get_package_paths(cls, env: Env, name: str) -> set[Path]:
         """

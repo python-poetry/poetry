@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from typing import cast
-
 from cleo.io.inputs.string_input import StringInput
 from cleo.io.io import IO
 
-from poetry.console.application import Application
 from poetry.console.commands.command import Command
-from poetry.console.commands.self.show.plugins import SelfShowPluginsCommand
 
 
 class PluginShowCommand(Command):
-
     name = "plugin show"
 
     description = "Shows information about the currently installed plugins."
@@ -24,10 +19,8 @@ class PluginShowCommand(Command):
     def handle(self) -> int:
         self.line_error(self.help)
 
-        application = cast(Application, self.application)
-        command: SelfShowPluginsCommand = cast(
-            SelfShowPluginsCommand, application.find("self show plugins")
-        )
+        application = self.get_application()
+        command = application.find("self show plugins")
 
         exit_code: int = command.run(
             IO(

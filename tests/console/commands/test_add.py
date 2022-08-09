@@ -870,8 +870,12 @@ Package operations: 1 install, 0 updates, 0 removals
 cachy = "^0.2.0"
 
 """
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
-    assert expected in content.as_string()
+    assert expected in string_content
 
 
 def test_add_to_dev_section_deprecated(

@@ -13,11 +13,7 @@ from typing import Any
 from typing import cast
 
 from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.package import Package
-from poetry.core.packages.url_dependency import URLDependency
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
@@ -30,7 +26,6 @@ from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
 from tomlkit.items import Array
-from tomlkit.items import Table
 
 from poetry.packages import DependencyPackage
 from poetry.utils.extras import get_extra_package_names
@@ -41,7 +36,12 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Sequence
 
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
+    from tomlkit.items import Table
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories import Repository
@@ -50,7 +50,6 @@ logger = logging.getLogger(__name__)
 
 
 class Locker:
-
     _VERSION = "1.1"
 
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
@@ -103,10 +102,10 @@ class Locker:
         from poetry.repositories import Repository
 
         if not self.is_locked():
-            return Repository()
+            return Repository("poetry-locked")
 
         lock_data = self.lock_data
-        packages = Repository()
+        packages = Repository("poetry-locked")
         locked_packages = cast("list[dict[str, Any]]", lock_data["package"])
 
         if not locked_packages:
@@ -180,7 +179,6 @@ class Locker:
                         package.marker = parse_marker(split_dep[1].strip())
 
             for dep_name, constraint in info.get("dependencies", {}).items():
-
                 root_dir = self._lock.path.parent
                 if package.source_type == "directory":
                     # root dir should be the source of the package relative to the lock
@@ -271,11 +269,12 @@ class Locker:
             requirement = locked_package.to_dependency()
             requirement.marker = requirement.marker.intersect(marker)
 
-            requirement.set_constraint(constraint)
+            requirement.constraint = constraint
 
             for require in locked_package.requires:
-                if require.in_extras and locked_package.features.isdisjoint(
-                    require.in_extras
+                if require.is_optional() and not any(
+                    require in locked_package.extras[feature]
+                    for feature in locked_package.features
                 ):
                     continue
 
@@ -455,7 +454,7 @@ class Locker:
         except TOMLKitError as e:
             raise RuntimeError(f"Unable to read the lock file ({e}).")
 
-        metadata = cast(Table, lock_data["metadata"])
+        metadata = cast("Table", lock_data["metadata"])
         lock_version = Version.parse(metadata.get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
         # We expect the locker to be able to read lock files
@@ -513,22 +512,22 @@ class Locker:
             constraint = inline_table()
 
             if dependency.is_directory():
-                dependency = cast(DirectoryDependency, dependency)
+                dependency = cast("DirectoryDependency", dependency)
                 constraint["path"] = dependency.path.as_posix()
 
                 if dependency.develop:
                     constraint["develop"] = True
 
             elif dependency.is_file():
-                dependency = cast(FileDependency, dependency)
+                dependency = cast("FileDependency", dependency)
                 constraint["path"] = dependency.path.as_posix()
 
             elif dependency.is_url():
-                dependency = cast(URLDependency, dependency)
+                dependency = cast("URLDependency", dependency)
                 constraint["url"] = dependency.url
 
             elif dependency.is_vcs():
-                dependency = cast(VCSDependency, dependency)
+                dependency = cast("VCSDependency", dependency)
                 constraint[dependency.vcs] = dependency.source
 
                 if dependency.branch:
@@ -603,7 +602,8 @@ class Locker:
                 # The lock file should only store paths relative to the root project
                 url = Path(
                     os.path.relpath(
-                        Path(url).as_posix(), self._lock.path.parent.as_posix()
+                        Path(url).resolve().as_posix(),
+                        Path(self._lock.path.parent).resolve().as_posix(),
                     )
                 ).as_posix()
 

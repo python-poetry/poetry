@@ -6,7 +6,6 @@ from poetry.console.commands.command import Command
 
 
 class EnvListCommand(Command):
-
     name = "env list"
     description = "Lists all virtualenvs associated with the current project."
 

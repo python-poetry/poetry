@@ -11,7 +11,6 @@ import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 import pkginfo
 
@@ -171,12 +170,17 @@ class PackageInfo:
         package.python_versions = self.requires_python or "*"
         package.files = self.files
 
-        if root_dir or (self._source_type in {"directory"} and self._source_url):
-            # this is a local poetry project, this means we can extract "richer"
-            # requirement information, eg: development requirements etc.
-            poetry_package = self._get_poetry_package(
-                path=root_dir or Path(cast(str, self._source_url))
-            )
+        # If this is a local poetry project, we can extract "richer" requirement
+        # information, eg: development requirements etc.
+        if root_dir is not None:
+            path = root_dir
+        elif self._source_type == "directory" and self._source_url is not None:
+            path = Path(self._source_url)
+        else:
+            path = None
+
+        if path is not None:
+            poetry_package = self._get_poetry_package(path=path)
             if poetry_package:
                 package.extras = poetry_package.extras
                 for dependency in poetry_package.requires:

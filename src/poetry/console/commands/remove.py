@@ -4,15 +4,14 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.utils.helpers import canonicalize_name
 
 
 class RemoveCommand(InstallerCommand):
-
     name = "remove"
     description = "Removes a package from the project dependencies."
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import sys
 import tempfile
 import uuid
 
@@ -753,3 +755,91 @@ def test_content_hash_with_legacy_is_compatible(
     content_hash = locker._get_content_hash()
 
     assert (content_hash == old_content_hash) or fresh
+
+
+def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
+    """
+    Create directories and file structure as follows:
+
+    d1/
+    d1/testsymlink -> d1/d2/d3
+    d1/d2/d3/lock_file
+    d1/d4/source_file
+
+    Using the testsymlink as the Locker.lock file path should correctly resolve to
+    the real physical path of the source_file when calculating the relative path
+    from the lock_file, i.e. "../../d4/source_file" instead of the unresolved path
+    from the symlink itself which would have been "../d4/source_file"
+
+    See https://github.com/python-poetry/poetry/issues/5849
+    """
+    with tempfile.TemporaryDirectory() as d1:
+        symlink_path = Path(d1).joinpath("testsymlink")
+        with tempfile.TemporaryDirectory(dir=d1) as d2, tempfile.TemporaryDirectory(
+            dir=d1
+        ) as d4, tempfile.TemporaryDirectory(dir=d2) as d3, tempfile.NamedTemporaryFile(
+            dir=d4
+        ) as source_file, tempfile.NamedTemporaryFile(
+            dir=d3
+        ) as lock_file:
+            lock_file.close()
+            try:
+                os.symlink(Path(d3), symlink_path)
+            except OSError:
+                if sys.platform == "win32":
+                    # os.symlink requires either administrative privileges or developer
+                    # mode on Win10, throwing an OSError if neither is active.
+                    # Test is not possible in that case.
+                    return
+                raise
+            locker = Locker(str(symlink_path) + os.sep + Path(lock_file.name).name, {})
+
+            package_local = Package(
+                "local-package",
+                "1.2.3",
+                source_type="file",
+                source_url=source_file.name,
+                source_reference="develop",
+                source_resolved_reference="123456",
+            )
+            packages = [
+                package_local,
+            ]
+
+            locker.set_lock_data(root, packages)
+
+            with locker.lock.open(encoding="utf-8") as f:
+                content = f.read()
+
+            expected = f"""\
+[[package]]
+name = "local-package"
+version = "1.2.3"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "file"
+url = "{
+    Path(
+        os.path.relpath(
+            Path(source_file.name).resolve().as_posix(),
+            Path(Path(lock_file.name).parent).resolve().as_posix(),
+        )
+    ).as_posix()
+}"
+reference = "develop"
+resolved_reference = "123456"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+local-package = []
+"""
+
+            assert content == expected
