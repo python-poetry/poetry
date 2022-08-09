@@ -1453,6 +1453,7 @@ Initial release
 [1.2.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b1
 [1.2.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0a2
 [1.2.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0a1
+[1.1.14]: https://github.com/python-poetry/poetry/releases/tag/1.1.14
 [1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.13
 [1.1.12]: https://github.com/python-poetry/poetry/releases/tag/1.1.12
 [1.1.11]: https://github.com/python-poetry/poetry/releases/tag/1.1.11
