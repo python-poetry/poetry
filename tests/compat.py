@@ -11,4 +11,4 @@ else:
 try:
     from typing import Protocol  # nopycln: import
 except ImportError:
-    from typing_extensions import Protocol  # noqa: F401, TC002
+    from typing_extensions import Protocol  # noqa: F401
