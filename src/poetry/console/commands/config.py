@@ -38,7 +38,8 @@ class ConfigCommand(Command):
         option("local", None, "Set/Get from the project's local configuration."),
     ]
 
-    help = """This command allows you to edit the poetry config settings and repositories.
+    help = """\
+This command allows you to edit the poetry config settings and repositories.
 
 To add a repository:
 
