@@ -535,6 +535,9 @@ class Executor:
         else:
             req = Path(package.source_url).resolve(strict=False)
 
+        if package.source_subdirectory:
+            req /= package.source_subdirectory
+
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
         if pyproject.is_poetry_project():
@@ -762,6 +765,8 @@ class Executor:
                 "commit_id": package.source_resolved_reference,
             },
         }
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
 
         return reference
 
