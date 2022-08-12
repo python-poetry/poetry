@@ -823,7 +823,7 @@ def test_add_constraint_with_source(
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+    repo._cache.store("matches").put("cachy:0.2.0", ([Version.parse("0.2.0")], []), 5)
 
     poetry.pool.add_repository(repo)
 
@@ -1810,7 +1810,7 @@ def test_add_constraint_with_source_old_installer(
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+    repo._cache.store("matches").put("cachy:0.2.0", ([Version.parse("0.2.0")], []), 5)
 
     poetry.pool.add_repository(repo)
 

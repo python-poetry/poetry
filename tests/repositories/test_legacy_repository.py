@@ -40,8 +40,10 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
 class MockRepository(LegacyRepository):
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self) -> None:
-        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
+    def __init__(self, *, disable_cache: bool = True) -> None:
+        super().__init__(
+            "legacy", url="http://legacy.foo.bar", disable_cache=disable_cache
+        )
 
     def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
@@ -214,6 +216,18 @@ def test_find_packages_only_prereleases(constraint: str, count: int):
             assert package.source_type == "legacy"
             assert package.source_reference == repo.name
             assert package.source_url == repo.url
+
+
+def test_find_packages_only_prereleases_cached():
+    repo = MockRepository(disable_cache=False)
+
+    # first run: cache is filled
+    packages = repo.find_packages(Factory.create_dependency("black", "*"))
+    assert len(packages) == 1
+
+    # second run: cache is used
+    packages = repo.find_packages(Factory.create_dependency("black", "*"))
+    assert len(packages) == 1
 
 
 def test_find_packages_only_prereleases_empty_when_not_any():

@@ -46,7 +46,9 @@ class LegacyRepository(HTTPRepository):
         ignored_pre_release_versions = []
 
         if self._cache.store("matches").has(key):
-            versions = self._cache.store("matches").get(key)
+            versions, ignored_pre_release_versions = self._cache.store("matches").get(
+                key
+            )
         else:
             page = self._get_page(f"/{dependency.name.replace('.', '-')}/")
             if page is None:
@@ -63,7 +65,9 @@ class LegacyRepository(HTTPRepository):
                 if constraint.allows(version):
                     versions.append(version)
 
-            self._cache.store("matches").put(key, versions, 5)
+            self._cache.store("matches").put(
+                key, (versions, ignored_pre_release_versions), 5
+            )
 
         for package_versions in (versions, ignored_pre_release_versions):
             for version in package_versions:
