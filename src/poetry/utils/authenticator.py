@@ -242,7 +242,7 @@ class Authenticator:
             if not is_last_attempt:
                 attempt += 1
                 delay = 0.5 * attempt
-                logger.debug(f"Retrying HTTP request in {delay} seconds.")
+                logger.debug("Retrying HTTP request in %s seconds.", delay)
                 time.sleep(delay)
                 continue
 

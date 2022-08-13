@@ -201,8 +201,10 @@ class PackageInfo:
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 logger.debug(
-                    f"Invalid constraint ({req}) found in"
-                    f" {package.name}-{package.version} dependencies, skipping",
+                    "Invalid constraint (%s) found in %s-%s dependencies, skipping",
+                    req,
+                    package.name,
+                    package.version,
                 )
                 continue
 

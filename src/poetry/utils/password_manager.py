@@ -110,7 +110,7 @@ class PoetryKeyring:
         try:
             import keyring
         except Exception as e:
-            logger.debug(f"An error occurred while importing keyring: {e!s}")
+            logger.debug("An error occurred while importing keyring: %s", e)
             self._is_available = False
 
             return
