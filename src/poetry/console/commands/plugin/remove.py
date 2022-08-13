@@ -47,11 +47,10 @@ class PluginRemoveCommand(Command):
         if self.option("--dry-run"):
             argv.append("--dry-run")
 
-        exit_code: int = command.run(
+        return command.run(
             IO(
                 StringInput(" ".join(argv)),
                 self.io.output,
                 self.io.error_output,
             )
         )
-        return exit_code

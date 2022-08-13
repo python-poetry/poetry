@@ -1205,8 +1205,7 @@ class Env:
 
     @property
     def python_implementation(self) -> str:
-        implementation: str = self.marker_env["platform_python_implementation"]
-        return implementation
+        return self.marker_env["platform_python_implementation"]
 
     @property
     def python(self) -> str:
@@ -1265,8 +1264,7 @@ class Env:
         wheel: Wheel = get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         )
-        path: Path = wheel.path
-        return path
+        return wheel.path
 
     @property
     def pip_embedded(self) -> str:
@@ -1403,8 +1401,7 @@ class Env:
         raise NotImplementedError()
 
     def is_valid_for_marker(self, marker: BaseMarker) -> bool:
-        valid: bool = marker.validate(self.marker_env)
-        return valid
+        return marker.validate(self.marker_env)
 
     def is_sane(self) -> bool:
         """
@@ -1657,8 +1654,7 @@ class VirtualEnv(Env):
     def sys_path(self) -> list[str]:
         output = self.run_python_script(GET_SYS_PATH)
         assert isinstance(output, str)
-        paths: list[str] = json.loads(output)
-        return paths
+        return json.loads(output)
 
     def get_version_info(self) -> tuple[Any, ...]:
         output = self.run_python_script(GET_PYTHON_VERSION)
@@ -1667,8 +1663,7 @@ class VirtualEnv(Env):
         return tuple(int(s) for s in output.strip().split("."))
 
     def get_python_implementation(self) -> str:
-        implementation: str = self.marker_env["platform_python_implementation"]
-        return implementation
+        return self.marker_env["platform_python_implementation"]
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
         # We're in a virtualenv that is known to be sane,
@@ -1688,8 +1683,7 @@ class VirtualEnv(Env):
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
         assert isinstance(output, str)
 
-        env: dict[str, Any] = json.loads(output)
-        return env
+        return json.loads(output)
 
     def get_pip_version(self) -> Version:
         output = self.run_pip("--version")
@@ -1705,8 +1699,7 @@ class VirtualEnv(Env):
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS)
         assert isinstance(output, str)
-        paths: dict[str, str] = json.loads(output)
-        return paths
+        return json.loads(output)
 
     def is_venv(self) -> bool:
         return True
@@ -1822,8 +1815,7 @@ class GenericEnv(VirtualEnv):
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
         assert isinstance(output, str)
 
-        paths: dict[str, str] = json.loads(output)
-        return paths
+        return json.loads(output)
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)

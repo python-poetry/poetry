@@ -48,11 +48,10 @@ environment.
         if self.option("preview"):
             argv.append("--allow-prereleases")
 
-        exit_code: int = add_command.run(
+        return add_command.run(
             IO(
                 StringInput(" ".join(argv)),
                 self.io.output,
                 self.io.error_output,
             )
         )
-        return exit_code

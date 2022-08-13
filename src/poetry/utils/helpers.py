@@ -123,8 +123,7 @@ def get_package_version_display_string(
         path = Path(os.path.relpath(package.source_url, root.as_posix())).as_posix()
         return f"{package.version} {path}"
 
-    pretty_version: str = package.full_pretty_version
-    return pretty_version
+    return package.full_pretty_version
 
 
 def paths_csv(paths: list[Path]) -> str:

@@ -1371,11 +1371,9 @@ def test_generate_env_name_uses_real_path(tmp_dir: str, mocker: MockerFixture):
 
 @pytest.fixture()
 def extended_without_setup_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
+    return Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / "extended_project_without_setup"
     )
-
-    return poetry
 
 
 def test_build_environment_called_build_script_specified(

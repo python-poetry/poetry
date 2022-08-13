@@ -186,9 +186,7 @@ def config_source(config_cache_dir: Path) -> DictConfigSource:
 
 @pytest.fixture
 def auth_config_source() -> DictConfigSource:
-    source = DictConfigSource()
-
-    return source
+    return DictConfigSource()
 
 
 @pytest.fixture(autouse=True)

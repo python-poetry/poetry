@@ -172,8 +172,7 @@ class PasswordManager:
 
     def get_pypi_token(self, name: str) -> str | None:
         if not self.keyring.is_available():
-            token: str | None = self._config.get(f"pypi-token.{name}")
-            return token
+            return self._config.get(f"pypi-token.{name}")
 
         return self.keyring.get_password(name, "__token__")
 

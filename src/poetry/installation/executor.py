@@ -757,7 +757,7 @@ class Executor:
                         writer.writerow([str(path), "", ""])
 
     def _create_git_url_reference(self, package: Package) -> dict[str, Any]:
-        reference = {
+        return {
             "url": package.source_url,
             "vcs_info": {
                 "vcs": "git",
@@ -768,17 +768,13 @@ class Executor:
         if package.source_subdirectory:
             reference["subdirectory"] = package.source_subdirectory
 
-        return reference
-
     def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
         archive_info = {}
 
         if package.name in self._hashes:
             archive_info["hash"] = self._hashes[package.name]
 
-        reference = {"url": package.source_url, "archive_info": archive_info}
-
-        return reference
+        return {"url": package.source_url, "archive_info": archive_info}
 
     def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
         archive_info = {}

@@ -225,8 +225,7 @@ class VersionSolver:
             unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
         )
 
-        complete_name: str = unsatisfied.dependency.complete_name
-        return complete_name
+        return unsatisfied.dependency.complete_name
 
     def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
@@ -414,8 +413,7 @@ class VersionSolver:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
                 )
-                complete_name: str = dependency.complete_name
-                return complete_name
+                return dependency.complete_name
 
             package = None
             if dependency.name not in self._use_latest:
@@ -443,8 +441,7 @@ class VersionSolver:
                     Incompatibility([Term(dependency, True)], NoVersionsCause())
                 )
 
-                complete_name = dependency.complete_name
-                return complete_name
+                return dependency.complete_name
         else:
             package = locked
 
@@ -472,8 +469,7 @@ class VersionSolver:
                 f" ({package.package.full_pretty_version})"
             )
 
-        complete_name = dependency.complete_name
-        return complete_name
+        return dependency.complete_name
 
     def _result(self) -> SolverResult:
         """

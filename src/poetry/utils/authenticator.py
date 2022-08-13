@@ -145,8 +145,7 @@ class Authenticator:
         if not self.is_cached:
             return session
 
-        session = CacheControl(sess=session, cache=self._cache_control)
-        return session
+        return CacheControl(sess=session, cache=self._cache_control)
 
     def get_session(self, url: str | None = None) -> requests.Session:
         if not url:

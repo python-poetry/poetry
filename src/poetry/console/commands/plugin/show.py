@@ -22,11 +22,10 @@ class PluginShowCommand(Command):
         application = self.get_application()
         command = application.find("self show plugins")
 
-        exit_code: int = command.run(
+        return command.run(
             IO(
                 StringInput(""),
                 self.io.output,
                 self.io.error_output,
             )
         )
-        return exit_code

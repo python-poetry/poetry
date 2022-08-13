@@ -24,5 +24,4 @@ class DebugInfoCommand(Command):
         )
         command = self.application.get("env info")
 
-        exit_code: int = command.run(self.io)
-        return exit_code
+        return command.run(self.io)

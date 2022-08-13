@@ -155,10 +155,9 @@ class PyPiRepository(HTTPRepository):
         if self._disable_cache:
             return self._get_package_info(name)
 
-        package_info: dict[str, Any] = self._cache.store("packages").remember_forever(
+        return self._cache.store("packages").remember_forever(
             name, lambda: self._get_package_info(name)
         )
-        return package_info
 
     def _get_package_info(self, name: str) -> dict[str, Any]:
         data = self._get(f"pypi/{name}/json")
@@ -264,5 +263,4 @@ class PyPiRepository(HTTPRepository):
         if json_response.status_code != 200:
             return None
 
-        json: dict[str, Any] = json_response.json()
-        return json
+        return json_response.json()

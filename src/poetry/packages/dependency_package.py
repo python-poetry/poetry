@@ -43,5 +43,4 @@ class DependencyPackage:
         if isinstance(other, DependencyPackage):
             other = other.package
 
-        equal: bool = self._package == other
-        return equal
+        return self._package == other

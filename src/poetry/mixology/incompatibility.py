@@ -435,8 +435,7 @@ class Incompatibility:
             return f"every version of {term.dependency.complete_name}"
 
         if term.dependency.is_root:
-            pretty_name: str = term.dependency.pretty_name
-            return pretty_name
+            return term.dependency.pretty_name
 
         if term.dependency.source_type:
             return str(term.dependency)

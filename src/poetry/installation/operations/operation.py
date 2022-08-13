@@ -43,8 +43,7 @@ class Operation:
         raise NotImplementedError()
 
     def format_version(self, package: Package) -> str:
-        version: str = package.full_pretty_version
-        return version
+        return package.full_pretty_version
 
     def skip(self: T, reason: str) -> T:
         self._skipped = True

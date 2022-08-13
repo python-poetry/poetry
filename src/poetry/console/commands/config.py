@@ -53,7 +53,7 @@ To remove a repository (repo is a short alias for repositories):
 
     @property
     def unique_config_values(self) -> dict[str, tuple[Any, Any, Any]]:
-        unique_config_values = {
+        return {
             "cache-dir": (
                 str,
                 lambda val: str(Path(val)),
@@ -122,8 +122,6 @@ To remove a repository (repo is a short alias for repositories):
                 None,
             ),
         }
-
-        return unique_config_values
 
     def handle(self) -> int:
         from pathlib import Path
