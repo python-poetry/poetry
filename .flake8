@@ -17,6 +17,8 @@ extend-ignore =
     ANN101,
     # ANN102: Missing type annotation for cls in classmethod
     ANN102,
+    # PIE798 no-unnecessary-class: Consider using a module for namespacing instead
+    PIE798,
 per-file-ignores =
     # TC002: Move third-party import '...' into a type-checking block
     __init__.py:TC002,
