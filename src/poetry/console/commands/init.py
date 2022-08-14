@@ -19,6 +19,7 @@ from poetry.utils.dependency_specification import parse_dependency_specification
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
@@ -238,7 +239,7 @@ You can specify a package in the following forms:
         return 0
 
     def _generate_choice_list(
-        self, matches: list[Package], canonicalized_name: str
+        self, matches: list[Package], canonicalized_name: NormalizedName
     ) -> list[str]:
         choices = []
         matches_names = [p.name for p in matches]

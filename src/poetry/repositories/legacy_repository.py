@@ -14,6 +14,7 @@ from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
     from poetry.core.semver.version_constraint import VersionConstraint
 
@@ -66,13 +67,15 @@ class LegacyRepository(HTTPRepository):
 
         return list(page.links_for_version(package.name, package.version))
 
-    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
         """
         Find packages on the remote server.
         """
         versions: list[Version]
 
-        key = name
+        key: str = name
         if not constraint.is_any():
             key = f"{key}:{constraint!s}"
 
