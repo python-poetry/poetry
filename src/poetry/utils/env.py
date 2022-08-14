@@ -641,8 +641,9 @@ class EnvManager:
 
     def deactivate(self, io: IO) -> None:
         venv_path = self._poetry.config.virtualenvs_path
-        name = self._poetry.package.name
-        name = self.generate_env_name(name, str(self._poetry.file.parent))
+        name = self.generate_env_name(
+            self._poetry.package.name, str(self._poetry.file.parent)
+        )
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         if envs_file.exists():

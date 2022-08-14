@@ -39,7 +39,7 @@ class LegacyRepository(HTTPRepository):
             dependency
         )
 
-        key = dependency.name
+        key: str = dependency.name
         if not constraint.is_any():
             key = f"{key}:{constraint!s}"
 
