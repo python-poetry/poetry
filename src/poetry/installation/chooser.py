@@ -103,7 +103,9 @@ class Chooser:
             raise RuntimeError(f"Unable to find installation candidates for {package}")
 
         # Get the best link
-        return max(links, key=lambda link: self._sort_key(package, link))
+        chosen = max(links, key=lambda link: self._sort_key(package, link))
+
+        return chosen
 
     def _get_links(self, package: Package) -> list[Link]:
         if package.source_type:

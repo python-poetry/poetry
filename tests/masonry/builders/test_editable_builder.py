@@ -31,32 +31,40 @@ if TYPE_CHECKING:
 
 @pytest.fixture()
 def simple_poetry() -> Poetry:
-    return Factory().create_poetry(
+    poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
     )
+
+    return poetry
 
 
 @pytest.fixture()
 def project_with_include() -> Poetry:
-    return Factory().create_poetry(
+    poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "with-include"
     )
+
+    return poetry
 
 
 @pytest.fixture()
 def extended_poetry() -> Poetry:
-    return Factory().create_poetry(
+    poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
     )
+
+    return poetry
 
 
 @pytest.fixture()
 def extended_without_setup_poetry() -> Poetry:
-    return Factory().create_poetry(
+    poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent
         / "fixtures"
         / "extended_project_without_setup"
     )
+
+    return poetry
 
 
 @pytest.fixture()

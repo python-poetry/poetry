@@ -28,7 +28,8 @@ class Command(BaseCommand):  # type: ignore[misc]
         self._poetry = poetry
 
     def get_application(self) -> Application:
-        return self.application
+        application: Application = self.application
+        return application
 
     def reset_poetry(self) -> None:
         self.get_application().reset_poetry()

@@ -61,7 +61,8 @@ class EditableBuilder(Builder):
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
                 self._setup_build()
-                return self._path
+                path: Path = self._path
+                return path
 
             self._run_build_script(self._package.build_script)
 
@@ -78,7 +79,8 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-        return self._path
+        path = self._path
+        return path
 
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:

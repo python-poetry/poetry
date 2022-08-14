@@ -211,11 +211,13 @@ def depth_first_search(source: PackageNode) -> list[list[PackageNode]]:
         node.visit(back_edges[node.id])
         combined_nodes[node.name].append(node)
 
-    return [
+    combined_topo_sorted_nodes: list[list[PackageNode]] = [
         combined_nodes.pop(node.name)
         for node in topo_sorted_nodes
         if node.name in combined_nodes
     ]
+
+    return combined_topo_sorted_nodes
 
 
 def dfs_visit(

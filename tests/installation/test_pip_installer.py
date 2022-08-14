@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def package_git() -> Package:
-    return Package(
+    package = Package(
         "demo",
         "1.0.0",
         source_type="git",
@@ -35,10 +35,12 @@ def package_git() -> Package:
         source_reference="master",
     )
 
+    return package
+
 
 @pytest.fixture
 def package_git_with_subdirectory() -> Package:
-    return Package(
+    package = Package(
         "subdirectories",
         "2.0.0",
         source_type="git",
@@ -46,6 +48,8 @@ def package_git_with_subdirectory() -> Package:
         source_reference="master",
         source_subdirectory="two",
     )
+
+    return package
 
 
 @pytest.fixture

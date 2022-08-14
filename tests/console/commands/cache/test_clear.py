@@ -19,7 +19,8 @@ if TYPE_CHECKING:
 def tester() -> ApplicationTester:
     app = Application()
 
-    return ApplicationTester(app)
+    tester = ApplicationTester(app)
+    return tester
 
 
 def test_cache_clear_all(

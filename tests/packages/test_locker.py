@@ -33,7 +33,9 @@ if TYPE_CHECKING:
 def locker() -> Locker:
     with tempfile.NamedTemporaryFile() as f:
         f.close()
-        return Locker(f.name, {})
+        locker = Locker(f.name, {})
+
+        return locker
 
 
 @pytest.fixture

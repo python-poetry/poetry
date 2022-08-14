@@ -66,7 +66,9 @@ def io_decorated() -> BufferedIO:
 
 @pytest.fixture()
 def io_not_decorated() -> BufferedIO:
-    return BufferedIO(decorated=False)
+    io = BufferedIO(decorated=False)
+
+    return io
 
 
 @pytest.fixture()

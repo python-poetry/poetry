@@ -43,7 +43,8 @@ def load_command(name: str) -> Callable[[], Command]:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
-        return command_class()
+        command: Command = command_class()
+        return command
 
     return _load
 
@@ -185,7 +186,8 @@ class Application(BaseApplication):  # type: ignore[misc]
 
         self._load_plugins(io)
 
-        return super()._run(io)
+        exit_code: int = super()._run(io)
+        return exit_code
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -385,7 +387,8 @@ class Application(BaseApplication):  # type: ignore[misc]
 
 
 def main() -> int:
-    return Application().run()
+    exit_code: int = Application().run()
+    return exit_code
 
 
 if __name__ == "__main__":

@@ -103,7 +103,8 @@ class SelfCommand(InstallerCommand):
         The default implementations handles cases where a `self` command delegates
         handling to an existing command. Eg: `SelfAddCommand(SelfCommand, AddCommand)`.
         """
-        return super().handle()
+        return_code: int = super().handle()
+        return return_code
 
     def reset(self) -> None:
         """

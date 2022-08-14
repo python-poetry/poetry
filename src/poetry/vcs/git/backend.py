@@ -199,11 +199,12 @@ class Git:
         client, path = get_transport_and_path(url, config=config, **kwargs)
 
         with local:
-            return client.fetch(
+            result: FetchPackResult = client.fetch(
                 path,
                 local,
                 determine_wants=local.object_store.determine_wants_all,
             )
+            return result
 
     @staticmethod
     def _clone_legacy(url: str, refspec: GitRefSpec, target: Path) -> Repo:
@@ -239,7 +240,8 @@ class Git:
                 f"Failed to checkout {url} at '{revision}'"
             )
 
-        return Repo(str(target))
+        repo = Repo(str(target))
+        return repo
 
     @classmethod
     def _clone(cls, url: str, refspec: GitRefSpec, target: Path) -> Repo:
@@ -356,7 +358,10 @@ class Git:
     def is_using_legacy_client() -> bool:
         from poetry.config.config import Config
 
-        return Config.create().get("experimental", {}).get("system-git-client", False)
+        legacy_client: bool = (
+            Config.create().get("experimental", {}).get("system-git-client", False)
+        )
+        return legacy_client
 
     @staticmethod
     def get_default_source_root() -> Path:

@@ -48,13 +48,15 @@ class InvalidPlugin:
 
 @pytest.fixture()
 def poetry(tmp_dir: str, config: Config) -> Poetry:
-    return Poetry(
+    poetry = Poetry(
         CWD / "pyproject.toml",
         {},
         ProjectPackage("simple-project", "1.2.3"),
         Locker(CWD / "poetry.lock", {}),
         config,
     )
+
+    return poetry
 
 
 @pytest.fixture()

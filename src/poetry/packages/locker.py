@@ -89,7 +89,8 @@ class Locker:
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
-            return self._content_hash == metadata["content-hash"]
+            fresh: bool = self._content_hash == metadata["content-hash"]
+            return fresh
 
         return False
 
