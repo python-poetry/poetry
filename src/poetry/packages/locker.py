@@ -587,7 +587,7 @@ class Locker:
 
         if package.extras:
             extras = {}
-            for name, deps in package.extras.items():
+            for name, deps in sorted(package.extras.items()):
                 # TODO: This should use dep.to_pep_508() once this is fixed
                 # https://github.com/python-poetry/poetry-core/pull/102
                 extras[name] = sorted(
