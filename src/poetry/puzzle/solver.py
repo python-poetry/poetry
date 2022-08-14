@@ -75,8 +75,8 @@ class Solver:
 
             if len(self._overrides) > 1:
                 self._provider.debug(
-                    f"Complete version solving took {end - start:.3f} seconds with"  # noqa: PIE803
-                    f" {len(self._overrides)} overrides"
+                    f"Complete version solving took {end - start:.3f}"  # noqa: PIE803
+                    f" seconds with {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
                     "Resolved with overrides:"  # noqa: PIE803
