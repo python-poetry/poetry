@@ -48,7 +48,7 @@ class LegacyRepository(HTTPRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get_page(f"/{dependency.name.replace('.', '-')}/")
+            page = self._get_page(f"/{dependency.name}/")
             if page is None:
                 return []
 
@@ -115,14 +115,14 @@ class LegacyRepository(HTTPRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> list[Link]:
-        page = self._get_page(f"/{package.name.replace('.', '-')}/")
+        page = self._get_page(f"/{package.name}/")
         if page is None:
             return []
 
         return list(page.links_for_version(package.name, package.version))
 
     def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
-        page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
+        page = self._get_page(f"/{canonicalize_name(name)}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
