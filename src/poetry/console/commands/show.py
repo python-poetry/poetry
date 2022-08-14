@@ -11,6 +11,7 @@ from poetry.console.commands.group_command import GroupCommand
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
@@ -423,7 +424,7 @@ lists all packages available."""
         io: IO,
         dependency: Dependency,
         installed_packages: list[Package],
-        packages_in_tree: list[str],
+        packages_in_tree: list[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:

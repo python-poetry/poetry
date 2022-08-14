@@ -63,7 +63,7 @@ def test_get_extra_package_names(
     extras: dict[str, list[str]],
     extra_names: list[str],
     expected_extra_package_names: list[str],
-):
+) -> None:
     assert (
         list(get_extra_package_names(packages, extras, extra_names))
         == expected_extra_package_names

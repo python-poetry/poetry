@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.semver.version_constraint import VersionConstraint
 
 
@@ -90,7 +91,7 @@ class PyPiRepository(HTTPRepository):
 
         return results
 
-    def get_package_info(self, name: str) -> dict[str, Any]:
+    def get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         """
         Return the package information given its name.
 
@@ -105,7 +106,9 @@ class PyPiRepository(HTTPRepository):
         )
         return package_info
 
-    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
         """
         Find packages on the remote server.
         """
@@ -145,7 +148,7 @@ class PyPiRepository(HTTPRepository):
 
         return packages
 
-    def _get_package_info(self, name: str) -> dict[str, Any]:
+    def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         data = self._get(f"pypi/{name}/json")
         if data is None:
             raise PackageNotFound(f"Package [{name}] not found.")

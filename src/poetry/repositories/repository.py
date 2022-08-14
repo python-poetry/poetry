@@ -12,6 +12,7 @@ from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
@@ -112,7 +113,9 @@ class Repository:
 
         return constraint, allow_prereleases
 
-    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
         return [
             package
             for package in self._packages
