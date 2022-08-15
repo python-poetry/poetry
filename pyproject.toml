@@ -45,7 +45,7 @@ generate-setup-file = false
 python = "^3.7"
 
 poetry-core = "^1.1.0b3"
-poetry-plugin-export = "^1.0.5"
+poetry-plugin-export = "^1.0.6"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a5"
