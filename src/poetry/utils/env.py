@@ -948,7 +948,8 @@ class EnvManager:
 
         if venv_prompt is not None:
             venv_prompt = venv_prompt.format(
-                project_name=self._poetry.package.name, python_version=python_minor
+                project_name=self._poetry.package.name or "virtualenv",
+                python_version=python_minor,
             )
 
         if not venv.exists():
