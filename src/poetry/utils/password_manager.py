@@ -180,11 +180,8 @@ class PasswordManager:
         :param repo_name:  Name of repository.
         :return: Returns a token as a string if found, otherwise None.
         """
-        return self._config.get(f"pypi-token.{repo_name}", self.keyring.get_password(repo_name, "__token__"))
-        return (
-            token
-            if token is not None
-            else self.keyring.get_password(repo_name, "__token__")
+        return self._config.get(
+            f"pypi-token.{repo_name}", self.keyring.get_password(repo_name, "__token__")
         )
 
     def delete_pypi_token(self, name: str) -> None:

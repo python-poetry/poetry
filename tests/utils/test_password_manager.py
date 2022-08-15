@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 
 from typing import TYPE_CHECKING
-from unittest import mock
 
 import pytest
 
@@ -235,19 +234,20 @@ def test_get_http_auth_from_environment_variables(
 
 
 def test_get_pypi_token_with_env_var_positive(
-    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+    mocker: MockerFixture,
+    config: Config,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
 ):
     sample_token = "sampletoken-1234"
     repo_name = "foo"
     manager = PasswordManager(config)
-
-    with mock.patch.dict(
+    mocker.patch.dict(
         os.environ,
         {f"POETRY_PYPI_TOKEN_{repo_name.upper()}": sample_token},
-    ):
-        result_token = manager.get_pypi_token(repo_name)
+    )
 
-    assert result_token == sample_token
+    assert manager.get_pypi_token(repo_name) == sample_token
 
 
 def test_get_pypi_token_with_env_var_not_available(
