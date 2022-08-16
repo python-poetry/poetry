@@ -513,11 +513,9 @@ class VersionSolver:
         locked = self._locked.get(dependency.name, [])
         for dependency_package in locked:
             package = dependency_package.package
-            if (allow_similar or dependency.is_same_package_as(package)) and (
-                dependency.constraint.allows(package.version)
-                or package.is_prerelease()
-                and dependency.constraint.allows(package.version.next_patch())
-            ):
+            if (
+                allow_similar or dependency.is_same_package_as(package)
+            ) and dependency.constraint.allows(package.version):
                 return DependencyPackage(dependency, package)
         return None
 
