@@ -51,7 +51,9 @@ def mock_file_downloads(http):
             return [200, headers, f.read()]
 
     http.register_uri(
-        http.GET, re.compile("^https://files.pythonhosted.org/.*$"), body=callback,
+        http.GET,
+        re.compile("^https://files.pythonhosted.org/.*$"),
+        body=callback,
     )
 
 

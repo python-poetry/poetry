@@ -20,7 +20,9 @@ class InstallCommand(InstallerCommand):
             "(implicitly enables --verbose).",
         ),
         option(
-            "remove-untracked", None, "Removes packages not present in the lock file.",
+            "remove-untracked",
+            None,
+            "Removes packages not present in the lock file.",
         ),
         option(
             "extras",

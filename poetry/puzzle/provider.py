@@ -659,8 +659,10 @@ class Provider:
         clean_dependencies = []
         for dep in dependencies:
             if not package.dependency.transitive_marker.without_extras().is_any():
-                marker_intersection = package.dependency.transitive_marker.without_extras().intersect(
-                    dep.marker.without_extras()
+                marker_intersection = (
+                    package.dependency.transitive_marker.without_extras().intersect(
+                        dep.marker.without_extras()
+                    )
                 )
                 if marker_intersection.is_empty():
                     # The dependency is not needed, since the markers specified

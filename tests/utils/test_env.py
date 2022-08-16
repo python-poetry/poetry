@@ -14,7 +14,8 @@ from poetry.core.semver import Version
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
-from poetry.utils.env import EnvError, EnvCommandError
+from poetry.utils.env import EnvCommandError
+from poetry.utils.env import EnvError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv

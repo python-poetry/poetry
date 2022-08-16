@@ -9,7 +9,8 @@ from poetry.io.null_io import NullIO
 @pytest.fixture()
 def mock_remote(http):
     http.register_uri(
-        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
     )
 
 

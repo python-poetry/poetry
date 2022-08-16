@@ -1828,7 +1828,8 @@ def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package)
     ops = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": pytest}],
+        ops,
+        [{"job": "install", "package": pytest}],
     )
 
 
@@ -2031,7 +2032,8 @@ def test_solver_should_use_the_python_constraint_from_the_environment_if_availab
         ops = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": b}, {"job": "install", "package": a}],
+        ops,
+        [{"job": "install", "package": b}, {"job": "install", "package": a}],
     )
 
 

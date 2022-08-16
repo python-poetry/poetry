@@ -66,10 +66,11 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
     assert tmp_venv.site_packages.joinpath("simple_project.pth").exists()
-    assert simple_poetry.file.parent.resolve().as_posix() == tmp_venv.site_packages.joinpath(
-        "simple_project.pth"
-    ).read_text().strip(
-        os.linesep
+    assert (
+        simple_poetry.file.parent.resolve().as_posix()
+        == tmp_venv.site_packages.joinpath("simple_project.pth")
+        .read_text()
+        .strip(os.linesep)
     )
 
     dist_info = tmp_venv.site_packages.joinpath("simple_project-1.2.3.dist-info")

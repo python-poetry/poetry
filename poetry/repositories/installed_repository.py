@@ -53,7 +53,8 @@ class InstalledRepository(Repository):
 
         for entry in reversed(env.sys_path):
             for distribution in sorted(
-                metadata.distributions(path=[entry]), key=lambda d: str(d._path),
+                metadata.distributions(path=[entry]),
+                key=lambda d: str(d._path),
             ):
                 name = distribution.metadata["name"]
                 path = Path(str(distribution._path))

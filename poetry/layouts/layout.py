@@ -5,7 +5,7 @@ from tomlkit import table
 from poetry.utils.helpers import module_name
 
 
-TESTS_DEFAULT = u"""from {package_name} import __version__
+TESTS_DEFAULT = """from {package_name} import __version__
 
 
 def test_version():

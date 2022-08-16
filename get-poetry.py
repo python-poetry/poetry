@@ -825,7 +825,7 @@ class Installer:
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
-            u"Environment",
+            "Environment",
             SMTO_ABORTIFHUNG,
             5000,
             ctypes.byref(result),

@@ -455,8 +455,10 @@ class VersionSolver:
             locked.requires_extras = dependency.extras
 
         if not dependency.transitive_marker.without_extras().is_any():
-            marker_intersection = dependency.transitive_marker.without_extras().intersect(
-                locked.dependency.marker.without_extras()
+            marker_intersection = (
+                dependency.transitive_marker.without_extras().intersect(
+                    locked.dependency.marker.without_extras()
+                )
             )
             if not marker_intersection.is_empty():
                 locked.dependency.transitive_marker = marker_intersection

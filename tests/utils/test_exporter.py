@@ -717,7 +717,12 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
             auth=Auth("https://example.com/simple", "foo", "bar"),
         )
     )
-    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple",))
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://foobaz.com/simple",
+        )
+    )
     poetry.locker.mock_lock_data(
         {
             "package": [

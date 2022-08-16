@@ -213,8 +213,10 @@ class Executor(object):
             self._shutdown = True
             self._lock.release()
         except KeyboardInterrupt:
-            message = "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
-                message=self.get_operation_message(operation, warning=True),
+            message = (
+                "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
+                    message=self.get_operation_message(operation, warning=True),
+                )
             )
             if not self.supports_fancy_output():
                 self._io.write_line(message)
@@ -237,7 +239,8 @@ class Executor(object):
                     "<fg=default;options=bold,dark>Skipped</> "
                     "<fg=default;options=dark>for the following reason:</> "
                     "<fg=default;options=bold,dark>{reason}</>".format(
-                        message=operation_message, reason=operation.skip_reason,
+                        message=operation_message,
+                        reason=operation.skip_reason,
                     ),
                 )
 
@@ -397,8 +400,10 @@ class Executor(object):
         return self._update(operation)
 
     def _execute_uninstall(self, operation):  # type: (Uninstall) -> None
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
-            message=self.get_operation_message(operation),
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
+                message=self.get_operation_message(operation),
+            )
         )
         self._write(operation, message)
 
@@ -420,8 +425,10 @@ class Executor(object):
             archive = self._download(operation)
 
         operation_message = self.get_operation_message(operation)
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
+                message=operation_message,
+            )
         )
         self._write(operation, message)
 
@@ -454,8 +461,10 @@ class Executor(object):
     def _prepare_file(self, operation):
         package = operation.package
 
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
-            message=self.get_operation_message(operation),
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
+                message=self.get_operation_message(operation),
+            )
         )
         self._write(operation, message)
 
@@ -474,8 +483,10 @@ class Executor(object):
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Building...</info>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Building...</info>".format(
+                message=operation_message,
+            )
         )
         self._write(operation, message)
 
@@ -548,8 +559,10 @@ class Executor(object):
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Cloning...</info>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Cloning...</info>".format(
+                message=operation_message,
+            )
         )
         self._write(operation, message)
 
@@ -605,8 +618,10 @@ class Executor(object):
         response = self._authenticator.request("get", link.url, stream=True)
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(
+                message=operation_message,
+            )
         )
         progress = None
         if self.supports_fancy_output():

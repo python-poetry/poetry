@@ -169,7 +169,12 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
+            operations,
+            key=lambda o: (
+                -o.priority,
+                o.package.name,
+                o.package.version,
+            ),
         )
 
     def solve_in_compatibility_mode(self, overrides, use_latest=None):

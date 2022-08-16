@@ -202,7 +202,8 @@ class Repository(BaseRepository):
 @pytest.fixture
 def repo(http):
     http.register_uri(
-        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
     )
     return Repository(name="foo")
 
