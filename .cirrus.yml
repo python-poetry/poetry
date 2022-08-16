@@ -1,76 +1,35 @@
 freebsd_instance:
-  image_family: freebsd-12-1-snap
+  image_family: freebsd-13-0
+  cpu: 1
+  memory: 4G
 
 test_task:
   name: "Tests / FreeBSD / "
+  only_if: $CIRRUS_TAG == ''
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
-      - PYTHON: python2.7
       - PYTHON: python3.7
-  python_script:
+      - PYTHON: python3.8
+      - PYTHON: python3.9
+      - PYTHON: python3.10
+  pkg_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
-    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+    - pkg install -y git-lite curl $PYPACKAGE $SQLPACKAGE
   pip_script:
     - $PYTHON -m ensurepip
-    - $PYTHON -m pip install -U pip tox
-    - $PYTHON -m pip install -U --pre poetry
+    - $PYTHON -m pip --disable-pip-version-check install -U pip
+  env_script:
+    - echo "PATH=/.local/bin:${PATH}" >> $CIRRUS_ENV
+  poetry_script:
+    - curl -sL https://install.python-poetry.org | $PYTHON - -y
     - poetry config virtualenvs.in-project true
-  tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
+  test_script:
+    - poetry install
+    - poetry run pytest -n auto -q --junitxml=junit.xml tests
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml
       format: junit
       type: text/xml
-
-release_task:
-  name: "Release / FreeBSD"
-  only_if: $CIRRUS_TAG != ''
-  env:
-    GITHUB_TOKEN: ENCRYPTED[2b573a2d28a03523ac6fb5b3c2f513a41c0a98db81e40e50e1d103b171f85c57e58ae38d957499dbf7fd7635cfcfd7be]
-    PYTHON: python3.8
-    PYTHON27: python2.7
-    PYTHON35: python3.5
-    PYTHON36: python3.6
-    PYTHON37: python3.7
-    PYTHON38: python3.8
-  freebsd_instance:
-    matrix:
-      - image_family: freebsd-12-1-snap
-      - image_family: freebsd-11-3-snap
-  python_script: pkg install -y curl bash python3 python27 python35 python36 python37 python38
-  pip_script:
-    - python2.7 -m ensurepip
-    - python3.5 -m ensurepip
-    - python3.6 -m ensurepip
-    - python3.7 -m ensurepip
-    - python3.8 -m ensurepip
-  build_script: bash ./make-nix-release.sh
-  upload_script: |
-    #!/usr/bin/env bash
-
-    if [[ "$CIRRUS_RELEASE" == "" ]]; then
-      echo "Not a release. No need to deploy!"
-      exit 0
-    fi
-
-    if [[ "$GITHUB_TOKEN" == "" ]]; then
-      echo "Please provide GitHub access token via GITHUB_TOKEN environment variable!"
-      exit 1
-    fi
-
-    for fpath in releases/*
-    do
-      echo "Uploading $fpath..."
-      name=$(basename "$fpath")
-      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_RELEASE/assets?name=$name"
-      echo "Uploading to $url_to_upload"
-      curl -X POST \
-        --data-binary @$fpath \
-        --header "Authorization: token $GITHUB_TOKEN" \
-        --header "Content-Type: application/octet-stream" \
-        $url_to_upload
-    done
-  archive_artifacts:
-    path: "releases/*"

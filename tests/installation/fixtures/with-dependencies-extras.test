@@ -18,7 +18,7 @@ python-versions = "*"
 C = {version = "^1.0", optional = true}
 
 [package.extras]
-foo = ["C (^1.0)"]
+foo = ["C (>=1.0,<2.0)"]
 
 [[package]]
 name = "C"

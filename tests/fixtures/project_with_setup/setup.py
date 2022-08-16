@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 from setuptools import setup
 
 
 kwargs = dict(
-    name="my-package",
+    name="project-with-setup",
     license="MIT",
     version="0.1.2",
     description="Demo project.",

@@ -1,29 +1,75 @@
-name: Documentation
+name: "Documentation Preview"
 
 on:
-  push:
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
-    branches:
-      - master
   pull_request:
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
-    branches:
-      - '**'
+    # allow repository maintainers to modify and test workflow
+    paths-ignore:
+      - "**"
+      - "!.github/workflows/docs.yml"
+  pull_request_target:
+    # enable runs for this workflow when labeled as documentation only
+    # prevent execution when the workflow itself is modified from a fork
+    types:
+      - labeled
+      - synchronize
+    paths-ignore:
+      - "**"
+      - "!docs/**"
 
 jobs:
-  docs:
-    name: Documentation Build
-    runs-on: Ubuntu-latest
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'Documentation'))
+      || (github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Checkout Website Source
+        uses: actions/checkout@v3
         with:
-          python-version: 3.8
-      - name: Install tox
-        run: pip install tox
-      - name: Build documentation
-        run: tox -e doc
+          repository: python-poetry/website
+
+      - name: Checkout Poetry Source
+        uses: actions/checkout@v3
+        with:
+          path: poetry
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: Build Assets
+        run: npm ci && npm run prod
+
+      - name: Fetch Documentation
+        run: |
+          python -m pip install poetry
+          poetry install --no-dev
+          poetry run python bin/website build --local ./poetry
+
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.83.1'
+
+      - name: Build
+        run: hugo -v --minify
+
+      - name: Deploy
+        uses: amondnet/vercel-action@v20
+        id: vercel-action
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: python-poetry
+          github-comment: true
+          working-directory: public

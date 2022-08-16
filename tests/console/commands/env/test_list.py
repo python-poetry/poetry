@@ -1,78 +1,62 @@
-import os
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import pytest
 import tomlkit
 
-from cleo.testers import CommandTester
-
-from poetry.utils._compat import Path
-from poetry.utils.env import EnvManager
-from poetry.utils.toml_file import TomlFile
+from poetry.core.toml.file import TOMLFile
 
 
-def test_none_activated(app, tmp_dir, mocker, env):
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
+if TYPE_CHECKING:
+    from pathlib import Path
 
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
-
-    command = app.find("env list")
-    tester = CommandTester(command)
-    tester.execute()
-
-    expected = """\
-{}-py3.6
-{}-py3.7
-""".format(
-        venv_name, venv_name
-    )
-
-    assert expected == tester.io.fetch_output()
+    from poetry.utils.env import MockEnv
+    from tests.types import CommandTesterFactory
 
 
-def test_activated(app, tmp_dir):
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
-
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
-
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+@pytest.fixture
+def venv_activate_37(venv_cache: Path, venv_name: str) -> None:
+    envs_file = TOMLFile(venv_cache / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    command = app.find("env list")
-    tester = CommandTester(command)
-    tester.execute()
 
-    expected = """\
-{}-py3.6
-{}-py3.7 (Activated)
-""".format(
-        venv_name, venv_name
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("env list")
+
+
+def test_none_activated(
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    mocker: MockerFixture,
+    env: MockEnv,
+):
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
+    tester.execute()
+    expected = "\n".join(venvs_in_cache_dirs).strip()
+    assert tester.io.fetch_output().strip() == expected
+
+
+def test_activated(
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_cache: Path,
+    venv_activate_37: None,
+):
+    tester.execute()
+    expected = (
+        "\n".join(venvs_in_cache_dirs).strip().replace("py3.7", "py3.7 (Activated)")
     )
+    assert tester.io.fetch_output().strip() == expected
 
-    assert expected == tester.io.fetch_output()
 
-
-def test_in_project_venv(app, tmpdir):
-    os.environ.pop("VIRTUAL_ENV", None)
-    app.poetry.config.merge({"virtualenvs": {"in-project": True}})
-
-    (app.poetry.file.parent / ".venv").mkdir(exist_ok=True)
-
-    command = app.find("env list")
-    tester = CommandTester(command)
+def test_in_project_venv(tester: CommandTester, venvs_in_project_dir: list[str]):
     tester.execute()
-
     expected = ".venv (Activated)\n"
-
-    assert expected == tester.io.fetch_output()
-    (app.poetry.file.parent / ".venv").rmdir()
+    assert tester.io.fetch_output() == expected

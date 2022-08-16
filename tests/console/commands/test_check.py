@@ -1,23 +1,34 @@
-from cleo.testers import CommandTester
+from __future__ import annotations
 
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import pytest
 
 
-def test_check_valid(app):
-    command = app.find("check")
-    tester = CommandTester(command)
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
+    from tests.types import CommandTesterFactory
+
+
+@pytest.fixture()
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("check")
+
+
+def test_check_valid(tester: CommandTester):
     tester.execute()
 
     expected = """\
 All set!
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_check_invalid(app, mocker):
+def test_check_invalid(mocker: MockerFixture, tester: CommandTester):
     mocker.patch(
         "poetry.factory.Factory.locate",
         return_value=Path(__file__).parent.parent.parent
@@ -26,22 +37,14 @@ def test_check_invalid(app, mocker):
         / "pyproject.toml",
     )
 
-    command = app.find("check")
-    tester = CommandTester(command)
-
     tester.execute()
 
-    if PY2:
-        expected = """\
-Error: u'description' is a required property
-Warning: A wildcard Python dependency is ambiguous. Consider specifying a more explicit one.
-Warning: The "pendulum" dependency specifies the "allows-prereleases" property, which is deprecated. Use "allow-prereleases" instead.
-"""
-    else:
-        expected = """\
+    expected = """\
 Error: 'description' is a required property
-Warning: A wildcard Python dependency is ambiguous. Consider specifying a more explicit one.
-Warning: The "pendulum" dependency specifies the "allows-prereleases" property, which is deprecated. Use "allow-prereleases" instead.
+Warning: A wildcard Python dependency is ambiguous.\
+ Consider specifying a more explicit one.
+Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
+ which is deprecated. Use "allow-prereleases" instead.
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_error() == expected

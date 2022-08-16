@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 NAME = "PyYAML"
 VERSION = "3.13"
 DESCRIPTION = "YAML parser and emitter for Python"
@@ -12,13 +15,13 @@ supports standard YAML tags and provides Python-specific tags that
 allow to represent an arbitrary Python object.
 
 PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistance."""
+configuration files to object serialization and persistence."""
 AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "MIT"
 PLATFORMS = "Any"
 URL = "http://pyyaml.org/wiki/PyYAML"
-DOWNLOAD_URL = "http://pyyaml.org/download/pyyaml/%s-%s.tar.gz" % (NAME, VERSION)
+DOWNLOAD_URL = f"http://pyyaml.org/download/pyyaml/{NAME}-{VERSION}.tar.gz"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -53,21 +56,23 @@ int main(void) {
 """
 
 
-import sys, os.path, platform
+import os.path
+import platform
+import sys
 
 from distutils import log
-from distutils.core import setup, Command
+from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
+from distutils.command.build_ext import build_ext as _build_ext
+from distutils.core import Command
 from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
+from distutils.core import setup
 from distutils.dir_util import mkpath
-from distutils.command.build_ext import build_ext as _build_ext
-from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
-from distutils.errors import (
-    DistutilsError,
-    CompileError,
-    LinkError,
-    DistutilsPlatformError,
-)
+from distutils.errors import CompileError
+from distutils.errors import DistutilsError
+from distutils.errors import DistutilsPlatformError
+from distutils.errors import LinkError
+
 
 if "setuptools.extension" in sys.modules:
     _Extension = sys.modules["setuptools.extension"]._Extension
@@ -77,8 +82,8 @@ if "setuptools.extension" in sys.modules:
 
 with_cython = False
 try:
-    from Cython.Distutils.extension import Extension as _Extension
     from Cython.Distutils import build_ext as _build_ext
+    from Cython.Distutils.extension import Extension as _Extension
 
     with_cython = True
 except ImportError:
@@ -185,7 +190,7 @@ class build_ext(_build_ext):
                 filenames.append(filename)
                 base = os.path.splitext(filename)[0]
                 for ext in ["c", "h", "pyx", "pxd"]:
-                    filename = "%s.%s" % (base, ext)
+                    filename = f"{base}.{ext}"
                     if filename not in filenames and os.path.isfile(filename):
                         filenames.append(filename)
         return filenames
@@ -308,10 +313,7 @@ class test(Command):
         build_cmd = self.get_finalized_command("build")
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        if sys.version_info[0] < 3:
-            sys.path.insert(0, "tests/lib")
-        else:
-            sys.path.insert(0, "tests/lib3")
+        sys.path.insert(0, "tests/lib3")
         import test_all
 
         if not test_all.main([]):
@@ -337,7 +339,7 @@ if __name__ == "__main__":
         url=URL,
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
-        package_dir={"": {2: "lib", 3: "lib3"}[sys.version_info[0]]},
+        package_dir={"": "lib3"},
         packages=["yaml"],
         ext_modules=[
             Extension(

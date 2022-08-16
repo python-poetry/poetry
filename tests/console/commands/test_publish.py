@@ -1,37 +1,55 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
+
 import pytest
 import requests
 
 from poetry.publishing.uploader import UploadError
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 
 
-@pytest.mark.skipif(
-    not PY36, reason="Improved error rendering is only available on Python >=3.6"
-)
-def test_publish_returns_non_zero_code_for_upload_errors(app, app_tester, http):
+if TYPE_CHECKING:
+    import httpretty
+
+    from cleo.testers.application_tester import ApplicationTester
+    from pytest_mock import MockerFixture
+
+    from tests.helpers import PoetryTestApplication
+
+
+def test_publish_returns_non_zero_code_for_upload_errors(
+    app: PoetryTestApplication,
+    app_tester: ApplicationTester,
+    http: type[httpretty.httpretty],
+):
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
     )
 
     exit_code = app_tester.execute("publish --username foo --password bar")
 
-    assert 1 == exit_code
+    assert exit_code == 1
 
-    expected = """
+    expected_output = """
 Publishing simple-project (1.2.3) to PyPI
-
-
-  UploadError
-
-  HTTP Error 400: Bad Request
+"""
+    expected_error_output = """\
+HTTP Error 400: Bad Request | b'Bad Request'
 """
 
-    assert expected in app_tester.io.fetch_output()
+    assert expected_output in app_tester.io.fetch_output()
+    assert expected_error_output in app_tester.io.fetch_error()
 
 
-def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, http):
-    def request_callback(*_, **__):
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+def test_publish_returns_non_zero_code_for_connection_errors(
+    app: PoetryTestApplication,
+    app_tester: ApplicationTester,
+    http: type[httpretty.httpretty],
+):
+    def request_callback(*_: Any, **__: Any) -> None:
         raise requests.ConnectionError()
 
     http.register_uri(
@@ -40,66 +58,50 @@ def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, ht
 
     exit_code = app_tester.execute("publish --username foo --password bar")
 
-    assert 1 == exit_code
+    assert exit_code == 1
 
     expected = str(UploadError(error=requests.ConnectionError()))
 
-    assert expected in app_tester.io.fetch_output()
+    assert expected in app_tester.io.fetch_error()
 
 
-@pytest.mark.skipif(
-    PY36, reason="Improved error rendering is not available on Python <3.6"
-)
-def test_publish_returns_non_zero_code_for_upload_errors_older_python(
-    app, app_tester, http
-):
-    http.register_uri(
-        http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
-    )
-
-    exit_code = app_tester.execute("publish --username foo --password bar")
-
-    assert 1 == exit_code
-
-    expected = """
-Publishing simple-project (1.2.3) to PyPI
-
-
-UploadError
-
-HTTP Error 400: Bad Request
-"""
-
-    assert app_tester.io.fetch_output() == expected
-
-
-def test_publish_with_cert(app_tester, mocker):
+def test_publish_with_cert(app_tester: ApplicationTester, mocker: MockerFixture):
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --cert path/to/ca.pem")
 
     assert [
-        (None, None, None, Path("path/to/ca.pem"), None, False)
+        (None, None, None, Path("path/to/ca.pem"), None, False, False)
     ] == publisher_publish.call_args
 
 
-def test_publish_with_client_cert(app_tester, mocker):
+def test_publish_with_client_cert(app_tester: ApplicationTester, mocker: MockerFixture):
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --client-cert path/to/client.pem")
     assert [
-        (None, None, None, None, Path("path/to/client.pem"), False)
+        (None, None, None, None, Path("path/to/client.pem"), False, False)
     ] == publisher_publish.call_args
 
 
-def test_publish_dry_run(app_tester, http):
+@pytest.mark.parametrize(
+    "options",
+    [
+        "--dry-run",
+        "--skip-existing",
+        "--dry-run --skip-existing",
+    ],
+)
+def test_publish_dry_run_skip_existing(
+    app_tester: ApplicationTester, http: type[httpretty.httpretty], options: str
+):
     http.register_uri(
-        http.POST, "https://upload.pypi.org/legacy/", status=403, body="Forbidden"
+        http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
     )
 
-    exit_code = app_tester.execute("publish --dry-run --username foo --password bar")
+    exit_code = app_tester.execute(f"publish {options} --username foo --password bar")
 
-    assert 0 == exit_code
+    assert exit_code == 0
 
     output = app_tester.io.fetch_output()
     error = app_tester.io.fetch_error()
@@ -107,3 +109,20 @@ def test_publish_dry_run(app_tester, http):
     assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple-project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
+
+
+def test_skip_existing_output(
+    app_tester: ApplicationTester, http: type[httpretty.httpretty]
+):
+    http.register_uri(
+        http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
+    )
+
+    exit_code = app_tester.execute(
+        "publish --skip-existing --username foo --password bar"
+    )
+
+    assert exit_code == 0
+
+    error = app_tester.io.fetch_error()
+    assert "- Uploading simple-project-1.2.3.tar.gz File exists. Skipping" in error

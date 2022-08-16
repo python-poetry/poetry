@@ -1,3 +1,7 @@
+<!--
+The content of this file is manually kept in sync with docs/contributing.md. There are formatting differences because this file uses plain markdown.
+-->
+
 # Contributing to Poetry
 
 First off, thanks for taking the time to contribute!
@@ -10,7 +14,10 @@ The following is a set of guidelines for contributing to Poetry on GitHub. These
 
   * [Reporting bugs](#reporting-bugs)
   * [Suggesting enhancements](#suggesting-enhancements)
+  * [Contributing to documentation](#contributing-to-documentation)
   * [Contributing to code](#contributing-to-code)
+  * [Issue triage](#issue-triage)
+  * [Git workflow](#git-workflow)
 
 
 ## How to contribute
@@ -52,7 +59,7 @@ Provide more context by answering these questions:
 Include details about your configuration and environment:
 
 * **Which version of Poetry are you using?** You can get the exact version by running `poetry -V` in your terminal.
-* **Which Python version Poetry has been installed for?** Execute the `debug:info` to get the information.
+* **Which Python version Poetry has been installed for?** Execute the `poetry debug info` to get the information.
 * **What's the name and version of the OS you're using**?
 
 
@@ -76,26 +83,56 @@ Enhancement suggestions are tracked on the [official issue tracker](https://gith
 * **Provide specific examples to demonstrate the steps**..
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why.
 
+### Contributing to documentation
+
+One of the simplest ways to get started contributing to a project is through improving documentation. Poetry is constantly evolving, this means that sometimes our documentation has gaps. You can help by
+adding missing sections, editing the existing content so it is more accessible or creating new content (tutorials, FAQs, etc).
+
+> **Note:** A great way to understand Poetry's design and how it all fits together, is to add FAQ entries for commonly
+> asked questions. Poetry members usually mark issues with [candidate/faq](https://github.com/python-poetry/poetry/issues?q=is%3Aissue+label%3Acandidate%2Ffaq+) to indicate that the issue either contains a response
+> that explains how something works or might benefit from an entry in the FAQ.
+
+Issues pertaining to the documentation are usually marked with the [Documentation](https://github.com/python-poetry/poetry/labels/Documentation) label.
 
 ### Contributing to code
+
+#### Picking an issue
+
+> **Note:** If you are a first time contributor, and are looking for an issue to take on, you might want to look for [Good First Issue](https://github.com/python-poetry/poetry/issues?q=is%3Aopen+is%3Aissue+label%3A%22Good+First+Issue%22)
+> labelled issues. We do our best to label such issues, however we might fall behind at times. So, ask us.
+
+If you would like to take on an issue, feel free to comment on the issue tagging `@python-poetry/triage`. We are more than happy to discuss solutions on the issue. If you would like help with navigating
+the code base, join us on our [Discord Server](https://discordapp.com/invite/awxPgve).
 
 #### Local development
 
 You will need Poetry to start contributing on the Poetry codebase. Refer to the [documentation](https://python-poetry.org/docs/#introduction) to start using Poetry.
 
+> **Note:** Local development of Poetry requires Python 3.8 or newer.
+
 You will first need to clone the repository using `git` and place yourself in its directory:
 
 ```bash
-$ git clone git@github.com:python-poetry/poetry.git
-$ cd poetry
+git clone git@github.com:python-poetry/poetry.git
+cd poetry
 ```
+
+> **Note:** We recommend that you use a personal [fork](https://docs.github.com/en/free-pro-team@latest/github/getting-started-with-github/fork-a-repo) for this step. If you are new to GitHub collaboration,
+> you can refer to the [Forking Projects Guide](https://guides.github.com/activities/forking/).
 
 Now, you will need to install the required dependency for Poetry and be sure that the current
 tests are passing on your machine:
 
 ```bash
-$ poetry install
-$ poetry run pytest tests/
+poetry install
+poetry run pytest tests/
+```
+
+Poetry uses [mypy](https://github.com/python/mypy) for typechecking, and the CI
+will fail if it finds any errors.  To run mypy locally:
+
+```bash
+poetry run mypy
 ```
 
 Poetry uses the [black](https://github.com/psf/black) coding style and you must ensure that your
@@ -108,13 +145,13 @@ To make sure that you don't accidentally commit code that does not follow the co
 install a pre-commit hook that will check that everything is in order:
 
 ```bash
-$ poetry run pre-commit install
+poetry run pre-commit install
 ```
 
 You can also run it anytime using:
 
 ```bash
-$ poetry run pre-commit run --all-files
+poetry run pre-commit run --all-files
 ```
 
 Your code must always be accompanied by corresponding tests, if tests are not present your code
@@ -125,3 +162,90 @@ will not be merged.
 * Fill in [the required template](https://github.com/python-poetry/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
 * Be sure that your pull request contains tests that cover the changed or added code.
 * If your changes warrant a documentation change, the pull request must also update the documentation.
+
+> **Note:** Make sure your branch is [rebased](https://docs.github.com/en/free-pro-team@latest/github/using-git/about-git-rebase) against the latest main branch. A maintainer might ask you to ensure the branch is
+> up-to-date prior to merging your Pull Request if changes have conflicts.
+
+All pull requests, unless otherwise instructed, need to be first accepted into the main branch (`master`).
+
+### Issue triage
+
+> **Note:** If you have an issue that hasn't had any attention, you can ping us `@python-poetry/triage` on the issue. Please, give us reasonable time to get to your issue first, spamming us with messages
+> does not help anyone.
+
+If you are helping with the triage of reported issues, this section provides some useful information to assist you in your contribution.
+
+#### Triage steps
+
+1. If `pyproject.toml` is missing or `-vvv` debug logs (with stack trace) is not provided and required, request that the issue author provides it.
+1. Attempt to reproduce the issue with the reported Poetry version or request further clarification from the issue author.
+1. Ensure the issue is not already resolved. You can attempt to reproduce using the latest preview release and/or poetry from the main branch.
+1. If the issue cannot be reproduced,
+   1. clarify with the issue's author,
+   1. close the issue or notify `@python-poetry/triage`.
+1. If the issue can be reproduced,
+   1. comment on the issue confirming so
+   1. notify `@python-poetry/triage`.
+   1. if possible, identify the root cause of the issue.
+   1. if interested, attempt to fix it via a pull request.
+
+#### Multiple versions
+
+Often times you would want to attempt to reproduce issues with multiple versions of `poetry` at the same time. For these use cases, the [pipx project](https://pypa.github.io/pipx/) is useful.
+
+You can set your environment up like so.
+
+```sh
+pipx install --suffix @1.0.10 'poetry==1.0.10'
+pipx install --suffix @1.1.0rc1 'poetry==1.1.0rc1'
+pipx install --suffix @master 'poetry @ git+https://github.com/python-poetry/poetry'
+```
+
+> **Hint:** Do not forget to update your `poetry@master` installation in sync with upstream.
+
+For `@local` it is recommended that you do something similar to the following as editable installs are not supported for PEP 517 projects.
+
+```sh
+# note this will not work for Windows, and we assume you have already run `poetry install`
+cd /path/to/python-poetry/poetry
+ln -sf $(poetry run which poetry) ~/.local/bin/poetry@local
+```
+
+> **Hint:** This mechanism can also be used to test pull requests.
+
+### Git Workflow
+
+All development work is performed against Poetry's main branch (`master`). All changes are expected to be submitted and accepted to this
+branch.
+
+#### Release branch
+
+When a release is ready, the following are required before a release is tagged.
+
+1. A release branch with the prefix `release-`, eg: `release-1.1.0rc1`.
+1. A pull request from the release branch to the main branch (`master`) if it's a minor or major release. Otherwise, to the bug fix branch (eg: `1.0`).
+   1. The pull request description MUST include the change log corresponding to the release (eg: [#2971](https://github.com/python-poetry/poetry/pull/2971)).
+   1. The pull request must contain a commit that updates [CHANGELOG.md](CHANGELOG.md) and bumps the project version (eg: [#2971](https://github.com/python-poetry/poetry/pull/2971/commits/824e7b79defca435cf1d765bb633030b71b9a780)).
+   1. The pull request must have the `Release` label specified.
+
+Once the branch pull-request is ready and approved, a member of `@python-poetry/core` will,
+
+1. Tag the branch with the version identifier (eg: `1.1.0rc1`).
+2. Merge the pull request once the release is created and assets are uploaded by the CI.
+
+> **Note:** In this case, we prefer a merge commit instead of squash or rebase merge.
+
+#### Bug fix branch
+
+Once a minor version (eg: `1.1.0`) is released, a new branch for the minor version (eg: `1.1`) is created for the bug fix releases. Changes identified
+or acknowledged by the Poetry team as requiring a bug fix can be submitted as a pull requests against this branch.
+
+At the time of writing only issues meeting the following criteria may be accepted into a bug fix branch. Trivial fixes may be accepted on a
+case-by-case basis.
+
+1. The issue breaks a core functionality and/or is a critical regression.
+1. The change set does not introduce a new feature or changes an existing functionality.
+1. A new minor release is not expected within a reasonable time frame.
+1. If the issue affects the next minor/major release, a corresponding fix has been accepted into the main branch.
+
+> **Note:** This is subject to the interpretation of a maintainer within the context of the issue.

@@ -1,18 +1,32 @@
+from __future__ import annotations
+
+import re
 import shutil
+
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.null_io import NullIO
 from poetry.core.packages.package import Package
+
 from poetry.installation.pip_installer import PipInstaller
-from poetry.io.null_io import NullIO
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
-from poetry.utils._compat import Path
+from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.env import NullEnv
 
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from poetry.utils.env import VirtualEnv
+    from tests.conftest import Config
+
+
 @pytest.fixture
-def package_git():
+def package_git() -> Package:
     package = Package(
         "demo",
         "1.0.0",
@@ -25,16 +39,30 @@ def package_git():
 
 
 @pytest.fixture
-def pool():
+def package_git_with_subdirectory() -> Package:
+    package = Package(
+        "subdirectories",
+        "2.0.0",
+        source_type="git",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_reference="master",
+        source_subdirectory="two",
+    )
+
+    return package
+
+
+@pytest.fixture
+def pool() -> Pool:
     return Pool()
 
 
 @pytest.fixture
-def installer(pool):
+def installer(pool: Pool) -> PipInstaller:
     return PipInstaller(NullEnv(), NullIO(), pool)
 
 
-def test_requirement(installer):
+def test_requirement(installer: PipInstaller):
     package = Package("ipython", "7.5.0")
     package.files = [
         {"file": "foo-0.1.0.tar.gz", "hash": "md5:dbdc53e3918f28fa335a173432402a00"},
@@ -52,7 +80,7 @@ def test_requirement(installer):
         "\n"
     )
 
-    assert expected == result
+    assert result == expected
 
 
 def test_requirement_source_type_url():
@@ -62,24 +90,42 @@ def test_requirement_source_type_url():
         "foo",
         "0.0.0",
         source_type="url",
-        source_url="https://somehwere.com/releases/foo-1.0.0.tar.gz",
+        source_url="https://somewhere.com/releases/foo-1.0.0.tar.gz",
     )
 
     result = installer.requirement(foo, formatted=True)
-    expected = "{}#egg={}".format(foo.source_url, foo.name)
+    expected = f"{foo.source_url}#egg={foo.name}"
 
-    assert expected == result
+    assert result == expected
 
 
-def test_requirement_git_develop_false(installer, package_git):
+def test_requirement_git_subdirectory(
+    pool: Pool, package_git_with_subdirectory: Package
+) -> None:
+    null_env = NullEnv()
+    installer = PipInstaller(null_env, NullIO(), pool)
+    result = installer.requirement(package_git_with_subdirectory)
+    expected = (
+        "git+https://github.com/demo/subdirectories.git"
+        "@master#egg=subdirectories&subdirectory=two"
+    )
+
+    assert result == expected
+    installer.install(package_git_with_subdirectory)
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert Path(cmd[-1]).parts[-3:] == ("demo", "subdirectories", "two")
+
+
+def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):
     package_git.develop = False
     result = installer.requirement(package_git)
     expected = "git+git@github.com:demo/demo.git@master#egg=demo"
 
-    assert expected == result
+    assert result == expected
 
 
-def test_install_with_non_pypi_default_repository(pool, installer):
+def test_install_with_non_pypi_default_repository(pool: Pool, installer: PipInstaller):
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
 
@@ -105,44 +151,22 @@ def test_install_with_non_pypi_default_repository(pool, installer):
     installer.install(bar)
 
 
-def test_install_with_cert():
-    ca_path = "path/to/cert.pem"
-    pool = Pool()
-
-    default = LegacyRepository("default", "https://foo.bar", cert=Path(ca_path))
-
-    pool.add_repository(default, default=True)
-
-    null_env = NullEnv()
-
-    installer = PipInstaller(null_env, NullIO(), pool)
-
-    foo = Package(
-        "foo",
-        "0.0.0",
-        source_type="legacy",
-        source_reference=default.name,
-        source_url=default.url,
-    )
-
-    installer.install(foo)
-
-    assert len(null_env.executed) == 1
-    cmd = null_env.executed[0]
-    assert "--cert" in cmd
-    cert_index = cmd.index("--cert")
-    # Need to do the str(Path()) bit because Windows paths get modified by Path
-    assert cmd[cert_index + 1] == str(Path(ca_path))
-
-
-def test_install_with_client_cert():
+@pytest.mark.parametrize(
+    ("key", "option"),
+    [
+        ("client_cert", "client-cert"),
+        ("cert", "cert"),
+    ],
+)
+def test_install_with_certs(mocker: MockerFixture, key: str, option: str):
     client_path = "path/to/client.pem"
-    pool = Pool()
-
-    default = LegacyRepository(
-        "default", "https://foo.bar", client_cert=Path(client_path)
+    mocker.patch(
+        "poetry.utils.authenticator.Authenticator.get_certs_for_url",
+        return_value=RepositoryCertificateConfig(**{key: Path(client_path)}),
     )
 
+    default = LegacyRepository("default", "https://foo.bar")
+    pool = Pool()
     pool.add_repository(default, default=True)
 
     null_env = NullEnv()
@@ -161,25 +185,27 @@ def test_install_with_client_cert():
 
     assert len(null_env.executed) == 1
     cmd = null_env.executed[0]
-    assert "--client-cert" in cmd
-    cert_index = cmd.index("--client-cert")
+    assert f"--{option}" in cmd
+    cert_index = cmd.index(f"--{option}")
     # Need to do the str(Path()) bit because Windows paths get modified by Path
     assert cmd[cert_index + 1] == str(Path(client_path))
 
 
-def test_requirement_git_develop_true(installer, package_git):
+def test_requirement_git_develop_true(installer: PipInstaller, package_git: Package):
     package_git.develop = True
     result = installer.requirement(package_git)
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
 
-    assert expected == result
+    assert result == expected
 
 
-def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
+def test_uninstall_git_package_nspkg_pth_cleanup(
+    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: Pool
+):
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
-    # use a namepspace package
+    # use a namespace package
     package = Package(
         "namespace-package-one",
         "1.0.0",
@@ -188,13 +214,10 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
         source_reference="master",
     )
 
-    # we do this here because the virtual env might not be usable if failure case is triggered
-    pth_file_candidate = tmp_venv.site_packages / "{}-nspkg.pth".format(package.name)
-
     # in order to reproduce the scenario where the git source is removed prior to proper
     # clean up of nspkg.pth file, we need to make sure the fixture is copied and not
     # symlinked into the git src directory
-    def copy_only(source, dest):
+    def copy_only(source: Path, dest: Path) -> None:
         if dest.exists():
             dest.unlink()
 
@@ -209,8 +232,37 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     installer.install(package)
     installer.remove(package)
 
-    assert not Path(pth_file_candidate).exists()
+    pth_file = f"{package.name}-nspkg.pth"
+    assert not tmp_venv.site_packages.exists(pth_file)
 
     # any command in the virtual environment should trigger the error message
     output = tmp_venv.run("python", "-m", "site")
-    assert "Error processing line 1 of {}".format(pth_file_candidate) not in output
+    assert not re.match(rf"Error processing line 1 of .*{pth_file}", output)
+
+
+def test_install_with_trusted_host(config: Config):
+    config.merge({"certificates": {"default": {"cert": False}}})
+
+    default = LegacyRepository("default", "https://foo.bar")
+    pool = Pool()
+    pool.add_repository(default, default=True)
+
+    null_env = NullEnv()
+
+    installer = PipInstaller(null_env, NullIO(), pool)
+
+    foo = Package(
+        "foo",
+        "0.0.0",
+        source_type="legacy",
+        source_reference=default.name,
+        source_url=default.url,
+    )
+
+    installer.install(foo)
+
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert "--trusted-host" in cmd
+    cert_index = cmd.index("--trusted-host")
+    assert cmd[cert_index + 1] == "foo.bar"

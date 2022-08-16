@@ -1,127 +1,249 @@
+from __future__ import annotations
+
 import json
 import os
 
-from cleo.testers import CommandTester
+from typing import TYPE_CHECKING
+
+import pytest
+
+from deepdiff import DeepDiff
+from poetry.core.pyproject.exceptions import PyProjectException
 
 from poetry.config.config_source import ConfigSource
 from poetry.factory import Factory
+from tests.conftest import Config
 
 
-def test_list_displays_default_value_if_not_set(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
+
+    from poetry.config.dict_config_source import DictConfigSource
+    from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
+
+
+@pytest.fixture()
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("config")
+
+
+def test_show_config_with_local_config_file_empty(
+    tester: CommandTester, mocker: MockerFixture
+):
+    mocker.patch(
+        "poetry.factory.Factory.create_poetry",
+        side_effect=PyProjectException("[tool.poetry] section not found"),
+    )
+    tester.execute()
+
+    assert tester.io.fetch_output() == ""
+
+
+def test_list_displays_default_value_if_not_set(
+    tester: CommandTester, config: Config, config_cache_dir: Path
+):
     tester.execute("--list")
 
-    expected = """cache-dir = "/foo"
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
+experimental.system-git-client = false
+installer.max-workers = null
+installer.no-binary = null
+installer.parallel = true
 virtualenvs.create = true
-virtualenvs.in-project = false
-virtualenvs.path = {path}  # /foo{sep}virtualenvs
-""".format(
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
-    )
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_list_displays_set_get_setting(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_list_displays_set_get_setting(
+    tester: CommandTester, config: Config, config_cache_dir: Path
+):
     tester.execute("virtualenvs.create false")
 
     tester.execute("--list")
 
-    expected = """cache-dir = "/foo"
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
+experimental.system-git-client = false
+installer.max-workers = null
+installer.no-binary = null
+installer.parallel = true
 virtualenvs.create = false
-virtualenvs.in-project = false
-virtualenvs.path = {path}  # /foo{sep}virtualenvs
-""".format(
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
-    )
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
 
-    assert 0 == config.set_config_source.call_count
-    assert expected == tester.io.fetch_output()
+    assert config.set_config_source.call_count == 0
+    assert tester.io.fetch_output() == expected
 
 
-def test_display_single_setting(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_display_single_setting(tester: CommandTester, config: Config):
     tester.execute("virtualenvs.create")
 
     expected = """true
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_display_single_local_setting(app, config, fixture_dir):
-    poetry = Factory().create_poetry(fixture_dir("with_local_config"))
-    app._poetry = poetry
-
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_display_single_local_setting(
+    command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
+):
+    tester = command_tester_factory(
+        "config", poetry=Factory().create_poetry(fixture_dir("with_local_config"))
+    )
     tester.execute("virtualenvs.create")
 
     expected = """false
 """
 
-    assert expected == tester.io.fetch_output()
+    assert tester.io.fetch_output() == expected
 
 
-def test_list_displays_set_get_local_setting(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_list_displays_set_get_local_setting(
+    tester: CommandTester, config: Config, config_cache_dir: Path
+):
     tester.execute("virtualenvs.create false --local")
 
     tester.execute("--list")
 
-    expected = """cache-dir = "/foo"
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
+experimental.system-git-client = false
+installer.max-workers = null
+installer.no-binary = null
+installer.parallel = true
 virtualenvs.create = false
-virtualenvs.in-project = false
-virtualenvs.path = {path}  # /foo{sep}virtualenvs
-""".format(
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
-    )
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
 
-    assert 1 == config.set_config_source.call_count
-    assert expected == tester.io.fetch_output()
+    assert config.set_config_source.call_count == 1
+    assert tester.io.fetch_output() == expected
 
 
-def test_set_pypi_token(app, config, config_source, auth_config_source):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_set_pypi_token(tester: CommandTester, auth_config_source: DictConfigSource):
     tester.execute("pypi-token.pypi mytoken")
-
     tester.execute("--list")
 
-    assert "mytoken" == auth_config_source.config["pypi-token"]["pypi"]
+    assert auth_config_source.config["pypi-token"]["pypi"] == "mytoken"
 
 
-def test_set_client_cert(app, config_source, auth_config_source, mocker):
+def test_set_client_cert(
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
+):
     mocker.spy(ConfigSource, "__init__")
-    command = app.find("config")
-    tester = CommandTester(command)
 
     tester.execute("certificates.foo.client-cert path/to/cert.pem")
 
     assert (
-        "path/to/cert.pem"
-        == auth_config_source.config["certificates"]["foo"]["client-cert"]
+        auth_config_source.config["certificates"]["foo"]["client-cert"]
+        == "path/to/cert.pem"
     )
 
 
-def test_set_cert(app, config_source, auth_config_source, mocker):
+@pytest.mark.parametrize(
+    ("value", "result"),
+    [
+        ("path/to/ca.pem", "path/to/ca.pem"),
+        ("true", True),
+        ("false", False),
+    ],
+)
+def test_set_cert(
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
+    value: str,
+    result: str | bool,
+):
     mocker.spy(ConfigSource, "__init__")
-    command = app.find("config")
-    tester = CommandTester(command)
 
-    tester.execute("certificates.foo.cert path/to/ca.pem")
+    tester.execute(f"certificates.foo.cert {value}")
 
-    assert "path/to/ca.pem" == auth_config_source.config["certificates"]["foo"]["cert"]
+    assert auth_config_source.config["certificates"]["foo"]["cert"] == result
+
+
+def test_config_installer_parallel(
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
+):
+    tester.execute("--local installer.parallel")
+    assert tester.io.fetch_output().strip() == "true"
+
+    workers = command_tester_factory(
+        "install"
+    )._command._installer._executor._max_workers
+    assert workers > 1
+
+    tester.io.clear_output()
+    tester.execute("--local installer.parallel false")
+    tester.execute("--local installer.parallel")
+    assert tester.io.fetch_output().strip() == "false"
+
+    workers = command_tester_factory(
+        "install"
+    )._command._installer._executor._max_workers
+    assert workers == 1
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("true", [":all:"]),
+        ("1", [":all:"]),
+        ("false", [":none:"]),
+        ("0", [":none:"]),
+        ("pytest", ["pytest"]),
+        ("PyTest", ["pytest"]),
+        ("pytest,black", ["pytest", "black"]),
+        ("", []),
+    ],
+)
+def test_config_installer_no_binary(
+    tester: CommandTester, value: str, expected: list[str]
+) -> None:
+    setting = "installer.no-binary"
+
+    tester.execute(setting)
+    assert tester.io.fetch_output().strip() == "null"
+
+    config = Config.create()
+    assert not config.get(setting)
+
+    tester.execute(f"{setting} '{value}'")
+
+    config = Config.create(reload=True)
+    assert not DeepDiff(config.get(setting), expected, ignore_order=True)

@@ -1,0 +1,19 @@
+[[package]]
+category = "main"
+description = "A sample Python project"
+name = "sampleproject"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
+version = "1.3.1"
+
+[metadata]
+content-hash = "c8c2c9d899e47bac3972e029ef0e71b75d5df98a28eebef25a75640a19aac177"
+lock-version = "1.0"
+python-versions = "^3.8"
+
+[metadata.files]
+sampleproject = [
+    {file = "sampleproject-1.3.1-py2.py3-none-any.whl", hash = "sha256:26c9172e08244873b0e09c574a229bf2c251c67723a05e08fd3ec0c5ee423796"},
+    {file = "sampleproject-1.3.1-py3-none-any.whl", hash = "sha256:75bb5bb4e74a1b77dc0cff25ebbacb54fe1318aaf99a86a036cefc86ed885ced"},
+    {file = "sampleproject-1.3.1.tar.gz", hash = "sha256:3593ca2f1e057279d70d6144b14472fb28035b1da213dde60906b703d6f82c55"},
+]

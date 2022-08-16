@@ -7,7 +7,7 @@ authors = [
 ]
 license = "MIT"
 
-readme = "README.rst"
+readme = ["README.rst"]
 
 homepage = "https://python-poetry.org"
 repository = "https://github.com/python-poetry/poetry"
@@ -27,3 +27,9 @@ python = "~2.7 || ^3.4"
 [tool.poetry.scripts]
 foo = "foo:bar"
 baz = "bar:baz.boom.bim"
+fox = "fuz.foo:bar.baz"
+
+
+[build-system]
+requires = ["poetry-core>=1.1.0a7"]
+build-backend = "poetry.core.masonry.api"

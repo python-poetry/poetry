@@ -125,8 +125,8 @@ def is_decorated():
     if platform.system().lower() == "windows":
         return (
             os.getenv("ANSICON") is not None
-            or "ON" == os.getenv("ConEmuANSI")
-            or "xterm" == os.getenv("Term")
+            or os.getenv("ConEmuANSI") == "ON"
+            or os.getenv("Term") == "xterm"
         )
 
     if not hasattr(sys.stdout, "fileno"):
@@ -159,15 +159,15 @@ def colorize(style, text):
 def temporary_directory(*args, **kwargs):
     try:
         from tempfile import TemporaryDirectory
-
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
     except ImportError:
         name = tempfile.mkdtemp(*args, **kwargs)
 
         yield name
 
         shutil.rmtree(name)
+    else:
+        with TemporaryDirectory(*args, **kwargs) as name:
+            yield name
 
 
 def string_to_bool(value):
@@ -309,7 +309,6 @@ environment variable. This has not been done automatically.
 
 
 class Installer:
-
     CURRENT_PYTHON = sys.executable
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
@@ -317,7 +316,7 @@ class Installer:
         r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|rc|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
         r"(?:\+[^\s]+)?"
@@ -363,7 +362,7 @@ class Installer:
                 version, upgrade=current_version is not None, file=self._offline_file
             )
         except subprocess.CalledProcessError as e:
-            print(colorize("error", "An error has occured: {}".format(str(e))))
+            print(colorize("error", "An error has occurred: {}".format(str(e))))
             print(e.output.decode())
 
             return e.returncode
@@ -448,6 +447,35 @@ class Installer:
                 version = release
 
                 break
+
+        def _is_supported(x):
+            mx = self.VERSION_REGEX.match(x)
+            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
+            return vx < (1, 2, 0)
+
+        if not _is_supported(version):
+            print(
+                colorize(
+                    "error",
+                    "Version {version} does not support this installation method."
+                    " Please specify a version prior to 1.2.0a1 explicitly using the"
+                    " '--version' option.\nPlease see"
+                    " https://python-poetry.org/blog/announcing-poetry-1-2-0a1.html#deprecation-of-the-get-poetry-py-script"
+                    " for more information.".format(version=version),
+                )
+            )
+            return None, None
+
+        print(
+            colorize(
+                "warning",
+                "This installer is deprecated. Poetry versions installed using this"
+                " script will not be able to use 'self update' command to upgrade to"
+                " 1.2.0a1 or later. It is recommended to use"
+                " https://install.python-poetry.org instead. Instructions are"
+                " available at https://python-poetry.org/docs/#installation",
+            )
+        )
 
         current_version = None
         if os.path.exists(POETRY_LIB):
@@ -638,7 +666,7 @@ class Installer:
 
     def _which_python(self):
         """Decides which python executable we'll embed in the launcher script."""
-        allowed_executables = ["python", "python3"]
+        allowed_executables = ["python3", "python"]
         if WINDOWS:
             allowed_executables += ["py.exe -3", "py.exe -2"]
 
@@ -658,7 +686,8 @@ class Installer:
                 return executable
 
             if fallback is None:
-                # keep this one as the fallback; it was the first valid executable we found.
+                # keep this one as the fallback; it was the first valid executable we
+                # found.
                 fallback = executable
 
         if fallback is None:
@@ -746,7 +775,8 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "\nUnable to get the PATH value. It will not be updated automatically.",
+                    "\nUnable to get the PATH value. It will not be updated"
+                    " automatically.",
                 )
             )
             self._modify_path = False
@@ -781,7 +811,8 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "Unable to get the PATH value. It will not be updated automatically",
+                    "Unable to get the PATH value. It will not be updated"
+                    " automatically",
                 )
             )
             self._modify_path = False
@@ -824,7 +855,7 @@ class Installer:
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
-            u"Environment",
+            "Environment",
             SMTO_ABORTIFHUNG,
             5000,
             ctypes.byref(result),
@@ -903,7 +934,7 @@ class Installer:
 
         if "zsh" in SHELL:
             zdotdir = os.getenv("ZDOTDIR", HOME)
-            profiles.append(os.path.join(zdotdir, ".zprofile"))
+            profiles.append(os.path.join(zdotdir, ".zshrc"))
 
         bash_profile = os.path.join(HOME, ".bash_profile")
         if os.path.exists(bash_profile):
@@ -1047,8 +1078,10 @@ def main():
         "--file",
         dest="file",
         action="store",
-        help="Install from a local file instead of fetching the latest version "
-        "of Poetry available online.",
+        help=(
+            "Install from a local file instead of fetching the latest version "
+            "of Poetry available online."
+        ),
     )
 
     args = parser.parse_args()

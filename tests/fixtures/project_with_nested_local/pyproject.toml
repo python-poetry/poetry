@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "project-with-nested-local"
+version = "1.2.3"
+description = "Some description."
+authors = ["Poetry Maintainer <tests@python-poetry.org>"]
+license = "MIT"
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+foo = { path = "./foo", develop = true }
+bar = { path = "./bar", develop = true }

@@ -1,0 +1,11 @@
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    # keep dependency updates manual for now
+    open-pull-requests-limit: 0
+    reviewers:
+      - "python-poetry/triage"

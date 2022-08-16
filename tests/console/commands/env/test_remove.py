@@ -1,57 +1,108 @@
-from cleo.testers import CommandTester
+from __future__ import annotations
 
-from poetry.utils._compat import Path
-from poetry.utils.env import EnvManager
+from typing import TYPE_CHECKING
 
-from .test_use import Version
-from .test_use import check_output_wrapper
+import pytest
+
+from poetry.core.semver.version import Version
+
+from tests.console.commands.env.helpers import check_output_wrapper
 
 
-def test_remove_by_python_version(app, tmp_dir, mocker):
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+if TYPE_CHECKING:
+    from pathlib import Path
 
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+    from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
+    from tests.types import CommandTesterFactory
+
+
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("env remove")
+
+
+def test_remove_by_python_version(
+    mocker: MockerFixture,
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_name: str,
+    venv_cache: Path,
+):
     check_output = mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    command = app.find("env remove")
-    tester = CommandTester(command)
     tester.execute("3.6")
 
     assert check_output.called
-    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+    assert not (venv_cache / f"{venv_name}-py3.6").exists()
 
-    expected = "Deleted virtualenv: {}\n".format(
-        (Path(tmp_dir) / "{}-py3.6".format(venv_name))
-    )
-
-    assert expected == tester.io.fetch_output()
+    expected = f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
+    assert tester.io.fetch_output() == expected
 
 
-def test_remove_by_name(app, tmp_dir):
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+def test_remove_by_name(
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_name: str,
+    venv_cache: Path,
+):
+    expected = ""
 
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+    for name in venvs_in_cache_dirs:
+        tester.execute(name)
 
-    command = app.find("env remove")
-    tester = CommandTester(command)
-    tester.execute("{}-py3.6".format(venv_name))
+        assert not (venv_cache / name).exists()
 
-    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+        expected += f"Deleted virtualenv: {venv_cache / name}\n"
 
-    expected = "Deleted virtualenv: {}\n".format(
-        (Path(tmp_dir) / "{}-py3.6".format(venv_name))
-    )
+    assert tester.io.fetch_output() == expected
 
-    assert expected == tester.io.fetch_output()
+
+def test_remove_all(
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_name: str,
+    venv_cache: Path,
+):
+    expected = {""}
+    tester.execute("--all")
+    for name in venvs_in_cache_dirs:
+        assert not (venv_cache / name).exists()
+        expected.add(f"Deleted virtualenv: {venv_cache / name}")
+    assert set(tester.io.fetch_output().split("\n")) == expected
+
+
+def test_remove_all_and_version(
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_name: str,
+    venv_cache: Path,
+):
+    expected = {""}
+    tester.execute(f"--all {venvs_in_cache_dirs[0]}")
+    for name in venvs_in_cache_dirs:
+        assert not (venv_cache / name).exists()
+        expected.add(f"Deleted virtualenv: {venv_cache / name}")
+    assert set(tester.io.fetch_output().split("\n")) == expected
+
+
+def test_remove_multiple(
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_name: str,
+    venv_cache: Path,
+):
+    expected = {""}
+    removed_envs = venvs_in_cache_dirs[0:2]
+    remaining_envs = venvs_in_cache_dirs[2:]
+    tester.execute(" ".join(removed_envs))
+    for name in removed_envs:
+        assert not (venv_cache / name).exists()
+        expected.add(f"Deleted virtualenv: {venv_cache / name}")
+    for name in remaining_envs:
+        assert (venv_cache / name).exists()
+    assert set(tester.io.fetch_output().split("\n")) == expected

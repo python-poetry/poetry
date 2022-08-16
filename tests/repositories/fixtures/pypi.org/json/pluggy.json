@@ -1,87 +1,87 @@
 {
-    "info": {
-        "author": "Holger Krekel",
-        "author_email": "holger@merlinux.eu",
-        "bugtrack_url": null,
-        "classifiers": [
-            "Development Status :: 4 - Beta",
-            "Intended Audience :: Developers",
-            "License :: OSI Approved :: MIT License",
-            "Operating System :: MacOS :: MacOS X",
-            "Operating System :: Microsoft :: Windows",
-            "Operating System :: POSIX",
-            "Programming Language :: Python :: 2",
-            "Programming Language :: Python :: 2.7",
-            "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.4",
-            "Programming Language :: Python :: 3.5",
-            "Programming Language :: Python :: 3.6",
-            "Programming Language :: Python :: Implementation :: CPython",
-            "Programming Language :: Python :: Implementation :: PyPy",
-            "Topic :: Software Development :: Libraries",
-            "Topic :: Software Development :: Testing",
-            "Topic :: Utilities"
-        ],
-        "description": "",
-        "docs_url": null,
-        "download_url": "",
-        "downloads": {
-            "last_day": -1,
-            "last_month": -1,
-            "last_week": -1
+  "info": {
+    "author": "Holger Krekel",
+    "author_email": "holger@merlinux.eu",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: MacOS :: MacOS X",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: POSIX",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy",
+      "Topic :: Software Development :: Libraries",
+      "Topic :: Software Development :: Testing",
+      "Topic :: Utilities"
+    ],
+    "description": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/pytest-dev/pluggy",
+    "keywords": "",
+    "license": "MIT license",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "pluggy",
+    "package_url": "https://pypi.org/project/pluggy/",
+    "platform": "unix",
+    "project_url": "https://pypi.org/project/pluggy/",
+    "release_url": "https://pypi.org/project/pluggy/0.6.0/",
+    "requires_dist": null,
+    "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    "summary": "plugin and hook calling mechanisms for python",
+    "version": "0.6.0"
+  },
+  "last_serial": 3361295,
+  "releases": {
+    "0.6.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
+          "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
         },
-        "home_page": "https://github.com/pytest-dev/pluggy",
-        "keywords": "",
-        "license": "MIT license",
-        "maintainer": "",
-        "maintainer_email": "",
-        "name": "pluggy",
-        "package_url": "https://pypi.org/project/pluggy/",
-        "platform": "unix",
-        "project_url": "https://pypi.org/project/pluggy/",
-        "release_url": "https://pypi.org/project/pluggy/0.6.0/",
-        "requires_dist": null,
-        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
-        "summary": "plugin and hook calling mechanisms for python",
-        "version": "0.6.0"
-    },
-    "last_serial": 3361295,
-    "releases": {
-        "0.6.0": [
-            {
-                "comment_text": "",
-                "digests": {
-                    "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
-                    "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
-                },
-                "downloads": -1,
-                "filename": "pluggy-0.6.0.tar.gz",
-                "has_sig": false,
-                "md5_digest": "ffdde7c3a5ba9a440404570366ffb6d5",
-                "packagetype": "sdist",
-                "python_version": "source",
-                "size": 19678,
-                "upload_time": "2017-11-24T16:33:11",
-                "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"
-            }
-        ]
-    },
-    "urls": [
-        {
-            "comment_text": "",
-            "digests": {
-                "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
-                "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
-            },
-            "downloads": -1,
-            "filename": "pluggy-0.6.0.tar.gz",
-            "has_sig": false,
-            "md5_digest": "ffdde7c3a5ba9a440404570366ffb6d5",
-            "packagetype": "sdist",
-            "python_version": "source",
-            "size": 19678,
-            "upload_time": "2017-11-24T16:33:11",
-            "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"
-        }
+        "downloads": -1,
+        "filename": "pluggy-0.6.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "ffdde7c3a5ba9a440404570366ffb6d5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "size": 19678,
+        "upload_time": "2017-11-24T16:33:11",
+        "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"
+      }
     ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
+        "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
+      },
+      "downloads": -1,
+      "filename": "pluggy-0.6.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "ffdde7c3a5ba9a440404570366ffb6d5",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "size": 19678,
+      "upload_time": "2017-11-24T16:33:11",
+      "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"
+    }
+  ]
 }

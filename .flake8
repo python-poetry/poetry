@@ -1,22 +1,32 @@
 [flake8]
+min_python_version = 3.7.0
 max-line-length = 88
-ignore = E501, E203, W503
-per-file-ignores = __init__.py:F401
-exclude =
-    .git
-    __pycache__
-    setup.py
-    build
-    dist
-    releases
-    .venv
-    .tox
-    .mypy_cache
-    .pytest_cache
-    .vscode
-    .github
-    poetry/utils/_compat.py
-    poetry/utils/env_scripts/tags.py
-    tests/fixtures/
-    tests/repositories/fixtures/
-    tests/utils/fixtures/
+ban-relative-imports = true
+# flake8-use-fstring: https://github.com/MichaelKim0407/flake8-use-fstring#--percent-greedy-and---format-greedy
+format-greedy = 1
+inline-quotes = double
+enable-extensions = TC, TC1
+type-checking-exempt-modules = typing, typing-extensions
+eradicate-whitelist-extend = ^-.*;
+extend-ignore =
+    # E203: Whitespace before ':' (pycqa/pycodestyle#373)
+    E203,
+    # SIM106: Handle error-cases first
+    SIM106,
+    # ANN101: Missing type annotation for self in method
+    ANN101,
+    # ANN102: Missing type annotation for cls in classmethod
+    ANN102,
+per-file-ignores =
+    # TC002: Move third-party import '...' into a type-checking block
+    __init__.py:TC002,
+    # ANN201: Missing return type annotation for public function
+    tests/test_*:ANN201
+    tests/**/test_*:ANN201
+extend-exclude =
+    # Frozen and not subject to change in this repo:
+    get-poetry.py,
+    install-poetry.py,
+    # External to the project's coding standards:
+    tests/fixtures/*,
+    tests/**/fixtures/*,

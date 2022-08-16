@@ -20,11 +20,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-build = "build.py"
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.4"
-
-[tool.poetry.scripts]
-foo = "foo:bar"
+python = "^3.7"

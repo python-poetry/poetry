@@ -7,7 +7,15 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "my-package"
+name = "pendulum"
+version = "1.4.4"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "project-with-setup"
 version = "0.1.2"
 develop = false
 description = "Demo project."
@@ -23,14 +31,6 @@ url = "tests/fixtures/project_with_setup"
 cachy = {version = ">=0.2.0", extras = ["msgpack"]}
 pendulum = ">=1.4.4"
 
-[[package]]
-name = "pendulum"
-version = "1.4.4"
-description = ""
-category = "main"
-optional = false
-python-versions = "*"
-
 [metadata]
 python-versions = "*"
 lock-version = "1.1"
@@ -38,5 +38,5 @@ content-hash = "123456789"
 
 [metadata.files]
 cachy = []
-my-package = []
+project-with-setup = []
 pendulum = []

@@ -6,261 +6,42 @@ on:
       - '*.*.*'
 
 jobs:
-
-  Linux:
+  release:
+    name: Release
     runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Get tag
-      id: tag
-      run: |
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
-    - name: Building release
-      run: |
-        make linux_release
-    - name: Upload release file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-    - name: Upload checksum file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-
-  MacOS:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Get tag
-      id: tag
-      run: |
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.8"
-    - name: Install Poetry
-      run: |
-        python get-poetry.py --preview -y
-        source $HOME/.poetry/env
-    - name: Install dependencies
-      run: |
-        source $HOME/.poetry/env
-        poetry install --no-dev
-    - name: Preparing Python executables
-      run: |
-        curl -L https://github.com/sdispater/python-binaries/releases/download/2.7.17/python-2.7.17.macos.tar.xz -o python-2.7.17.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.5.9/python-3.5.9.macos.tar.xz -o python-3.5.9.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.6.8/python-3.6.8.macos.tar.xz -o python-3.6.8.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.7.6/python-3.7.6.macos.tar.xz -o python-3.7.6.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.8.3/python-3.8.3.macos.tar.xz -o python-3.8.3.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.9.0b4/python-3.9.0b4.macos.tar.xz -o python-3.9.0b4.tar.xz
-        tar -zxf python-2.7.17.tar.xz
-        tar -zxf python-3.5.9.tar.xz
-        tar -zxf python-3.6.8.tar.xz
-        tar -zxf python-3.7.6.tar.xz
-        tar -zxf python-3.8.3.tar.xz
-        tar -zxf python-3.9.0b4.tar.xz
-    - name: Build specific release
-      run: |
-        source $HOME/.poetry/env
-        poetry run python sonnet make release --ansi -P "2.7:python-2.7.17/bin/python" -P "3.5:python-3.5.9/bin/python" -P "3.6:python-3.6.8/bin/python" -P "3.7:python-3.7.6/bin/python" -P "3.8:python-3.8.3/bin/python" -P "3.9:python-3.9.0b4/bin/python"
-    - name: Upload release file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-    - name: Upload checksum file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-
-  Windows:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Get tag
-      id: tag
-      shell: bash
-      run: |
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.8"
-    - name: Install Poetry
-      run: |
-        python get-poetry.py --preview -y
-        $env:Path += ";$env:Userprofile\.poetry\bin"
-    - name: Install dependencies
-      run: |
-        $env:Path += ";$env:Userprofile\.poetry\bin"
-        poetry install --no-dev
-    - name: Preparing Python executables
-      run: |
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/2.7.17/python-2.7.17.windows.tar.xz -O python-2.7.17.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.5.4/python-3.5.4.windows.tar.xz -O python-3.5.4.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.6.8/python-3.6.8.windows.tar.xz -O python-3.6.8.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.7.6/python-3.7.6.windows.tar.xz -O python-3.7.6.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.8.3/python-3.8.3.windows.tar.xz -O python-3.8.3.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.9.0b4/python-3.9.0b4.windows.tar.xz -O python-3.9.0b4.tar.xz
-        7z x python-2.7.17.tar.xz
-        7z x python-3.5.4.tar.xz
-        7z x python-3.6.8.tar.xz
-        7z x python-3.7.6.tar.xz
-        7z x python-3.8.3.tar.xz
-        7z x python-3.9.0b4.tar.xz
-        7z x python-2.7.17.tar
-        7z x python-3.4.4.tar
-        7z x python-3.5.4.tar
-        7z x python-3.6.8.tar
-        7z x python-3.7.6.tar
-        7z x python-3.8.3.tar
-        7z x python-3.9.0b4.tar
-    - name: Build specific release
-      run: |
-        $env:Path += ";$env:Userprofile\.poetry\bin"
-        poetry run python sonnet make release --ansi -P "2.7:python-2.7.17\python.exe" -P "3.5:python-3.5.4\python.exe" -P "3.6:python-3.6.8\python.exe" -P "3.7:python-3.7.6\python.exe" -P "3.8:python-3.8.3\python.exe" -P "3.9:python-3.9.0b4\python.exe"
-    - name: Upload release file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-    - name: Upload checksum file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-
-  Release:
-    needs: [Linux, MacOS, Windows]
-    runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Get tag
-        id: tag
-        run: |
-          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
-      - name: Download Linux release file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-          path: releases/
-      - name: Download Linux checksum file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          path: releases/
-      - name: Download MacOS release file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-          path: releases/
-      - name: Download MacOS checksum file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          path: releases/
-      - name: Download Windows release file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-          path: releases/
-      - name: Download Windows checksum file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-          path: releases/
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          release_name: ${{ steps.tag.outputs.tag }}
-          draft: false
-          prerelease: false
-      - name: Upload Linux release file asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-          asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-          asset_content_type: application/gzip
-      - name: Upload Linux checksum file asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          asset_content_type: text/plain
-      - name: Upload MacOS release file asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-          asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-          asset_content_type: application/gzip
-      - name: Upload MacOS checksum file asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          asset_content_type: text/plain
-      - name: Upload Windows release file asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-          asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-          asset_content_type: application/gzip
-      - name: Upload Windows checksum file asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-          asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-          asset_content_type: text/plain
-      - name: Set up Python 3.8
+
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8"
+          python-version: "3.9"
+
       - name: Install Poetry
-        run: |
-          python get-poetry.py --preview -y
-      - name: Install dependencies
-        run: |
-          source $HOME/.poetry/env
-          poetry install --no-dev
+        run: python install-poetry.py -y
+
+      - name: Update PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Build project for distribution
+        run: poetry build
+
+      - name: Check Version
+        id: check-version
         run: |
-          source $HOME/.poetry/env
-          poetry run poetry build
+          [[ "$(poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || echo ::set-output name=prerelease::true
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: steps.check-version.outputs.prerelease == 'true'
+
       - name: Publish to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          source $HOME/.poetry/env
-          poetry run poetry publish
+        run: poetry publish

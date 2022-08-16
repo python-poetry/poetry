@@ -1,87 +1,66 @@
-import os
+from __future__ import annotations
 
-from cleo.testers import CommandTester
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from poetry.__version__ import __version__
+import pytest
+
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
-from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import Path
 
+from poetry.__version__ import __version__
+from poetry.factory import Factory
+
+
+if TYPE_CHECKING:
+    from cleo.testers.command_tester import CommandTester
+
+    from tests.helpers import TestRepository
+    from tests.types import CommandTesterFactory
 
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
 
 
-def test_self_update_should_install_all_necessary_elements(
-    app, http, mocker, environ, tmp_dir
+@pytest.fixture()
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("self update")
+
+
+def test_self_update_can_update_from_recommended_installation(
+    tester: CommandTester,
+    repo: TestRepository,
+    installed: TestRepository,
 ):
-    os.environ["POETRY_HOME"] = tmp_dir
+    new_version = Version.parse(__version__).next_minor().text
 
-    command = app.find("self update")
+    old_poetry = Package("poetry", __version__)
+    old_poetry.add_dependency(Factory.create_dependency("cleo", "^0.8.2"))
 
-    version = Version.parse(__version__).next_minor.text
-    mocker.patch(
-        "poetry.repositories.pypi_repository.PyPiRepository.find_packages",
-        return_value=[Package("poetry", version)],
-    )
-    mocker.patch.object(command, "_check_recommended_installation", return_value=None)
-    mocker.patch.object(
-        command, "_get_release_name", return_value="poetry-{}-darwin".format(version)
-    )
-    mocker.patch("subprocess.check_output", return_value=b"Python 3.8.2")
+    new_poetry = Package("poetry", new_version)
+    new_poetry.add_dependency(Factory.create_dependency("cleo", "^1.0.0"))
 
-    http.register_uri(
-        "GET",
-        command.BASE_URL + "/{}/poetry-{}-darwin.sha256sum".format(version, version),
-        body=FIXTURES.joinpath("poetry-1.0.5-darwin.sha256sum").read_bytes(),
-    )
-    http.register_uri(
-        "GET",
-        command.BASE_URL + "/{}/poetry-{}-darwin.tar.gz".format(version, version),
-        body=FIXTURES.joinpath("poetry-1.0.5-darwin.tar.gz").read_bytes(),
-    )
+    installed.add_package(old_poetry)
+    installed.add_package(Package("cleo", "0.8.2"))
 
-    tester = CommandTester(command)
+    repo.add_package(new_poetry)
+    repo.add_package(Package("cleo", "1.0.0"))
+
     tester.execute()
 
-    bin_ = Path(tmp_dir).joinpath("bin")
-    lib = Path(tmp_dir).joinpath("lib")
-    assert bin_.exists()
+    expected_output = f"""\
+Updating Poetry version ...
 
-    script = bin_.joinpath("poetry")
-    assert script.exists()
+Using version ^{new_version} for poetry
 
-    expected_script = """\
-# -*- coding: utf-8 -*-
-import glob
-import sys
-import os
+Updating dependencies
+Resolving dependencies...
 
-lib = os.path.normpath(os.path.join(os.path.realpath(__file__), "../..", "lib"))
-vendors = os.path.join(lib, "poetry", "_vendor")
-current_vendors = os.path.join(
-    vendors, "py{}".format(".".join(str(v) for v in sys.version_info[:2]))
-)
-sys.path.insert(0, lib)
-sys.path.insert(0, current_vendors)
+Writing lock file
 
-if __name__ == "__main__":
-    from poetry.console import main
-    main()
+Package operations: 0 installs, 2 updates, 0 removals
+
+  • Updating cleo (0.8.2 -> 1.0.0)
+  • Updating poetry ({__version__} -> {new_version})
 """
-    if not WINDOWS:
-        expected_script = "#!/usr/bin/env python\n" + expected_script
 
-    assert expected_script == script.read_text()
-
-    if WINDOWS:
-        bat = bin_.joinpath("poetry.bat")
-        expected_bat = '@echo off\r\npython "{}" %*\r\n'.format(
-            str(script).replace(os.environ.get("USERPROFILE", ""), "%USERPROFILE%")
-        )
-        assert bat.exists()
-        with bat.open(newline="") as f:
-            assert expected_bat == f.read()
-
-    assert lib.exists()
-    assert lib.joinpath("poetry").exists()
+    assert tester.io.fetch_output() == expected_output

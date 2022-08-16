@@ -1,82 +1,58 @@
+from __future__ import annotations
+
 import os
-import re
+
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from cleo import ApplicationTester
+from cleo.io.null_io import NullIO
+from cleo.testers.application_tester import ApplicationTester
+from cleo.testers.command_tester import CommandTester
 
-from poetry.console import Application as BaseApplication
-from poetry.core.masonry.utils.helpers import escape_name
-from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.packages.utils.link import Link
-from poetry.factory import Factory
-from poetry.installation.executor import Executor as BaseExecutor
+from poetry.installation import Installer
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.io.null_io import NullIO
-from poetry.packages import Locker as BaseLocker
-from poetry.poetry import Poetry as BasePoetry
-from poetry.repositories import Pool
-from poetry.repositories import Repository as BaseRepository
-from poetry.repositories.exceptions import PackageNotFound
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
-from poetry.utils.toml_file import TomlFile
+from tests.helpers import PoetryTestApplication
+from tests.helpers import TestExecutor
 from tests.helpers import mock_clone
 
 
-class Executor(BaseExecutor):
-    def __init__(self, *args, **kwargs):
-        super(Executor, self).__init__(*args, **kwargs)
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
-        self._installs = []
-        self._updates = []
-        self._uninstalls = []
+    from pytest_mock import MockerFixture
 
-    @property
-    def installations(self):
-        return self._installs
-
-    @property
-    def updates(self):
-        return self._updates
-
-    @property
-    def removals(self):
-        return self._uninstalls
-
-    def _do_execute_operation(self, operation):
-        super(Executor, self)._do_execute_operation(operation)
-
-        if not operation.skipped:
-            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
-
-    def _execute_install(self, operation):
-        return 0
-
-    def _execute_update(self, operation):
-        return 0
-
-    def _execute_remove(self, operation):
-        return 0
+    from poetry.installation.executor import Executor
+    from poetry.poetry import Poetry
+    from poetry.repositories import Repository
+    from poetry.utils.env import Env
+    from tests.conftest import Config
+    from tests.types import CommandTesterFactory
+    from tests.types import ProjectFactory
 
 
 @pytest.fixture()
-def installer():
+def installer() -> NoopInstaller:
     return NoopInstaller()
 
 
 @pytest.fixture
-def installed():
-    return BaseRepository()
-
-
-@pytest.fixture
-def env():
-    return MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+def env(tmp_dir: str) -> MockEnv:
+    path = Path(tmp_dir) / ".venv"
+    path.mkdir(parents=True)
+    return MockEnv(path=path, is_venv=True)
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed, config, env):
+def setup(
+    mocker: MockerFixture,
+    installer: NoopInstaller,
+    installed: Repository,
+    config: Config,
+    env: MockEnv,
+) -> Iterator[None]:
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -93,9 +69,8 @@ def setup(mocker, installer, installed, config, env):
     p.return_value = installed
 
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
+    p = mocker.patch("poetry.vcs.git.Git.get_revision")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
     # Patch the virtual environment creation do actually do nothing
@@ -114,143 +89,91 @@ def setup(mocker, installer, installed, config, env):
     os.environ.update(environ)
 
 
-class Application(BaseApplication):
-    def __init__(self, poetry):
-        super(Application, self).__init__()
-
-        self._poetry = poetry
-
-    def reset_poetry(self):
-        poetry = self._poetry
-        self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
-        self._poetry.set_pool(poetry.pool)
-        self._poetry.set_config(poetry.config)
-        self._poetry.set_locker(
-            Locker(poetry.locker.lock.path, self._poetry.local_config)
-        )
-
-
-class Locker(BaseLocker):
-    def __init__(self, lock, local_config):
-        self._lock = TomlFile(lock)
-        self._local_config = local_config
-        self._lock_data = None
-        self._content_hash = self._get_content_hash()
-        self._locked = False
-        self._lock_data = None
-        self._write = False
-
-    def write(self, write=True):
-        self._write = write
-
-    def is_locked(self):
-        return self._locked
-
-    def locked(self, is_locked=True):
-        self._locked = is_locked
-
-        return self
-
-    def mock_lock_data(self, data):
-        self.locked()
-
-        self._lock_data = data
-
-    def is_fresh(self):
-        return True
-
-    def _write_lock_data(self, data):
-        if self._write:
-            super(Locker, self)._write_lock_data(data)
-            self._locked = True
-            return
-
-        self._lock_data = data
-
-
-class Poetry(BasePoetry):
-    def __init__(self, file, local_config, package, locker, config):
-        self._file = TomlFile(file)
-        self._package = package
-        self._local_config = local_config
-        self._locker = Locker(locker.lock.path, locker._local_config)
-        self._config = config
-
-        # Configure sources
-        self._pool = Pool()
-
-
-class Repository(BaseRepository):
-    def find_packages(self, dependency):
-        packages = super(Repository, self).find_packages(dependency)
-        if len(packages) == 0:
-            raise PackageNotFound("Package [{}] not found.".format(dependency.name))
-
-        return packages
-
-    def find_links_for_package(self, package):
-        return [
-            Link(
-                "https://foo.bar/files/{}-{}-py2.py3-none-any.whl".format(
-                    escape_name(package.name), escape_version(package.version.text)
-                )
-            )
-        ]
-
-
 @pytest.fixture
-def repo(http):
-    http.register_uri(
-        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
-    )
-    return Repository(name="foo")
-
-
-@pytest.fixture
-def project_directory():
+def project_directory() -> str:
     return "simple_project"
 
 
 @pytest.fixture
-def poetry(repo, project_directory, config):
-    p = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / project_directory
+def poetry(project_directory: str, project_factory: ProjectFactory) -> Poetry:
+    return project_factory(
+        name="simple",
+        source=Path(__file__).parent.parent / "fixtures" / project_directory,
     )
-    p.set_locker(Locker(p.locker.lock.path, p.locker._local_config))
-
-    with p.file.path.open(encoding="utf-8") as f:
-        content = f.read()
-
-    p.set_config(config)
-
-    pool = Pool()
-    pool.add_repository(repo)
-    p.set_pool(pool)
-
-    yield p
-
-    with p.file.path.open("w", encoding="utf-8") as f:
-        f.write(content)
 
 
 @pytest.fixture
-def app(poetry):
-    app_ = Application(poetry)
-    app_.config.set_terminate_after_run(False)
-
+def app(poetry: Poetry) -> PoetryTestApplication:
+    app_ = PoetryTestApplication(poetry)
+    app_._load_plugins()
     return app_
 
 
 @pytest.fixture
-def app_tester(app):
+def app_tester(app: PoetryTestApplication) -> ApplicationTester:
     return ApplicationTester(app)
 
 
 @pytest.fixture
-def new_installer_disabled(config):
+def new_installer_disabled(config: Config) -> None:
     config.merge({"experimental": {"new-installer": False}})
 
 
 @pytest.fixture()
-def executor(poetry, config, env):
-    return Executor(env, poetry.pool, config, NullIO())
+def executor(poetry: Poetry, config: Config, env: MockEnv) -> TestExecutor:
+    return TestExecutor(env, poetry.pool, config, NullIO())
+
+
+@pytest.fixture
+def command_tester_factory(
+    app: PoetryTestApplication, env: MockEnv
+) -> CommandTesterFactory:
+    def _tester(
+        command: str,
+        poetry: Poetry | None = None,
+        installer: Installer | None = None,
+        executor: Executor | None = None,
+        environment: Env | None = None,
+    ) -> CommandTester:
+        command = app.find(command)
+        tester = CommandTester(command)
+
+        # Setting the formatter from the application
+        # TODO: Find a better way to do this in Cleo
+        app_io = app.create_io()
+        formatter = app_io.output.formatter
+        tester.io.output.set_formatter(formatter)
+        tester.io.error_output.set_formatter(formatter)
+
+        if poetry:
+            app._poetry = poetry
+
+        poetry = app.poetry
+        command._pool = poetry.pool
+
+        if hasattr(command, "set_env"):
+            command.set_env(environment or env)
+
+        if hasattr(command, "set_installer"):
+            installer = installer or Installer(
+                tester.io,
+                env,
+                poetry.package,
+                poetry.locker,
+                poetry.pool,
+                poetry.config,
+                executor=executor
+                or TestExecutor(env, poetry.pool, poetry.config, tester.io),
+            )
+            installer.use_executor(True)
+            command.set_installer(installer)
+
+        return tester
+
+    return _tester
+
+
+@pytest.fixture
+def do_lock(command_tester_factory: CommandTesterFactory, poetry: Poetry) -> None:
+    command_tester_factory("lock").execute()
+    assert poetry.locker.lock.exists()

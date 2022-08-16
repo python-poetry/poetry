@@ -1,47 +1,121 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.publishing.uploader import Uploader
 from poetry.publishing.uploader import UploadError
-from poetry.utils._compat import Path
 
 
-fixtures_dir = Path(__file__).parent.parent / "fixtures"
+if TYPE_CHECKING:
+    import httpretty
+
+    from pytest_mock import MockerFixture
+
+    from tests.types import FixtureDirGetter
 
 
-def project(name):
-    return fixtures_dir / name
+@pytest.fixture
+def uploader(fixture_dir: FixtureDirGetter) -> Uploader:
+    return Uploader(Factory().create_poetry(fixture_dir("simple_project")), NullIO())
 
 
-def test_uploader_properly_handles_400_errors(http):
+def test_uploader_properly_handles_400_errors(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
     http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
-    uploader = Uploader(Factory().create_poetry(project("simple_project")), NullIO())
 
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
-    assert "HTTP Error 400: Bad Request" == str(e.value)
+    assert str(e.value) == "HTTP Error 400: Bad Request | b'Bad request'"
 
 
-def test_uploader_properly_handles_403_errors(http):
+def test_uploader_properly_handles_403_errors(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
-    uploader = Uploader(Factory().create_poetry(project("simple_project")), NullIO())
 
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
-    assert "HTTP Error 403: Forbidden" == str(e.value)
+    assert str(e.value) == "HTTP Error 403: Forbidden | b'Unauthorized'"
 
 
-def test_uploader_registers_for_appropriate_400_errors(mocker, http):
+def test_uploader_properly_handles_nonstandard_errors(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
+    # content based off a true story.
+    # Message changed to protect the ~~innocent~~ guilty.
+    content = (
+        b'{\n "errors": [ {\n '
+        b'"status": 400,'
+        b'"message": "I cant let you do that, dave"\n'
+        b"} ]\n}"
+    )
+    http.register_uri(http.POST, "https://foo.com", status=400, body=content)
+
+    with pytest.raises(UploadError) as e:
+        uploader.upload("https://foo.com")
+
+    assert str(e.value) == f"HTTP Error 400: Bad Request | {content}"
+
+
+def test_uploader_properly_handles_301_redirects(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
+    http.register_uri(http.POST, "https://foo.com", status=301, body="Redirect")
+
+    with pytest.raises(UploadError) as e:
+        uploader.upload("https://foo.com")
+
+    assert (
+        str(e.value)
+        == "Redirects are not supported. Is the URL missing a trailing slash?"
+    )
+
+
+def test_uploader_registers_for_appropriate_400_errors(
+    mocker: MockerFixture, http: type[httpretty.httpretty], uploader: Uploader
+):
     register = mocker.patch("poetry.publishing.uploader.Uploader._register")
     http.register_uri(
         http.POST, "https://foo.com", status=400, body="No package was ever registered"
     )
-    uploader = Uploader(Factory().create_poetry(project("simple_project")), NullIO())
 
     with pytest.raises(UploadError):
         uploader.upload("https://foo.com")
 
-    assert 1 == register.call_count
+    assert register.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "status, body",
+    [
+        (409, ""),
+        (400, "File already exists"),
+        (400, "Repository does not allow updating assets"),
+        (403, "Not enough permissions to overwrite artifact"),
+        (400, "file name has already been taken"),
+    ],
+)
+def test_uploader_skips_existing(
+    http: type[httpretty.httpretty], uploader: Uploader, status: int, body: str
+):
+    http.register_uri(http.POST, "https://foo.com", status=status, body=body)
+
+    # should not raise
+    uploader.upload("https://foo.com", skip_existing=True)
+
+
+def test_uploader_skip_existing_bubbles_unskippable_errors(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
+    http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
+
+    with pytest.raises(UploadError):
+        uploader.upload("https://foo.com", skip_existing=True)

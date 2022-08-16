@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from poetry.repositories import Pool
@@ -8,7 +10,7 @@ from poetry.repositories.legacy_repository import LegacyRepository
 
 def test_pool_raises_package_not_found_when_no_package_is_found():
     pool = Pool()
-    pool.add_repository(Repository())
+    pool.add_repository(Repository("repo"))
 
     with pytest.raises(PackageNotFound):
         pool.package("foo", "1.0.0")
@@ -17,15 +19,15 @@ def test_pool_raises_package_not_found_when_no_package_is_found():
 def test_pool():
     pool = Pool()
 
-    assert 0 == len(pool.repositories)
+    assert len(pool.repositories) == 0
     assert not pool.has_default()
 
 
 def test_pool_with_initial_repositories():
-    repo = Repository()
+    repo = Repository("repo")
     pool = Pool([repo])
 
-    assert 1 == len(pool.repositories)
+    assert len(pool.repositories) == 1
     assert not pool.has_default()
 
 

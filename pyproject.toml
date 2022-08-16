@@ -1,13 +1,30 @@
 [tool.poetry]
 name = "poetry"
-version = "1.1.0b4"
+version = "1.2.0rc1.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    "Sébastien Eustace <sebastien@eustace.io>",
+]
+maintainers = [
+    "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
+    "Bjorn Neergaard <bjorn@neersighted.com>",
+    "Branch Vincent <branchevincent@gmail.com>",
+    "Bryce Drennan <github@accounts.brycedrennan.com>",
+    "Daniel Eades <danieleades@hotmail.com>",
+    "Randy Döring <radoering.poetry@gmail.com>",
+    "Steph Samson <hello@stephsamson.com>",
+    "finswimmer <finswimmer77@gmail.com>",
 ]
 license = "MIT"
 
 readme = "README.md"
+
+packages = [
+    { include = "poetry", from = "src" }
+]
+include = [
+    { path = "tests", format = "sdist" }
+]
 
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
@@ -20,96 +37,134 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
+[tool.poetry.build]
+generate-setup-file = false
+
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.5"
+python = "^3.7"
 
-poetry-core = "^1.0.0b1"
-cleo = "^0.8.1"
-clikit = "^0.6.2"
-crashtest = { version = "^0.3.0", python = "^3.6" }
-requests = "^2.18"
+poetry-core = "^1.1.0b3"
+poetry-plugin-export = "^1.0.6"
+cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
-requests-toolbelt = "^0.9.1"
-cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
-pkginfo = "^1.4"
+cleo = "^1.0.0a5"
+crashtest = "^0.3.0"
 html5lib = "^1.0"
-shellingham = "^1.1"
-tomlkit = ">=0.7.0,<1.0.0"
+importlib-metadata = { version = "^4.4", python = "<3.10" }
+# keyring uses calver, so version is unclamped
+keyring = ">=21.2.0"
+# packaging uses calver, so version is unclamped
+packaging = ">=20.4"
 pexpect = "^4.7.0"
-packaging = "^20.4"
-virtualenv = { version = "^20.0.26" }
-
-# The typing module is not in the stdlib in Python 2.7
-typing = { version = "^3.6", python = "~2.7" }
-
-# Use pathlib2 for Python 2.7
-pathlib2 = { version = "^2.3", python = "~2.7" }
-# Use futures on Python 2.7
-futures = { version = "^3.3.0", python = "~2.7" }
-# Use glob2 for Python 2.7 and 3.4
-glob2 = { version = "^0.6", python = "~2.7" }
-# functools32 is needed for Python 2.7
-functools32 = { version = "^3.2.3", python = "~2.7" }
-keyring = [
-    { version = "^18.0.1", python = "~2.7" },
-    { version = "^20.0.1", python = "~3.5" },
-    { version = "^21.2.0", python = "^3.6" }
-]
-# Use subprocess32 for Python 2.7
-subprocess32 = { version = "^3.5", python = "~2.7" }
-importlib-metadata = {version = "^1.6.0", python = "<3.8"}
+pkginfo = "^1.5"
+platformdirs = "^2.5.2"
+requests = "^2.18"
+requests-toolbelt = "^0.9.1"
+shellingham = "^1.5"
+# exclude 0.11.2 and 0.11.3 due to https://github.com/sdispater/tomlkit/issues/225
+tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
+# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
+virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
+xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
+urllib3 = "^1.26.0"
+dulwich = "^0.20.44"
 
 [tool.poetry.dev-dependencies]
-pytest = [
-    {version = "^4.1", python = "<3.5"},
-    {version = "^5.4.3", python = ">=3.5"}
-]
-pytest-cov = "^2.5"
-pytest-mock = "^1.9"
-pre-commit = { version = "^2.6", python = "^3.6.1" }
-tox = "^3.0"
-pytest-sugar = "^0.9.2"
-httpretty = "^0.9.6"
+tox = "^3.18"
+pytest = "^7.1"
+pytest-cov = "^3.0"
+pytest-mock = "^3.5"
+pytest-randomly = "^3.10"
+pytest-sugar = "^0.9"
+pytest-xdist = { version = "^2.5", extras = ["psutil"] }
+pre-commit = "^2.6"
+deepdiff = "^5.0"
+httpretty = "^1.0"
+typing-extensions = { version = "^4.0.0", python = "<3.8" }
+zipp = { version = "^3.4", python = "<3.8" }
+flatdict = "^4.0.1"
+mypy = ">=0.960"
+types-html5lib = ">=1.1.7"
+types-jsonschema = ">=4.4.4"
+types-requests = ">=2.27.11"
 
 [tool.poetry.scripts]
-poetry = "poetry.console:main"
+poetry = "poetry.console.application:main"
 
 
 [build-system]
-requires = ["poetry-core>=1.0.0a3"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]
+py_version = 37
 profile = "black"
 force_single_line = true
-atomic = true
-include_trailing_comma = true
-lines_after_imports = 2
+combine_as_imports = true
 lines_between_types = 1
-use_parentheses = true
-src_paths = ["poetry", "tests"]
-skip_glob = ["*/setup.py"]
-filter_files = true
-known_first_party = "poetry"
+lines_after_imports = 2
+src_paths = ["src", "tests"]
+extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
 
 
 [tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/.*/setup.py
-)/
+target-version = ['py37']
+preview = true
+force-exclude = '''
+.*/setup\.py$
 '''
+
+
+[tool.mypy]
+files = "src"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+show_error_codes = true
+strict = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+]
+
+# use of importlib-metadata backport at python3.7 makes it impossible to
+# satisfy mypy without some ignores: but we get a different set of ignores at
+# different python versions.
+#
+# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
+# warning.
+[[tool.mypy.overrides]]
+module = [
+  'poetry.console.commands.self.show.plugins',
+  'poetry.installation.executor',
+  'poetry.mixology.version_solver',
+  'poetry.plugins.plugin_manager',
+  'poetry.repositories.installed_repository',
+  'poetry.utils.env',
+]
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+  'cachecontrol.*',
+  'cachy.*',
+  'cleo.*',
+  'crashtest.*',
+  'pexpect.*',
+  'pkginfo.*',
+  'requests_toolbelt.*',
+  'shellingham.*',
+  'virtualenv.*',
+  'xattr.*',
+]
+ignore_missing_imports = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:"
+]

@@ -7,9 +7,9 @@ optional = false
 python-versions = "*"
 
 [package.extras]
-dev = ["coverage", "hypothesis", "pympler", "pytest", "six", "zope.interface", "sphinx", "zope.interface"]
-docs = ["sphinx", "zope.interface"]
-tests = ["coverage", "hypothesis", "pympler", "pytest", "six", "zope.interface"]
+dev = ["coverage", "hypothesis", "pympler", "pytest", "six", "sphinx", "zope-interface", "zope-interface"]
+docs = ["sphinx", "zope-interface"]
+tests = ["coverage", "hypothesis", "pympler", "pytest", "six", "zope-interface"]
 
 [[package]]
 name = "colorama"
@@ -66,10 +66,23 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 py = ">=1.5.0"
 six = ">=1.10.0"
 attrs = ">=17.4.0"
+setuptools = "*"
 more-itertools = ">=4.0.0"
 pluggy = ">=0.5,<0.7"
 funcsigs = {"version" = "*", "markers" = "python_version < \"3.0\""}
 colorama = {"version" = "*", "markers" = "sys_platform == \"win32\""}
+
+[[package]]
+name = "setuptools"
+version = "39.2.0"
+description = "Easily download, build, install, upgrade, and uninstall Python packages"
+category = "dev"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*"
+
+[package.extras]
+certs = ["certifi (==2016.9.26)"]
+ssl = ["wincertstore (==0.2)"]
 
 [[package]]
 name = "six"
@@ -112,6 +125,10 @@ py = [
 pytest = [
     {file = "pytest-3.5.0-py2.py3-none-any.whl", hash = "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c"},
     {file = "pytest-3.5.0.tar.gz", hash = "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1"},
+]
+setuptools = [
+    {file = "setuptools-39.2.0-py2.py3-none-any.whl", hash = "sha256:8fca9275c89964f13da985c3656cb00ba029d7f3916b37990927ffdf264e7926"},
+    {file = "setuptools-39.2.0.zip", hash = "sha256:f7cddbb5f5c640311eb00eab6e849f7701fa70bf6a183fc8a2c33dd1d1672fb2"},
 ]
 six = [
     {file = "six-1.11.0-py2.py3-none-any.whl", hash = "sha256:832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"},

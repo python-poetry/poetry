@@ -1,7 +1,17 @@
-from cleo.testers import CommandTester
+from __future__ import annotations
 
-from poetry.utils._compat import Path
+from pathlib import Path
+from typing import TYPE_CHECKING
 
+import pytest
+
+
+if TYPE_CHECKING:
+    import httpretty
+
+    from cleo.testers.command_tester import CommandTester
+
+    from tests.types import CommandTesterFactory
 
 TESTS_DIRECTORY = Path(__file__).parent.parent.parent
 FIXTURES_DIRECTORY = (
@@ -9,15 +19,18 @@ FIXTURES_DIRECTORY = (
 )
 
 
-def test_search(app, http):
+@pytest.fixture(autouse=True)
+def mock_search_http_response(http: type[httpretty.httpretty]) -> None:
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
-        search_results = f.read()
+        http.register_uri("GET", "https://pypi.org/search", f.read())
 
-    http.register_uri("GET", "https://pypi.org/search", search_results)
 
-    command = app.find("search")
-    tester = CommandTester(command)
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("search")
 
+
+def test_search(tester: CommandTester, http: type[httpretty.httpretty]):
     tester.execute("sqlalchemy")
 
     expected = """
@@ -39,7 +52,7 @@ paginate-sqlalchemy (0.3.0)
 sqlalchemy-audit (0.1.0)
  sqlalchemy-audit provides an easy way to set up revision tracking for your data.
 
-transmogrify.sqlalchemy (1.0.2)
+transmogrify-sqlalchemy (1.0.2)
  Feed data from SQLAlchemy into a transmogrifier pipeline
 
 sqlalchemy-schemadisplay (1.3)
@@ -55,7 +68,8 @@ sqlalchemy-wrap (2.1.7)
  Python wrapper for the CircleCI API
 
 sqlalchemy-nav (0.0.2)
- SQLAlchemy-Nav provides SQLAlchemy Mixins for creating navigation bars compatible with Bootstrap
+ SQLAlchemy-Nav provides SQLAlchemy Mixins for creating navigation bars compatible with\
+ Bootstrap
 
 sqlalchemy-repr (0.0.1)
  Automatically generates pretty repr of a SQLAlchemy model.
@@ -82,4 +96,6 @@ sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
 """
 
-    assert expected == tester.io.fetch_output()
+    output = tester.io.fetch_output()
+
+    assert output == expected

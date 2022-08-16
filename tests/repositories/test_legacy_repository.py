@@ -1,16 +1,22 @@
+from __future__ import annotations
+
+import base64
+import re
 import shutil
 
-import pytest
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from poetry.core.packages import Dependency
+import pytest
+import requests
+
+from poetry.core.packages.dependency import Dependency
+
 from poetry.factory import Factory
-from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.legacy_repository import Page
-from poetry.utils._compat import PY35
-from poetry.utils._compat import Path
+from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 try:
@@ -18,17 +24,26 @@ try:
 except ImportError:
     import urlparse
 
+if TYPE_CHECKING:
+    import httpretty
+
+    from _pytest.monkeypatch import MonkeyPatch
+
+    from poetry.config.config import Config
+
+
+@pytest.fixture(autouse=True)
+def _use_simple_keyring(with_simple_keyring: None) -> None:
+    pass
+
 
 class MockRepository(LegacyRepository):
-
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self, auth=None):
-        super(MockRepository, self).__init__(
-            "legacy", url="http://legacy.foo.bar", auth=auth, disable_cache=True
-        )
+    def __init__(self) -> None:
+        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get(self, endpoint):
+    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -37,9 +52,9 @@ class MockRepository(LegacyRepository):
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return Page(self._url + endpoint, f.read(), {})
+            return SimpleRepositoryPage(self._url + endpoint, f.read())
 
-    def _download(self, url, dest):
+    def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
@@ -49,7 +64,7 @@ class MockRepository(LegacyRepository):
 def test_page_relative_links_path_are_correct():
     repo = MockRepository()
 
-    page = repo._get("/relative")
+    page = repo._get_page("/relative")
 
     for link in page.links:
         assert link.netloc == "legacy.foo.bar"
@@ -59,16 +74,56 @@ def test_page_relative_links_path_are_correct():
 def test_page_absolute_links_path_are_correct():
     repo = MockRepository()
 
-    page = repo._get("/absolute")
+    page = repo._get_page("/absolute")
 
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
 
 
+def test_page_clean_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/relative")
+
+    cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
+    assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
+
+
+def test_page_invalid_version_link():
+    repo = MockRepository()
+
+    page = repo._get_page("/invalid-version")
+
+    links = list(page.links)
+    assert len(links) == 2
+
+    versions = list(page.versions("poetry"))
+    assert len(versions) == 1
+    assert versions[0].to_string() == "0.1.0"
+
+    invalid_link = None
+
+    for link in links:
+        if link.filename.startswith("poetry-21"):
+            invalid_link = link
+            break
+
+    links_010 = list(page.links_for_version("poetry", versions[0]))
+    assert invalid_link not in links_010
+
+    assert invalid_link
+    assert not page.link_package_data(invalid_link)
+
+    packages = list(page.packages)
+    assert len(packages) == 1
+    assert packages[0].name == "poetry"
+    assert packages[0].version.to_string() == "0.1.0"
+
+
 def test_sdist_format_support():
     repo = MockRepository()
-    page = repo._get("/relative")
+    page = repo._get_page("/relative")
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
@@ -96,16 +151,6 @@ def test_get_package_information_fallback_read_setup():
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
 
-    if PY35:
-        assert package.requires == [
-            Dependency("notebook", "*"),
-            Dependency("qtconsole", "*"),
-            Dependency("jupyter-console", "*"),
-            Dependency("nbconvert", "*"),
-            Dependency("ipykernel", "*"),
-            Dependency("ipywidgets", "*"),
-        ]
-
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints():
     repo = MockRepository()
@@ -118,9 +163,9 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         package.description == "Python Language Server for the Language Server Protocol"
     )
 
-    assert 19 == len(package.requires)
+    assert len(package.requires) == 25
     assert sorted(
-        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+        (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
         Dependency("configparser", "*"),
         Dependency("future", ">=0.14.0"),
@@ -155,8 +200,10 @@ def test_find_packages_no_prereleases():
     assert packages[0].source_url == repo.url
 
 
-@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
-def test_find_packages_only_prereleases(constraint, count):
+@pytest.mark.parametrize(
+    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+)
+def test_find_packages_only_prereleases(constraint: str, count: int):
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
@@ -214,10 +261,10 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
 
     package = repo.package("ipython", "5.7.0")
 
-    assert "ipython" == package.name
-    assert "5.7.0" == package.version.text
-    assert "*" == package.python_versions
-    assert 26 == len(package.requires)
+    assert package.name == "ipython"
+    assert package.version.text == "5.7.0"
+    assert package.python_versions == "*"
+    assert len(package.requires) == 41
 
     expected = [
         Dependency("appnope", "*"),
@@ -235,16 +282,26 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
         Dependency("win-unicode-console", ">=0.5"),
     ]
     required = [r for r in package.requires if not r.is_optional()]
-    assert expected == required
+    assert required == expected
 
-    assert 'python_version == "2.7"' == str(required[1].marker)
-    assert 'sys_platform == "win32" and python_version < "3.6"' == str(
-        required[12].marker
+    assert str(required[1].marker) == 'python_version == "2.7"'
+    assert (
+        str(required[12].marker) == 'sys_platform == "win32" and python_version < "3.6"'
     )
-    assert 'python_version == "2.7" or python_version == "3.3"' == str(
-        required[4].marker
+    assert (
+        str(required[4].marker) == 'python_version == "2.7" or python_version == "3.3"'
     )
-    assert 'sys_platform != "win32"' == str(required[5].marker)
+    assert str(required[5].marker) == 'sys_platform != "win32"'
+
+
+def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint():
+    repo = MockRepository()
+
+    package = repo.package("poetry-test-py2-py3-metadata-merge", "0.1.0")
+
+    assert package.name == "poetry-test-py2-py3-metadata-merge"
+    assert package.version.text == "0.1.0"
+    assert package.python_versions == ">=2.7,<2.8 || >=3.7,<4.0"
 
 
 def test_get_package_with_dist_and_universal_py3_wheel():
@@ -252,9 +309,9 @@ def test_get_package_with_dist_and_universal_py3_wheel():
 
     package = repo.package("ipython", "7.5.0")
 
-    assert "ipython" == package.name
-    assert "7.5.0" == package.version.text
-    assert ">=3.5" == package.python_versions
+    assert package.name == "ipython"
+    assert package.version.text == "7.5.0"
+    assert package.python_versions == ">=3.5"
 
     expected = [
         Dependency("appnope", "*"),
@@ -272,7 +329,7 @@ def test_get_package_with_dist_and_universal_py3_wheel():
         Dependency("win-unicode-console", ">=0.5"),
     ]
     required = [r for r in package.requires if not r.is_optional()]
-    assert expected == sorted(required, key=lambda dep: dep.name)
+    assert sorted(required, key=lambda dep: dep.name) == expected
 
 
 def test_get_package_retrieves_non_sha256_hashes():
@@ -283,15 +340,38 @@ def test_get_package_retrieves_non_sha256_hashes():
     expected = [
         {
             "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "md5:dbdc53e3918f28fa335a173432402a00",
+            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",  # noqa: E501
         },
         {
             "file": "ipython-7.5.0.tar.gz",
-            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",  # noqa: E501
         },
     ]
 
-    assert expected == package.files
+    assert package.files == expected
+
+
+def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
+    repo = MockRepository()
+
+    package = repo.package("ipython", "5.7.0")
+
+    expected = [
+        {
+            "file": "ipython-5.7.0-py2-none-any.whl",
+            "hash": "md5:a10a802ef98da741cd6f4f6289d47ba7",
+        },
+        {
+            "file": "ipython-5.7.0-py3-none-any.whl",
+            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",  # noqa: E501
+        },
+        {
+            "file": "ipython-5.7.0.tar.gz",
+            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",  # noqa: E501
+        },
+    ]
+
+    assert package.files == expected
 
 
 def test_get_package_retrieves_packages_with_no_hashes():
@@ -299,44 +379,98 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
     package = repo.package("jupyter", "1.0.0")
 
-    assert [] == package.files
-
-
-def test_username_password_special_chars():
-    auth = Auth("http://legacy.foo.bar", "user:", "/%2Fp@ssword")
-    repo = MockRepository(auth=auth)
-
-    assert "http://user%3A:%2F%252Fp%40ssword@legacy.foo.bar" == repo.authenticated_url
+    assert [
+        {
+            "file": "jupyter-1.0.0.tar.gz",
+            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
+        }
+    ] == package.files
 
 
 class MockHttpRepository(LegacyRepository):
-    def __init__(self, endpoint_responses, http):
+    def __init__(
+        self, endpoint_responses: dict, http: type[httpretty.httpretty]
+    ) -> None:
         base_url = "http://legacy.foo.bar"
-        super(MockHttpRepository, self).__init__(
-            "legacy", url=base_url, auth=None, disable_cache=True
-        )
+        super().__init__("legacy", url=base_url, disable_cache=True)
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint
             http.register_uri(http.GET, url, status=response)
 
 
-def test_get_200_returns_page(http):
+def test_get_200_returns_page(http: type[httpretty.httpretty]):
     repo = MockHttpRepository({"/foo": 200}, http)
 
-    assert repo._get("/foo")
+    assert repo._get_page("/foo")
 
 
-def test_get_404_returns_none(http):
-    repo = MockHttpRepository({"/foo": 404}, http)
+@pytest.mark.parametrize("status_code", [401, 403, 404])
+def test_get_40x_and_returns_none(http: type[httpretty.httpretty], status_code: int):
+    repo = MockHttpRepository({"/foo": status_code}, http)
 
-    assert repo._get("/foo") is None
+    assert repo._get_page("/foo") is None
 
 
-def test_get_4xx_and_5xx_raises(http):
-    endpoints = {"/{}".format(code): code for code in {401, 403, 500}}
-    repo = MockHttpRepository(endpoints, http)
+def test_get_5xx_raises(http: type[httpretty.httpretty]):
+    repo = MockHttpRepository({"/foo": 500}, http)
 
-    for endpoint in endpoints:
-        with pytest.raises(RepositoryError):
-            repo._get(endpoint)
+    with pytest.raises(RepositoryError):
+        repo._get_page("/foo")
+
+
+def test_get_redirected_response_url(
+    http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
+):
+    repo = MockHttpRepository({"/foo": 200}, http)
+    redirect_url = "http://legacy.redirect.bar"
+
+    def get_mock(
+        url: str, raise_for_status: bool = True, timeout: int = 5
+    ) -> requests.Response:
+        response = requests.Response()
+        response.status_code = 200
+        response.url = redirect_url + "/foo"
+        return response
+
+    monkeypatch.setattr(repo.session, "get", get_mock)
+    assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+
+
+@pytest.mark.parametrize(
+    ("repositories",),
+    [
+        ({},),
+        # ensure path is respected
+        ({"publish": {"url": "https://foo.bar/legacy"}},),
+        # ensure path length does not give incorrect results
+        ({"publish": {"url": "https://foo.bar/upload/legacy"}},),
+    ],
+)
+def test_authenticator_with_implicit_repository_configuration(
+    http: type[httpretty.httpretty],
+    config: Config,
+    repositories: dict[str, dict[str, str]],
+) -> None:
+    http.register_uri(
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
+    )
+
+    config.merge(
+        {
+            "repositories": repositories,
+            "http-basic": {
+                "source": {"username": "foo", "password": "bar"},
+                "publish": {"username": "baz", "password": "qux"},
+            },
+        }
+    )
+
+    repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
+    repo._get_page("/foo")
+
+    request = http.last_request()
+
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
