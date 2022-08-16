@@ -7,7 +7,7 @@ import re
 import shutil
 import sys
 import sysconfig
-import warnings
+import textwrap
 
 from contextlib import contextmanager
 from typing import Any
@@ -15,11 +15,19 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import tomlkit
 
 from clikit.api.io import IO
 
+import packaging.tags
+import virtualenv
+
+from packaging.tags import Tag
+from packaging.tags import interpreter_name
+from packaging.tags import interpreter_version
+from packaging.tags import sys_tags
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import BaseMarker
@@ -39,6 +47,36 @@ import json
 import os
 import platform
 import sys
+import sysconfig
+
+INTERPRETER_SHORT_NAMES = {
+    "python": "py",
+    "cpython": "cp",
+    "pypy": "pp",
+    "ironpython": "ip",
+    "jython": "jy",
+}
+
+
+def interpreter_version():
+    version = sysconfig.get_config_var("interpreter_version")
+    if version:
+        version = str(version)
+    else:
+        version = _version_nodot(sys.version_info[:2])
+
+    return version
+
+
+def _version_nodot(version):
+    # type: (PythonVersion) -> str
+    if any(v >= 10 for v in version):
+        sep = "_"
+    else:
+        sep = ""
+
+    return sep.join(map(str, version))
+
 
 if hasattr(sys, "implementation"):
     info = sys.implementation.version
@@ -50,7 +88,7 @@ if hasattr(sys, "implementation"):
     implementation_name = sys.implementation.name
 else:
     iver = "0"
-    implementation_name = ""
+    implementation_name = platform.python_implementation().lower()
 
 env = {
     "implementation_name": implementation_name,
@@ -65,6 +103,9 @@ env = {
     "python_version": platform.python_version()[:3],
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
+    # Extra information
+    "interpreter_name": INTERPRETER_SHORT_NAMES.get(implementation_name, implementation_name),
+    "interpreter_version": interpreter_version(),
 }
 
 print(json.dumps(env))
@@ -80,12 +121,6 @@ elif hasattr(sys, "base_prefix"):
     print(sys.base_prefix)
 else:
     print(sys.prefix)
-"""
-
-GET_CONFIG_VAR = """\
-import sysconfig
-
-print(sysconfig.get_config_var("{config_var}")),
 """
 
 GET_PYTHON_VERSION = """\
@@ -106,27 +141,6 @@ import json
 import sysconfig
 
 print(json.dumps(sysconfig.get_paths()))
-"""
-
-CREATE_VENV_COMMAND = """\
-path = {!r}
-
-try:
-    from venv import EnvBuilder
-
-    builder = EnvBuilder(with_pip=True)
-    builder.create(path)
-except ImportError:
-    try:
-        # We fallback on virtualenv for Python 2.7
-        from virtualenv import create_environment
-
-        create_environment(path)
-    except ImportError:
-        # since virtualenv>20 we have to use cli_run
-        from virtualenv import cli_run
-
-        cli_run([path])
 """
 
 
@@ -427,7 +441,7 @@ class EnvManager(object):
                 if venv.path.name == python:
                     # Exact virtualenv name
                     if not envs_file.exists():
-                        self.remove_venv(str(venv.path))
+                        self.remove_venv(venv.path)
 
                         return venv
 
@@ -437,7 +451,7 @@ class EnvManager(object):
 
                     current_env = envs.get(base_env_name)
                     if not current_env:
-                        self.remove_venv(str(venv.path))
+                        self.remove_venv(venv.path)
 
                         return venv
 
@@ -445,7 +459,7 @@ class EnvManager(object):
                         del envs[base_env_name]
                         envs_file.write(envs)
 
-                    self.remove_venv(str(venv.path))
+                    self.remove_venv(venv.path)
 
                     return venv
 
@@ -499,7 +513,7 @@ class EnvManager(object):
                     del envs[base_env_name]
                     envs_file.write(envs)
 
-        self.remove_venv(str(venv))
+        self.remove_venv(venv)
 
         return VirtualEnv(venv)
 
@@ -645,7 +659,7 @@ class EnvManager(object):
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
-            self.build_venv(str(venv), executable=executable)
+            self.build_venv(venv, executable=executable)
         else:
             if force:
                 if not env.is_sane():
@@ -657,8 +671,8 @@ class EnvManager(object):
                 io.write_line(
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
-                self.remove_venv(str(venv))
-                self.build_venv(str(venv), executable=executable)
+                self.remove_venv(venv)
+                self.build_venv(venv, executable=executable)
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
@@ -681,46 +695,43 @@ class EnvManager(object):
         return VirtualEnv(venv)
 
     @classmethod
-    def build_venv(cls, path, executable=None):
-        if executable is not None:
-            # Create virtualenv by using an external executable
-            try:
-                p = subprocess.Popen(
-                    list_to_shell_command([executable, "-"]),
-                    stdin=subprocess.PIPE,
-                    shell=True,
-                )
-                p.communicate(encode(CREATE_VENV_COMMAND.format(path)))
-            except CalledProcessError as e:
-                raise EnvCommandError(e)
+    def build_venv(
+        cls, path, executable=None
+    ):  # type: (Union[Path,str], Optional[Union[str, Path]]) -> virtualenv.run.session.Session
+        if isinstance(executable, Path):
+            executable = executable.resolve().as_posix()
+        return virtualenv.cli_run(
+            [
+                "--no-download",
+                "--no-periodic-update",
+                "--python",
+                executable or sys.executable,
+                str(path),
+            ]
+        )
 
-            return
-
+    @classmethod
+    def remove_venv(cls, path):  # type: (Union[Path,str]) -> None
+        if isinstance(path, str):
+            path = Path(path)
+        assert path.is_dir()
         try:
-            from venv import EnvBuilder
+            shutil.rmtree(str(path))
+            return
+        except OSError as e:
+            # Continue only if e.errno == 16
+            if e.errno != 16:  # ERRNO 16: Device or resource busy
+                raise e
 
-            # use the same defaults as python -m venv
-            if os.name == "nt":
-                use_symlinks = False
-            else:
-                use_symlinks = True
-
-            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
-            builder.create(path)
-        except ImportError:
-            try:
-                # We fallback on virtualenv for Python 2.7
-                from virtualenv import create_environment
-
-                create_environment(path)
-            except ImportError:
-                # since virtualenv>20 we have to use cli_run
-                from virtualenv import cli_run
-
-                cli_run([path])
-
-    def remove_venv(self, path):  # type: (str) -> None
-        shutil.rmtree(path)
+        # Delete all files and folders but the toplevel one. This is because sometimes
+        # the venv folder is mounted by the OS, such as in a docker volume. In such
+        # cases, an attempt to delete the folder itself will result in an `OSError`.
+        # See https://github.com/python-poetry/poetry/pull/2064
+        for file_path in path.iterdir():
+            if file_path.is_file() or file_path.is_symlink():
+                file_path.unlink()
+            elif file_path.is_dir():
+                shutil.rmtree(str(file_path))
 
     def get_base_prefix(self):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
@@ -759,6 +770,7 @@ class Env(object):
         self._pip_version = None
         self._site_packages = None
         self._paths = None
+        self._supported_tags = None
 
     @property
     def path(self):  # type: () -> Path
@@ -830,6 +842,13 @@ class Env(object):
 
         return self._paths
 
+    @property
+    def supported_tags(self):  # type: () -> List[Tag]
+        if self._supported_tags is None:
+            self._supported_tags = self.get_supported_tags()
+
+        return self._supported_tags
+
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
@@ -852,7 +871,7 @@ class Env(object):
     def get_pip_command(self):  # type: () -> List[str]
         raise NotImplementedError()
 
-    def config_var(self, var):  # type: (str) -> Any
+    def get_supported_tags(self):  # type: () -> List[Tag]
         raise NotImplementedError()
 
     def get_pip_version(self):  # type: () -> Version
@@ -884,15 +903,15 @@ class Env(object):
         """
         Run a command inside the Python environment.
         """
-        shell = kwargs.get("shell", False)
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
 
-        if shell:
-            cmd = list_to_shell_command(cmd)
         try:
             if self._is_windows:
                 kwargs["shell"] = True
+
+            if kwargs.get("shell", False):
+                cmd = list_to_shell_command(cmd)
 
             if input_:
                 output = subprocess.run(
@@ -1004,6 +1023,9 @@ class SystemEnv(Env):
 
         return paths
 
+    def get_supported_tags(self):  # type: () -> List[Tag]
+        return list(sys_tags())
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
@@ -1032,15 +1054,10 @@ class SystemEnv(Env):
             ),
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
+            # Extra information
+            "interpreter_name": interpreter_name(),
+            "interpreter_version": interpreter_version(),
         }
-
-    def config_var(self, var):  # type: (str) -> Any
-        try:
-            return sysconfig.get_config_var(var)
-        except IOError as e:
-            warnings.warn("{0}".format(e), RuntimeWarning)
-
-            return
 
     def get_pip_version(self):  # type: () -> Version
         from pip import __version__
@@ -1085,28 +1102,40 @@ class VirtualEnv(Env):
         # so assume that we have a functional pip
         return [self._bin("pip")]
 
+    def get_supported_tags(self):  # type: () -> List[Tag]
+        file_path = Path(packaging.tags.__file__)
+        if file_path.suffix == ".pyc":
+            # Python 2
+            file_path = file_path.with_suffix(".py")
+
+        with file_path.open(encoding="utf-8") as f:
+            script = decode(f.read())
+
+        script = script.replace(
+            "from ._typing import TYPE_CHECKING, cast",
+            "TYPE_CHECKING = False\ncast = lambda type_, value: value",
+        )
+        script = script.replace(
+            "from ._typing import MYPY_CHECK_RUNNING, cast",
+            "MYPY_CHECK_RUNNING = False\ncast = lambda type_, value: value",
+        )
+
+        script += textwrap.dedent(
+            """
+            import json
+
+            print(json.dumps([(t.interpreter, t.abi, t.platform) for t in sys_tags()]))
+            """
+        )
+
+        output = self.run("python", "-", input_=script)
+
+        return [Tag(*t) for t in json.loads(output)]
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
 
         return json.loads(output)
-
-    def config_var(self, var):  # type: (str) -> Any
-        try:
-            value = self.run(
-                "python", "-", input_=GET_CONFIG_VAR.format(config_var=var)
-            ).strip()
-        except EnvCommandError as e:
-            warnings.warn("{0}".format(e), RuntimeWarning)
-            return None
-
-        if value == "None":
-            value = None
-        elif value == "1":
-            value = 1
-        elif value == "0":
-            value = 0
-
-        return value
 
     def get_pip_version(self):  # type: () -> Version
         output = self.run_pip("--version").strip()
@@ -1205,7 +1234,7 @@ class MockEnv(NullEnv):
         pip_version="19.1",
         sys_path=None,
         marker_env=None,
-        config_vars=None,
+        supported_tags=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1218,15 +1247,7 @@ class MockEnv(NullEnv):
         self._pip_version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
-        self._config_vars = config_vars
-
-    @property
-    def version_info(self):  # type: () -> Tuple[int]
-        return self._version_info
-
-    @property
-    def python_implementation(self):  # type: () -> str
-        return self._python_implementation
+        self._supported_tags = supported_tags
 
     @property
     def platform(self):  # type: () -> str
@@ -1255,18 +1276,14 @@ class MockEnv(NullEnv):
         marker_env["python_implementation"] = self._python_implementation
         marker_env["version_info"] = self._version_info
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
+        marker_env["python_full_version"] = ".".join(str(v) for v in self._version_info)
         marker_env["sys_platform"] = self._platform
+        marker_env["interpreter_name"] = self._python_implementation.lower()
+        marker_env["interpreter_version"] = "cp" + "".join(
+            str(v) for v in self._version_info[:2]
+        )
 
         return marker_env
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
-
-    def config_var(self, var):  # type: (str) -> Any
-        if self._config_vars is None:
-            return super().config_var(var)
-        else:
-            try:
-                return self._config_vars[var]
-            except KeyError:
-                return None

@@ -23,6 +23,11 @@ try:
 except ImportError:
     import urlparse
 
+try:
+    from os import cpu_count
+except ImportError:  # Python 2
+    from multiprocessing import cpu_count
+
 try:  # Python 2
     long = long
     unicode = unicode
@@ -48,6 +53,14 @@ else:
     import shlex
 
     shell_quote = shlex.quote
+
+
+if PY34:
+    from importlib.machinery import EXTENSION_SUFFIXES
+else:
+    from imp import get_suffixes
+
+    EXTENSION_SUFFIXES = [suffix[0] for suffix in get_suffixes()]
 
 
 if PY35:

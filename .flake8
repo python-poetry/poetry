@@ -16,6 +16,7 @@ exclude =
     .vscode
     .github
     poetry/utils/_compat.py
+    poetry/utils/env_scripts/tags.py
     tests/fixtures/
     tests/repositories/fixtures/
     tests/utils/fixtures/

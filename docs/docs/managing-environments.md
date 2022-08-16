@@ -92,7 +92,7 @@ poetry env info --path
 
 ## Listing the environments associated with the project
 
-You can also list all the virtual environments associated with the current virtual environment
+You can also list all the virtual environments associated with the current project
 with the `env list` command:
 
 ```bash

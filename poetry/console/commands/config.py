@@ -57,6 +57,11 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: str(Path(val)),
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
+            "experimental.new-installer": (
+                boolean_validator,
+                boolean_normalizer,
+                True,
+            ),
         }
 
         return unique_config_values

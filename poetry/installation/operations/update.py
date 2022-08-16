@@ -2,11 +2,11 @@ from .operation import Operation
 
 
 class Update(Operation):
-    def __init__(self, initial, target, reason=None):
+    def __init__(self, initial, target, reason=None, priority=0):
         self._initial_package = initial
         self._target_package = target
 
-        super(Update, self).__init__(reason)
+        super(Update, self).__init__(reason, priority=priority)
 
     @property
     def initial_package(self):

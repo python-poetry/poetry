@@ -48,8 +48,7 @@ jobs:
       - name: Install poetry
         shell: bash
         run: |
-          curl -fsS -o get-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
-          python get-poetry.py -y
+          python get-poetry.py -y --preview
           echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
 
       - name: Configure poetry
@@ -67,6 +66,10 @@ jobs:
         if: steps.cache.outputs.cache-hit == 'true'
         shell: bash
         run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
+
+      - name: Upgrade pip
+        shell: bash
+        run: poetry run python -m pip install pip -U
 
       - name: Install dependencies
         shell: bash

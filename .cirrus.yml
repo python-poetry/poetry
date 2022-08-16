@@ -16,7 +16,8 @@ test_task:
     - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
   pip_script:
     - $PYTHON -m ensurepip
-    - $PYTHON -m pip install -U pip tox poetry
+    - $PYTHON -m pip install -U pip tox
+    - $PYTHON -m pip install -U --pre poetry
     - poetry config virtualenvs.in-project true
   tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
   on_failure:

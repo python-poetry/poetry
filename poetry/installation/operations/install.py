@@ -2,8 +2,8 @@ from .operation import Operation
 
 
 class Install(Operation):
-    def __init__(self, package, reason=None):
-        super(Install, self).__init__(reason)
+    def __init__(self, package, reason=None, priority=0):
+        super(Install, self).__init__(reason, priority=priority)
 
         self._package = package
 

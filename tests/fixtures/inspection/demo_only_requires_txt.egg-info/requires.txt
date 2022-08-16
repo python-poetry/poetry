@@ -1,0 +1,3 @@
+cleo; extra == "foo"
+pendulum (>=1.4.4)
+tomlkit; extra == "bar"

@@ -94,6 +94,8 @@ class Shell:
             suffix = ".fish"
         elif "csh" == self._name:
             suffix = ".csh"
+        elif "tcsh" == self._name:
+            suffix = ".csh"
         else:
             suffix = ""
 
@@ -103,6 +105,8 @@ class Shell:
         if "fish" == self._name:
             return "source"
         elif "csh" == self._name:
+            return "source"
+        elif "tcsh" == self._name:
             return "source"
 
         return "."

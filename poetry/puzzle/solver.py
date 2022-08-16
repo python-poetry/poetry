@@ -4,11 +4,16 @@ from contextlib import contextmanager
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 from clikit.io import ConsoleIO
 
 from poetry.core.packages import Package
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.installation.operations import Install
+from poetry.installation.operations import Uninstall
+from poetry.installation.operations import Update
+from poetry.installation.operations.operation import Operation
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -18,10 +23,6 @@ from poetry.utils.env import Env
 
 from .exceptions import OverrideNeeded
 from .exceptions import SolverProblemError
-from .operations import Install
-from .operations import Uninstall
-from .operations import Update
-from .operations.operation import Operation
 from .provider import Provider
 
 
@@ -33,14 +34,19 @@ class Solver:
         installed,  # type: Repository
         locked,  # type: Repository
         io,  # type: ConsoleIO
-        remove_untracked=False,  # type: bool
+        remove_untracked=False,  # type: bool,
+        provider=None,  # type: Optional[Provider]
     ):
         self._package = package
         self._pool = pool
         self._installed = installed
         self._locked = locked
         self._io = io
-        self._provider = Provider(self._package, self._pool, self._io)
+
+        if provider is None:
+            provider = Provider(self._package, self._pool, self._io)
+
+        self._provider = provider
         self._overrides = []
         self._remove_untracked = remove_untracked
 
@@ -72,7 +78,7 @@ class Solver:
                 )
 
         operations = []
-        for package in packages:
+        for i, package in enumerate(packages):
             installed = False
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
@@ -107,23 +113,27 @@ class Solver:
                                 package.source_reference
                             )
                         ):
-                            operations.append(Update(pkg, package))
+                            operations.append(Update(pkg, package, priority=depths[i]))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
                             )
                     elif package.version != pkg.version:
                         # Checking version
-                        operations.append(Update(pkg, package))
+                        operations.append(Update(pkg, package, priority=depths[i]))
                     elif pkg.source_type and package.source_type != pkg.source_type:
-                        operations.append(Update(pkg, package))
+                        operations.append(Update(pkg, package, priority=depths[i]))
                     else:
-                        operations.append(Install(package).skip("Already installed"))
+                        operations.append(
+                            Install(package, priority=depths[i]).skip(
+                                "Already installed"
+                            )
+                        )
 
                     break
 
             if not installed:
-                operations.append(Install(package))
+                operations.append(Install(package, priority=depths[i]))
 
         # Checking for removals
         for pkg in self._locked.packages:
@@ -159,15 +169,7 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations,
-            key=lambda o: (
-                o.job_type == "uninstall",
-                # Packages to be uninstalled have no depth so we default to 0
-                # since it actually doesn't matter since removals are always on top.
-                -depths[packages.index(o.package)] if o.job_type != "uninstall" else 0,
-                o.package.name,
-                o.package.version,
-            ),
+            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
         )
 
     def solve_in_compatibility_mode(self, overrides, use_latest=None):

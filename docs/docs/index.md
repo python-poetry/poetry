@@ -6,8 +6,13 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
-Poetry requires Python 2.7 or 3.4+. It is multi-platform and the goal is to make it work equally well
+Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
+
+!!! note
+
+    Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
+    You should consider updating your Python version to a supported one.
 
 
 ## Installation
@@ -28,7 +33,7 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 !!! note
 
     You only need to install Poetry once. It will automatically pick up the current
-    Python version and use it to [create virtualenvs](/docs/managing-environments.md) accordingly.
+    Python version and use it to [create virtualenvs](/docs/managing-environments) accordingly.
 
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
@@ -76,6 +81,15 @@ POETRY_VERSION=0.12.0 python get-poetry.py
 !!!note
 
     Note that the installer does not support Poetry releases < 0.12.0.
+
+!!!note
+
+    The setup script must be able to find one of following executables in your shell's path environment:
+
+    - `python` (which can be a py3 or py2 interpreter)
+    - `python3`
+    - `py.exe -3` (Windows)
+    - `py.exe -2` (Windows)
 
 ### Alternative installation methods (not recommended)
 

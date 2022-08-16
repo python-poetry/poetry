@@ -304,6 +304,13 @@ class LegacyRepository(PyPiRepository):
 
             return package
 
+    def find_links_for_package(self, package):
+        page = self._get("/{}/".format(package.name.replace(".", "-")))
+        if page is None:
+            return []
+
+        return list(page.links_for_version(package.version))
+
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:

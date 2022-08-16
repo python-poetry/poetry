@@ -38,6 +38,7 @@ class Config(object):
             "in-project-dir": ".venv",
             "path": os.path.join("{cache-dir}", "virtualenvs"),
         },
+        "experimental": {"new-installer": True},
     }
 
     def __init__(

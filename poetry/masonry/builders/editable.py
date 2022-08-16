@@ -8,6 +8,7 @@ from base64 import urlsafe_b64encode
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
+from poetry.core.masonry.utils.package_include import PackageInclude
 from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
@@ -91,8 +92,17 @@ class EditableBuilder(Builder):
                 pth.name, self._env.site_packages, self._poetry.file.parent
             )
         )
+
+        paths = set()
+        for include in self._module.includes:
+            if isinstance(include, PackageInclude) and (
+                include.is_module() or include.is_package()
+            ):
+                paths.add(include.base.resolve().as_posix())
+
         with pth.open("w", encoding="utf-8") as f:
-            f.write(decode(str(self._poetry.file.parent.resolve())))
+            for path in paths:
+                f.write(decode(path + os.linesep))
 
         return [pth]
 

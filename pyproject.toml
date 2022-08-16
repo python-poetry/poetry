@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.1.0a2"
+version = "1.1.0a3"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -37,16 +37,18 @@ html5lib = "^1.0"
 shellingham = "^1.1"
 tomlkit = "^0.5.11"
 pexpect = "^4.7.0"
+packaging = "^20.4"
+virtualenv = { version = "^20.0.26" }
 
 # The typing module is not in the stdlib in Python 2.7
 typing = { version = "^3.6", python = "~2.7" }
 
 # Use pathlib2 for Python 2.7
 pathlib2 = { version = "^2.3", python = "~2.7" }
+# Use futures on Python 2.7
+futures = { version = "^3.3.0", python = "~2.7" }
 # Use glob2 for Python 2.7 and 3.4
 glob2 = { version = "^0.6", python = "~2.7" }
-# Use virtualenv for Python 2.7 since venv does not exist
-virtualenv = { version = "^20.0.18", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
 keyring = [
