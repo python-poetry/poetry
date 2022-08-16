@@ -14,7 +14,6 @@ from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
-from deepdiff import DeepDiff
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
@@ -152,7 +151,7 @@ def package() -> ProjectPackage:
 
 @pytest.fixture()
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture()
@@ -1164,7 +1163,7 @@ def test_installer_with_pypi_repository(
 
     expected = fixture("with-pypi-repository")
 
-    assert not DeepDiff(expected, locker.written_data, ignore_order=True)
+    assert expected == locker.written_data
 
 
 def test_run_installs_with_local_file(

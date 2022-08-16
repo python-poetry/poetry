@@ -18,9 +18,7 @@ if TYPE_CHECKING:
 
 
 class Repository:
-    def __init__(
-        self, name: str | None = None, packages: list[Package] | None = None
-    ) -> None:
+    def __init__(self, name: str, packages: list[Package] | None = None) -> None:
         self._name = name
         self._packages: list[Package] = []
 
@@ -28,7 +26,7 @@ class Repository:
             self.add_package(package)
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> str:
         return self._name
 
     @property
@@ -37,30 +35,28 @@ class Repository:
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
-        ignored_pre_release_packages = []
         constraint, allow_prereleases = self._get_constraints_from_dependency(
             dependency
         )
+        ignored_pre_release_packages = []
 
-        for package in self.packages:
-            if dependency.name == package.name:
-                if (
-                    package.is_prerelease()
-                    and not allow_prereleases
-                    and not package.source_type
-                ):
-                    # If prereleases are not allowed and the package is a prerelease
-                    # and is a standard package then we skip it
-                    if constraint.is_any():
-                        # we need this when all versions of the package are pre-releases
-                        ignored_pre_release_packages.append(package)
-                    continue
+        for package in self._find_packages(dependency.name, constraint):
+            if (
+                package.is_prerelease()
+                and not allow_prereleases
+                and not package.is_direct_origin()
+            ):
+                if constraint.is_any():
+                    # we need this when all versions of the package are pre-releases
+                    ignored_pre_release_packages.append(package)
+                continue
 
-                if constraint.allows(package.version) or (
-                    package.is_prerelease()
-                    and constraint.allows(package.version.next_patch())
-                ):
-                    packages.append(package)
+            packages.append(package)
+
+        self._log(
+            f"{len(packages)} packages found for {dependency.name} {constraint!s}",
+            level="debug",
+        )
 
         return packages or ignored_pre_release_packages
 
@@ -115,6 +111,13 @@ class Repository:
             allow_prereleases = True
 
         return constraint, allow_prereleases
+
+    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+        return [
+            package
+            for package in self._packages
+            if package.name == name and constraint.allows(package.version)
+        ]
 
     def _log(self, msg: str, level: str = "info") -> None:
         logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")

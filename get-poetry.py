@@ -309,7 +309,6 @@ environment variable. This has not been done automatically.
 
 
 class Installer:
-
     CURRENT_PYTHON = sys.executable
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
@@ -472,7 +471,9 @@ class Installer:
                 "warning",
                 "This installer is deprecated. Poetry versions installed using this"
                 " script will not be able to use 'self update' command to upgrade to"
-                " 1.2.0a1 or later.",
+                " 1.2.0a1 or later. It is recommended to use"
+                " https://install.python-poetry.org instead. Instructions are"
+                " available at https://python-poetry.org/docs/#installation",
             )
         )
 

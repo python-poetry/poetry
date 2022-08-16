@@ -6,7 +6,6 @@ from poetry.console.commands.command import Command
 
 
 class SearchCommand(Command):
-
     name = "search"
     description = "Searches for packages on remote repositories."
 

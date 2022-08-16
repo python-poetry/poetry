@@ -15,11 +15,7 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.empty_constraint import EmptyConstraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import AnyMarker
@@ -47,13 +43,16 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.specification import PackageSpecification
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
     from poetry.repositories import Pool
-    from poetry.repositories import Repository
     from poetry.utils.env import Env
 
 
@@ -80,6 +79,7 @@ class Indicator(ProgressIndicator):  # type: ignore[misc]
             return f" <c1>{Indicator.CONTEXT}</> "
 
     def _formatter_elapsed(self) -> str:
+        assert self._start_time is not None
         elapsed = time.time() - self._start_time
 
         return f"{elapsed:.1f}s"
@@ -119,7 +119,6 @@ def _get_package_from_git(
 
 
 class Provider:
-
     UNSAFE_PACKAGES: set[str] = set()
 
     def __init__(
@@ -128,7 +127,7 @@ class Provider:
         pool: Pool,
         io: IO,
         env: Env | None = None,
-        installed: Repository | None = None,
+        installed: list[Package] | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -141,7 +140,8 @@ class Provider:
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
-        self._installed = installed
+        self._installed_packages = installed if installed is not None else []
+        self._direct_origin_packages: dict[str, Package] = {}
 
     @property
     def pool(self) -> Pool:
@@ -202,7 +202,7 @@ class Provider:
         This is useful when dealing with packages that are under development, not
         published on package sources and/or only available via system installations.
         """
-        if not self._installed:
+        if not self._installed_packages:
             return []
 
         logger.debug(
@@ -211,7 +211,7 @@ class Provider:
         )
         packages = [
             package
-            for package in self._installed.packages
+            for package in self._installed_packages
             if package.provides(specification)
         ]
         logger.debug(
@@ -221,16 +221,45 @@ class Provider:
         )
         return packages
 
-    def search_for(
-        self,
-        dependency: (
-            Dependency
-            | VCSDependency
-            | FileDependency
-            | DirectoryDependency
-            | URLDependency
-        ),
-    ) -> list[DependencyPackage]:
+    def search_for_direct_origin_dependency(self, dependency: Dependency) -> Package:
+        package = self._deferred_cache.get(dependency)
+        if package is not None:
+            pass
+
+        elif dependency.is_vcs():
+            dependency = cast("VCSDependency", dependency)
+            package = self._search_for_vcs(dependency)
+
+        elif dependency.is_file():
+            dependency = cast("FileDependency", dependency)
+            package = self._search_for_file(dependency)
+
+        elif dependency.is_directory():
+            dependency = cast("DirectoryDependency", dependency)
+            package = self._search_for_directory(dependency)
+
+        elif dependency.is_url():
+            dependency = cast("URLDependency", dependency)
+            package = self._search_for_url(dependency)
+
+        else:
+            raise RuntimeError(
+                f"Unknown direct dependency type {dependency.source_type}"
+            )
+
+        if dependency.is_vcs():
+            dependency._source_reference = package.source_reference
+            dependency._source_resolved_reference = package.source_resolved_reference
+            dependency._source_subdirectory = package.source_subdirectory
+
+        dependency._constraint = package.version
+        dependency._pretty_constraint = package.version.text
+
+        self._deferred_cache[dependency] = package
+
+        return package
+
+    def search_for(self, dependency: Dependency) -> list[DependencyPackage]:
         """
         Search for the specifications that match the given dependency.
 
@@ -240,35 +269,40 @@ class Provider:
         if dependency.is_root:
             return PackageCollection(dependency, [self._package])
 
-        if dependency.is_vcs():
-            dependency = cast(VCSDependency, dependency)
-            packages = self.search_for_vcs(dependency)
-        elif dependency.is_file():
-            dependency = cast(FileDependency, dependency)
-            packages = self.search_for_file(dependency)
-        elif dependency.is_directory():
-            dependency = cast(DirectoryDependency, dependency)
-            packages = self.search_for_directory(dependency)
-        elif dependency.is_url():
-            dependency = cast(URLDependency, dependency)
-            packages = self.search_for_url(dependency)
-        else:
-            packages = self._pool.find_packages(dependency)
+        if dependency.is_direct_origin():
+            package = self.search_for_direct_origin_dependency(dependency)
+            self._direct_origin_packages[dependency.name] = package
+            return PackageCollection(dependency, [package])
 
-            packages.sort(
-                key=lambda p: (
-                    not p.is_prerelease() and not dependency.allows_prereleases(),
-                    p.version,
-                ),
-                reverse=True,
+        # If we've previously found a direct-origin package that meets this dependency,
+        # use it.
+        #
+        # We rely on the VersionSolver resolving direct-origin dependencies first.
+        direct_origin_package = self._direct_origin_packages.get(dependency.name)
+        if direct_origin_package is not None:
+            packages = (
+                [direct_origin_package]
+                if dependency.constraint.allows(direct_origin_package.version)
+                else []
             )
+            return PackageCollection(dependency, packages)
+
+        packages = self._pool.find_packages(dependency)
+
+        packages.sort(
+            key=lambda p: (
+                not p.is_prerelease() and not dependency.allows_prereleases(),
+                p.version,
+            ),
+            reverse=True,
+        )
 
         if not packages:
             packages = self.search_for_installed_packages(dependency)
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: VCSDependency) -> list[Package]:
+    def _search_for_vcs(self, dependency: VCSDependency) -> Package:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -290,16 +324,7 @@ class Provider:
 
         package.develop = dependency.develop
 
-        dependency._constraint = package.version
-        dependency._pretty_constraint = package.version.text
-
-        dependency._source_reference = package.source_reference
-        dependency._source_resolved_reference = package.source_resolved_reference
-        dependency._source_subdirectory = package.source_subdirectory
-
-        self._deferred_cache[dependency] = package
-
-        return [package]
+        return package
 
     @staticmethod
     def get_package_from_vcs(
@@ -323,18 +348,8 @@ class Provider:
             source_root=source_root,
         )
 
-    def search_for_file(self, dependency: FileDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            _package = self._deferred_cache[dependency]
-
-            package = _package.clone()
-        else:
-            package = self.get_package_from_file(dependency.full_path)
-
-            dependency._constraint = package.version
-            dependency._pretty_constraint = package.version.text
-
-            self._deferred_cache[dependency] = package
+    def _search_for_file(self, dependency: FileDependency) -> Package:
+        package = self.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -345,7 +360,7 @@ class Provider:
             {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
         ]
 
-        return [package]
+        return package
 
     @classmethod
     def get_package_from_file(cls, file_path: Path) -> Package:
@@ -360,18 +375,8 @@ class Provider:
 
         return package
 
-    def search_for_directory(self, dependency: DirectoryDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            _package = self._deferred_cache[dependency]
-
-            package = _package.clone()
-        else:
-            package = self.get_package_from_directory(dependency.full_path)
-
-            dependency._constraint = package.version
-            dependency._pretty_constraint = package.version.text
-
-            self._deferred_cache[dependency] = package
+    def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
+        package = self.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -380,16 +385,13 @@ class Provider:
         if dependency.base is not None:
             package.root_dir = dependency.base
 
-        return [package]
+        return package
 
     @classmethod
     def get_package_from_directory(cls, directory: Path) -> Package:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
-    def search_for_url(self, dependency: URLDependency) -> list[Package]:
-        if dependency in self._deferred_cache:
-            return [self._deferred_cache[dependency]]
-
+    def _search_for_url(self, dependency: URLDependency) -> Package:
         package = self.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -402,12 +404,7 @@ class Provider:
                 for extra_dep in package.extras[extra]:
                     package.add_dependency(extra_dep)
 
-        dependency._constraint = package.version
-        dependency._pretty_constraint = package.version.text
-
-        self._deferred_cache[dependency] = package
-
-        return [package]
+        return package
 
     @classmethod
     def get_package_from_url(cls, url: str) -> Package:
@@ -445,7 +442,7 @@ class Provider:
         return _dependencies
 
     def incompatibilities_for(
-        self, package: DependencyPackage
+        self, dependency_package: DependencyPackage
     ) -> list[Incompatibility]:
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
@@ -456,6 +453,7 @@ class Provider:
         won't return incompatibilities that have already been returned by a
         previous call to _incompatibilities_for().
         """
+        package = dependency_package.package
         if package.is_root():
             dependencies = package.all_requires
         else:
@@ -463,7 +461,7 @@ class Provider:
 
             if not package.python_constraint.allows_all(self._python_constraint):
                 transitive_python_constraint = get_python_constraint_from_marker(
-                    package.dependency.transitive_marker
+                    dependency_package.dependency.transitive_marker
                 )
                 intersection = package.python_constraint.intersect(
                     transitive_python_constraint
@@ -476,7 +474,7 @@ class Provider:
                 if (
                     transitive_python_constraint.is_any()
                     or self._python_constraint.intersect(
-                        package.dependency.python_constraint
+                        dependency_package.dependency.python_constraint
                     ).is_empty()
                     or intersection.is_empty()
                     or not difference.is_empty()
@@ -497,7 +495,9 @@ class Provider:
             and self._python_constraint.allows_any(dep.python_constraint)
             and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
-        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
+        dependencies = self._get_dependencies_with_overrides(
+            _dependencies, dependency_package
+        )
 
         return [
             Incompatibility(
@@ -507,39 +507,44 @@ class Provider:
             for dep in dependencies
         ]
 
-    def complete_package(self, package: DependencyPackage) -> DependencyPackage:
+    def complete_package(
+        self, dependency_package: DependencyPackage
+    ) -> DependencyPackage:
+        package = dependency_package.package
+        dependency = dependency_package.dependency
+
         if package.is_root():
-            package = package.clone()
+            dependency_package = dependency_package.clone()
+            package = dependency_package.package
+            dependency = dependency_package.dependency
             requires = package.all_requires
-        elif not package.is_root() and package.source_type not in {
+        elif package.source_type not in {
             "directory",
             "file",
             "url",
             "git",
         }:
             try:
-                package = DependencyPackage(
-                    package.dependency,
+                dependency_package = DependencyPackage(
+                    dependency,
                     self._pool.package(
                         package.name,
                         package.version.text,
-                        extras=list(package.dependency.extras),
-                        repository=package.dependency.source_name,
+                        extras=list(dependency.extras),
+                        repository=dependency.source_name,
                     ),
                 )
             except PackageNotFound as e:
                 try:
-                    package = next(
-                        DependencyPackage(
-                            package.dependency,
-                            pkg,
-                        )
-                        for pkg in self.search_for_installed_packages(
-                            package.dependency
-                        )
+                    dependency_package = next(
+                        DependencyPackage(dependency, pkg)
+                        for pkg in self.search_for_installed_packages(dependency)
                     )
                 except StopIteration:
                     raise e from e
+
+            package = dependency_package.package
+            dependency = dependency_package.dependency
             requires = package.requires
         else:
             requires = package.requires
@@ -547,14 +552,8 @@ class Provider:
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies
             for r in requires:
-                if r.is_directory():
-                    self.search_for_directory(r)
-                elif r.is_file():
-                    self.search_for_file(r)
-                elif r.is_vcs():
-                    self.search_for_vcs(r)
-                elif r.is_url():
-                    self.search_for_url(r)
+                if r.is_direct_origin():
+                    self.search_for_direct_origin_dependency(r)
 
         optional_dependencies = []
         _dependencies = []
@@ -562,15 +561,19 @@ class Provider:
         # If some extras/features were required, we need to
         # add a special dependency representing the base package
         # to the current package
-        if package.dependency.extras:
-            for extra in package.dependency.extras:
+        if dependency.extras:
+            for extra in dependency.extras:
                 extra = safe_extra(extra)
                 if extra not in package.extras:
                     continue
 
                 optional_dependencies += [d.name for d in package.extras[extra]]
 
-            package = package.with_features(list(package.dependency.extras))
+            dependency_package = dependency_package.with_features(
+                list(dependency.extras)
+            )
+            package = dependency_package.package
+            dependency = dependency_package.dependency
             _dependencies.append(package.without_features().to_dependency())
 
         for dep in requires:
@@ -588,7 +591,7 @@ class Provider:
                 or (
                     dep.in_extras
                     and not set(dep.in_extras).intersection(
-                        {safe_extra(extra) for extra in package.dependency.extras}
+                        {safe_extra(extra) for extra in dependency.extras}
                     )
                 )
             ):
@@ -596,7 +599,9 @@ class Provider:
 
             _dependencies.append(dep)
 
-        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
+        dependencies = self._get_dependencies_with_overrides(
+            _dependencies, dependency_package
+        )
 
         # Searching for duplicate dependencies
         #
@@ -680,10 +685,10 @@ class Provider:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
 
             def fmt_warning(d: Dependency) -> str:
-                marker = d.marker if not d.marker.is_any() else "*"
+                dependency_marker = d.marker if not d.marker.is_any() else "*"
                 return (
                     f"<c1>{d.name}</c1> <fg=default>(<c2>{d.pretty_constraint}</c2>)</>"
-                    f" with markers <b>{marker}</b>"
+                    f" with markers <b>{dependency_marker}</b>"
                 )
 
             warnings = ", ".join(fmt_warning(d) for d in deps[:-1])
@@ -721,8 +726,8 @@ class Provider:
                 for dep_any in any_markers_dependencies:
                     dep_any.marker = inverted_marker
                     for dep_other in other_markers_dependencies:
-                        dep_other.set_constraint(
-                            dep_other.constraint.intersect(dep_any.constraint)
+                        dep_other.constraint = dep_other.constraint.intersect(
+                            dep_any.constraint
                         )
             elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
                 get_python_constraint_from_marker(inverted_marker)
@@ -752,9 +757,11 @@ class Provider:
             for dep in deps:
                 if not overrides_marker_intersection.intersect(dep.marker).is_empty():
                     current_overrides = self._overrides.copy()
-                    package_overrides = current_overrides.get(package, {}).copy()
+                    package_overrides = current_overrides.get(
+                        dependency_package, {}
+                    ).copy()
                     package_overrides.update({dep.name: dep})
-                    current_overrides.update({package: package_overrides})
+                    current_overrides.update({dependency_package: package_overrides})
                     overrides.append(current_overrides)
 
             if overrides:
@@ -763,9 +770,9 @@ class Provider:
         # Modifying dependencies as needed
         clean_dependencies = []
         for dep in dependencies:
-            if not package.dependency.transitive_marker.without_extras().is_any():
+            if not dependency.transitive_marker.without_extras().is_any():
                 marker_intersection = (
-                    package.dependency.transitive_marker.without_extras().intersect(
+                    dependency.transitive_marker.without_extras().intersect(
                         dep.marker.without_extras()
                     )
                 )
@@ -777,9 +784,9 @@ class Provider:
 
                 dep.transitive_marker = marker_intersection
 
-            if not package.dependency.python_constraint.is_any():
+            if not dependency.python_constraint.is_any():
                 python_constraint_intersection = dep.python_constraint.intersect(
-                    package.dependency.python_constraint
+                    dependency.python_constraint
                 )
                 if python_constraint_intersection.is_empty():
                     # This dependency is not needed under current python constraint.
@@ -788,14 +795,13 @@ class Provider:
 
             clean_dependencies.append(dep)
 
-        package = DependencyPackage(
-            package.dependency, package.with_dependency_groups([], only=True)
-        )
+        package = package.with_dependency_groups([], only=True)
+        dependency_package = DependencyPackage(dependency, package)
 
         for dep in clean_dependencies:
             package.add_dependency(dep)
 
-        return package
+        return dependency_package
 
     def debug(self, message: str, depth: int = 0) -> None:
         if not (self._io.is_very_verbose() or self._io.is_debug()):

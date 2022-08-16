@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "poetry-plugin"
+version = "0.1.2"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+pendulum = "^2.0"
+tomlkit = {version = "^0.7.0", optional = true}
+
+[tool.poetry.extras]
+foo = ["tomlkit"]
+
+[tool.poetry.dev-dependencies]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import itertools
 import json
@@ -35,10 +36,12 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
+from poetry.utils.helpers import get_real_windows_path
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import remove_directory
@@ -279,11 +282,9 @@ class SitePackages:
         candidates = self._candidates if not writable_only else self.writable_candidates
         if path.is_absolute():
             for candidate in candidates:
-                try:
+                with contextlib.suppress(ValueError):
                     path.relative_to(candidate)
                     return [path]
-                except ValueError:
-                    pass
             site_type = "writable " if writable_only else ""
             raise ValueError(
                 f"{path} is not relative to any discovered {site_type}sites"
@@ -457,7 +458,6 @@ class SitePackages:
 
 
 class EnvError(Exception):
-
     pass
 
 
@@ -948,7 +948,8 @@ class EnvManager:
 
         if venv_prompt is not None:
             venv_prompt = venv_prompt.format(
-                project_name=self._poetry.package.name, python_version=python_minor
+                project_name=self._poetry.package.name or "virtualenv",
+                python_version=python_minor,
             )
 
         if not venv.exists():
@@ -962,7 +963,10 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_line(f"Creating virtualenv <c1>{name}</> in {venv_path!s}")
+            io.write_line(
+                f"Creating virtualenv <c1>{name}</> in"
+                f" {venv_path if not WINDOWS else get_real_windows_path(venv_path)!s}"
+            )
         else:
             create_venv = False
             if force:
@@ -1014,6 +1018,10 @@ class EnvManager:
         with_setuptools: bool | None = None,
         prompt: str | None = None,
     ) -> virtualenv.run.session.Session:
+        if WINDOWS:
+            path = get_real_windows_path(path)
+            executable = get_real_windows_path(executable) if executable else None
+
         flags = flags or {}
 
         flags["no-pip"] = (
@@ -1138,7 +1146,7 @@ class EnvManager:
     def generate_env_name(cls, name: str, cwd: str) -> str:
         name = name.lower()
         sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
-        normalized_cwd = os.path.normcase(cwd)
+        normalized_cwd = os.path.normcase(os.path.realpath(cwd))
         h_bytes = hashlib.sha256(encode(normalized_cwd)).digest()
         h_str = base64.urlsafe_b64encode(h_bytes).decode()[:8]
 
@@ -1154,6 +1162,10 @@ class Env:
         self._is_windows = sys.platform == "win32"
         self._is_mingw = sysconfig.get_platform().startswith("mingw")
         self._is_conda = bool(os.environ.get("CONDA_DEFAULT_ENV"))
+
+        if self._is_windows:
+            path = get_real_windows_path(path)
+            base = get_real_windows_path(base) if base else None
 
         if not self._is_windows or self._is_mingw:
             bin_dir = "bin"
@@ -1334,11 +1346,9 @@ class Env:
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         for lib_path in [self.purelib, self.platlib]:
-            try:
+            with contextlib.suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
-            except ValueError:
-                pass
 
         return False
 
@@ -1900,7 +1910,10 @@ def build_environment(
     """
     if not env or poetry.package.build_script:
         with ephemeral_environment(executable=env.python if env else None) as venv:
-            overwrite = io and io.output.is_decorated() and not io.is_debug()
+            overwrite = (
+                io is not None and io.output.is_decorated() and not io.is_debug()
+            )
+
             if io:
                 if not overwrite:
                     io.write_line("")
@@ -1914,6 +1927,7 @@ def build_environment(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
+
             venv.run_pip(
                 "install",
                 "--disable-pip-version-check",
@@ -1922,6 +1936,7 @@ def build_environment(
             )
 
             if overwrite:
+                assert io is not None
                 io.write_line("")
 
             yield venv

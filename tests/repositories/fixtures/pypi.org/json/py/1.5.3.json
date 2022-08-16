@@ -47,42 +47,6 @@
     "version": "1.5.3"
   },
   "last_serial": 3694828,
-  "releases": {
-    "1.5.3": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "3184fb17d224b073117a25336040d7c7",
-          "sha256": "983f77f3331356039fdd792e9220b7b8ee1aa6bd2b25f567a963ff1de5a64f6a"
-        },
-        "downloads": -1,
-        "filename": "py-1.5.3-py2.py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "3184fb17d224b073117a25336040d7c7",
-        "packagetype": "bdist_wheel",
-        "python_version": "py2.py3",
-        "size": 84903,
-        "upload_time": "2018-03-22T10:06:50",
-        "url": "https://files.pythonhosted.org/packages/67/a5/f77982214dd4c8fd104b066f249adea2c49e25e8703d284382eb5e9ab35a/py-1.5.3-py2.py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "667d37a148ad9fb81266492903f2d880",
-          "sha256": "29c9fab495d7528e80ba1e343b958684f4ace687327e6f789a94bf3d1915f881"
-        },
-        "downloads": -1,
-        "filename": "py-1.5.3.tar.gz",
-        "has_sig": false,
-        "md5_digest": "667d37a148ad9fb81266492903f2d880",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 202335,
-        "upload_time": "2018-03-22T10:06:52",
-        "url": "https://files.pythonhosted.org/packages/f7/84/b4c6e84672c4ceb94f727f3da8344037b62cee960d80e999b1cd9b832d83/py-1.5.3.tar.gz"
-      }
-    ]
-  },
   "urls": [
     {
       "comment_text": "",

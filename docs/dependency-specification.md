@@ -71,15 +71,51 @@ Here are some examples of inequality requirements:
 != 1.2.3
 ```
 
-### Exact requirements
-
-You can specify the exact version of a package.
-This will tell Poetry to install this version and this version only.
-If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
-
 #### Multiple requirements
 
 Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
+
+### Exact requirements
+
+You can specify the exact version of a package.
+
+`==1.2.3` is an example of an exact version specification.
+
+This will tell Poetry to install this version and this version only.
+If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+
+### Using the `@` operator
+
+When adding dependencies via `poetry add`, you can use the `@` operator.
+This is understood similarly to the `==` syntax, but also allows prefixing any
+specifiers that are valid in `pyproject.toml`. For example:
+
+```shell
+poetry add django@^4.0.0
+```
+
+The above would translate to the following entry in `pyproject.toml`:
+```toml
+Django = "^4.0.0"
+```
+
+The special keyword `latest` is also understood by the `@` operator:
+```shell
+poetry add django@latest
+```
+
+The above would translate to the following entry in `pyproject.toml`, assuming the latest release of `django` is `4.0.5`:
+```toml
+Django = "^4.0.5"
+```
+
+#### Extras
+
+Extras and `@` can be combined as one might expect (`package[extra]@version`):
+
+```shell
+poetry add django[bcrypt]@^4.0.0
+```
 
 ## `git` dependencies
 
@@ -107,6 +143,20 @@ requests = { git = "https://github.com/kennethreitz/requests.git", branch = "nex
 flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 # Get a revision by its tag
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
+```
+
+In cases where the package you want to install is located in a subdirectory of the VCS repository, you can use the `subdirectory` option, similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides:
+
+```toml
+[tool.poetry.dependencies]
+# Install a package named `subdir_package` from a folder called `subdir` within the repository
+subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", subdirectory = "subdir" }
+```
+
+with the corresponding `add` call:
+
+```bash
+poetry add "https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
 ```
 
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:

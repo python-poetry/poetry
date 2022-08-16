@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import sys
 import tempfile
 import uuid
 
@@ -55,6 +57,15 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         source_reference="develop",
         source_resolved_reference="123456",
     )
+    package_git_with_subdirectory = Package(
+        "git-package-subdir",
+        "1.2.3",
+        source_type="git",
+        source_url="https://github.com/python-poetry/poetry.git",
+        source_reference="develop",
+        source_resolved_reference="123456",
+        source_subdirectory="subdir",
+    )
     package_url_linux = Package(
         "url-package",
         "1.0",
@@ -72,6 +83,7 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         package_a,
         get_package("B", "1.2"),
         package_git,
+        package_git_with_subdirectory,
         package_url_win32,
         package_url_linux,
     ]
@@ -125,6 +137,22 @@ reference = "develop"
 resolved_reference = "123456"
 
 [[package]]
+name = "git-package-subdir"
+version = "1.2.3"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry.git"
+reference = "develop"
+resolved_reference = "123456"
+subdirectory = "subdir"
+
+[[package]]
 name = "url-package"
 version = "1.0"
 description = ""
@@ -161,6 +189,7 @@ A = [
 ]
 B = []
 git-package = []
+git-package-subdir = []
 url-package = []
 """
 
@@ -340,6 +369,44 @@ content-hash = "123456789"
 
     dependency_b = package.extras["b"][0]
     assert dependency_b.name == "b"
+
+
+def test_locker_properly_loads_subdir(locker: Locker) -> None:
+    content = """\
+[[package]]
+name = "git-package-subdir"
+version = "1.2.3"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry.git"
+reference = "develop"
+resolved_reference = "123456"
+subdirectory = "subdir"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+git-package-subdir = []
+"""
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert len(repository.packages) == 1
+
+    packages = repository.find_packages(get_dependency("git-package-subdir", "1.2.3"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert package.source_subdirectory == "subdir"
 
 
 def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackage):
@@ -666,6 +733,96 @@ A = []
     assert content == expected
 
 
+def test_locker_dumps_subdir(locker: Locker, root: ProjectPackage) -> None:
+    package_git_with_subdirectory = Package(
+        "git-package-subdir",
+        "1.2.3",
+        source_type="git",
+        source_url="https://github.com/python-poetry/poetry.git",
+        source_reference="develop",
+        source_resolved_reference="123456",
+        source_subdirectory="subdir",
+    )
+
+    locker.set_lock_data(root, [package_git_with_subdirectory])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+[[package]]
+name = "git-package-subdir"
+version = "1.2.3"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry.git"
+reference = "develop"
+resolved_reference = "123456"
+subdirectory = "subdir"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+git-package-subdir = []
+"""
+
+    assert content == expected
+
+
+def test_locker_dumps_dependency_extras_in_correct_order(
+    locker: Locker, root: ProjectPackage
+):
+    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    package_a = get_package("A", "1.0.0")
+    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+
+    package_a.extras = {
+        "C": [package_third, package_second, package_first],
+        "B": [package_first, package_second, package_third],
+    }
+
+    locker.set_lock_data(root, [package_a])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+B = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+C = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+A = []
+"""
+
+    assert content == expected
+
+
 def test_locked_repository_uses_root_dir_of_package(
     locker: Locker, mocker: MockerFixture
 ):
@@ -753,3 +910,91 @@ def test_content_hash_with_legacy_is_compatible(
     content_hash = locker._get_content_hash()
 
     assert (content_hash == old_content_hash) or fresh
+
+
+def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
+    """
+    Create directories and file structure as follows:
+
+    d1/
+    d1/testsymlink -> d1/d2/d3
+    d1/d2/d3/lock_file
+    d1/d4/source_file
+
+    Using the testsymlink as the Locker.lock file path should correctly resolve to
+    the real physical path of the source_file when calculating the relative path
+    from the lock_file, i.e. "../../d4/source_file" instead of the unresolved path
+    from the symlink itself which would have been "../d4/source_file"
+
+    See https://github.com/python-poetry/poetry/issues/5849
+    """
+    with tempfile.TemporaryDirectory() as d1:
+        symlink_path = Path(d1).joinpath("testsymlink")
+        with tempfile.TemporaryDirectory(dir=d1) as d2, tempfile.TemporaryDirectory(
+            dir=d1
+        ) as d4, tempfile.TemporaryDirectory(dir=d2) as d3, tempfile.NamedTemporaryFile(
+            dir=d4
+        ) as source_file, tempfile.NamedTemporaryFile(
+            dir=d3
+        ) as lock_file:
+            lock_file.close()
+            try:
+                os.symlink(Path(d3), symlink_path)
+            except OSError:
+                if sys.platform == "win32":
+                    # os.symlink requires either administrative privileges or developer
+                    # mode on Win10, throwing an OSError if neither is active.
+                    # Test is not possible in that case.
+                    return
+                raise
+            locker = Locker(str(symlink_path) + os.sep + Path(lock_file.name).name, {})
+
+            package_local = Package(
+                "local-package",
+                "1.2.3",
+                source_type="file",
+                source_url=source_file.name,
+                source_reference="develop",
+                source_resolved_reference="123456",
+            )
+            packages = [
+                package_local,
+            ]
+
+            locker.set_lock_data(root, packages)
+
+            with locker.lock.open(encoding="utf-8") as f:
+                content = f.read()
+
+            expected = f"""\
+[[package]]
+name = "local-package"
+version = "1.2.3"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.source]
+type = "file"
+url = "{
+    Path(
+        os.path.relpath(
+            Path(source_file.name).resolve().as_posix(),
+            Path(Path(lock_file.name).parent).resolve().as_posix(),
+        )
+    ).as_posix()
+}"
+reference = "develop"
+resolved_reference = "123456"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+local-package = []
+"""
+
+            assert content == expected

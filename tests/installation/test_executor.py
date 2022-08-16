@@ -369,7 +369,7 @@ def test_executor_should_delete_incomplete_downloads(
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cached_archive_for_link",
-        side_effect=lambda link: link,
+        side_effect=lambda link: None,
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cache_directory_for_link",
@@ -436,11 +436,8 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     config: Config,
     io: BufferedIO,
 ):
-    link_cached = Link(
-        fixture_dir("distributions")
-        .joinpath("demo-0.1.0-py2.py3-none-any.whl")
-        .as_uri()
-    )
+    link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
     mocker.patch(
         "poetry.installation.executor.Executor._download", return_value=link_cached
     )
@@ -556,6 +553,40 @@ def test_executor_should_write_pep610_url_references_for_git(
     )
 
 
+def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
+    tmp_venv: VirtualEnv,
+    pool: Pool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
+):
+    package = Package(
+        "two",
+        "2.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    verify_installed_distribution(
+        tmp_venv,
+        package,
+        {
+            "vcs_info": {
+                "vcs": "git",
+                "requested_revision": "master",
+                "commit_id": "123456",
+            },
+            "url": package.source_url,
+            "subdirectory": package.source_subdirectory,
+        },
+    )
+
+
 def test_executor_should_use_cached_link_and_hash(
     tmp_venv: VirtualEnv,
     pool: Pool,
@@ -564,12 +595,8 @@ def test_executor_should_use_cached_link_and_hash(
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
 ):
-    # Produce a file:/// URI that is a valid link
-    link_cached = Link(
-        fixture_dir("distributions")
-        .joinpath("demo-0.1.0-py2.py3-none-any.whl")
-        .as_uri()
-    )
+    link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
     mocker.patch(
         "poetry.installation.chef.Chef.get_cached_archive_for_link",
         return_value=link_cached,

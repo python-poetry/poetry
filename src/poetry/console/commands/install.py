@@ -6,7 +6,6 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 class InstallCommand(InstallerCommand):
-
     name = "install"
     description = "Installs the project dependencies."
 
@@ -56,7 +55,8 @@ class InstallCommand(InstallerCommand):
         ),
     ]
 
-    help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
+    help = """\
+The <info>install</info> command reads the <comment>poetry.lock</> file from
 the current directory, processes it, and downloads and installs all the
 libraries and dependencies outlined in that file. If the file does not
 exist it will look for <comment>pyproject.toml</> and do the same.

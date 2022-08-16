@@ -39,6 +39,20 @@ def package_git() -> Package:
 
 
 @pytest.fixture
+def package_git_with_subdirectory() -> Package:
+    package = Package(
+        "subdirectories",
+        "2.0.0",
+        source_type="git",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_reference="master",
+        source_subdirectory="two",
+    )
+
+    return package
+
+
+@pytest.fixture
 def pool() -> Pool:
     return Pool()
 
@@ -83,6 +97,24 @@ def test_requirement_source_type_url():
     expected = f"{foo.source_url}#egg={foo.name}"
 
     assert result == expected
+
+
+def test_requirement_git_subdirectory(
+    pool: Pool, package_git_with_subdirectory: Package
+) -> None:
+    null_env = NullEnv()
+    installer = PipInstaller(null_env, NullIO(), pool)
+    result = installer.requirement(package_git_with_subdirectory)
+    expected = (
+        "git+https://github.com/demo/subdirectories.git"
+        "@master#egg=subdirectories&subdirectory=two"
+    )
+
+    assert result == expected
+    installer.install(package_git_with_subdirectory)
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert Path(cmd[-1]).parts[-3:] == ("demo", "subdirectories", "two")
 
 
 def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):
@@ -173,7 +205,7 @@ def test_uninstall_git_package_nspkg_pth_cleanup(
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
-    # use a namepspace package
+    # use a namespace package
     package = Package(
         "namespace-package-one",
         "1.0.0",

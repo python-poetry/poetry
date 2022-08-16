@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 
 class IOFormatter(logging.Formatter):
-
     _colors = {
         "error": "fg=red",
         "warning": "fg=yellow",

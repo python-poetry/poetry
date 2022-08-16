@@ -11,7 +11,6 @@ from poetry.repositories.single_page_repository import SinglePageRepository
 
 
 class MockSinglePageRepository(SinglePageRepository):
-
     FIXTURES = Path(__file__).parent / "fixtures" / "single-page"
 
     def __init__(self, page: str) -> None:
