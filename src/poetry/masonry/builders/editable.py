@@ -85,7 +85,7 @@ class EditableBuilder(Builder):
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
             self._debug(f"  - Executing build script: <b>{build_script}</b>")
-            env.run("python", str(self._path.joinpath(build_script)), call=True)
+            env.run("python", str(self._path.joinpath(build_script)))
 
     def _setup_build(self) -> None:
         builder = SdistBuilder(self._poetry)
