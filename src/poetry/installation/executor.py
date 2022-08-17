@@ -18,6 +18,7 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
+from requests.utils import atomic_open
 
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
@@ -683,7 +684,7 @@ class Executor:
         done = 0
         archive: Path = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
-        with archive.open("wb") as f:
+        with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if not chunk:
                     break
