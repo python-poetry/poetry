@@ -46,7 +46,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
-    from poetry.core.packages.specification import PackageSpecification
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.semver.version_constraint import VersionConstraint
@@ -193,11 +192,11 @@ class Provider:
 
     def search_for_installed_packages(
         self,
-        specification: PackageSpecification,
+        dependency: Dependency,
     ) -> list[Package]:
         """
-        Search for installed packages, when available, that provides the given
-        specification.
+        Search for installed packages, when available, that satisfy the given
+        dependency.
 
         This is useful when dealing with packages that are under development, not
         published on package sources and/or only available via system installations.
@@ -207,17 +206,17 @@ class Provider:
 
         logger.debug(
             "Falling back to installed packages to discover metadata for <c2>%s</>",
-            specification.complete_name,
+            dependency.complete_name,
         )
         packages = [
             package
             for package in self._installed_packages
-            if package.provides(specification)
+            if package.satisfies(dependency, ignore_source_type=True)
         ]
         logger.debug(
             "Found <c2>%d</> compatible packages for <c2>%s</>",
             len(packages),
-            specification.complete_name,
+            dependency.complete_name,
         )
         return packages
 
