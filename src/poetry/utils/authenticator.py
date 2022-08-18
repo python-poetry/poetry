@@ -214,7 +214,7 @@ class Authenticator:
 
         verify = str(verify) if isinstance(verify, Path) else verify
 
-        settings = session.merge_environment_settings(  # type: ignore[no-untyped-call]
+        settings = session.merge_environment_settings(
             prepared_request.url, proxies, stream, verify, cert
         )
 
