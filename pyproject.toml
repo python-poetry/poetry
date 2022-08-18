@@ -44,8 +44,8 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "^1.1.0b3"
-poetry-plugin-export = "^1.0.5"
+poetry-core = "^1.1.0rc1"
+poetry-plugin-export = "^1.0.6"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a5"
@@ -61,8 +61,9 @@ pkginfo = "^1.5"
 platformdirs = "^2.5.2"
 requests = "^2.18"
 requests-toolbelt = "^0.9.1"
-shellingham = "^1.1"
-tomlkit = ">=0.11.1,<1.0.0"
+shellingham = "^1.5"
+# exclude 0.11.2 and 0.11.3 due to https://github.com/sdispater/tomlkit/issues/225
+tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }

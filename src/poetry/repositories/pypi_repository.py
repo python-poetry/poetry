@@ -12,6 +12,7 @@ from cachecontrol.controller import logger as cache_control_logger
 from html5lib.html5parser import parse
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
+from poetry.core.semver.version import Version
 from poetry.core.version.exceptions import InvalidVersion
 
 from poetry.repositories.exceptions import PackageNotFound
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.dependency import Dependency
+    from packaging.utils import NormalizedName
+    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class PyPiRepository(HTTPRepository):
@@ -42,62 +44,6 @@ class PyPiRepository(HTTPRepository):
 
         self._base_url = url
         self._fallback = fallback
-
-    def find_packages(self, dependency: Dependency) -> list[Package]:
-        """
-        Find packages on the remote server.
-        """
-        constraint, allow_prereleases = self._get_constraints_from_dependency(
-            dependency
-        )
-
-        try:
-            info = self.get_package_info(dependency.name)
-        except PackageNotFound:
-            self._log(
-                f"No packages found for {dependency.name} {constraint!s}",
-                level="debug",
-            )
-            return []
-
-        packages = []
-        ignored_pre_release_packages = []
-
-        for version, release in info["releases"].items():
-            if not release:
-                # Bad release
-                self._log(
-                    f"No release information found for {dependency.name}-{version},"
-                    " skipping",
-                    level="debug",
-                )
-                continue
-
-            try:
-                package = Package(info["info"]["name"], version)
-            except InvalidVersion:
-                self._log(
-                    f'Unable to parse version "{version}" for the'
-                    f" {dependency.name} package, skipping",
-                    level="debug",
-                )
-                continue
-
-            if package.is_prerelease() and not allow_prereleases:
-                if constraint.is_any():
-                    # we need this when all versions of the package are pre-releases
-                    ignored_pre_release_packages.append(package)
-                continue
-
-            if constraint.allows(package.version):
-                packages.append(package)
-
-        self._log(
-            f"{len(packages)} packages found for {dependency.name} {constraint!s}",
-            level="debug",
-        )
-
-        return packages or ignored_pre_release_packages
 
     def search(self, query: str) -> list[Package]:
         results = []
@@ -145,7 +91,7 @@ class PyPiRepository(HTTPRepository):
 
         return results
 
-    def get_package_info(self, name: str) -> dict[str, Any]:
+    def get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         """
         Return the package information given its name.
 
@@ -160,7 +106,49 @@ class PyPiRepository(HTTPRepository):
         )
         return package_info
 
-    def _get_package_info(self, name: str) -> dict[str, Any]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
+        """
+        Find packages on the remote server.
+        """
+        try:
+            info = self.get_package_info(name)
+        except PackageNotFound:
+            self._log(
+                f"No packages found for {name} {constraint!s}",
+                level="debug",
+            )
+            return []
+
+        packages = []
+
+        for version_string, release in info["releases"].items():
+            if not release:
+                # Bad release
+                self._log(
+                    f"No release information found for {name}-{version_string},"
+                    " skipping",
+                    level="debug",
+                )
+                continue
+
+            try:
+                version = Version.parse(version_string)
+            except InvalidVersion:
+                self._log(
+                    f'Unable to parse version "{version_string}" for the'
+                    f" {name} package, skipping",
+                    level="debug",
+                )
+                continue
+
+            if constraint.allows(version):
+                packages.append(Package(info["info"]["name"], version))
+
+        return packages
+
+    def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         data = self._get(f"pypi/{name}/json")
         if data is None:
             raise PackageNotFound(f"Package [{name}] not found.")

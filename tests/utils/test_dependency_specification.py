@@ -35,6 +35,15 @@ if TYPE_CHECKING:
             "git+https://github.com/demo/demo.git@main",
             {"git": "https://github.com/demo/demo.git", "name": "demo", "rev": "main"},
         ),
+        (
+            "git+https://github.com/demo/subdirectories.git@main#subdirectory=two",
+            {
+                "git": "https://github.com/demo/subdirectories.git",
+                "name": "two",
+                "rev": "main",
+                "subdirectory": "two",
+            },
+        ),
         ("demo", {"name": "demo"}),
         ("demo@1.0.0", {"name": "demo", "version": "1.0.0"}),
         ("demo@^1.0.0", {"name": "demo", "version": "^1.0.0"}),

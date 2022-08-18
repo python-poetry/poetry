@@ -3648,3 +3648,36 @@ def test_solver_incompatible_dependency_with_and_without_extras(
             {"job": "install", "package": foo},
         ],
     )
+
+
+def test_update_with_prerelease_and_no_solution(
+    solver: Solver,
+    repo: Repository,
+    installed: InstalledRepository,
+    package: ProjectPackage,
+    locked: Repository,
+):
+    # Locked and installed: cleo which depends on an old version of crashtest.
+    cleo = get_package("cleo", "1.0.0a5")
+    crashtest = get_package("crashtest", "0.3.0")
+    cleo.add_dependency(Factory.create_dependency("crashtest", {"version": "<0.4.0"}))
+    locked.add_package(cleo)
+    locked.add_package(crashtest)
+
+    installed.add_package(cleo)
+    installed.add_package(crashtest)
+
+    # Try to upgrade to a new version of crashtest, this will be disallowed by the
+    # dependency from cleo.
+    package.add_dependency(Factory.create_dependency("cleo", "^1.0.0a5"))
+    package.add_dependency(Factory.create_dependency("crashtest", "^0.4.0"))
+
+    newer_crashtest = get_package("crashtest", "0.4.0")
+    even_newer_crashtest = get_package("crashtest", "0.4.1")
+    repo.add_package(cleo)
+    repo.add_package(crashtest)
+    repo.add_package(newer_crashtest)
+    repo.add_package(even_newer_crashtest)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()

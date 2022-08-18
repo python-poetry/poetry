@@ -374,6 +374,53 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
+@pytest.mark.parametrize(
+    "url, rev",
+    [
+        ("git+https://github.com/demo/subdirectories.git#subdirectory=two", None),
+        (
+            "git+https://github.com/demo/subdirectories.git@master#subdirectory=two",
+            "master",
+        ),
+    ],
+)
+def test_add_git_constraint_with_subdirectory(
+    url: str,
+    rev: str | None,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+):
+    tester.execute(url)
+
+    expected = """\
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing two (2.0.0 9cf87a2)
+"""
+    assert tester.io.fetch_output().strip() == expected.strip()
+    assert tester.command.installer.executor.installations_count == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    constraint = {
+        "git": "https://github.com/demo/subdirectories.git",
+        "subdirectory": "two",
+    }
+
+    if rev:
+        constraint["rev"] = rev
+
+    assert "two" in content["dependencies"]
+    assert content["dependencies"]["two"] == constraint
+
+
 @pytest.mark.parametrize("editable", [False, True])
 def test_add_git_ssh_constraint(
     editable: bool,

@@ -553,6 +553,40 @@ def test_executor_should_write_pep610_url_references_for_git(
     )
 
 
+def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
+    tmp_venv: VirtualEnv,
+    pool: Pool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
+):
+    package = Package(
+        "two",
+        "2.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    verify_installed_distribution(
+        tmp_venv,
+        package,
+        {
+            "vcs_info": {
+                "vcs": "git",
+                "requested_revision": "master",
+                "commit_id": "123456",
+            },
+            "url": package.source_url,
+            "subdirectory": package.source_subdirectory,
+        },
+    )
+
+
 def test_executor_should_use_cached_link_and_hash(
     tmp_venv: VirtualEnv,
     pool: Pool,

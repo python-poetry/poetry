@@ -220,7 +220,7 @@ def _get_win_folder_with_ctypes(csidl_name: str) -> str:
 def get_win_folder(csidl_name: str) -> Path:
     if sys.platform == "win32":
         try:
-            from ctypes import windll  # noqa: F401, TC003
+            from ctypes import windll  # noqa: F401
 
             _get_win_folder = _get_win_folder_with_ctypes
         except ImportError:
