@@ -175,6 +175,7 @@ print('.'.join([str(s) for s in sys.version_info[:3]]))
 GET_PYTHON_VERSION_ONELINER = (
     "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
 )
+GET_ENV_PATH_ONELINER = '"import sys; print(sys.prefix)"'
 
 GET_SYS_PATH = """\
 import json
@@ -461,6 +462,12 @@ class EnvError(Exception):
     pass
 
 
+class IncorrectEnvError(EnvError):
+    def __init__(self, env_name: str) -> None:
+        message = f"Env {env_name} doesn't belong to this project."
+        super().__init__(message)
+
+
 class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
         self.e = e
@@ -737,6 +744,14 @@ class EnvManager:
             env_list.insert(0, VirtualEnv(venv))
         return env_list
 
+    def check_env_is_for_current_project(self, env: str) -> bool:
+        """
+        Check if env name starts with projects name.
+
+        This is done to prevent action on other project's envs.
+        """
+        return env.startswith(self._poetry.package.name)
+
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
 
@@ -744,7 +759,23 @@ class EnvManager:
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
-        if python.startswith(base_env_name):
+        python_path = Path(python)
+        if python_path.is_file():
+            # Validate env name if provided env is a full path to python
+            try:
+                env_dir = decode(
+                    subprocess.check_output(
+                        list_to_shell_command([python, "-c", GET_ENV_PATH_ONELINER]),
+                        shell=True,
+                    )
+                ).strip("\n")
+                env_name = Path(env_dir).name
+                if not self.check_env_is_for_current_project(env_name):
+                    raise IncorrectEnvError(env_name)
+            except CalledProcessError as e:
+                raise EnvCommandError(e)
+
+        if self.check_env_is_for_current_project(python):
             venvs = self.list()
             for venv in venvs:
                 if venv.path.name == python:

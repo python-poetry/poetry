@@ -22,6 +22,7 @@ from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv
+from poetry.utils.env import IncorrectEnvError
 from poetry.utils.env import InvalidCurrentPythonVersionError
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NoCompatiblePythonVersionFound
@@ -672,6 +673,85 @@ def test_remove_by_name(
     expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
     assert venv.path == expected_venv_path
     assert not expected_venv_path.exists()
+
+
+def test_remove_by_string_with_python_and_version(
+    tmp_dir: str,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    venv_name: str,
+):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    venv = manager.remove("python3.6")
+
+    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    assert venv.path == expected_venv_path
+    assert not expected_venv_path.exists()
+
+
+def test_remove_by_full_path_to_python(
+    tmp_dir: str,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    venv_name: str,
+):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    python_path = expected_venv_path / "bin" / "python"
+
+    venv = manager.remove(str(python_path))
+
+    assert venv.path == expected_venv_path
+    assert not expected_venv_path.exists()
+
+
+def test_doesnt_act_on_different_projects_env_when_passing_full_path(
+    tmp_dir: str,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    different_venv_name = "different-project"
+    different_venv_path = Path(tmp_dir) / f"{different_venv_name}-py3.6"
+    different_venv_bin_path = different_venv_path / "bin"
+    different_venv_bin_path.mkdir(parents=True)
+
+    python_path = different_venv_bin_path / "python"
+    python_path.touch(exist_ok=True)
+
+    # Patch initial call where python env path is extracted
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=lambda *args, **kwargs: str(different_venv_path),
+    )
+
+    with pytest.raises(IncorrectEnvError):
+        manager.remove(str(python_path))
 
 
 def test_remove_also_deactivates(
