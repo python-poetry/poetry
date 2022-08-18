@@ -781,7 +781,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "types-html5lib"
-version = "1.1.7"
+version = "1.1.9"
 description = "Typing stubs for html5lib"
 category = "dev"
 optional = false
@@ -789,7 +789,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-jsonschema"
-version = "4.4.8"
+version = "4.9.0"
 description = "Typing stubs for jsonschema"
 category = "dev"
 optional = false
@@ -797,7 +797,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-requests"
-version = "2.27.30"
+version = "2.28.8"
 description = "Typing stubs for requests"
 category = "dev"
 optional = false
@@ -888,7 +888,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "53a3c8b74db6e0031142cc42b6926785897c79b4ab3b0920508264f2a13075e3"
+content-hash = "b6828c80df3b7298c9bd1a2fd4df6cddcbf148f20226b51765ebad1e603b815e"
 
 [metadata.files]
 atomicwrites = [
@@ -1445,16 +1445,16 @@ typed-ast = [
     {file = "typed_ast-1.5.4.tar.gz", hash = "sha256:39e21ceb7388e4bb37f4c679d72707ed46c2fbf2a5609b8b8ebc4b067d977df2"},
 ]
 types-html5lib = [
-    {file = "types-html5lib-1.1.7.tar.gz", hash = "sha256:fdb307102ceea52adf52aea0e10255d142ee29d7f169014144a730707a92066a"},
-    {file = "types_html5lib-1.1.7-py3-none-any.whl", hash = "sha256:4bc5a1de03b9a697b7cc04b0d03eeed5d36c0073165dd9dc54f2f43d0f23b31f"},
+    {file = "types-html5lib-1.1.9.tar.gz", hash = "sha256:a2caebcddb43ba0387579b14c585fe87d53236820e21acff01cac084b0836cb7"},
+    {file = "types_html5lib-1.1.9-py3-none-any.whl", hash = "sha256:4a5c1dd200f119f0a226b1c0fe744c8a2a127ff7409c58b1e80115fc3631daec"},
 ]
 types-jsonschema = [
-    {file = "types-jsonschema-4.4.8.tar.gz", hash = "sha256:90be58439cb04793b5d359edc2e40a258b9f9409c68ff8e87086420d2b952f7b"},
-    {file = "types_jsonschema-4.4.8-py3-none-any.whl", hash = "sha256:601e533d2a9fb851e7ee3a6129362d7d7274dd65b59135471a4afe371fad9e5d"},
+    {file = "types-jsonschema-4.9.0.tar.gz", hash = "sha256:b1743257464ba71c80e8c085b4c2a871c98973e4d18e7766bc2b3976bdb7a65b"},
+    {file = "types_jsonschema-4.9.0-py3-none-any.whl", hash = "sha256:822221913ff6c8348a6e8af45e70bc223e42767857688a7716795b720de6c214"},
 ]
 types-requests = [
-    {file = "types-requests-2.27.30.tar.gz", hash = "sha256:ca8d7cc549c3d10dbcb3c69c1b53e3ffd1270089c1001a65c1e9e1017eb5e704"},
-    {file = "types_requests-2.27.30-py3-none-any.whl", hash = "sha256:b9b6cd0a6e5d500e56419b79f44ec96f316e9375ff6c8ee566c39d25e9612621"},
+    {file = "types-requests-2.28.8.tar.gz", hash = "sha256:7a9f7b152d594a1c18dd4932cdd2596b8efbeedfd73caa4e4abb3755805b4685"},
+    {file = "types_requests-2.28.8-py3-none-any.whl", hash = "sha256:b0421f9f2d0dd0f8df2c75f974686517ca67473f05b466232d4c6384d765ad7a"},
 ]
 types-urllib3 = [
     {file = "types-urllib3-1.26.15.tar.gz", hash = "sha256:c89283541ef92e344b7f59f83ea9b5a295b16366ceee3f25ecfc5593c79f794e"},
