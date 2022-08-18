@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 
-from distutils.util import strtobool
 from os import environ
 
 from poetry.console.commands.env_command import EnvCommand
@@ -39,6 +38,6 @@ If one doesn't exist yet, it will be created.
         return 0
 
     def _is_venv_activated(self) -> bool:
-        return strtobool(environ.get("POETRY_ACTIVE", "0")) or getattr(
+        return bool(environ.get("POETRY_ACTIVE")) or getattr(
             sys, "real_prefix", sys.prefix
         ) == str(self.env.path)
