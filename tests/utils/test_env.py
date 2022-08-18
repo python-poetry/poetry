@@ -727,7 +727,7 @@ def test_remove_by_full_path_to_python(
     assert not expected_venv_path.exists()
 
 
-def test_doesnt_act_on_different_projects_env_when_passing_full_path(
+def test_raises_if_acting_on_different_project_by_full_path(
     tmp_dir: str,
     manager: EnvManager,
     poetry: Poetry,
@@ -752,6 +752,60 @@ def test_doesnt_act_on_different_projects_env_when_passing_full_path(
 
     with pytest.raises(IncorrectEnvError):
         manager.remove(str(python_path))
+
+
+def test_raises_if_acting_on_different_project_by_name(
+    tmp_dir: str,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    different_venv_name = (
+        EnvManager.generate_env_name(
+            "different-project",
+            str(poetry.file.parent),
+        )
+        + "-py3.6"
+    )
+    different_venv_path = Path(tmp_dir) / different_venv_name
+    different_venv_bin_path = different_venv_path / "bin"
+    different_venv_bin_path.mkdir(parents=True)
+
+    python_path = different_venv_bin_path / "python"
+    python_path.touch(exist_ok=True)
+
+    with pytest.raises(IncorrectEnvError):
+        manager.remove(different_venv_name)
+
+
+def test_raises_when_passing_old_env_after_dir_rename(
+    tmp_dir: str,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    venv_name: str,
+):
+    # Make sure that poetry raises when trying to remove old venv after you've renamed
+    # root directory of the project, which will create another venv with new name.
+    # This is not ideal as you still "can't" remove it by name, but it at least doesn't
+    # cause any unwanted side effects
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    previous_venv_name = EnvManager.generate_env_name(
+        poetry.package.name,
+        "previous_dir_name",
+    )
+    venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    venv_path.mkdir()
+
+    previous_venv_name = f"{previous_venv_name}-py3.6"
+    previous_venv_path = Path(tmp_dir) / previous_venv_name
+    previous_venv_path.mkdir()
+
+    with pytest.raises(IncorrectEnvError):
+        manager.remove(previous_venv_name)
 
 
 def test_remove_also_deactivates(

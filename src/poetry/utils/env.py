@@ -744,13 +744,14 @@ class EnvManager:
             env_list.insert(0, VirtualEnv(venv))
         return env_list
 
-    def check_env_is_for_current_project(self, env: str) -> bool:
+    @staticmethod
+    def check_env_is_for_current_project(env: str, base_env_name: str) -> bool:
         """
         Check if env name starts with projects name.
 
         This is done to prevent action on other project's envs.
         """
-        return env.startswith(self._poetry.package.name)
+        return env.startswith(base_env_name)
 
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
@@ -770,12 +771,12 @@ class EnvManager:
                     )
                 ).strip("\n")
                 env_name = Path(env_dir).name
-                if not self.check_env_is_for_current_project(env_name):
+                if not self.check_env_is_for_current_project(env_name, base_env_name):
                     raise IncorrectEnvError(env_name)
             except CalledProcessError as e:
                 raise EnvCommandError(e)
 
-        if self.check_env_is_for_current_project(python):
+        if self.check_env_is_for_current_project(python, base_env_name):
             venvs = self.list()
             for venv in venvs:
                 if venv.path.name == python:
@@ -806,6 +807,12 @@ class EnvManager:
             raise ValueError(
                 f'<warning>Environment "{python}" does not exist.</warning>'
             )
+        else:
+            venv_path = self._poetry.config.virtualenvs_path
+            # Get all the poetry envs, even for other projects
+            env_names = [Path(p).name for p in sorted(venv_path.glob("*-*-py*"))]
+            if python in env_names:
+                raise IncorrectEnvError(python)
 
         try:
             python_version = Version.parse(python)
