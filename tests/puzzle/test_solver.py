@@ -18,7 +18,6 @@ from poetry.factory import Factory
 from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
-from poetry.puzzle.provider import Provider as BaseProvider
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
@@ -36,6 +35,7 @@ if TYPE_CHECKING:
     import httpretty
 
     from poetry.installation.operations.operation import Operation
+    from poetry.puzzle.provider import Provider
     from poetry.puzzle.transaction import Transaction
 
 DEFAULT_SOURCE_REF = (
@@ -44,10 +44,9 @@ DEFAULT_SOURCE_REF = (
 )
 
 
-class Provider(BaseProvider):
-    def set_package_python_versions(self, python_versions: str) -> None:
-        self._package.python_versions = python_versions
-        self._python_constraint = self._package.python_constraint
+def set_package_python_versions(provider: Provider, python_versions: str) -> None:
+    provider._package.python_versions = python_versions
+    provider._python_constraint = provider._package.python_constraint
 
 
 @pytest.fixture()
@@ -88,14 +87,7 @@ def solver(
     locked: Repository,
     io: NullIO,
 ) -> Solver:
-    return Solver(
-        package,
-        pool,
-        installed.packages,
-        locked.packages,
-        io,
-        provider=Provider(package, pool, io, installed=installed.packages),
-    )
+    return Solver(package, pool, installed.packages, locked.packages, io)
 
 
 def check_solver_result(
@@ -404,7 +396,7 @@ def test_solver_sets_groups(solver: Solver, repo: Repository, package: ProjectPa
 def test_solver_respects_root_package_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
-    solver.provider.set_package_python_versions("~3.4")
+    set_package_python_versions(solver.provider, "~3.4")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -437,7 +429,7 @@ def test_solver_respects_root_package_python_versions(
 def test_solver_fails_if_mismatch_root_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
-    solver.provider.set_package_python_versions("^3.4")
+    set_package_python_versions(solver.provider, "^3.4")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -459,7 +451,7 @@ def test_solver_fails_if_mismatch_root_python_versions(
 def test_solver_ignores_python_restricted_if_mismatch_root_package_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
-    solver.provider.set_package_python_versions("~3.8")
+    set_package_python_versions(solver.provider, "~3.8")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "1.0", "python": "<3.8"})
     )
@@ -483,7 +475,7 @@ def test_solver_ignores_python_restricted_if_mismatch_root_package_python_versio
 def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
-    solver.provider.set_package_python_versions("~3.4")
+    set_package_python_versions(solver.provider, "~3.4")
     package.extras["foo"] = [get_dependency("B")]
     package.add_dependency(
         Factory.create_dependency("A", {"version": "*", "python": "^3.4"})
@@ -987,7 +979,7 @@ def test_solver_sub_dependencies_with_requirements_complex(
 def test_solver_sub_dependencies_with_not_supported_python_version(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("^3.5")
+    set_package_python_versions(solver.provider, "^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1009,7 +1001,7 @@ def test_solver_sub_dependencies_with_not_supported_python_version(
 def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("^3.4")
+    set_package_python_versions(solver.provider, "^3.4")
 
     package.add_dependency(
         Factory.create_dependency("httpx", {"version": "^0.17.1", "python": "^3.6"})
@@ -1053,7 +1045,7 @@ def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
 def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("^3.5")
+    set_package_python_versions(solver.provider, "^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(
         Factory.create_dependency(
@@ -1667,7 +1659,7 @@ def test_solver_duplicate_dependencies_sub_dependencies(
 
 
 def test_duplicate_path_dependencies(solver: Solver, package: ProjectPackage) -> None:
-    solver.provider.set_package_python_versions("^3.7")
+    set_package_python_versions(solver.provider, "^3.7")
     fixtures = Path(__file__).parent.parent / "fixtures"
     project_dir = fixtures / "with_conditional_path_deps"
 
@@ -1701,7 +1693,7 @@ def test_duplicate_path_dependencies(solver: Solver, package: ProjectPackage) ->
 def test_duplicate_path_dependencies_same_path(
     solver: Solver, package: ProjectPackage
 ) -> None:
-    solver.provider.set_package_python_versions("^3.7")
+    set_package_python_versions(solver.provider, "^3.7")
     fixtures = Path(__file__).parent.parent / "fixtures"
     project_dir = fixtures / "with_conditional_path_deps"
 
@@ -1877,7 +1869,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.4")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.6"})
     )
@@ -1895,7 +1887,7 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.4")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.6"})
     )
@@ -1927,7 +1919,7 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.4")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.5"})
     )
@@ -1944,7 +1936,7 @@ def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_wit
 def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.4")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.5"})
     )
@@ -2004,7 +1996,7 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
 def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.4")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.6"})
     )
@@ -2094,7 +2086,7 @@ def test_solver_should_not_resolve_prerelease_version_if_not_requested(
 def test_solver_ignores_dependencies_with_incompatible_python_full_version_marker(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("^3.6")
+    set_package_python_versions(solver.provider, "^3.6")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
     package.add_dependency(Factory.create_dependency("B", "^2.0"))
 
@@ -2297,14 +2289,7 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
     poetry = Factory().create_poetry(cwd=base)
     package = poetry.package
 
-    solver = Solver(
-        package,
-        pool,
-        installed.packages,
-        locked.packages,
-        io,
-        provider=Provider(package, pool, io),
-    )
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2904,7 +2889,7 @@ def test_solver_discards_packages_with_empty_markers(
 def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(
         Factory.create_dependency(
             "A", {"version": "^1.0", "python": "~2.7"}, groups=["dev"]
@@ -2936,7 +2921,7 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
 def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(
         Factory.create_dependency(
             "requests", {"version": "^2.22.0", "extras": ["security"]}
@@ -3035,7 +3020,7 @@ def test_ignore_python_constraint_no_overlap_dependencies(
 def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     solver: Solver, repo: Repository, package: Package
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
 
     package_a = get_package("A", "1.0.0")
@@ -3244,7 +3229,7 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
 def test_solver_should_use_the_python_constraint_from_the_environment_if_available(
     solver: Solver, repo: Repository, package: Package, installed: InstalledRepository
 ):
-    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
 
     a = get_package("A", "1.0.0")
@@ -3320,7 +3305,7 @@ def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
     solver: Solver, repo: Repository, package: Package
 ):
     package.python_versions = "^3.6"
-    solver.provider.set_package_python_versions("^3.6")
+    set_package_python_versions(solver.provider, "^3.6")
     package.add_dependency(
         Factory.create_dependency("dataclasses", {"version": "^0.7", "python": "<3.7"})
     )
@@ -3446,7 +3431,7 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
     solver: Solver, repo: Repository, package: Package
 ):
     package.python_versions = "~2.7 || ^3.5"
-    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("virtualenv", "^20.4.3"))
     package.add_dependency(
         Factory.create_dependency("pre-commit", {"version": "^2.6", "python": "^3.6.1"})
@@ -3500,7 +3485,7 @@ def test_solver_keeps_multiple_locked_dependencies_for_same_package(
     locked: Repository,
     is_locked: bool,
 ):
-    solver.provider.set_package_python_versions("^3.6")
+    set_package_python_versions(solver.provider, "^3.6")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "~1.1", "python": "<3.7"})
     )
