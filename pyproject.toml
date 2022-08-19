@@ -84,10 +84,10 @@ httpretty = "^1.0"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
 flatdict = "^4.0.1"
-mypy = ">=0.960"
-types-html5lib = ">=1.1.7"
-types-jsonschema = ">=4.4.4"
-types-requests = ">=2.27.11"
+mypy = ">=0.971"
+types-html5lib = ">=1.1.9"
+types-jsonschema = ">=4.9.0"
+types-requests = ">=2.28.8"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
