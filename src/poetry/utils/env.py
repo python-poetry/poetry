@@ -654,8 +654,9 @@ class EnvManager:
 
     def deactivate(self, io: IO) -> None:
         venv_path = self._poetry.config.virtualenvs_path
-        name = self._poetry.package.name
-        name = self.generate_env_name(name, str(self._poetry.file.parent))
+        name = self.generate_env_name(
+            self._poetry.package.name, str(self._poetry.file.parent)
+        )
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         if envs_file.exists():
@@ -965,7 +966,8 @@ class EnvManager:
 
         if venv_prompt is not None:
             venv_prompt = venv_prompt.format(
-                project_name=self._poetry.package.name, python_version=python_minor
+                project_name=self._poetry.package.name or "virtualenv",
+                python_version=python_minor,
             )
 
         if not venv.exists():
@@ -1167,7 +1169,7 @@ class EnvManager:
     def generate_env_name(cls, name: str, cwd: str) -> str:
         name = name.lower()
         sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
-        normalized_cwd = os.path.normcase(cwd)
+        normalized_cwd = os.path.normcase(os.path.realpath(cwd))
         h_bytes = hashlib.sha256(encode(normalized_cwd)).digest()
         h_str = base64.urlsafe_b64encode(h_bytes).decode()[:8]
 
@@ -1935,7 +1937,10 @@ def build_environment(
     """
     if not env or poetry.package.build_script:
         with ephemeral_environment(executable=env.python if env else None) as venv:
-            overwrite = io and io.output.is_decorated() and not io.is_debug()
+            overwrite = (
+                io is not None and io.output.is_decorated() and not io.is_debug()
+            )
+
             if io:
                 if not overwrite:
                     io.write_line("")
@@ -1949,6 +1954,7 @@ def build_environment(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
+
             venv.run_pip(
                 "install",
                 "--disable-pip-version-check",
@@ -1957,6 +1963,7 @@ def build_environment(
             )
 
             if overwrite:
+                assert io is not None
                 io.write_line("")
 
             yield venv

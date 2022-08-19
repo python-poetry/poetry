@@ -106,16 +106,19 @@ def test_solver_dependency_cache_respects_subdirectories(
     package_one = packages_one[0]
     package_one_copy = packages_one_copy[0]
 
-    assert package_one.package.name == package_one_copy.name
+    assert package_one.package.name == package_one_copy.package.name
     assert package_one.package.version.text == package_one_copy.package.version.text
-    assert package_one.package.source_type == package_one_copy.source_type == "git"
+    assert (
+        package_one.package.source_type == package_one_copy.package.source_type == "git"
+    )
     assert (
         package_one.package.source_resolved_reference
-        == package_one_copy.source_resolved_reference
+        == package_one_copy.package.source_resolved_reference
         == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
     )
     assert (
-        package_one.package.source_subdirectory != package_one_copy.source_subdirectory
+        package_one.package.source_subdirectory
+        != package_one_copy.package.source_subdirectory
     )
     assert package_one.package.source_subdirectory == "one"
     assert package_one_copy.package.source_subdirectory == "one-copy"

@@ -544,6 +544,7 @@ class Installer:
 
         Maybe we just let the solver handle it?
         """
+        extras: dict[str, list[str]]
         if self._update:
             extras = {k: [d.name for d in v] for k, v in self._package.extras.items()}
         else:

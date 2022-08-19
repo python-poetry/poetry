@@ -258,6 +258,7 @@ class Executor:
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
+                io: IO | SectionOutput
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
@@ -534,6 +535,9 @@ class Executor:
         else:
             req = Path(package.source_url).resolve(strict=False)
 
+        if package.source_subdirectory:
+            req /= package.source_subdirectory
+
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
         if pyproject.is_poetry_project():
@@ -761,6 +765,8 @@ class Executor:
                 "commit_id": package.source_resolved_reference,
             },
         }
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
 
         return reference
 

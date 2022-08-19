@@ -65,6 +65,12 @@ $ poetry cache clear pypi --all
 - Improved autocompletion documentation ([#5879](https://github.com/python-poetry/poetry/pull/5879))
 - Improved `scripts` definition documentation ([#5884](https://github.com/python-poetry/poetry/pull/5884))
 
+## [1.1.14] - 2022-07-08
+
+## Fixed
+
+- Fixed an issue where dependencies hashes could not be retrieved when locking due to a breaking change on PyPI JSON API ([#5973](https://github.com/python-poetry/poetry/pull/5973))
+
 ## [1.2.0b2] - 2022-06-07
 
 ### Added
@@ -261,6 +267,7 @@ $ poetry cache clear pypi --all
 -   Fixed the detection of the system environment when the setting `virtualenvs.create` is deactivated. ([#4507](https://github.com/python-poetry/poetry/pull/4507))
 -   Fixed an issue where unsafe parameters could be passed to `git` commands. ([python-poetry/poetry-core#203](https://github.com/python-poetry/poetry-core/pull/203))
 -   Fixed an issue where the wrong `git` executable could be used on Windows. ([python-poetry/poetry-core#205](https://github.com/python-poetry/poetry-core/pull/205))
+
 ## [1.1.8] - 2021-08-19
 
 ### Fixed
@@ -1446,6 +1453,7 @@ Initial release
 [1.2.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b1
 [1.2.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0a2
 [1.2.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0a1
+[1.1.14]: https://github.com/python-poetry/poetry/releases/tag/1.1.14
 [1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.13
 [1.1.12]: https://github.com/python-poetry/poetry/releases/tag/1.1.12
 [1.1.11]: https://github.com/python-poetry/poetry/releases/tag/1.1.11

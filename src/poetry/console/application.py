@@ -38,13 +38,13 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
 
 
-def load_command(name: str) -> Callable[[], type[Command]]:
-    def _load() -> type[Command]:
+def load_command(name: str) -> Callable[[], Command]:
+    def _load() -> Command:
         words = name.split(" ")
         module = import_module("poetry.console.commands." + ".".join(words))
         command_class = getattr(module, "".join(c.title() for c in words) + "Command")
-        command_type: type[Command] = command_class()
-        return command_type
+        command: Command = command_class()
+        return command
 
     return _load
 
@@ -136,7 +136,8 @@ class Application(BaseApplication):  # type: ignore[misc]
 
     @property
     def command_loader(self) -> CommandLoader:
-        command_loader: CommandLoader = self._command_loader
+        command_loader: CommandLoader | None = self._command_loader
+        assert command_loader is not None
         return command_loader
 
     def reset_poetry(self) -> None:
@@ -333,7 +334,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
 
-    def _load_plugins(self, io: IO = None) -> None:
+    def _load_plugins(self, io: IO | None = None) -> None:
         if self._plugins_loaded:
             return
 

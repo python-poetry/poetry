@@ -11,8 +11,7 @@ from poetry.utils.authenticator import Authenticator
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from cleo.io import BufferedIO
-    from cleo.io import ConsoleIO
+    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -24,7 +23,7 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry: Poetry, io: BufferedIO | ConsoleIO) -> None:
+    def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io

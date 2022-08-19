@@ -45,6 +45,7 @@ class Factory(BaseFactory):
     def create_poetry(
         self,
         cwd: Path | None = None,
+        with_groups: bool = True,
         io: IO | None = None,
         disable_plugins: bool = False,
         disable_cache: bool = False,
@@ -52,7 +53,7 @@ class Factory(BaseFactory):
         if io is None:
             io = NullIO()
 
-        base_poetry = super().create_poetry(cwd)
+        base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
         locker = Locker(
             base_poetry.file.parent / "poetry.lock", base_poetry.local_config

@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from cleo.io.inputs.string_input import StringInput
 from cleo.io.io import IO
 
 from poetry.console.commands.command import Command
-
-
-if TYPE_CHECKING:
-    from poetry.console.commands.self.show.plugins import SelfShowPluginsCommand
 
 
 class PluginShowCommand(Command):
@@ -26,7 +20,7 @@ class PluginShowCommand(Command):
         self.line_error(self.help)
 
         application = self.get_application()
-        command: SelfShowPluginsCommand = application.find("self show plugins")
+        command = application.find("self show plugins")
 
         exit_code: int = command.run(
             IO(
