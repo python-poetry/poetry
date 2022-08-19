@@ -14,6 +14,7 @@ from cleo.testers.command_tester import CommandTester
 from poetry.installation import Installer
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.utils.env import MockEnv
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import PoetryTestApplication
 from tests.helpers import TestExecutor
 from tests.helpers import mock_clone
@@ -71,7 +72,7 @@ def setup(
     # Patch git module to not actually clone projects
     mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
     p = mocker.patch("poetry.vcs.git.Git.get_revision")
-    p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    p.return_value = MOCK_DEFAULT_GIT_REVISION
 
     # Patch the virtual environment creation do actually do nothing
     mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)

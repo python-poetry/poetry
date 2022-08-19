@@ -22,6 +22,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.utils.env import MockEnv
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -1426,7 +1427,7 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     transaction = solver.solve()
@@ -1782,7 +1783,7 @@ def test_solver_can_resolve_git_dependencies(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     ops = check_solver_result(
@@ -1819,7 +1820,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     check_solver_result(
@@ -1851,7 +1852,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=ref[list(ref.keys())[0]],
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     git_config = {demo.source_type: demo.source_url}
@@ -2144,7 +2145,7 @@ def test_solver_git_dependencies_update(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo_installed)
 
@@ -2185,7 +2186,7 @@ def test_solver_git_dependencies_update_skipped(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference="master",
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo)
 
@@ -2217,8 +2218,8 @@ def test_solver_git_dependencies_short_hash_update_skipped(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_reference=MOCK_DEFAULT_GIT_REVISION,
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo)
 
@@ -2241,10 +2242,8 @@ def test_solver_git_dependencies_short_hash_update_skipped(
                     "0.1.2",
                     source_type="git",
                     source_url="https://github.com/demo/demo.git",
-                    source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                    source_resolved_reference=(
-                        "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                    ),
+                    source_reference=MOCK_DEFAULT_GIT_REVISION,
+                    source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
                 ),
                 "skipped": True,
             },
@@ -2983,7 +2982,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     installed.add_package(git_package)
