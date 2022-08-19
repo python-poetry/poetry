@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
-from deepdiff import DeepDiff
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 
@@ -833,7 +832,7 @@ def test_installer_with_pypi_repository(
 
     expected = fixture("with-pypi-repository")
 
-    assert not DeepDiff(expected, locker.written_data, ignore_order=True)
+    assert expected == locker.written_data
 
 
 def test_run_installs_with_local_file(

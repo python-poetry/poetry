@@ -1500,6 +1500,13 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(
         assert venv_name1 != venv_name2
 
 
+def test_generate_env_name_uses_real_path(tmp_dir: str, mocker: MockerFixture):
+    mocker.patch("os.path.realpath", return_value="the_real_dir")
+    venv_name1 = EnvManager.generate_env_name("simple-project", "the_real_dir")
+    venv_name2 = EnvManager.generate_env_name("simple-project", "linked_dir")
+    assert venv_name1 == venv_name2
+
+
 @pytest.fixture()
 def extended_without_setup_poetry() -> Poetry:
     poetry = Factory().create_poetry(
@@ -1546,3 +1553,43 @@ def test_build_environment_not_called_without_build_script_specified(
     with build_environment(poetry, project_env) as env:
         assert env == project_env
         assert not env.executed
+
+
+def test_create_venv_project_name_empty_sets_correct_prompt(
+    project_factory: ProjectFactory,
+    config: Config,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    fixture = Path(__file__).parent.parent / "fixtures" / "no_name_project"
+    poetry = project_factory("no", source=fixture)
+    manager = EnvManager(poetry)
+
+    poetry.package.python_versions = "^3.7"
+    venv_name = manager.generate_env_name("", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.7.5")),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    m.assert_called_with(
+        config_virtualenvs_path / f"{venv_name}-py3.7",
+        executable="python3",
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="virtualenv-py3.7",
+    )

@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
 
 from poetry.console.commands.init import InitCommand
-
-
-if TYPE_CHECKING:
-    from poetry.console.commands.show import ShowCommand
+from poetry.console.commands.show import ShowCommand
 
 
 class DebugResolveCommand(InitCommand):
@@ -94,7 +89,8 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: ShowCommand = self.application.find("show")
+            show_command = self.application.find("show")
+            assert isinstance(show_command, ShowCommand)
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]

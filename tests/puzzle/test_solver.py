@@ -1448,9 +1448,9 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         DependencyPackage(package.to_dependency(), package)
     )
 
-    assert len(complete_package.all_requires) == 2
+    assert len(complete_package.package.all_requires) == 2
 
-    pypi, git = complete_package.all_requires
+    pypi, git = complete_package.package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi
@@ -3596,3 +3596,88 @@ def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
     assert op.package.version.text == "0.1.2"
     assert op.package.source_type == "directory"
     assert op.package.source_url == path
+
+
+def test_solver_incompatible_dependency_with_and_without_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    """
+    The solver first encounters a requirement for google-auth and then later an
+    incompatible requirement for google-auth[aiohttp].
+
+    Testcase derived from https://github.com/python-poetry/poetry/issues/6054.
+    """
+    # Incompatible requirements from foo and bar2.
+    foo = get_package("foo", "1.0.0")
+    foo.add_dependency(Factory.create_dependency("google-auth", {"version": "^1"}))
+
+    bar = get_package("bar", "1.0.0")
+
+    bar2 = get_package("bar", "2.0.0")
+    bar2.add_dependency(
+        Factory.create_dependency(
+            "google-auth", {"version": "^2", "extras": ["aiohttp"]}
+        )
+    )
+
+    baz = get_package("baz", "1.0.0")  # required by google-auth[aiohttp]
+
+    google_auth = get_package("google-auth", "1.2.3")
+    google_auth.extras = {"aiohttp": [get_dependency("baz", "^1.0")]}
+
+    google_auth2 = get_package("google-auth", "2.3.4")
+    google_auth2.extras = {"aiohttp": [get_dependency("baz", "^1.0")]}
+
+    repo.add_package(foo)
+    repo.add_package(bar)
+    repo.add_package(bar2)
+    repo.add_package(baz)
+    repo.add_package(google_auth)
+    repo.add_package(google_auth2)
+
+    package.add_dependency(Factory.create_dependency("foo", ">=1"))
+    package.add_dependency(Factory.create_dependency("bar", ">=1"))
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": google_auth},
+            {"job": "install", "package": bar},
+            {"job": "install", "package": foo},
+        ],
+    )
+
+
+def test_update_with_prerelease_and_no_solution(
+    solver: Solver,
+    repo: Repository,
+    installed: InstalledRepository,
+    package: ProjectPackage,
+    locked: Repository,
+):
+    # Locked and installed: cleo which depends on an old version of crashtest.
+    cleo = get_package("cleo", "1.0.0a5")
+    crashtest = get_package("crashtest", "0.3.0")
+    cleo.add_dependency(Factory.create_dependency("crashtest", {"version": "<0.4.0"}))
+    locked.add_package(cleo)
+    locked.add_package(crashtest)
+
+    installed.add_package(cleo)
+    installed.add_package(crashtest)
+
+    # Try to upgrade to a new version of crashtest, this will be disallowed by the
+    # dependency from cleo.
+    package.add_dependency(Factory.create_dependency("cleo", "^1.0.0a5"))
+    package.add_dependency(Factory.create_dependency("crashtest", "^0.4.0"))
+
+    newer_crashtest = get_package("crashtest", "0.4.0")
+    even_newer_crashtest = get_package("crashtest", "0.4.1")
+    repo.add_package(cleo)
+    repo.add_package(crashtest)
+    repo.add_package(newer_crashtest)
+    repo.add_package(even_newer_crashtest)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()

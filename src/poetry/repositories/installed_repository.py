@@ -124,6 +124,7 @@ class InstalledRepository(Repository):
         source_url = None
         source_reference = None
         source_resolved_reference = None
+        source_subdirectory = None
         if is_standard_package:
             if path.name.endswith(".dist-info"):
                 paths = cls.get_package_paths(
@@ -169,6 +170,7 @@ class InstalledRepository(Repository):
             source_url=source_url,
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
+            source_subdirectory=source_subdirectory,
         )
 
         package.description = distribution.metadata.get(  # type: ignore[attr-defined]
@@ -185,6 +187,7 @@ class InstalledRepository(Repository):
         source_url = None
         source_reference = None
         source_resolved_reference = None
+        source_subdirectory = None
         develop = False
 
         url_reference = json.loads(
@@ -213,6 +216,7 @@ class InstalledRepository(Repository):
             source_reference = url_reference["vcs_info"].get(
                 "requested_revision", source_resolved_reference
             )
+        source_subdirectory = url_reference.get("subdirectory")
 
         package = Package(
             distribution.metadata["name"],
@@ -221,6 +225,7 @@ class InstalledRepository(Repository):
             source_url=source_url,
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
+            source_subdirectory=source_subdirectory,
             develop=develop,
         )
 
