@@ -40,7 +40,6 @@ class Solver:
         installed: list[Package],
         locked: list[Package],
         io: IO,
-        provider: Provider | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -48,12 +47,9 @@ class Solver:
         self._locked_packages = locked
         self._io = io
 
-        if provider is None:
-            provider = Provider(
-                self._package, self._pool, self._io, installed=installed
-            )
-
-        self._provider = provider
+        self._provider = Provider(
+            self._package, self._pool, self._io, installed=installed
+        )
         self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
 
     @property
