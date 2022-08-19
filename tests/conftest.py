@@ -30,6 +30,7 @@ from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import remove_directory
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
@@ -268,7 +269,7 @@ def git_mock(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
     mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
     p = mocker.patch("poetry.vcs.git.Git.get_revision")
-    p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    p.return_value = MOCK_DEFAULT_GIT_REVISION
 
 
 @pytest.fixture
