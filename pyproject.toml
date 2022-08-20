@@ -57,6 +57,7 @@ dulwich = "^0.21.2"
 filelock = "^3.8.0"
 html5lib = "^1.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
+installer = "^0.6.0"
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
 lockfile = "^0.12.2"
