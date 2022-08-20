@@ -50,6 +50,7 @@ python = "^3.7"
 poetry-core = "1.4.0"
 poetry-plugin-export = "^1.2.0"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
+build = "^0.10.0"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
@@ -66,6 +67,7 @@ packaging = ">=20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = "^2.5.2"
+pyproject-hooks = "^1.0.0"
 requests = "^2.18"
 requests-toolbelt = ">=0.9.1,<0.11.0"
 shellingham = "^1.5"
@@ -163,22 +165,22 @@ enable_error_code = [
 # warning.
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.commands.self.show.plugins',
-  'poetry.plugins.plugin_manager',
-  'poetry.repositories.installed_repository',
-  'poetry.utils.env',
+    'poetry.console.commands.self.show.plugins',
+    'poetry.plugins.plugin_manager',
+    'poetry.repositories.installed_repository',
+    'poetry.utils.env',
 ]
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-  'cachecontrol.*',
-  'lockfile.*',
-  'pexpect.*',
-  'requests_toolbelt.*',
-  'shellingham.*',
-  'virtualenv.*',
-  'xattr.*',
+    'cachecontrol.*',
+    'lockfile.*',
+    'pexpect.*',
+    'requests_toolbelt.*',
+    'shellingham.*',
+    'virtualenv.*',
+    'xattr.*',
 ]
 ignore_missing_imports = true
 
