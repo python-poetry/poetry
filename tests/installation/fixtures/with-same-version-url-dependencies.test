@@ -28,7 +28,7 @@ category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 files = [
-    {file = "demo-0.1.0.tar.gz", hash = "sha256:72e8531e49038c5f9c4a837b088bfcb8011f4a9f76335c8f0654df6ac539b3d6"}
+    {file = "demo-0.1.0.tar.gz", hash = "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"}
 ]
 [package.source]
 type = "url"
