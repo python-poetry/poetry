@@ -16,11 +16,14 @@ from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
 from poetry.factory import Factory
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import encode
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
 
@@ -35,6 +38,14 @@ class MockRepository(PyPiRepository):
 
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
+
+    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+        fixture = self.JSON_FIXTURES / (name + ".json")
+
+        if not fixture.exists():
+            raise PackageNotFound(f"Package [{name}] not found.")
+
+        return SimpleJsonPage("", json.loads(fixture.read_text()))
 
     def _get(
         self, url: str, headers: dict[str, str] | None = None

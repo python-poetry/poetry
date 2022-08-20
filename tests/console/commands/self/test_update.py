@@ -10,15 +10,31 @@ from poetry.core.packages.package import Package
 
 from poetry.__version__ import __version__
 from poetry.factory import Factory
+from poetry.installation.executor import Executor
+from poetry.installation.wheel_installer import WheelInstaller
 
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
 
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
+
+
+@pytest.fixture()
+def setup(mocker: MockerFixture, fixture_dir: Path):
+    mocker.patch.object(
+        Executor,
+        "_download",
+        return_value=fixture_dir("distributions").joinpath(
+            "demo-0.1.2-py2.py3-none-any.whl"
+        ),
+    )
+
+    mocker.patch.object(WheelInstaller, "install")
 
 
 @pytest.fixture()
