@@ -1,0 +1,25 @@
+{
+  "name": "poetry-core",
+  "files": [
+    {
+      "hashes": {
+        "md5": "da501738afe0c95dd4936468f8b81c31",
+        "sha256": "4a5ae0cda9df52fa6725d6afecca7b3207576c4e896c18b1e20cf3a57e4f513a"
+      },
+      "filename": "poetry_core-1.1.0rc1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/76/88/2dd243d24edfeee8825c415e4474317dd321d77c806ef43cc66b6f41622a/poetry_core-1.1.0rc1-py3-none-any.whl"
+    },
+    {
+      "hashes": {
+        "md5": "8ca80b6ec297aad1031f80345bf2411d",
+        "sha256": "993ebe45b3fe06deb022a0fd5483d760211f37eef6337122caa098d75d7da1f3"
+      },
+      "filename": "poetry-core-1.1.0rc1.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/4f/69/370fd45e9f12435321133bc5d4ce0d736757cb660274ffdedbe3de54e279/poetry-core-1.1.0rc1.tar.gz"
+    }
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3879671
+  }
+}
