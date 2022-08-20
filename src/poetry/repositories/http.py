@@ -68,7 +68,7 @@ class HTTPRepository(CachedRepository, ABC):
     def authenticated_url(self) -> str:
         return self._authenticator.authenticated_url(url=self.url)
 
-    def _download(self, url: str, dest: str) -> None:
+    def _download(self, url: str, dest: Path) -> None:
         return download_file(url, dest, session=self.session)
 
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
@@ -81,7 +81,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
-            self._download(url, str(filepath))
+            self._download(url, filepath)
 
             return PackageInfo.from_wheel(filepath)
 
@@ -97,7 +97,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
-            self._download(url, str(filepath))
+            self._download(url, filepath)
 
             return PackageInfo.from_sdist(filepath)
 
@@ -226,7 +226,7 @@ class HTTPRepository(CachedRepository, ABC):
             ):
                 with temporary_directory() as temp_dir:
                     filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, str(filepath))
+                    self._download(link.url, filepath)
 
                     known_hash = (
                         getattr(hashlib, link.hash_name)() if link.hash_name else None

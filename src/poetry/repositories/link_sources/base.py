@@ -17,6 +17,7 @@ from poetry.utils.patterns import wheel_file_re
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
 
 
@@ -98,9 +99,9 @@ class LinkSource:
             pkg = Package(name, version, source_url=link.url)
         return pkg
 
-    def links_for_version(self, name: str, version: Version) -> Iterator[Link]:
-        name = canonicalize_name(name)
-
+    def links_for_version(
+        self, name: NormalizedName, version: Version
+    ) -> Iterator[Link]:
         for link in self.links:
             pkg = self.link_package_data(link)
 

@@ -12,6 +12,8 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
+from packaging.utils import canonicalize_name
+from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
@@ -224,7 +226,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     assert [] == env.executed
 
 
-def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str):
+def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
     # create an isolated copy of the project
     fixture = Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
     extended_project = Path(tmp_dir) / "extended_project"
@@ -241,7 +243,10 @@ def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str):
 
         # is the package installed?
         repository = InstalledRepository.load(venv)
-        assert repository.package("extended-project", "1.2.3")
+        package = repository.package(
+            canonicalize_name("extended-project"), Version.parse("1.2.3")
+        )
+        assert package.name == "extended-project"
 
         # check for the module built by build.py
         try:
