@@ -1152,7 +1152,8 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         del os.environ["VIRTUAL_ENV"]
 
     version = Version.from_parts(*sys.version_info[:3])
-    poetry.package.python_versions = f"~{version.major}.{version.minor-1}.0"
+    poetry.package.python_versions = f"~{version.major}.{version.minor - 1}.0"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -1263,6 +1264,7 @@ def test_system_env_has_correct_paths():
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
     assert env.site_packages.path == Path(paths["purelib"])
+    assert paths["include"] is not None
 
 
 @pytest.mark.parametrize(
@@ -1284,6 +1286,11 @@ def test_venv_has_correct_paths(tmp_venv: VirtualEnv):
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
     assert tmp_venv.site_packages.path == Path(paths["purelib"])
+    assert paths["include"] == str(
+        tmp_venv.path.joinpath(
+            f"include/site/python{tmp_venv.version_info[0]}.{tmp_venv.version_info[1]}"
+        )
+    )
 
 
 def test_env_system_packages(tmp_path: Path, poetry: Poetry):
