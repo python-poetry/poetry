@@ -72,7 +72,7 @@ def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
 
 def download_file(
     url: str,
-    dest: str,
+    dest: Path,
     session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
 ) -> None:

@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
+    from poetry.core.semver.version import Version
 
 
 class Repository:
@@ -133,12 +134,10 @@ class Repository:
         return []
 
     def package(
-        self, name: str, version: str, extras: list[str] | None = None
+        self, name: NormalizedName, version: Version, extras: list[str] | None = None
     ) -> Package:
-        name = name.lower()
-
         for package in self.packages:
-            if name == package.name and package.version.text == version:
+            if name == package.name and package.version == version:
                 return package.clone()
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")

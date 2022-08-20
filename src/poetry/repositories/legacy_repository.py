@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
-from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
-from poetry.core.semver.version import Version
 
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
@@ -16,6 +14,7 @@ from poetry.repositories.link_sources.html import SimpleRepositoryPage
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
+    from poetry.core.semver.version import Version
     from poetry.core.semver.version_constraint import VersionConstraint
 
     from poetry.config.config import Config
@@ -35,7 +34,7 @@ class LegacyRepository(HTTPRepository):
         super().__init__(name, url.rstrip("/"), config, disable_cache)
 
     def package(
-        self, name: str, version: str, extras: list[str] | None = None
+        self, name: NormalizedName, version: Version, extras: list[str] | None = None
     ) -> Package:
         """
         Retrieve the release information.
@@ -49,7 +48,7 @@ class LegacyRepository(HTTPRepository):
         should be much faster.
         """
         try:
-            index = self._packages.index(Package(name, version, version))
+            index = self._packages.index(Package(name, version))
 
             return self._packages[index]
         except ValueError:
@@ -106,18 +105,20 @@ class LegacyRepository(HTTPRepository):
             for version in versions
         ]
 
-    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
-        page = self._get_page(f"/{canonicalize_name(name)}/")
+    def _get_release_info(
+        self, name: NormalizedName, version: Version
+    ) -> dict[str, Any]:
+        page = self._get_page(f"/{name}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
-        links = list(page.links_for_version(name, Version.parse(version)))
+        links = list(page.links_for_version(name, version))
 
         return self._links_to_data(
             links,
             PackageInfo(
                 name=name,
-                version=version,
+                version=version.text,
                 summary="",
                 platform=None,
                 requires_dist=[],

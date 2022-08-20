@@ -125,13 +125,13 @@ def mock_clone(
     return MockDulwichRepo(dest)
 
 
-def mock_download(url: str, dest: str, **__: Any) -> None:
+def mock_download(url: str, dest: Path) -> None:
     parts = urllib.parse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"
     fixture = fixtures / parts.path.lstrip("/")
 
-    copy_or_symlink(fixture, Path(dest))
+    copy_or_symlink(fixture, dest)
 
 
 class TestExecutor(Executor):
