@@ -125,13 +125,13 @@ class Provider:
         package: Package,
         pool: Pool,
         io: IO,
-        env: Env | None = None,
+        *,
         installed: list[Package] | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
-        self._env = env
+        self._env: Env | None = None
         self._python_constraint = package.python_constraint
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
@@ -168,7 +168,6 @@ class Provider:
 
     @contextmanager
     def use_environment(self, env: Env) -> Iterator[Provider]:
-        original_env = self._env
         original_python_constraint = self._python_constraint
 
         self._env = env
@@ -176,7 +175,7 @@ class Provider:
 
         yield self
 
-        self._env = original_env
+        self._env = None
         self._python_constraint = original_python_constraint
 
     @staticmethod
