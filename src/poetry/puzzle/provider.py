@@ -410,7 +410,7 @@ class Provider:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
-            download_file(url, str(dest))
+            download_file(url, dest)
             package = cls.get_package_from_file(dest)
 
         package._source_type = "url"
@@ -528,7 +528,7 @@ class Provider:
                     dependency,
                     self._pool.package(
                         package.name,
-                        package.version.text,
+                        package.version,
                         extras=list(dependency.extras),
                         repository=dependency.source_name,
                     ),

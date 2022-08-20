@@ -7,8 +7,10 @@ from poetry.repositories.repository import Repository
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.semver.version import Version
 
 
 class Pool(Repository):
@@ -118,8 +120,8 @@ class Pool(Repository):
 
     def package(
         self,
-        name: str,
-        version: str,
+        name: NormalizedName,
+        version: Version,
         extras: list[str] | None = None,
         repository: str | None = None,
     ) -> Package:

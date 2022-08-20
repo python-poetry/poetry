@@ -41,6 +41,9 @@ if TYPE_CHECKING:
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
+# Used as a mock for latest git revision.
+MOCK_DEFAULT_GIT_REVISION = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
 
 def get_package(name: str, version: str | Version) -> Package:
     return Package(name, version)
@@ -97,7 +100,7 @@ class MockDulwichRepo:
         self.path = str(root)
 
     def head(self) -> bytes:
-        return b"9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+        return MOCK_DEFAULT_GIT_REVISION.encode()
 
 
 def mock_clone(
@@ -122,13 +125,13 @@ def mock_clone(
     return MockDulwichRepo(dest)
 
 
-def mock_download(url: str, dest: str, **__: Any) -> None:
+def mock_download(url: str, dest: Path) -> None:
     parts = urllib.parse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"
     fixture = fixtures / parts.path.lstrip("/")
 
-    copy_or_symlink(fixture, Path(dest))
+    copy_or_symlink(fixture, dest)
 
 
 class TestExecutor(Executor):
