@@ -5,6 +5,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
+from typing import Collection
 from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
@@ -13,7 +14,6 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
-from poetry.packages import DependencyPackage
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import Indicator
@@ -24,10 +24,12 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.packages import DependencyPackage
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import Pool
     from poetry.utils.env import Env
@@ -49,7 +51,7 @@ class Solver:
         self._io = io
 
         self._provider = Provider(
-            self._package, self._pool, self._io, installed=installed
+            self._package, self._pool, self._io, installed=installed, locked=locked
         )
         self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
 
@@ -62,12 +64,14 @@ class Solver:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest: list[str] | None = None) -> Transaction:
+    def solve(
+        self, use_latest: Collection[NormalizedName] | None = None
+    ) -> Transaction:
         from poetry.puzzle.transaction import Transaction
 
-        with self._progress():
+        with self._progress(), self._provider.use_latest_for(use_latest or []):
             start = time.time()
-            packages, depths = self._solve(use_latest=use_latest)
+            packages, depths = self._solve()
             end = time.time()
 
             if len(self._overrides) > 1:
@@ -116,7 +120,6 @@ class Solver:
     def _solve_in_compatibility_mode(
         self,
         overrides: tuple[dict[DependencyPackage, dict[str, Dependency]], ...],
-        use_latest: list[str] | None = None,
     ) -> tuple[list[Package], list[int]]:
         packages = []
         depths = []
@@ -126,7 +129,7 @@ class Solver:
                 f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
-            _packages, _depths = self._solve(use_latest=use_latest)
+            _packages, _depths = self._solve()
             for index, package in enumerate(_packages):
                 if package not in packages:
                     packages.append(package)
@@ -143,31 +146,16 @@ class Solver:
 
         return packages, depths
 
-    def _solve(
-        self, use_latest: list[str] | None = None
-    ) -> tuple[list[Package], list[int]]:
+    def _solve(self) -> tuple[list[Package], list[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
-        locked: dict[str, list[DependencyPackage]] = defaultdict(list)
-        for package in self._locked_packages:
-            locked[package.name].append(
-                DependencyPackage(package.to_dependency(), package)
-            )
-        for dependency_packages in locked.values():
-            dependency_packages.sort(
-                key=lambda p: p.package.version,
-                reverse=True,
-            )
-
         try:
-            result = resolve_version(
-                self._package, self._provider, locked=locked, use_latest=use_latest
-            )
+            result = resolve_version(self._package, self._provider)
 
             packages = result.packages
         except OverrideNeeded as e:
-            return self._solve_in_compatibility_mode(e.overrides, use_latest=use_latest)
+            return self._solve_in_compatibility_mode(e.overrides)
         except SolveFailure as e:
             raise SolverProblemError(e)
 

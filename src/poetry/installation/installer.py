@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -59,7 +60,7 @@ class Installer:
         self._execute_operations = True
         self._lock = False
 
-        self._whitelist: list[str] = []
+        self._whitelist: list[NormalizedName] = []
 
         self._extras: list[str] = []
 
