@@ -59,7 +59,6 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
 
-
 GET_SYS_TAGS = f"""
 import importlib.util
 import json
@@ -83,7 +82,6 @@ print(
     json.dumps([(t.interpreter, t.abi, t.platform) for t in packaging_tags.sys_tags()])
 )
 """
-
 
 GET_ENVIRONMENT_INFO = """\
 import json
@@ -154,7 +152,6 @@ env = {
 
 print(json.dumps(env))
 """
-
 
 GET_BASE_PREFIX = """\
 import sys
@@ -1437,6 +1434,16 @@ class Env:
     def paths(self) -> dict[str, str]:
         if self._paths is None:
             self._paths = self.get_paths()
+
+            if self.is_venv():
+                # We copy pip's logic here for the `include` path
+                self._paths["include"] = str(
+                    self.path.joinpath(
+                        "include",
+                        "site",
+                        f"python{self.version_info[0]}.{self.version_info[1]}",
+                    )
+                )
 
         return self._paths
 
