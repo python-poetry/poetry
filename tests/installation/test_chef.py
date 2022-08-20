@@ -8,14 +8,32 @@ import pytest
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
 
+from poetry.factory import Factory
 from poetry.installation.chef import Chef
+from poetry.repositories import RepositoryPool
+from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
+from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
+
+
+@pytest.fixture()
+def pool() -> RepositoryPool:
+    pool = RepositoryPool()
+
+    pool.add_repository(MockRepository())
+
+    return pool
+
+
+@pytest.fixture(autouse=True)
+def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
+    mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
 @pytest.mark.parametrize(
@@ -82,7 +100,7 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
     )
 
     assert archives
-    assert set(archives) == {Path(path) for path in distributions.glob("demo-0.1.0*")}
+    assert set(archives) == set(distributions.glob("demo-0.1.*"))
 
 
 def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
@@ -103,3 +121,47 @@ def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
     )
 
     assert directory == expected
+
+
+def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
+    chef = Chef(config, EnvManager.get_system_env())
+
+    archive = (
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
+        .resolve()
+    )
+
+    destination = chef.get_cache_directory_for_link(Link(archive.as_uri()))
+
+    wheel = chef.prepare(archive)
+
+    assert wheel.parent == destination
+    assert wheel.name == "demo-0.1.0-py3-none-any.whl"
+
+
+def test_prepare_directory(config: Config, config_cache_dir: Path):
+    chef = Chef(config, EnvManager.get_system_env())
+
+    archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+
+    wheel = chef.prepare(archive)
+
+    assert wheel.name == "simple_project-1.2.3-py2.py3-none-any.whl"
+
+
+def test_prepare_directory_with_extensions(
+    config: Config, config_cache_dir: Path
+) -> None:
+    env = EnvManager.get_system_env()
+    chef = Chef(config, env)
+
+    archive = (
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/extended_with_no_setup")
+        .resolve()
+    )
+
+    wheel = chef.prepare(archive)
+
+    assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
