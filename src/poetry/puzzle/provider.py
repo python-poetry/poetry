@@ -134,7 +134,6 @@ class Provider:
         self._env: Env | None = None
         self._python_constraint = package.python_constraint
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
-        self._in_progress = False
         self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
@@ -887,24 +886,6 @@ class Provider:
             )
 
             self._io.write(debug_info)
-
-    @contextmanager
-    def progress(self) -> Iterator[None]:
-        if not self._io.output.is_decorated() or self.is_debugging():
-            self._io.write_line("Resolving dependencies...")
-            yield
-        else:
-            indicator = Indicator(
-                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
-            )
-
-            with indicator.auto(
-                "<info>Resolving dependencies...</info>",
-                "<info>Resolving dependencies...</info>",
-            ):
-                yield
-
-        self._in_progress = False
 
     def _merge_dependencies_by_constraint(
         self, dependencies: Iterable[Dependency]

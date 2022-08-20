@@ -16,6 +16,7 @@ from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import Indicator
 from poetry.puzzle.provider import Provider
 
 
@@ -64,7 +65,7 @@ class Solver:
     def solve(self, use_latest: list[str] | None = None) -> Transaction:
         from poetry.puzzle.transaction import Transaction
 
-        with self._provider.progress():
+        with self._progress():
             start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
             end = time.time()
@@ -96,7 +97,23 @@ class Solver:
             root_package=self._package,
         )
 
-    def solve_in_compatibility_mode(
+    @contextmanager
+    def _progress(self) -> Iterator[None]:
+        if not self._io.output.is_decorated() or self._provider.is_debugging():
+            self._io.write_line("Resolving dependencies...")
+            yield
+        else:
+            indicator = Indicator(
+                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
+            )
+
+            with indicator.auto(
+                "<info>Resolving dependencies...</info>",
+                "<info>Resolving dependencies...</info>",
+            ):
+                yield
+
+    def _solve_in_compatibility_mode(
         self,
         overrides: tuple[dict[DependencyPackage, dict[str, Dependency]], ...],
         use_latest: list[str] | None = None,
@@ -150,7 +167,7 @@ class Solver:
 
             packages = result.packages
         except OverrideNeeded as e:
-            return self.solve_in_compatibility_mode(e.overrides, use_latest=use_latest)
+            return self._solve_in_compatibility_mode(e.overrides, use_latest=use_latest)
         except SolveFailure as e:
             raise SolverProblemError(e)
 
