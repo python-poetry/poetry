@@ -18,12 +18,12 @@ from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
 from poetry.mixology.term import Term
-from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider
 
 
@@ -82,23 +82,10 @@ class VersionSolver:
     on how this solver works.
     """
 
-    def __init__(
-        self,
-        root: ProjectPackage,
-        provider: Provider,
-        locked: dict[str, list[DependencyPackage]] | None = None,
-        use_latest: list[str] | None = None,
-    ) -> None:
+    def __init__(self, root: ProjectPackage, provider: Provider) -> None:
         self._root = root
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)
-        self._locked = locked or {}
-
-        if use_latest is None:
-            use_latest = []
-
-        self._use_latest = use_latest
-
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
         self._contradicted_incompatibilities: set[Incompatibility] = set()
         self._solution = PartialSolution()
@@ -384,12 +371,12 @@ class VersionSolver:
             if dependency.is_direct_origin():
                 return False, -1
 
-            if dependency.name in self._use_latest:
+            if dependency.name in self._provider.use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
                 return not dependency.marker.is_any(), 1
 
-            locked = self._get_locked(dependency)
+            locked = self._provider.get_locked(dependency)
             if locked:
                 return not dependency.marker.is_any(), 1
 
@@ -406,7 +393,7 @@ class VersionSolver:
         else:
             dependency = min(*unsatisfied, key=_get_min)
 
-        locked = self._get_locked(dependency)
+        locked = self._provider.get_locked(dependency)
         if locked is None:
             try:
                 packages = self._dependency_cache.search_for(dependency)
@@ -498,24 +485,6 @@ class VersionSolver:
             self._incompatibilities[term.dependency.complete_name].append(
                 incompatibility
             )
-
-    def _get_locked(self, dependency: Dependency) -> DependencyPackage | None:
-        if dependency.name in self._use_latest:
-            return None
-
-        locked = self._locked.get(dependency.name, [])
-        for dependency_package in locked:
-            package = dependency_package.package
-            if (
-                # Locked dependencies are always without features.
-                # Thus, we can't use is_same_package_as() here because it compares
-                # the complete_name (including features).
-                dependency.name == package.name
-                and dependency.is_same_source_as(package)
-                and dependency.constraint.allows(package.version)
-            ):
-                return DependencyPackage(dependency, package)
-        return None
 
     def _log(self, text: str) -> None:
         self._provider.debug(text, self._solution.attempted_solutions)
