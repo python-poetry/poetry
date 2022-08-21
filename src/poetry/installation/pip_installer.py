@@ -259,22 +259,16 @@ class PipInstaller(BaseInstaller):
                     builder = SdistBuilder(package_poetry)
 
                     with builder.setup_py():
-                        if package.develop:
-                            return pip_install(
-                                path=req,
-                                environment=self._env,
-                                upgrade=True,
-                                editable=True,
-                            )
                         return pip_install(
-                            path=req, environment=self._env, deps=False, upgrade=True
+                            path=req,
+                            environment=self._env,
+                            upgrade=True,
+                            editable=package.develop,
                         )
 
-        if package.develop:
-            return pip_install(
-                path=req, environment=self._env, upgrade=True, editable=True
-            )
-        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
+        return pip_install(
+            path=req, environment=self._env, upgrade=True, editable=package.develop
+        )
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package

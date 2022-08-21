@@ -577,16 +577,10 @@ class Executor:
                     # build-systems
                     # We also need it for non-PEP-517 packages
                     builder = SdistBuilder(package_poetry)
-
                     with builder.setup_py():
-                        if package.develop:
-                            return self.pip_install(req, upgrade=True, editable=True)
-                        return self.pip_install(req, upgrade=True)
+                        return self.pip_install(req, upgrade=True, editable=package.develop)
 
-        if package.develop:
-            return self.pip_install(req, upgrade=True, editable=True)
-
-        return self.pip_install(req, upgrade=True)
+        return self.pip_install(req, upgrade=True, editable=package.develop)
 
     def _install_git(self, operation: Install | Update) -> int:
         from poetry.vcs.git import Git
