@@ -463,7 +463,6 @@ class Executor:
         if package.source_type == "git":
             return self._install_git(operation)
 
-        archive: Path
         if package.source_type == "file":
             archive = self._prepare_file(operation)
         elif package.source_type == "url":
@@ -617,7 +616,6 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        archive: Path | None
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is None:
             # No cached distributions was found, so we download and prepare it
@@ -681,7 +679,7 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive: Path = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
         with archive.open("wb") as f:
             for chunk in response.iter_content(chunk_size=4096):
