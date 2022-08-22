@@ -32,11 +32,6 @@ class GroupCommand(EnvCommand):
                 multiple=True,
             ),
             option(
-                "default",
-                None,
-                "Only include the main dependencies. (<warning>Deprecated</warning>)",
-            ),
-            option(
                 "only",
                 None,
                 "The only dependency groups to include.",
@@ -85,7 +80,6 @@ class GroupCommand(EnvCommand):
             }
 
         for opt, new, group in [
-            ("default", "only", MAIN_GROUP),
             ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
         ]:
