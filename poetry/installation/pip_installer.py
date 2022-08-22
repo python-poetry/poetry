@@ -202,34 +202,39 @@ class PipInstaller(BaseInstaller):
             legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
                 19, 0, 0
             )
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
-            if package.develop and not package_poetry.package.build_script:
-                from poetry.masonry.builders.editable import EditableBuilder
+            try:
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+            except RuntimeError:
+                package_poetry = None
 
-                # This is a Poetry package in editable mode
-                # we can use the EditableBuilder without going through pip
-                # to install it, unless it has a build script.
-                builder = EditableBuilder(package_poetry, self._env, NullIO())
-                builder.build()
+            if package_poetry is not None:
+                if package.develop and not package_poetry.package.build_script:
+                    from poetry.masonry.builders.editable import EditableBuilder
 
-                return 0
-            elif legacy_pip or package_poetry.package.build_script:
-                from poetry.core.masonry.builders.sdist import SdistBuilder
+                    # This is a Poetry package in editable mode
+                    # we can use the EditableBuilder without going through pip
+                    # to install it, unless it has a build script.
+                    builder = EditableBuilder(package_poetry, self._env, NullIO())
+                    builder.build()
 
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
-                builder = SdistBuilder(package_poetry)
+                    return 0
+                elif legacy_pip or package_poetry.package.build_script:
+                    from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                with builder.setup_py():
-                    if package.develop:
-                        args.append("-e")
+                    # We need to rely on creating a temporary setup.py
+                    # file since the version of pip does not support
+                    # build-systems
+                    # We also need it for non-PEP-517 packages
+                    builder = SdistBuilder(package_poetry)
 
-                    args.append(req)
+                    with builder.setup_py():
+                        if package.develop:
+                            args.append("-e")
 
-                    return self.run(*args)
+                        args.append(req)
+
+                        return self.run(*args)
 
         if package.develop:
             args.append("-e")
