@@ -598,6 +598,49 @@ A = []
     assert expected == content
 
 
+def test_locker_dumps_dependency_extras_in_correct_order(locker, root):
+    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    package_a = get_package("A", "1.0.0")
+    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+
+    package_a.extras = {
+        "C": [package_third, package_second, package_first],
+        "B": [package_first, package_second, package_third],
+    }
+
+    locker.set_lock_data(root, [package_a])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+B = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+C = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+A = []
+"""
+
+    assert content == expected
+
+
 @pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason="Skip for Python 3.5")
 def test_locked_repository_uses_root_dir_of_package(locker, mocker):
     content = """\
