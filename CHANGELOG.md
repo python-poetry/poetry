@@ -1,14 +1,21 @@
 # Change Log
 
+## [1.1.15] - 2022-08-22
+
+### Changed
+
+- Poetry now fallback to gather metadata for dependencies via pep517 if parsing pyproject.toml fail ([#6206](https://github.com/python-poetry/poetry/pull/6206))
+- Extras and extras dependencies are now sorted in lock file ([#6207](https://github.com/python-poetry/poetry/pull/6207))
+
 ## [1.1.14] - 2022-07-08
 
-## Fixed
+### Fixed
 
 - Fixed an issue where dependencies hashes could not be retrieved when locking due to a breaking change on PyPI JSON API ([#5973](https://github.com/python-poetry/poetry/pull/5973))
 
 ## [1.1.13] - 2022-02-09
 
-## Fixed
+### Fixed
 
 - Fixed an issue where envs in MSYS2 always reported as broken ([#4942](https://github.com/python-poetry/poetry/pull/4942))
 - Fixed an issue where conda envs in windows are always reported as broken ([#5008](https://github.com/python-poetry/poetry/pull/5008))
@@ -1183,7 +1190,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.14...1.1
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.15...1.1
+[1.1.15]: https://github.com/python-poetry/poetry/releases/tag/1.1.15
 [1.1.14]: https://github.com/python-poetry/poetry/releases/tag/1.1.14
 [1.1.13]: https://github.com/python-poetry/poetry/releases/tag/1.1.13
 [1.1.12]: https://github.com/python-poetry/poetry/releases/tag/1.1.12
