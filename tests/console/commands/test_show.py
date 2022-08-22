@@ -211,12 +211,6 @@ cachy 0.1.0 Cachy package
 """,
         ),
         (
-            "--default",
-            """\
-cachy 0.1.0 Cachy package
-""",
-        ),
-        (
             "--no-dev",
             """\
 cachy 0.1.0 Cachy package
