@@ -704,3 +704,59 @@ def test_executor_should_be_initialized_with_correct_workers(
     executor = Executor(tmp_venv, pool, config, io)
 
     assert executor._max_workers == expected_workers
+
+
+def test_executer_fallback_on_poetry_create_error(
+    mocker: MockerFixture,
+    config: Config,
+    pool: Pool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
+):
+    mock_pip_install = mocker.patch("poetry.installation.executor.pip_install")
+    mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
+    mock_editable_builder = mocker.patch(
+        "poetry.masonry.builders.editable.EditableBuilder"
+    )
+    mock_create_poetry = mocker.patch(
+        "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
+    )
+
+    config.merge({"cache-dir": tmp_dir})
+
+    executor = Executor(env, pool, config, io)
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/simple_project")
+        .resolve()
+        .as_posix(),
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+        ]
+    )
+
+    expected = f"""
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing simple-project (1.2.3 {directory_package.source_url})
+"""
+
+    expected = set(expected.splitlines())
+    output = set(io.fetch_output().splitlines())
+    assert output == expected
+    assert return_code == 0
+    assert mock_create_poetry.call_count == 1
+    assert mock_sdist_builder.call_count == 0
+    assert mock_editable_builder.call_count == 0
+    assert mock_pip_install.call_count == 1
+    assert mock_pip_install.call_args[1].get("upgrade") is True
+    assert mock_pip_install.call_args[1].get("editable") is False
