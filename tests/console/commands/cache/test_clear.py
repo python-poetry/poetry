@@ -39,6 +39,22 @@ def test_cache_clear_all(
     assert not cache.has("cleo:0.2")
 
 
+def test_cache_clear_all_assume_yes(
+    tester: ApplicationTester,
+    repository_one: str,
+    repository_cache_dir: Path,
+    cache: CacheManager,
+):
+    exit_code = tester.execute(f"cache clear {repository_one} --all --assume-yes")
+
+    assert exit_code == 0
+    assert tester.io.fetch_output() == "Deleting 2 entries.\n"
+    # ensure directory is empty
+    assert not any((repository_cache_dir / repository_one).iterdir())
+    assert not cache.has("cachy:0.1")
+    assert not cache.has("cleo:0.2")
+
+
 def test_cache_clear_all_no(
     tester: ApplicationTester,
     repository_one: str,
@@ -64,6 +80,19 @@ def test_cache_clear_pkg(
 
     assert exit_code == 0
     assert tester.io.fetch_output() == ""
+    assert not cache.has("cachy:0.1")
+    assert cache.has("cleo:0.2")
+
+
+def test_cache_clear_pkg_assume_yes(
+    tester: ApplicationTester,
+    repository_one: str,
+    cache: CacheManager,
+):
+    exit_code = tester.execute(f"cache clear {repository_one}:cachy:0.1 -y")
+
+    assert exit_code == 0
+    assert tester.io.fetch_output() == "Deleting cache entry cachy:0.1\n"
     assert not cache.has("cachy:0.1")
     assert cache.has("cleo:0.2")
 

@@ -14,7 +14,15 @@ class CacheClearCommand(Command):
     description = "Clears Poetry's cache."
 
     arguments = [argument("cache", description="The name of the cache to clear.")]
-    options = [option("all", description="Clear all entries in the cache.")]
+    options = [
+        option(long_name="all", description="Clear all entries in the cache."),
+        option(
+            long_name="assume-yes",
+            short_name="y",
+            flag=True,
+            description="Assume yes; skip confirmation prompts",
+        ),
+    ]
 
     def handle(self) -> int:
         from cachy import CacheManager
@@ -55,11 +63,15 @@ class CacheClearCommand(Command):
                 len(files) for _path, _dirs, files in os.walk(str(cache_dir))
             )
 
-            delete = self.confirm(f"<question>Delete {entries_count} entries?</>")
-            if not delete:
-                return 0
+            if self.option("assume-yes"):
+                self.line(f"Deleting {entries_count} entries.")
+            else:
+                delete = self.confirm(f"<question>Delete {entries_count} entries?</>")
+                if not delete:
+                    return 0
 
             cache.flush()
+
         elif len(parts) == 2:
             raise RuntimeError(
                 "Only specifying the package name is not yet supported. "
@@ -73,9 +85,12 @@ class CacheClearCommand(Command):
                 self.line(f"No cache entries for {package}:{version}")
                 return 0
 
-            delete = self.confirm(f"Delete cache entry {package}:{version}")
-            if not delete:
-                return 0
+            if self.option("assume-yes"):
+                self.line(f"Deleting cache entry {package}:{version}")
+            else:
+                delete = self.confirm(f"Delete cache entry {package}:{version}")
+                if not delete:
+                    return 0
 
             cache.forget(f"{package}:{version}")
         else:
