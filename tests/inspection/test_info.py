@@ -127,6 +127,22 @@ def test_info_from_poetry_directory():
     demo_check_info(info)
 
 
+def test_info_from_poetry_directory_fallback_on_poetry_create_error(mocker):
+    mock_create_poetry = mocker.patch(
+        "poetry.inspection.info.Factory.create_poetry", side_effect=RuntimeError
+    )
+    mock_get_poetry_package = mocker.spy(PackageInfo, "_get_poetry_package")
+    mock_get_pep517_metadata = mocker.patch(
+        "poetry.inspection.info.PackageInfo._pep517_metadata"
+    )
+
+    PackageInfo.from_directory(FIXTURE_DIR_INSPECTIONS / "demo_poetry_package")
+
+    assert mock_create_poetry.call_count == 1
+    assert mock_get_poetry_package.call_count == 1
+    assert mock_get_pep517_metadata.call_count == 1
+
+
 def test_info_from_requires_txt():
     info = PackageInfo.from_metadata(
         FIXTURE_DIR_INSPECTIONS / "demo_only_requires_txt.egg-info"

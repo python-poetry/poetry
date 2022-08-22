@@ -216,3 +216,35 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     # any command in the virtual environment should trigger the error message
     output = tmp_venv.run("python", "-m", "site")
     assert "Error processing line 1 of {}".format(pth_file_candidate) not in output
+
+
+def test_install_directory_fallback_on_poetry_create_error(mocker, tmp_venv, pool):
+    import poetry.installation.pip_installer
+
+    mock_create_poetry = mocker.patch(
+        "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
+    )
+    mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
+    mock_editable_builder = mocker.patch(
+        "poetry.masonry.builders.editable.EditableBuilder"
+    )
+    mock_pip_install = mocker.patch.object(
+        poetry.installation.pip_installer.PipInstaller, "run"
+    )
+
+    package = Package(
+        "demo",
+        "1.0.0",
+        source_type="directory",
+        source_url=str(
+            Path(__file__).parent.parent / "fixtures/inspection/demo_poetry_package"
+        ),
+    )
+
+    installer = PipInstaller(tmp_venv, NullIO(), pool)
+    installer.install_directory(package)
+
+    assert mock_create_poetry.call_count == 1
+    assert mock_sdist_builder.call_count == 0
+    assert mock_editable_builder.call_count == 0
+    assert mock_pip_install.call_count == 1

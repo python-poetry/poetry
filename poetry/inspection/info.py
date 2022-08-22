@@ -437,7 +437,12 @@ class PackageInfo:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
-            return Factory().create_poetry(path).package
+            try:
+                return Factory().create_poetry(path).package
+            except RuntimeError:
+                return None
+
+        return None
 
     @classmethod
     def _pep517_metadata(cls, path):  # type (Path) -> PackageInfo
