@@ -11,13 +11,14 @@ if TYPE_CHECKING:
 
 class EnvCommand(Command):
     def __init__(self) -> None:
-        # Set in poetry.console.application.Application.configure_installer
-        self._env: Env = None  # type: ignore[assignment]
+        # Set in poetry.console.application.Application.configure_env
+        self._env: Env | None = None
 
         super().__init__()
 
     @property
     def env(self) -> Env:
+        assert self._env is not None
         return self._env
 
     def set_env(self, env: Env) -> None:

@@ -100,15 +100,15 @@ list of installed packages
         self.poetry.set_locker(
             self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
         )
-        self._installer.set_locker(self.poetry.locker)
+        self.installer.set_locker(self.poetry.locker)
 
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run", False))
-        self._installer.verbose(self.io.is_verbose())
-        self._installer.update(True)
-        self._installer.whitelist(removed_set)
+        self.installer.set_package(self.poetry.package)
+        self.installer.dry_run(self.option("dry-run", False))
+        self.installer.verbose(self.io.is_verbose())
+        self.installer.update(True)
+        self.installer.whitelist(removed_set)
 
-        status = self._installer.run()
+        status = self.installer.run()
 
         if not self.option("dry-run") and status == 0:
             assert isinstance(content, TOMLDocument)

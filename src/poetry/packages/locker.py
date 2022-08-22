@@ -425,8 +425,8 @@ class Locker:
                 # The lock file should only store paths relative to the root project
                 url = Path(
                     os.path.relpath(
-                        Path(url).resolve().as_posix(),
-                        Path(self._lock.path.parent).resolve().as_posix(),
+                        Path(url).resolve(),
+                        Path(self._lock.path.parent).resolve(),
                     )
                 ).as_posix()
 

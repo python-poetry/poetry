@@ -169,3 +169,31 @@ def test_with_compatible_locked_dependencies_with_extras(
             "baz": get_package("baz", "1.0.0"),
         },
     )
+
+
+def test_with_yanked_package_in_lock(
+    root: ProjectPackage, provider: Provider, repo: Repository
+):
+    root.add_dependency(Factory.create_dependency("foo", "*"))
+
+    add_to_repo(repo, "foo", "1")
+    add_to_repo(repo, "foo", "2", yanked=True)
+
+    # yanked version is kept in lock file
+    locked_foo = get_package("foo", "2")
+    assert not locked_foo.yanked
+    result = check_solver_result(
+        root,
+        provider,
+        result={"foo": "2"},
+        locked={"foo": locked_foo},
+    )
+    foo = result.packages[0]
+    assert foo.yanked
+
+    # without considering the lock file, the other version is chosen
+    check_solver_result(
+        root,
+        provider,
+        result={"foo": "1"},
+    )

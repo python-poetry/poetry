@@ -3,8 +3,14 @@ from __future__ import annotations
 import sys
 
 from os import environ
+from typing import TYPE_CHECKING
+from typing import cast
 
 from poetry.console.commands.env_command import EnvCommand
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env import VirtualEnv
 
 
 class ShellCommand(EnvCommand):
@@ -29,10 +35,15 @@ If one doesn't exist yet, it will be created.
 
         self.line(f"Spawning shell within <info>{self.env.path}</>")
 
+        # Be sure that we have the right type of environment.
+        env = self.env
+        assert env.is_venv()
+        env = cast("VirtualEnv", env)
+
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"
         shell = Shell.get()
-        shell.activate(self.env)  # type: ignore[arg-type]
+        shell.activate(env)
         environ.pop("POETRY_ACTIVE")
 
         return 0
