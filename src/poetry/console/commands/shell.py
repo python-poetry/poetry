@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 
-from distutils.util import strtobool
 from os import environ
 from typing import TYPE_CHECKING
 from typing import cast
@@ -27,10 +26,7 @@ If one doesn't exist yet, it will be created.
         from poetry.utils.shell import Shell
 
         # Check if it's already activated or doesn't exist and won't be created
-        venv_activated = strtobool(environ.get("POETRY_ACTIVE", "0")) or getattr(
-            sys, "real_prefix", sys.prefix
-        ) == str(self.env.path)
-        if venv_activated:
+        if self._is_venv_activated():
             self.line(
                 f"Virtual environment already activated: <info>{self.env.path}</>"
             )
@@ -51,3 +47,8 @@ If one doesn't exist yet, it will be created.
         environ.pop("POETRY_ACTIVE")
 
         return 0
+
+    def _is_venv_activated(self) -> bool:
+        return bool(environ.get("POETRY_ACTIVE")) or getattr(
+            sys, "real_prefix", sys.prefix
+        ) == str(self.env.path)
