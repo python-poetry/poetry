@@ -131,18 +131,10 @@ class Authenticator:
             self._get_repository_config_for_url
         )
 
-    @property
-    def cache(self) -> FileCache | None:
-        return self._cache_control
-
-    @property
-    def is_cached(self) -> bool:
-        return self._cache_control is not None
-
     def create_session(self) -> requests.Session:
         session = requests.Session()
 
-        if not self.is_cached:
+        if self._cache_control is None:
             return session
 
         session = CacheControl(sess=session, cache=self._cache_control)
@@ -171,7 +163,7 @@ class Authenticator:
         self.close()
 
     def delete_cache(self, url: str) -> None:
-        if self.is_cached:
+        if self._cache_control is not None:
             self._cache_control.delete(key=url)
 
     def authenticated_url(self, url: str) -> str:
@@ -202,12 +194,12 @@ class Authenticator:
         session = self.get_session(url=url)
         prepared_request = session.prepare_request(request)
 
-        proxies = kwargs.get("proxies", {})
-        stream = kwargs.get("stream")
+        proxies: dict[str, str] = kwargs.get("proxies", {})
+        stream: bool | None = kwargs.get("stream")
 
         certs = self.get_certs_for_url(url)
-        verify = kwargs.get("verify") or certs.cert or certs.verify
-        cert = kwargs.get("cert") or certs.client_cert
+        verify: bool | str | Path = kwargs.get("verify") or certs.cert or certs.verify
+        cert: str | Path | None = kwargs.get("cert") or certs.client_cert
 
         if cert is not None:
             cert = str(cert)

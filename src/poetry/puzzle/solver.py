@@ -83,6 +83,16 @@ class Solver:
                     f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
+        for p in packages:
+            if p.yanked:
+                message = (
+                    f"The locked version {p.pretty_version} for {p.pretty_name} is a"
+                    " yanked version."
+                )
+                if p.yanked_reason:
+                    message += f" Reason for being yanked: {p.yanked_reason}"
+                self._io.write_error_line(f"<warning>Warning: {message}</warning>")
+
         return Transaction(
             self._locked_packages,
             list(zip(packages, depths)),
