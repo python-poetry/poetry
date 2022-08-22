@@ -728,6 +728,8 @@ To only remove a specific package from a cache, you have to specify the cache en
 poetry cache clear pypi:requests:2.24.0
 ```
 
+To suppress prompts and proceed with the action without interaction, pass `--assume-yes` or `-y`.
+
 ## source
 
 The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
