@@ -78,10 +78,6 @@ COMMANDS = [
     "env list",
     "env remove",
     "env use",
-    # Plugin commands
-    "plugin add",
-    "plugin remove",
-    "plugin show",
     # Self commands
     "self add",
     "self install",
