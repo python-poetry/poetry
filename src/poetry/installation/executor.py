@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import csv
 import itertools
 import json
@@ -542,7 +543,12 @@ class Executor:
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
+        package_poetry = None
         if pyproject.is_poetry_project():
+            with contextlib.suppress(RuntimeError):
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+
+        if package_poetry is not None:
             # Even if there is a build system specified
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
@@ -552,33 +558,27 @@ class Executor:
                 < self._env.pip_version.__class__.from_parts(19, 0, 0)
             )
 
-            try:
-                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
-            except RuntimeError:
-                package_poetry = None
+            builder: Builder
+            if package.develop and not package_poetry.package.build_script:
+                from poetry.masonry.builders.editable import EditableBuilder
 
-            if package_poetry is not None:
-                builder: Builder
-                if package.develop and not package_poetry.package.build_script:
-                    from poetry.masonry.builders.editable import EditableBuilder
+                # This is a Poetry package in editable mode
+                # we can use the EditableBuilder without going through pip
+                # to install it, unless it has a build script.
+                builder = EditableBuilder(package_poetry, self._env, NullIO())
+                builder.build()
 
-                    # This is a Poetry package in editable mode
-                    # we can use the EditableBuilder without going through pip
-                    # to install it, unless it has a build script.
-                    builder = EditableBuilder(package_poetry, self._env, NullIO())
-                    builder.build()
+                return 0
+            elif legacy_pip or package_poetry.package.build_script:
+                from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                    return 0
-                elif legacy_pip or package_poetry.package.build_script:
-                    from poetry.core.masonry.builders.sdist import SdistBuilder
-
-                    # We need to rely on creating a temporary setup.py
-                    # file since the version of pip does not support
-                    # build-systems
-                    # We also need it for non-PEP-517 packages
-                    builder = SdistBuilder(package_poetry)
-                    with builder.setup_py():
-                        return self.pip_install(req, upgrade=True, editable=package.develop)
+                # We need to rely on creating a temporary setup.py
+                # file since the version of pip does not support
+                # build-systems
+                # We also need it for non-PEP-517 packages
+                builder = SdistBuilder(package_poetry)
+                with builder.setup_py():
+                    return self.pip_install(req, upgrade=True, editable=package.develop)
 
         return self.pip_install(req, upgrade=True, editable=package.develop)
 
