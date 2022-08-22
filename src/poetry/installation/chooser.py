@@ -198,8 +198,7 @@ class Chooser:
 
         has_allowed_hash = int(self._is_link_hash_allowed_for_package(link, package))
 
-        # TODO: Proper yank value
-        yank_value = 0
+        yank_value = int(not link.yanked)
 
         return (
             has_allowed_hash,
