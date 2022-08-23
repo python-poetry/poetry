@@ -112,6 +112,20 @@ class Pool(Repository):
         idx = self._lookup.get(repository_name)
         if idx is not None:
             del self._repositories[idx]
+            del self._lookup[repository_name]
+
+            if idx == 0:
+                self._default = False
+
+            for name in self._lookup:
+                if self._lookup[name] > idx:
+                    self._lookup[name] -= 1
+
+            if (
+                self._secondary_start_idx is not None
+                and self._secondary_start_idx > idx
+            ):
+                self._secondary_start_idx -= 1
 
         return self
 
