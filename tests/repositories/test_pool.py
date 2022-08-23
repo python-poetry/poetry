@@ -102,9 +102,16 @@ def test_remove_default_repository():
     pool.add_repository(repo1)
     pool.add_repository(repo2)
     pool.add_repository(default, default=True)
+
+    assert pool.has_default()
+
     pool.remove_repository("default")
+
+    assert not pool.has_default()
+
     pool.add_repository(new_default, default=True)
 
+    assert pool.has_default()
     assert pool.repositories[0] is new_default
     assert not pool.has_repository("default")
 
