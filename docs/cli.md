@@ -348,7 +348,13 @@ poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
-or make them point to a local directory or file:
+or reference a subdirectory:
+
+```bash
+poetry add git+https://github.com/myorg/mypackage_with_subdirs.git@main#subdirectory=subdir
+```
+
+You can also add a local directory or file:
 
 ```bash
 poetry add ./my-package/
