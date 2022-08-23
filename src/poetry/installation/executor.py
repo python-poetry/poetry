@@ -477,17 +477,18 @@ class Executor:
 
     def _install(self, operation: Install | Update) -> int:
         package = operation.package
-        if package.source_type == "directory":
-            if not self._use_wheel_installer:
-                return self._install_directory_without_wheel_installer(operation)
+        if package.source_type == "directory" and not self._use_wheel_installer:
+            return self._install_directory_without_wheel_installer(operation)
 
-            return self._install_directory(operation)
-
+        cleanup_archive: bool = False
         if package.source_type == "git":
-            return self._install_git(operation)
-
-        if package.source_type == "file":
+            archive = self._prepare_git_archive(operation)
+            cleanup_archive = True
+        elif package.source_type == "file":
             archive = self._prepare_archive(operation)
+        elif package.source_type == "directory":
+            archive = self._prepare_directory_archive(operation)
+            cleanup_archive = True
         elif package.source_type == "url":
             assert package.source_url is not None
             archive = self._download_link(operation, Link(package.source_url))
@@ -504,7 +505,18 @@ class Executor:
         if not self._use_wheel_installer:
             return self.pip_install(archive, upgrade=operation.job_type == "update")
 
-        self._wheel_installer.install(archive)
+        try:
+            if operation.job_type == "update":
+                # Uninstall first
+                # TODO: Make an uninstaller and find a way to rollback in case
+                # the new package can't be installed
+                assert isinstance(operation, Update)
+                self._remove(operation.initial_package)
+
+            self._wheel_installer.install(archive)
+        finally:
+            if cleanup_archive:
+                archive.unlink()
 
         return 0
 
@@ -541,9 +553,9 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
-        return self._chef.prepare(archive)
+        return self._chef.prepare(archive, editable=package.develop)
 
-    def _install_directory(self, operation: Install | Update) -> int:
+    def _prepare_directory_archive(self, operation: Install | Update) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -562,27 +574,35 @@ class Executor:
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        if package.develop:
-            # Editable installations are currently not supported
-            # for PEP-517 build systems so we defer to pip.
-            # TODO: Remove this workaround once either PEP-660 or PEP-662 is accepted
-            return self.pip_install(req, editable=True)
+        return self._prepare_archive(operation)
 
-        archive = self._prepare_archive(operation)
+    def _prepare_git_archive(self, operation: Install | Update) -> Path:
+        from poetry.vcs.git import Git
 
-        try:
-            if operation.job_type == "update":
-                # Uninstall first
-                # TODO: Make an uninstaller and find a way to rollback in case
-                # the new package can't be installed
-                assert isinstance(operation, Update)
-                self._remove(operation.initial_package)
+        package = operation.package
+        operation_message = self.get_operation_message(operation)
 
-            self._wheel_installer.install(archive)
-        finally:
-            archive.unlink()
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
+        )
+        self._write(operation, message)
 
-        return 0
+        assert package.source_url is not None
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
+
+        # Now we just need to install from the source directory
+        original_url = package.source_url
+        package._source_url = str(source.path)
+
+        archive = self._prepare_directory_archive(operation)
+
+        package._source_url = original_url
+
+        return archive
 
     def _install_directory_without_wheel_installer(
         self, operation: Install | Update
@@ -649,34 +669,6 @@ class Executor:
                     return self.pip_install(req, upgrade=True, editable=package.develop)
 
         return self.pip_install(req, upgrade=True, editable=package.develop)
-
-    def _install_git(self, operation: Install | Update) -> int:
-        from poetry.vcs.git import Git
-
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
-        )
-        self._write(operation, message)
-
-        assert package.source_url is not None
-        source = Git.clone(
-            url=package.source_url,
-            source_root=self._env.path / "src",
-            revision=package.source_resolved_reference or package.source_reference,
-        )
-
-        # Now we just need to install from the source directory
-        original_url = package.source_url
-        package._source_url = str(source.path)
-
-        status_code = self._install_directory(operation)
-
-        package._source_url = original_url
-
-        return status_code
 
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)

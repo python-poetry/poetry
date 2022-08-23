@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from zipfile import ZipFile
 
 import pytest
 
@@ -165,3 +166,16 @@ def test_prepare_directory_with_extensions(
     wheel = chef.prepare(archive)
 
     assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
+
+
+def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
+    chef = Chef(config, EnvManager.get_system_env())
+
+    archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+
+    wheel = chef.prepare(archive, editable=True)
+
+    assert wheel.name == "simple_project-1.2.3-py2.py3-none-any.whl"
+
+    with ZipFile(wheel) as z:
+        assert "simple_project.pth" in z.namelist()
