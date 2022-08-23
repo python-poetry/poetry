@@ -94,18 +94,22 @@ class Chef:
             Path(config.get("cache-dir")).expanduser().joinpath("artifacts")
         )
 
-    def prepare(self, archive: Path, output_dir: Path | None = None) -> Path:
+    def prepare(
+        self, archive: Path, output_dir: Path | None = None, *, editable: bool = False
+    ) -> Path:
         if not self._should_prepare(archive):
             return archive
 
         if archive.is_dir():
             tmp_dir = tempfile.mkdtemp(prefix="poetry-chef-")
 
-            return self._prepare(archive, Path(tmp_dir))
+            return self._prepare(archive, Path(tmp_dir), editable=editable)
 
         return self._prepare_sdist(archive, destination=output_dir)
 
-    def _prepare(self, directory: Path, destination: Path) -> Path:
+    def _prepare(
+        self, directory: Path, destination: Path, *, editable: bool = False
+    ) -> Path:
         with ephemeral_environment(self._env.python) as venv:
             env = IsolatedEnv(venv, self._config)
             builder = ProjectBuilder(
@@ -124,7 +128,7 @@ class Chef:
                 try:
                     return Path(
                         builder.build(
-                            "wheel",
+                            "wheel" if not editable else "editable",
                             destination.as_posix(),
                         )
                     )
