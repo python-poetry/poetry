@@ -4,16 +4,19 @@ import csv
 import json
 import re
 import shutil
+import tempfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from urllib.parse import urlparse
 
 import pytest
 
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
+from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 
@@ -41,26 +44,40 @@ if TYPE_CHECKING:
 
 
 class Chef(BaseChef):
-    _directory_wheel = None
-    _sdist_wheel = None
+    _directory_wheels: list[Path] | None = None
+    _sdist_wheels: list[Path] | None = None
 
-    def set_directory_wheel(self, wheel: Path) -> None:
-        self._directory_wheel = wheel
+    def set_directory_wheel(self, wheels: Path | list[Path]) -> None:
+        if not isinstance(wheels, list):
+            wheels = [wheels]
 
-    def set_sdist_wheel(self, wheel: Path) -> None:
-        self._sdist_wheel = wheel
+        self._directory_wheels = wheels
+
+    def set_sdist_wheel(self, wheels: Path | list[Path]) -> None:
+        if not isinstance(wheels, list):
+            wheels = [wheels]
+
+        self._sdist_wheels = wheels
 
     def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
-        if self._sdist_wheel is not None:
-            return self._sdist_wheel
+        if self._sdist_wheels is not None:
+            wheel = self._sdist_wheels.pop(0)
+            self._sdist_wheels.append(wheel)
+
+            return wheel
 
         return super()._prepare_sdist(archive)
 
-    def _prepare(self, directory: Path, destination: Path) -> Path:
-        if self._directory_wheel is not None:
-            return self._directory_wheel
+    def _prepare(
+        self, directory: Path, destination: Path, *, editable: bool = False
+    ) -> Path:
+        if self._directory_wheels is not None:
+            wheel = self._directory_wheels.pop(0)
+            self._directory_wheels.append(wheel)
 
-        return super()._prepare(directory, destination)
+            return wheel
+
+        return super()._prepare(directory, destination, editable=editable)
 
 
 @pytest.fixture
@@ -132,17 +149,38 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
 
 
 @pytest.fixture()
-def wheel(tmp_dir: Path) -> Path:
-    shutil.copyfile(
-        Path(__file__)
-        .parent.parent.joinpath(
-            "fixtures/distributions/demo-0.1.2-py2.py3-none-any.whl"
-        )
-        .as_posix(),
-        Path(tmp_dir).joinpath("demo-0.1.2-py2.py3-none-any.whl").as_posix(),
-    )
+def copy_wheel(tmp_dir: Path) -> Callable[[], Path]:
+    def _copy_wheel() -> Path:
+        tmp_name = tempfile.mktemp()
+        Path(tmp_dir).joinpath(tmp_name).mkdir()
 
-    return Path(tmp_dir).joinpath("demo-0.1.2-py2.py3-none-any.whl")
+        shutil.copyfile(
+            Path(__file__)
+            .parent.parent.joinpath(
+                "fixtures/distributions/demo-0.1.2-py2.py3-none-any.whl"
+            )
+            .as_posix(),
+            Path(tmp_dir)
+            .joinpath(tmp_name)
+            .joinpath("demo-0.1.2-py2.py3-none-any.whl")
+            .as_posix(),
+        )
+
+        return (
+            Path(tmp_dir).joinpath(tmp_name).joinpath("demo-0.1.2-py2.py3-none-any.whl")
+        )
+
+    return _copy_wheel
+
+
+@pytest.fixture()
+def wheel(copy_wheel: Callable[[], Path]) -> Path:
+    archive = copy_wheel()
+
+    yield archive
+
+    if archive.exists():
+        archive.unlink()
 
 
 def test_execute_executes_a_batch_of_operations(
@@ -153,15 +191,18 @@ def test_execute_executes_a_batch_of_operations(
     tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
-    wheel: Path,
+    copy_wheel: Callable[[], Path],
 ):
     wheel_install = mocker.patch.object(WheelInstaller, "install")
 
     config.merge({"cache-dir": tmp_dir})
 
+    prepare_spy = mocker.spy(Chef, "_prepare")
     chef = Chef(config, env)
-    chef.set_directory_wheel(wheel)
-    chef.set_sdist_wheel(wheel)
+    chef.set_directory_wheel([copy_wheel(), copy_wheel()])
+    chef.set_sdist_wheel(copy_wheel())
+
+    io.set_verbosity(Verbosity.VERY_VERBOSE)
 
     executor = Executor(env, pool, config, io)
     executor._chef = chef
@@ -223,10 +264,16 @@ Package operations: 4 installs, 1 update, 1 removal
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
     assert output == expected
-    assert wheel_install.call_count == 4
-    # One pip uninstall and one pip editable install
+    assert wheel_install.call_count == 5
+    # Two pip uninstalls: one for the remove operation one for the update operation
     assert len(env.executed) == 2
     assert return_code == 0
+
+    assert prepare_spy.call_count == 2
+    assert prepare_spy.call_args_list == [
+        mocker.call(chef, mocker.ANY, mocker.ANY, editable=False),
+        mocker.call(chef, mocker.ANY, mocker.ANY, editable=True),
+    ]
 
 
 @pytest.mark.parametrize(
