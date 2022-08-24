@@ -1,0 +1,34 @@
+[[package]]
+name = "demo"
+version = "0.1.2"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.dependencies]
+pendulum = ">=1.4.4"
+
+[package.source]
+type = "git"
+url = "https://github.com/demo/demo.git"
+reference = "HEAD"
+resolved_reference = "123456"
+
+[[package]]
+name = "pendulum"
+version = "1.4.4"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+demo = []
+pendulum = []
