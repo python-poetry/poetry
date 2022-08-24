@@ -8,6 +8,7 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 
 from poetry.factory import Factory
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_package
 
 
@@ -205,12 +206,6 @@ pytest 3.7.3 Pytest package
         ),
         (
             f"--only {MAIN_GROUP}",
-            """\
-cachy 0.1.0 Cachy package
-""",
-        ),
-        (
-            "--default",
             """\
 cachy 0.1.0 Cachy package
 """,
@@ -1121,10 +1116,8 @@ def test_show_outdated_git_dev_dependency(
                     "checksum": [],
                     "source": {
                         "type": "git",
-                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                        "resolved_reference": (
-                            "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                        ),
+                        "reference": MOCK_DEFAULT_GIT_REVISION,
+                        "resolved_reference": MOCK_DEFAULT_GIT_REVISION,
                         "url": "https://github.com/demo/demo.git",
                     },
                 },
@@ -1223,7 +1216,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
                     "checksum": [],
                     "source": {
                         "type": "git",
-                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                        "reference": MOCK_DEFAULT_GIT_REVISION,
                         "url": "https://github.com/demo/pyproject-demo.git",
                     },
                 },

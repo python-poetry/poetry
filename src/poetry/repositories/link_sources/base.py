@@ -6,10 +6,10 @@ import re
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 
@@ -17,6 +17,7 @@ from poetry.utils.patterns import wheel_file_re
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
 
 
@@ -69,7 +70,9 @@ class LinkSource:
 
     @classmethod
     def link_package_data(cls, link: Link) -> Package | None:
-        name, version_string, version = None, None, None
+        name: str | None = None
+        version_string: str | None = None
+        version: Version | None = None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:
@@ -96,9 +99,9 @@ class LinkSource:
             pkg = Package(name, version, source_url=link.url)
         return pkg
 
-    def links_for_version(self, name: str, version: Version) -> Iterator[Link]:
-        name = canonicalize_name(name)
-
+    def links_for_version(
+        self, name: NormalizedName, version: Version
+    ) -> Iterator[Link]:
         for link in self.links:
             pkg = self.link_package_data(link)
 
@@ -110,3 +113,17 @@ class LinkSource:
         the link, it will be rewritten to %20 (while not over-quoting
         % or other characters)."""
         return self.CLEAN_REGEX.sub(lambda match: f"%{ord(match.group(0)):02x}", url)
+
+    def yanked(self, name: NormalizedName, version: Version) -> str | bool:
+        reasons = set()
+        for link in self.links_for_version(name, version):
+            if link.yanked:
+                if link.yanked_reason:
+                    reasons.add(link.yanked_reason)
+            else:
+                # release is not yanked if at least one file is not yanked
+                return False
+        # if all files are yanked (or there are no files) the release is yanked
+        if reasons:
+            return "\n".join(sorted(reasons))
+        return True

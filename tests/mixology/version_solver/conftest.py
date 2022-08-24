@@ -24,7 +24,7 @@ class Provider(BaseProvider):
 
 @pytest.fixture
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture

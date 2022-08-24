@@ -13,13 +13,15 @@ from poetry.repositories.repository import Repository
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
+    from poetry.core.semver.version import Version
 
     from poetry.inspection.info import PackageInfo
 
 
 class CachedRepository(Repository, ABC):
-    CACHE_VERSION = parse_constraint("1.0.0")
+    CACHE_VERSION = parse_constraint("1.1.0")
 
     def __init__(
         self, name: str, disable_cache: bool = False, config: Config | None = None
@@ -40,10 +42,12 @@ class CachedRepository(Repository, ABC):
         )
 
     @abstractmethod
-    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
+    def _get_release_info(
+        self, name: NormalizedName, version: Version
+    ) -> dict[str, Any]:
         raise NotImplementedError()
 
-    def get_release_info(self, name: str, version: str) -> PackageInfo:
+    def get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
         """
         Return the release information given a package name and a version.
 
@@ -74,8 +78,8 @@ class CachedRepository(Repository, ABC):
 
     def package(
         self,
-        name: str,
-        version: str,
+        name: NormalizedName,
+        version: Version,
         extras: list[str] | None = None,
     ) -> Package:
         return self.get_release_info(name, version).to_package(name=name, extras=extras)

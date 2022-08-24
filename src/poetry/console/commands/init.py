@@ -10,15 +10,16 @@ from typing import Mapping
 from typing import Union
 
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.dependency_specification import parse_dependency_specification
-from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
@@ -215,11 +216,13 @@ You can specify a package in the following forms:
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content(original=pyproject)
+        content = layout_.generate_poetry_content()
+        for section in content:
+            pyproject.data.append(section, content[section])
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
-            self.line(content)
+            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
             self.line("")
 
         if not self.confirm("Do you confirm generation?", True):
@@ -227,13 +230,12 @@ You can specify a package in the following forms:
 
             return 1
 
-        with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
-            f.write(content)
+        pyproject.save()
 
         return 0
 
     def _generate_choice_list(
-        self, matches: list[Package], canonicalized_name: str
+        self, matches: list[Package], canonicalized_name: NormalizedName
     ) -> list[str]:
         choices = []
         matches_names = [p.name for p in matches]

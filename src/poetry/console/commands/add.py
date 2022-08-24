@@ -6,12 +6,12 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.utils.helpers import canonicalize_name
 
 
 class AddCommand(InstallerCommand, InitCommand):
@@ -125,9 +125,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             section = poetry_content["dependencies"]
         else:
             if "group" not in poetry_content:
-                poetry_content.value._insert_after(
-                    "dependencies", "group", table(is_super_table=True)
-                )
+                poetry_content["group"] = table(is_super_table=True)
 
             groups = poetry_content["group"]
             if group not in groups:
@@ -236,21 +234,21 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.poetry.set_locker(
             self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
         )
-        self._installer.set_locker(self.poetry.locker)
+        self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
         self.line("")
 
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self.io.is_verbose())
-        self._installer.update(True)
+        self.installer.set_package(self.poetry.package)
+        self.installer.dry_run(self.option("dry-run"))
+        self.installer.verbose(self.io.is_verbose())
+        self.installer.update(True)
         if self.option("lock"):
-            self._installer.lock()
+            self.installer.lock()
 
-        self._installer.whitelist([r["name"] for r in requirements])
+        self.installer.whitelist([r["name"] for r in requirements])
 
-        status = self._installer.run()
+        status = self.installer.run()
 
         if status == 0 and not self.option("dry-run"):
             assert isinstance(content, TOMLDocument)

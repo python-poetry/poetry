@@ -67,9 +67,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -93,12 +91,10 @@ baz = "^1.0.0"
 baz = "^1.0.0"
 
 """
-    # At the moment line endings will be inconsistent on Windows.
-    # See https://github.com/sdispater/tomlkit/issues/200 for details.
-    # https://github.com/sdispater/tomlkit/pull/201 fixes this issue
-    # In order to make tests forward compatible for tomlkit downstream tests,
-    # we replace "\r\n" with "\n" for now.
-    string_content = content.as_string().replace("\r\n", "\n")
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
 
@@ -128,9 +124,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -154,12 +148,10 @@ baz = "^1.0.0"
 baz = "^1.0.0"
 
 """
-    # At the moment line endings will be inconsistent on Windows.
-    # See https://github.com/sdispater/tomlkit/issues/200 for details.
-    # https://github.com/sdispater/tomlkit/pull/201 fixes this issue
-    # In order to make tests forward compatible for tomlkit downstream tests,
-    # we replace "\r\n" with "\n" for now.
-    string_content = content.as_string().replace("\r\n", "\n")
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
 
@@ -189,9 +181,7 @@ baz = "^1.0.0"
 """
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
-    content["tool"]["poetry"].value._insert_after(
-        "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-    )
+    content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -263,12 +253,10 @@ baz = "^1.0.0"
 baz = "^1.0.0"
 
 """
-    # At the moment line endings will be inconsistent on Windows.
-    # See https://github.com/sdispater/tomlkit/issues/200 for details.
-    # https://github.com/sdispater/tomlkit/pull/201 fixes this issue
-    # In order to make tests forward compatible for tomlkit downstream tests,
-    # we replace "\r\n" with "\n" for now.
-    string_content = content.as_string().replace("\r\n", "\n")
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
 

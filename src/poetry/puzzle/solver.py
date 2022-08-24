@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import Pool
-    from poetry.repositories import Repository
     from poetry.utils.env import Env
 
 
@@ -38,15 +37,15 @@ class Solver:
         self,
         package: ProjectPackage,
         pool: Pool,
-        installed: Repository,
-        locked: Repository,
+        installed: list[Package],
+        locked: list[Package],
         io: IO,
         provider: Provider | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
-        self._installed = installed
-        self._locked = locked
+        self._installed_packages = installed
+        self._locked_packages = locked
         self._io = io
 
         if provider is None:
@@ -84,10 +83,20 @@ class Solver:
                     f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
+        for p in packages:
+            if p.yanked:
+                message = (
+                    f"The locked version {p.pretty_version} for {p.pretty_name} is a"
+                    " yanked version."
+                )
+                if p.yanked_reason:
+                    message += f" Reason for being yanked: {p.yanked_reason}"
+                self._io.write_error_line(f"<warning>Warning: {message}</warning>")
+
         return Transaction(
-            self._locked.packages,
+            self._locked_packages,
             list(zip(packages, depths)),
-            installed_packages=self._installed.packages,
+            installed_packages=self._installed_packages,
             root_package=self._package,
         )
 
@@ -128,7 +137,7 @@ class Solver:
             self._overrides.append(self._provider._overrides)
 
         locked: dict[str, list[DependencyPackage]] = defaultdict(list)
-        for package in self._locked.packages:
+        for package in self._locked_packages:
             locked[package.name].append(
                 DependencyPackage(package.to_dependency(), package)
             )

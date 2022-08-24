@@ -344,7 +344,7 @@ Keyring support is enabled using the [keyring library](https://pypi.org/project/
 {{% note %}}
 
 Poetry will fallback to Pip style use of keyring so that backends like
-Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a change to retrieve
+Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a chance to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
 preferably by installing a plugin.
 

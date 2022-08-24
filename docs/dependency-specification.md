@@ -145,6 +145,20 @@ flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
+In cases where the package you want to install is located in a subdirectory of the VCS repository, you can use the `subdirectory` option, similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides:
+
+```toml
+[tool.poetry.dependencies]
+# Install a package named `subdir_package` from a folder called `subdir` within the repository
+subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", subdirectory = "subdir" }
+```
+
+with the corresponding `add` call:
+
+```bash
+poetry add "https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
+```
+
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:
 
 ```toml

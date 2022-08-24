@@ -61,7 +61,9 @@ class DependencyCache:
         if packages is None:
             packages = self.provider.search_for(dependency)
         else:
-            packages = [p for p in packages if dependency.constraint.allows(p.version)]
+            packages = [
+                p for p in packages if dependency.constraint.allows(p.package.version)
+            ]
 
         self.cache[key] = packages
 
@@ -376,6 +378,12 @@ class VersionSolver:
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
         def _get_min(dependency: Dependency) -> tuple[bool, int]:
+            # Direct origin dependencies must be handled first: we don't want to resolve
+            # a regular dependency for some package only to find later that we had a
+            # direct-origin dependency.
+            if dependency.is_direct_origin():
+                return False, -1
+
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
@@ -383,16 +391,6 @@ class VersionSolver:
 
             locked = self._get_locked(dependency)
             if locked:
-                return not dependency.marker.is_any(), 1
-
-            # VCS, URL, File or Directory dependencies
-            # represent a single version
-            if (
-                dependency.is_vcs()
-                or dependency.is_url()
-                or dependency.is_file()
-                or dependency.is_directory()
-            ):
                 return not dependency.marker.is_any(), 1
 
             try:
@@ -420,14 +418,14 @@ class VersionSolver:
                 return complete_name
 
             package = None
-            if dependency.name not in self._use_latest:
-                # prefer locked version of compatible (not exact same) dependency;
-                # required in order to not unnecessarily update dependencies with
-                # extras, e.g. "coverage" vs. "coverage[toml]"
-                locked = self._get_locked(dependency, allow_similar=True)
             if locked is not None:
                 package = next(
-                    (p for p in packages if p.version == locked.version), None
+                    (
+                        p
+                        for p in packages
+                        if p.package.version == locked.package.version
+                    ),
+                    None,
                 )
             if package is None:
                 with suppress(IndexError):
@@ -465,7 +463,8 @@ class VersionSolver:
         if not conflict:
             self._solution.decide(package.package)
             self._log(
-                f"selecting {package.complete_name} ({package.full_pretty_version})"
+                f"selecting {package.package.complete_name}"
+                f" ({package.package.full_pretty_version})"
             )
 
         complete_name = dependency.complete_name
@@ -500,20 +499,22 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(
-        self, dependency: Dependency, *, allow_similar: bool = False
-    ) -> DependencyPackage | None:
+    def _get_locked(self, dependency: Dependency) -> DependencyPackage | None:
         if dependency.name in self._use_latest:
             return None
 
         locked = self._locked.get(dependency.name, [])
-        for package in locked:
-            if (allow_similar or dependency.is_same_package_as(package.package)) and (
-                dependency.constraint.allows(package.version)
-                or package.is_prerelease()
-                and dependency.constraint.allows(package.version.next_patch())
+        for dependency_package in locked:
+            package = dependency_package.package
+            if (
+                # Locked dependencies are always without features.
+                # Thus, we can't use is_same_package_as() here because it compares
+                # the complete_name (including features).
+                dependency.name == package.name
+                and dependency.is_same_source_as(package)
+                and dependency.constraint.allows(package.version)
             ):
-                return DependencyPackage(dependency, package.package)
+                return DependencyPackage(dependency, package)
         return None
 
     def _log(self, text: str) -> None:

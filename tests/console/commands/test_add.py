@@ -374,6 +374,53 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
+@pytest.mark.parametrize(
+    "url, rev",
+    [
+        ("git+https://github.com/demo/subdirectories.git#subdirectory=two", None),
+        (
+            "git+https://github.com/demo/subdirectories.git@master#subdirectory=two",
+            "master",
+        ),
+    ],
+)
+def test_add_git_constraint_with_subdirectory(
+    url: str,
+    rev: str | None,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+):
+    tester.execute(url)
+
+    expected = """\
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing two (2.0.0 9cf87a2)
+"""
+    assert tester.io.fetch_output().strip() == expected.strip()
+    assert tester.command.installer.executor.installations_count == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    constraint = {
+        "git": "https://github.com/demo/subdirectories.git",
+        "subdirectory": "two",
+    }
+
+    if rev:
+        constraint["rev"] = rev
+
+    assert "two" in content["dependencies"]
+    assert content["dependencies"]["two"] == constraint
+
+
 @pytest.mark.parametrize("editable", [False, True])
 def test_add_git_ssh_constraint(
     editable: bool,
@@ -776,7 +823,9 @@ def test_add_constraint_with_source(
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+    repo._cache.store("matches").put(
+        "cachy:0.2.0", [(Version.parse("0.2.0"), False)], 5
+    )
 
     poetry.pool.add_repository(repo)
 
@@ -870,12 +919,10 @@ Package operations: 1 install, 0 updates, 0 removals
 cachy = "^0.2.0"
 
 """
-    # At the moment line endings will be inconsistent on Windows.
-    # See https://github.com/sdispater/tomlkit/issues/200 for details.
-    # https://github.com/sdispater/tomlkit/pull/201 fixes this issue
-    # In order to make tests forward compatible for tomlkit downstream tests,
-    # we replace "\r\n" with "\n" for now.
-    string_content = content.as_string().replace("\r\n", "\n")
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
 
@@ -1765,7 +1812,9 @@ def test_add_constraint_with_source_old_installer(
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+    repo._cache.store("matches").put(
+        "cachy:0.2.0", [(Version.parse("0.2.0"), False)], 5
+    )
 
     poetry.pool.add_repository(repo)
 

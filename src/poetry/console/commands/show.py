@@ -4,18 +4,18 @@ from typing import TYPE_CHECKING
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 
 from poetry.console.commands.group_command import GroupCommand
-from poetry.utils.helpers import canonicalize_name
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.repositories.installed_repository import InstalledRepository
     from poetry.repositories.repository import Repository
 
 
@@ -74,7 +74,6 @@ lists all packages available."""
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.repositories.pool import Pool
-        from poetry.repositories.repository import Repository
         from poetry.utils.helpers import get_package_version_display_string
 
         package = self.argument("package")
@@ -119,7 +118,7 @@ lists all packages available."""
             for p in packages:
                 for require in requires:
                     if p.name == require.name:
-                        self.display_package_tree(self.io, p, locked_repo)
+                        self.display_package_tree(self.io, p, packages)
                         break
 
             return 0
@@ -131,8 +130,8 @@ lists all packages available."""
         solver = Solver(
             root,
             pool=pool,
-            installed=Repository(),
-            locked=locked_repo,
+            installed=[],
+            locked=locked_packages,
             io=NullIO(),
         )
         solver.provider.load_deferred(False)
@@ -174,11 +173,11 @@ lists all packages available."""
 
                     for p in packages:
                         self.display_package_tree(
-                            self.io, p, locked_repo, why_package=pkg
+                            self.io, p, locked_packages, why_package=pkg
                         )
 
                 else:
-                    self.display_package_tree(self.io, pkg, locked_repo)
+                    self.display_package_tree(self.io, pkg, locked_packages)
 
                 return 0
 
@@ -224,7 +223,9 @@ lists all packages available."""
 
             current_length = len(locked.pretty_name)
             if not self.io.output.is_decorated():
-                installed_status = self.get_installed_status(locked, installed_repo)
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
 
                 if installed_status == "not-installed":
                     current_length += 4
@@ -300,7 +301,9 @@ lists all packages available."""
 
                 color = "black;options=bold"
             else:
-                installed_status = self.get_installed_status(locked, installed_repo)
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
                 if installed_status == "not-installed":
                     color = "red"
 
@@ -371,7 +374,7 @@ lists all packages available."""
         self,
         io: IO,
         package: Package,
-        installed_repo: Repository,
+        installed_packages: list[Package],
         why_package: Package | None = None,
     ) -> None:
         io.write(f"<c1>{package.pretty_name}</c1>")
@@ -408,22 +411,27 @@ lists all packages available."""
             packages_in_tree = [package.name, dependency.name]
 
             self._display_tree(
-                io, dependency, installed_repo, packages_in_tree, tree_bar, level + 1
+                io,
+                dependency,
+                installed_packages,
+                packages_in_tree,
+                tree_bar,
+                level + 1,
             )
 
     def _display_tree(
         self,
         io: IO,
         dependency: Dependency,
-        installed_repo: Repository,
-        packages_in_tree: list[str],
+        installed_packages: list[Package],
+        packages_in_tree: list[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
         dependencies = []
-        for package in installed_repo.packages:
+        for package in installed_packages:
             if package.name == dependency.name:
                 dependencies = package.requires
 
@@ -459,7 +467,12 @@ lists all packages available."""
                 current_tree.append(dependency.name)
 
                 self._display_tree(
-                    io, dependency, installed_repo, current_tree, tree_bar, level + 1
+                    io,
+                    dependency,
+                    installed_packages,
+                    current_tree,
+                    tree_bar,
+                    level + 1,
                 )
 
     def _write_tree_line(self, io: IO, line: str) -> None:
@@ -517,9 +530,9 @@ lists all packages available."""
         return "update-possible"
 
     def get_installed_status(
-        self, locked: Package, installed_repo: InstalledRepository
+        self, locked: Package, installed_packages: list[Package]
     ) -> str:
-        for package in installed_repo.packages:
+        for package in installed_packages:
             if locked.name == package.name:
                 return "installed"
 

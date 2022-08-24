@@ -14,7 +14,6 @@ from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
-from deepdiff import DeepDiff
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
@@ -31,6 +30,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -152,7 +152,7 @@ def package() -> ProjectPackage:
 
 @pytest.fixture()
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture()
@@ -1164,7 +1164,7 @@ def test_installer_with_pypi_repository(
 
     expected = fixture("with-pypi-repository")
 
-    assert not DeepDiff(expected, locker.written_data, ignore_order=True)
+    assert expected == locker.written_data
 
 
 def test_run_installs_with_local_file(
@@ -2473,4 +2473,46 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
         source_url="https://github.com/demo/demo.git",
         source_reference="master",
         source_resolved_reference="123456",
+    )
+
+
+@pytest.mark.parametrize("is_locked", [False, True])
+def test_installer_should_use_the_locked_version_of_git_dependencies_with_extras(
+    installer: Installer,
+    locker: Locker,
+    package: ProjectPackage,
+    repo: Repository,
+    is_locked: bool,
+):
+    if is_locked:
+        locker.locked(True)
+        locker.mock_lock_data(fixture("with-vcs-dependency-with-extras"))
+        expected_reference = "123456"
+    else:
+        expected_reference = MOCK_DEFAULT_GIT_REVISION
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "git": "https://github.com/demo/demo.git",
+                "branch": "master",
+                "extras": ["foo"],
+            },
+        )
+    )
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "1.0.0"))
+
+    installer.run()
+
+    assert len(installer.executor.installations) == 3
+    assert installer.executor.installations[-1] == Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference="master",
+        source_resolved_reference=expected_reference,
     )

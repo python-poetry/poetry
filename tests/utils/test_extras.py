@@ -43,7 +43,7 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
             ["group0"],
             ["bar", "foo"],
         ),
-        # Selecting multpile extras should get us the union of all package names
+        # Selecting multiple extras should get us the union of all package names
         (
             [_PACKAGE_FOO, _PACKAGE_SPAM, _PACKAGE_BAR],
             {"group0": ["bar"], "group1": ["spam"]},
@@ -63,7 +63,7 @@ def test_get_extra_package_names(
     extras: dict[str, list[str]],
     extra_names: list[str],
     expected_extra_package_names: list[str],
-):
+) -> None:
     assert (
         list(get_extra_package_names(packages, extras, extra_names))
         == expected_extra_package_names

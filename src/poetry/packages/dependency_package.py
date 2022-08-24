@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 
 
 if TYPE_CHECKING:
@@ -30,15 +29,6 @@ class DependencyPackage:
 
     def without_features(self) -> DependencyPackage:
         return self.with_features([])
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._package, name)
-
-    def __setattr__(self, key: str, value: Any) -> None:
-        if key in {"_dependency", "_package"}:
-            return super().__setattr__(key, value)
-
-        setattr(self._package, key, value)
 
     def __str__(self) -> str:
         return str(self._package)

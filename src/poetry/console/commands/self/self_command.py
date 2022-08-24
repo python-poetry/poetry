@@ -46,6 +46,7 @@ class SelfCommand(InstallerCommand):
     def env(self) -> Env:
         if not isinstance(self._env, SystemEnv):
             self.reset_env()
+        assert self._env is not None
         return self._env
 
     @property
