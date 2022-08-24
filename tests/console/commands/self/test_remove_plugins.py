@@ -96,7 +96,6 @@ Resolving dependencies...
 Package operations: 0 installs, 0 updates, 1 removal, 1 skipped
 
   • Removing poetry-plugin (1.2.3)
-  • Removing poetry-plugin (1.2.3)
   • Installing poetry ({__version__}): Skipped for the following reason: Already \
 installed
 """
