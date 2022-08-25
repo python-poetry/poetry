@@ -33,7 +33,13 @@ class HTMLPage(LinkSource):
                 url = self.clean_link(urllib.parse.urljoin(self._url, href))
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
-                link = Link(url, requires_python=pyrequire)
+                yanked_value = anchor.get("data-yanked")
+                yanked: str | bool
+                if yanked_value:
+                    yanked = unescape(yanked_value)
+                else:
+                    yanked = "data-yanked" in anchor.attrib
+                link = Link(url, requires_python=pyrequire, yanked=yanked)
 
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue

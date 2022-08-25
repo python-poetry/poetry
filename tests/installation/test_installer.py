@@ -30,6 +30,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -2488,7 +2489,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_with_extras
         locker.mock_lock_data(fixture("with-vcs-dependency-with-extras"))
         expected_reference = "123456"
     else:
-        expected_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+        expected_reference = MOCK_DEFAULT_GIT_REVISION
 
     package.add_dependency(
         Factory.create_dependency(

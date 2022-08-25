@@ -1,5 +1,41 @@
 # Change Log
 
+## [1.2.0rc1] - 2022-08-22
+
+### Added
+
+- Added support for subdirectories in git dependencies ([#5172](https://github.com/python-poetry/poetry/pull/5172))
+- Added support for yanked releases and files (PEP-592) ([#5841](https://github.com/python-poetry/poetry/pull/5841))
+- Virtual environments can now be created even with empty project names ([#5856](https://github.com/python-poetry/poetry/pull/5856))
+- Added support for `nushell` in `poetry shell` ([#6063](https://github.com/python-poetry/poetry/pull/6063))
+
+### Changed
+
+- Poetry now falls back to gather metadata for dependencies via pep517 if parsing `pyproject.toml` fails ([#5834](https://github.com/python-poetry/poetry/pull/5834))
+- Replaced Poetry's helper method `canonicalize_name()` with `packaging.utils.canonicalize_name()` ([#6022](https://github.com/python-poetry/poetry/pull/6022))
+- Removed code for the `export` command, which is now provided via plugin ([#6128](https://github.com/python-poetry/poetry/pull/6128))
+- Extras and extras dependencies are now sorted in the lock file ([#6169](https://github.com/python-poetry/poetry/pull/6169))
+- Removed deprecated (1.2-only) CLI options ([#6210](https://github.com/python-poetry/poetry/pull/6210))
+
+### Fixed
+
+- Fixed an issue where symlinks in the lock file were not resolved ([#5850](https://github.com/python-poetry/poetry/pull/5850))
+- Fixed a `tomlkit` regression resulting in inconsistent line endings ([#5870](https://github.com/python-poetry/poetry/pull/5870))
+- Fixed an issue where the `POETRY_PYPI_TOKEN_PYPI` environment variable wasn't respected ([#5911](https://github.com/python-poetry/poetry/pull/5911))
+- Fixed an issue where neither Python nor a managed venv can be found, when using Python from MS Store ([#5931](https://github.com/python-poetry/poetry/pull/5931))
+- Improved error message of `poetry publish` in the event of an upload error ([#6043](https://github.com/python-poetry/poetry/pull/6043))
+- Fixed an issue where `poetry lock` fails without output ([#6058](https://github.com/python-poetry/poetry/pull/6058))
+- Fixed an issue where Windows drive mappings break virtual environment names ([#6110](https://github.com/python-poetry/poetry/pull/6110))
+- `tomlkit` versions with memory leak are now avoided ([#6160](https://github.com/python-poetry/poetry/pull/6160))
+- Fixed an infinite loop in the solver ([#6178](https://github.com/python-poetry/poetry/pull/6178))
+- Fixed an issue where latest version was used instead of locked one for vcs dependencies with extras ([#6185](https://github.com/python-poetry/poetry/pull/6185))
+
+### Docs
+
+- Document use of the `subdirectory` parameter ([#5949](https://github.com/python-poetry/poetry/pull/5949))
+- Document suggested `tox` config for different use cases ([#6026](https://github.com/python-poetry/poetry/pull/6026))
+
+
 ## [1.2.0b3] - 2022-07-13
 
 **Important**: This release fixes a critical issue that prevented hashes from being retrieved when locking dependencies,
@@ -1447,7 +1483,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0b3...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0rc1...master
+[1.2.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc1
 [1.2.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b3
 [1.2.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b2
 [1.2.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b1

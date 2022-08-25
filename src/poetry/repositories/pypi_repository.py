@@ -144,7 +144,10 @@ class PyPiRepository(HTTPRepository):
                 continue
 
             if constraint.allows(version):
-                packages.append(Package(info["info"]["name"], version))
+                # PEP 592: PyPI always yanks entire releases, not individual files,
+                # so we just have to look for the first file
+                yanked = self._get_yanked(release[0])
+                packages.append(Package(info["info"]["name"], version, yanked=yanked))
 
         return packages
 
@@ -163,12 +166,12 @@ class PyPiRepository(HTTPRepository):
         links = []
         for url in json_data["urls"]:
             h = f"sha256={url['digests']['sha256']}"
-            links.append(Link(url["url"] + "#" + h))
+            links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
 
         return links
 
     def _get_release_info(
-        self, name: str, version: str
+        self, name: NormalizedName, version: Version
     ) -> dict[str, str | list[str] | None]:
         from poetry.inspection.info import PackageInfo
 
@@ -188,6 +191,7 @@ class PyPiRepository(HTTPRepository):
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
             files=info.get("files", []),
+            yanked=self._get_yanked(info),
             cache_version=str(self.CACHE_VERSION),
         )
 
@@ -254,3 +258,9 @@ class PyPiRepository(HTTPRepository):
 
         json: dict[str, Any] = json_response.json()
         return json
+
+    @staticmethod
+    def _get_yanked(json_data: dict[str, Any]) -> str | bool:
+        if json_data.get("yanked", False):
+            return json_data.get("yanked_reason") or True  # noqa: SIM222
+        return False

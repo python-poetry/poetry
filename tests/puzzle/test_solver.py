@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -22,6 +23,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.utils.env import MockEnv
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -1426,7 +1428,7 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     transaction = solver.solve()
@@ -1782,7 +1784,7 @@ def test_solver_can_resolve_git_dependencies(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     ops = check_solver_result(
@@ -1819,7 +1821,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     check_solver_result(
@@ -1851,7 +1853,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=ref[list(ref.keys())[0]],
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     git_config = {demo.source_type: demo.source_url}
@@ -2144,7 +2146,7 @@ def test_solver_git_dependencies_update(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo_installed)
 
@@ -2185,7 +2187,7 @@ def test_solver_git_dependencies_update_skipped(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference="master",
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo)
 
@@ -2217,8 +2219,8 @@ def test_solver_git_dependencies_short_hash_update_skipped(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_reference=MOCK_DEFAULT_GIT_REVISION,
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo)
 
@@ -2241,10 +2243,8 @@ def test_solver_git_dependencies_short_hash_update_skipped(
                     "0.1.2",
                     source_type="git",
                     source_url="https://github.com/demo/demo.git",
-                    source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                    source_resolved_reference=(
-                        "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                    ),
+                    source_reference=MOCK_DEFAULT_GIT_REVISION,
+                    source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
                 ),
                 "skipped": True,
             },
@@ -2983,7 +2983,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     installed.add_package(git_package)
@@ -3681,3 +3681,44 @@ def test_update_with_prerelease_and_no_solution(
 
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+def test_solver_yanked_warning(
+    package: ProjectPackage,
+    installed: InstalledRepository,
+    locked: Repository,
+    pool: Pool,
+    repo: Repository,
+) -> None:
+    package.add_dependency(Factory.create_dependency("foo", "==1"))
+    package.add_dependency(Factory.create_dependency("bar", "==2"))
+    package.add_dependency(Factory.create_dependency("baz", "==3"))
+    foo = get_package("foo", "1", yanked=False)
+    bar = get_package("bar", "2", yanked=True)
+    baz = get_package("baz", "3", yanked="just wrong")
+    repo.add_package(foo)
+    repo.add_package(bar)
+    repo.add_package(baz)
+
+    io = BufferedIO(decorated=False)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": bar},
+            {"job": "install", "package": baz},
+            {"job": "install", "package": foo},
+        ],
+    )
+    error = io.fetch_error()
+    assert "foo" not in error
+    assert "The locked version 2 for bar is a yanked version." in error
+    assert (
+        "The locked version 3 for baz is a yanked version. Reason for being yanked:"
+        " just wrong"
+        in error
+    )
+    assert error.count("is a yanked version") == 2
+    assert error.count("Reason for being yanked") == 1

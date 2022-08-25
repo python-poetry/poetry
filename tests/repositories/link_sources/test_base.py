@@ -5,6 +5,7 @@ from unittest.mock import PropertyMock
 
 import pytest
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.semver.version import Version
@@ -87,4 +88,7 @@ def test_links_for_version(
 ) -> None:
     version = Version.parse(version_string)
     expected = {Link(f"{link_source.url}/{name}") for name in filenames}
-    assert set(link_source.links_for_version("demo", version)) == expected
+    assert (
+        set(link_source.links_for_version(canonicalize_name("demo"), version))
+        == expected
+    )

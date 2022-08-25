@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
+from poetry.core.semver.version import Version
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
@@ -50,7 +52,7 @@ class MockRepository(PyPiRepository):
                 fixture = self.JSON_FIXTURES / (name + ".json")
 
         if not fixture.exists():
-            return
+            return None
 
         with fixture.open(encoding="utf-8") as f:
             return json.loads(f.read())
@@ -63,21 +65,21 @@ class MockRepository(PyPiRepository):
         shutil.copyfile(str(fixture), dest)
 
 
-def test_find_packages():
+def test_find_packages() -> None:
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("requests", "^2.18"))
 
     assert len(packages) == 5
 
 
-def test_find_packages_with_prereleases():
+def test_find_packages_with_prereleases() -> None:
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("toga", ">=0.3.0.dev2"))
 
     assert len(packages) == 7
 
 
-def test_find_packages_does_not_select_prereleases_if_not_allowed():
+def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("pyyaml", "*"))
 
@@ -87,17 +89,35 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed():
 @pytest.mark.parametrize(
     ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
 )
-def test_find_packages_only_prereleases(constraint: str, count: int):
+def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert len(packages) == count
 
 
-def test_package():
+@pytest.mark.parametrize(
+    ["constraint", "expected"],
+    [
+        # yanked 21.11b0 is ignored except for pinned version
+        ("*", ["19.10b0"]),
+        (">=19.0a0", ["19.10b0"]),
+        (">=20.0a0", []),
+        (">=21.11b0", []),
+        ("==21.11b0", ["21.11b0"]),
+    ],
+)
+def test_find_packages_yanked(constraint: str, expected: list[str]) -> None:
+    repo = MockRepository()
+    packages = repo.find_packages(Factory.create_dependency("black", constraint))
+
+    assert [str(p.version) for p in packages] == expected
+
+
+def test_package() -> None:
     repo = MockRepository()
 
-    package = repo.package("requests", "2.18.4")
+    package = repo.package(canonicalize_name("requests"), Version.parse("2.18.4"))
 
     assert package.name == "requests"
     assert len(package.requires) == 9
@@ -126,10 +146,51 @@ def test_package():
     )
 
 
-def test_fallback_on_downloading_packages():
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_package_yanked(
+    package_name: str, version: str, yanked: bool, yanked_reason: str
+) -> None:
+    repo = MockRepository()
+
+    package = repo.package(package_name, version)
+
+    assert package.name == package_name
+    assert str(package.version) == version
+    assert package.yanked is yanked
+    assert package.yanked_reason == yanked_reason
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_find_links_for_package_yanked(
+    package_name: str, version: str, yanked: bool, yanked_reason: str
+) -> None:
+    repo = MockRepository()
+
+    package = repo.package(package_name, version)
+    links = repo.find_links_for_package(package)
+
+    assert len(links) == 2
+    for link in links:
+        assert link.yanked == yanked
+        assert link.yanked_reason == yanked_reason
+
+
+def test_fallback_on_downloading_packages() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package("jupyter", "1.0.0")
+    package = repo.package(canonicalize_name("jupyter"), Version.parse("1.0.0"))
 
     assert package.name == "jupyter"
     assert len(package.requires) == 6
@@ -145,10 +206,10 @@ def test_fallback_on_downloading_packages():
     ]
 
 
-def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
+def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package("isort", "4.3.4")
+    package = repo.package(canonicalize_name("isort"), Version.parse("4.3.4"))
 
     assert package.name == "isort"
     assert len(package.requires) == 1
@@ -158,10 +219,10 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
     assert dep.python_versions == "~2.7"
 
 
-def test_fallback_can_read_setup_to_get_dependencies():
+def test_fallback_can_read_setup_to_get_dependencies() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package("sqlalchemy", "1.2.12")
+    package = repo.package(canonicalize_name("sqlalchemy"), Version.parse("1.2.12"))
 
     assert package.name == "sqlalchemy"
     assert len(package.requires) == 9
@@ -180,10 +241,10 @@ def test_fallback_can_read_setup_to_get_dependencies():
     }
 
 
-def test_pypi_repository_supports_reading_bz2_files():
+def test_pypi_repository_supports_reading_bz2_files() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package("twisted", "18.9.0")
+    package = repo.package(canonicalize_name("twisted"), Version.parse("18.9.0"))
 
     assert package.name == "twisted"
     assert len(package.requires) == 71
@@ -220,7 +281,7 @@ def test_pypi_repository_supports_reading_bz2_files():
         )
 
 
-def test_invalid_versions_ignored():
+def test_invalid_versions_ignored() -> None:
     repo = MockRepository()
 
     # the json metadata for this package contains one malformed version
@@ -229,7 +290,9 @@ def test_invalid_versions_ignored():
     assert len(packages) == 1
 
 
-def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: MockerFixture):
+def test_get_should_invalid_cache_on_too_many_redirects_error(
+    mocker: MockerFixture,
+) -> None:
     delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
 
     response = Response()
@@ -246,14 +309,14 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker: MockerFixt
     assert delete_cache.called
 
 
-def test_urls():
+def test_urls() -> None:
     repository = PyPiRepository()
 
     assert repository.url == "https://pypi.org/simple/"
     assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
-def test_use_pypi_pretty_name():
+def test_use_pypi_pretty_name() -> None:
     repo = MockRepository(fallback=True)
 
     package = repo.find_packages(Factory.create_dependency("twisted", "*"))
