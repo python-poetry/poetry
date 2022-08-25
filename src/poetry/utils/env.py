@@ -5,7 +5,6 @@ import contextlib
 import hashlib
 import itertools
 import json
-import logging
 import os
 import platform
 import plistlib
@@ -37,7 +36,6 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
-from poetry.exceptions import PoetryException
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
@@ -59,9 +57,6 @@ if TYPE_CHECKING:
     from virtualenv.seed.wheels.util import Wheel
 
     from poetry.poetry import Poetry
-
-
-logger = logging.getLogger(__name__)
 
 
 GET_SYS_TAGS = f"""
@@ -226,11 +221,6 @@ if site.check_enableusersite() and hasattr(obj, "install_usersite"):
 
 print(json.dumps(paths))
 """
-
-
-# This should be dropped when Poetry removes python2 support completely
-def _is_python2_exec(executable: str) -> bool:
-    return re.match(r".*2.|.2\..", executable) is not None
 
 
 class SitePackages:
@@ -578,9 +568,6 @@ class EnvManager:
 
         python = self._full_python_path(python)
 
-        if _is_python2_exec(python):
-            io.write_error_line("Poetry no longer supports Python 2.7 environments")
-
         try:
             python_version_string = decode(
                 subprocess.check_output(
@@ -923,10 +910,6 @@ class EnvManager:
 
                 python = "python" + python_to_try
 
-                if _is_python2_exec(python):
-                    error_message = "Poetry no longer supports Python 2.7 environments."
-                    raise PoetryException(error_message)
-
                 if io.is_debug():
                     io.write_line(f"<debug>Trying {python}</debug>")
 
@@ -985,7 +968,6 @@ class EnvManager:
                 f"Creating virtualenv <c1>{name}</> in"
                 f" {venv_path if not WINDOWS else get_real_windows_path(venv_path)!s}"
             )
-
         else:
             create_venv = False
             if force:
@@ -1063,10 +1045,6 @@ class EnvManager:
 
         if isinstance(executable, Path):
             executable = executable.resolve().as_posix()
-
-        if _is_python2_exec(executable):
-            error_message = "Poetry no longer supports Python 2.7 environments."
-            raise PoetryException(error_message)
 
         args = [
             "--no-download",
@@ -1703,13 +1681,9 @@ class VirtualEnv(Env):
         ]
 
     def get_supported_tags(self) -> list[Tag]:
-        if self.get_version_info() < (3, 0, 0):
-            error_message = """
-            Poetry no longer supports Python 2.7 environments.
-            """
-            raise PoetryException(error_message)
         output = self.run_python_script(GET_SYS_TAGS)
         assert isinstance(output, str)
+
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
