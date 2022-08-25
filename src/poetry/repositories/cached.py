@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from cachy import CacheManager
+from packaging.utils import canonicalize_name
 from poetry.core.semver.helpers import parse_constraint
 
 from poetry.config.config import Config
@@ -78,8 +79,10 @@ class CachedRepository(Repository, ABC):
 
     def package(
         self,
-        name: NormalizedName,
+        name: str,
         version: Version,
         extras: list[str] | None = None,
     ) -> Package:
-        return self.get_release_info(name, version).to_package(name=name, extras=extras)
+        return self.get_release_info(canonicalize_name(name), version).to_package(
+            name=name, extras=extras
+        )
