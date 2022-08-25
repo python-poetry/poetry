@@ -12,7 +12,6 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
-from packaging.utils import canonicalize_name
 from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
@@ -243,9 +242,7 @@ def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
 
         # is the package installed?
         repository = InstalledRepository.load(venv)
-        package = repository.package(
-            canonicalize_name("extended-project"), Version.parse("1.2.3")
-        )
+        package = repository.package("extended-project", Version.parse("1.2.3"))
         assert package.name == "extended-project"
 
         # check for the module built by build.py
