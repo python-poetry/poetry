@@ -11,7 +11,7 @@ python-versions = "*"
 "C" = {version = "^1.0", markers = "python_version >= \"2.7\" and python_version < \"2.8\""}
 
 [package.extras]
-foo = ["b"]
+foo = ["B"]
 
 [[package]]
 name = "B"
