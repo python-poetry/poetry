@@ -41,6 +41,10 @@ poetry install
 ```
 {{% /note %}}
 
+{{% note %}}
+Since version 1.2, Poetry no longer supports managing environments for Python 2.7.
+{{% /note %}}
+
 ## Switching between environments
 
 Sometimes this might not be feasible for your system, especially Windows where `pyenv`
@@ -114,7 +118,6 @@ poetry env list
 will output something like the following:
 
 ```text
-test-O3eWbxRl-py2.7
 test-O3eWbxRl-py3.6
 test-O3eWbxRl-py3.7 (Activated)
 ```
