@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from packaging.utils import canonicalize_name
 from poetry.core.semver.version import Version
 
 from poetry.repositories import Pool
@@ -16,7 +15,7 @@ def test_pool_raises_package_not_found_when_no_package_is_found() -> None:
     pool.add_repository(Repository("repo"))
 
     with pytest.raises(PackageNotFound):
-        pool.package(canonicalize_name("foo"), Version.parse("1.0.0"))
+        pool.package("foo", Version.parse("1.0.0"))
 
 
 def test_pool():

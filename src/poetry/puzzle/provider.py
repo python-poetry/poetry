@@ -528,7 +528,7 @@ class Provider:
                 dependency_package = DependencyPackage(
                     dependency,
                     self._pool.package(
-                        package.name,
+                        package.pretty_name,
                         package.version,
                         extras=list(dependency.extras),
                         repository=dependency.source_name,
