@@ -24,6 +24,7 @@ from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import download_file
 from poetry.utils.patterns import wheel_file_re
 
@@ -67,7 +68,7 @@ class HTTPRepository(CachedRepository, ABC):
     def authenticated_url(self) -> str:
         return self._authenticator.authenticated_url(url=self.url)
 
-    def _download(self, url: str, dest: str) -> None:
+    def _download(self, url: str, dest: Path) -> None:
         return download_file(url, dest, session=self.session)
 
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
@@ -80,7 +81,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
-            self._download(url, str(filepath))
+            self._download(url, filepath)
 
             return PackageInfo.from_wheel(filepath)
 
@@ -96,7 +97,7 @@ class HTTPRepository(CachedRepository, ABC):
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
-            self._download(url, str(filepath))
+            self._download(url, filepath)
 
             return PackageInfo.from_sdist(filepath)
 
@@ -209,6 +210,9 @@ class HTTPRepository(CachedRepository, ABC):
         urls = defaultdict(list)
         files: list[dict[str, Any]] = []
         for link in links:
+            if link.yanked and not data.yanked:
+                # drop yanked files unless the entire release is yanked
+                continue
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
             elif link.filename.endswith(
@@ -225,7 +229,7 @@ class HTTPRepository(CachedRepository, ABC):
             ):
                 with temporary_directory() as temp_dir:
                     filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, str(filepath))
+                    self._download(link.url, filepath)
 
                     known_hash = (
                         getattr(hashlib, link.hash_name)() if link.hash_name else None
@@ -260,7 +264,9 @@ class HTTPRepository(CachedRepository, ABC):
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
         try:
-            response: requests.Response = self.session.get(url, raise_for_status=False)
+            response: requests.Response = self.session.get(
+                url, raise_for_status=False, timeout=REQUESTS_TIMEOUT
+            )
             if response.status_code in (401, 403):
                 self._log(
                     f"Authorization error accessing {url}",

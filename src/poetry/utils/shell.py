@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -11,7 +12,6 @@ from typing import Any
 
 import pexpect
 
-from cleo.terminal import Terminal
 from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
@@ -87,13 +87,13 @@ class Shell:
 
         import shlex
 
-        terminal = Terminal()
+        terminal = shutil.get_terminal_size()
         with env.temp_environ():
             c = pexpect.spawn(
-                self._path, ["-i"], dimensions=(terminal.height, terminal.width)
+                self._path, ["-i"], dimensions=(terminal.lines, terminal.columns)
             )
 
-        if self._name == "zsh":
+        if self._name in ["zsh", "nu"]:
             c.setecho(False)
             # Under ZSH the source command should be invoked in zsh's bash emulator
             c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
@@ -103,8 +103,8 @@ class Shell:
             )
 
         def resize(sig: Any, data: Any) -> None:
-            terminal = Terminal()
-            c.setwinsize(terminal.height, terminal.width)
+            terminal = shutil.get_terminal_size()
+            c.setwinsize(terminal.lines, terminal.columns)
 
         signal.signal(signal.SIGWINCH, resize)
 
@@ -123,13 +123,15 @@ class Shell:
             suffix = ".ps1"
         elif self._name == "cmd":
             suffix = ".bat"
+        elif self._name == "nu":
+            suffix = ".nu"
         else:
             suffix = ""
 
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if self._name in ("fish", "csh", "tcsh"):
+        if self._name in ("fish", "csh", "tcsh", "nu"):
             return "source"
         return "."
 

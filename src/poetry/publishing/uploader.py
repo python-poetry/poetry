@@ -22,11 +22,12 @@ from requests_toolbelt.multipart import MultipartEncoderMonitor
 from urllib3 import util
 
 from poetry.__version__ import __version__
+from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    from cleo.io.null_io import NullIO
+    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -37,7 +38,8 @@ class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
             message = (
-                f"HTTP Error {error.response.status_code}: {error.response.reason}"
+                f"HTTP Error {error.response.status_code}: {error.response.reason} |"
+                f" {error.response.content!r}"
             )
         elif isinstance(error, ConnectionError):
             message = (
@@ -50,7 +52,7 @@ class UploadError(Exception):
 
 
 class Uploader:
-    def __init__(self, poetry: Poetry, io: NullIO) -> None:
+    def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -262,6 +264,7 @@ class Uploader:
                         data=monitor,
                         allow_redirects=False,
                         headers={"Content-Type": monitor.content_type},
+                        timeout=REQUESTS_TIMEOUT,
                     )
                 if resp is None or 200 <= resp.status_code < 300:
                     bar.set_format(
@@ -320,6 +323,7 @@ class Uploader:
             data=encoder,
             allow_redirects=False,
             headers={"Content-Type": encoder.content_type},
+            timeout=REQUESTS_TIMEOUT,
         )
 
         resp.raise_for_status()

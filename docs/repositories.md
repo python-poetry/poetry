@@ -288,17 +288,17 @@ configuration unlike [package sources](#package-sources). Poetry, today, only su
 your project.
 
 These are configured using the [`config`]({{< relref "cli#config" >}}) command, under the
-`repository` key.
+`repositories` key.
 
 ```bash
-poetry config repository.testpypi https://upload.test.pypi.org/legacy/
+poetry config repositories.testpypi https://test.pypi.org/legacy/
 ```
 
 {{% note %}}
 
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
-in the example of [Test PyPI](https://test.pypi.org/), both the host (`upload.test.pypi.org`) as
+in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
 well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
@@ -344,7 +344,7 @@ Keyring support is enabled using the [keyring library](https://pypi.org/project/
 {{% note %}}
 
 Poetry will fallback to Pip style use of keyring so that backends like
-Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a change to retrieve
+Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a chance to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
 preferably by installing a plugin.
 
@@ -426,5 +426,5 @@ poetry --no-cache add pycowsay
 If this solves your issue, you can consider clearing your cache using the [`cache`]({{< relref "cli#cache-clear" >}})
 command.
 
-Alternatively, you could also consider enabling very verbose loging `-vvv` along with the `--no-cache` to see network
+Alternatively, you could also consider enabling very verbose logging `-vvv` along with the `--no-cache` to see network
 requests being made in the logs.

@@ -51,6 +51,14 @@ pytest-mock = "*"
 {{% /note %}}
 
 {{% note %}}
+Dependency groups, other than the implicit `main` group, must only contain dependencies you need in your development
+process. Installing them is only possible by using Poetry.
+
+To declare a set of dependencies, which add additional functionality to the project during runtime,
+use [extras]({{< relref "pyproject#extras" >}}) instead. Extras can be installed by the end user using `pip`.
+{{% /note %}}
+
+{{% note %}}
 **A note about the `dev-dependencies` section**
 
 Any dependency declared in the `dev-dependencies` section will automatically be added to a `dev` group.
@@ -155,6 +163,15 @@ If you only want to install the project's runtime dependencies, you can do so  w
 
 ```bash
 poetry install --only main
+```
+{{% /note %}}
+
+{{% note %}}
+If you want to install the project root, and no other dependencies, you can use
+the `--only-root` option.
+
+```bash
+poetry install --only-root
 ```
 {{% /note %}}
 

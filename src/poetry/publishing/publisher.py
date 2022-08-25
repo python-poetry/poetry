@@ -11,8 +11,7 @@ from poetry.utils.authenticator import Authenticator
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from cleo.io import BufferedIO
-    from cleo.io import ConsoleIO
+    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -24,7 +23,7 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry: Poetry, io: BufferedIO | ConsoleIO) -> None:
+    def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -73,15 +72,6 @@ class Publisher:
         certificates = self._authenticator.get_certs_for_repository(repository_name)
         resolved_cert = cert or certificates.cert or certificates.verify
         resolved_client_cert = client_cert or certificates.client_cert
-
-        # Requesting missing credentials but only if there is not a client cert defined.
-        if not resolved_client_cert and hasattr(self._io, "ask"):
-            if username is None:
-                username = self._io.ask("Username:")
-
-            # skip password input if no username is provided, assume unauthenticated
-            if username and password is None:
-                password = self._io.ask_hidden("Password:")
 
         self._uploader.auth(username, password)
 

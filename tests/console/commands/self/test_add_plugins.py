@@ -138,6 +138,53 @@ Package operations: 3 installs, 0 updates, 0 removals
     )
 
 
+@pytest.mark.parametrize(
+    "url, rev",
+    [
+        ("git+https://github.com/demo/poetry-plugin2.git#subdirectory=subdir", None),
+        (
+            "git+https://github.com/demo/poetry-plugin2.git@master#subdirectory=subdir",
+            "master",
+        ),
+    ],
+)
+def test_add_with_git_constraint_with_subdirectory(
+    url: str,
+    rev: str | None,
+    tester: CommandTester,
+    repo: TestRepository,
+):
+    repo.add_package(Package("pendulum", "2.0.5"))
+
+    tester.execute(url)
+
+    expected = """
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  • Installing pendulum (2.0.5)
+  • Installing poetry-plugin (0.1.2 9cf87a2)
+"""
+
+    constraint = {
+        "git": "https://github.com/demo/poetry-plugin2.git",
+        "subdirectory": "subdir",
+    }
+
+    if rev:
+        constraint["rev"] = rev
+
+    assert_plugin_add_result(
+        tester,
+        expected,
+        constraint,
+    )
+
+
 def test_add_existing_plugin_warns_about_no_operation(
     tester: CommandTester,
     repo: TestRepository,

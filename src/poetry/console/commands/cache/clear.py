@@ -10,7 +10,6 @@ from poetry.console.commands.command import Command
 
 
 class CacheClearCommand(Command):
-
     name = "cache clear"
     description = "Clears Poetry's cache."
 
@@ -47,7 +46,7 @@ class CacheClearCommand(Command):
                     f"Add the --all option if you want to clear all {parts[0]} caches"
                 )
 
-            if not os.path.exists(str(cache_dir)):
+            if not os.path.exists(cache_dir):
                 self.line(f"No cache entries for {parts[0]}")
                 return 0
 

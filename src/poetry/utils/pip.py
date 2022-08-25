@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.core.packages.utils.link import Link
-from poetry.core.packages.utils.utils import url_to_path
-
 from poetry.exceptions import PoetryException
 from poetry.utils.env import EnvCommandError
 
@@ -16,13 +13,12 @@ if TYPE_CHECKING:
 
 
 def pip_install(
-    path: Path | Link,
+    path: Path,
     environment: Env,
     editable: bool = False,
     deps: bool = False,
     upgrade: bool = False,
 ) -> int | str:
-    path = url_to_path(path.url) if isinstance(path, Link) else path
     is_wheel = path.suffix == ".whl"
 
     # We disable version check here as we are already pinning to version available in

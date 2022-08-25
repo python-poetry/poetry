@@ -17,7 +17,6 @@ from typing import cast
 from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
-from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.chef import Chef
@@ -79,6 +78,7 @@ class Executor:
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
         self._sections: dict[int, SectionOutput] = {}
+        self._yanked_warnings: list[str] = []
         self._lock = threading.Lock()
         self._shutdown = False
         self._hashes: dict[str, str] = {}
@@ -114,7 +114,7 @@ class Executor:
         return self
 
     def pip_install(
-        self, req: Path | Link, upgrade: bool = False, editable: bool = False
+        self, req: Path, upgrade: bool = False, editable: bool = False
     ) -> int:
         try:
             pip_install(req, self._env, upgrade=upgrade, editable=editable)
@@ -141,6 +141,7 @@ class Executor:
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
         self._sections = {}
+        self._yanked_warnings = []
         for _, group in groups:
             tasks = []
             serial_operations = []
@@ -179,6 +180,9 @@ class Executor:
                 self._executor.shutdown(wait=True)
 
                 break
+
+        for warning in self._yanked_warnings:
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
         return 1 if self._shutdown else 0
 
@@ -259,6 +263,7 @@ class Executor:
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
+                io: IO | SectionOutput
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
@@ -311,8 +316,6 @@ class Executor:
             return 0
 
         if not self._enabled or self._dry_run:
-            self._io.write_line(f"  <fg=blue;options=bold>•</> {operation_message}")
-
             return 0
 
         result: int = getattr(self, f"_execute_{method}")(operation)
@@ -463,7 +466,6 @@ class Executor:
         if package.source_type == "git":
             return self._install_git(operation)
 
-        archive: Link | Path
         if package.source_type == "file":
             archive = self._prepare_file(operation)
         elif package.source_type == "url":
@@ -515,8 +517,6 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
-        archive = self._chef.prepare(archive)
-
         return archive
 
     def _install_directory(self, operation: Install | Update) -> int:
@@ -537,6 +537,9 @@ class Executor:
         else:
             req = Path(package.source_url).resolve(strict=False)
 
+        if package.source_subdirectory:
+            req /= package.source_subdirectory
+
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
         if pyproject.is_poetry_project():
@@ -548,32 +551,37 @@ class Executor:
                 self._env.pip_version
                 < self._env.pip_version.__class__.from_parts(19, 0, 0)
             )
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
-            builder: Builder
-            if package.develop and not package_poetry.package.build_script:
-                from poetry.masonry.builders.editable import EditableBuilder
+            try:
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+            except RuntimeError:
+                package_poetry = None
 
-                # This is a Poetry package in editable mode
-                # we can use the EditableBuilder without going through pip
-                # to install it, unless it has a build script.
-                builder = EditableBuilder(package_poetry, self._env, NullIO())
-                builder.build()
+            if package_poetry is not None:
+                builder: Builder
+                if package.develop and not package_poetry.package.build_script:
+                    from poetry.masonry.builders.editable import EditableBuilder
 
-                return 0
-            elif legacy_pip or package_poetry.package.build_script:
-                from poetry.core.masonry.builders.sdist import SdistBuilder
+                    # This is a Poetry package in editable mode
+                    # we can use the EditableBuilder without going through pip
+                    # to install it, unless it has a build script.
+                    builder = EditableBuilder(package_poetry, self._env, NullIO())
+                    builder.build()
 
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
-                builder = SdistBuilder(package_poetry)
+                    return 0
+                elif legacy_pip or package_poetry.package.build_script:
+                    from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                with builder.setup_py():
-                    if package.develop:
-                        return self.pip_install(req, upgrade=True, editable=True)
-                    return self.pip_install(req, upgrade=True)
+                    # We need to rely on creating a temporary setup.py
+                    # file since the version of pip does not support
+                    # build-systems
+                    # We also need it for non-PEP-517 packages
+                    builder = SdistBuilder(package_poetry)
+
+                    with builder.setup_py():
+                        if package.develop:
+                            return self.pip_install(req, upgrade=True, editable=True)
+                        return self.pip_install(req, upgrade=True)
 
         if package.develop:
             return self.pip_install(req, upgrade=True, editable=True)
@@ -608,17 +616,28 @@ class Executor:
 
         return status_code
 
-    def _download(self, operation: Install | Update) -> Link | Path:
+    def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
+
+        if link.yanked:
+            # Store yanked warnings in a list and print after installing, so they can't
+            # be overlooked. Further, printing them in the concerning section would have
+            # the risk of overwriting the warning, so it is only briefly visible.
+            message = (
+                f"The file chosen for install of {operation.package.pretty_name} "
+                f"{operation.package.pretty_version} ({link.show_url}) is yanked."
+            )
+            if link.yanked_reason:
+                message += f" Reason for being yanked: {link.yanked_reason}"
+            self._yanked_warnings.append(message)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation: Install | Update, link: Link) -> Link | Path:
+    def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        archive: Link | Path
         archive = self._chef.get_cached_archive_for_link(link)
-        if archive is link:
+        if archive is None:
             # No cached distributions was found, so we download and prepare it
             try:
                 archive = self._download_archive(operation, link)
@@ -632,11 +651,6 @@ class Executor:
 
                 raise
 
-            # TODO: Check readability of the created archive
-
-            if not link.is_wheel:
-                archive = self._chef.prepare(archive)
-
         if package.files:
             archive_hash = self._validate_archive_hash(archive, package)
 
@@ -645,20 +659,14 @@ class Executor:
         return archive
 
     @staticmethod
-    def _validate_archive_hash(archive: Path | Link, package: Package) -> str:
-        archive_path = (
-            url_to_path(archive.url) if isinstance(archive, Link) else archive
-        )
-        file_dep = FileDependency(
-            package.name,
-            archive_path,
-        )
+    def _validate_archive_hash(archive: Path, package: Package) -> str:
+        file_dep = FileDependency(package.name, archive)
         archive_hash: str = "sha256:" + file_dep.hash()
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
-                f"Hash for {package} from archive {archive_path.name} not found in"
+                f"Hash for {package} from archive {archive.name} not found in"
                 f" known hashes (was: {archive_hash})"
             )
 
@@ -691,7 +699,7 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive: Path = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
         with archive.open("wb") as f:
             for chunk in response.iter_content(chunk_size=4096):
@@ -713,7 +721,9 @@ class Executor:
         return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
-        return not operation.skipped or self._dry_run or self._verbose
+        return (
+            not operation.skipped or self._dry_run or self._verbose or not self._enabled
+        )
 
     def _save_url_reference(self, operation: Operation) -> None:
         """
@@ -761,7 +771,7 @@ class Executor:
 
                 record = dist_path / "RECORD"
                 if record.exists():
-                    with record.open(mode="a", encoding="utf-8") as f:
+                    with record.open(mode="a", encoding="utf-8", newline="") as f:
                         writer = csv.writer(f)
                         path = url.relative_to(record.parent.parent)
                         writer.writerow([str(path), "", ""])
@@ -775,6 +785,8 @@ class Executor:
                 "commit_id": package.source_resolved_reference,
             },
         }
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
 
         return reference
 

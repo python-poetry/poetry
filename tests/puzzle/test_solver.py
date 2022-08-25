@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -22,6 +23,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.utils.env import MockEnv
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -65,12 +67,12 @@ def installed() -> InstalledRepository:
 
 @pytest.fixture()
 def locked() -> Repository:
-    return Repository()
+    return Repository("locked")
 
 
 @pytest.fixture()
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture()
@@ -89,10 +91,10 @@ def solver(
     return Solver(
         package,
         pool,
-        installed,
-        locked,
+        installed.packages,
+        locked.packages,
         io,
-        provider=Provider(package, pool, io, installed=installed),
+        provider=Provider(package, pool, io, installed=installed.packages),
     )
 
 
@@ -1426,7 +1428,7 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     transaction = solver.solve()
@@ -1448,9 +1450,9 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         DependencyPackage(package.to_dependency(), package)
     )
 
-    assert len(complete_package.all_requires) == 2
+    assert len(complete_package.package.all_requires) == 2
 
-    pypi, git = complete_package.all_requires
+    pypi, git = complete_package.package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi
@@ -1782,7 +1784,7 @@ def test_solver_can_resolve_git_dependencies(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     ops = check_solver_result(
@@ -1819,7 +1821,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     check_solver_result(
@@ -1851,7 +1853,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=ref[list(ref.keys())[0]],
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     git_config = {demo.source_type: demo.source_url}
@@ -2019,7 +2021,7 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    solver._locked = Repository([package_a])
+    solver._locked = Repository("locked", [package_a])
     transaction = solver.solve(use_latest=[package_b.name])
 
     check_solver_result(
@@ -2144,7 +2146,7 @@ def test_solver_git_dependencies_update(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo_installed)
 
@@ -2185,7 +2187,7 @@ def test_solver_git_dependencies_update_skipped(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference="master",
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo)
 
@@ -2217,8 +2219,8 @@ def test_solver_git_dependencies_short_hash_update_skipped(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_reference=MOCK_DEFAULT_GIT_REVISION,
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
     installed.add_package(demo)
 
@@ -2241,10 +2243,8 @@ def test_solver_git_dependencies_short_hash_update_skipped(
                     "0.1.2",
                     source_type="git",
                     source_url="https://github.com/demo/demo.git",
-                    source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                    source_resolved_reference=(
-                        "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                    ),
+                    source_reference=MOCK_DEFAULT_GIT_REVISION,
+                    source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
                 ),
                 "skipped": True,
             },
@@ -2298,7 +2298,12 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
     package = poetry.package
 
     solver = Solver(
-        package, pool, installed, locked, io, provider=Provider(package, pool, io)
+        package,
+        pool,
+        installed.packages,
+        locked.packages,
+        io,
+        provider=Provider(package, pool, io),
     )
 
     transaction = solver.solve()
@@ -2539,7 +2544,7 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
     repo = MockLegacyRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
@@ -2586,7 +2591,7 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
     repo = MockLegacyRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
@@ -2620,7 +2625,7 @@ def test_solver_skips_invalid_versions(
     repo = MockPyPIRepository()
     pool = Pool([repo])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     package.add_dependency(Factory.create_dependency("trackpy", "^0.4"))
 
@@ -2667,7 +2672,7 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
     repo = MockLegacyRepository()
     pool = Pool([repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2693,7 +2698,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
     repo = MockLegacyRepository()
     pool = Pool([repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2728,13 +2733,13 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
     )
 
-    repo = Repository()
+    repo = Repository("repo")
     foo = get_package("foo", "1.0.0")
     foo.add_dependency(Factory.create_dependency("tomlkit", "^0.5.0"))
     repo.add_package(foo)
     pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2774,7 +2779,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     pool.add_repository(MockPyPIRepository(), secondary=True)
     pool.add_repository(MockLegacyRepository())
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2826,7 +2831,7 @@ def test_solver_chooses_from_secondary_if_explicit(
     pool.add_repository(MockPyPIRepository(), secondary=True)
     pool.add_repository(MockLegacyRepository())
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2883,7 +2888,7 @@ def test_solver_discards_packages_with_empty_markers(
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -2978,7 +2983,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
         source_type="git",
         source_url="https://github.com/demo/demo.git",
         source_reference=DEFAULT_SOURCE_REF,
-        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+        source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
     installed.add_package(git_package)
@@ -2989,7 +2994,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
     repo.add_package(get_package("a", "1.2.3"))
     repo.add_package(Package("pendulum", "2.1.2"))
 
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
 
     transaction = solver.solve()
 
@@ -3067,7 +3072,7 @@ def test_solver_synchronize_single(
     locked: Repository,
     io: NullIO,
 ):
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
     package_a = get_package("a", "1.0")
     installed.add_package(package_a)
 
@@ -3086,7 +3091,7 @@ def test_solver_with_synchronization_keeps_critical_package(
     locked: Repository,
     io: NullIO,
 ):
-    solver = Solver(package, pool, installed, locked, io)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
     package_pip = get_package("setuptools", "1.0")
     installed.add_package(package_pip)
 
@@ -3539,3 +3544,181 @@ def test_solver_keeps_multiple_locked_dependencies_for_same_package(
             {"job": "install", "package": a12},
         ],
     )
+
+
+def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    """
+    Another package requires the same dependency with extras that is required
+    by the project as direct origin dependency without any extras.
+    """
+    pendulum = get_package("pendulum", "2.0.3")  # required by demo
+    cleo = get_package("cleo", "1.0.0")  # required by demo[foo]
+    demo_foo = get_package("demo-foo", "1.2.3")
+    demo_foo.add_dependency(
+        Factory.create_dependency("demo", {"version": ">=0.1", "extras": ["foo"]})
+    )
+    repo.add_package(demo_foo)
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    # project requires path dependency of demo while demo-foo requires demo[foo]
+    package.add_dependency(Factory.create_dependency("demo", {"path": path}))
+    package.add_dependency(Factory.create_dependency("demo-foo", "^1.2.3"))
+
+    transaction = solver.solve()
+
+    demo = Package("demo", "0.1.2", source_type="directory", source_url=path)
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": demo},
+            {"job": "install", "package": demo_foo},
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.2"
+    assert op.package.source_type == "directory"
+    assert op.package.source_url == path
+
+
+def test_solver_incompatible_dependency_with_and_without_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    """
+    The solver first encounters a requirement for google-auth and then later an
+    incompatible requirement for google-auth[aiohttp].
+
+    Testcase derived from https://github.com/python-poetry/poetry/issues/6054.
+    """
+    # Incompatible requirements from foo and bar2.
+    foo = get_package("foo", "1.0.0")
+    foo.add_dependency(Factory.create_dependency("google-auth", {"version": "^1"}))
+
+    bar = get_package("bar", "1.0.0")
+
+    bar2 = get_package("bar", "2.0.0")
+    bar2.add_dependency(
+        Factory.create_dependency(
+            "google-auth", {"version": "^2", "extras": ["aiohttp"]}
+        )
+    )
+
+    baz = get_package("baz", "1.0.0")  # required by google-auth[aiohttp]
+
+    google_auth = get_package("google-auth", "1.2.3")
+    google_auth.extras = {"aiohttp": [get_dependency("baz", "^1.0")]}
+
+    google_auth2 = get_package("google-auth", "2.3.4")
+    google_auth2.extras = {"aiohttp": [get_dependency("baz", "^1.0")]}
+
+    repo.add_package(foo)
+    repo.add_package(bar)
+    repo.add_package(bar2)
+    repo.add_package(baz)
+    repo.add_package(google_auth)
+    repo.add_package(google_auth2)
+
+    package.add_dependency(Factory.create_dependency("foo", ">=1"))
+    package.add_dependency(Factory.create_dependency("bar", ">=1"))
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": google_auth},
+            {"job": "install", "package": bar},
+            {"job": "install", "package": foo},
+        ],
+    )
+
+
+def test_update_with_prerelease_and_no_solution(
+    solver: Solver,
+    repo: Repository,
+    installed: InstalledRepository,
+    package: ProjectPackage,
+    locked: Repository,
+):
+    # Locked and installed: cleo which depends on an old version of crashtest.
+    cleo = get_package("cleo", "1.0.0a5")
+    crashtest = get_package("crashtest", "0.3.0")
+    cleo.add_dependency(Factory.create_dependency("crashtest", {"version": "<0.4.0"}))
+    locked.add_package(cleo)
+    locked.add_package(crashtest)
+
+    installed.add_package(cleo)
+    installed.add_package(crashtest)
+
+    # Try to upgrade to a new version of crashtest, this will be disallowed by the
+    # dependency from cleo.
+    package.add_dependency(Factory.create_dependency("cleo", "^1.0.0a5"))
+    package.add_dependency(Factory.create_dependency("crashtest", "^0.4.0"))
+
+    newer_crashtest = get_package("crashtest", "0.4.0")
+    even_newer_crashtest = get_package("crashtest", "0.4.1")
+    repo.add_package(cleo)
+    repo.add_package(crashtest)
+    repo.add_package(newer_crashtest)
+    repo.add_package(even_newer_crashtest)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_yanked_warning(
+    package: ProjectPackage,
+    installed: InstalledRepository,
+    locked: Repository,
+    pool: Pool,
+    repo: Repository,
+) -> None:
+    package.add_dependency(Factory.create_dependency("foo", "==1"))
+    package.add_dependency(Factory.create_dependency("bar", "==2"))
+    package.add_dependency(Factory.create_dependency("baz", "==3"))
+    foo = get_package("foo", "1", yanked=False)
+    bar = get_package("bar", "2", yanked=True)
+    baz = get_package("baz", "3", yanked="just wrong")
+    repo.add_package(foo)
+    repo.add_package(bar)
+    repo.add_package(baz)
+
+    io = BufferedIO(decorated=False)
+    solver = Solver(package, pool, installed.packages, locked.packages, io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": bar},
+            {"job": "install", "package": baz},
+            {"job": "install", "package": foo},
+        ],
+    )
+    error = io.fetch_error()
+    assert "foo" not in error
+    assert "The locked version 2 for bar is a yanked version." in error
+    assert (
+        "The locked version 3 for baz is a yanked version. Reason for being yanked:"
+        " just wrong"
+        in error
+    )
+    assert error.count("is a yanked version") == 2
+    assert error.count("Reason for being yanked") == 1

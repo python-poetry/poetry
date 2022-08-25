@@ -6,7 +6,6 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 class LockCommand(InstallerCommand):
-
     name = "lock"
     description = "Locks the project dependencies."
 
@@ -34,7 +33,7 @@ file.
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
-        self._installer.use_executor(
+        self.installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
 
@@ -50,6 +49,6 @@ file.
             )
             return 1
 
-        self._installer.lock(update=not self.option("no-update"))
+        self.installer.lock(update=not self.option("no-update"))
 
-        return self._installer.run()
+        return self.installer.run()

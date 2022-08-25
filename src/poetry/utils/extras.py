@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Mapping
 
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
 
 
@@ -25,7 +26,7 @@ def get_extra_package_names(
         in the `extras` section of `poetry.lock`.
     :param extra_names: A list of strings specifying names of extra groups to resolve.
     """
-    from poetry.utils.helpers import canonicalize_name
+    from packaging.utils import canonicalize_name
 
     if not extra_names:
         return []
@@ -43,13 +44,15 @@ def get_extra_package_names(
     # keep record of packages seen during recursion in order to avoid recursion error
     seen_package_names = set()
 
-    def _extra_packages(package_names: Iterable[str]) -> Iterator[str]:
+    def _extra_packages(
+        package_names: Iterable[NormalizedName],
+    ) -> Iterator[NormalizedName]:
         """Recursively find dependencies for packages names"""
         # for each extra package name
         for package_name in package_names:
             # Find the actual Package object. A missing key indicates an implicit
             # dependency (like setuptools), which should be ignored
-            package = packages_by_name.get(canonicalize_name(package_name))
+            package = packages_by_name.get(package_name)
             if package:
                 if package.name not in seen_package_names:
                     seen_package_names.add(package.name)

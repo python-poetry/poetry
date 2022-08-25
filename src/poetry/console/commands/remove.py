@@ -4,15 +4,14 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.utils.helpers import canonicalize_name
 
 
 class RemoveCommand(InstallerCommand):
-
     name = "remove"
     description = "Removes a package from the project dependencies."
 
@@ -101,15 +100,15 @@ list of installed packages
         self.poetry.set_locker(
             self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
         )
-        self._installer.set_locker(self.poetry.locker)
+        self.installer.set_locker(self.poetry.locker)
 
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run", False))
-        self._installer.verbose(self.io.is_verbose())
-        self._installer.update(True)
-        self._installer.whitelist(removed_set)
+        self.installer.set_package(self.poetry.package)
+        self.installer.dry_run(self.option("dry-run", False))
+        self.installer.verbose(self.io.is_verbose())
+        self.installer.update(True)
+        self.installer.whitelist(removed_set)
 
-        status = self._installer.run()
+        status = self.installer.run()
 
         if not self.option("dry-run") and status == 0:
             assert isinstance(content, TOMLDocument)

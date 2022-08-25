@@ -36,7 +36,7 @@ def test_publish_returns_non_zero_code_for_upload_errors(
 Publishing simple-project (1.2.3) to PyPI
 """
     expected_error_output = """\
-HTTP Error 400: Bad Request
+HTTP Error 400: Bad Request | b'Bad Request'
 """
 
     assert expected_output in app_tester.io.fetch_output()
@@ -114,7 +114,6 @@ def test_publish_dry_run_skip_existing(
 def test_skip_existing_output(
     app_tester: ApplicationTester, http: type[httpretty.httpretty]
 ):
-
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
     )

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from typing import cast
-
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.inputs.string_input import StringInput
 from cleo.io.io import IO
 
-from poetry.console.application import Application
 from poetry.console.commands.add import AddCommand
 from poetry.console.commands.self.self_command import SelfCommand
 
@@ -37,8 +34,9 @@ environment.
 
     def _system_project_handle(self) -> int:
         self.write("<info>Updating Poetry version ...</info>\n\n")
-        application = cast(Application, self.application)
-        add_command: AddCommand = cast(AddCommand, application.find("add"))
+        application = self.get_application()
+        add_command = application.find("add")
+        assert isinstance(add_command, AddCommand)
         add_command.set_env(self.env)
         application.configure_installer_for_command(add_command, self.io)
 

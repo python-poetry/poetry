@@ -160,7 +160,6 @@ class Git:
             url = ""
             if config.has_section(section):
                 value = config.get(section, b"url")
-                assert value is not None
                 url = value.decode("utf-8")
 
             return url
@@ -195,7 +194,8 @@ class Git:
             kwargs["username"] = credentials.username
             kwargs["password"] = credentials.password
 
-        client, path = get_transport_and_path(url, **kwargs)
+        config = local.get_config_stack()
+        client, path = get_transport_and_path(url, config=config, **kwargs)
 
         with local:
             result: FetchPackResult = client.fetch(
@@ -329,7 +329,7 @@ class Git:
         modules_config = repo_root.joinpath(".gitmodules")
 
         if modules_config.exists():
-            config = ConfigFile.from_path(modules_config)
+            config = ConfigFile.from_path(str(modules_config))
 
             url: bytes
             path: bytes

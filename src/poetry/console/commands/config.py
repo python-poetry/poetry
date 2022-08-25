@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
 
 class ConfigCommand(Command):
-
     name = "config"
     description = "Manages configuration settings."
 
@@ -39,7 +38,8 @@ class ConfigCommand(Command):
         option("local", None, "Set/Get from the project's local configuration."),
     ]
 
-    help = """This command allows you to edit the poetry config settings and repositories.
+    help = """\
+This command allows you to edit the poetry config settings and repositories.
 
 To add a repository:
 
@@ -95,6 +95,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_validator,
                 boolean_normalizer,
                 True,
+            ),
+            "experimental.system-git-client": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
             ),
             "installer.parallel": (
                 boolean_validator,

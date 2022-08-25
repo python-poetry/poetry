@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import os
 import shutil
@@ -11,6 +12,8 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
+from packaging.utils import canonicalize_name
+from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
@@ -158,17 +161,22 @@ My Package
 """
     assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
 
-    records = dist_info.joinpath("RECORD").read_text()
+    with open(dist_info.joinpath("RECORD"), encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        records = list(reader)
+
+    assert all(len(row) == 3 for row in records)
+    record_entries = {row[0] for row in records}
     pth_file = "simple_project.pth"
     assert tmp_venv.site_packages.exists(pth_file)
-    assert str(tmp_venv.site_packages.find(pth_file)[0]) in records
-    assert str(tmp_venv._bin_dir.joinpath("foo")) in records
-    assert str(tmp_venv._bin_dir.joinpath("baz")) in records
-    assert str(dist_info.joinpath("METADATA")) in records
-    assert str(dist_info.joinpath("INSTALLER")) in records
-    assert str(dist_info.joinpath("entry_points.txt")) in records
-    assert str(dist_info.joinpath("RECORD")) in records
-    assert str(dist_info.joinpath("direct_url.json")) in records
+    assert str(tmp_venv.site_packages.find(pth_file)[0]) in record_entries
+    assert str(tmp_venv._bin_dir.joinpath("foo")) in record_entries
+    assert str(tmp_venv._bin_dir.joinpath("baz")) in record_entries
+    assert str(dist_info.joinpath("METADATA")) in record_entries
+    assert str(dist_info.joinpath("INSTALLER")) in record_entries
+    assert str(dist_info.joinpath("entry_points.txt")) in record_entries
+    assert str(dist_info.joinpath("RECORD")) in record_entries
+    assert str(dist_info.joinpath("direct_url.json")) in record_entries
 
     baz_script = f"""\
 #!{tmp_venv.python}
@@ -218,7 +226,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     assert [] == env.executed
 
 
-def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str):
+def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
     # create an isolated copy of the project
     fixture = Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
     extended_project = Path(tmp_dir) / "extended_project"
@@ -235,7 +243,10 @@ def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str):
 
         # is the package installed?
         repository = InstalledRepository.load(venv)
-        assert repository.package("extended-project", "1.2.3")
+        package = repository.package(
+            canonicalize_name("extended-project"), Version.parse("1.2.3")
+        )
+        assert package.name == "extended-project"
 
         # check for the module built by build.py
         try:

@@ -167,6 +167,12 @@ It's also possible to only install specific dependency groups by using the `only
 poetry install --only test,docs
 ```
 
+To only install the project itself with no dependencies, use the `--only-root` flag.
+
+```bash
+poetry install --only-root
+```
+
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
@@ -220,7 +226,7 @@ option is used.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
+* `--only-root`: Install only the root project, exclude all dependencies.
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -261,7 +267,6 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**)
 * `--lock` : Do not perform install (only update the lockfile).
@@ -281,17 +286,32 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
-You also can specify a constraint when adding a package, like so:
+You can also specify a constraint when adding a package:
 
 ```bash
+# Allow >=2.0.5, <3.0.0 versions
 poetry add pendulum@^2.0.5
+
+# Allow >=2.0.5, <2.1.0 versions
+poetry add pendulum@~2.0.5
+
+# Allow >=2.0.5 versions, without upper bound
 poetry add "pendulum>=2.0.5"
+
+# Allow only 2.0.5 version
+poetry add pendulum==2.0.5
 ```
+
+{{% note %}}
+See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more information about the `@` operator.
+{{% /note %}}
 
 If you try to add a package that is already present, you will get an error.
 However, if you specify a constraint, like above, the dependency will be updated
-by using the specified constraint. If you want to get the latest version of an already
-present dependency you can use the special `latest` constraint:
+by using the specified constraint.
+
+If you want to get the latest version of an already
+present dependency, you can use the special `latest` constraint:
 
 ```bash
 poetry add pendulum@latest
@@ -312,8 +332,7 @@ or use ssh instead of https:
 ```bash
 poetry add git+ssh://git@github.com/sdispater/pendulum.git
 
-or alternatively:
-
+# or alternatively:
 poetry add git+ssh://git@github.com:sdispater/pendulum.git
 ```
 
@@ -324,13 +343,18 @@ you can specify it when using `add`:
 poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 
-or using SSH instead:
-
+# or using SSH instead:
 poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
-or make them point to a local directory or file:
+or reference a subdirectory:
+
+```bash
+poetry add git+https://github.com/myorg/mypackage_with_subdirs.git@main#subdirectory=subdir
+```
+
+You can also add a local directory or file:
 
 ```bash
 poetry add ./my-package/
@@ -353,7 +377,7 @@ my-package = {path = "../my/path", develop = true}
 ```
 
 {{% note %}}
-Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicitly,
 to make sure the behavior is the same for all poetry versions.
 {{% /note %}}
 
@@ -451,7 +475,6 @@ required by
 * `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
@@ -668,7 +691,6 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.

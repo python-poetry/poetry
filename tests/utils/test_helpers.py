@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import pytest
-
 from poetry.core.utils.helpers import parse_requires
 
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import safe_extra
 
 
 def test_parse_requires():
@@ -63,17 +61,8 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
     assert result == expected
 
 
-test_canonicalize_name_cases = [
-    ("flask", "flask"),
-    ("Flask", "flask"),
-    ("FLASK", "flask"),
-    ("FlAsK", "flask"),
-    ("fLaSk57", "flask57"),
-    ("flask-57", "flask-57"),
-]
-
-
-@pytest.mark.parametrize("test, expected", test_canonicalize_name_cases)
-def test_canonicalize_name(test: str, expected: str):
-    canonicalized_name = canonicalize_name(test)
-    assert canonicalized_name == expected
+def test_safe_extra():
+    extra = "pandas.CSVDataSet"
+    result = safe_extra(extra)
+    expected = "pandas.csvdataset"
+    assert result == expected

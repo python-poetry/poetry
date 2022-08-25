@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
+from packaging.utils import canonicalize_name
 from poetry.core.toml import TOMLFile
-from poetry.core.utils.helpers import canonicalize_name
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
@@ -105,7 +105,6 @@ _default_config: Config | None = None
 
 
 class Config:
-
     default_config: dict[str, Any] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
@@ -205,6 +204,13 @@ class Config:
     @property
     def repository_cache_directory(self) -> Path:
         return Path(self.get("cache-dir")) / "cache" / "repositories"
+
+    @property
+    def virtualenvs_path(self) -> Path:
+        path = self.get("virtualenvs.path")
+        if path is None:
+            path = Path(self.get("cache-dir")) / "virtualenvs"
+        return Path(path).expanduser()
 
     def get(self, setting_name: str, default: Any = None) -> Any:
         """

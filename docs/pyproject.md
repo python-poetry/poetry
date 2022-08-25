@@ -327,7 +327,8 @@ mkdocs = "*"
 ```
 
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for a more in-depth look
-at how to manage dependency groups.
+at how to manage dependency groups and [Dependency specification]({{< relref "dependency-specification" >}})
+for more information on other keys and specifying version ranges.
 
 ## `scripts`
 
@@ -335,10 +336,10 @@ This section describes the scripts or executables that will be installed when in
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry.console:run'
+my_package_cli = 'my_package.console:run'
 ```
 
-Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
 
 To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
 

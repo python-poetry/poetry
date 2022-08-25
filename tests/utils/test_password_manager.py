@@ -231,3 +231,31 @@ def test_get_http_auth_from_environment_variables(
 
     assert auth["username"] == "bar"
     assert auth["password"] == "baz"
+
+
+def test_get_pypi_token_with_env_var_positive(
+    mocker: MockerFixture,
+    config: Config,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+):
+    sample_token = "sampletoken-1234"
+    repo_name = "foo"
+    manager = PasswordManager(config)
+    mocker.patch.dict(
+        os.environ,
+        {f"POETRY_PYPI_TOKEN_{repo_name.upper()}": sample_token},
+    )
+
+    assert manager.get_pypi_token(repo_name) == sample_token
+
+
+def test_get_pypi_token_with_env_var_not_available(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+):
+    repo_name = "foo"
+    manager = PasswordManager(config)
+
+    result_token = manager.get_pypi_token(repo_name)
+
+    assert result_token is None

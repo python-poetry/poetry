@@ -200,8 +200,12 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.command.installer.executor.installations_count == 1
 
 
+@pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    extra_name: str,
 ):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -212,7 +216,7 @@ def test_add_constraint_with_extras(
     repo.add_package(cachy1)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute("cachy[msgpack]>=0.1.0,<0.2.0")
+    tester.execute(f"cachy[{extra_name}]>=0.1.0,<0.2.0")
 
     expected = """\
 
@@ -327,11 +331,13 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.command.installer.executor.installations_count == 2
 
 
+@pytest.mark.parametrize("extra_name", ["foo", "FOO"])
 def test_add_git_constraint_with_extras(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
+    extra_name: str,
 ):
     tester.command.set_env(tmp_venv)
 
@@ -339,7 +345,7 @@ def test_add_git_constraint_with_extras(
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
-    tester.execute("git+https://github.com/demo/demo.git[foo,bar]")
+    tester.execute(f"git+https://github.com/demo/demo.git[{extra_name},bar]")
 
     expected = """\
 
@@ -364,8 +370,55 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
         "git": "https://github.com/demo/demo.git",
-        "extras": ["foo", "bar"],
+        "extras": [extra_name, "bar"],
     }
+
+
+@pytest.mark.parametrize(
+    "url, rev",
+    [
+        ("git+https://github.com/demo/subdirectories.git#subdirectory=two", None),
+        (
+            "git+https://github.com/demo/subdirectories.git@master#subdirectory=two",
+            "master",
+        ),
+    ],
+)
+def test_add_git_constraint_with_subdirectory(
+    url: str,
+    rev: str | None,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    env: MockEnv,
+):
+    tester.execute(url)
+
+    expected = """\
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing two (2.0.0 9cf87a2)
+"""
+    assert tester.io.fetch_output().strip() == expected.strip()
+    assert tester.command.installer.executor.installations_count == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    constraint = {
+        "git": "https://github.com/demo/subdirectories.git",
+        "subdirectory": "two",
+    }
+
+    if rev:
+        constraint["rev"] = rev
+
+    assert "two" in content["dependencies"]
+    assert content["dependencies"]["two"] == constraint
 
 
 @pytest.mark.parametrize("editable", [False, True])
@@ -562,8 +615,12 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == {"path": path}
 
 
+@pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras_option(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    extra_name: str,
 ):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -574,7 +631,7 @@ def test_add_constraint_with_extras_option(
     repo.add_package(cachy2)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute("cachy=0.2.0 --extras msgpack")
+    tester.execute(f"cachy=0.2.0 --extras {extra_name}")
 
     expected = """\
 
@@ -597,7 +654,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
         "version": "0.2.0",
-        "extras": ["msgpack"],
+        "extras": [extra_name],
     }
 
 
@@ -641,10 +698,12 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
+@pytest.mark.parametrize("extra_name", ["foo", "FOO"])
 def test_add_url_constraint_wheel_with_extras(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
+    extra_name: str,
     mocker: MockerFixture,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -653,7 +712,7 @@ def test_add_url_constraint_wheel_with_extras(
 
     tester.execute(
         "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
-        "[foo,bar]"
+        f"[{extra_name},bar]"
     )
 
     expected = """\
@@ -684,7 +743,7 @@ Package operations: 4 installs, 0 updates, 0 removals
         "url": (
             "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         ),
-        "extras": ["foo", "bar"],
+        "extras": [extra_name, "bar"],
     }
 
 
@@ -764,7 +823,9 @@ def test_add_constraint_with_source(
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+    repo._cache.store("matches").put(
+        "cachy:0.2.0", [(Version.parse("0.2.0"), False)], 5
+    )
 
     poetry.pool.add_repository(repo)
 
@@ -858,8 +919,12 @@ Package operations: 1 install, 0 updates, 0 removals
 cachy = "^0.2.0"
 
 """
+    string_content = content.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
 
-    assert expected in content.as_string()
+    assert expected in string_content
 
 
 def test_add_to_dev_section_deprecated(
@@ -1165,11 +1230,13 @@ Package operations: 1 install, 0 updates, 0 removals
     assert len(installer.installs) == 1
 
 
+@pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
+    extra_name: str,
 ):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -1180,7 +1247,7 @@ def test_add_constraint_with_extras_old_installer(
     repo.add_package(cachy1)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    old_tester.execute("cachy[msgpack]>=0.1.0,<0.2.0")
+    old_tester.execute(f"cachy[{extra_name}]>=0.1.0,<0.2.0")
 
     expected = """\
 
@@ -1298,17 +1365,19 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert len(installer.installs) == 2
 
 
+@pytest.mark.parametrize("extra_name", ["foo", "FOO"])
 def test_add_git_constraint_with_extras_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
+    extra_name: str,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
-    old_tester.execute("git+https://github.com/demo/demo.git[foo,bar]")
+    old_tester.execute(f"git+https://github.com/demo/demo.git[{extra_name},bar]")
 
     expected = """\
 
@@ -1334,7 +1403,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
         "git": "https://github.com/demo/demo.git",
-        "extras": ["foo", "bar"],
+        "extras": [extra_name, "bar"],
     }
 
 
@@ -1523,11 +1592,13 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == {"path": path}
 
 
+@pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras_option_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
+    extra_name: str,
 ):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
@@ -1538,7 +1609,7 @@ def test_add_constraint_with_extras_option_old_installer(
     repo.add_package(cachy2)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    old_tester.execute("cachy=0.2.0 --extras msgpack")
+    old_tester.execute(f"cachy=0.2.0 --extras {extra_name}")
 
     expected = """\
 
@@ -1562,7 +1633,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
         "version": "0.2.0",
-        "extras": ["msgpack"],
+        "extras": [extra_name],
     }
 
 
@@ -1608,11 +1679,13 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
+@pytest.mark.parametrize("extra_name", ["foo", "FOO"])
 def test_add_url_constraint_wheel_with_extras_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
+    extra_name: str,
 ):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -1620,7 +1693,7 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
 
     old_tester.execute(
         "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
-        "[foo,bar]"
+        f"[{extra_name},bar]"
     )
 
     expected = """\
@@ -1650,7 +1723,7 @@ Package operations: 4 installs, 0 updates, 0 removals
         "url": (
             "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         ),
-        "extras": ["foo", "bar"],
+        "extras": [extra_name, "bar"],
     }
 
 
@@ -1739,7 +1812,9 @@ def test_add_constraint_with_source_old_installer(
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+    repo._cache.store("matches").put(
+        "cachy:0.2.0", [(Version.parse("0.2.0"), False)], 5
+    )
 
     poetry.pool.add_repository(repo)
 
