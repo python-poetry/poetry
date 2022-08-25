@@ -54,7 +54,7 @@ pytest-mock = "*"
 Dependency groups, other than the implicit `main` group, must only contain dependencies you need in your development
 process. Installing them is only possible by using Poetry.
 
-To declare a set of dependencies, which add additional functionallity to the project during runtime,
+To declare a set of dependencies, which add additional functionality to the project during runtime,
 use [extras]({{< relref "pyproject#extras" >}}) instead. Extras can be installed by the end user using `pip`.
 {{% /note %}}
 
