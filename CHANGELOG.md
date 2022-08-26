@@ -4,8 +4,8 @@
 
 ### Fixed
 
-- Fixed an issue where venv were created unnecessarily on running  `poetry self` ([#6226](https://github.com/python-poetry/poetry/pull/6226))
-- Ensured that packages `pretty_name` is written to lockfile ([#6243](https://github.com/python-poetry/poetry/pull/6243))
+- Fixed an issue where virtual environments were created unnecessarily when running `poetry self` commands ([#6226](https://github.com/python-poetry/poetry/pull/6226))
+- Ensure that packages' `pretty_name` are written to the lock file ([#6243](https://github.com/python-poetry/poetry/pull/6243))
 
 ### Improvements
 
