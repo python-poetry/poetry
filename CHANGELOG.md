@@ -1,5 +1,22 @@
 # Change Log
 
+## [1.2.0rc2] - 2022-08-26
+
+### Fixed
+
+- Fixed an issue where venv were created unnecessarily on running  `poetry self` ([#6226](https://github.com/python-poetry/poetry/pull/6226))
+- Ensured that packages `pretty_name` is written to lockfile ([#6243](https://github.com/python-poetry/poetry/pull/6243))
+
+### Improvements
+
+- Improved the consistency of `Pool().remove_repository()` to make it easier to write poetry plugins ([#6231](https://github.com/python-poetry/poetry/pull/6231))
+
+### Docs
+
+- Removed mentions of Python 2.7 from docs ([#6235](https://github.com/python-poetry/poetry/pull/6235))
+- Added note about the difference between groups and extras ([#6232](https://github.com/python-poetry/poetry/pull/6232))
+
+
 ## [1.2.0rc1] - 2022-08-22
 
 ### Added
@@ -1483,7 +1500,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0rc1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0rc2...master
+[1.2.0rc2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc2
 [1.2.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc1
 [1.2.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b3
 [1.2.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b2
