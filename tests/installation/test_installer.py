@@ -2516,3 +2516,41 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_with_extras
         source_reference="master",
         source_resolved_reference=expected_reference,
     )
+
+
+@pytest.mark.parametrize("is_locked", [False, True])
+def test_installer_should_use_the_locked_version_of_git_dependencies_without_reference(
+    installer: Installer,
+    locker: Locker,
+    package: ProjectPackage,
+    repo: Repository,
+    is_locked: bool,
+):
+    """
+    If there is no explicit reference (branch or tag or rev) in pyproject.toml,
+    HEAD is used.
+    """
+    if is_locked:
+        locker.locked(True)
+        locker.mock_lock_data(fixture("with-vcs-dependency-without-ref"))
+        expected_reference = "123456"
+    else:
+        expected_reference = MOCK_DEFAULT_GIT_REVISION
+
+    package.add_dependency(
+        Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+    )
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    assert len(installer.executor.installations) == 2
+    assert installer.executor.installations[-1] == Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference="HEAD",
+        source_resolved_reference=expected_reference,
+    )
