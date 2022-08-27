@@ -171,16 +171,6 @@ Poetry uses `dulwich` by default for git related tasks to not rely on the availa
 
 If you encounter any problems with it, set to `true` to use the system git backend.
 
-### `installer.parallel`
-
-**Type**: `boolean`
-
-**Default**: `true`
-
-*Introduced in 1.1.4*
-
-Use parallel execution when using the new (`>=1.1.0`) installer.
-
 ### `installer.max-workers`
 
 **Type**: `int`
@@ -249,6 +239,15 @@ Unless this is required system-wide, if configured globally, you could encounter
 across all your projects if incorrectly set.
 {{% /warning %}}
 
+### `installer.parallel`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+*Introduced in 1.1.4*
+
+Use parallel execution when using the new (`>=1.1.0`) installer.
 
 ### `virtualenvs.create`
 
@@ -275,25 +274,6 @@ If set to `true`, the virtualenv will be created and expected in a folder named
 `.venv` within the root directory of the project.
 
 If set to `false`, `poetry` will ignore any existing `.venv` directory.
-
-### `virtualenvs.path`
-
-**Type**: `string`
-
-**Default**: `{cache-dir}/virtualenvs`
-
-Directory where virtual environments will be created.
-
-### `virtualenvs.prompt`
-
-**Type**: `string`
-
-**Default**: `{project_name}-py{python_version}`
-
-*Introduced in 1.2.0*
-
-Format string defining the prompt to be displayed when the virtual environment is activated.
-The variables `project_name` and `python_version` are available for formatting.
 
 ### `virtualenvs.options.always-copy`
 
@@ -352,6 +332,14 @@ available within a virtual environment. This can cause some features in these to
 Give the virtual environment access to the system site-packages directory.
 Applies on virtualenv creation.
 
+### `virtualenvs.path`
+
+**Type**: `string`
+
+**Default**: `{cache-dir}/virtualenvs`
+
+Directory where virtual environments will be created.
+
 ### `virtualenvs.prefer-active-python` (experimental)
 
 **Type**: `boolean`
@@ -362,6 +350,17 @@ Applies on virtualenv creation.
 
 Use currently activated Python version to create a new virtual environment.
 If set to `false`, Python version used during Poetry installation is used.
+
+### `virtualenvs.prompt`
+
+**Type**: `string`
+
+**Default**: `{project_name}-py{python_version}`
+
+*Introduced in 1.2.0*
+
+Format string defining the prompt to be displayed when the virtual environment is activated.
+The variables `project_name` and `python_version` are available for formatting.
 
 ### `repositories.<name>`
 
