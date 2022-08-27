@@ -342,7 +342,10 @@ class Git:
                 source_root.mkdir(parents=True, exist_ok=True)
 
                 with repo:
-                    revision = repo.open_index()[path].sha.decode("utf-8")
+                    try:
+                        revision = repo.open_index()[path].sha.decode("utf-8")
+                    except KeyError:
+                        continue
 
                 cls.clone(
                     url=url.decode("utf-8"),
