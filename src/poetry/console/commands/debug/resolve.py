@@ -65,10 +65,7 @@ class DebugResolveCommand(InitCommand):
                 assert isinstance(name, str)
                 extras = []
                 for extra in self.option("extras"):
-                    if " " in extra:
-                        extras += [e.strip() for e in extra.split(" ")]
-                    else:
-                        extras.append(extra)
+                    extras += extra.split()
 
                 constraint["extras"] = extras
 
