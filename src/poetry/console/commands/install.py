@@ -120,10 +120,7 @@ dependencies and not including the current project, run the command with the
         else:
             extras = []
             for extra in self.option("extras", []):
-                if " " in extra:
-                    extras += [e.strip() for e in extra.split(" ")]
-                else:
-                    extras.append(extra)
+                extras += extra.split()
 
         self.installer.extras(extras)
 

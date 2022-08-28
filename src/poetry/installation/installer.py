@@ -20,7 +20,6 @@ from poetry.utils.helpers import pluralize
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
 
     from cleo.io.io import IO
     from poetry.core.packages.project_package import ProjectPackage
@@ -465,7 +464,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_lockfile_repo(
-        self, repo: LockfileRepository, ops: Sequence[Operation]
+        self, repo: LockfileRepository, ops: Iterable[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
@@ -509,7 +508,7 @@ class Installer:
 
         return ops
 
-    def _filter_operations(self, ops: Sequence[Operation], repo: Repository) -> None:
+    def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):

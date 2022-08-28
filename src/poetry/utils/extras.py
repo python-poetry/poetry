@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
-    from collections.abc import Sequence
     from typing import Mapping
 
     from packaging.utils import NormalizedName
@@ -14,10 +14,10 @@ if TYPE_CHECKING:
 
 
 def get_extra_package_names(
-    packages: Sequence[Package],
+    packages: Iterable[Package],
     extras: Mapping[str, list[str]],
-    extra_names: Sequence[str],
-) -> Iterable[str]:
+    extra_names: Collection[str],
+) -> Iterable[NormalizedName]:
     """
     Returns all package names required by the given extras.
 

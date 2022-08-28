@@ -46,7 +46,7 @@ class CacheClearCommand(Command):
                     f"Add the --all option if you want to clear all {parts[0]} caches"
                 )
 
-            if not os.path.exists(cache_dir):
+            if not cache_dir.exists():
                 self.line(f"No cache entries for {parts[0]}")
                 return 0
 
