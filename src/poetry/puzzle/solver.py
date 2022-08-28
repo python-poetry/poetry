@@ -252,14 +252,11 @@ class PackageNode(DFSNode):
         package: Package,
         packages: list[Package],
         previous: PackageNode | None = None,
-        previous_dep: Dependency | None = None,
         dep: Dependency | None = None,
     ) -> None:
         self.package = package
         self.packages = packages
 
-        self.previous = previous
-        self.previous_dep = previous_dep
         self.dep = dep
         self.depth = -1
 
@@ -283,44 +280,16 @@ class PackageNode(DFSNode):
     def reachable(self) -> list[PackageNode]:
         children: list[PackageNode] = []
 
-        if (
-            self.dep
-            and self.previous_dep
-            and self.previous_dep is not self.dep
-            and self.previous_dep.name == self.dep.name
-        ):
-            return []
-
         for dependency in self.package.all_requires:
-            if self.previous and self.previous.name == dependency.name:
-                # We have a circular dependency.
-                # Since the dependencies are resolved we can
-                # simply skip it because we already have it
-                # N.B. this only catches cycles of length 2;
-                # dependency cycles in general are handled by the DFS traversal
-                continue
-
             for pkg in self.packages:
-                if (
-                    pkg.complete_name == dependency.complete_name
-                    and (
-                        dependency.constraint.allows(pkg.version)
-                        or dependency.allows_prereleases()
-                        and pkg.version.is_unstable()
-                        and dependency.constraint.allows(pkg.version.stable)
-                    )
-                    and not any(
-                        child.package.complete_name == pkg.complete_name
-                        and child.groups == dependency.groups
-                        for child in children
-                    )
+                if pkg.complete_name == dependency.complete_name and (
+                    dependency.constraint.allows(pkg.version)
                 ):
                     children.append(
                         PackageNode(
                             pkg,
                             self.packages,
                             self,
-                            dependency,
                             self.dep or dependency,
                         )
                     )
