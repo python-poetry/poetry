@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.2.0] - 2022-08-31
+
+### Docs
+
+- Added note about how to add a git dependency with a subdirectory ([#6218](https://github.com/python-poetry/poetry/pull/6218))
+- Fixed several style issues in the docs ([#6255](https://github.com/python-poetry/poetry/pull/6255))
+- Fixed outdated info about `--only` parameter ([#6264](https://github.com/python-poetry/poetry/pull/6264))
+
+
 ## [1.2.0rc2] - 2022-08-26
 
 ### Fixed
@@ -1500,7 +1509,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0rc2...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0...master
+[1.2.0]: https://github.com/python-poetry/poetry/releases/tag/1.2.0
 [1.2.0rc2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc2
 [1.2.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc1
 [1.2.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.2.0b3
