@@ -218,9 +218,6 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--only`
-option is used.
-
 ### Options
 
 * `--without`: The dependency groups to ignore.
