@@ -468,12 +468,11 @@ class Installer:
 
         print(
             colorize(
-                "warning",
-                "This installer is deprecated. Poetry versions installed using this"
-                " script will not be able to use 'self update' command to upgrade to"
-                " 1.2.0a1 or later. It is recommended to use"
-                " https://install.python-poetry.org instead. Instructions are"
-                " available at https://python-poetry.org/docs/#installation",
+                "error",
+                "This installer is deprecated and scheduled to be removed."
+                " Use https://install.python-poetry.org instead."
+                " Instructions are available at"
+                " https://python-poetry.org/docs/#installation",
             )
         )
 
