@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     Command = Union[CleoCommand, PoetryCommand]
 
+
 class CommandLoader(FactoryCommandLoader):  # type: ignore[misc]
     def register_factory(
         self, command_name: str, factory: Callable[[], Command]
