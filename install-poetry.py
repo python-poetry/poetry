@@ -858,8 +858,16 @@ def main():
 
     args = parser.parse_args()
 
+    maximum_version = "1.1.15"
+    version = args.version or os.getenv("POETRY_VERSION")
+    if not version:
+        print("This installer only works with the 1.1 poetry family, but the latest is 1.2."
+              " Please upgrade to the new installer as soon as possible: <url to install> ."
+              f" Version {maximum_version} will be installed as a courtesy.")
+        version = maximum_version
+
     installer = Installer(
-        version=args.version or os.getenv("POETRY_VERSION"),
+        version=version,
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
         accept_all=args.accept_all
