@@ -72,7 +72,6 @@ urllib3 = "^1.26.0"
 dulwich = "^0.20.44"
 
 [tool.poetry.dev-dependencies]
-tox = "^3.18"
 pytest = "^7.1"
 pytest-cov = "^3.0"
 pytest-mock = "^3.5"
