@@ -15,7 +15,6 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
 .pytest_cache
 
 .DS_Store
