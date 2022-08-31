@@ -8,9 +8,11 @@ from cleo.loaders.factory_command_loader import FactoryCommandLoader
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from cleo.commands.command import Command as CleoCommand
-    from poetry.console.commands.command import Command as PoetryCommand
     from typing import Union
+
+    from cleo.commands.command import Command as CleoCommand
+
+    from poetry.console.commands.command import Command as PoetryCommand
 
     Command = Union[CleoCommand, PoetryCommand]
 
