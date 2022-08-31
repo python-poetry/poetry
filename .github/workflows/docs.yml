@@ -51,7 +51,7 @@ jobs:
       - name: Fetch Documentation
         run: |
           python -m pip install poetry
-          poetry install --no-dev
+          poetry install --only main
           poetry run python bin/website build --local ./poetry
 
       - name: Install Hugo
