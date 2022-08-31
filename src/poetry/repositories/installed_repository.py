@@ -93,16 +93,18 @@ class InstalledRepository(Repository):
     def is_vcs_package(cls, package: Path | Package, env: Env) -> bool:
         # A VCS dependency should have been installed
         # in the src directory.
+        from poetry.vcs.git import Git
+
         src = env.path / "src"
         if isinstance(package, Package):
-            return src.joinpath(package.name).is_dir()
+            return Git.is_valid_repo(src.joinpath(package.name))
 
         try:
             package.relative_to(env.path / "src")
         except ValueError:
             return False
         else:
-            return True
+            return Git.is_valid_repo(package)
 
     @classmethod
     def create_package_from_distribution(
