@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import functools
+
 from typing import TYPE_CHECKING
 
 from poetry.plugins.base_plugin import BasePlugin
@@ -22,8 +24,12 @@ class ApplicationPlugin(BasePlugin):
         return []
 
     def activate(self, application: Application) -> None:
+        def factory(command: type[Command]) -> Command:
+            return command()
+
         for command in self.commands:
             assert command.name is not None
+
             application.command_loader.register_factory(
-                command.name, lambda: command()  # noqa: B023
+                command.name, functools.partial(factory, command)
             )
