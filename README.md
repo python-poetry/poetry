@@ -26,7 +26,7 @@ information on how to enable tab completion in your environment.
 ## Introduction
 
 `poetry` is a tool to handle dependency installation as well as building and packaging of Python packages.
-It only needs one file to do all of that: the new, [standardized](https://www.python.org/dev/peps/pep-0518/) `pyproject.toml`.
+It only needs one file to do all of that: the new, [standardized](https://peps.python.org/pep-0518/) `pyproject.toml`.
 
 In other words, poetry uses `pyproject.toml` to replace `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile`.
 
@@ -53,7 +53,7 @@ keywords = ["packaging", "poetry"]
 python = "^3.8"  # Compatible python versions must be declared here
 aiohttp = "^3.8.1"
 # Dependencies with extras
-requests = { version = "^2.28", extras = [ "security" ] }
+requests = { version = "^2.28", extras = ["security"] }
 # Python specific dependencies with prereleases allowed
 tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
 # Git dependencies
@@ -62,9 +62,13 @@ cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "master" }
 # Optional dependencies (extras)
 pendulum = { version = "^2.1.2", optional = true }
 
-[tool.poetry.dev-dependencies]
+# Dependency groups
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
 pytest-cov = "^3.0"
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^5.1.1"
 
 [tool.poetry.scripts]
 my-script = "my_package:main"
@@ -82,7 +86,7 @@ There are some things we can notice here:
 `poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
 So, `poetry` can be installed globally and used everywhere.
 
-`poetry` also comes with a full fledged dependency resolution library.
+`poetry` also comes with a full-fledged dependency resolution library.
 
 ## Why?
 
