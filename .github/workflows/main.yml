@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   tests:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }} ${{ matrix.suffix }}
+    name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:
@@ -54,7 +54,7 @@ jobs:
 
       - name: Bootstrap poetry
         run: |
-          curl -sL https://install.python-poetry.org | python - -y ${{ matrix.bootstrap-args }}
+          curl -sL https://install.python-poetry.org | python - -y
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
