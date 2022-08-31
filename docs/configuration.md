@@ -16,7 +16,7 @@ or directly in the `config.toml` file that will be automatically be created when
 This file can typically be found in one of the following directories:
 
 - macOS:   `~/Library/Application Support/pypoetry`
-- Windows: `C:\Users\<username>\AppData\Roaming\pypoetry`
+- Windows: `%appdata%\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
 That means, by default `~/.config/pypoetry`.
