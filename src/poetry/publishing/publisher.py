@@ -62,7 +62,7 @@ class Publisher:
                 password = token
             else:
                 auth = self._authenticator.get_http_auth(repository_name)
-                if auth:
+                if auth.password:
                     logger.debug(
                         f"Found authentication information for {repository_name}."
                     )
