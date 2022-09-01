@@ -25,6 +25,7 @@ then `--help` combined with any of those can give you more information.
 * `--ansi`: Force ANSI output.
 * `--no-ansi`: Disable ANSI output.
 * `--version (-V)`: Display this application version.
+* `--no-interaction (-n)`: Do not ask any interactive question.
 
 
 ## new
