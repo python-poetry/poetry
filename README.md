@@ -19,8 +19,8 @@ The [complete documentation](https://python-poetry.org/docs/) is available on th
 
 ## Installation
 
-Instructions on how to install `poetry` can be found [here](https://python-poetry.org/docs/master/#installation).
-You can also refer [here](https://python-poetry.org/docs/master/#enable-tab-completion-for-bash-fish-or-zsh) for
+Instructions on how to install `poetry` can be found [here](https://python-poetry.org/docs/#installation).
+You can also refer [here](https://python-poetry.org/docs/#enable-tab-completion-for-bash-fish-or-zsh) for
 information on how to enable tab completion in your environment.
 
 ## Introduction
