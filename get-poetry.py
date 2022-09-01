@@ -355,7 +355,7 @@ class Installer:
         version, current_version = self.get_version()
 
         if version is None:
-            return 0
+            return 1
 
         self.customize_install()
         self.display_pre_message()
