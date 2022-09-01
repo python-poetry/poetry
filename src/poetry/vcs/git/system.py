@@ -21,6 +21,7 @@ class SystemGit:
             "clone",
             "--git-depth 1",
             "--recurse-submodules",
+            "--shallow-submodules",
             "--",
             repository,
             str(dest),
