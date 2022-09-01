@@ -17,8 +17,14 @@ class SystemGit:
     @classmethod
     def clone(cls, repository: str, dest: Path) -> str:
         cls._check_parameter(repository)
-
-        return cls.run("clone", "--recurse-submodules", "--", repository, str(dest))
+        return cls.run(
+            "clone",
+            "--git-depth 1",
+            "--recurse-submodules",
+            "--",
+            repository,
+            str(dest),
+        )
 
     @classmethod
     def checkout(cls, rev: str, target: Path | None = None) -> str:
