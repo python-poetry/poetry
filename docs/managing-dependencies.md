@@ -145,7 +145,7 @@ When used together, `--without` takes precedence over `--with`. For example, the
 will only install the dependencies specified in the `test` group.
 
 ```bash
-poetry install --with docs --without test,docs
+poetry install --with test,docs --without docs
 ```
 {{% /warning %}}
 
