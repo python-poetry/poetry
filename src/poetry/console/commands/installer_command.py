@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
 
 
@@ -9,7 +10,7 @@ if TYPE_CHECKING:
     from poetry.installation.installer import Installer
 
 
-class InstallerCommand(GroupCommand):
+class InstallerCommand(GroupCommand, EnvCommand):
     def __init__(self) -> None:
         # Set in poetry.console.application.Application.configure_installer
         self._installer: Installer | None = None
