@@ -117,16 +117,17 @@ The installer creates a `poetry` wrapper in a well-known, platform-specific dire
 
 - `$HOME/.local/bin` on Unix.
 - `%APPDATA%\Python\Scripts` on Windows.
+- `$POETRY_HOME/bin` if `$POETRY_HOME` is set.
 
 If this directory is not present in your `$PATH`, you can add it in order to invoke Poetry
 as `poetry`.
 
 Alternatively, the full path to the `poetry` binary can always be used:
 
-- `$POETRY_HOME/bin/poetry` if `$POETRY_HOME` is set.
-- `~/Library/Application Support/pypoetry/bin/poetry` on MacOS.
-- `~/.local/share/pypoetry/bin/poetry` on Linux/Unix.
-- `%APPDATA%\pypoetry\Scripts\poetry` on Windows.
+- `~/Library/Application Support/pypoetry/venv/bin/poetry` on MacOS.
+- `~/.local/share/pypoetry/venv/bin/poetry` on Linux/Unix.
+- `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows.
+- `$POETRY_HOME/venv/bin/poetry` if `$POETRY_HOME` is set.
 
 {{< /step >}}
 {{< step >}}
