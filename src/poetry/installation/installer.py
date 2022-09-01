@@ -524,15 +524,6 @@ class Installer:
                 op.skip("Not needed for the current environment")
                 continue
 
-            if self._update:
-                extras = {}
-                for extra, dependencies in self._package.extras.items():
-                    extras[extra] = [dependency.name for dependency in dependencies]
-            else:
-                extras = {}
-                for extra, deps in self._locker.lock_data.get("extras", {}).items():
-                    extras[extra] = [dep.lower() for dep in deps]
-
             # If a package is optional and not requested
             # in any extra we skip it
             if package.optional and package.name not in extra_packages:
