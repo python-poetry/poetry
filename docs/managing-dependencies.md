@@ -142,7 +142,7 @@ poetry install --with docs
 
 {{% warning %}}
 When used together, `--without` takes precedence over `--with`. For example, the following command
-will only install the dependencies specified in the `test` group.
+will only install the dependencies specified in the optional `test` group.
 
 ```bash
 poetry install --with test,docs --without docs
