@@ -10,11 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Union
 
-    from cleo.commands.command import Command as CleoCommand
-
-    from poetry.console.commands.command import Command as PoetryCommand
-
-    Command = Union[CleoCommand, PoetryCommand]
+    from cleo.commands.command import Command
 
 
 class CommandLoader(FactoryCommandLoader):  # type: ignore[misc]
