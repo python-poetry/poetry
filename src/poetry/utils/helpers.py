@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
 
-
 _canonicalize_regex = re.compile("[-_]+")
 
 
@@ -73,7 +72,7 @@ def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
     func(path)
 
 
-def robust_rmtree(path: str, onerror=None, max_timeout=1) -> None:
+def robust_rmtree(path: str, onerror: Callable = None, max_timeout: float = 1) -> None:
     """
     Robustly tries to delete paths.
     Retries several times if an OSError occurs.
@@ -98,7 +97,9 @@ def safe_rmtree(path: str) -> None:
     if Path(path).is_symlink():
         return os.unlink(str(path))
 
-    shutil.rmtree(path, onerror=_on_rm_error)  # maybe we could call robust_rmtree here just in case ?
+    shutil.rmtree(
+        path, onerror=_on_rm_error
+    )  # maybe we could call robust_rmtree here just in case ?
 
 
 def merge_dicts(d1: Dict, d2: Dict) -> None:
