@@ -308,7 +308,7 @@ the installer does to safely install Poetry isolated from the rest of your syste
 for any Python package, with a syntax/usage that is similar to `pip`. `pipx` should be considered equally supported in
 comparison to the official installer, and should be one of your top choices for use of Poetry in CI.
 
-```
+```bash
 pipx install poetry==1.2.0
 ```
 
@@ -318,10 +318,11 @@ For maximum control in your CI environment, installation with `pip` is fully sup
 consider. While this requires more explicit commands and knowledge of Python packaging from you, it in return offers the
 best debugging experience, and leaves you subject to the fewest external tools.
 
-```
-virtualenv /opt/poetry
-/opt/poetry/bin/pip install poetry==1.2.0
-/opt/poetry/bin/poetry --version
+```bash
+export POETRY_HOME=/opt/poetry
+python3 -m venv $POETRY_HOME
+$POETRY_HOME/bin/pip install poetry==1.2.0
+$POETRY_HOME/bin/poetry --version
 ```
 
 {{% note %}}
