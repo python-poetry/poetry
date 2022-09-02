@@ -21,7 +21,6 @@ import hashlib
 import json
 import os
 import platform
-import random
 import re
 import shutil
 import stat
@@ -69,8 +68,6 @@ except NameError:
 SHELL = os.getenv("SHELL", "")
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
-
-BROWNOUT_CHANCE = 5  # percent chance to randomly fail in CI
 
 FOREGROUND_COLORS = {
     "black": 30,
@@ -355,7 +352,7 @@ class Installer:
         version, current_version = self.get_version()
 
         if version is None:
-            return 0
+            return 1
 
         self.customize_install()
         self.display_pre_message()
@@ -449,49 +446,30 @@ class Installer:
         print(
             colorize(
                 "deprecation",
-                "This installer is deprecated, and cannot install Poetry 1.2.0a1 or"
-                " newer.\nAdditionally, Poetry installations created by this installer"
-                " cannot `self update` to 1.2.0a1 or later.\nYou should migrate to"
-                " https://install.python-poetry.org instead. Instructions are available"
-                " at https://python-poetry.org/docs/#installation.\n",
+                "This installer is deprecated, and scheduled for removal from the"
+                " Poetry repository on or after January 1, 2023.\nSee"
+                " https://github.com/python-poetry/poetry/issues/6377 for"
+                " details.\n\nYou should migrate to https://install.python-poetry.org"
+                " instead, which supports all versions of Poetry, and allows for `self"
+                " update` of versions 1.1.7 or newer.\nInstructions are available at"
+                " https://python-poetry.org/docs/#installation.\n",
             )
         )
 
-        if not os.environ.get("GET_POETRY_IGNORE_DEPRECATION"):
-            if os.environ.get("CI"):
-                print(
-                    colorize(
-                        "deprecation",
-                        "A CI environment has been detected! Due to the above"
-                        " deprecation, this installer is subject to an escalating"
-                        " brownout percentage (currently {percent}%)!\nIf you"
-                        " understand the above warning and wish to opt out of this"
-                        " brownout, set GET_POETRY_IGNORE_DEPRECATION=1 in the"
-                        " environment.\n".format(percent=BROWNOUT_CHANCE),
-                    )
+        if not os.environ.get("GET_POETRY_IGNORE_DEPRECATION") and not self._version:
+            print(
+                colorize(
+                    "deprecation",
+                    "Without an explicit version, this installer will attempt to"
+                    " install the latest version of Poetry.\nThis installer cannot"
+                    " install Poetry 1.2.0a1 or newer (and installs will be unable to"
+                    " `self update` to 1.2.0a1 or newer).\n\nTo continue to use this"
+                    " deprecated installer, you must specify an explicit version with"
+                    " --version <version> or POETRY_VERSION=<version>.\nAlternatively,"
+                    " if you wish to force this deprecated installer to use the latest"
+                    " installable release, set GET_POETRY_IGNORE_DEPRECATION=1.\n",
                 )
-                if random.randrange(1, 100) < BROWNOUT_CHANCE:
-                    print(
-                        colorize(
-                            "error",
-                            "This invocation of the installer has been terminated due"
-                            " to the brownout described above. Please carefully read"
-                            " the above notices and update your CI pipeline"
-                            " accordingly!",
-                        )
-                    )
-                    return None, None
-            else:
-                print(
-                    colorize(
-                        "error",
-                        "This installer will now exit. If you understand the above"
-                        " warning and wish to proceed anyway, set"
-                        " GET_POETRY_IGNORE_DEPRECATION=1 in the environment and run"
-                        " this installer again.",
-                    )
-                )
-                return None, None
+            )
 
         version = self._version
         if not version:
@@ -500,29 +478,33 @@ class Installer:
                 if m.group(5) and not self.allows_prereleases():
                     continue
 
-                if _is_supported(release):
+                if not os.environ.get("GET_POETRY_IGNORE_DEPRECATION"):
                     version = release
-
-                    print(
-                        colorize(
-                            "warning",
-                            "Version {version} will be installed as it is the latest"
-                            " version supported by this installer.\nThis is not the"
-                            " latest version of Poetry! If you wish to install the"
-                            " latest version, please migrate to the new installer as"
-                            " described above!\n".format(version=release),
-                        )
-                    )
-
                     break
                 else:
-                    print(
-                        colorize(
-                            "warning",
-                            "Version {version} is available but is not supported by"
-                            " this installer!".format(version=release),
+                    if _is_supported(release):
+                        print(
+                            colorize(
+                                "warning",
+                                "Version {release} will be installed as it is the"
+                                " latest version supported by this installer.\n\nThis"
+                                " is not the latest version of Poetry! If you wish to"
+                                " install the latest version, you must move to the new"
+                                " installer as described above!\n".format(
+                                    release=release
+                                ),
+                            )
                         )
-                    )
+                        version = release
+                        break
+                    else:
+                        print(
+                            colorize(
+                                "warning",
+                                "Version {release} is available but is not supported by"
+                                " this installer!".format(release=release),
+                            )
+                        )
 
         if not _is_supported(version):
             print(
@@ -534,6 +516,7 @@ class Installer:
                     ),
                 )
             )
+
             return None, None
 
         current_version = None
