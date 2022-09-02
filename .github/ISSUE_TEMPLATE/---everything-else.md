@@ -4,7 +4,7 @@ about: For questions and issues that do not fall in any of the other categories.
   can include questions about Poetry's roadmap. For support questions, please post
   on StackOverflow.
 title: ''
-labels: ''
+labels: status/triage
 assignees: ''
 
 ---
