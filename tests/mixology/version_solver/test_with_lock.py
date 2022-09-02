@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
+from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
 from tests.helpers import get_package
@@ -213,4 +214,26 @@ def test_with_yanked_package_in_lock(
         root,
         provider,
         result={"foo": "1"},
+    )
+
+
+def test_no_update_is_respected_for_legacy_repository(
+    root: ProjectPackage, repo: Repository, pool: Pool
+):
+    root.add_dependency(Factory.create_dependency("foo", "^1.0"))
+
+    foo_100 = Package(
+        "foo", "1.0.0", source_type="legacy", source_url="http://example.com"
+    )
+    foo_101 = Package(
+        "foo", "1.0.1", source_type="legacy", source_url="http://example.com"
+    )
+    repo.add_package(foo_100)
+    repo.add_package(foo_101)
+
+    provider = Provider(root, pool, NullIO(), locked=[foo_100])
+    check_solver_result(
+        root,
+        provider,
+        result={"foo": "1.0.0"},
     )
