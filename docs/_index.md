@@ -28,7 +28,7 @@ If you are viewing documentation for the development branch, you may wish to ins
 See the **advanced** installation instructions to use a preview or alternate version of Poetry.
 {{% /note %}}
 
-{{< tabs tabTotal="3" tabID1="installing-with-the-official-installer" tabID2="installing-with-pipx" tabID3="installing-manually" tabName1="With the official installer" tabName2="With pipx" tabName3="Manually (advanced)" >}}
+{{< tabs tabTotal="4" tabID1="installing-with-the-official-installer" tabID2="installing-with-pipx" tabID3="installing-manually" tabID4="ci-recommendations" tabName1="With the official installer" tabName2="With pipx" tabName3="Manually (advanced)" tabName4="CI recommendations">}}
 
 {{< tab tabID="installing-with-the-official-installer" >}}
 
@@ -275,7 +275,79 @@ Poetry will be available at `$VENV_PATH/bin/poetry` and can be invoked directly 
 To uninstall Poetry, simply delete the entire `$VENV_PATH` directory.
 
 {{< /tab >}}
+{{< tab tabID="ci-recommendations" >}}
+Unlike development environments, where making use of the latest tools is desirable, in a CI environment reproducibility
+should be made the priority. Here are some suggestions for installing Poetry in such an environment.
+
+**Installation method**
+
+The official installer script ([install.python-poetry.org](https://install.python-poetry.org)) offers a streamlined and
+simplified installation of Poetry, sufficient for developer use or for simple pipelines. However, in a CI environment
+the other two supported installation methods (pipx and manual) should be seriously considered.
+
+**Using install.python-poetry.org**
+
+Downloading a copy of the installer script to a place accessible by your CI pipelines (or maintaining a copy of the
+[repository](https://github.com/python-poetry/install.python-poetry.org)) is strongly suggested, to ensure your
+pipeline's stability and to maintain control over what code is executed.
+
+By default the installer will install to a user-specific directory. In more complex pipelines that may make accessing
+Poetry difficult (especially in cases like multi-stage container builds). It is highly suggested to make use of
+`$POETRY_HOME` when using the official installer in CI, as that way the exact paths can be controlled.
+
+```bash
+export POETRY_HOME=/opt/poetry
+python3 install-poetry.py --version 1.2.0
+$POETRY_HOME/bin/poetry --version
+```
+
+**Using pipx**
+
+Just as `pipx` is a powerful tool for development use, it is equally useful in a CI environment. It takes the same steps
+the installer does to safely install Poetry isolated from the rest of your system, but is generic and able to do this
+for any Python package, with a syntax/usage that is similar to `pip`. `pipx` should be considered equally supported in
+comparison to the official installer, and should be one of your top choices for use of Poetry in CI.
+
+```
+pipx install poetry==1.2.0
+```
+
+**Using pip (aka manually)**
+
+For maximum control in your CI environment, installation with `pip` is fully supported and something you should
+consider. While this requires more explicit commands and knowledge of Python packaging from you, it in return offers the
+best debugging experience, and leaves you subject to the fewest external tools.
+
+```
+virtualenv /opt/poetry
+/opt/poetry/bin/pip install poetry==1.2.0
+/opt/poetry/bin/poetry --version
+```
+
+{{% note %}}
+If you install Poetry via `pip`, ensure you have Poetry installed into an isolated environment that is **not the same**
+as the target environment managed by Poetry. If Poetry and your project are installed into the same environment, Poetry
+is likely to upgrade or uninstall its own dependencies (causing hard-to-debug and understand errors).
+{{% /note %}}
+
+**Version pinning**
+
+Whatever method you use, it is highly recommended to explicitly control the version of Poetry used, so that you are able
+to upgrade after performing your own validation. Each install method has a different syntax for setting the version --
+the following are some simple examples:
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
+# or
+curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
+
+pipx install poetry==1.2.0
+
+/path/to/venv/bin/pip install poetry==1.2.0
+```
+{{< /tab >}}
 {{< /tabs >}}
+
 
 
 ## Enable tab completion for Bash, Fish, or Zsh
