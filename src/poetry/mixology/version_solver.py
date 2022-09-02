@@ -511,7 +511,10 @@ class VersionSolver:
                 # Thus, we can't use is_same_package_as() here because it compares
                 # the complete_name (including features).
                 dependency.name == package.name
-                and dependency.is_same_source_as(package)
+                and (
+                    dependency.source_type is None
+                    or dependency.is_same_source_as(package)
+                )
                 and dependency.constraint.allows(package.version)
             ):
                 return DependencyPackage(dependency, package)
