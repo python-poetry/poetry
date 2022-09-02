@@ -19,7 +19,7 @@ class SystemGit:
         cls._check_parameter(repository)
         return cls.run(
             "clone",
-            "--git-depth 1",
+            "--depth 1",
             "--recurse-submodules",
             "--shallow-submodules",
             "--",
