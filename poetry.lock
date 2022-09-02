@@ -931,7 +931,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "993e76b1334c28db52f3f8e8af2cfcd635431a71f505860073f6917cf170bc8d"
+content-hash = "1a3bec1367439db08fff0893d90204804ab6872bbaabdf88939c88c575776c77"
 
 [metadata.files]
 atomicwrites = [
