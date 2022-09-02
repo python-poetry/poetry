@@ -2,17 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from cleo.io.null_io import NullIO
+from poetry.core.packages.package import Package
+
 from poetry.factory import Factory
 from tests.helpers import get_package
 from tests.mixology.helpers import add_to_repo
 from tests.mixology.helpers import check_solver_result
+from tests.mixology.version_solver.conftest import Provider
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.repositories import Pool
     from poetry.repositories import Repository
-    from tests.mixology.version_solver.conftest import Provider
 
 
 def test_with_compatible_locked_dependencies(
@@ -196,4 +200,27 @@ def test_with_yanked_package_in_lock(
         root,
         provider,
         result={"foo": "1"},
+    )
+
+
+def test_no_update_is_respected_for_legacy_repository(
+    root: ProjectPackage, repo: Repository, pool: Pool
+):
+    root.add_dependency(Factory.create_dependency("foo", "^1.0"))
+
+    foo_100 = Package(
+        "foo", "1.0.0", source_type="legacy", source_url="http://example.com"
+    )
+    foo_101 = Package(
+        "foo", "1.0.1", source_type="legacy", source_url="http://example.com"
+    )
+    repo.add_package(foo_100)
+    repo.add_package(foo_101)
+
+    provider = Provider(root, pool, NullIO())
+    check_solver_result(
+        root,
+        provider,
+        result={"foo": "1.0.0"},
+        locked={"foo": foo_100},
     )
