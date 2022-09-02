@@ -8,7 +8,6 @@ from cleo.loaders.factory_command_loader import FactoryCommandLoader
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Union
 
     from cleo.commands.command import Command
 
