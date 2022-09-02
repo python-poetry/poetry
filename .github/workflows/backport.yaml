@@ -22,8 +22,15 @@ jobs:
         )
       )
     steps:
-      - uses: tibdex/backport@v2
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_id: ${{ secrets.POETRY_TOKEN_APP_ID }}
+          private_key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
+      - name: Generate backport
+        uses: tibdex/backport@v2
+        with:
+          github_token: ${{ steps.generate_token.outputs.token }}
           title_template: "[<%= base %>] <%= title %>"
           label_pattern: "^backport/(?<base>([^ ]+))$"
