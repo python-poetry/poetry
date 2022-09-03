@@ -148,7 +148,7 @@ poetry run pytest tests/
 ```
 
 Poetry uses [mypy](https://github.com/python/mypy) for typechecking, and the CI
-will fail if it finds any errors.  To run mypy locally:
+will fail if it finds any errors. To run mypy locally:
 
 ```bash
 poetry run mypy
