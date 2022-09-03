@@ -128,9 +128,18 @@ class Locker:
                 # Old lock so we create dummy files from the hashes
                 hashes = cast("dict[str, Any]", metadata["hashes"])
                 package.files = [{"name": h, "hash": h} for h in hashes[name]]
+            elif source_type in {"git", "directory", "url"}:
+                package.files = []
             else:
                 files = metadata["files"][name]
-                package.files = files
+                if source_type == "file":
+                    filename = Path(url).name
+                    package.files = [item for item in files if item["file"] == filename]
+                else:
+                    # Strictly speaking, this is not correct, but we have no chance
+                    # to always determine which are the correct files because the
+                    # lockfile doesn't keep track which files belong to which package.
+                    package.files = files
 
             package.python_versions = info["python-versions"]
             extras = info.get("extras", {})
