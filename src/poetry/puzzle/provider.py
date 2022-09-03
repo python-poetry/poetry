@@ -581,6 +581,12 @@ class Provider:
             # Retrieving constraints for deferred dependencies
             for r in requires:
                 if r.is_direct_origin():
+                    locked = self.get_locked(r)
+                    # If lock file contains exactly the same URL and reference
+                    # (commit hash) of dependency as is requested,
+                    # do not analyze it again: nothing could have changed.
+                    if locked is not None and locked.package.is_same_package_as(r):
+                        continue
                     self.search_for_direct_origin_dependency(r)
 
         optional_dependencies = []
