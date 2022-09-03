@@ -1015,7 +1015,7 @@ def test_show_outdated_local_dependencies(
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {
-                        "pendulum": "pendulum>=1.4.4",
+                        "pendulum": ">=1.4.4",
                         "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
                     },
                     "source": {
