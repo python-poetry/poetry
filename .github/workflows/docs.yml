@@ -36,14 +36,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.10"
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: "14"
+          node-version: "18"
 
       - name: Build Assets
         run: npm ci && npm run prod
@@ -63,7 +63,7 @@ jobs:
         run: hugo -v --minify
 
       - name: Deploy
-        uses: amondnet/vercel-action@v20
+        uses: amondnet/vercel-action@v25
         id: vercel-action
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
