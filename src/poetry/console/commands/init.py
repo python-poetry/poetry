@@ -5,9 +5,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Mapping
-from typing import Union
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
@@ -25,7 +23,7 @@ if TYPE_CHECKING:
 
     from poetry.repositories import Pool
 
-Requirements = Dict[str, Union[str, Mapping[str, Any]]]
+Requirements = dict[str, str | Mapping[str, Any]]
 
 
 class InitCommand(Command):

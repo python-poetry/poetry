@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Collection
 from typing import FrozenSet
-from typing import Tuple
 from typing import TypeVar
 
 from poetry.core.packages.dependency_group import MAIN_GROUP
@@ -188,7 +187,7 @@ class Solver:
         return final_packages, depths
 
 
-DFSNodeID = Tuple[str, FrozenSet[str], bool]
+DFSNodeID = tuple[str, FrozenSet[str], bool]
 
 T = TypeVar("T", bound="DFSNode")
 
