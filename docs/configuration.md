@@ -15,7 +15,7 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically be created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Application Support/pypoetry`
+- macOS:   `~/Library/Preferences/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
