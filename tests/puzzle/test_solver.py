@@ -3454,6 +3454,63 @@ def test_solver_keeps_multiple_locked_dependencies_for_same_package(
     )
 
 
+@pytest.mark.parametrize("is_locked", [False, True])
+def test_solver_does_not_update_ref_of_locked_vcs_package(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: Pool,
+    io: NullIO,
+    is_locked: bool,
+):
+    locked_ref = "123456"
+    latest_ref = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    demo_locked = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference=DEFAULT_SOURCE_REF,
+        source_resolved_reference=locked_ref,
+    )
+    demo_locked.add_dependency(Factory.create_dependency("pendulum", "*"))
+    demo_latest = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference=DEFAULT_SOURCE_REF,
+        source_resolved_reference=latest_ref,
+    )
+    locked = [demo_locked] if is_locked else []
+
+    package.add_dependency(
+        Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+    )
+
+    # transient dependencies of demo
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    solver = Solver(package, pool, [], locked, io)
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": demo_locked if is_locked else demo_latest},
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.package.source_type == "git"
+    assert op.package.source_reference == DEFAULT_SOURCE_REF
+    assert (
+        op.package.source_resolved_reference == locked_ref if is_locked else latest_ref
+    )
+
+
 def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
