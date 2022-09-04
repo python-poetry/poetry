@@ -48,10 +48,7 @@ class PipInstaller(BaseInstaller):
 
         args = ["install", "--no-deps"]
 
-        if (
-            package.source_type not in {"git", "directory", "file", "url"}
-            and package.source_url
-        ):
+        if not package.is_direct_origin() and package.source_url:
             assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
             parsed = urllib.parse.urlparse(package.source_url)
