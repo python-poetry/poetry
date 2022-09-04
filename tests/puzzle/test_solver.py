@@ -34,6 +34,8 @@ from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRe
 if TYPE_CHECKING:
     import httpretty
 
+    from pytest_mock import MockerFixture
+
     from poetry.installation.operations.operation import Operation
     from poetry.puzzle.provider import Provider
     from poetry.puzzle.transaction import Transaction
@@ -3509,6 +3511,40 @@ def test_solver_does_not_update_ref_of_locked_vcs_package(
     assert (
         op.package.source_resolved_reference == locked_ref if is_locked else latest_ref
     )
+
+
+def test_solver_does_not_fetch_locked_vcs_package_with_ref(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: Pool,
+    io: NullIO,
+    mocker: MockerFixture,
+):
+    locked_ref = "123456"
+    demo_locked = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference=DEFAULT_SOURCE_REF,
+        source_resolved_reference=locked_ref,
+    )
+    demo_locked.add_dependency(Factory.create_dependency("pendulum", "*"))
+
+    package.add_dependency(
+        Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+    )
+
+    # transient dependencies of demo
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    solver = Solver(package, pool, [], [demo_locked], io)
+    spy = mocker.spy(solver._provider, "_search_for_vcs")
+
+    solver.solve()
+
+    spy.assert_not_called()
 
 
 def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
