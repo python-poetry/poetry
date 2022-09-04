@@ -166,7 +166,7 @@ hash = "sha256:70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9"
 
 [metadata]
 python-versions = "*"
-lock-version = "1.1"
+lock-version = "1.2"
 content-hash = "123456789"
 
 [metadata.files]

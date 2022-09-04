@@ -211,7 +211,7 @@ hash = "sha256:d735b91d6d1692a6a181f2a8c9e0238e5f6373356f561bb9dc4c7af36f452010"
 six = "*"
 
 [metadata]
-lock-version = "1.1"
+lock-version = "1.2"
 python-versions = "^3.8"
 content-hash = "2f47de5e052dabeff3c1362d3a37b5cfcaf9bbe9d9ce1681207e72ca1f4dab55"
 

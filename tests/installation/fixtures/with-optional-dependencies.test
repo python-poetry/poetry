@@ -33,7 +33,7 @@ foo = ["A"]
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-lock-version = "1.1"
+lock-version = "1.2"
 content-hash = "123456789"
 
 [metadata.files]

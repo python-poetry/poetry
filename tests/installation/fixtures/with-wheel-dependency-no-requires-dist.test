@@ -16,7 +16,7 @@ url = "tests/fixtures/wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.wh
 
 [metadata]
 python-versions = "*"
-lock-version = "1.1"
+lock-version = "1.2"
 content-hash = "123456789"
 
 [metadata.files]

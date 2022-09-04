@@ -47,7 +47,7 @@ GENERATED_COMMENT = (
 
 
 class Locker:
-    _VERSION = "1.1"
+    _VERSION = "1.2"
 
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
