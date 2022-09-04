@@ -1992,3 +1992,54 @@ def test_show_dependency_installed_from_git_in_dev(
     # packages.
     tester.execute("--outdated")
     assert tester.io.fetch_output() == ""
+
+
+def test_url_dependency_is_not_outdated_by_repository_package(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
+):
+    demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {"url": demo_url},
+        )
+    )
+
+    # A newer version of demo is available in the repository.
+    demo_100 = get_package("demo", "1.0.0")
+    repo.add_package(demo_100)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "description": "Demo package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "url",
+                        "url": demo_url,
+                    },
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"demo": []},
+            },
+        }
+    )
+
+    # The url dependency on demo is not made outdated by the existence of a newer
+    # version in the repository.
+    tester.execute("--outdated")
+    assert tester.io.fetch_output() == ""

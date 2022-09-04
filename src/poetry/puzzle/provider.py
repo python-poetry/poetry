@@ -546,12 +546,9 @@ class Provider:
             package = dependency_package.package
             dependency = dependency_package.dependency
             requires = package.all_requires
-        elif package.source_type not in {
-            "directory",
-            "file",
-            "url",
-            "git",
-        }:
+        elif package.is_direct_origin():
+            requires = package.requires
+        else:
             try:
                 dependency_package = DependencyPackage(
                     dependency,
@@ -573,8 +570,6 @@ class Provider:
 
             package = dependency_package.package
             dependency = dependency_package.dependency
-            requires = package.requires
-        else:
             requires = package.requires
 
         if self._load_deferred:

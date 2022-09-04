@@ -502,7 +502,7 @@ lists all packages available."""
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
-        if package.source_type in ("git", "file", "directory"):
+        if package.is_direct_origin():
             requires = root.all_requires
 
             for dep in requires:
