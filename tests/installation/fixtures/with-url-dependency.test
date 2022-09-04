@@ -5,6 +5,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = []
 
 [package.source]
 type = "url"
@@ -24,6 +25,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 python-versions = "*"

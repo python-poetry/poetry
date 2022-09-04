@@ -116,8 +116,9 @@ class Locker:
             if source_type in ["directory", "file"]:
                 url = self._lock.path.parent.joinpath(url).resolve().as_posix()
 
+            name = info["name"]
             package = Package(
-                info["name"],
+                name,
                 info["version"],
                 info["version"],
                 source_type=source_type,
@@ -130,9 +131,19 @@ class Locker:
             package.category = info.get("category", "main")
             package.optional = info["optional"]
             metadata = cast("dict[str, Any]", lock_data["metadata"])
-            name = info["name"]
-            if "hashes" in metadata:
-                # Old lock so we create dummy files from the hashes
+
+            # Storing of package files and hashes has been through a few generations in
+            # the lockfile, we can read them all:
+            #
+            # - latest and preferred is that this is read per package, from
+            #   package.files
+            # - oldest is that hashes were stored in metadata.hashes without filenames
+            # - in between those two, hashes were stored alongside filenames in
+            #   metadata.files
+            package_files = info.get("files")
+            if package_files is not None:
+                package.files = package_files
+            elif "hashes" in metadata:
                 hashes = cast("dict[str, Any]", metadata["hashes"])
                 package.files = [{"name": h, "hash": h} for h in hashes[name]]
             elif source_type in {"git", "directory", "url"}:
@@ -233,8 +244,6 @@ class Locker:
                 assert isinstance(package_files, Array)
                 files[package["name"]] = package_files.multiline(True)
 
-            del package["files"]
-
         lock = document()
         lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
@@ -249,6 +258,7 @@ class Locker:
             "lock-version": self._VERSION,
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
+            # TODO stop writing files here, this is deprecated.
             "files": files,
         }
 

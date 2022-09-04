@@ -6,6 +6,14 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[[package.files]]
+file = "certifi-2020.12.5-py2.py3-none-any.whl"
+hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"
+
+[[package.files]]
+file = "certifi-2020.12.5.tar.gz"
+hash = "sha256:1a4995114262bffbc2413b159f2a1a480c969de6e6eb13ee966d470af86af59c"
+
 [[package]]
 name = "chardet"
 version = "4.0.0"
@@ -14,6 +22,14 @@ category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
+[[package.files]]
+file = "chardet-4.0.0-py2.py3-none-any.whl"
+hash = "sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5"
+
+[[package.files]]
+file = "chardet-4.0.0.tar.gz"
+hash = "sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa"
+
 [[package]]
 name = "docker"
 version = "4.3.1"
@@ -21,6 +37,14 @@ description = "A Python library for the Docker Engine API."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package.files]]
+file = "docker-4.3.1-py2.py3-none-any.whl"
+hash = "sha256:13966471e8bc23b36bfb3a6fb4ab75043a5ef1dac86516274777576bed3b9828"
+
+[[package.files]]
+file = "docker-4.3.1.tar.gz"
+hash = "sha256:bad94b8dd001a8a4af19ce4becc17f41b09f228173ffe6a4e0355389eef142f2"
 
 [package.dependencies]
 pywin32 = {version = "227", markers = "sys_platform == \"win32\""}
@@ -40,6 +64,14 @@ category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
+[[package.files]]
+file = "idna-2.10-py2.py3-none-any.whl"
+hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"
+
+[[package.files]]
+file = "idna-2.10.tar.gz"
+hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"
+
 [[package]]
 name = "pywin32"
 version = "227"
@@ -48,6 +80,54 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[[package.files]]
+file = "pywin32-227-cp27-cp27m-win32.whl"
+hash = "sha256:371fcc39416d736401f0274dd64c2302728c9e034808e37381b5e1b22be4a6b0"
+
+[[package.files]]
+file = "pywin32-227-cp27-cp27m-win_amd64.whl"
+hash = "sha256:4cdad3e84191194ea6d0dd1b1b9bdda574ff563177d2adf2b4efec2a244fa116"
+
+[[package.files]]
+file = "pywin32-227-cp35-cp35m-win32.whl"
+hash = "sha256:f4c5be1a293bae0076d93c88f37ee8da68136744588bc5e2be2f299a34ceb7aa"
+
+[[package.files]]
+file = "pywin32-227-cp35-cp35m-win_amd64.whl"
+hash = "sha256:a929a4af626e530383a579431b70e512e736e9588106715215bf685a3ea508d4"
+
+[[package.files]]
+file = "pywin32-227-cp36-cp36m-win32.whl"
+hash = "sha256:300a2db938e98c3e7e2093e4491439e62287d0d493fe07cce110db070b54c0be"
+
+[[package.files]]
+file = "pywin32-227-cp36-cp36m-win_amd64.whl"
+hash = "sha256:9b31e009564fb95db160f154e2aa195ed66bcc4c058ed72850d047141b36f3a2"
+
+[[package.files]]
+file = "pywin32-227-cp37-cp37m-win32.whl"
+hash = "sha256:47a3c7551376a865dd8d095a98deba954a98f326c6fe3c72d8726ca6e6b15507"
+
+[[package.files]]
+file = "pywin32-227-cp37-cp37m-win_amd64.whl"
+hash = "sha256:31f88a89139cb2adc40f8f0e65ee56a8c585f629974f9e07622ba80199057511"
+
+[[package.files]]
+file = "pywin32-227-cp38-cp38-win32.whl"
+hash = "sha256:7f18199fbf29ca99dff10e1f09451582ae9e372a892ff03a28528a24d55875bc"
+
+[[package.files]]
+file = "pywin32-227-cp38-cp38-win_amd64.whl"
+hash = "sha256:7c1ae32c489dc012930787f06244426f8356e129184a02c25aef163917ce158e"
+
+[[package.files]]
+file = "pywin32-227-cp39-cp39-win32.whl"
+hash = "sha256:c054c52ba46e7eb6b7d7dfae4dbd987a1bb48ee86debe3f245a2884ece46e295"
+
+[[package.files]]
+file = "pywin32-227-cp39-cp39-win_amd64.whl"
+hash = "sha256:f27cec5e7f588c3d1051651830ecc00294f90728d19c3bf6916e6dba93ea357c"
+
 [[package]]
 name = "requests"
 version = "2.25.1"
@@ -55,6 +135,14 @@ description = "Python HTTP for Humans."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package.files]]
+file = "requests-2.25.1-py2.py3-none-any.whl"
+hash = "sha256:c210084e36a42ae6b9219e00e48287def368a26d03a048ddad7bfee44f75871e"
+
+[[package.files]]
+file = "requests-2.25.1.tar.gz"
+hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"
 
 [package.dependencies]
 certifi = ">=2017.4.17"
@@ -74,6 +162,14 @@ category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
+[[package.files]]
+file = "six-1.15.0-py2.py3-none-any.whl"
+hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"
+
+[[package.files]]
+file = "six-1.15.0.tar.gz"
+hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"
+
 [[package]]
 name = "urllib3"
 version = "1.26.3"
@@ -81,6 +177,14 @@ description = "HTTP library with thread-safe connection pooling, file post, and 
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
+
+[[package.files]]
+file = "urllib3-1.26.3-py2.py3-none-any.whl"
+hash = "sha256:1b465e494e3e0d8939b50680403e3aedaa2bc434b7d5af64dfd3c958d7f5ae80"
+
+[[package.files]]
+file = "urllib3-1.26.3.tar.gz"
+hash = "sha256:de3eedaad74a2683334e282005cd8d7f22f4d55fa690a2a1020a416cb0a47e73"
 
 [package.extras]
 brotli = ["brotlipy (>=0.6.0)"]
@@ -94,6 +198,14 @@ description = "WebSocket client for Python with low level API options"
 category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package.files]]
+file = "websocket_client-0.58.0-py2.py3-none-any.whl"
+hash = "sha256:44b5df8f08c74c3d82d28100fdc81f4536809ce98a17f0757557813275fbb663"
+
+[[package.files]]
+file = "websocket_client-0.58.0.tar.gz"
+hash = "sha256:63509b41d158ae5b7f67eb4ad20fecbb4eee99434e73e140354dc3ff8e09716f"
 
 [package.dependencies]
 six = "*"

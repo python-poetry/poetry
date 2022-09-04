@@ -5,6 +5,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 B = "^2.0"
@@ -16,6 +17,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 C = "1.5"
@@ -27,6 +29,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 python-versions = "*"

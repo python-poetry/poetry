@@ -5,6 +5,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 develop = false
 
 [package.dependencies]
@@ -27,6 +28,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [[package]]
 name = "cleo"
@@ -35,6 +37,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 python-versions = "*"

@@ -105,6 +105,14 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[[package.files]]
+file = "bar"
+hash = "123"
+
+[[package.files]]
+file = "foo"
+hash = "456"
+
 [package.dependencies]
 B = "^1.0"
 
@@ -116,6 +124,10 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[[package.files]]
+file = "baz"
+hash = "345"
+
 [[package]]
 name = "B"
 version = "1.2"
@@ -123,6 +135,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [[package]]
 name = "git-package"
@@ -131,6 +144,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 develop = false
 
 [package.source]
@@ -146,6 +160,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 develop = false
 
 [package.source]
@@ -162,6 +177,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.source]
 type = "url"
@@ -174,6 +190,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.source]
 type = "url"
@@ -551,6 +568,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 lock-version = "1.1"
@@ -585,6 +603,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 B = [
@@ -672,6 +691,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.source]
 type = "legacy"
@@ -763,6 +783,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 B = {{version = "^1.0.0", extras = ["a", "b", "c"], optional = true}}
@@ -856,6 +877,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 B = {{path = "project_with_extras", develop = true}}
@@ -902,6 +924,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 develop = false
 
 [package.source]
@@ -954,6 +977,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.extras]
 B = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
@@ -1126,6 +1150,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.source]
 type = "file"
