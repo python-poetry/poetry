@@ -1392,7 +1392,7 @@ def test_build_environment_called_build_script_specified(
         assert env == ephemeral_env
         assert env.executed == [
             [
-                "python",
+                sys.executable,
                 env.pip_embedded,
                 "install",
                 "--disable-pip-version-check",
