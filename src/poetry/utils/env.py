@@ -536,15 +536,15 @@ class EnvManager:
         executable = None
 
         try:
-            io.write_line(
+            io.write_error_line(
                 "Trying to detect current active python executable as specified in the"
                 " config.",
                 verbosity=Verbosity.VERBOSE,
             )
             executable = self._full_python_path("python")
-            io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+            io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         except CalledProcessError:
-            io.write_line(
+            io.write_error_line(
                 "Unable to detect the current active python executable. Falling back to"
                 " default.",
                 verbosity=Verbosity.VERBOSE,
@@ -651,7 +651,9 @@ class EnvManager:
             env = envs.get(name)
             if env is not None:
                 venv = venv_path / f"{name}-py{env['minor']}"
-                io.write_line(f"Deactivating virtualenv: <comment>{venv}</comment>")
+                io.write_error_line(
+                    f"Deactivating virtualenv: <comment>{venv}</comment>"
+                )
                 del envs[name]
 
                 envs_file.write(envs)
@@ -911,7 +913,7 @@ class EnvManager:
                 python = "python" + python_to_try
 
                 if io.is_debug():
-                    io.write_line(f"<debug>Trying {python}</debug>")
+                    io.write_error_line(f"<debug>Trying {python}</debug>")
 
                 try:
                     python_patch = decode(
@@ -930,7 +932,7 @@ class EnvManager:
                     continue
 
                 if supported_python.allows(Version.parse(python_patch)):
-                    io.write_line(f"Using <c1>{python}</c1> ({python_patch})")
+                    io.write_error_line(f"Using <c1>{python}</c1> ({python_patch})")
                     executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
@@ -955,7 +957,7 @@ class EnvManager:
 
         if not venv.exists():
             if create_venv is False:
-                io.write_line(
+                io.write_error_line(
                     "<fg=black;bg=yellow>"
                     "Skipping virtualenv creation, "
                     "as specified in config file."
@@ -964,7 +966,7 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_line(
+            io.write_error_line(
                 f"Creating virtualenv <c1>{name}</> in"
                 f" {venv_path if not WINDOWS else get_real_windows_path(venv_path)!s}"
             )
@@ -976,11 +978,11 @@ class EnvManager:
                         f"<warning>The virtual environment found in {env.path} seems to"
                         " be broken.</warning>"
                     )
-                io.write_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
+                io.write_error_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
                 self.remove_venv(venv)
                 create_venv = True
             elif io.is_very_verbose():
-                io.write_line(f"Virtualenv <c1>{name}</> already exists.")
+                io.write_error_line(f"Virtualenv <c1>{name}</> already exists.")
 
         if create_venv:
             self.build_venv(
@@ -1917,14 +1919,14 @@ def build_environment(
 
             if io:
                 if not overwrite:
-                    io.write_line("")
+                    io.write_error_line("")
 
                 requires = [
                     f"<c1>{requirement}</c1>"
                     for requirement in poetry.pyproject.build_system.requires
                 ]
 
-                io.overwrite(
+                io.overwrite_error(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
@@ -1938,7 +1940,7 @@ def build_environment(
 
             if overwrite:
                 assert io is not None
-                io.write_line("")
+                io.write_error_line("")
 
             yield venv
     else:
