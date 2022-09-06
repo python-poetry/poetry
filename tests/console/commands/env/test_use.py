@@ -86,12 +86,11 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    expected = f"""\
-Creating virtualenv {venv_py37.name} in {venv_py37.parent}
-Using virtualenv: {venv_py37}
-"""
-
-    assert tester.io.fetch_output() == expected
+    assert (
+        tester.io.fetch_error()
+        == f"Creating virtualenv {venv_py37.name} in {venv_py37.parent}\n"
+    )
+    assert tester.io.fetch_output() == f"Using virtualenv: {venv_py37}\n"
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
@@ -149,9 +148,8 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
 
     tester.execute(python_minor)
 
-    expected = f"""\
-Creating virtualenv {venv_dir.name} in {venv_dir.parent}
-Using virtualenv: {venv_dir}
-"""
-
-    assert tester.io.fetch_output() == expected
+    assert (
+        tester.io.fetch_error()
+        == f"Creating virtualenv {venv_dir.name} in {venv_dir.parent}\n"
+    )
+    assert tester.io.fetch_output() == f"Using virtualenv: {venv_dir}\n"

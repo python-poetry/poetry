@@ -4,9 +4,8 @@ import logging
 
 from typing import TYPE_CHECKING
 
-from poetry.core.semver.helpers import parse_constraint
+from packaging.utils import canonicalize_name
 from poetry.core.semver.version import Version
-from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 
 from poetry.repositories.exceptions import PackageNotFound
@@ -17,6 +16,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
+    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Repository:
@@ -102,11 +102,6 @@ class Repository:
         dependency: Dependency,
     ) -> tuple[VersionConstraint, bool]:
         constraint = dependency.constraint
-        if constraint is None:
-            constraint = "*"
-
-        if not isinstance(constraint, VersionConstraint):
-            constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange) and (
@@ -139,10 +134,11 @@ class Repository:
         return []
 
     def package(
-        self, name: NormalizedName, version: Version, extras: list[str] | None = None
+        self, name: str, version: Version, extras: list[str] | None = None
     ) -> Package:
+        canonicalized_name = canonicalize_name(name)
         for package in self.packages:
-            if name == package.name and package.version == version:
+            if canonicalized_name == package.name and package.version == version:
                 return package.clone()
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")

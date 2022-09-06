@@ -6,6 +6,7 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
 
+from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
 
 
@@ -30,7 +31,7 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
-class ShowCommand(GroupCommand):
+class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
 
@@ -505,7 +506,7 @@ lists all packages available."""
             requires = root.all_requires
 
             for dep in requires:
-                if dep.name == package.name:
+                if dep.name == package.name and dep.source_type == package.source_type:
                     provider = Provider(root, self.poetry.pool, NullIO())
                     return provider.search_for_direct_origin_dependency(dep)
 

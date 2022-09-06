@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
@@ -53,11 +52,18 @@ def test_package_yanked(
     yanked: bool,
     yanked_reason: str,
 ) -> None:
-    package = black_repository.package(
-        canonicalize_name(package_name), Version.parse(version)
-    )
+    package = black_repository.package(package_name, Version.parse(version))
 
     assert package.name == package_name
     assert str(package.version) == version
     assert package.yanked is yanked
     assert package.yanked_reason == yanked_reason
+
+
+def test_package_pretty_name_is_kept() -> None:
+    pretty_name = "Not_canoni-calized.name"
+    repo = Repository("repo")
+    repo.add_package(Package(pretty_name, "1.0"))
+    package = repo.package(pretty_name, Version.parse("1.0"))
+
+    assert package.pretty_name == pretty_name

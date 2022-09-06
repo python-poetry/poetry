@@ -46,7 +46,7 @@ class CacheClearCommand(Command):
                     f"Add the --all option if you want to clear all {parts[0]} caches"
                 )
 
-            if not os.path.exists(cache_dir):
+            if not cache_dir.exists():
                 self.line(f"No cache entries for {parts[0]}")
                 return 0
 
@@ -55,7 +55,7 @@ class CacheClearCommand(Command):
                 len(files) for _path, _dirs, files in os.walk(str(cache_dir))
             )
 
-            delete = self.confirm(f"<question>Delete {entries_count} entries?</>")
+            delete = self.confirm(f"<question>Delete {entries_count} entries?</>", True)
             if not delete:
                 return 0
 
@@ -73,7 +73,7 @@ class CacheClearCommand(Command):
                 self.line(f"No cache entries for {package}:{version}")
                 return 0
 
-            delete = self.confirm(f"Delete cache entry {package}:{version}")
+            delete = self.confirm(f"Delete cache entry {package}:{version}", True)
             if not delete:
                 return 0
 

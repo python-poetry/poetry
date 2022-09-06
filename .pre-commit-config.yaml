@@ -75,7 +75,7 @@ repos:
         args: [--lines-after-imports, "-1"]
 
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
       - id: black
 
