@@ -1393,7 +1393,7 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
-        raise NotImplementedError()
+        return [self.python, self.pip_embedded if embedded else self.pip]
 
     def get_supported_tags(self) -> list[Tag]:
         raise NotImplementedError()
@@ -1556,11 +1556,6 @@ class SystemEnv(Env):
     def get_python_implementation(self) -> str:
         return platform.python_implementation()
 
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        # If we're not in a venv, assume the interpreter we're running on
-        # has a pip and use that
-        return [sys.executable, self.pip_embedded if embedded else self.pip]
-
     def get_paths(self) -> dict[str, str]:
         # We can't use sysconfig.get_paths() because
         # on some distributions it does not return the proper paths
@@ -1671,14 +1666,6 @@ class VirtualEnv(Env):
     def get_python_implementation(self) -> str:
         implementation: str = self.marker_env["platform_python_implementation"]
         return implementation
-
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        # We're in a virtualenv that is known to be sane,
-        # so assume that we have a functional pip
-        return [
-            self._bin(self._executable),
-            self.pip_embedded if embedded else self.pip,
-        ]
 
     def get_supported_tags(self) -> list[Tag]:
         output = self.run_python_script(GET_SYS_TAGS)
@@ -1857,12 +1844,6 @@ class NullEnv(SystemEnv):
 
         self._execute = execute
         self.executed: list[list[str]] = []
-
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        return [
-            self._bin(self._executable),
-            self.pip_embedded if embedded else self.pip,
-        ]
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         self.executed.append(cmd)
