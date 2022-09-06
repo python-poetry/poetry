@@ -95,8 +95,13 @@ class Shell:
 
         if self._name in ["zsh", "nu"]:
             c.setecho(False)
-
-        c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
+            if self._name == "zsh":
+                # Under ZSH the source command should be invoked in zsh's bash emulator
+                c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
+        else:
+            c.sendline(
+                f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+            )
 
         def resize(sig: Any, data: Any) -> None:
             terminal = shutil.get_terminal_size()
