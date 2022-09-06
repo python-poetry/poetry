@@ -1393,7 +1393,10 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
-        return [self.python, self.pip_embedded if embedded else self.pip]
+        if embedded or not Path(self._bin(self._pip_executable)).exists():
+            return [self.python, self.pip_embedded]
+        # run as module so that pip can update itself on Windows
+        return [self.python, "-m", "pip"]
 
     def get_supported_tags(self) -> list[Tag]:
         raise NotImplementedError()
