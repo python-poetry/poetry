@@ -102,14 +102,15 @@ lists all packages available."""
             return 1
 
         locked_repo = self.poetry.locker.locked_repository()
-        root = self.project_with_activated_groups_only()
-
-        # Show tree view if requested
-        if self.option("tree") and package is None:
-            return self._display_packages_tree_information(locked_repo, root)
 
         if package:
             return self._display_single_package_information(package, locked_repo)
+
+        root = self.project_with_activated_groups_only()
+
+        # Show tree view if requested
+        if self.option("tree"):
+            return self._display_packages_tree_information(locked_repo, root)
 
         return self._display_packages_information(locked_repo, root)
 
