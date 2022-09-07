@@ -165,9 +165,7 @@ lists all packages available."""
             ["<info>description</>", f" : {pkg.description}"],
         ]
 
-        table = self.table(style="compact")
-        table.add_rows(rows)
-        table.render()
+        self.table(rows=rows, style="compact").render()
 
         if pkg.requires:
             self.line("")
