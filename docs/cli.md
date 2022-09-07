@@ -144,7 +144,7 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-If you want to exclude one or more dependency group for the installation, you can use
+If you want to exclude one or more dependency groups for the installation, you can use
 the `--without` option.
 
 ```bash
@@ -199,6 +199,12 @@ Pass `--all-extras` to install all defined extras for a project.
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 poetry install --all-extras
+```
+
+Extras are not sensitive to `--sync`.  Any extras not specified will always be removed.
+
+```bash
+poetry install --extras "A B"  # C is removed
 ```
 
 By default `poetry` will install your project's package every time you run `install`:
