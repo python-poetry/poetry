@@ -25,10 +25,11 @@ cache_control_logger.setLevel(logging.ERROR)
 
 logger = logging.getLogger(__name__)
 
-
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.semver.version_constraint import VersionConstraint
+
+SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
 class PyPiRepository(HTTPRepository):
@@ -165,8 +166,9 @@ class PyPiRepository(HTTPRepository):
 
         links = []
         for url in json_data["urls"]:
-            h = f"sha256={url['digests']['sha256']}"
-            links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
+            if url["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                h = f"sha256={url['digests']['sha256']}"
+                links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
 
         return links
 
@@ -201,12 +203,13 @@ class PyPiRepository(HTTPRepository):
             version_info = []
 
         for file_info in version_info:
-            data.files.append(
-                {
-                    "file": file_info["filename"],
-                    "hash": "sha256:" + file_info["digests"]["sha256"],
-                }
-            )
+            if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                data.files.append(
+                    {
+                        "file": file_info["filename"],
+                        "hash": "sha256:" + file_info["digests"]["sha256"],
+                    }
+                )
 
         if self._fallback and data.requires_dist is None:
             self._log("No dependencies found, downloading archives", level="debug")
@@ -219,7 +222,7 @@ class PyPiRepository(HTTPRepository):
             for url in json_data["urls"]:
                 # Only get sdist and wheels if they exist
                 dist_type = url["packagetype"]
-                if dist_type not in ["sdist", "bdist_wheel"]:
+                if dist_type not in SUPPORTED_PACKAGE_TYPES:
                     continue
 
                 urls[dist_type].append(url["url"])
