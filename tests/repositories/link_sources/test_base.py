@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
-from unittest.mock import PropertyMock
 
 import pytest
 
@@ -18,25 +18,32 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
+    from poetry.repositories.link_sources.base import LinkCache
+
 
 @pytest.fixture
 def link_source(mocker: MockerFixture) -> LinkSource:
     url = "https://example.org"
-    link_source = LinkSource(url)
-    mocker.patch(
-        f"{LinkSource.__module__}.{LinkSource.__qualname__}.links",
-        new_callable=PropertyMock,
-        return_value=iter(
-            [
-                Link(f"{url}/demo-0.1.0.tar.gz"),
-                Link(f"{url}/demo-0.1.0_invalid.tar.gz"),
-                Link(f"{url}/invalid.tar.gz"),
-                Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
-                Link(f"{url}/demo-0.1.1.tar.gz"),
-            ]
-        ),
-    )
-    return link_source
+
+    class LinkSourceMock(LinkSource):
+        def _get_link_cache(self) -> LinkCache:
+            return defaultdict(
+                lambda: defaultdict(list),
+                {
+                    canonicalize_name("demo"): defaultdict(
+                        list,
+                        {
+                            Version.parse("0.1.0"): [
+                                Link(f"{url}/demo-0.1.0.tar.gz"),
+                                Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
+                            ],
+                            Version.parse("0.1.1"): [Link(f"{url}/demo-0.1.1.tar.gz")],
+                        },
+                    ),
+                },
+            )
+
+    return LinkSourceMock(url)
 
 
 @pytest.mark.parametrize(
@@ -63,7 +70,7 @@ def test_link_package_data(filename: str, expected: Package | None) -> None:
     ],
 )
 def test_versions(name: str, expected: set[Version], link_source: LinkSource) -> None:
-    assert set(link_source.versions(name)) == expected
+    assert set(link_source.versions(canonicalize_name(name))) == expected
 
 
 def test_packages(link_source: LinkSource) -> None:
