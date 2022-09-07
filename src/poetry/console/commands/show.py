@@ -115,15 +115,7 @@ lists all packages available."""
 
         # Show tree view if requested
         if self.option("tree") and package is None:
-            requires = root.all_requires
-            packages = locked_repo.packages
-            for p in packages:
-                for require in requires:
-                    if p.name == require.name:
-                        self.display_package_tree(self.io, p, packages)
-                        break
-
-            return 0
+            return self._display_packages_tree_information(locked_repo, root)
 
         locked_packages = locked_repo.packages
         pool = Pool(ignore_repository_names=True)
@@ -375,6 +367,19 @@ lists all packages available."""
             self.line("<info>required by</info>")
             for parent, requires_version in required_by.items():
                 self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
+
+        return 0
+
+    def _display_packages_tree_information(
+        self, locked_repository: Repository, root: ProjectPackage
+    ) -> int:
+        packages = locked_repository.packages
+
+        for p in packages:
+            for require in root.all_requires:
+                if p.name == require.name:
+                    self.display_package_tree(self.io, p, packages)
+                    break
 
         return 0
 
