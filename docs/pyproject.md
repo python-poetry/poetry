@@ -385,8 +385,8 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-Any extras you don't specify will be removed. Note this behavior is different from 
-[optional dependency groups]({{< relref "managing-dependencies#optional-groups" >}}) not 
+Any extras you don't specify will be removed. Note this behavior is different from
+[optional dependency groups]({{< relref "managing-dependencies#optional-groups" >}}) not
 selected for install, e.g. those not specified via `install --with`.
 
 You can install all extras with the `--all-extras` option:
