@@ -197,7 +197,7 @@ poetry install --sync
 ```
 
 The `--sync` option can be combined with any [dependency groups]({{< relref "#dependency-groups" >}}) related options
-to synchronize the environment with specific groups. Note that extras are separate.  Any 
+to synchronize the environment with specific groups. Note that extras are separate.  Any
 extras not selected for install are always removed, regardless of `--sync`.
 
 ```bash
@@ -212,6 +212,6 @@ The `--sync` option replaces the `--remove-untracked` option which is now deprec
 
 ## Layering optional groups
 
-When you omit the `--sync` option, you can install any subset of optional groups without removing 
+When you omit the `--sync` option, you can install any subset of optional groups without removing
 those that are already installed.  This is very useful, for example, in multi-stage
 Docker builds, where you run `poetry install` multiple times in different build stages.
