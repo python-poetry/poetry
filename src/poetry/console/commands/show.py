@@ -125,7 +125,6 @@ lists all packages available."""
 
             return 0
 
-        table = self.table(style="compact")
         locked_packages = locked_repo.packages
         pool = Pool(ignore_repository_names=True)
         pool.add_repository(locked_repo)
@@ -143,71 +142,7 @@ lists all packages available."""
         required_locked_packages = {op.package for op in ops if not op.skipped}
 
         if package:
-            pkg = None
-            for locked in locked_packages:
-                if canonicalize_name(package) == locked.name:
-                    pkg = locked
-                    break
-
-            if not pkg:
-                raise ValueError(f"Package {package} not found")
-
-            required_by = reverse_deps(pkg, locked_repo)
-
-            if self.option("tree"):
-                if self.option("why"):
-                    # The default case if there's no reverse dependencies is to query
-                    # the subtree for pkg but if any rev-deps exist we'll query for each
-                    # of them in turn
-                    packages = [pkg]
-                    if required_by:
-                        packages = [
-                            p
-                            for p in locked_packages
-                            for r in required_by.keys()
-                            if p.name == r
-                        ]
-                    else:
-                        # if no rev-deps exist we'll make this clear as it can otherwise
-                        # look very odd for packages that also have no or few direct
-                        # dependencies
-                        self.io.write_line(f"Package {package} is a direct dependency.")
-
-                    for p in packages:
-                        self.display_package_tree(
-                            self.io, p, locked_packages, why_package=pkg
-                        )
-
-                else:
-                    self.display_package_tree(self.io, pkg, locked_packages)
-
-                return 0
-
-            rows = [
-                ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
-                ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
-                ["<info>description</>", f" : {pkg.description}"],
-            ]
-
-            table.add_rows(rows)
-            table.render()
-
-            if pkg.requires:
-                self.line("")
-                self.line("<info>dependencies</info>")
-                for dependency in pkg.requires:
-                    self.line(
-                        f" - <c1>{dependency.pretty_name}</c1>"
-                        f" <b>{dependency.pretty_constraint}</b>"
-                    )
-
-            if required_by:
-                self.line("")
-                self.line("<info>required by</info>")
-                for parent, requires_version in required_by.items():
-                    self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
-
-            return 0
+            return self._display_single_package_information(package, locked_repo)
 
         show_latest = self.option("latest")
         show_all = self.option("all")
@@ -368,6 +303,78 @@ lists all packages available."""
                 line += " " + description
 
             self.line(line)
+
+        return 0
+
+    def _display_single_package_information(
+        self, package: str, locked_repository: Repository
+    ) -> int:
+        locked_packages = locked_repository.packages
+        pkg = None
+
+        for locked in locked_packages:
+            if canonicalize_name(package) == locked.name:
+                pkg = locked
+                break
+
+        if not pkg:
+            raise ValueError(f"Package {package} not found")
+
+        required_by = reverse_deps(pkg, locked_repository)
+
+        if self.option("tree"):
+            if self.option("why"):
+                # The default case if there's no reverse dependencies is to query
+                # the subtree for pkg but if any rev-deps exist we'll query for each
+                # of them in turn
+                packages = [pkg]
+                if required_by:
+                    packages = [
+                        p
+                        for p in locked_packages
+                        for r in required_by.keys()
+                        if p.name == r
+                    ]
+                else:
+                    # if no rev-deps exist we'll make this clear as it can otherwise
+                    # look very odd for packages that also have no or few direct
+                    # dependencies
+                    self.io.write_line(f"Package {package} is a direct dependency.")
+
+                for p in packages:
+                    self.display_package_tree(
+                        self.io, p, locked_packages, why_package=pkg
+                    )
+
+            else:
+                self.display_package_tree(self.io, pkg, locked_packages)
+
+            return 0
+
+        rows = [
+            ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
+            ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
+            ["<info>description</>", f" : {pkg.description}"],
+        ]
+
+        table = self.table(style="compact")
+        table.add_rows(rows)
+        table.render()
+
+        if pkg.requires:
+            self.line("")
+            self.line("<info>dependencies</info>")
+            for dependency in pkg.requires:
+                self.line(
+                    f" - <c1>{dependency.pretty_name}</c1>"
+                    f" <b>{dependency.pretty_constraint}</b>"
+                )
+
+        if required_by:
+            self.line("")
+            self.line("<info>required by</info>")
+            for parent, requires_version in required_by.items():
+                self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
 
         return 0
 
