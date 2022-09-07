@@ -118,10 +118,11 @@ lists all packages available."""
         self, package: str, locked_repository: Repository
     ) -> int:
         locked_packages = locked_repository.packages
+        canonicalized_package = canonicalize_name(package)
         pkg = None
 
         for locked in locked_packages:
-            if canonicalize_name(package) == locked.name:
+            if locked.name == canonicalized_package:
                 pkg = locked
                 break
 
