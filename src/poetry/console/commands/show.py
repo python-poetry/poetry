@@ -69,15 +69,6 @@ lists all packages available."""
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
     def handle(self) -> int:
-        import shutil
-
-        from cleo.io.null_io import NullIO
-
-        from poetry.puzzle.solver import Solver
-        from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.repositories.pool import Pool
-        from poetry.utils.helpers import get_package_version_display_string
-
         package = self.argument("package")
 
         if self.option("tree"):
@@ -117,186 +108,10 @@ lists all packages available."""
         if self.option("tree") and package is None:
             return self._display_packages_tree_information(locked_repo, root)
 
-        locked_packages = locked_repo.packages
-        pool = Pool(ignore_repository_names=True)
-        pool.add_repository(locked_repo)
-        solver = Solver(
-            root,
-            pool=pool,
-            installed=[],
-            locked=locked_packages,
-            io=NullIO(),
-        )
-        solver.provider.load_deferred(False)
-        with solver.use_environment(self.env):
-            ops = solver.solve().calculate_operations()
-
-        required_locked_packages = {op.package for op in ops if not op.skipped}
-
         if package:
             return self._display_single_package_information(package, locked_repo)
 
-        show_latest = self.option("latest")
-        show_all = self.option("all")
-        width = shutil.get_terminal_size().columns
-        name_length = version_length = latest_length = required_by_length = 0
-        latest_packages = {}
-        latest_statuses = {}
-        installed_repo = InstalledRepository.load(self.env)
-
-        # Computing widths
-        for locked in locked_packages:
-            if locked not in required_locked_packages and not show_all:
-                continue
-
-            current_length = len(locked.pretty_name)
-            if not self.io.output.is_decorated():
-                installed_status = self.get_installed_status(
-                    locked, installed_repo.packages
-                )
-
-                if installed_status == "not-installed":
-                    current_length += 4
-
-            if show_latest:
-                latest = self.find_latest_package(locked, root)
-                if not latest:
-                    latest = locked
-
-                latest_packages[locked.pretty_name] = latest
-                update_status = latest_statuses[
-                    locked.pretty_name
-                ] = self.get_update_status(latest, locked)
-
-                if not self.option("outdated") or update_status != "up-to-date":
-                    name_length = max(name_length, current_length)
-                    version_length = max(
-                        version_length,
-                        len(
-                            get_package_version_display_string(
-                                locked, root=self.poetry.file.parent
-                            )
-                        ),
-                    )
-                    latest_length = max(
-                        latest_length,
-                        len(
-                            get_package_version_display_string(
-                                latest, root=self.poetry.file.parent
-                            )
-                        ),
-                    )
-
-                    if self.option("why"):
-                        required_by = reverse_deps(locked, locked_repo)
-                        required_by_length = max(
-                            required_by_length,
-                            len(" from " + ",".join(required_by.keys())),
-                        )
-            else:
-                name_length = max(name_length, current_length)
-                version_length = max(
-                    version_length,
-                    len(
-                        get_package_version_display_string(
-                            locked, root=self.poetry.file.parent
-                        )
-                    ),
-                )
-
-                if self.option("why"):
-                    required_by = reverse_deps(locked, locked_repo)
-                    required_by_length = max(
-                        required_by_length, len(" from " + ",".join(required_by.keys()))
-                    )
-
-        write_version = name_length + version_length + 3 <= width
-        write_latest = name_length + version_length + latest_length + 3 <= width
-
-        why_end_column = (
-            name_length + version_length + latest_length + required_by_length
-        )
-        write_why = self.option("why") and (why_end_column + 3) <= width
-        write_description = (why_end_column + 24) <= width
-
-        for locked in locked_packages:
-            color = "cyan"
-            name = locked.pretty_name
-            install_marker = ""
-            if locked not in required_locked_packages:
-                if not show_all:
-                    continue
-
-                color = "black;options=bold"
-            else:
-                installed_status = self.get_installed_status(
-                    locked, installed_repo.packages
-                )
-                if installed_status == "not-installed":
-                    color = "red"
-
-                    if not self.io.output.is_decorated():
-                        # Non installed in non decorated mode
-                        install_marker = " (!)"
-
-            if (
-                show_latest
-                and self.option("outdated")
-                and latest_statuses[locked.pretty_name] == "up-to-date"
-            ):
-                continue
-
-            line = (
-                f"<fg={color}>"
-                f"{name:{name_length - len(install_marker)}}{install_marker}</>"
-            )
-            if write_version:
-                version = get_package_version_display_string(
-                    locked, root=self.poetry.file.parent
-                )
-                line += f" <b>{version:{version_length}}</b>"
-            if show_latest:
-                latest = latest_packages[locked.pretty_name]
-                update_status = latest_statuses[locked.pretty_name]
-
-                if write_latest:
-                    color = "green"
-                    if update_status == "semver-safe-update":
-                        color = "red"
-                    elif update_status == "update-possible":
-                        color = "yellow"
-
-                    version = get_package_version_display_string(
-                        latest, root=self.poetry.file.parent
-                    )
-                    line += f" <fg={color}>{version:{latest_length}}</>"
-
-            if write_why:
-                required_by = reverse_deps(locked, locked_repo)
-                if required_by:
-                    content = ",".join(required_by.keys())
-                    # subtract 6 for ' from '
-                    line += f" from {content:{required_by_length - 6}}"
-                else:
-                    line += " " * required_by_length
-
-            if write_description:
-                description = locked.description
-                remaining = (
-                    width - name_length - version_length - required_by_length - 4
-                )
-
-                if show_latest:
-                    remaining -= latest_length
-
-                if len(locked.description) > remaining:
-                    description = description[: remaining - 3] + "..."
-
-                line += " " + description
-
-            self.line(line)
-
-        return 0
+        return self._display_packages_information(locked_repo, root)
 
     def _display_single_package_information(
         self, package: str, locked_repository: Repository
@@ -367,6 +182,196 @@ lists all packages available."""
             self.line("<info>required by</info>")
             for parent, requires_version in required_by.items():
                 self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
+
+        return 0
+
+    def _display_packages_information(
+        self, locked_repository: Repository, root: ProjectPackage
+    ) -> int:
+        import shutil
+
+        from cleo.io.null_io import NullIO
+
+        from poetry.puzzle.solver import Solver
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.repositories.pool import Pool
+        from poetry.utils.helpers import get_package_version_display_string
+
+        locked_packages = locked_repository.packages
+        pool = Pool(ignore_repository_names=True)
+        pool.add_repository(locked_repository)
+        solver = Solver(
+            root,
+            pool=pool,
+            installed=[],
+            locked=locked_packages,
+            io=NullIO(),
+        )
+        solver.provider.load_deferred(False)
+        with solver.use_environment(self.env):
+            ops = solver.solve().calculate_operations()
+
+        required_locked_packages = {op.package for op in ops if not op.skipped}
+
+        show_latest = self.option("latest")
+        show_all = self.option("all")
+        width = shutil.get_terminal_size().columns
+        name_length = version_length = latest_length = required_by_length = 0
+        latest_packages = {}
+        latest_statuses = {}
+        installed_repo = InstalledRepository.load(self.env)
+
+        # Computing widths
+        for locked in locked_packages:
+            if locked not in required_locked_packages and not show_all:
+                continue
+
+            current_length = len(locked.pretty_name)
+            if not self.io.output.is_decorated():
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
+
+                if installed_status == "not-installed":
+                    current_length += 4
+
+            if show_latest:
+                latest = self.find_latest_package(locked, root)
+                if not latest:
+                    latest = locked
+
+                latest_packages[locked.pretty_name] = latest
+                update_status = latest_statuses[
+                    locked.pretty_name
+                ] = self.get_update_status(latest, locked)
+
+                if not self.option("outdated") or update_status != "up-to-date":
+                    name_length = max(name_length, current_length)
+                    version_length = max(
+                        version_length,
+                        len(
+                            get_package_version_display_string(
+                                locked, root=self.poetry.file.parent
+                            )
+                        ),
+                    )
+                    latest_length = max(
+                        latest_length,
+                        len(
+                            get_package_version_display_string(
+                                latest, root=self.poetry.file.parent
+                            )
+                        ),
+                    )
+
+                    if self.option("why"):
+                        required_by = reverse_deps(locked, locked_repository)
+                        required_by_length = max(
+                            required_by_length,
+                            len(" from " + ",".join(required_by.keys())),
+                        )
+            else:
+                name_length = max(name_length, current_length)
+                version_length = max(
+                    version_length,
+                    len(
+                        get_package_version_display_string(
+                            locked, root=self.poetry.file.parent
+                        )
+                    ),
+                )
+
+                if self.option("why"):
+                    required_by = reverse_deps(locked, locked_repository)
+                    required_by_length = max(
+                        required_by_length, len(" from " + ",".join(required_by.keys()))
+                    )
+
+        write_version = name_length + version_length + 3 <= width
+        write_latest = name_length + version_length + latest_length + 3 <= width
+
+        why_end_column = (
+            name_length + version_length + latest_length + required_by_length
+        )
+        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_description = (why_end_column + 24) <= width
+
+        for locked in locked_packages:
+            color = "cyan"
+            name = locked.pretty_name
+            install_marker = ""
+            if locked not in required_locked_packages:
+                if not show_all:
+                    continue
+
+                color = "black;options=bold"
+            else:
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
+                if installed_status == "not-installed":
+                    color = "red"
+
+                    if not self.io.output.is_decorated():
+                        # Non installed in non decorated mode
+                        install_marker = " (!)"
+
+            if (
+                show_latest
+                and self.option("outdated")
+                and latest_statuses[locked.pretty_name] == "up-to-date"
+            ):
+                continue
+
+            line = (
+                f"<fg={color}>"
+                f"{name:{name_length - len(install_marker)}}{install_marker}</>"
+            )
+            if write_version:
+                version = get_package_version_display_string(
+                    locked, root=self.poetry.file.parent
+                )
+                line += f" <b>{version:{version_length}}</b>"
+            if show_latest:
+                latest = latest_packages[locked.pretty_name]
+                update_status = latest_statuses[locked.pretty_name]
+
+                if write_latest:
+                    color = "green"
+                    if update_status == "semver-safe-update":
+                        color = "red"
+                    elif update_status == "update-possible":
+                        color = "yellow"
+
+                    version = get_package_version_display_string(
+                        latest, root=self.poetry.file.parent
+                    )
+                    line += f" <fg={color}>{version:{latest_length}}</>"
+
+            if write_why:
+                required_by = reverse_deps(locked, locked_repository)
+                if required_by:
+                    content = ",".join(required_by.keys())
+                    # subtract 6 for ' from '
+                    line += f" from {content:{required_by_length - 6}}"
+                else:
+                    line += " " * required_by_length
+
+            if write_description:
+                description = locked.description
+                remaining = (
+                    width - name_length - version_length - required_by_length - 4
+                )
+
+                if show_latest:
+                    remaining -= latest_length
+
+                if len(locked.description) > remaining:
+                    description = description[: remaining - 3] + "..."
+
+                line += " " + description
+
+            self.line(line)
 
         return 0
 
