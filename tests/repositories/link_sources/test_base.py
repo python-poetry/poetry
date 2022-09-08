@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from unittest.mock import PropertyMock
 
 import pytest
 
@@ -18,32 +19,31 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-    from poetry.repositories.link_sources.base import LinkCache
-
 
 @pytest.fixture
 def link_source(mocker: MockerFixture) -> LinkSource:
     url = "https://example.org"
-
-    class LinkSourceMock(LinkSource):
-        def _get_link_cache(self) -> LinkCache:
-            return defaultdict(
-                lambda: defaultdict(list),
-                {
-                    canonicalize_name("demo"): defaultdict(
-                        list,
-                        {
-                            Version.parse("0.1.0"): [
-                                Link(f"{url}/demo-0.1.0.tar.gz"),
-                                Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
-                            ],
-                            Version.parse("0.1.1"): [Link(f"{url}/demo-0.1.1.tar.gz")],
-                        },
-                    ),
-                },
-            )
-
-    return LinkSourceMock(url)
+    link_source = LinkSource(url)
+    mocker.patch(
+        f"{LinkSource.__module__}.{LinkSource.__qualname__}._link_cache",
+        new_callable=PropertyMock,
+        return_value=defaultdict(
+            lambda: defaultdict(list),
+            {
+                canonicalize_name("demo"): defaultdict(
+                    list,
+                    {
+                        Version.parse("0.1.0"): [
+                            Link(f"{url}/demo-0.1.0.tar.gz"),
+                            Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
+                        ],
+                        Version.parse("0.1.1"): [Link(f"{url}/demo-0.1.1.tar.gz")],
+                    },
+                ),
+            },
+        ),
+    )
+    return link_source
 
 
 @pytest.mark.parametrize(

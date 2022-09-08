@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
+from poetry.utils._compat import cached_property
 
 
 if TYPE_CHECKING:
@@ -30,7 +31,8 @@ class HTMLPage(LinkSource):
 
         self._parsed = html5lib.parse(content, namespaceHTMLElements=False)
 
-    def _get_link_cache(self) -> LinkCache:
+    @cached_property
+    def _link_cache(self) -> LinkCache:
         links: defaultdict[
             NormalizedName, defaultdict[Version, list[Link]]
         ] = defaultdict(lambda: defaultdict(list))

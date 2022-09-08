@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 import re
 
@@ -12,6 +11,7 @@ from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
+from poetry.utils._compat import cached_property
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 
@@ -43,9 +43,6 @@ class LinkSource:
 
     def __init__(self, url: str) -> None:
         self._url = url
-        self._get_link_cache_wrapper = functools.lru_cache(maxsize=1)(
-            self._get_link_cache
-        )
 
     @property
     def url(self) -> str:
@@ -124,9 +121,6 @@ class LinkSource:
             return "\n".join(sorted(reasons))
         return True
 
-    @property
+    @cached_property
     def _link_cache(self) -> LinkCache:
-        return self._get_link_cache_wrapper()
-
-    def _get_link_cache(self) -> LinkCache:
         raise NotImplementedError()
