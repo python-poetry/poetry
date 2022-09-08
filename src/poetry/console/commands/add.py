@@ -180,10 +180,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             if self.option("extras"):
                 extras = []
                 for extra in self.option("extras"):
-                    if " " in extra:
-                        extras += [e.strip() for e in extra.split(" ")]
-                    else:
-                        extras.append(extra)
+                    extras += extra.split()
 
                 constraint["extras"] = self.option("extras")
 
@@ -234,21 +231,21 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.poetry.set_locker(
             self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
         )
-        self._installer.set_locker(self.poetry.locker)
+        self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
         self.line("")
 
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self.io.is_verbose())
-        self._installer.update(True)
+        self.installer.set_package(self.poetry.package)
+        self.installer.dry_run(self.option("dry-run"))
+        self.installer.verbose(self.io.is_verbose())
+        self.installer.update(True)
         if self.option("lock"):
-            self._installer.lock()
+            self.installer.lock()
 
-        self._installer.whitelist([r["name"] for r in requirements])
+        self.installer.whitelist([r["name"] for r in requirements])
 
-        status = self._installer.run()
+        status = self.installer.run()
 
         if status == 0 and not self.option("dry-run"):
             assert isinstance(content, TOMLDocument)

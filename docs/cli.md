@@ -218,16 +218,12 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--only`
-option is used.
-
 ### Options
 
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
@@ -268,7 +264,6 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**)
 * `--lock` : Do not perform install (only update the lockfile).
@@ -350,7 +345,13 @@ poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
-or make them point to a local directory or file:
+or reference a subdirectory:
+
+```bash
+poetry add git+https://github.com/myorg/mypackage_with_subdirs.git@main#subdirectory=subdir
+```
+
+You can also add a local directory or file:
 
 ```bash
 poetry add ./my-package/
@@ -471,7 +472,6 @@ required by
 * `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
@@ -688,7 +688,6 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.

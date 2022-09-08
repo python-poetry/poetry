@@ -88,7 +88,6 @@ def tester(
         ("--with bam --without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--with foo --without foo", {MAIN_GROUP, "bar", "baz", "bim"}),
         # deprecated options
-        ("--default", {MAIN_GROUP}),
         ("--no-dev", {MAIN_GROUP}),
     ],
 )

@@ -8,6 +8,7 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 
 from poetry.factory import Factory
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_package
 
 
@@ -205,12 +206,6 @@ pytest 3.7.3 Pytest package
         ),
         (
             f"--only {MAIN_GROUP}",
-            """\
-cachy 0.1.0 Cachy package
-""",
-        ),
-        (
-            "--default",
             """\
 cachy 0.1.0 Cachy package
 """,
@@ -1020,7 +1015,7 @@ def test_show_outdated_local_dependencies(
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {
-                        "pendulum": "pendulum>=1.4.4",
+                        "pendulum": ">=1.4.4",
                         "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
                     },
                     "source": {
@@ -1121,10 +1116,8 @@ def test_show_outdated_git_dev_dependency(
                     "checksum": [],
                     "source": {
                         "type": "git",
-                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                        "resolved_reference": (
-                            "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-                        ),
+                        "reference": MOCK_DEFAULT_GIT_REVISION,
+                        "resolved_reference": MOCK_DEFAULT_GIT_REVISION,
                         "url": "https://github.com/demo/demo.git",
                     },
                 },
@@ -1223,7 +1216,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
                     "checksum": [],
                     "source": {
                         "type": "git",
-                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                        "reference": MOCK_DEFAULT_GIT_REVISION,
                         "url": "https://github.com/demo/pyproject-demo.git",
                     },
                 },
@@ -1931,3 +1924,71 @@ def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry):
     expected = "Error: poetry.lock not found. Run `poetry lock` to create it.\n"
     assert tester.io.fetch_error() == expected
     assert tester.status_code == 1
+
+
+def test_show_dependency_installed_from_git_in_dev(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
+):
+    # Add a regular dependency for a package in main, and a git dependency for the same
+    # package in dev.
+    poetry.package.add_dependency(Factory.create_dependency("demo", "^0.1.1"))
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"git": "https://github.com/demo/demo.git"}, groups=["dev"]
+        )
+    )
+
+    demo_011 = get_package("demo", "0.1.1")
+    demo_011.description = "Demo package"
+    repo.add_package(demo_011)
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+    repo.add_package(pendulum_200)
+
+    # The git package is the one that gets into the lockfile.
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.2",
+                    "description": "Demo package",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "develop": False,
+                    "source": {
+                        "type": "git",
+                        "reference": MOCK_DEFAULT_GIT_REVISION,
+                        "resolved_reference": MOCK_DEFAULT_GIT_REVISION,
+                        "url": "https://github.com/demo/demo.git",
+                    },
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"demo": [], "pendulum": []},
+            },
+        }
+    )
+
+    # Nothing needs updating, there is no confusion between the git and not-git
+    # packages.
+    tester.execute("--outdated")
+    assert tester.io.fetch_output() == ""

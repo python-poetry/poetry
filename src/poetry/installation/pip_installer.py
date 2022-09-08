@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import tempfile
 import urllib.parse
@@ -225,13 +226,17 @@ class PipInstaller(BaseInstaller):
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
+        package_poetry = None
         if pyproject.is_poetry_project():
+            with contextlib.suppress(RuntimeError):
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+
+        if package_poetry is not None:
             # Even if there is a build system specified
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
             legacy_pip = self._env.pip_version < Version.from_parts(19, 0, 0)
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
@@ -254,22 +259,16 @@ class PipInstaller(BaseInstaller):
                 builder = SdistBuilder(package_poetry)
 
                 with builder.setup_py():
-                    if package.develop:
-                        return pip_install(
-                            path=req,
-                            environment=self._env,
-                            upgrade=True,
-                            editable=True,
-                        )
                     return pip_install(
-                        path=req, environment=self._env, deps=False, upgrade=True
+                        path=req,
+                        environment=self._env,
+                        upgrade=True,
+                        editable=package.develop,
                     )
 
-        if package.develop:
-            return pip_install(
-                path=req, environment=self._env, upgrade=True, editable=True
-            )
-        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
+        return pip_install(
+            path=req, environment=self._env, upgrade=True, editable=package.develop
+        )
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package

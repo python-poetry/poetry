@@ -1,0 +1,155 @@
+{
+  "info": {
+    "author": "Łukasz Langa",
+    "author_email": "lukasz@langa.pl",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Environment :: Console",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3 :: Only",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      "Topic :: Software Development :: Quality Assurance"
+    ],
+    "description": "",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/psf/black",
+    "keywords": "automation formatter yapf autopep8 pyfmt gofmt rustfmt",
+    "license": "MIT",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "black",
+    "package_url": "https://pypi.org/project/black/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/black/",
+    "project_urls": {
+      "Changelog": "https://github.com/psf/black/blob/main/CHANGES.md",
+      "Homepage": "https://github.com/psf/black"
+    },
+    "release_url": "https://pypi.org/project/black/21.11b0/",
+    "requires_dist": [
+      "click (>=7.1.2)",
+      "platformdirs (>=2)",
+      "tomli (<2.0.0,>=0.2.6)",
+      "regex (>=2020.1.8)",
+      "pathspec (<1,>=0.9.0)",
+      "typing-extensions (>=3.10.0.0)",
+      "mypy-extensions (>=0.4.3)",
+      "dataclasses (>=0.6) ; python_version < \"3.7\"",
+      "typed-ast (>=1.4.2) ; python_version < \"3.8\" and implementation_name == \"cpython\"",
+      "typing-extensions (!=3.10.0.1) ; python_version >= \"3.10\"",
+      "colorama (>=0.4.3) ; extra == 'colorama'",
+      "aiohttp (>=3.7.4) ; extra == 'd'",
+      "ipython (>=7.8.0) ; extra == 'jupyter'",
+      "tokenize-rt (>=3.2.0) ; extra == 'jupyter'",
+      "typed-ast (>=1.4.3) ; extra == 'python2'",
+      "uvloop (>=0.15.2) ; extra == 'uvloop'"
+    ],
+    "requires_python": ">=3.6.2",
+    "summary": "The uncompromising code formatter.",
+    "version": "21.11b0",
+    "yanked": true,
+    "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+  },
+  "last_serial": 13326107,
+  "releases": {
+    "21.11b0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "945da11b34c11738560fc6698cffa425",
+          "sha256": "0b1f66cbfadcd332ceeaeecf6373d9991d451868d2e2219ad0ac1213fb701117"
+        },
+        "downloads": -1,
+        "filename": "black-21.11b0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "945da11b34c11738560fc6698cffa425",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6.2",
+        "size": 155131,
+        "upload_time": "2021-11-17T02:32:14",
+        "upload_time_iso_8601": "2021-11-17T02:32:14.551680Z",
+        "url": "https://files.pythonhosted.org/packages/3d/ad/1cf514e7f9ee4c3d8df7c839d7977f7605ad76557f3fca741ec67f76dba6/black-21.11b0-py3-none-any.whl",
+        "yanked": true,
+        "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+          "sha256": "83f3852301c8dcb229e9c444dd79f573c8d31c7c2dad9bbaaa94c808630e32aa"
+        },
+        "downloads": -1,
+        "filename": "black-21.11b0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6.2",
+        "size": 593164,
+        "upload_time": "2021-11-17T02:32:16",
+        "upload_time_iso_8601": "2021-11-17T02:32:16.396821Z",
+        "url": "https://files.pythonhosted.org/packages/2f/db/03e8cef689ab0ff857576ee2ee288d1ff2110ef7f3a77cac62e61f18acaf/black-21.11b0.tar.gz",
+        "yanked": true,
+        "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "945da11b34c11738560fc6698cffa425",
+        "sha256": "0b1f66cbfadcd332ceeaeecf6373d9991d451868d2e2219ad0ac1213fb701117"
+      },
+      "downloads": -1,
+      "filename": "black-21.11b0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "945da11b34c11738560fc6698cffa425",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.6.2",
+      "size": 155131,
+      "upload_time": "2021-11-17T02:32:14",
+      "upload_time_iso_8601": "2021-11-17T02:32:14.551680Z",
+      "url": "https://files.pythonhosted.org/packages/3d/ad/1cf514e7f9ee4c3d8df7c839d7977f7605ad76557f3fca741ec67f76dba6/black-21.11b0-py3-none-any.whl",
+      "yanked": true,
+      "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+        "sha256": "83f3852301c8dcb229e9c444dd79f573c8d31c7c2dad9bbaaa94c808630e32aa"
+      },
+      "downloads": -1,
+      "filename": "black-21.11b0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.6.2",
+      "size": 593164,
+      "upload_time": "2021-11-17T02:32:16",
+      "upload_time_iso_8601": "2021-11-17T02:32:16.396821Z",
+      "url": "https://files.pythonhosted.org/packages/2f/db/03e8cef689ab0ff857576ee2ee288d1ff2110ef7f3a77cac62e61f18acaf/black-21.11b0.tar.gz",
+      "yanked": true,
+      "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+    }
+  ],
+  "vulnerabilities": []
+}

@@ -6,11 +6,13 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
 
+from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
@@ -29,7 +31,7 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
-class ShowCommand(GroupCommand):
+class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
 
@@ -67,8 +69,9 @@ lists all packages available."""
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
     def handle(self) -> int:
+        import shutil
+
         from cleo.io.null_io import NullIO
-        from cleo.terminal import Terminal
 
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
@@ -208,8 +211,7 @@ lists all packages available."""
 
         show_latest = self.option("latest")
         show_all = self.option("all")
-        terminal = Terminal()
-        width = terminal.width
+        width = shutil.get_terminal_size().columns
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
@@ -423,7 +425,7 @@ lists all packages available."""
         io: IO,
         dependency: Dependency,
         installed_packages: list[Package],
-        packages_in_tree: list[str],
+        packages_in_tree: list[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
@@ -504,7 +506,7 @@ lists all packages available."""
             requires = root.all_requires
 
             for dep in requires:
-                if dep.name == package.name:
+                if dep.name == package.name and dep.source_type == package.source_type:
                     provider = Provider(root, self.poetry.pool, NullIO())
                     return provider.search_for_direct_origin_dependency(dep)
 

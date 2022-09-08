@@ -4,19 +4,20 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
-    from collections.abc import Sequence
     from typing import Mapping
 
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
 
 
 def get_extra_package_names(
-    packages: Sequence[Package],
+    packages: Iterable[Package],
     extras: Mapping[str, list[str]],
-    extra_names: Sequence[str],
-) -> Iterable[str]:
+    extra_names: Collection[str],
+) -> Iterable[NormalizedName]:
     """
     Returns all package names required by the given extras.
 
@@ -43,13 +44,15 @@ def get_extra_package_names(
     # keep record of packages seen during recursion in order to avoid recursion error
     seen_package_names = set()
 
-    def _extra_packages(package_names: Iterable[str]) -> Iterator[str]:
+    def _extra_packages(
+        package_names: Iterable[NormalizedName],
+    ) -> Iterator[NormalizedName]:
         """Recursively find dependencies for packages names"""
         # for each extra package name
         for package_name in package_names:
             # Find the actual Package object. A missing key indicates an implicit
             # dependency (like setuptools), which should be ignored
-            package = packages_by_name.get(canonicalize_name(package_name))
+            package = packages_by_name.get(package_name)
             if package:
                 if package.name not in seen_package_names:
                     seen_package_names.add(package.name)

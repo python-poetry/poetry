@@ -1,5 +1,5 @@
 freebsd_instance:
-  image_family: freebsd-13-0
+  image_family: freebsd-13-1
   cpu: 1
   memory: 4G
 
@@ -8,6 +8,9 @@ test_task:
   only_if: $CIRRUS_TAG == ''
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
+    # `SHELL` environment variable is not set by default, so we explicitly set it to
+    # avoid failures on tests that depend on it.
+    SHELL: sh
     matrix:
       - PYTHON: python3.7
       - PYTHON: python3.8

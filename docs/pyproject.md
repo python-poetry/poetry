@@ -369,7 +369,7 @@ mandatory = "^1.0"
 
 # A list of all of the optional dependencies, some of which are included in the
 # below `extras`. They can be opted into by apps.
-psycopg2 = { version = "^2.7", optional = true }
+psycopg2 = { version = "^2.9", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
 
 [tool.poetry.extras]

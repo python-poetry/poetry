@@ -266,3 +266,35 @@ def test_install_with_trusted_host(config: Config):
     assert "--trusted-host" in cmd
     cert_index = cmd.index("--trusted-host")
     assert cmd[cert_index + 1] == "foo.bar"
+
+
+def test_install_directory_fallback_on_poetry_create_error(
+    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: Pool
+):
+    mock_create_poetry = mocker.patch(
+        "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
+    )
+    mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
+    mock_editable_builder = mocker.patch(
+        "poetry.masonry.builders.editable.EditableBuilder"
+    )
+    mock_pip_install = mocker.patch("poetry.installation.pip_installer.pip_install")
+
+    package = Package(
+        "demo",
+        "1.0.0",
+        source_type="directory",
+        source_url=str(
+            Path(__file__).parent.parent / "fixtures/inspection/demo_poetry_package"
+        ),
+    )
+
+    installer = PipInstaller(tmp_venv, NullIO(), pool)
+    installer.install_directory(package)
+
+    assert mock_create_poetry.call_count == 1
+    assert mock_sdist_builder.call_count == 0
+    assert mock_editable_builder.call_count == 0
+    assert mock_pip_install.call_count == 1
+    assert mock_pip_install.call_args[1].get("deps") is None
+    assert mock_pip_install.call_args[1].get("upgrade") is True

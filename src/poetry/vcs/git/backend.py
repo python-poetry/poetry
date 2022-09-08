@@ -160,7 +160,6 @@ class Git:
             url = ""
             if config.has_section(section):
                 value = config.get(section, b"url")
-                assert isinstance(value, bytes)
                 url = value.decode("utf-8")
 
             return url
@@ -335,7 +334,7 @@ class Git:
             url: bytes
             path: bytes
             submodules = parse_submodules(config)
-            for path, url, _ in submodules:
+            for path, url, name in submodules:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
 
@@ -343,7 +342,16 @@ class Git:
                 source_root.mkdir(parents=True, exist_ok=True)
 
                 with repo:
-                    revision = repo.open_index()[path].sha.decode("utf-8")
+                    try:
+                        revision = repo.open_index()[path].sha.decode("utf-8")
+                    except KeyError:
+                        logger.debug(
+                            "Skip submodule %s in %s, path %s not found",
+                            name,
+                            repo.path,
+                            path,
+                        )
+                        continue
 
                 cls.clone(
                     url=url.decode("utf-8"),

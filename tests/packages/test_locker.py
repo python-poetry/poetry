@@ -409,6 +409,120 @@ git-package-subdir = []
     assert package.source_subdirectory == "subdir"
 
 
+def test_locker_properly_assigns_metadata_files(locker: Locker) -> None:
+    """
+    For multiple constraints dependencies, there is only one common entry in
+    metadata.files. However, we must not assign all the files to each of the packages
+    because this can result in duplicated and outdated entries when running
+    `poetry lock --no-update` and hash check failures when running `poetry install`.
+    """
+    content = """\
+[[package]]
+name = "demo"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[[package]]
+name = "demo"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/demo/demo.git"
+reference = "main"
+resolved_reference = "123456"
+
+[[package]]
+name = "demo"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "directory"
+url = "./folder"
+
+[[package]]
+name = "demo"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "file"
+url = "./demo-1.0-cp39-win_amd64.whl"
+
+[[package]]
+name = "demo"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "url"
+url = "https://example.com/demo-1.0-cp38-win_amd64.whl"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+# metadata.files are only tracked for non-direct origin and file dependencies
+demo = [
+    {file = "demo-1.0-cp39-win_amd64.whl", hash = "sha256"},
+    {file = "demo-1.0.tar.gz", hash = "sha256"},
+    {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
+]
+"""
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert len(repository.packages) == 5
+    assert {package.source_type for package in repository.packages} == {
+        None,
+        "git",
+        "directory",
+        "file",
+        "url",
+    }
+    for package in repository.packages:
+        if package.source_type is None:
+            # non-direct origin package contains all files
+            # with the current lockfile format we have no chance to determine
+            # which files are correct, so we keep all for hash check
+            # correct files are set later in Provider.complete_package()
+            assert package.files == [
+                {"file": "demo-1.0-cp39-win_amd64.whl", "hash": "sha256"},
+                {"file": "demo-1.0.tar.gz", "hash": "sha256"},
+                {"file": "demo-1.0-py3-none-any.whl", "hash": "sha256"},
+            ]
+        elif package.source_type == "file":
+            assert package.files == [
+                {"file": "demo-1.0-cp39-win_amd64.whl", "hash": "sha256"}
+            ]
+        else:
+            package.files = []
+
+
 def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.description = None
@@ -773,6 +887,51 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 git-package-subdir = []
+"""
+
+    assert content == expected
+
+
+def test_locker_dumps_dependency_extras_in_correct_order(
+    locker: Locker, root: ProjectPackage
+):
+    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    package_a = get_package("A", "1.0.0")
+    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+
+    package_a.extras = {
+        "C": [package_third, package_second, package_first],
+        "B": [package_first, package_second, package_third],
+    }
+
+    locker.set_lock_data(root, [package_a])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+B = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+C = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+A = []
 """
 
     assert content == expected

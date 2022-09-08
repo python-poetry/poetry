@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from poetry.factory import Factory
 from tests.mixology.helpers import add_to_repo
 from tests.mixology.helpers import check_solver_result
@@ -87,3 +89,44 @@ def test_circular_dependency(
     add_to_repo(repo, "bar", "1.0.0", deps={"foo": "1.0.0"})
 
     check_solver_result(root, provider, {"foo": "1.0.0", "bar": "1.0.0"})
+
+
+@pytest.mark.parametrize(
+    "constraint, versions, yanked_versions, expected",
+    [
+        (">=1", ["1", "2"], [], "2"),
+        (">=1", ["1", "2"], ["2"], "1"),
+        (">=1", ["1", "2", "3"], ["2"], "3"),
+        (">=1", ["1", "2", "3"], ["2", "3"], "1"),
+        (">1", ["1", "2"], ["2"], "error"),
+        (">1", ["2"], ["2"], "error"),
+        (">=2", ["2"], ["2"], "error"),
+        ("==2", ["2"], ["2"], "2"),
+        ("==2", ["2", "2+local"], [], "2+local"),
+        ("==2", ["2", "2+local"], ["2+local"], "2"),
+    ],
+)
+def test_yanked_release(
+    root: ProjectPackage,
+    provider: Provider,
+    repo: Repository,
+    constraint: str,
+    versions: list[str],
+    yanked_versions: list[str],
+    expected: str,
+) -> None:
+    root.add_dependency(Factory.create_dependency("foo", constraint))
+
+    for version in versions:
+        add_to_repo(repo, "foo", version, yanked=version in yanked_versions)
+
+    if expected == "error":
+        result = None
+        error = (
+            f"Because myapp depends on foo ({constraint}) which doesn't match any "
+            "versions, version solving failed."
+        )
+    else:
+        result = {"foo": expected}
+        error = None
+    check_solver_result(root, provider, result, error)

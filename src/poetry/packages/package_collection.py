@@ -7,7 +7,7 @@ from poetry.packages.dependency_package import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
@@ -17,12 +17,9 @@ class PackageCollection(List[DependencyPackage]):
     def __init__(
         self,
         dependency: Dependency,
-        packages: Sequence[Package | DependencyPackage] | None = None,
+        packages: Iterable[Package | DependencyPackage] = (),
     ) -> None:
         self._dependency = dependency
-
-        if packages is None:
-            packages = []
 
         super().__init__()
 

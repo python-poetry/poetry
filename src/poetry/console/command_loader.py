@@ -9,7 +9,7 @@ from cleo.loaders.factory_command_loader import FactoryCommandLoader
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from poetry.console.commands.command import Command
+    from cleo.commands.command import Command
 
 
 class CommandLoader(FactoryCommandLoader):  # type: ignore[misc]
