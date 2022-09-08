@@ -33,9 +33,7 @@ class HTMLPage(LinkSource):
 
     @cached_property
     def _link_cache(self) -> LinkCache:
-        links: defaultdict[
-            NormalizedName, defaultdict[Version, list[Link]]
-        ] = defaultdict(lambda: defaultdict(list))
+        links: LinkCache = defaultdict(lambda: defaultdict(list))
         for anchor in self._parsed.findall(".//a"):
             if anchor.get("href"):
                 href = anchor.get("href")
