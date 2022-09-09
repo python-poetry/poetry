@@ -102,24 +102,11 @@ def test_page_invalid_version_link() -> None:
     assert page is not None
 
     links = list(page.links)
-    assert len(links) == 2
+    assert len(links) == 1
 
-    versions = list(page.versions("poetry"))
+    versions = list(page.versions(canonicalize_name("poetry")))
     assert len(versions) == 1
     assert versions[0].to_string() == "0.1.0"
-
-    invalid_link = None
-
-    for link in links:
-        if link.filename.startswith("poetry-21"):
-            invalid_link = link
-            break
-
-    links_010 = list(page.links_for_version(canonicalize_name("poetry"), versions[0]))
-    assert invalid_link not in links_010
-
-    assert invalid_link
-    assert not page.link_package_data(invalid_link)
 
     packages = list(page.packages)
     assert len(packages) == 1
