@@ -14,9 +14,6 @@ from poetry.utils._compat import cached_property
 
 
 if TYPE_CHECKING:
-    from packaging.utils import NormalizedName
-    from poetry.core.semver.version import Version
-
     from poetry.repositories.link_sources.base import LinkCache
 
 
