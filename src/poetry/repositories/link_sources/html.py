@@ -3,16 +3,19 @@ from __future__ import annotations
 import urllib.parse
 import warnings
 
+from collections import defaultdict
 from html import unescape
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
+from poetry.utils._compat import cached_property
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from poetry.repositories.link_sources.base import LinkCache
+
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -25,8 +28,9 @@ class HTMLPage(LinkSource):
 
         self._parsed = html5lib.parse(content, namespaceHTMLElements=False)
 
-    @property
-    def links(self) -> Iterator[Link]:
+    @cached_property
+    def _link_cache(self) -> LinkCache:
+        links: LinkCache = defaultdict(lambda: defaultdict(list))
         for anchor in self._parsed.findall(".//a"):
             if anchor.get("href"):
                 href = anchor.get("href")
@@ -44,7 +48,11 @@ class HTMLPage(LinkSource):
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue
 
-                yield link
+                pkg = self.link_package_data(link)
+                if pkg:
+                    links[pkg.name][pkg.version].append(link)
+
+        return links
 
 
 class SimpleRepositoryPage(HTMLPage):

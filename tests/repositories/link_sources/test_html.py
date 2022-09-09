@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.utils.link import Link
 from poetry.core.semver.version import Version
 
@@ -90,4 +91,4 @@ def test_yanked(yanked_attrs: tuple[str, str], expected: bool | str) -> None:
     content = DEMO_TEMPLATE.format(anchors)
     page = HTMLPage("https://example.org", content)
 
-    assert page.yanked("demo", Version.parse("0.1")) == expected
+    assert page.yanked(canonicalize_name("demo"), Version.parse("0.1")) == expected
