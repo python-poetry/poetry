@@ -21,7 +21,7 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
-from poetry.utils.env import ephemeral_environment
+from poetry.utils.env.context import ephemeral_environment
 
 
 if TYPE_CHECKING:

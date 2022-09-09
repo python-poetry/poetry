@@ -30,7 +30,7 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
-from poetry.utils.pip import pip_install
+from poetry.utils.pip import Pip
 
 
 if TYPE_CHECKING:
@@ -118,7 +118,8 @@ class Executor:
         self, req: Path, upgrade: bool = False, editable: bool = False
     ) -> int:
         try:
-            pip_install(req, self._env, upgrade=upgrade, editable=editable)
+            pip = Pip(target_env=self._env)
+            pip.install_archive(req, editable=editable, upgrade=upgrade)
         except EnvCommandError as e:
             output = decode(e.e.output)
             if (

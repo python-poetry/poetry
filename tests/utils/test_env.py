@@ -1385,7 +1385,7 @@ def test_build_environment_called_build_script_specified(
     ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
 
     mocker.patch(
-        "poetry.utils.env.ephemeral_environment"
+        "poetry.utils.env.context.ephemeral_environment"
     ).return_value.__enter__.return_value = ephemeral_env
 
     with build_environment(extended_without_setup_poetry, project_env) as env:
@@ -1409,7 +1409,7 @@ def test_build_environment_not_called_without_build_script_specified(
     ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
 
     mocker.patch(
-        "poetry.utils.env.ephemeral_environment"
+        "poetry.utils.env.context.ephemeral_environment"
     ).return_value.__enter__.return_value = ephemeral_env
 
     with build_environment(poetry, project_env) as env:

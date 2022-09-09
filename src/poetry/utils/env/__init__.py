@@ -33,8 +33,6 @@ from packaging.tags import sys_tags
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
-from poetry.core.utils.helpers import temporary_directory
-from virtualenv.seed.wheels.embed import get_embed_wheel
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
@@ -52,9 +50,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from cleo.io.io import IO
-    from poetry.core.poetry import Poetry as CorePoetry
     from poetry.core.version.markers import BaseMarker
-    from virtualenv.seed.wheels.util import Wheel
 
     from poetry.poetry import Poetry
 
@@ -1109,10 +1105,10 @@ class EnvManager:
 
         This can be the base Python environment or an activated virtual environment.
 
-        This method also workaround the issue that the virtual environment
+        This method also works arounds the issue that the virtual environment
         used by Poetry internally (when installed via the custom installer)
         is incorrectly detected as the system environment. Note that this workaround
-        happens only when `naive` is False since there are times where we actually
+        happens only when `naive` is False since there are times when we actually
         want to retrieve Poetry's custom virtual environment
         (e.g. plugin installation or self update).
         """
@@ -1178,22 +1174,17 @@ class Env:
         self._bin_dir = self._path / bin_dir
 
         self._executable = "python"
-        self._pip_executable = "pip"
-
-        self.find_executables()
+        self._find_executable()
 
         self._base = base or path
 
         self._marker_env: dict[str, Any] | None = None
-        self._pip_version: Version | None = None
         self._site_packages: SitePackages | None = None
         self._paths: dict[str, str] | None = None
         self._supported_tags: list[Tag] | None = None
         self._purelib: Path | None = None
         self._platlib: Path | None = None
         self._script_dirs: list[Path] | None = None
-
-        self._embedded_pip_path: str | None = None
 
     @property
     def path(self) -> Path:
@@ -1217,7 +1208,7 @@ class Env:
         """
         Path to current python executable
         """
-        return self._bin(self._executable)
+        return self.bin(self._executable)
 
     @property
     def marker_env(self) -> dict[str, Any]:
@@ -1230,65 +1221,23 @@ class Env:
     def parent_env(self) -> GenericEnv:
         return GenericEnv(self.base, child_env=self)
 
-    def _find_python_executable(self) -> None:
+    def _find_executable(self) -> None:
         bin_dir = self._bin_dir
 
         if self._is_windows and self._is_conda:
             bin_dir = self._path
 
-        python_executables = sorted(
+        executables = sorted(
             p.name
             for p in bin_dir.glob("python*")
             if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
-        if python_executables:
-            executable = python_executables[0]
+        if executables:
+            executable = executables[0]
             if executable.endswith(".exe"):
                 executable = executable[:-4]
 
             self._executable = executable
-
-    def _find_pip_executable(self) -> None:
-        pip_executables = sorted(
-            p.name
-            for p in self._bin_dir.glob("pip*")
-            if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-        )
-        if pip_executables:
-            pip_executable = pip_executables[0]
-            if pip_executable.endswith(".exe"):
-                pip_executable = pip_executable[:-4]
-
-            self._pip_executable = pip_executable
-
-    def find_executables(self) -> None:
-        self._find_python_executable()
-        self._find_pip_executable()
-
-    def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel: Wheel = get_embed_wheel(
-            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
-        )
-        path: Path = wheel.path
-        return path
-
-    @property
-    def pip_embedded(self) -> str:
-        if self._embedded_pip_path is None:
-            self._embedded_pip_path = str(self.get_embedded_wheel("pip") / "pip")
-        return self._embedded_pip_path
-
-    @property
-    def pip(self) -> str:
-        """
-        Path to current pip executable
-        """
-        # we do not use as_posix() here due to issues with windows pathlib2
-        # implementation
-        path = self._bin(self._pip_executable)
-        if not Path(path).exists():
-            return str(self.pip_embedded)
-        return path
 
     @property
     def platform(self) -> str:
@@ -1297,13 +1246,6 @@ class Env:
     @property
     def os(self) -> str:
         return os.name
-
-    @property
-    def pip_version(self) -> Version:
-        if self._pip_version is None:
-            self._pip_version = self.get_pip_version()
-
-        return self._pip_version
 
     @property
     def site_packages(self) -> SitePackages:
@@ -1394,16 +1336,7 @@ class Env:
     def get_marker_env(self) -> dict[str, Any]:
         raise NotImplementedError()
 
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        if embedded or not Path(self._bin(self._pip_executable)).exists():
-            return [self.python, self.pip_embedded]
-        # run as module so that pip can update itself on Windows
-        return [self.python, "-m", "pip"]
-
     def get_supported_tags(self) -> list[Tag]:
-        raise NotImplementedError()
-
-    def get_pip_version(self) -> Version:
         raise NotImplementedError()
 
     def get_paths(self) -> dict[str, str]:
@@ -1419,21 +1352,8 @@ class Env:
         """
         return True
 
-    def get_command_from_bin(self, bin: str) -> list[str]:
-        if bin == "pip":
-            # when pip is required we need to ensure that we fallback to
-            # embedded pip when pip is not available in the environment
-            return self.get_pip_command()
-
-        return [self._bin(bin)]
-
     def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
-        cmd = self.get_command_from_bin(bin) + list(args)
-        return self._run(cmd, **kwargs)
-
-    def run_pip(self, *args: str, **kwargs: Any) -> int | str:
-        pip = self.get_pip_command()
-        cmd = pip + list(args)
+        cmd = [self.bin(bin), *args]
         return self._run(cmd, **kwargs)
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
@@ -1480,7 +1400,7 @@ class Env:
         return decode(output)
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        command = self.get_command_from_bin(bin) + list(args)
+        command = [self.bin(bin), *args]
         env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
@@ -1505,7 +1425,7 @@ class Env:
                 self._script_dirs.append(self.userbase / self._script_dirs[0].name)
         return self._script_dirs
 
-    def _bin(self, bin: str) -> str:
+    def bin(self, bin: str) -> str:
         """
         Return path to the given executable.
         """
@@ -1629,11 +1549,6 @@ class SystemEnv(Env):
             "interpreter_version": interpreter_version(),
         }
 
-    def get_pip_version(self) -> Version:
-        from pip import __version__
-
-        return Version.parse(__version__)
-
     def is_venv(self) -> bool:
         return self._path != self._base
 
@@ -1684,17 +1599,6 @@ class VirtualEnv(Env):
 
         env: dict[str, Any] = json.loads(output)
         return env
-
-    def get_pip_version(self) -> Version:
-        output = self.run_pip("--version")
-        assert isinstance(output, str)
-        output = output.strip()
-
-        m = re.match("pip (.+?)(?: from .+)?$", output)
-        if not m:
-            return Version.parse("0.0")
-
-        return Version.parse(m.group(1))
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS)
@@ -1761,56 +1665,35 @@ class GenericEnv(VirtualEnv):
 
         super().__init__(path, base=base)
 
-    def find_executables(self) -> None:
-        patterns = [("python*", "pip*")]
+    def _find_executable(self) -> None:
+        patterns = ["python*"]
 
         if self._child_env:
             minor_version = (
                 f"{self._child_env.version_info[0]}.{self._child_env.version_info[1]}"
             )
             major_version = f"{self._child_env.version_info[0]}"
-            patterns = [
-                (f"python{minor_version}", f"pip{minor_version}"),
-                (f"python{major_version}", f"pip{major_version}"),
-            ]
+            patterns = [f"python{minor_version}", f"python{major_version}"]
 
-        python_executable = None
-        pip_executable = None
+        executable = None
 
-        for python_pattern, pip_pattern in patterns:
-            if python_executable and pip_executable:
+        for pattern in patterns:
+            if executable:
                 break
 
-            if not python_executable:
-                python_executables = sorted(
-                    p.name
-                    for p in self._bin_dir.glob(python_pattern)
-                    if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                )
+            executables = sorted(
+                p.name
+                for p in self._bin_dir.glob(pattern)
+                if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+            )
 
-                if python_executables:
-                    executable = python_executables[0]
-                    if executable.endswith(".exe"):
-                        executable = executable[:-4]
+            if executables:
+                executable = executables[0]
+                if executable.endswith(".exe"):
+                    executable = executable[:-4]
 
-                    python_executable = executable
-
-            if not pip_executable:
-                pip_executables = sorted(
-                    p.name
-                    for p in self._bin_dir.glob(pip_pattern)
-                    if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                )
-                if pip_executables:
-                    pip_executable = pip_executables[0]
-                    if pip_executable.endswith(".exe"):
-                        pip_executable = pip_executable[:-4]
-
-            if python_executable:
-                self._executable = python_executable
-
-            if pip_executable:
-                self._pip_executable = pip_executable
+        if executable:
+            self._executable = executable
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
@@ -1820,7 +1703,7 @@ class GenericEnv(VirtualEnv):
         return paths
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        command = self.get_command_from_bin(bin) + list(args)
+        command = [self.bin(bin), *args]
         env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
@@ -1864,71 +1747,8 @@ class NullEnv(SystemEnv):
             return super().execute(bin, *args, **kwargs)
         return 0
 
-    def _bin(self, bin: str) -> str:
+    def bin(self, bin: str) -> str:
         return bin
-
-
-@contextmanager
-def ephemeral_environment(
-    executable: str | Path | None = None,
-    flags: dict[str, bool] | None = None,
-) -> Iterator[VirtualEnv]:
-    with temporary_directory() as tmp_dir:
-        # TODO: cache PEP 517 build environment corresponding to each project venv
-        venv_dir = Path(tmp_dir) / ".venv"
-        EnvManager.build_venv(
-            path=venv_dir.as_posix(),
-            executable=executable,
-            flags=flags,
-        )
-        yield VirtualEnv(venv_dir, venv_dir)
-
-
-@contextmanager
-def build_environment(
-    poetry: CorePoetry, env: Env | None = None, io: IO | None = None
-) -> Iterator[Env]:
-    """
-    If a build script is specified for the project, there could be additional build
-    time dependencies, eg: cython, setuptools etc. In these cases, we create an
-    ephemeral build environment with all requirements specified under
-    `build-system.requires` and return this. Otherwise, the given default project
-    environment is returned.
-    """
-    if not env or poetry.package.build_script:
-        with ephemeral_environment(executable=env.python if env else None) as venv:
-            overwrite = (
-                io is not None and io.output.is_decorated() and not io.is_debug()
-            )
-
-            if io:
-                if not overwrite:
-                    io.write_error_line("")
-
-                requires = [
-                    f"<c1>{requirement}</c1>"
-                    for requirement in poetry.pyproject.build_system.requires
-                ]
-
-                io.overwrite_error(
-                    "<b>Preparing</b> build environment with build-system requirements"
-                    f" {', '.join(requires)}"
-                )
-
-            venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                *poetry.pyproject.build_system.requires,
-            )
-
-            if overwrite:
-                assert io is not None
-                io.write_error_line("")
-
-            yield venv
-    else:
-        yield env
 
 
 class MockEnv(NullEnv):
@@ -1939,7 +1759,6 @@ class MockEnv(NullEnv):
         platform: str = "darwin",
         os_name: str = "posix",
         is_venv: bool = False,
-        pip_version: str = "19.1",
         sys_path: list[str] | None = None,
         marker_env: dict[str, Any] | None = None,
         supported_tags: list[Tag] | None = None,
@@ -1952,7 +1771,6 @@ class MockEnv(NullEnv):
         self._platform = platform
         self._os_name = os_name
         self._is_venv = is_venv
-        self._pip_version: Version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
         self._supported_tags = supported_tags
@@ -1964,10 +1782,6 @@ class MockEnv(NullEnv):
     @property
     def os(self) -> str:
         return self._os_name
-
-    @property
-    def pip_version(self) -> Version:
-        return self._pip_version
 
     @property
     def sys_path(self) -> list[str]:

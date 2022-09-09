@@ -23,7 +23,7 @@ from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 
 from poetry.utils.env import EnvCommandError
-from poetry.utils.env import ephemeral_environment
+from poetry.utils.env.context import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
 
 

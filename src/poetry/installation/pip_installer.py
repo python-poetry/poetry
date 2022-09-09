@@ -17,7 +17,7 @@ from poetry.installation.base_installer import BaseInstaller
 from poetry.repositories.http import HTTPRepository
 from poetry.utils._compat import encode
 from poetry.utils.helpers import remove_directory
-from poetry.utils.pip import pip_install
+from poetry.utils.pip import Pip
 
 
 if TYPE_CHECKING:
@@ -231,12 +231,14 @@ class PipInstaller(BaseInstaller):
             with contextlib.suppress(RuntimeError):
                 package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
+        pip = Pip(target_env=self._env)
+
         if package_poetry is not None:
             # Even if there is a build system specified
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
-            legacy_pip = self._env.pip_version < Version.from_parts(19, 0, 0)
+            legacy_pip = pip.version() < Version.from_parts(19, 0, 0)
 
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
@@ -259,15 +261,16 @@ class PipInstaller(BaseInstaller):
                 builder = SdistBuilder(package_poetry)
 
                 with builder.setup_py():
-                    return pip_install(
+                    return pip.install_archive(
                         path=req,
-                        environment=self._env,
-                        upgrade=True,
                         editable=package.develop,
+                        upgrade=True,
                     )
 
-        return pip_install(
-            path=req, environment=self._env, upgrade=True, editable=package.develop
+        return pip.install_archive(
+            path=req,
+            editable=package.develop,
+            upgrade=True,
         )
 
     def install_git(self, package: Package) -> None:
