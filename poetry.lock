@@ -13,6 +13,14 @@ tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900
 tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
+name = "backports.cached-property"
+version = "1.0.2"
+description = "cached_property() - computed once per instance, cached as attribute"
+category = "main"
+optional = false
+python-versions = ">=3.6.0"
+
+[[package]]
 name = "CacheControl"
 version = "0.12.11"
 description = "httplib2 caching for requests"
@@ -969,12 +977,16 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "853bf1ff15c31c912ce1f017cab05956ac09e0fe1a8262a40d77363192c5f934"
+content-hash = "583302ecdf45ce586b5c640d3942765615bb6e0c4749be43230b1cf02fd7d16e"
 
 [metadata.files]
 attrs = [
     {file = "attrs-22.1.0-py2.py3-none-any.whl", hash = "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"},
     {file = "attrs-22.1.0.tar.gz", hash = "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6"},
+]
+"backports.cached-property" = [
+    {file = "backports.cached-property-1.0.2.tar.gz", hash = "sha256:9306f9eed6ec55fd156ace6bc1094e2c86fae5fb2bf07b6a9c00745c656e75dd"},
+    {file = "backports.cached_property-1.0.2-py3-none-any.whl", hash = "sha256:baeb28e1cd619a3c9ab8941431fe34e8490861fb998c6c4590693d50171db0cc"},
 ]
 CacheControl = [
     {file = "CacheControl-0.12.11-py2.py3-none-any.whl", hash = "sha256:2c75d6a8938cb1933c75c50184549ad42728a27e9f6b92fd677c3151aa72555b"},
