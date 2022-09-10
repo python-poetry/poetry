@@ -524,21 +524,12 @@ class Installer:
                 op.skip("Not needed for the current environment")
                 continue
 
-            if self._update:
-                extras = {}
-                for extra, dependencies in self._package.extras.items():
-                    extras[extra] = [dependency.name for dependency in dependencies]
-            else:
-                extras = {}
-                for extra, deps in self._locker.lock_data.get("extras", {}).items():
-                    extras[extra] = [dep.lower() for dep in deps]
-
             # If a package is optional and not requested
             # in any extra we skip it
             if package.optional and package.name not in extra_packages:
                 op.skip("Not required")
 
-    def _get_extra_packages(self, repo: Repository) -> list[str]:
+    def _get_extra_packages(self, repo: Repository) -> set[NormalizedName]:
         """
         Returns all package names required by extras.
 
@@ -550,7 +541,7 @@ class Installer:
         else:
             extras = self._locker.lock_data.get("extras", {})
 
-        return list(get_extra_package_names(repo.packages, extras, self._extras))
+        return get_extra_package_names(repo.packages, extras, self._extras)
 
     def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._env, self._io, self._pool)
