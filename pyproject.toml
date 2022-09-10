@@ -51,6 +51,8 @@ cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
+dulwich = "^0.20.46"
+filelock = "^3.8.0"
 html5lib = "^1.0"
 importlib-metadata = { version = "^4.4", python = "<3.10" }
 jsonschema = "^4.10.0"
@@ -70,7 +72,6 @@ tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
 virtualenv = ">=20.4.3,!=20.4.5,!=20.4.6"
 xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
-dulwich = "^0.20.46"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1"
@@ -155,6 +156,7 @@ module = [
   'cachy.*',
   'cleo.*',
   'crashtest.*',
+  'lockfile.*',
   'pexpect.*',
   'pkginfo.*',
   'requests_toolbelt.*',
