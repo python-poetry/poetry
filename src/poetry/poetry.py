@@ -30,6 +30,7 @@ class Poetry(BasePoetry):
         package: ProjectPackage,
         locker: Locker,
         config: Config,
+        disable_cache: bool = False,
     ) -> None:
         from poetry.repositories.pool import Pool
 
@@ -39,6 +40,7 @@ class Poetry(BasePoetry):
         self._config = config
         self._pool = Pool()
         self._plugin_manager: PluginManager | None = None
+        self._disable_cache = disable_cache
 
     @property
     def locker(self) -> Locker:
@@ -51,6 +53,10 @@ class Poetry(BasePoetry):
     @property
     def config(self) -> Config:
         return self._config
+
+    @property
+    def disable_cache(self) -> bool:
+        return self._disable_cache
 
     def set_locker(self, locker: Locker) -> Poetry:
         self._locker = locker
