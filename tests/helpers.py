@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.masonry.utils.helpers import escape_name
-from poetry.core.masonry.utils.helpers import escape_version
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
@@ -237,7 +236,7 @@ class TestRepository(Repository):
         return [
             Link(
                 f"https://foo.bar/files/{escape_name(package.name)}"
-                f"-{escape_version(package.version.text)}-py2.py3-none-any.whl"
+                f"-{package.version.to_string()}-py2.py3-none-any.whl"
             )
         ]
 
