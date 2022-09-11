@@ -12,7 +12,6 @@ import requests
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.utils.helpers import normalize_version
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -78,7 +77,7 @@ class Uploader:
     @property
     def files(self) -> list[Path]:
         dist = self._poetry.file.parent / "dist"
-        version = normalize_version(self._package.version.text)
+        version = self._package.version.to_string()
 
         wheels = list(
             dist.glob(
@@ -305,10 +304,7 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = (
-            dist
-            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"  # noqa: E501
-        )
+        file = dist / f"{self._package.name}-{self._package.version.to_string()}.tar.gz"
 
         if not file.exists():
             raise RuntimeError(f'"{file.name}" does not exist.')
