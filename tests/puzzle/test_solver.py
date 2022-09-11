@@ -3716,3 +3716,72 @@ def test_solver_yanked_warning(
     )
     assert error.count("is a yanked version") == 2
     assert error.count("Reason for being yanked") == 1
+
+
+@pytest.mark.parametrize("is_locked", [False, True])
+def test_update_with_use_latest_vs_lock(
+    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO, is_locked: bool
+):
+    """
+    A1 depends on B2, A2 and A3 depend on B1. Same for C.
+    B1 depends on A2/C2, B2 depends on A1/C1.
+
+    Because there are fewer versions B than of A and C, B is resolved first
+    so that latest version of B is used.
+    There shouldn't be a difference between `poetry lock` (not is_locked)
+    and `poetry update` (is_locked + use_latest)
+    """
+    # B added between A and C (and also alphabetically between)
+    # to ensure that neither the first nor the last one is resolved first
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(Factory.create_dependency("B", "*"))
+    package.add_dependency(Factory.create_dependency("C", "*"))
+
+    package_a1 = get_package("A", "1")
+    package_a1.add_dependency(Factory.create_dependency("B", "2"))
+    package_a2 = get_package("A", "2")
+    package_a2.add_dependency(Factory.create_dependency("B", "1"))
+    package_a3 = get_package("A", "3")
+    package_a3.add_dependency(Factory.create_dependency("B", "1"))
+
+    package_c1 = get_package("C", "1")
+    package_c1.add_dependency(Factory.create_dependency("B", "2"))
+    package_c2 = get_package("C", "2")
+    package_c2.add_dependency(Factory.create_dependency("B", "1"))
+    package_c3 = get_package("C", "3")
+    package_c3.add_dependency(Factory.create_dependency("B", "1"))
+
+    package_b1 = get_package("B", "1")
+    package_b1.add_dependency(Factory.create_dependency("A", "2"))
+    package_b1.add_dependency(Factory.create_dependency("C", "2"))
+    package_b2 = get_package("B", "2")
+    package_b2.add_dependency(Factory.create_dependency("A", "1"))
+    package_b2.add_dependency(Factory.create_dependency("C", "1"))
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+    repo.add_package(package_a3)
+    repo.add_package(package_b1)
+    repo.add_package(package_b2)
+    repo.add_package(package_c1)
+    repo.add_package(package_c2)
+    repo.add_package(package_c3)
+
+    if is_locked:
+        locked = [package_a1, package_b2, package_c1]
+        use_latest = [package.name for package in locked]
+    else:
+        locked = []
+        use_latest = []
+
+    solver = Solver(package, pool, [], locked, io)
+    transaction = solver.solve(use_latest)
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_c1},
+            {"job": "install", "package": package_b2},
+            {"job": "install", "package": package_a1},
+        ],
+    )
