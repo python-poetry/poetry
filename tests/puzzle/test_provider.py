@@ -688,3 +688,31 @@ def test_complete_package_preserves_source_type_with_subdirectories(
         dependency_one_copy.to_pep_508(),
         dependency_two.to_pep_508(),
     }
+
+
+@pytest.mark.parametrize("source_name", [None, "repo"])
+def test_complete_package_with_extras_preserves_source_name(
+    provider: Provider, repository: Repository, source_name: str | None
+) -> None:
+    package_a = Package("A", "1.0")
+    package_b = Package("B", "1.0")
+    dep = get_dependency("B", "^1.0", optional=True)
+    package_a.add_dependency(dep)
+    package_a.extras = {"foo": [dep]}
+    repository.add_package(package_a)
+    repository.add_package(package_b)
+
+    dependency = Dependency("A", "1.0", extras=["foo"])
+    if source_name:
+        dependency.source_name = source_name
+
+    complete_package = provider.complete_package(
+        DependencyPackage(dependency, package_a)
+    )
+
+    requires = complete_package.package.all_requires
+    assert len(requires) == 2
+    assert requires[0].name == "a"
+    assert requires[0].source_name == source_name
+    assert requires[1].name == "b"
+    assert requires[1].source_name is None
