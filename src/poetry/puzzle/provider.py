@@ -256,6 +256,9 @@ class Provider:
         elif dependency.is_vcs():
             dependency = cast("VCSDependency", dependency)
             package = self._search_for_vcs(dependency)
+            dependency._source_reference = package.source_reference
+            dependency._source_resolved_reference = package.source_resolved_reference
+            dependency._source_subdirectory = package.source_subdirectory
 
         elif dependency.is_file():
             dependency = cast("FileDependency", dependency)
@@ -273,11 +276,6 @@ class Provider:
             raise RuntimeError(
                 f"{dependency}: unknown direct dependency type {dependency.source_type}"
             )
-
-        if dependency.is_vcs():
-            dependency._source_reference = package.source_reference
-            dependency._source_resolved_reference = package.source_resolved_reference
-            dependency._source_subdirectory = package.source_subdirectory
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
