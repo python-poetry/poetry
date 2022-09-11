@@ -92,6 +92,7 @@ class Factory(BaseFactory):
             base_poetry.package,
             locker,
             config,
+            disable_cache,
         )
 
         # Configuring sources
