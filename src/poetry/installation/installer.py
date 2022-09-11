@@ -43,6 +43,7 @@ class Installer:
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
+        disable_cache: bool = False,
     ) -> None:
         self._io = io
         self._env = env
@@ -65,7 +66,9 @@ class Installer:
         self._extras: list[str] = []
 
         if executor is None:
-            executor = Executor(self._env, self._pool, config, self._io)
+            executor = Executor(
+                self._env, self._pool, config, self._io, disable_cache=disable_cache
+            )
 
         self._executor = executor
         self._use_executor = False

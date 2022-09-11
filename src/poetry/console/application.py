@@ -327,6 +327,7 @@ class Application(BaseApplication):  # type: ignore[misc]
             poetry.locker,
             poetry.pool,
             poetry.config,
+            disable_cache=poetry.disable_cache,
         )
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)

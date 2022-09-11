@@ -11,6 +11,7 @@ from cleo.testers.application_tester import ApplicationTester
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.utils.authenticator import Authenticator
 from tests.helpers import mock_metadata_entry_points
 
 
@@ -99,3 +100,26 @@ def test_application_verify_source_cache_flag(disable_cache: bool):
 
     for repo in app.poetry.pool.repositories:
         assert repo._disable_cache == disable_cache
+
+
+@pytest.mark.parametrize("disable_cache", [True, False])
+def test_application_verify_cache_flag_at_install(
+    mocker: MockerFixture, disable_cache: bool
+) -> None:
+    app = Application()
+
+    tester = ApplicationTester(app)
+    command = "install --dry-run"
+
+    if disable_cache:
+        command = f"{command} --no-cache"
+
+    spy = mocker.spy(Authenticator, "__init__")
+
+    tester.execute(command)
+
+    assert spy.call_count == 2
+    for call in spy.mock_calls:
+        (name, args, kwargs) = call
+        assert "disable_cache" in kwargs
+        assert disable_cache is kwargs["disable_cache"]
