@@ -362,31 +362,50 @@ class VersionSolver:
         if not unsatisfied:
             return None
 
+        class Preference:
+            """
+            Preference is one of the criteria for choosing which dependency to solve
+            first. A higher value means that there are "more options" to satisfy
+            a dependency. A lower value takes precedence.
+            """
+
+            DIRECT_ORIGIN = 0
+            NO_CHOICE = 1
+            USE_LATEST = 2
+            LOCKED = 3
+            DEFAULT = 4
+
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency: Dependency) -> tuple[bool, int]:
+        # In order to provide results that are as deterministic as possible
+        # and consistent between `poetry lock` and `poetry update`, the return value
+        # of two different dependencies should not be equal if possible.
+        def _get_min(dependency: Dependency) -> tuple[bool, int, int]:
             # Direct origin dependencies must be handled first: we don't want to resolve
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, -1
+                return False, Preference.DIRECT_ORIGIN, 1
 
-            if dependency.name in self._provider.use_latest:
-                # If we're forced to use the latest version of a package, it effectively
-                # only has one version to choose from.
-                return not dependency.marker.is_any(), 1
+            is_specific_marker = not dependency.marker.is_any()
 
-            locked = self._provider.get_locked(dependency)
-            if locked:
-                return not dependency.marker.is_any(), 1
+            use_latest = dependency.name in self._provider.use_latest
+            if not use_latest:
+                locked = self._provider.get_locked(dependency)
+                if locked:
+                    return is_specific_marker, Preference.LOCKED, 1
 
             try:
-                return (
-                    not dependency.marker.is_any(),
-                    len(self._dependency_cache.search_for(dependency)),
-                )
+                num_packages = len(self._dependency_cache.search_for(dependency))
             except ValueError:
-                return not dependency.marker.is_any(), 0
+                num_packages = 0
+            if num_packages < 2:
+                preference = Preference.NO_CHOICE
+            elif use_latest:
+                preference = Preference.USE_LATEST
+            else:
+                preference = Preference.DEFAULT
+            return is_specific_marker, preference, num_packages
 
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]
