@@ -89,3 +89,11 @@ repos:
     rev: v2.20.0
     hooks:
       - id: validate_manifest
+
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.2.0
+    hooks:
+      - id: poetry-lock
+        name: poetry-lock-check
+        args: [--check]
+        files: ^pyproject\.toml|poetry\.lock$
