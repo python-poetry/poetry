@@ -121,3 +121,13 @@ def determine_requirements_from_list(
         result.append(requirement)
 
     return result
+
+
+def create_pool() -> Pool:
+    from poetry.repositories import Pool
+    from poetry.repositories.pypi_repository import PyPiRepository
+
+    pool = Pool()
+    pool.add_repository(PyPiRepository())
+
+    return pool

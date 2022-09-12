@@ -10,6 +10,7 @@ from packaging.utils import canonicalize_name
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.requirements import create_pool
 from poetry.utils.requirements import determine_requirements_from_list
 from poetry.utils.requirements import find_best_version_for_package
 from poetry.utils.requirements import format_requirements
@@ -379,14 +380,10 @@ You can specify a package in the following forms:
         return package
 
     def _get_pool(self) -> Pool:
-        from poetry.repositories import Pool
-        from poetry.repositories.pypi_repository import PyPiRepository
-
         if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:
-            self._pool = Pool()
-            self._pool.add_repository(PyPiRepository())
+            self._pool = create_pool()
 
         return self._pool
