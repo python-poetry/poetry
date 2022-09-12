@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.testers.command_tester import CommandTester
+from packaging.utils import canonicalize_name
 
+from poetry.console.commands.init import InitCommand
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.requirements import parse_requirements
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
@@ -588,6 +589,56 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+def test_interactive_with_wrong_dependency_inputs(
+    tester: CommandTester, repo: TestRepository
+):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "^3.8",  # Python
+        "",  # Interactive packages
+        "pendulum 2.0.0 foo",  # Package name and constraint (invalid)
+        "pendulum 2.0.0",  # Package name and constraint (invalid)
+        "pendulum 2.0.0",  # Package name and constraint (invalid)
+        "pendulum 2.0.0",  # Package name and constraint (invalid)
+        "pendulum@^2.0.0",  # Package name and constraint (valid)
+        "",  # End package selection
+        "",  # Interactive dev packages
+        "pytest 3.6.0 foo",  # Dev package name and constraint (invalid)
+        "pytest 3.6.0",  # Dev package name and constraint (invalid)
+        "pytest@3.6.0",  # Dev package name and constraint (valid)
+        "",  # End package selection
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pendulum = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "3.6.0"
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_python_option(tester: CommandTester):
     inputs = [
         "my-package",  # Package name
@@ -780,6 +831,51 @@ pytest-requests = "^0.2.0"
     assert 'pytest = "^3.6.0"' in output
 
 
+def test_predefined_all_options(tester: CommandTester, repo: TestRepository):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Author
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'This is a description' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--python '^3.8' "
+        "--license MIT "
+        "--dependency pendulum "
+        "--dev-dependency pytest",
+        inputs="\n".join(inputs),
+    )
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Foo Bar <foo@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pendulum = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^3.6.0"
+"""
+
+    output = tester.io.fetch_output()
+    assert expected in output
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester):
     result = parse_requirements(["databases[postgresql, sqlite]"], tester.command, None)
 
@@ -789,7 +885,6 @@ def test_add_package_with_extras_and_whitespace(tester: CommandTester):
     assert "sqlite" in result[0]["extras"]
 
 
-@pytest.mark.xfail(sys.platform == "win32", reason="regression in tomlkit")
 def test_init_existing_pyproject_simple(
     tester: CommandTester,
     source_dir: Path,
@@ -806,7 +901,30 @@ line-length = 88
     assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
 
-@pytest.mark.xfail(sys.platform == "win32", reason="regression in tomlkit")
+@pytest.mark.parametrize("linesep", ["\n", "\r\n"])
+def test_init_existing_pyproject_consistent_linesep(
+    tester: CommandTester,
+    source_dir: Path,
+    init_basic_inputs: str,
+    init_basic_toml: str,
+    linesep: str,
+):
+    pyproject_file = source_dir / "pyproject.toml"
+    existing_section = """
+[tool.black]
+line-length = 88
+""".replace(
+        "\n", linesep
+    )
+    with open(pyproject_file, "w", newline="") as f:
+        f.write(existing_section)
+    tester.execute(inputs=init_basic_inputs)
+    with open(pyproject_file, newline="") as f:
+        content = f.read()
+    init_basic_toml = init_basic_toml.replace("\n", linesep)
+    assert f"{existing_section}{linesep}{init_basic_toml}" in content
+
+
 def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
@@ -862,3 +980,29 @@ build-backend = "setuptools.build_meta"
         == "A pyproject.toml file with a defined build-system already exists."
     )
     assert existing_section in pyproject_file.read_text()
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        None,
+        "",
+        "foo",
+        "   foo  ",
+        "foo==2.0",
+        "foo@2.0",
+        "  foo@2.0   ",
+        "foo 2.0",
+        "   foo 2.0  ",
+    ],
+)
+def test__validate_package_valid(name: str | None):
+    assert InitCommand._validate_package(name) == name
+
+
+@pytest.mark.parametrize(
+    "name", ["foo bar 2.0", "   foo bar 2.0   ", "foo bar foobar 2.0"]
+)
+def test__validate_package_invalid(name: str):
+    with pytest.raises(ValueError):
+        assert InitCommand._validate_package(name)

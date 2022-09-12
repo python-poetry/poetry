@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
 
 class NewCommand(Command):
-
     name = "new"
     description = "Creates a new Python project at <path>."
 

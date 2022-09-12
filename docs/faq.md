@@ -14,12 +14,12 @@ menu:
 ### Why is the dependency resolution process slow?
 
 While the dependency resolver at the heart of Poetry is highly optimized and
-should be fast enough for most cases, sometimes, with some specific set of dependencies,
+should be fast enough for most cases, with certain sets of dependencies
 it can take time to find a valid solution.
 
 This is due to the fact that not all libraries on PyPI have properly declared their metadata
 and, as such, they are not available via the PyPI JSON API. At this point, Poetry has no choice
-but downloading the packages and inspect them to get the necessary information. This is an expensive
+but to download the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
 At the moment there is no way around it.
@@ -57,19 +57,57 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 ```
 
-And use a `tox.ini` configuration file similar to this:
+`tox` can be configured in multiple ways. It depends on what should be the code under test and which dependencies
+should be installed.
 
-```INI
+#### Usecase #1
+```ini
 [tox]
 isolated_build = true
-envlist = py27, py37
 
 [testenv]
-allowlist_externals = poetry
+deps =
+    pytest
 commands =
-    poetry install -v
-    poetry run pytest tests/
+    pytest tests/ --import-mode importlib
 ```
+
+`tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
+Thus, dependencies are resolved by `pip`.
+
+#### Usecase #2
+```ini
+[tox]
+isolated_build = true
+
+[testenv]
+whitelist_externals = poetry
+commands_pre =
+    poetry install --no-root --sync
+commands =
+    poetry run pytest tests/ --import-mode importlib
+```
+
+`tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
+Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry,
+ which will install the locked dependencies into the environment.
+
+#### Usecase #3
+```ini
+[tox]
+isolated_build = true
+
+[testenv]
+skip_install = true
+whitelist_externals = poetry
+commands_pre =
+    poetry install
+commands =
+    poetry run pytest tests/ --import-mode importlib
+```
+
+`tox` will not do any install. Poetry installs all the dependencies and the current package an editable mode.
+Thus, tests are running against the local files and not the built and installed package.
 
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 

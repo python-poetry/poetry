@@ -1,24 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.null_io import NullIO
-from tomlkit import nl
-from tomlkit import table
 from tomlkit.items import AoT
 
 from poetry.config.source import Source
 from poetry.console.commands.command import Command
 
 
-if TYPE_CHECKING:
-    from tomlkit.items import Table
-
-
 class SourceAddCommand(Command):
-
     name = "source add"
     description = "Add source configuration for project."
 
@@ -41,17 +32,10 @@ class SourceAddCommand(Command):
         option("secondary", "s", "Set this source as secondary."),
     ]
 
-    @staticmethod
-    def source_to_table(source: Source) -> Table:
-        source_table: Table = table()
-        for key, value in source.to_dict().items():
-            source_table.add(key, value)
-        source_table.add(nl())
-        return source_table
-
     def handle(self) -> int:
         from poetry.factory import Factory
         from poetry.repositories import Pool
+        from poetry.utils.source import source_to_table
 
         name = self.argument("name")
         url = self.argument("url")
@@ -92,11 +76,11 @@ class SourceAddCommand(Command):
                 source = new_source
                 new_source = None
 
-            sources.append(self.source_to_table(source))
+            sources.append(source_to_table(source))
 
         if new_source is not None:
             self.line(f"Adding source with name <c1>{name}</c1>.")
-            sources.append(self.source_to_table(new_source))
+            sources.append(source_to_table(new_source))
 
         # ensure new source is valid. eg: invalid name etc.
         self.poetry._pool = Pool()

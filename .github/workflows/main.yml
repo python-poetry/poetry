@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   tests:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }} ${{ matrix.suffix }}
+    name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:
@@ -41,10 +41,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -54,7 +54,7 @@ jobs:
 
       - name: Bootstrap poetry
         run: |
-          curl -sL https://install.python-poetry.org | python - -y ${{ matrix.bootstrap-args }}
+          curl -sL https://install.python-poetry.org | python - -y
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
@@ -68,7 +68,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Set up cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache
         with:
           path: .venv
@@ -103,7 +103,7 @@ jobs:
             poetry show poetry-plugin-export  | grep version | cut -d : -f 2 | xargs)
 
       - name: Checkout Plugin Source (poetry-plugin-export)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export

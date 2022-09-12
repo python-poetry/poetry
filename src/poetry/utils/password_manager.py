@@ -14,12 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class PasswordManagerError(Exception):
-
     pass
 
 
 class PoetryKeyringError(Exception):
-
     pass
 
 
@@ -172,12 +170,21 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str | None:
-        if not self.keyring.is_available():
-            token: str | None = self._config.get(f"pypi-token.{name}")
+    def get_pypi_token(self, repo_name: str) -> str | None:
+        """Get PyPi token.
+
+        First checks the environment variables for a token,
+        then the configured username/password and the
+        available keyring.
+
+        :param repo_name:  Name of repository.
+        :return: Returns a token as a string if found, otherwise None.
+        """
+        token: str | None = self._config.get(f"pypi-token.{repo_name}")
+        if token:
             return token
 
-        return self.keyring.get_password(name, "__token__")
+        return self.keyring.get_password(repo_name, "__token__")
 
     def delete_pypi_token(self, name: str) -> None:
         if not self.keyring.is_available():

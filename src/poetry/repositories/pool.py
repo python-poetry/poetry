@@ -9,6 +9,7 @@ from poetry.repositories.repository import Repository
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.semver.version import Version
 
 
 class Pool(Repository):
@@ -17,12 +18,12 @@ class Pool(Repository):
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__("poetry-pool")
 
         if repositories is None:
             repositories = []
 
-        self._lookup: dict[str | None, int] = {}
+        self._lookup: dict[str, int] = {}
         self._repositories: list[Repository] = []
         self._default = False
         self._has_primary_repositories = False
@@ -32,8 +33,6 @@ class Pool(Repository):
             self.add_repository(repository)
 
         self._ignore_repository_names = ignore_repository_names
-
-        super().__init__()
 
     @property
     def repositories(self) -> list[Repository]:
@@ -49,11 +48,11 @@ class Pool(Repository):
         return name.lower() in self._lookup
 
     def repository(self, name: str) -> Repository:
-        if name is not None:
-            name = name.lower()
+        name = name.lower()
 
-        if name in self._lookup:
-            return self._repositories[self._lookup[name]]
+        lookup = self._lookup.get(name)
+        if lookup is not None:
+            return self._repositories[lookup]
 
         raise ValueError(f'Repository "{name}" does not exist.')
 
@@ -63,11 +62,10 @@ class Pool(Repository):
         """
         Adds a repository to the pool.
         """
-        # FIXME: surely it's a problem that the repository name can be None here?
-        # All nameless repositories will collide in self._lookup.
-        repository_name = (
-            repository.name.lower() if repository.name is not None else None
-        )
+        repository_name = repository.name.lower()
+        if repository_name in self._lookup:
+            raise ValueError(f"{repository_name} already added")
+
         if default:
             if self.has_default():
                 raise ValueError("Only one repository can be the default")
@@ -113,6 +111,20 @@ class Pool(Repository):
         idx = self._lookup.get(repository_name)
         if idx is not None:
             del self._repositories[idx]
+            del self._lookup[repository_name]
+
+            if idx == 0:
+                self._default = False
+
+            for name in self._lookup:
+                if self._lookup[name] > idx:
+                    self._lookup[name] -= 1
+
+            if (
+                self._secondary_start_idx is not None
+                and self._secondary_start_idx > idx
+            ):
+                self._secondary_start_idx -= 1
 
         return self
 
@@ -122,7 +134,7 @@ class Pool(Repository):
     def package(
         self,
         name: str,
-        version: str,
+        version: Version,
         extras: list[str] | None = None,
         repository: str | None = None,
     ) -> Package:

@@ -1,0 +1,113 @@
+{
+  "info": {
+    "author": "Rapptz",
+    "author_email": "",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Natural Language :: English",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Internet",
+      "Topic :: Software Development :: Libraries",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      "Topic :: Utilities",
+      "Typing :: Typed"
+    ],
+    "description": "",
+    "description_content_type": "text/x-rst",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/Rapptz/discord.py",
+    "keywords": "",
+    "license": "MIT",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "discord.py",
+    "package_url": "https://pypi.org/project/discord.py/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/discord.py/",
+    "project_urls": {
+      "Documentation": "https://discordpy.readthedocs.io/en/latest/",
+      "Homepage": "https://github.com/Rapptz/discord.py",
+      "Issue tracker": "https://github.com/Rapptz/discord.py/issues"
+    },
+    "release_url": "https://pypi.org/project/discord.py/2.0.0/",
+    "requires_dist": [
+      "PyNaCl (<1.6,>=1.3.0) ; extra == 'voice'",
+      "typing-extensions (<5,>=4.3) ; extra == 'test'",
+      "pytest-mock ; extra == 'test'",
+      "pytest-cov ; extra == 'test'",
+      "pytest-asyncio ; extra == 'test'",
+      "pytest ; extra == 'test'",
+      "coverage[toml] ; extra == 'test'",
+      "cchardet ; extra == 'speed'",
+      "Brotli ; extra == 'speed'",
+      "aiodns (>=1.1) ; extra == 'speed'",
+      "orjson (>=3.5.4) ; extra == 'speed'",
+      "typing-extensions (<5,>=4.3) ; extra == 'docs'",
+      "sphinxcontrib-websupport ; extra == 'docs'",
+      "sphinxcontrib-trio (==1.1.2) ; extra == 'docs'",
+      "sphinx (==4.4.0) ; extra == 'docs'",
+      "aiohttp (<4,>=3.7.4)"
+    ],
+    "requires_python": ">=3.8.0",
+    "summary": "A Python wrapper for the Discord API",
+    "version": "2.0.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14796560,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "4df2fceef99934d1fdac5a9b0aa94173",
+        "sha256": "18b06870bdc85d29e0d55f4a4b2abe9d7cdae2b197e23d49f82886ba27ba1aec"
+      },
+      "downloads": -1,
+      "filename": "discord.py-2.0.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "4df2fceef99934d1fdac5a9b0aa94173",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8.0",
+      "size": 1059049,
+      "upload_time": "2022-08-18T03:47:52",
+      "upload_time_iso_8601": "2022-08-18T03:47:52.438785Z",
+      "url": "https://files.pythonhosted.org/packages/0e/d9/7b057cab41c16144925ba4f96dab576a8ebb7b80a98d40e06bd94298eb3b/discord.py-2.0.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "3aaca51997210bd2ae4d4b5401c00ab7",
+        "sha256": "c36f26935938194c3465c2abf8ecfbbf5560c50b189f1b746d6f00d1e78c0d3b"
+      },
+      "downloads": -1,
+      "filename": "discord.py-2.0.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3aaca51997210bd2ae4d4b5401c00ab7",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8.0",
+      "size": 955054,
+      "upload_time": "2022-08-18T03:47:54",
+      "upload_time_iso_8601": "2022-08-18T03:47:54.173712Z",
+      "url": "https://files.pythonhosted.org/packages/4c/73/fb89115b07588bf7a46e9eca972b89dd62b5856abd52297fe130b41d9d63/discord.py-2.0.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class EnvInfoCommand(Command):
-
     name = "env info"
     description = "Displays information about the current environment."
 
@@ -41,10 +40,14 @@ class EnvInfoCommand(Command):
         listing = [
             f"<info>Python</info>:         <comment>{env_python_version}</>",
             f"<info>Implementation</info>: <comment>{env.python_implementation}</>",
-            "<info>Path</info>:          "
-            f" <comment>{env.path if env.is_venv() else 'NA'}</>",
-            "<info>Executable</info>:    "
-            f" <comment>{env.python if env.is_venv() else 'NA'}</>",
+            (
+                "<info>Path</info>:          "
+                f" <comment>{env.path if env.is_venv() else 'NA'}</>"
+            ),
+            (
+                "<info>Executable</info>:    "
+                f" <comment>{env.python if env.is_venv() else 'NA'}</>"
+            ),
         ]
         if env.is_venv():
             listing.append(

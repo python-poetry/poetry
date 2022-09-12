@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import cast
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.project_package import ProjectPackage
@@ -11,13 +10,13 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.__version__ import __version__
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.factory import Factory
-from poetry.poetry import Poetry
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.helpers import directory
 
 
 if TYPE_CHECKING:
+    from poetry.poetry import Poetry
     from poetry.utils.env import Env
 
 
@@ -47,6 +46,7 @@ class SelfCommand(InstallerCommand):
     def env(self) -> Env:
         if not isinstance(self._env, SystemEnv):
             self.reset_env()
+        assert self._env is not None
         return self._env
 
     @property
@@ -90,7 +90,9 @@ class SelfCommand(InstallerCommand):
     def poetry(self) -> Poetry:
         if self._poetry is None:
             self.reset_poetry()
-        return cast(Poetry, self._poetry)
+
+        assert self._poetry is not None
+        return self._poetry
 
     def _system_project_handle(self) -> int:
         """
@@ -102,7 +104,8 @@ class SelfCommand(InstallerCommand):
         The default implementations handles cases where a `self` command delegates
         handling to an existing command. Eg: `SelfAddCommand(SelfCommand, AddCommand)`.
         """
-        return cast(int, super().handle())
+        return_code: int = super().handle()
+        return return_code
 
     def reset(self) -> None:
         """

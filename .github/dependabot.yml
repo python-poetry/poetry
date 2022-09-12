@@ -9,3 +9,8 @@ updates:
     open-pull-requests-limit: 0
     reviewers:
       - "python-poetry/triage"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

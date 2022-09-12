@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import glob
 import logging
@@ -10,7 +11,6 @@ import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 import pkginfo
 
@@ -69,6 +69,7 @@ class PackageInfoError(ValueError):
 class PackageInfo:
     def __init__(
         self,
+        *,
         name: str | None = None,
         version: str | None = None,
         summary: str | None = None,
@@ -76,6 +77,7 @@ class PackageInfo:
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
+        yanked: str | bool = False,
         cache_version: str | None = None,
     ) -> None:
         self.name = name
@@ -85,6 +87,7 @@ class PackageInfo:
         self.requires_dist = requires_dist
         self.requires_python = requires_python
         self.files = files or []
+        self.yanked = yanked
         self._cache_version = cache_version
         self._source_type: str | None = None
         self._source_url: str | None = None
@@ -117,6 +120,7 @@ class PackageInfo:
             "requires_dist": self.requires_dist,
             "requires_python": self.requires_python,
             "files": self.files,
+            "yanked": self.yanked,
             "_cache_version": self._cache_version,
         }
 
@@ -163,6 +167,7 @@ class PackageInfo:
             source_type=self._source_type,
             source_url=self._source_url,
             source_reference=self._source_reference,
+            yanked=self.yanked,
         )
         if self.summary is not None:
             package.description = self.summary
@@ -170,12 +175,17 @@ class PackageInfo:
         package.python_versions = self.requires_python or "*"
         package.files = self.files
 
-        if root_dir or (self._source_type in {"directory"} and self._source_url):
-            # this is a local poetry project, this means we can extract "richer"
-            # requirement information, eg: development requirements etc.
-            poetry_package = self._get_poetry_package(
-                path=root_dir or Path(cast(str, self._source_url))
-            )
+        # If this is a local poetry project, we can extract "richer" requirement
+        # information, eg: development requirements etc.
+        if root_dir is not None:
+            path = root_dir
+        elif self._source_type == "directory" and self._source_url is not None:
+            path = Path(self._source_url)
+        else:
+            path = None
+
+        if path is not None:
+            poetry_package = self._get_poetry_package(path=path)
             if poetry_package:
                 package.extras = poetry_package.extras
                 for dependency in poetry_package.requires:
@@ -445,6 +455,7 @@ class PackageInfo:
             requires_dist=list(requires),
             requires_python=package.python_versions,
             files=package.files,
+            yanked=package.yanked_reason if package.yanked else False,
         )
 
     @staticmethod
@@ -452,7 +463,9 @@ class PackageInfo:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
-            return Factory().create_poetry(path).package
+            with contextlib.suppress(RuntimeError):
+                return Factory().create_poetry(path).package
+
         return None
 
     @classmethod
@@ -556,12 +569,11 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
     :param path: Path to package source to build and read metadata for.
     """
     info = None
-    try:
+
+    with contextlib.suppress(PackageInfoError):
         info = PackageInfo.from_setup_files(path)
         if all([info.version, info.name, info.requires_dist]):
             return info
-    except PackageInfoError:
-        pass
 
     with ephemeral_environment(
         flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}

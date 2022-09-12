@@ -35,6 +35,15 @@ if TYPE_CHECKING:
             "git+https://github.com/demo/demo.git@main",
             {"git": "https://github.com/demo/demo.git", "name": "demo", "rev": "main"},
         ),
+        (
+            "git+https://github.com/demo/subdirectories.git@main#subdirectory=two",
+            {
+                "git": "https://github.com/demo/subdirectories.git",
+                "name": "two",
+                "rev": "main",
+                "subdirectory": "two",
+            },
+        ),
         ("demo", {"name": "demo"}),
         ("demo@1.0.0", {"name": "demo", "version": "1.0.0"}),
         ("demo@^1.0.0", {"name": "demo", "version": "^1.0.0"}),
@@ -46,8 +55,11 @@ if TYPE_CHECKING:
         ("../demo", {"name": "demo", "path": "../demo"}),
         ("../demo/demo.whl", {"name": "demo", "path": "../demo/demo.whl"}),
         (
-            "https://example.com/packages/demo-0.1.0.tar.gz",
-            {"name": "demo", "url": "https://example.com/packages/demo-0.1.0.tar.gz"},
+            "https://example.com/distributions/demo-0.1.0.tar.gz",
+            {
+                "name": "demo",
+                "url": "https://example.com/distributions/demo-0.1.0.tar.gz",
+            },
         ),
         # PEP 508 inputs
         (
@@ -78,8 +90,10 @@ if TYPE_CHECKING:
             },
         ),
         (
-            'cachecontrol[filecache] (>=0.12.9,<0.13.0); python_version >= "3.6" and'
-            ' python_version < "4.0"',
+            (
+                'cachecontrol[filecache] (>=0.12.9,<0.13.0); python_version >= "3.6"'
+                ' and python_version < "4.0"'
+            ),
             {
                 "version": ">=0.12.9,<0.13.0",
                 "markers": 'python_version >= "3.6" and python_version < "4.0"',

@@ -3,13 +3,15 @@ from __future__ import annotations
 import logging
 import re
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import DefaultDict
+from typing import List
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils._compat import cached_property
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 
@@ -17,7 +19,10 @@ from poetry.utils.patterns import wheel_file_re
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
+
+    LinkCache = DefaultDict[NormalizedName, DefaultDict[Version, List[Link]]]
 
 
 logger = logging.getLogger(__name__)
@@ -43,16 +48,8 @@ class LinkSource:
     def url(self) -> str:
         return self._url
 
-    def versions(self, name: str) -> Iterator[Version]:
-        name = canonicalize_name(name)
-        seen: set[Version] = set()
-
-        for link in self.links:
-            pkg = self.link_package_data(link)
-
-            if pkg and pkg.name == name and pkg.version not in seen:
-                seen.add(pkg.version)
-                yield pkg.version
+    def versions(self, name: NormalizedName) -> Iterator[Version]:
+        yield from self._link_cache[name]
 
     @property
     def packages(self) -> Iterator[Package]:
@@ -63,13 +60,16 @@ class LinkSource:
                 yield pkg
 
     @property
-    @abstractmethod
     def links(self) -> Iterator[Link]:
-        raise NotImplementedError()
+        for links_per_version in self._link_cache.values():
+            for links in links_per_version.values():
+                yield from links
 
     @classmethod
     def link_package_data(cls, link: Link) -> Package | None:
-        name, version_string, version = None, None, None
+        name: str | None = None
+        version_string: str | None = None
+        version: Version | None = None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:
@@ -96,17 +96,31 @@ class LinkSource:
             pkg = Package(name, version, source_url=link.url)
         return pkg
 
-    def links_for_version(self, name: str, version: Version) -> Iterator[Link]:
-        name = canonicalize_name(name)
-
-        for link in self.links:
-            pkg = self.link_package_data(link)
-
-            if pkg and pkg.name == name and pkg.version == version:
-                yield link
+    def links_for_version(
+        self, name: NormalizedName, version: Version
+    ) -> Iterator[Link]:
+        yield from self._link_cache[name][version]
 
     def clean_link(self, url: str) -> str:
         """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
         the link, it will be rewritten to %20 (while not over-quoting
         % or other characters)."""
         return self.CLEAN_REGEX.sub(lambda match: f"%{ord(match.group(0)):02x}", url)
+
+    def yanked(self, name: NormalizedName, version: Version) -> str | bool:
+        reasons = set()
+        for link in self.links_for_version(name, version):
+            if link.yanked:
+                if link.yanked_reason:
+                    reasons.add(link.yanked_reason)
+            else:
+                # release is not yanked if at least one file is not yanked
+                return False
+        # if all files are yanked (or there are no files) the release is yanked
+        if reasons:
+            return "\n".join(sorted(reasons))
+        return True
+
+    @cached_property
+    def _link_cache(self) -> LinkCache:
+        raise NotImplementedError()

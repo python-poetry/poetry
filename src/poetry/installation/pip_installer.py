@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import tempfile
 import urllib.parse
@@ -47,10 +48,7 @@ class PipInstaller(BaseInstaller):
 
         args = ["install", "--no-deps"]
 
-        if (
-            package.source_type not in {"git", "directory", "file", "url"}
-            and package.source_url
-        ):
+        if not package.is_direct_origin() and package.source_url:
             assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
             parsed = urllib.parse.urlparse(package.source_url)
@@ -183,6 +181,9 @@ class PipInstaller(BaseInstaller):
                 f"#egg={package.name}"
             )
 
+            if package.source_subdirectory:
+                req += f"&subdirectory={package.source_subdirectory}"
+
             if package.develop:
                 return ["-e", req]
 
@@ -217,15 +218,22 @@ class PipInstaller(BaseInstaller):
         else:
             req = Path(package.source_url).resolve(strict=False)
 
+        if package.source_subdirectory:
+            req /= package.source_subdirectory
+
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
+        package_poetry = None
         if pyproject.is_poetry_project():
+            with contextlib.suppress(RuntimeError):
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+
+        if package_poetry is not None:
             # Even if there is a build system specified
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
             legacy_pip = self._env.pip_version < Version.from_parts(19, 0, 0)
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
@@ -248,22 +256,16 @@ class PipInstaller(BaseInstaller):
                 builder = SdistBuilder(package_poetry)
 
                 with builder.setup_py():
-                    if package.develop:
-                        return pip_install(
-                            path=req,
-                            environment=self._env,
-                            upgrade=True,
-                            editable=True,
-                        )
                     return pip_install(
-                        path=req, environment=self._env, deps=False, upgrade=True
+                        path=req,
+                        environment=self._env,
+                        upgrade=True,
+                        editable=package.develop,
                     )
 
-        if package.develop:
-            return pip_install(
-                path=req, environment=self._env, upgrade=True, editable=True
-            )
-        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
+        return pip_install(
+            path=req, environment=self._env, upgrade=True, editable=package.develop
+        )
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package
@@ -278,9 +280,13 @@ class PipInstaller(BaseInstaller):
         )
 
         # Now we just need to install from the source directory
-        pkg = Package(package.name, package.version)
-        pkg._source_type = "directory"
-        pkg._source_url = str(source.path)
-        pkg.develop = package.develop
+        pkg = Package(
+            name=package.name,
+            version=package.version,
+            source_type="directory",
+            source_url=str(source.path),
+            source_subdirectory=package.source_subdirectory,
+            develop=package.develop,
+        )
 
         self.install_directory(pkg)

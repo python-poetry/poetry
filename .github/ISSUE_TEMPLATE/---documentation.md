@@ -2,7 +2,7 @@
 name: "\U0001F4DA Documentation"
 about: Did you find errors, problems, or anything unintelligible in the docs (https://python-poetry.org/docs)?
 title: ''
-labels: Documentation, Triage
+labels: area/docs, status/triage
 assignees: ''
 
 ---

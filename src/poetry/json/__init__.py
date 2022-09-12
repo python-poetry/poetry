@@ -15,7 +15,6 @@ SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
 
 
 class ValidationError(ValueError):
-
     pass
 
 

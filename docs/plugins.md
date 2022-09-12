@@ -38,7 +38,7 @@ version = "1.0.0"
 
 # ...
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.7"
+python = "^3.7"
 poetry = "^1.0"
 
 [tool.poetry.plugins."poetry.plugin"]
@@ -233,14 +233,19 @@ pipx runpip poetry uninstall poetry-plugin
 
 ### With `pip`
 
-If you used `pip` to install Poetry you can add the plugin packages via the `pip install` command.
+The `pip` binary in Poetry's virtual environment can also be used to install and remove plugins.
+The environment variable `$POETRY_HOME` here is used to represent the path to the virtual environment.
+The [installation instructions](/docs/) can be referenced if you are not
+sure where Poetry has been installed.
+
+To add a plugin, you can use `pip install`:
 
 ```shell
-pip install --user poetry-plugin
+$POETRY_HOME/bin/pip install --user poetry-plugin
 ```
 
 If you want to uninstall a plugin, you can run:
 
 ```shell
-pip uninstall poetry-plugin
+$POETRY_HOME/bin/pip uninstall poetry-plugin
 ```

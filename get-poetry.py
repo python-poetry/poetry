@@ -118,6 +118,7 @@ STYLES = {
     "comment": style("yellow", None, None),
     "error": style("red", None, None),
     "warning": style("yellow", None, None),
+    "deprecation": style("magenta", None, None),
 }
 
 
@@ -309,7 +310,6 @@ environment variable. This has not been done automatically.
 
 
 class Installer:
-
     CURRENT_PYTHON = sys.executable
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
@@ -352,7 +352,7 @@ class Installer:
         version, current_version = self.get_version()
 
         if version is None:
-            return 0
+            return 1
 
         self.customize_install()
         self.display_pre_message()
@@ -438,6 +438,39 @@ class Installer:
 
             return None, None
 
+        def _is_supported(x):
+            mx = self.VERSION_REGEX.match(x)
+            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
+            return vx < (1, 2, 0)
+
+        print(
+            colorize(
+                "deprecation",
+                "This installer is deprecated, and scheduled for removal from the"
+                " Poetry repository on or after January 1, 2023.\nSee"
+                " https://github.com/python-poetry/poetry/issues/6377 for"
+                " details.\n\nYou should migrate to https://install.python-poetry.org"
+                " instead, which supports all versions of Poetry, and allows for `self"
+                " update` of versions 1.1.7 or newer.\nInstructions are available at"
+                " https://python-poetry.org/docs/#installation.\n",
+            )
+        )
+
+        if not os.environ.get("GET_POETRY_IGNORE_DEPRECATION") and not self._version:
+            print(
+                colorize(
+                    "deprecation",
+                    "Without an explicit version, this installer will attempt to"
+                    " install the latest version of Poetry.\nThis installer cannot"
+                    " install Poetry 1.2.0a1 or newer (and installs will be unable to"
+                    " `self update` to 1.2.0a1 or newer).\n\nTo continue to use this"
+                    " deprecated installer, you must specify an explicit version with"
+                    " --version <version> or POETRY_VERSION=<version>.\nAlternatively,"
+                    " if you wish to force this deprecated installer to use the latest"
+                    " installable release, set GET_POETRY_IGNORE_DEPRECATION=1.\n",
+                )
+            )
+
         version = self._version
         if not version:
             for release in reversed(releases):
@@ -445,36 +478,46 @@ class Installer:
                 if m.group(5) and not self.allows_prereleases():
                     continue
 
-                version = release
-
-                break
-
-        def _is_supported(x):
-            mx = self.VERSION_REGEX.match(x)
-            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
-            return vx < (1, 2, 0)
+                if not os.environ.get("GET_POETRY_IGNORE_DEPRECATION"):
+                    version = release
+                    break
+                else:
+                    if _is_supported(release):
+                        print(
+                            colorize(
+                                "warning",
+                                "Version {release} will be installed as it is the"
+                                " latest version supported by this installer.\n\nThis"
+                                " is not the latest version of Poetry! If you wish to"
+                                " install the latest version, you must move to the new"
+                                " installer as described above!\n".format(
+                                    release=release
+                                ),
+                            )
+                        )
+                        version = release
+                        break
+                    else:
+                        print(
+                            colorize(
+                                "warning",
+                                "Version {release} is available but is not supported by"
+                                " this installer!".format(release=release),
+                            )
+                        )
 
         if not _is_supported(version):
             print(
                 colorize(
                     "error",
-                    "Version {version} does not support this installation method."
-                    " Please specify a version prior to 1.2.0a1 explicitly using the"
-                    " '--version' option.\nPlease see"
-                    " https://python-poetry.org/blog/announcing-poetry-1-2-0a1.html#deprecation-of-the-get-poetry-py-script"
-                    " for more information.".format(version=version),
+                    "Version {version} is not supported by this installer! Please"
+                    " specify a version prior to 1.2.0a1 to continue!".format(
+                        version=version
+                    ),
                 )
             )
-            return None, None
 
-        print(
-            colorize(
-                "warning",
-                "This installer is deprecated. Poetry versions installed using this"
-                " script will not be able to use 'self update' command to upgrade to"
-                " 1.2.0a1 or later.",
-            )
-        )
+            return None, None
 
         current_version = None
         if os.path.exists(POETRY_LIB):

@@ -15,6 +15,9 @@ class LockfileRepository(Repository):
     but also by source type, url, etc.
     """
 
+    def __init__(self) -> None:
+        super().__init__("poetry-lockfile")
+
     def has_package(self, package: Package) -> bool:
         return any(p == package for p in self.packages)
 

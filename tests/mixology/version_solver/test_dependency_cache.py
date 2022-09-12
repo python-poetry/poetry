@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
 from poetry.mixology.version_solver import DependencyCache
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.mixology.helpers import add_to_repo
 
 
@@ -56,10 +57,7 @@ def test_solver_dependency_cache_respects_source_type(
     assert package_git.package.version.text == "0.1.2"
     assert package_git.package.source_type == dependency_git.source_type
     assert package_git.package.source_url == dependency_git.source_url
-    assert (
-        package_git.package.source_resolved_reference
-        == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-    )
+    assert package_git.package.source_resolved_reference == MOCK_DEFAULT_GIT_REVISION
 
 
 def test_solver_dependency_cache_respects_subdirectories(
@@ -106,16 +104,19 @@ def test_solver_dependency_cache_respects_subdirectories(
     package_one = packages_one[0]
     package_one_copy = packages_one_copy[0]
 
-    assert package_one.package.name == package_one_copy.name
+    assert package_one.package.name == package_one_copy.package.name
     assert package_one.package.version.text == package_one_copy.package.version.text
-    assert package_one.package.source_type == package_one_copy.source_type == "git"
     assert (
-        package_one.package.source_resolved_reference
-        == package_one_copy.source_resolved_reference
-        == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+        package_one.package.source_type == package_one_copy.package.source_type == "git"
     )
     assert (
-        package_one.package.source_subdirectory != package_one_copy.source_subdirectory
+        package_one.package.source_resolved_reference
+        == package_one_copy.package.source_resolved_reference
+        == MOCK_DEFAULT_GIT_REVISION
+    )
+    assert (
+        package_one.package.source_subdirectory
+        != package_one_copy.package.source_subdirectory
     )
     assert package_one.package.source_subdirectory == "one"
     assert package_one_copy.package.source_subdirectory == "one-copy"
