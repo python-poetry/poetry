@@ -661,17 +661,15 @@ class Executor:
         known_hashes = {f["hash"] for f in package.files}
 
         for known_hash in known_hashes:
-            hash_name, known_hash_value = known_hash.split(':', 1)
+            hash_name, known_hash_value = known_hash.split(":", 1)
             archive_hash_value = file_dep.hash(hash_name=hash_name)
 
             if known_hash_value == archive_hash_value:
                 return f"{hash_name}:{archive_hash_value}"
 
         raise RuntimeError(
-            f"Hash for {package} from archive {archive.name} not found in"
-            f" known hashes"
+            f"Hash for {package} from archive {archive.name} not found in known hashes"
         )
-
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
         response = self._authenticator.request(

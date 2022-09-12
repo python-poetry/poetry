@@ -646,10 +646,10 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
 @pytest.mark.parametrize(
     "file_hash",
     [
-        ("sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"),
-        ("md5:15507846fd4299596661d0197bfb4f90"),
-        ("sha512:44cfa6b8696e5008c1c4dfe32c52a8b6511c261d8f3a25882366c0718eb42a17da5e4b9196623597661871be65c48e613d8f5c50a5c5c827e0efbf8b612fe5be"),  # noqa: E501
-    ]
+        "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        "md5:15507846fd4299596661d0197bfb4f90",
+        "sha512:44cfa6b8696e5008c1c4dfe32c52a8b6511c261d8f3a25882366c0718eb42a17da5e4b9196623597661871be65c48e613d8f5c50a5c5c827e0efbf8b612fe5be",  # noqa: E501
+    ],
 )
 def test_executor_should_use_cached_link_and_hash(
     tmp_venv: VirtualEnv,
@@ -658,7 +658,7 @@ def test_executor_should_use_cached_link_and_hash(
     io: BufferedIO,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
-    file_hash,
+    file_hash: str,
 ):
     link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
