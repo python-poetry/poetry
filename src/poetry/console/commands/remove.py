@@ -18,7 +18,12 @@ class RemoveCommand(InstallerCommand):
     arguments = [argument("packages", "The packages to remove.", multiple=True)]
     options = [
         option("group", "G", "The group to remove the dependency from.", flag=False),
-        option("dev", "D", "Remove a package from the development dependencies."),
+        option(
+            "dev",
+            "D",
+            "Remove a package from the development dependencies."
+            " (<warning>Deprecated</warning>)",
+        ),
         option(
             "dry-run",
             None,

@@ -235,8 +235,8 @@ poetry install --no-root
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
-* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
-* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
+* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -271,7 +271,7 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--no-dev` : Do not update the development dependencies. (**Deprecated**)
+* `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--lock` : Do not perform install (only update the lockfile).
 
 {{% note %}}
@@ -409,7 +409,7 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to add the dependency to.
-* `--dev (-D)`: Add package as development dependency. (**Deprecated**)
+* `--dev (-D)`: Add package as development dependency. (**Deprecated**, use `-G dev` instead)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
@@ -442,13 +442,13 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to remove the dependency from.
-* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
+* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
 ## show
 
-To list all of the available packages, you can use the `show` command.
+To list all the available packages, you can use the `show` command.
 
 ```bash
 poetry show
@@ -478,7 +478,7 @@ required by
 * `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
+* `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
@@ -689,7 +689,7 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
   Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
-* `--dev`: Include development dependencies. (**Deprecated**)
+* `--dev`: Include development dependencies. (**Deprecated**, use `--with dev` instead)
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
