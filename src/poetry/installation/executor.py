@@ -667,10 +667,10 @@ class Executor:
             if known_hash_value == archive_hash_value:
                 return f"{hash_name}:{archive_hash_value}"
 
-    raise RuntimeError(
-        f"Hash for {package} from archive {archive.name} not found in"
-        f" known hashes (was: {archive_hash})"
-    )
+        raise RuntimeError(
+            f"Hash for {package} from archive {archive.name} not found in"
+            f" known hashes"
+        )
 
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
