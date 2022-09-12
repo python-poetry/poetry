@@ -16,7 +16,7 @@
 
 - id: poetry-lock-check
   name: poetry-lock-check
-  description: run poetry lock to check lock file is up-to-date with pyproject.toml
+  description: check that poetry lock file is consistent with pyproject.toml
   entry: poetry lock --check
   language: python
   pass_filenames: false
