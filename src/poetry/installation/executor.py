@@ -658,16 +658,20 @@ class Executor:
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
         file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + file_dep.hash()
         known_hashes = {f["hash"] for f in package.files}
 
-        if archive_hash not in known_hashes:
-            raise RuntimeError(
-                f"Hash for {package} from archive {archive.name} not found in"
-                f" known hashes (was: {archive_hash})"
-            )
+        for known_hash in known_hashes:
+            hash_name, known_hash_value = known_hash.split(':', 1)
+            archive_hash_value = file_dep.hash(hash_name=hash_name)
 
-        return archive_hash
+            if known_hash_value == archive_hash_value:
+                return f"{hash_name}:{archive_hash_value}"
+
+    raise RuntimeError(
+        f"Hash for {package} from archive {archive.name} not found in"
+        f" known hashes (was: {archive_hash})"
+    )
+
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
         response = self._authenticator.request(
