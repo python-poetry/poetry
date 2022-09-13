@@ -513,7 +513,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-core"
-version = "1.1.0"
+version = "1.2.0"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
@@ -524,15 +524,15 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "poetry-plugin-export"
-version = "1.0.6"
+version = "1.0.7"
 description = "Poetry plugin to export the dependencies to various formats"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-poetry = ">=1.2.0b3,<2.0.0"
-poetry-core = ">=1.1.0b3,<2.0.0"
+poetry = ">=1.2.0,<2.0.0"
+poetry-core = ">=1.1.0,<2.0.0"
 
 [[package]]
 name = "pre-commit"
@@ -956,7 +956,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "aab6953ba157fa41e2404572602a0ed1a3d1477e119892753b1551e999c26d37"
+content-hash = "5ebf2fd87bd0610d2ad1cb4f46102a0330413328cb1d59835a5c39479085c8aa"
 
 [metadata.files]
 attrs = [
@@ -1364,12 +1364,12 @@ pluggy = [
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
 poetry-core = [
-    {file = "poetry-core-1.1.0.tar.gz", hash = "sha256:d145ae121cf79118a8901b60f2c951c4edcc16f55eb8aaefc156aa33aa921f07"},
-    {file = "poetry_core-1.1.0-py3-none-any.whl", hash = "sha256:da16a12054bf3f1ff8656d4c289f99c3d6b7704d272fb174004c4dc82e045954"},
+    {file = "poetry-core-1.2.0.tar.gz", hash = "sha256:ceccec95487e46c63a41761fbac5211b809bca22658e25a049f4c7da96269f71"},
+    {file = "poetry_core-1.2.0-py3-none-any.whl", hash = "sha256:e248d36c1314dd60fbc66390791923ad8b58c629d3e587080b7c1537a1c0d30f"},
 ]
 poetry-plugin-export = [
-    {file = "poetry-plugin-export-1.0.6.tar.gz", hash = "sha256:af870afceb38e583afa57bcfadfa5cd35ebd74e35aacadcb802bb3a073c13adb"},
-    {file = "poetry_plugin_export-1.0.6-py3-none-any.whl", hash = "sha256:55ae87d4560a6a3f96e04eba63c78cadbd0410e9652dee0ee1cde93281e9cb48"},
+    {file = "poetry-plugin-export-1.0.7.tar.gz", hash = "sha256:f6ac707ae227b06b2481249ed2678ff6b810b3487cac0fbb66eb0dc2bfd6ecf1"},
+    {file = "poetry_plugin_export-1.0.7-py3-none-any.whl", hash = "sha256:dd9d4552e7113a86c97908c13b9a439cb46830f247c7e4969e46a0d8d70e4d3f"},
 ]
 pre-commit = [
     {file = "pre_commit-2.20.0-py2.py3-none-any.whl", hash = "sha256:51a5ba7c480ae8072ecdb6933df22d2f812dc897d5fe848778116129a681aac7"},
