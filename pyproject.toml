@@ -70,7 +70,7 @@ tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
 virtualenv = ">=20.4.3,!=20.4.5,!=20.4.6"
 xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
-dulwich = "^0.20.44"
+dulwich = "^0.20.46"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1"
