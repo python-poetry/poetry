@@ -75,7 +75,7 @@ class SelfCommand(InstallerCommand):
         content = Factory.create_pyproject_from_package(package=package)
 
         for key in preserved:
-            content[key] = preserved[key]
+            content["tool"]["poetry"][key] = preserved[key]
 
         self.system_pyproject.write_text(content.as_string(), encoding="utf-8")
 
