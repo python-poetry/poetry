@@ -28,6 +28,7 @@ from poetry.installation.operations import Update
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -698,7 +699,7 @@ class Executor:
         done = 0
         archive = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
-        with archive.open("wb") as f:
+        with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if not chunk:
                     break
