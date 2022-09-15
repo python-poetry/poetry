@@ -20,9 +20,9 @@ from poetry.utils.helpers import pluralize
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
 
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -43,6 +43,7 @@ class Installer:
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
+        disable_cache: bool = False,
     ) -> None:
         self._io = io
         self._env = env
@@ -60,12 +61,14 @@ class Installer:
         self._execute_operations = True
         self._lock = False
 
-        self._whitelist: list[str] = []
+        self._whitelist: list[NormalizedName] = []
 
         self._extras: list[str] = []
 
         if executor is None:
-            executor = Executor(self._env, self._pool, config, self._io)
+            executor = Executor(
+                self._env, self._pool, config, self._io, disable_cache=disable_cache
+            )
 
         self._executor = executor
         self._use_executor = False
@@ -465,7 +468,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_lockfile_repo(
-        self, repo: LockfileRepository, ops: Sequence[Operation]
+        self, repo: LockfileRepository, ops: Iterable[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
@@ -509,7 +512,7 @@ class Installer:
 
         return ops
 
-    def _filter_operations(self, ops: Sequence[Operation], repo: Repository) -> None:
+    def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):
@@ -524,32 +527,24 @@ class Installer:
                 op.skip("Not needed for the current environment")
                 continue
 
-            if self._update:
-                extras = {}
-                for extra, dependencies in self._package.extras.items():
-                    extras[extra] = [dependency.name for dependency in dependencies]
-            else:
-                extras = {}
-                for extra, deps in self._locker.lock_data.get("extras", {}).items():
-                    extras[extra] = [dep.lower() for dep in deps]
-
             # If a package is optional and not requested
             # in any extra we skip it
             if package.optional and package.name not in extra_packages:
                 op.skip("Not required")
 
-    def _get_extra_packages(self, repo: Repository) -> list[str]:
+    def _get_extra_packages(self, repo: Repository) -> set[NormalizedName]:
         """
         Returns all package names required by extras.
 
         Maybe we just let the solver handle it?
         """
+        extras: dict[str, list[str]]
         if self._update:
             extras = {k: [d.name for d in v] for k, v in self._package.extras.items()}
         else:
             extras = self._locker.lock_data.get("extras", {})
 
-        return list(get_extra_package_names(repo.packages, extras, self._extras))
+        return get_extra_package_names(repo.packages, extras, self._extras)
 
     def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._env, self._io, self._pool)

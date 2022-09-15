@@ -78,10 +78,6 @@ COMMANDS = [
     "env list",
     "env remove",
     "env use",
-    # Plugin commands
-    "plugin add",
-    "plugin remove",
-    "plugin show",
     # Self commands
     "self add",
     "self install",
@@ -280,12 +276,13 @@ class Application(BaseApplication):  # type: ignore[misc]
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.env_command import EnvCommand
+        from poetry.console.commands.self.self_command import SelfCommand
 
         command = event.command
-        if not isinstance(command, EnvCommand):
+        if not isinstance(command, EnvCommand) or isinstance(command, SelfCommand):
             return
 
-        if command.env is not None:
+        if command._env is not None:
             return
 
         from poetry.utils.env import EnvManager
@@ -313,7 +310,7 @@ class Application(BaseApplication):  # type: ignore[misc]
 
         # If the command already has an installer
         # we skip this step
-        if command.installer is not None:
+        if command._installer is not None:
             return
 
         cls.configure_installer_for_command(command, event.io)
@@ -330,6 +327,7 @@ class Application(BaseApplication):  # type: ignore[misc]
             poetry.locker,
             poetry.pool,
             poetry.config,
+            disable_cache=poetry.disable_cache,
         )
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)

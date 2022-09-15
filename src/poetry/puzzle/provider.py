@@ -12,6 +12,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -42,6 +43,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
@@ -125,26 +127,42 @@ class Provider:
         package: Package,
         pool: Pool,
         io: IO,
-        env: Env | None = None,
+        *,
         installed: list[Package] | None = None,
+        locked: list[Package] | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
-        self._env = env
+        self._env: Env | None = None
         self._python_constraint = package.python_constraint
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
-        self._in_progress = False
         self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
         self._installed_packages = installed if installed is not None else []
         self._direct_origin_packages: dict[str, Package] = {}
+        self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
+        self._use_latest: Collection[NormalizedName] = []
+
+        for package in locked or []:
+            self._locked[package.name].append(
+                DependencyPackage(package.to_dependency(), package)
+            )
+        for dependency_packages in self._locked.values():
+            dependency_packages.sort(
+                key=lambda p: p.package.version,
+                reverse=True,
+            )
 
     @property
     def pool(self) -> Pool:
         return self._pool
+
+    @property
+    def use_latest(self) -> Collection[NormalizedName]:
+        return self._use_latest
 
     def is_debugging(self) -> bool:
         return self._is_debugging
@@ -162,22 +180,32 @@ class Provider:
         original_source_root = self._source_root
         self._source_root = source_root
 
-        yield self
-
-        self._source_root = original_source_root
+        try:
+            yield self
+        finally:
+            self._source_root = original_source_root
 
     @contextmanager
     def use_environment(self, env: Env) -> Iterator[Provider]:
-        original_env = self._env
         original_python_constraint = self._python_constraint
 
         self._env = env
         self._python_constraint = Version.parse(env.marker_env["python_full_version"])
 
-        yield self
+        try:
+            yield self
+        finally:
+            self._env = None
+            self._python_constraint = original_python_constraint
 
-        self._env = original_env
-        self._python_constraint = original_python_constraint
+    @contextmanager
+    def use_latest_for(self, names: Collection[NormalizedName]) -> Iterator[Provider]:
+        self._use_latest = names
+
+        try:
+            yield self
+        finally:
+            self._use_latest = []
 
     @staticmethod
     def validate_package_for_dependency(
@@ -243,7 +271,7 @@ class Provider:
 
         else:
             raise RuntimeError(
-                f"Unknown direct dependency type {dependency.source_type}"
+                f"{dependency}: unknown direct dependency type {dependency.source_type}"
             )
 
         if dependency.is_vcs():
@@ -290,6 +318,7 @@ class Provider:
 
         packages.sort(
             key=lambda p: (
+                not p.yanked,
                 not p.is_prerelease() and not dependency.allows_prereleases(),
                 p.version,
             ),
@@ -410,7 +439,7 @@ class Provider:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
-            download_file(url, str(dest))
+            download_file(url, dest)
             package = cls.get_package_from_file(dest)
 
         package._source_type = "url"
@@ -517,18 +546,15 @@ class Provider:
             package = dependency_package.package
             dependency = dependency_package.dependency
             requires = package.all_requires
-        elif package.source_type not in {
-            "directory",
-            "file",
-            "url",
-            "git",
-        }:
+        elif package.is_direct_origin():
+            requires = package.requires
+        else:
             try:
                 dependency_package = DependencyPackage(
                     dependency,
                     self._pool.package(
-                        package.name,
-                        package.version.text,
+                        package.pretty_name,
+                        package.version,
                         extras=list(dependency.extras),
                         repository=dependency.source_name,
                     ),
@@ -545,13 +571,17 @@ class Provider:
             package = dependency_package.package
             dependency = dependency_package.dependency
             requires = package.requires
-        else:
-            requires = package.requires
 
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies
             for r in requires:
                 if r.is_direct_origin():
+                    locked = self.get_locked(r)
+                    # If lock file contains exactly the same URL and reference
+                    # (commit hash) of dependency as is requested,
+                    # do not analyze it again: nothing could have changed.
+                    if locked is not None and locked.package.is_same_package_as(r):
+                        continue
                     self.search_for_direct_origin_dependency(r)
 
         optional_dependencies = []
@@ -573,7 +603,15 @@ class Provider:
             )
             package = dependency_package.package
             dependency = dependency_package.dependency
-            _dependencies.append(package.without_features().to_dependency())
+            new_dependency = package.without_features().to_dependency()
+
+            # When adding dependency foo[extra] -> foo, preserve foo's source, if it's
+            # specified. This prevents us from trying to get foo from PyPI
+            # when user explicitly set repo for foo[extra].
+            if not new_dependency.source_name and dependency.source_name:
+                new_dependency.source_name = dependency.source_name
+
+            _dependencies.append(new_dependency)
 
         for dep in requires:
             if not self._python_constraint.allows_any(dep.python_constraint):
@@ -802,6 +840,27 @@ class Provider:
 
         return dependency_package
 
+    def get_locked(self, dependency: Dependency) -> DependencyPackage | None:
+        if dependency.name in self._use_latest:
+            return None
+
+        locked = self._locked.get(dependency.name, [])
+        for dependency_package in locked:
+            package = dependency_package.package
+            if (
+                # Locked dependencies are always without features.
+                # Thus, we can't use is_same_package_as() here because it compares
+                # the complete_name (including features).
+                dependency.name == package.name
+                and (
+                    dependency.source_type is None
+                    or dependency.is_same_source_as(package)
+                )
+                and dependency.constraint.allows(package.version)
+            ):
+                return DependencyPackage(dependency, package)
+        return None
+
     def debug(self, message: str, depth: int = 0) -> None:
         if not (self._io.is_very_verbose() or self._io.is_debug()):
             return
@@ -887,24 +946,6 @@ class Provider:
             )
 
             self._io.write(debug_info)
-
-    @contextmanager
-    def progress(self) -> Iterator[None]:
-        if not self._io.output.is_decorated() or self.is_debugging():
-            self._io.write_line("Resolving dependencies...")
-            yield
-        else:
-            indicator = Indicator(
-                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
-            )
-
-            with indicator.auto(
-                "<info>Resolving dependencies...</info>",
-                "<info>Resolving dependencies...</info>",
-            ):
-                yield
-
-        self._in_progress = False
 
     def _merge_dependencies_by_constraint(
         self, dependencies: Iterable[Dependency]

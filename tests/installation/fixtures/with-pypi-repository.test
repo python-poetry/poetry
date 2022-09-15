@@ -7,9 +7,9 @@ optional = false
 python-versions = "*"
 
 [package.extras]
-dev = ["coverage", "hypothesis", "pympler", "pytest", "six", "sphinx", "zope-interface", "zope-interface"]
-docs = ["sphinx", "zope-interface"]
-tests = ["coverage", "hypothesis", "pympler", "pytest", "six", "zope-interface"]
+dev = ["coverage", "hypothesis", "pympler", "pytest", "six", "sphinx", "zope.interface", "zope.interface"]
+docs = ["sphinx", "zope.interface"]
+tests = ["coverage", "hypothesis", "pympler", "pytest", "six", "zope.interface"]
 
 [[package]]
 name = "colorama"

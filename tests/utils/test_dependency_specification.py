@@ -90,8 +90,10 @@ if TYPE_CHECKING:
             },
         ),
         (
-            'cachecontrol[filecache] (>=0.12.9,<0.13.0); python_version >= "3.6" and'
-            ' python_version < "4.0"',
+            (
+                'cachecontrol[filecache] (>=0.12.9,<0.13.0); python_version >= "3.6"'
+                ' and python_version < "4.0"'
+            ),
             {
                 "version": ">=0.12.9,<0.13.0",
                 "markers": 'python_version >= "3.6" and python_version < "4.0"',

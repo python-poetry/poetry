@@ -25,9 +25,11 @@ cache_control_logger.setLevel(logging.ERROR)
 
 logger = logging.getLogger(__name__)
 
-
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.semver.version_constraint import VersionConstraint
+
+SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
 class PyPiRepository(HTTPRepository):
@@ -90,7 +92,7 @@ class PyPiRepository(HTTPRepository):
 
         return results
 
-    def get_package_info(self, name: str) -> dict[str, Any]:
+    def get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         """
         Return the package information given its name.
 
@@ -105,7 +107,9 @@ class PyPiRepository(HTTPRepository):
         )
         return package_info
 
-    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
         """
         Find packages on the remote server.
         """
@@ -141,11 +145,14 @@ class PyPiRepository(HTTPRepository):
                 continue
 
             if constraint.allows(version):
-                packages.append(Package(info["info"]["name"], version))
+                # PEP 592: PyPI always yanks entire releases, not individual files,
+                # so we just have to look for the first file
+                yanked = self._get_yanked(release[0])
+                packages.append(Package(info["info"]["name"], version, yanked=yanked))
 
         return packages
 
-    def _get_package_info(self, name: str) -> dict[str, Any]:
+    def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         data = self._get(f"pypi/{name}/json")
         if data is None:
             raise PackageNotFound(f"Package [{name}] not found.")
@@ -159,13 +166,14 @@ class PyPiRepository(HTTPRepository):
 
         links = []
         for url in json_data["urls"]:
-            h = f"sha256={url['digests']['sha256']}"
-            links.append(Link(url["url"] + "#" + h))
+            if url["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                h = f"sha256={url['digests']['sha256']}"
+                links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
 
         return links
 
     def _get_release_info(
-        self, name: str, version: str
+        self, name: NormalizedName, version: Version
     ) -> dict[str, str | list[str] | None]:
         from poetry.inspection.info import PackageInfo
 
@@ -185,6 +193,7 @@ class PyPiRepository(HTTPRepository):
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
             files=info.get("files", []),
+            yanked=self._get_yanked(info),
             cache_version=str(self.CACHE_VERSION),
         )
 
@@ -194,12 +203,13 @@ class PyPiRepository(HTTPRepository):
             version_info = []
 
         for file_info in version_info:
-            data.files.append(
-                {
-                    "file": file_info["filename"],
-                    "hash": "sha256:" + file_info["digests"]["sha256"],
-                }
-            )
+            if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                data.files.append(
+                    {
+                        "file": file_info["filename"],
+                        "hash": "sha256:" + file_info["digests"]["sha256"],
+                    }
+                )
 
         if self._fallback and data.requires_dist is None:
             self._log("No dependencies found, downloading archives", level="debug")
@@ -212,7 +222,7 @@ class PyPiRepository(HTTPRepository):
             for url in json_data["urls"]:
                 # Only get sdist and wheels if they exist
                 dist_type = url["packagetype"]
-                if dist_type not in ["sdist", "bdist_wheel"]:
+                if dist_type not in SUPPORTED_PACKAGE_TYPES:
                     continue
 
                 urls[dist_type].append(url["url"])
@@ -251,3 +261,9 @@ class PyPiRepository(HTTPRepository):
 
         json: dict[str, Any] = json_response.json()
         return json
+
+    @staticmethod
+    def _get_yanked(json_data: dict[str, Any]) -> str | bool:
+        if json_data.get("yanked", False):
+            return json_data.get("yanked_reason") or True  # noqa: SIM222
+        return False

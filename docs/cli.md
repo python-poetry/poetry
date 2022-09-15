@@ -144,7 +144,7 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-If you want to exclude one or more dependency group for the installation, you can use
+If you want to exclude one or more dependency groups for the installation, you can use
 the `--without` option.
 
 ```bash
@@ -201,6 +201,12 @@ poetry install -E mysql -E pgsql
 poetry install --all-extras
 ```
 
+Extras are not sensitive to `--sync`.  Any extras not specified will always be removed.
+
+```bash
+poetry install --extras "A B"  # C is removed
+```
+
 By default `poetry` will install your project's package every time you run `install`:
 
 ```bash
@@ -218,23 +224,19 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--only`
-option is used.
-
 ### Options
 
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
-* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
-* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
+* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -268,9 +270,8 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--no-dev` : Do not update the development dependencies. (**Deprecated**)
+* `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--lock` : Do not perform install (only update the lockfile).
 
 {{% note %}}
@@ -350,7 +351,13 @@ poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
-or make them point to a local directory or file:
+or reference a subdirectory:
+
+```bash
+poetry add git+https://github.com/myorg/mypackage_with_subdirs.git@main#subdirectory=subdir
+```
+
+You can also add a local directory or file:
 
 ```bash
 poetry add ./my-package/
@@ -402,7 +409,7 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to add the dependency to.
-* `--dev (-D)`: Add package as development dependency. (**Deprecated**)
+* `--dev (-D)`: Add package as development dependency. (**Deprecated**, use `-G dev` instead)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
@@ -435,13 +442,13 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to remove the dependency from.
-* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
+* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
 ## show
 
-To list all of the available packages, you can use the `show` command.
+To list all the available packages, you can use the `show` command.
 
 ```bash
 poetry show
@@ -471,8 +478,7 @@ required by
 * `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
-* `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
+* `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
@@ -683,12 +689,11 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
   Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
-* `--dev`: Include development dependencies. (**Deprecated**)
+* `--dev`: Include development dependencies. (**Deprecated**, use `--with dev` instead)
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.

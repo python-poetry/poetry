@@ -69,6 +69,7 @@ class PackageInfoError(ValueError):
 class PackageInfo:
     def __init__(
         self,
+        *,
         name: str | None = None,
         version: str | None = None,
         summary: str | None = None,
@@ -76,6 +77,7 @@ class PackageInfo:
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
+        yanked: str | bool = False,
         cache_version: str | None = None,
     ) -> None:
         self.name = name
@@ -85,6 +87,7 @@ class PackageInfo:
         self.requires_dist = requires_dist
         self.requires_python = requires_python
         self.files = files or []
+        self.yanked = yanked
         self._cache_version = cache_version
         self._source_type: str | None = None
         self._source_url: str | None = None
@@ -117,6 +120,7 @@ class PackageInfo:
             "requires_dist": self.requires_dist,
             "requires_python": self.requires_python,
             "files": self.files,
+            "yanked": self.yanked,
             "_cache_version": self._cache_version,
         }
 
@@ -163,6 +167,7 @@ class PackageInfo:
             source_type=self._source_type,
             source_url=self._source_url,
             source_reference=self._source_reference,
+            yanked=self.yanked,
         )
         if self.summary is not None:
             package.description = self.summary
@@ -450,6 +455,7 @@ class PackageInfo:
             requires_dist=list(requires),
             requires_python=package.python_versions,
             files=package.files,
+            yanked=package.yanked_reason if package.yanked else False,
         )
 
     @staticmethod
@@ -457,7 +463,9 @@ class PackageInfo:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
-            return Factory().create_poetry(path).package
+            with contextlib.suppress(RuntimeError):
+                return Factory().create_poetry(path).package
+
         return None
 
     @classmethod

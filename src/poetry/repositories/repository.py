@@ -4,17 +4,19 @@ import logging
 
 from typing import TYPE_CHECKING
 
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version_constraint import VersionConstraint
+from packaging.utils import canonicalize_name
+from poetry.core.semver.version import Version
 from poetry.core.semver.version_range import VersionRange
 
 from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
+    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Repository:
@@ -41,6 +43,11 @@ class Repository:
         ignored_pre_release_packages = []
 
         for package in self._find_packages(dependency.name, constraint):
+            if package.yanked and not isinstance(constraint, Version):
+                # PEP 592: yanked files are always ignored, unless they are the only
+                # file that matches a version specifier that "pins" to an exact
+                # version
+                continue
             if (
                 package.is_prerelease()
                 and not allow_prereleases
@@ -95,11 +102,6 @@ class Repository:
         dependency: Dependency,
     ) -> tuple[VersionConstraint, bool]:
         constraint = dependency.constraint
-        if constraint is None:
-            constraint = "*"
-
-        if not isinstance(constraint, VersionConstraint):
-            constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange) and (
@@ -112,7 +114,9 @@ class Repository:
 
         return constraint, allow_prereleases
 
-    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
         return [
             package
             for package in self._packages
@@ -130,12 +134,11 @@ class Repository:
         return []
 
     def package(
-        self, name: str, version: str, extras: list[str] | None = None
+        self, name: str, version: Version, extras: list[str] | None = None
     ) -> Package:
-        name = name.lower()
-
+        canonicalized_name = canonicalize_name(name)
         for package in self.packages:
-            if name == package.name and package.version.text == version:
+            if canonicalized_name == package.name and package.version == version:
                 return package.clone()
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")

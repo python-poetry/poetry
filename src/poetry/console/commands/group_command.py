@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import option
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
-from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
 
-class GroupCommand(EnvCommand):
+class GroupCommand(Command):
     @staticmethod
     def _group_dependency_options() -> list[Option]:
         return [
@@ -30,11 +30,6 @@ class GroupCommand(EnvCommand):
                 "The optional dependency groups to include.",
                 flag=False,
                 multiple=True,
-            ),
-            option(
-                "default",
-                None,
-                "Only include the main dependencies. (<warning>Deprecated</warning>)",
             ),
             option(
                 "only",
@@ -85,7 +80,6 @@ class GroupCommand(EnvCommand):
             }
 
         for opt, new, group in [
-            ("default", "only", MAIN_GROUP),
             ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
         ]:

@@ -99,6 +99,48 @@
         "yanked": false,
         "yanked_reason": null
       }
+    ],
+    "21.11b0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "945da11b34c11738560fc6698cffa425",
+          "sha256": "0b1f66cbfadcd332ceeaeecf6373d9991d451868d2e2219ad0ac1213fb701117"
+        },
+        "downloads": -1,
+        "filename": "black-21.11b0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "945da11b34c11738560fc6698cffa425",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6.2",
+        "size": 155131,
+        "upload_time": "2021-11-17T02:32:14",
+        "upload_time_iso_8601": "2021-11-17T02:32:14.551680Z",
+        "url": "https://files.pythonhosted.org/packages/3d/ad/1cf514e7f9ee4c3d8df7c839d7977f7605ad76557f3fca741ec67f76dba6/black-21.11b0-py3-none-any.whl",
+        "yanked": true,
+        "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+          "sha256": "83f3852301c8dcb229e9c444dd79f573c8d31c7c2dad9bbaaa94c808630e32aa"
+        },
+        "downloads": -1,
+        "filename": "black-21.11b0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6.2",
+        "size": 593164,
+        "upload_time": "2021-11-17T02:32:16",
+        "upload_time_iso_8601": "2021-11-17T02:32:16.396821Z",
+        "url": "https://files.pythonhosted.org/packages/2f/db/03e8cef689ab0ff857576ee2ee288d1ff2110ef7f3a77cac62e61f18acaf/black-21.11b0.tar.gz",
+        "yanked": true,
+        "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
+      }
     ]
   },
   "urls": [
