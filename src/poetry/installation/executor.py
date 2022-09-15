@@ -19,7 +19,6 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
-from requests.utils import atomic_open  # type: ignore[attr-defined]
 
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
@@ -29,6 +28,7 @@ from poetry.installation.operations import Update
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
