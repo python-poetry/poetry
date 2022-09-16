@@ -4,6 +4,7 @@ import os
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 
 from poetry.config.config import Config
 from poetry.console.commands.command import Command
@@ -66,7 +67,7 @@ class CacheClearCommand(Command):
                 "Add a specific version to clear"
             )
         elif len(parts) == 3:
-            package = parts[1]
+            package = canonicalize_name(parts[1])
             version = parts[2]
 
             if not cache.has(f"{package}:{version}"):
