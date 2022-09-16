@@ -437,6 +437,68 @@ any custom url in the `urls` section.
 
 If you publish your package on PyPI, they will appear in the `Project Links` section.
 
+
+## `ext_modules`
+
+Poetry allows you to define and build extension modules written in C, C++, and Objective-C. 
+
+```toml
+[tool.poetry.ext_modules.my_ext]
+sources = [
+    "my_ext/src/*.cpp"
+]
+include_dirs = [
+    "my_ext/include"
+]
+```
+
+Sources and include dirs are specified as relative paths or globs within your project.
+```toml
+[tool.poetry.ext_modules.my_ext]
+sources = [
+    "my_ext/src/main.c",
+    "my_ext/src/tree.c",
+    "my_ext/src/utils/*.c",
+    "my_ext/src/parser/**/*.c"
+]
+include_dirs = [
+    "my_ext/include"
+]
+```
+
+Other properties that may be specified in extension module definitions are as follows:
+
+| Property               | Description |
+|------------------------|---|
+| `define_macros`        | A list of macros to define. Each macro is defined using a 2-tuple (*name*, *value*) |
+| `undef_macros`         | A list of macros to undefine explicitly |
+| `library_dirs`         | A list of directories to search for C/C++ libraries at link time |
+| `libraries`            | A list of library names (not filenames or paths) to link against |
+| `runtime_library_dirs` | A list of directories to search for C/C++ libraries at run time |
+| `extra_objects`        | A list of paths or globs of extra files to link with |
+| `extra_compile_args`   | Any extra platform- and compiler-specific information to use when compiling the source files |
+| `extra_link_args`      | Any extra platform- and compiler-specific information to use when linking object files together |
+| `export_symbols`       | A list of symbols to be exported from a shared extension |
+| `swig_opts`            | Any extra options to pass to SWIG if a source file has the .i extension |
+| `depends`              | A list of paths or globs of files that the extension depends on |
+| `language`             | The extension language (i.e. `'c'`, `'c++'`, or `'objc'`) |
+| `optional`             | Boolean, specifies that a build failure in the extension should not abort the build process |
+
+
+## `libraries`
+
+Poetry can also build and include C libraries as dependencies of your extension modules:
+
+```toml
+[tool.poetry.libraries.mylib]
+sources = [
+    "lib/mylib/src/*.c"
+]
+include_dirs = [
+    "lib/mylib/include"
+]
+```
+
 ## Poetry and PEP-517
 
 [PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way

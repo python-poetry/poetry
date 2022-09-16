@@ -152,3 +152,39 @@ This is done so to be compliant with the broader Python ecosystem.
 
 For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
+
+
+### Does Poetry support C/C++ extension modules?
+
+**Yes**. C, C++, and Objective-C extension modules as well as C library dependencies can be defined in `pyproject.toml`:
+
+```toml
+# Extension module written in C++
+[tool.poetry.ext_modules.my_ext]
+sources = [
+    "my_ext/src/**/*.cpp"
+]
+include_dirs = [
+    "my_ext/include"
+]
+libaries = [
+    "mylib"
+]
+language = "c++"
+extra_compile_args = [
+    "-std=c++11"
+]
+
+# C library dependency (to compile and link against)
+[tool.poetry.libraries.mylib]
+sources = [
+    "lib/mylib/src/**/*.c"
+]
+include_dirs = [
+    "lib/mylib/include"
+]
+```
+
+See the documentation [here](pyproject.md##ext_modules) for full details.
+
+
