@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from poetry.core.utils.helpers import parse_requires
 
-from poetry.utils.helpers import safe_extra
-
 
 def test_parse_requires():
     requires = """\
@@ -58,11 +56,4 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
         'isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort ; extra == "dev"',  # noqa: E501
     ]
     # fmt: on
-    assert result == expected
-
-
-def test_safe_extra():
-    extra = "pandas.CSVDataSet"
-    result = safe_extra(extra)
-    expected = "pandas.csvdataset"
     assert result == expected

@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 def get_extra_package_names(
     packages: Iterable[Package],
-    extras: Mapping[str, list[str]],
-    extra_names: Collection[str],
+    extras: Mapping[NormalizedName, list[NormalizedName]],
+    extra_names: Collection[NormalizedName],
 ) -> set[NormalizedName]:
     """
     Returns all package names required by the given extras.
