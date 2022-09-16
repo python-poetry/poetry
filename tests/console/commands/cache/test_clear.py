@@ -55,12 +55,16 @@ def test_cache_clear_all_no(
     assert cache.has("cleo:0.2")
 
 
+@pytest.mark.parametrize("package_name", ["cachy", "Cachy"])
 def test_cache_clear_pkg(
     tester: ApplicationTester,
     repository_one: str,
     cache: CacheManager,
+    package_name: str,
 ):
-    exit_code = tester.execute(f"cache clear {repository_one}:cachy:0.1", inputs="yes")
+    exit_code = tester.execute(
+        f"cache clear {repository_one}:{package_name}:0.1", inputs="yes"
+    )
 
     assert exit_code == 0
     assert tester.io.fetch_output() == ""
