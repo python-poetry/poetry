@@ -147,7 +147,7 @@ def test_execute_executes_a_batch_of_operations(
 
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.2")),
+            Install(Package("pytest", "3.5.1")),
             Uninstall(Package("attrs", "17.4.0")),
             Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
             Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
@@ -160,7 +160,7 @@ def test_execute_executes_a_batch_of_operations(
     expected = f"""
 Package operations: 4 installs, 1 update, 1 removal
 
-  • Installing pytest (3.5.2)
+  • Installing pytest (3.5.1)
   • Removing attrs (17.4.0)
   • Updating requests (2.18.3 -> 2.18.4)
   • Installing demo (0.1.0 {file_package.source_url})
@@ -182,20 +182,20 @@ Package operations: 4 installs, 1 update, 1 removal
     "operations, has_warning",
     [
         (
-            [Install(Package("black", "21.11b0")), Install(Package("pytest", "3.5.2"))],
+            [Install(Package("black", "21.11b0")), Install(Package("pytest", "3.5.1"))],
             True,
         ),
         (
             [
                 Uninstall(Package("black", "21.11b0")),
-                Uninstall(Package("pytest", "3.5.2")),
+                Uninstall(Package("pytest", "3.5.1")),
             ],
             False,
         ),
         (
             [
                 Update(Package("black", "19.10b0"), Package("black", "21.11b0")),
-                Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.2")),
+                Update(Package("pytest", "3.5.0"), Package("pytest", "3.5.1")),
             ],
             True,
         ),
@@ -299,7 +299,7 @@ def test_execute_works_with_ansi_output(
     mocker.patch.object(env, "_run", return_value=install_output)
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.2")),
+            Install(Package("pytest", "3.5.1")),
         ]
     )
     env._run.assert_called_once()
@@ -307,10 +307,10 @@ def test_execute_works_with_ansi_output(
     # fmt: off
     expected = [
         "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",  # noqa: E501
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.2\x1b[39m\x1b[39m)\x1b[39m",  # finished  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.1\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.1\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.1\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",  # noqa: E501
+        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.1\x1b[39m\x1b[39m)\x1b[39m",  # finished  # noqa: E501
     ]
     # fmt: on
 
@@ -341,7 +341,7 @@ def test_execute_works_with_no_ansi_output(
     mocker.patch.object(env, "_run", return_value=install_output)
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.2")),
+            Install(Package("pytest", "3.5.1")),
         ]
     )
     env._run.assert_called_once()
@@ -349,7 +349,7 @@ def test_execute_works_with_no_ansi_output(
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing pytest (3.5.2)
+  • Installing pytest (3.5.1)
 """
     expected = set(expected.splitlines())
     output = set(io_not_decorated.fetch_output().splitlines())

@@ -206,7 +206,8 @@ class Authenticator:
     def request(
         self, method: str, url: str, raise_for_status: bool = True, **kwargs: Any
     ) -> requests.Response:
-        request = requests.Request(method, url)
+        headers = kwargs.get("headers")
+        request = requests.Request(method, url, headers=headers)
         credential = self.get_credentials_for_url(url)
 
         if credential.username is not None or credential.password is not None:
