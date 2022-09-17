@@ -109,8 +109,8 @@ class PoetryKeyring:
     def _check(self) -> None:
         try:
             import keyring
-        except Exception as e:
-            logger.debug(f"An error occurred while importing keyring: {e!s}")
+        except ImportError as e:
+            logger.debug("An error occurred while importing keyring: %s", e)
             self._is_available = False
 
             return
@@ -134,7 +134,7 @@ class PoetryKeyring:
                     and "plaintext" not in b.name.lower()
                     for b in backends
                 )
-            except Exception:
+            except ImportError:
                 self._is_available = False
 
         if not self._is_available:
