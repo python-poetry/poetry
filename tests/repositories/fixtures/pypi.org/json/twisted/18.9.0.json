@@ -1,0 +1,237 @@
+{
+  "info": {
+    "author": "Twisted Matrix Laboratories",
+    "author_email": "twisted-python@twistedmatrix.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7"
+    ],
+    "description": "An extensible framework for Python programming, with special focus\non event-based network programming and multiprotocol integration.",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "http://twistedmatrix.com/",
+    "keywords": "",
+    "license": "MIT",
+    "maintainer": "Glyph Lefkowitz",
+    "maintainer_email": "glyph@twistedmatrix.com",
+    "name": "Twisted",
+    "package_url": "https://pypi.org/project/Twisted/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/Twisted/",
+    "project_urls": {
+      "Homepage": "http://twistedmatrix.com/"
+    },
+    "release_url": "https://pypi.org/project/Twisted/18.9.0/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "An asynchronous networking framework written in Python",
+    "version": "18.9.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 13478846,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "20fe2ec156e6e45b0b0d2ff06d9e828f",
+        "sha256": "294be2c6bf84ae776df2fc98e7af7d6537e1c5e60a46d33c3ce2a197677da395"
+      },
+      "downloads": -1,
+      "filename": "Twisted-18.9.0.tar.bz2",
+      "has_sig": false,
+      "md5_digest": "20fe2ec156e6e45b0b0d2ff06d9e828f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 3088398,
+      "upload_time": "2018-10-15T09:11:22",
+      "upload_time_iso_8601": "2018-10-15T09:11:22.298247Z",
+      "url": "https://files.pythonhosted.org/packages/5d/0e/a72d85a55761c2c3ff1cb968143a2fd5f360220779ed90e0fadf4106d4f2/Twisted-18.9.0.tar.bz2",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "aliases": [
+        "CVE-2019-12387"
+      ],
+      "details": "In Twisted before 19.2.1, twisted.web did not validate or sanitize URIs or HTTP methods, allowing an attacker to inject invalid characters such as CRLF.",
+      "fixed_in": [
+        "19.2.1"
+      ],
+      "id": "PYSEC-2019-128",
+      "link": "https://osv.dev/vulnerability/PYSEC-2019-128",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2020-10109"
+      ],
+      "details": "In Twisted Web through 19.10.0, there was an HTTP request splitting vulnerability. When presented with a content-length and a chunked encoding header, the content-length took precedence and the remainder of the request body was interpreted as a pipelined request.",
+      "fixed_in": [
+        "20.3.0rc1"
+      ],
+      "id": "PYSEC-2020-260",
+      "link": "https://osv.dev/vulnerability/PYSEC-2020-260",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2019-12855"
+      ],
+      "details": "In words.protocols.jabber.xmlstream in Twisted through 19.2.1, XMPP support did not verify certificates when used with TLS, allowing an attacker to MITM connections.",
+      "fixed_in": [
+        "19.7.0rc1"
+      ],
+      "id": "PYSEC-2019-129",
+      "link": "https://osv.dev/vulnerability/PYSEC-2019-129",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2020-10108"
+      ],
+      "details": "In Twisted Web through 19.10.0, there was an HTTP request splitting vulnerability. When presented with two content-length headers, it ignored the first header. When the second content-length value was set to zero, the request body was interpreted as a pipelined request.",
+      "fixed_in": [
+        "20.3.0rc1"
+      ],
+      "id": "PYSEC-2020-259",
+      "link": "https://osv.dev/vulnerability/PYSEC-2020-259",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2022-21712",
+        "GHSA-92x2-jw7w-xvvx"
+      ],
+      "details": "twisted is an event-driven networking engine written in Python. In affected versions twisted exposes cookies and authorization headers when following cross-origin redirects. This issue is present in the `twited.web.RedirectAgent` and `twisted.web. BrowserLikeRedirectAgent` functions. Users are advised to upgrade. There are no known workarounds.",
+      "fixed_in": [
+        "22.1.0"
+      ],
+      "id": "PYSEC-2022-27",
+      "link": "https://osv.dev/vulnerability/PYSEC-2022-27",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2022-24801",
+        "GHSA-c2jg-hw38-jrqq"
+      ],
+      "details": "Twisted is an event-based framework for internet applications, supporting Python 3.6+. Prior to version 22.4.0rc1, the Twisted Web HTTP 1.1 server, located in the `twisted.web.http` module, parsed several HTTP request constructs more leniently than permitted by RFC 7230. This non-conformant parsing can lead to desync if requests pass through multiple HTTP parsers, potentially resulting in HTTP request smuggling. Users who may be affected use Twisted Web's HTTP 1.1 server and/or proxy and also pass requests through a different HTTP server and/or proxy. The Twisted Web client is not affected. The HTTP 2.0 server uses a different parser, so it is not affected. The issue has been addressed in Twisted 22.4.0rc1. Two workarounds are available: Ensure any vulnerabilities in upstream proxies have been addressed, such as by upgrading them; or filter malformed requests by other means, such as configuration of an upstream proxy.",
+      "fixed_in": [
+        "22.4.0"
+      ],
+      "id": "PYSEC-2022-195",
+      "link": "https://osv.dev/vulnerability/PYSEC-2022-195",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2022-24801"
+      ],
+      "details": "The Twisted Web HTTP 1.1 server, located in the `twisted.web.http` module, parsed several HTTP request constructs more leniently than permitted by RFC 7230:\n\n1. The Content-Length header value could have a `+` or `-` prefix.\n2. Illegal characters were permitted in chunked extensions, such as the LF (`\\n`) character.\n3. Chunk lengths, which are expressed in hexadecimal format, could have a prefix of `0x`.\n4. HTTP headers were stripped of all leading and trailing ASCII whitespace, rather than only space and HTAB (`\\t`).\n\nThis non-conformant parsing can lead to desync if requests pass through multiple HTTP parsers, potentially resulting in HTTP request smuggling.\n\n### Impact\n\nYou may be affected if:\n\n1. You use Twisted Web's HTTP 1.1 server and/or proxy\n2. You also pass requests through a different HTTP server and/or proxy\n\nThe specifics of the other HTTP parser matter. The original report notes that some versions of Apache Traffic Server and HAProxy have been vulnerable in the past. HTTP request smuggling may be a serious concern if you use a proxy to perform request validation or access control.\n\nThe Twisted Web client is not affected. The HTTP 2.0 server uses a different parser, so it is not affected.\n\n### Patches\n\nThe issue has been addressed in Twisted 22.4.0rc1 and later.\n\n### Workarounds\n\nOther than upgrading Twisted, you could:\n\n* Ensure any vulnerabilities in upstream proxies have been addressed, such as by upgrading them\n* Filter malformed requests by other means, such as configuration of an upstream proxy\n\n### Credits\n\nThis issue was initially reported by [Zhang Zeyu](https://github.com/zeyu2001).",
+      "fixed_in": [
+        "22.4.0rc1"
+      ],
+      "id": "GHSA-c2jg-hw38-jrqq",
+      "link": "https://osv.dev/vulnerability/GHSA-c2jg-hw38-jrqq",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2020-10109"
+      ],
+      "details": "In Twisted Web through 20.3.0, there was an HTTP request splitting vulnerability. When presented with a content-length and a chunked encoding header, the content-length took precedence and the remainder of the request body was interpreted as a pipelined request.",
+      "fixed_in": [
+        "20.3.0"
+      ],
+      "id": "GHSA-p5xh-vx83-mxcj",
+      "link": "https://osv.dev/vulnerability/GHSA-p5xh-vx83-mxcj",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [],
+      "details": "### Impact\nTwisted web servers that utilize the optional HTTP/2 support suffer from the following flow-control related vulnerabilities:\n\nPing flood: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9512\nReset flood: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9514\nSettings flood: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9515\n\nA Twisted web server supports HTTP/2 requests if you've installed the [`http2` optional dependency set](https://twistedmatrix.com/documents/19.2.0/installation/howto/optional.html).\n\n### Workarounds\nThere are no workarounds.\n\n### References\nhttps://github.com/Netflix/security-bulletins/blob/master/advisories/third-party/2019-002.md\n\n### For more information\nIf you have any questions or comments about this advisory:\n* Open an issue in [Twisted's Trac](https://twistedmatrix.com/trac/)\n",
+      "fixed_in": [
+        "19.10.0"
+      ],
+      "id": "GHSA-32gv-6cf3-wcmq",
+      "link": "https://osv.dev/vulnerability/GHSA-32gv-6cf3-wcmq",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2019-12855"
+      ],
+      "details": "In words.protocols.jabber.xmlstream in Twisted through 19.2.1, XMPP support did not verify certificates when used with TLS, allowing an attacker to MITM connections.",
+      "fixed_in": [
+        "19.7.0"
+      ],
+      "id": "GHSA-65rm-h285-5cc5",
+      "link": "https://osv.dev/vulnerability/GHSA-65rm-h285-5cc5",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2020-10108"
+      ],
+      "details": "In Twisted Web through 20.3.0, there was an HTTP request splitting vulnerability. When presented with two content-length headers, it ignored the first header. When the second content-length value was set to zero, the request body was interpreted as a pipelined request.",
+      "fixed_in": [
+        "20.3.0"
+      ],
+      "id": "GHSA-h96w-mmrf-2h6v",
+      "link": "https://osv.dev/vulnerability/GHSA-h96w-mmrf-2h6v",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2019-12387"
+      ],
+      "details": "In Twisted before 19.2.1, twisted.web did not validate or sanitize URIs or HTTP methods, allowing an attacker to inject invalid characters such as CRLF.",
+      "fixed_in": [
+        "19.2.1"
+      ],
+      "id": "GHSA-6cc5-2vg4-cc7m",
+      "link": "https://osv.dev/vulnerability/GHSA-6cc5-2vg4-cc7m",
+      "source": "osv",
+      "summary": null
+    },
+    {
+      "aliases": [
+        "CVE-2022-21712"
+      ],
+      "details": "### Impact\n\nCookie and Authorization headers are leaked when following cross-origin redirects in `twited.web.client.RedirectAgent` and `twisted.web.client.BrowserLikeRedirectAgent`.",
+      "fixed_in": [
+        "22.1"
+      ],
+      "id": "GHSA-92x2-jw7w-xvvx",
+      "link": "https://osv.dev/vulnerability/GHSA-92x2-jw7w-xvvx",
+      "source": "osv",
+      "summary": null
+    }
+  ]
+}

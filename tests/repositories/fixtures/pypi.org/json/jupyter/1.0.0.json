@@ -1,0 +1,112 @@
+{
+  "info": {
+    "author": "Jupyter Development Team",
+    "author_email": "jupyter@googlegroups.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "Intended Audience :: System Administrators",
+      "License :: OSI Approved :: BSD License",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.3",
+      "Programming Language :: Python :: 3.4"
+    ],
+    "description": "Install the Jupyter system, including the notebook, qtconsole, and the IPython kernel.",
+    "description_content_type": null,
+    "docs_url": null,
+    "download_url": "UNKNOWN",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "http://jupyter.org",
+    "keywords": null,
+    "license": "BSD",
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "jupyter",
+    "package_url": "https://pypi.org/project/jupyter/",
+    "platform": "UNKNOWN",
+    "project_url": "https://pypi.org/project/jupyter/",
+    "project_urls": {
+      "Download": "UNKNOWN",
+      "Homepage": "http://jupyter.org"
+    },
+    "release_url": "https://pypi.org/project/jupyter/1.0.0/",
+    "requires_dist": null,
+    "requires_python": null,
+    "summary": "Jupyter metapackage. Install all the Jupyter components in one go.",
+    "version": "1.0.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 1673841,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "f81d039e084c2c0c4da9e4a86446b863",
+        "sha256": "5b290f93b98ffbc21c0c7e749f054b3267782166d72fa5e3ed1ed4eaf34a2b78"
+      },
+      "downloads": -1,
+      "filename": "jupyter-1.0.0-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "f81d039e084c2c0c4da9e4a86446b863",
+      "packagetype": "bdist_wheel",
+      "python_version": "3.4",
+      "requires_python": null,
+      "size": 2736,
+      "upload_time": "2015-08-12T00:42:58",
+      "upload_time_iso_8601": "2015-08-12T00:42:58.951595Z",
+      "url": "https://files.pythonhosted.org/packages/83/df/0f5dd132200728a86190397e1ea87cd76244e42d39ec5e88efd25b2abd7e/jupyter-1.0.0-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "c6030444c7eb6c05a4d7b1768c72aed7",
+        "sha256": "d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f"
+      },
+      "downloads": -1,
+      "filename": "jupyter-1.0.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "c6030444c7eb6c05a4d7b1768c72aed7",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 12916,
+      "upload_time": "2015-08-12T00:43:08",
+      "upload_time_iso_8601": "2015-08-12T00:43:08.537857Z",
+      "url": "https://files.pythonhosted.org/packages/c9/a9/371d0b8fe37dd231cf4b2cff0a9f0f25e98f3a73c3771742444be27f2944/jupyter-1.0.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "25142b08e2ad7142b6f920bc8cc8dfeb",
+        "sha256": "3e1f86076bbb7c8c207829390305a2b1fe836d471ed54be66a3b8c41e7f46cc7"
+      },
+      "downloads": -1,
+      "filename": "jupyter-1.0.0.zip",
+      "has_sig": false,
+      "md5_digest": "25142b08e2ad7142b6f920bc8cc8dfeb",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 16690,
+      "upload_time": "2015-08-12T00:43:12",
+      "upload_time_iso_8601": "2015-08-12T00:43:12.460314Z",
+      "url": "https://files.pythonhosted.org/packages/fc/21/a372b73e3a498b41b92ed915ada7de2ad5e16631546329c03e484c3bf4e9/jupyter-1.0.0.zip",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
