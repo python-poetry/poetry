@@ -414,16 +414,21 @@ Dependencies listed in [dependency groups]({{< relref "managing-dependencies#dep
 
 ## `plugins`
 
-Poetry supports arbitrary plugins which work similarly to
-[setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
-To match the example in the setuptools documentation, you would use the following:
+Poetry supports arbitrary plugins which work similarly to `setuptools` entry points.
+The syntax for registering a plugin is:
 
 ```toml
 [tool.poetry.plugins] # Optional super table
 
-[tool.poetry.plugins."blogtool.parsers"]
-".rst" = "some_module:SomeClass"
+[tool.poetry.plugins."A"]
+"B" = "C:D"
 ```
+Which are:
+
+- `A` - type of the plugin, for example `poetry.plugin` or `flake8.extension`
+- `B` - name of the plugin
+- `C` - pythonic path to module containing plugin class
+- `D` - name of plugin class
 
 ## `urls`
 
