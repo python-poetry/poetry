@@ -212,8 +212,6 @@ class Uploader:
         skip_existing: bool = False,
     ) -> None:
         for file in self.files:
-            # TODO: Check existence
-
             self._upload_file(session, url, file, dry_run, skip_existing)
 
     def _upload_file(
@@ -225,6 +223,9 @@ class Uploader:
         skip_existing: bool = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
+
+        if not file.is_file():
+            raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
         data.update(
