@@ -70,6 +70,7 @@ To remove a repository (repo is a short alias for repositories):
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
             "experimental.new-installer": (boolean_validator, boolean_normalizer),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
+            "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
             "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
             "virtualenvs.prompt": (str, lambda val: str(val)),

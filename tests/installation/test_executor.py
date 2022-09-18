@@ -862,7 +862,12 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge({"cache-dir": tmp_dir, "experimental": {"wheel-installer": False}})
+    config.merge(
+        {
+            "cache-dir": tmp_dir,
+            "installer": {"modern-installation": False},
+        }
+    )
 
     executor = Executor(env, pool, config, io)
 
