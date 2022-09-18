@@ -846,7 +846,8 @@ def test_locker_dumps_dependency_information_correctly(
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = f"""# {GENERATED_COMMENT}
+    expected = f"""\
+# {GENERATED_COMMENT}
 
 [[package]]
 name = "A"
@@ -870,7 +871,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
 
     assert content == expected
 
@@ -891,7 +892,9 @@ def test_locker_dumps_subdir(locker: Locker, root: ProjectPackage) -> None:
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
+    expected = f"""\
+# {GENERATED_COMMENT}
+
 [[package]]
 name = "git-package-subdir"
 version = "1.2.3"
@@ -915,7 +918,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 git-package-subdir = []
-"""
+"""  # noqa: E800
 
     assert content == expected
 
@@ -941,7 +944,10 @@ def test_locker_dumps_dependency_extras_in_correct_order(
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """[[package]]
+    expected = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -960,7 +966,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 A = []
-"""
+"""  # noqa: E800
 
     assert content == expected
 
@@ -1111,6 +1117,8 @@ def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
                 content = f.read()
 
             expected = f"""\
+# {GENERATED_COMMENT}
+
 [[package]]
 name = "local-package"
 version = "1.2.3"
@@ -1139,6 +1147,6 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 [metadata.files]
 local-package = []
-"""
+"""  # noqa: E800
 
             assert content == expected
