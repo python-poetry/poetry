@@ -56,7 +56,7 @@ build-backend = "poetry.core.masonry.api"
 ```
 
 Poetry assumes your package contains a package with the same name as `tool.poetry.name` located in the root of your
-project.  If this is not the case, populate [`tool.poetry.packages`]({{< relref "pyproject#packages" >}}) to specify
+project. If this is not the case, populate [`tool.poetry.packages`]({{< relref "pyproject#packages" >}}) to specify
 your packages and their locations.
 
 Similarly, the traditional `MANIFEST.in` file is replaced by the `tool.poetry.readme`, `tool.poetry.include`, and
@@ -100,16 +100,16 @@ It will automatically find a suitable version constraint **and install** the pac
 
 Poetry supports a rich [dependency specification]({{< relref "dependency-specification" >}}) syntax, including caret,
 tilde, wildcard, inequality and
-[multiple constraint]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}) requirements.
+[multiple constraints]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}) requirements.
 
 ## Using your virtual environment
 
-By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs`.
+By default, Poetry creates a virtual environment in `{cache-dir}/virtualenvs`.
 You can change the [`cache-dir`]({{< relref "configuration#cache-dir" >}} "cache-dir configuration documentation") value
-by editing the Poetry config.
+by editing the Poetry configuration.
 Additionally, you can use the
 [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}}) configuration variable to create
-virtual environment within your project directory.
+virtual environments within your project directory.
 
 There are several ways to run commands within this virtual environment.
 
