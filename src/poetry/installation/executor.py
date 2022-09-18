@@ -18,6 +18,7 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.utils.link import Link
 
 from poetry.installation.chef import Chef
+from poetry.installation.chef import ChefBuildError
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -295,6 +296,19 @@ class Executor:
                 with self._lock:
                     trace = ExceptionTrace(e)
                     trace.render(io)
+                    if isinstance(e, ChefBuildError):
+                        pkg = operation.package
+                        requirement = pkg.to_dependency().to_pep_508()
+                        io.write_line("")
+                        io.write_line(
+                            "<info>"
+                            "Note: This error originates from the build backend,"
+                            " and is likely not a problem with poetry"
+                            f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
+                            " not supporting PEP 517 builds. You can verify this by"
+                            f" running 'pip wheel --use-pep517 \"{requirement}\"'."
+                            "</info>"
+                        )
                     io.write_line("")
             finally:
                 with self._lock:
