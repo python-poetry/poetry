@@ -190,6 +190,19 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 This configuration is ignored when `installer.parallel` is set to `false`.
 {{% /note %}}
 
+### `installer.modern-installation`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+*Introduced in 1.4.0*
+
+Use a more modern and faster method for package installation.
+
+If this causes issues, you can disable it by setting it to `false` and report the problems
+you encounter on the [issue tracker](https://github.com/python-poetry/poetry/issues).
+
 ### `installer.no-binary`
 
 **Type**: `string | boolean`
