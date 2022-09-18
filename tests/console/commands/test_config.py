@@ -53,8 +53,8 @@ def test_list_displays_default_value_if_not_set(
     expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
 experimental.system-git-client = false
-experimental.wheel-installer = true
 installer.max-workers = null
+installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = true
@@ -83,8 +83,8 @@ def test_list_displays_set_get_setting(
     expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
 experimental.system-git-client = false
-experimental.wheel-installer = true
 installer.max-workers = null
+installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = false
@@ -137,8 +137,8 @@ def test_list_displays_set_get_local_setting(
     expected = f"""cache-dir = {cache_dir}
 experimental.new-installer = true
 experimental.system-git-client = false
-experimental.wheel-installer = true
 installer.max-workers = null
+installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = false

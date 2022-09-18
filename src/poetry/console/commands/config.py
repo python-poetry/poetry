@@ -101,6 +101,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 False,
             ),
+            "installer.modern-installation": (
+                boolean_validator,
+                boolean_normalizer,
+                True,
+            ),
             "installer.parallel": (
                 boolean_validator,
                 boolean_normalizer,
