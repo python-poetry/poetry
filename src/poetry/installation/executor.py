@@ -61,7 +61,9 @@ class Executor:
         self._enabled = True
         self._verbose = False
         self._wheel_installer = WheelInstaller(self._env)
-        self._use_wheel_installer = config.get("experimental.wheel-installer", True)
+        self._use_modern_installation = config.get(
+            "installer.modern-installation", True
+        )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -477,7 +479,7 @@ class Executor:
 
     def _install(self, operation: Install | Update) -> int:
         package = operation.package
-        if package.source_type == "directory" and not self._use_wheel_installer:
+        if package.source_type == "directory" and not self._use_modern_installation:
             return self._install_directory_without_wheel_installer(operation)
 
         cleanup_archive: bool = False
@@ -502,7 +504,7 @@ class Executor:
         )
         self._write(operation, message)
 
-        if not self._use_wheel_installer:
+        if not self._use_modern_installation:
             return self.pip_install(archive, upgrade=operation.job_type == "update")
 
         try:

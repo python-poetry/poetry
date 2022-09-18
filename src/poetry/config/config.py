@@ -126,9 +126,13 @@ class Config:
         "experimental": {
             "new-installer": True,
             "system-git-client": False,
-            "wheel-installer": True,
         },
-        "installer": {"parallel": True, "max-workers": None, "no-binary": None},
+        "installer": {
+            "modern-installation": True,
+            "parallel": True,
+            "max-workers": None,
+            "no-binary": None,
+        },
     }
 
     def __init__(
@@ -270,7 +274,7 @@ class Config:
             "virtualenvs.options.prefer-active-python",
             "experimental.new-installer",
             "experimental.system-git-client",
-            "experimental.wheel-installer",
+            "installer.modern-installation",
             "installer.parallel",
         }:
             return boolean_normalizer
