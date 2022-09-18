@@ -7,6 +7,7 @@ import shutil
 import tempfile
 
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -14,12 +15,15 @@ from urllib.parse import urlparse
 
 import pytest
 
+from build import BuildBackendException
+from build import ProjectBuilder
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 
+from poetry.factory import Factory
 from poetry.installation.chef import Chef as BaseChef
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
@@ -903,3 +907,71 @@ Package operations: 1 install, 0 updates, 0 removals
     assert mock_pip_install.call_count == 1
     assert mock_pip_install.call_args[1].get("upgrade") is True
     assert mock_pip_install.call_args[1].get("editable") is False
+
+
+@pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
+def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
+    failing_method: str,
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
+):
+    mocker.patch.object(Factory, "create_pool", return_value=pool)
+
+    error = BuildBackendException(
+        CalledProcessError(1, ["pip"], output=b"Error on stdout")
+    )
+    mocker.patch.object(ProjectBuilder, failing_method, side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/simple_project")
+        .resolve()
+        .as_posix(),
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+        ]
+    )
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing {package_name} ({package_version} {package_url})
+
+  ChefBuildError
+
+  Backend operation failed: CalledProcessError(1, ['pip'])
+  \
+
+  Error on stdout
+"""
+
+    requirement = directory_package.to_dependency().to_pep_508()
+    expected_end = f"""
+Note: This error originates from the build backend, and is likely not a problem with \
+poetry but with {package_name} ({package_version} {package_url}) not supporting \
+PEP 517 builds. You can verify this by running 'pip wheel --use-pep517 "{requirement}"'.
+
+"""
+
+    output = io.fetch_output()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)

@@ -110,6 +110,8 @@ class Chef:
     def _prepare(
         self, directory: Path, destination: Path, *, editable: bool = False
     ) -> Path:
+        from subprocess import CalledProcessError
+
         with ephemeral_environment(self._env.python) as venv:
             env = IsolatedEnv(venv, self._config)
             builder = ProjectBuilder(
@@ -119,21 +121,38 @@ class Chef:
                 runner=quiet_subprocess_runner,
             )
             env.install(builder.build_system_requires)
-            env.install(
-                builder.build_system_requires | builder.get_requires_for_build("wheel")
-            )
 
             stdout = StringIO()
-            with redirect_stdout(stdout):
-                try:
-                    return Path(
+            error: Exception | None = None
+            try:
+                with redirect_stdout(stdout):
+                    env.install(
+                        builder.build_system_requires
+                        | builder.get_requires_for_build("wheel")
+                    )
+                    path = Path(
                         builder.build(
                             "wheel" if not editable else "editable",
                             destination.as_posix(),
                         )
                     )
-                except BuildBackendException as e:
-                    raise ChefBuildError(str(e))
+            except BuildBackendException as e:
+                message_parts = [str(e)]
+                if isinstance(e.exception, CalledProcessError) and (
+                    e.exception.stdout is not None or e.exception.stderr is not None
+                ):
+                    message_parts.append(
+                        e.exception.stderr.decode()
+                        if e.exception.stderr is not None
+                        else e.exception.stdout.decode()
+                    )
+
+                error = ChefBuildError("\n\n".join(message_parts))
+
+            if error is not None:
+                raise error from None
+
+            return path
 
     def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
         from poetry.core.packages.utils.link import Link
