@@ -1015,7 +1015,7 @@ def test_show_outdated_local_dependencies(
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {
-                        "pendulum": "pendulum>=1.4.4",
+                        "pendulum": ">=1.4.4",
                         "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
                     },
                     "source": {
@@ -1924,3 +1924,122 @@ def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry):
     expected = "Error: poetry.lock not found. Run `poetry lock` to create it.\n"
     assert tester.io.fetch_error() == expected
     assert tester.status_code == 1
+
+
+def test_show_dependency_installed_from_git_in_dev(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
+):
+    # Add a regular dependency for a package in main, and a git dependency for the same
+    # package in dev.
+    poetry.package.add_dependency(Factory.create_dependency("demo", "^0.1.1"))
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"git": "https://github.com/demo/demo.git"}, groups=["dev"]
+        )
+    )
+
+    demo_011 = get_package("demo", "0.1.1")
+    demo_011.description = "Demo package"
+    repo.add_package(demo_011)
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+    repo.add_package(pendulum_200)
+
+    # The git package is the one that gets into the lockfile.
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.2",
+                    "description": "Demo package",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "develop": False,
+                    "source": {
+                        "type": "git",
+                        "reference": MOCK_DEFAULT_GIT_REVISION,
+                        "resolved_reference": MOCK_DEFAULT_GIT_REVISION,
+                        "url": "https://github.com/demo/demo.git",
+                    },
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"demo": [], "pendulum": []},
+            },
+        }
+    )
+
+    # Nothing needs updating, there is no confusion between the git and not-git
+    # packages.
+    tester.execute("--outdated")
+    assert tester.io.fetch_output() == ""
+
+
+def test_url_dependency_is_not_outdated_by_repository_package(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
+):
+    demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {"url": demo_url},
+        )
+    )
+
+    # A newer version of demo is available in the repository.
+    demo_100 = get_package("demo", "1.0.0")
+    repo.add_package(demo_100)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "description": "Demo package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "url",
+                        "url": demo_url,
+                    },
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"demo": []},
+            },
+        }
+    )
+
+    # The url dependency on demo is not made outdated by the existence of a newer
+    # version in the repository.
+    tester.execute("--outdated")
+    assert tester.io.fetch_output() == ""

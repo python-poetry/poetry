@@ -6,10 +6,10 @@ import shutil
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
-from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.semver.version import Version
 from requests.exceptions import TooManyRedirects
@@ -36,7 +36,9 @@ class MockRepository(PyPiRepository):
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
-    def _get(self, url: str) -> dict | None:
+    def _get(
+        self, url: str, headers: dict[str, str] | None = None
+    ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]
         if len(parts) == 3:
@@ -48,8 +50,6 @@ class MockRepository(PyPiRepository):
             fixture = self.JSON_FIXTURES / (name + ".json")
         else:
             fixture = self.JSON_FIXTURES / name / (version + ".json")
-            if not fixture.exists():
-                fixture = self.JSON_FIXTURES / (name + ".json")
 
         if not fixture.exists():
             return None
@@ -117,7 +117,7 @@ def test_find_packages_yanked(constraint: str, expected: list[str]) -> None:
 def test_package() -> None:
     repo = MockRepository()
 
-    package = repo.package(canonicalize_name("requests"), Version.parse("2.18.4"))
+    package = repo.package("requests", Version.parse("2.18.4"))
 
     assert package.name == "requests"
     assert len(package.requires) == 9
@@ -158,12 +158,21 @@ def test_package_yanked(
 ) -> None:
     repo = MockRepository()
 
-    package = repo.package(package_name, version)
+    package = repo.package(package_name, Version.parse(version))
 
     assert package.name == package_name
     assert str(package.version) == version
     assert package.yanked is yanked
     assert package.yanked_reason == yanked_reason
+
+
+def test_package_not_canonicalized() -> None:
+    repo = MockRepository()
+
+    package = repo.package("discord.py", Version.parse("2.0.0"))
+
+    assert package.name == "discord-py"
+    assert package.pretty_name == "discord.py"
 
 
 @pytest.mark.parametrize(
@@ -178,7 +187,7 @@ def test_find_links_for_package_yanked(
 ) -> None:
     repo = MockRepository()
 
-    package = repo.package(package_name, version)
+    package = repo.package(package_name, Version.parse(version))
     links = repo.find_links_for_package(package)
 
     assert len(links) == 2
@@ -190,7 +199,7 @@ def test_find_links_for_package_yanked(
 def test_fallback_on_downloading_packages() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package(canonicalize_name("jupyter"), Version.parse("1.0.0"))
+    package = repo.package("jupyter", Version.parse("1.0.0"))
 
     assert package.name == "jupyter"
     assert len(package.requires) == 6
@@ -209,7 +218,7 @@ def test_fallback_on_downloading_packages() -> None:
 def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package(canonicalize_name("isort"), Version.parse("4.3.4"))
+    package = repo.package("isort", Version.parse("4.3.4"))
 
     assert package.name == "isort"
     assert len(package.requires) == 1
@@ -222,7 +231,7 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> N
 def test_fallback_can_read_setup_to_get_dependencies() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package(canonicalize_name("sqlalchemy"), Version.parse("1.2.12"))
+    package = repo.package("sqlalchemy", Version.parse("1.2.12"))
 
     assert package.name == "sqlalchemy"
     assert len(package.requires) == 9
@@ -244,7 +253,7 @@ def test_fallback_can_read_setup_to_get_dependencies() -> None:
 def test_pypi_repository_supports_reading_bz2_files() -> None:
     repo = MockRepository(fallback=True)
 
-    package = repo.package(canonicalize_name("twisted"), Version.parse("18.9.0"))
+    package = repo.package("twisted", Version.parse("18.9.0"))
 
     assert package.name == "twisted"
     assert len(package.requires) == 71
@@ -322,3 +331,25 @@ def test_use_pypi_pretty_name() -> None:
     package = repo.find_packages(Factory.create_dependency("twisted", "*"))
     assert len(package) == 1
     assert package[0].pretty_name == "Twisted"
+
+
+def test_find_links_for_package_of_supported_types():
+    repo = MockRepository()
+    package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))
+
+    assert len(package) == 1
+
+    links = repo.find_links_for_package(package[0])
+
+    assert len(links) == 1
+    assert links[0].is_sdist
+    assert links[0].show_url == "hbmqtt-0.9.6.tar.gz"
+
+
+def test_get_release_info_includes_only_supported_types():
+    repo = MockRepository()
+
+    release_info = repo._get_release_info(name="hbmqtt", version="0.9.6")
+
+    assert len(release_info["files"]) == 1
+    assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"

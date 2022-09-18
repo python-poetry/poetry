@@ -13,6 +13,12 @@ if sys.version_info < (3, 10):
 else:
     from importlib import metadata
 
+if sys.version_info < (3, 8):
+    # compatibility for python <3.8
+    from backports.cached_property import cached_property
+else:
+    from functools import cached_property
+
 WINDOWS = sys.platform == "win32"
 
 
@@ -53,4 +59,12 @@ def list_to_shell_command(cmd: list[str]) -> str:
     )
 
 
-__all__ = ["WINDOWS", "decode", "encode", "list_to_shell_command", "metadata", "to_str"]
+__all__ = [
+    "WINDOWS",
+    "cached_property",
+    "decode",
+    "encode",
+    "list_to_shell_command",
+    "metadata",
+    "to_str",
+]

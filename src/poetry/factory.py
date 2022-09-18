@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
-import warnings
 
 from typing import TYPE_CHECKING
 from typing import Any
@@ -60,12 +59,7 @@ class Factory(BaseFactory):
         )
 
         # Loading global configuration
-        with warnings.catch_warnings():
-            # this is preserved to ensure export plugin tests pass in ci,
-            # once poetry-plugin-export version is updated to use one that do not
-            # use Factory.create_config(), this can be safely removed.
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            config = self.create_config()
+        config = Config.create()
 
         # Loading local configuration
         local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
@@ -92,6 +86,7 @@ class Factory(BaseFactory):
             base_poetry.package,
             locker,
             config,
+            disable_cache,
         )
 
         # Configuring sources
@@ -113,16 +108,6 @@ class Factory(BaseFactory):
     @classmethod
     def get_package(cls, name: str, version: str) -> ProjectPackage:
         return ProjectPackage(name, version, version)
-
-    @classmethod
-    def create_config(cls, io: IO | None = None) -> Config:
-        if io is not None:
-            logger.debug("Ignoring provided io when creating config.")
-        warnings.warn(
-            "Use of Factory.create_config() is deprecated, use Config.create() instead",
-            DeprecationWarning,
-        )
-        return Config.create()
 
     @classmethod
     def configure_sources(

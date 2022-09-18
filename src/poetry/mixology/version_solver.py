@@ -18,12 +18,12 @@ from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
 from poetry.mixology.term import Term
-from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider
 
 
@@ -82,23 +82,10 @@ class VersionSolver:
     on how this solver works.
     """
 
-    def __init__(
-        self,
-        root: ProjectPackage,
-        provider: Provider,
-        locked: dict[str, list[DependencyPackage]] | None = None,
-        use_latest: list[str] | None = None,
-    ) -> None:
+    def __init__(self, root: ProjectPackage, provider: Provider) -> None:
         self._root = root
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)
-        self._locked = locked or {}
-
-        if use_latest is None:
-            use_latest = []
-
-        self._use_latest = use_latest
-
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
         self._contradicted_incompatibilities: set[Incompatibility] = set()
         self._solution = PartialSolution()
@@ -375,38 +362,57 @@ class VersionSolver:
         if not unsatisfied:
             return None
 
+        class Preference:
+            """
+            Preference is one of the criteria for choosing which dependency to solve
+            first. A higher value means that there are "more options" to satisfy
+            a dependency. A lower value takes precedence.
+            """
+
+            DIRECT_ORIGIN = 0
+            NO_CHOICE = 1
+            USE_LATEST = 2
+            LOCKED = 3
+            DEFAULT = 4
+
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency: Dependency) -> tuple[bool, int]:
+        # In order to provide results that are as deterministic as possible
+        # and consistent between `poetry lock` and `poetry update`, the return value
+        # of two different dependencies should not be equal if possible.
+        def _get_min(dependency: Dependency) -> tuple[bool, int, int]:
             # Direct origin dependencies must be handled first: we don't want to resolve
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, -1
+                return False, Preference.DIRECT_ORIGIN, 1
 
-            if dependency.name in self._use_latest:
-                # If we're forced to use the latest version of a package, it effectively
-                # only has one version to choose from.
-                return not dependency.marker.is_any(), 1
+            is_specific_marker = not dependency.marker.is_any()
 
-            locked = self._get_locked(dependency)
-            if locked:
-                return not dependency.marker.is_any(), 1
+            use_latest = dependency.name in self._provider.use_latest
+            if not use_latest:
+                locked = self._provider.get_locked(dependency)
+                if locked:
+                    return is_specific_marker, Preference.LOCKED, 1
 
             try:
-                return (
-                    not dependency.marker.is_any(),
-                    len(self._dependency_cache.search_for(dependency)),
-                )
+                num_packages = len(self._dependency_cache.search_for(dependency))
             except ValueError:
-                return not dependency.marker.is_any(), 0
+                num_packages = 0
+            if num_packages < 2:
+                preference = Preference.NO_CHOICE
+            elif use_latest:
+                preference = Preference.USE_LATEST
+            else:
+                preference = Preference.DEFAULT
+            return is_specific_marker, preference, num_packages
 
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]
         else:
             dependency = min(*unsatisfied, key=_get_min)
 
-        locked = self._get_locked(dependency)
+        locked = self._provider.get_locked(dependency)
         if locked is None:
             try:
                 packages = self._dependency_cache.search_for(dependency)
@@ -498,24 +504,6 @@ class VersionSolver:
             self._incompatibilities[term.dependency.complete_name].append(
                 incompatibility
             )
-
-    def _get_locked(self, dependency: Dependency) -> DependencyPackage | None:
-        if dependency.name in self._use_latest:
-            return None
-
-        locked = self._locked.get(dependency.name, [])
-        for dependency_package in locked:
-            package = dependency_package.package
-            if (
-                # Locked dependencies are always without features.
-                # Thus, we can't use is_same_package_as() here because it compares
-                # the complete_name (including features).
-                dependency.name == package.name
-                and dependency.is_same_source_as(package)
-                and dependency.constraint.allows(package.version)
-            ):
-                return DependencyPackage(dependency, package)
-        return None
 
     def _log(self, text: str) -> None:
         self._provider.debug(text, self._solution.attempted_solutions)

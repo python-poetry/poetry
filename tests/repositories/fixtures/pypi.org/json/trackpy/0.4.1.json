@@ -1,0 +1,60 @@
+{
+  "info": {
+    "author": "Trackpy Contributors",
+    "author_email": "daniel.b.allan@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [],
+    "description": "trackpy\n=======\n\n|build status| |Build status| |DOI|\n\nWhat is it?\n-----------\n\n**trackpy** is a Python package for particle tracking in 2D, 3D, and\nhigher dimensions. `**Read the\nwalkthrough** <http://soft-matter.github.io/trackpy/dev/tutorial/walkthrough.html>`__\nto skim or study an example project from start to finish.\n\nDocumentation\n-------------\n\n`**Read the documentation** <http://soft-matter.github.io/trackpy/>`__\nfor\n\n-  an introduction\n-  tutorials on the basics, 3D tracking, and much, much more\n-  easy `installation\n   instructions <http://soft-matter.github.io/trackpy/dev/installation.html>`__\n-  the reference guide\n\nIf you use trackpy for published research, please `cite the\nrelease <http://soft-matter.github.io/trackpy/dev/introduction.html#citing-trackpy>`__\nboth to credit the contributors, and to direct your readers to the exact\nversion of trackpy they could use to reproduce your results.\n\n.. |build status| image:: https://travis-ci.org/soft-matter/trackpy.png?branch=master\n   :target: https://travis-ci.org/soft-matter/trackpy\n.. |Build status| image:: https://ci.appveyor.com/api/projects/status/bc5umcboh3elm8oh?svg=true\n   :target: https://ci.appveyor.com/project/caspervdw/trackpy\n.. |DOI| image:: https://zenodo.org/badge/doi/10.5281/zenodo.1213240.svg\n   :target: http://dx.doi.org/10.5281/zenodo.1213240",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/soft-matter/trackpy",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "trackpy",
+    "package_url": "https://pypi.org/project/trackpy/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/trackpy/",
+    "project_urls": {
+      "Homepage": "https://github.com/soft-matter/trackpy"
+    },
+    "release_url": "https://pypi.org/project/trackpy/0.4.1/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "particle-tracking toolkit",
+    "version": "0.4.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 10042261,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "4c92e8b74840f57c6047f56a4a4412c4",
+        "sha256": "f682f75e99f6c29c65e8531899b957c67d9d5a027b28b44258fa2c4a18e851cd"
+      },
+      "downloads": -1,
+      "filename": "trackpy-0.4.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "4c92e8b74840f57c6047f56a4a4412c4",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 121998,
+      "upload_time": "2018-04-21T09:59:50",
+      "upload_time_iso_8601": "2018-04-21T09:59:50.546774Z",
+      "url": "https://files.pythonhosted.org/packages/62/31/797febf2ea8ea316c345c1d0f10503c3901f3fca5c3ffdc6e92717efdcad/trackpy-0.4.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

@@ -27,7 +27,11 @@ class AddCommand(InstallerCommand, InitCommand):
             flag=False,
             default=MAIN_GROUP,
         ),
-        option("dev", "D", "Add as a development dependency."),
+        option(
+            "dev",
+            "D",
+            "Add as a development dependency. (<warning>Deprecated</warning>)",
+        ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
             "extras",
@@ -180,10 +184,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             if self.option("extras"):
                 extras = []
                 for extra in self.option("extras"):
-                    if " " in extra:
-                        extras += [e.strip() for e in extra.split(" ")]
-                    else:
-                        extras.append(extra)
+                    extras += extra.split()
 
                 constraint["extras"] = self.option("extras")
 

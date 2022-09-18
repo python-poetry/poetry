@@ -276,9 +276,10 @@ class Application(BaseApplication):  # type: ignore[misc]
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from poetry.console.commands.env_command import EnvCommand
+        from poetry.console.commands.self.self_command import SelfCommand
 
         command = event.command
-        if not isinstance(command, EnvCommand):
+        if not isinstance(command, EnvCommand) or isinstance(command, SelfCommand):
             return
 
         if command._env is not None:
@@ -326,6 +327,7 @@ class Application(BaseApplication):  # type: ignore[misc]
             poetry.locker,
             poetry.pool,
             poetry.config,
+            disable_cache=poetry.disable_cache,
         )
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)

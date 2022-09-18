@@ -19,6 +19,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
+from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
@@ -38,6 +39,11 @@ if TYPE_CHECKING:
     from poetry.repositories import Repository
 
 logger = logging.getLogger(__name__)
+_GENERATED_IDENTIFIER = "@" + "generated"
+GENERATED_COMMENT = (
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
+    " changed by hand."
+)
 
 
 class Locker:
@@ -128,9 +134,18 @@ class Locker:
                 # Old lock so we create dummy files from the hashes
                 hashes = cast("dict[str, Any]", metadata["hashes"])
                 package.files = [{"name": h, "hash": h} for h in hashes[name]]
+            elif source_type in {"git", "directory", "url"}:
+                package.files = []
             else:
                 files = metadata["files"][name]
-                package.files = files
+                if source_type == "file":
+                    filename = Path(url).name
+                    package.files = [item for item in files if item["file"] == filename]
+                else:
+                    # Strictly speaking, this is not correct, but we have no chance
+                    # to always determine which are the correct files because the
+                    # lockfile doesn't keep track which files belong to which package.
+                    package.files = files
 
             package.python_versions = info["python-versions"]
             extras = info.get("extras", {})
@@ -220,6 +235,7 @@ class Locker:
             del package["files"]
 
         lock = document()
+        lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
 
         if root.extras:
@@ -410,12 +426,7 @@ class Locker:
         if package.extras:
             extras = {}
             for name, deps in sorted(package.extras.items()):
-                # TODO: This should use dep.to_pep_508() once this is fixed
-                # https://github.com/python-poetry/poetry-core/pull/102
-                extras[name] = sorted(
-                    dep.base_pep_508_name if not dep.constraint.is_any() else dep.name
-                    for dep in deps
-                )
+                extras[name] = sorted(dep.base_pep_508_name for dep in deps)
 
             data["extras"] = extras
 

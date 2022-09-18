@@ -34,7 +34,7 @@ class LegacyRepository(HTTPRepository):
         super().__init__(name, url.rstrip("/"), config, disable_cache)
 
     def package(
-        self, name: NormalizedName, version: Version, extras: list[str] | None = None
+        self, name: str, version: Version, extras: list[str] | None = None
     ) -> Package:
         """
         Retrieve the release information.

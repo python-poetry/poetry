@@ -15,8 +15,8 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically be created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Application Support/pypoetry`
-- Windows: `C:\Users\<username>\AppData\Roaming\pypoetry`
+- macOS:   `~/Library/Preferences/pypoetry`
+- Windows: `%APPDATA%\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
 That means, by default `~/.config/pypoetry`.
@@ -148,7 +148,7 @@ You can override the Cache directory by setting the `POETRY_CACHE_DIR` environme
 
 ### `cache-dir`
 
-**Type**: string
+**Type**: `string`
 
 The path to the cache directory used by Poetry.
 
@@ -160,7 +160,9 @@ Defaults to one of the following directories:
 
 ### `experimental.system-git-client`
 
-**Type**: boolean
+**Type**: `boolean`
+
+**Default**: `false`
 
 *Introduced in 1.2.0*
 
@@ -170,33 +172,30 @@ Poetry uses `dulwich` by default for git related tasks to not rely on the availa
 
 If you encounter any problems with it, set to `true` to use the system git backend.
 
-Defaults to `false`.
-
-### `installer.parallel`
-
-**Type**: boolean
-
-Use parallel execution when using the new (`>=1.1.0`) installer.
-Defaults to `true`.
-
 ### `installer.max-workers`
 
-**Type**: int
+**Type**: `int`
 
-Set the maximum number of workers while using the parallel installer. Defaults to `number_of_cores + 4`.
+**Default**: `number_of_cores + 4`
+
+*Introduced in 1.2.0*
+
+Set the maximum number of workers while using the parallel installer.
 The `number_of_cores` is determined by `os.cpu_count()`.
-If this raises a `NotImplentedError` exception `number_of_cores` is assumed to be 1.
+If this raises a `NotImplementedError` exception, `number_of_cores` is assumed to be 1.
 
 If this configuration parameter is set to a value greater than `number_of_cores + 4`,
 the number of maximum workers is still limited at `number_of_cores + 4`.
 
 {{% note %}}
-This configuration will be ignored when `installer.parallel` is set to false.
+This configuration is ignored when `installer.parallel` is set to `false`.
 {{% /note %}}
 
 ### `installer.no-binary`
 
-**Type**: string | bool
+**Type**: `string | boolean`
+
+**Default**: `false`
 
 *Introduced in 1.2.0*
 
@@ -241,22 +240,49 @@ Unless this is required system-wide, if configured globally, you could encounter
 across all your projects if incorrectly set.
 {{% /warning %}}
 
+### `installer.parallel`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+*Introduced in 1.1.4*
+
+Use parallel execution when using the new (`>=1.1.0`) installer.
 
 ### `virtualenvs.create`
 
-**Type**: boolean
+**Type**: `boolean`
+
+**Default**: `true`
 
 Create a new virtual environment if one doesn't already exist.
-Defaults to `true`.
 
-If set to `false`, poetry will install dependencies into the current python environment.
+If set to `false`, Poetry will not create a new virtual environment. If it detects a virtual environment
+in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` it will install dependencies into them, otherwise it will install
+dependencies into the systems python environment.
+
+{{% note %}}
+If Poetry detects it's running within an activated virtual environment, it will never create a new virtual environment,
+regardless of the value set for `virtualenvs.create`.
+{{% /note %}}
+
+{{% note %}}
+Be aware that installing dependencies into the system environment likely upgrade or uninstall existing packages and thus
+break other applications. Installing additional Python packages after installing the project might break the Poetry
+project in return.
+
+This is why it is recommended to always create a virtual environment. This is also true in Docker containers, as they
+might contain additional Python packages as well.
+{{% /note %}}
 
 ### `virtualenvs.in-project`
 
-**Type**: boolean
+**Type**: `boolean`
+
+**Default**: `None`
 
 Create the virtualenv inside the project's root directory.
-Defaults to `None`.
 
 If not set explicitly, `poetry` by default will create virtual environment under
 `{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory when one is available.
@@ -266,35 +292,27 @@ If set to `true`, the virtualenv will be created and expected in a folder named
 
 If set to `false`, `poetry` will ignore any existing `.venv` directory.
 
-### `virtualenvs.path`
-
-**Type**: string
-
-Directory where virtual environments will be created.
-Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
-
-### `virtualenvs.prompt`
-
-**Type**: string
-
-Format string defining the prompt to be displayed when the virtual environment is activated.
-The variables `project_name` and `python_version` are available for formatting.
-Defaults to `"{project_name}-py{python_version}"`.
-
 ### `virtualenvs.options.always-copy`
 
-**Type**: boolean
+**Type**: `boolean`
 
-If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
-Defaults to `false`.
+**Default**: `false`
+
+*Introduced in 1.2.0*
+
+If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the virtual environment, so that
+all needed files are copied into it instead of symlinked.
 
 ### `virtualenvs.options.no-pip`
 
-**Type**: boolean
+**Type**: `boolean`
 
-If set to `true` the `--no-pip` parameter is passed to `virtualenv` on creation of the venv. This means when a new
-virtual environment is created, `pip` will not be installed in the environment.
-Defaults to `false`.
+**Default**: `false`
+
+*Introduced in 1.2.0*
+
+If set to `true` the `--no-pip` parameter is passed to `virtualenv` on creation of the virtual environment. This means
+when a new virtual environment is created, `pip` will not be installed in the environment.
 
 {{% note %}}
 Poetry, for its internal operations, uses the `pip` wheel embedded in the `virtualenv` package installed as a dependency
@@ -307,12 +325,15 @@ packages. This is desirable for production environments.
 
 ### `virtualenvs.options.no-setuptools`
 
-**Type**: boolean
+**Type**: `boolean`
 
-If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the venv. This means when a new
-virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its internal operations,
-does not require `setuptools` and this can safely be set to `true`.
-Defaults to `false`.
+**Default**: `false`
+
+*Introduced in 1.2.0*
+
+If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the virtual environment. This
+means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
+internal operations, does not require `setuptools` and this can safely be set to `true`.
 
 {{% warning %}}
 Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
@@ -321,28 +342,52 @@ available within a virtual environment. This can cause some features in these to
 
 ### `virtualenvs.options.system-site-packages`
 
-**Type**: boolean
+**Type**: `boolean`
+
+**Default**: `false`
 
 Give the virtual environment access to the system site-packages directory.
 Applies on virtualenv creation.
-Defaults to `false`.
+
+### `virtualenvs.path`
+
+**Type**: `string`
+
+**Default**: `{cache-dir}/virtualenvs`
+
+Directory where virtual environments will be created.
 
 ### `virtualenvs.prefer-active-python` (experimental)
 
-**Type**: boolean
+**Type**: `boolean`
 
-Use currently activated Python version to create a new venv.
-Defaults to `false`, which means Python version used during Poetry installation is used.
+**Default**: `false`
+
+*Introduced in 1.2.0*
+
+Use currently activated Python version to create a new virtual environment.
+If set to `false`, Python version used during Poetry installation is used.
+
+### `virtualenvs.prompt`
+
+**Type**: `string`
+
+**Default**: `{project_name}-py{python_version}`
+
+*Introduced in 1.2.0*
+
+Format string defining the prompt to be displayed when the virtual environment is activated.
+The variables `project_name` and `python_version` are available for formatting.
 
 ### `repositories.<name>`
 
-**Type**: string
+**Type**: `string`
 
 Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
 
 ### `http-basic.<name>`:
 
-**Types**: string, string
+**Type**: `(string, string)`
 
 Set repository credentials (`username` and `password`) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
@@ -350,7 +395,7 @@ for more information.
 
 ### `pypi-token.<name>`:
 
-**Type**: string
+**Type**: `string`
 
 Set repository credentials (using an API token) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
@@ -358,7 +403,7 @@ for more information.
 
 ### `certificates.<name>.cert`:
 
-**Type**: string | bool
+**Type**: `string | boolean`
 
 Set custom certificate authority for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
@@ -369,7 +414,7 @@ repository.
 
 ### `certificates.<name>.client-cert`:
 
-**Type**: string
+**Type**: `string`
 
 Set client certificate for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})

@@ -24,6 +24,4 @@ class ApplicationPlugin(BasePlugin):
     def activate(self, application: Application) -> None:
         for command in self.commands:
             assert command.name is not None
-            application.command_loader.register_factory(
-                command.name, lambda: command()  # noqa: B023
-            )
+            application.command_loader.register_factory(command.name, command)

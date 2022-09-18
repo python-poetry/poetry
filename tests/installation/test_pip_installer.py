@@ -296,5 +296,5 @@ def test_install_directory_fallback_on_poetry_create_error(
     assert mock_sdist_builder.call_count == 0
     assert mock_editable_builder.call_count == 0
     assert mock_pip_install.call_count == 1
-    assert mock_pip_install.call_args[1].get("deps") is False
+    assert mock_pip_install.call_args[1].get("deps") is None
     assert mock_pip_install.call_args[1].get("upgrade") is True

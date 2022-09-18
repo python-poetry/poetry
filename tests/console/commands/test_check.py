@@ -41,10 +41,16 @@ def test_check_invalid(mocker: MockerFixture, tester: CommandTester):
 
     expected = """\
 Error: 'description' is a required property
+Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.
 Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
  which is deprecated. Use "allow-prereleases" instead.
+Warning: Deprecated classifier 'Natural Language :: Ukranian'.\
+ Must be replaced by ['Natural Language :: Ukrainian'].
+Warning: Deprecated classifier\
+ 'Topic :: Communications :: Chat :: AOL Instant Messenger'.\
+ Must be removed.
 """
 
     assert tester.io.fetch_error() == expected

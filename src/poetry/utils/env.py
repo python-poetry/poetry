@@ -175,6 +175,7 @@ print('.'.join([str(s) for s in sys.version_info[:3]]))
 GET_PYTHON_VERSION_ONELINER = (
     "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
 )
+GET_ENV_PATH_ONELINER = '"import sys; print(sys.prefix)"'
 
 GET_SYS_PATH = """\
 import json
@@ -461,6 +462,12 @@ class EnvError(Exception):
     pass
 
 
+class IncorrectEnvError(EnvError):
+    def __init__(self, env_name: str) -> None:
+        message = f"Env {env_name} doesn't belong to this project."
+        super().__init__(message)
+
+
 class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
         self.e = e
@@ -536,15 +543,15 @@ class EnvManager:
         executable = None
 
         try:
-            io.write_line(
+            io.write_error_line(
                 "Trying to detect current active python executable as specified in the"
                 " config.",
                 verbosity=Verbosity.VERBOSE,
             )
             executable = self._full_python_path("python")
-            io.write_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+            io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         except CalledProcessError:
-            io.write_line(
+            io.write_error_line(
                 "Unable to detect the current active python executable. Falling back to"
                 " default.",
                 verbosity=Verbosity.VERBOSE,
@@ -651,7 +658,9 @@ class EnvManager:
             env = envs.get(name)
             if env is not None:
                 venv = venv_path / f"{name}-py{env['minor']}"
-                io.write_line(f"Deactivating virtualenv: <comment>{venv}</comment>")
+                io.write_error_line(
+                    f"Deactivating virtualenv: <comment>{venv}</comment>"
+                )
                 del envs[name]
 
                 envs_file.write(envs)
@@ -738,6 +747,15 @@ class EnvManager:
             env_list.insert(0, VirtualEnv(venv))
         return env_list
 
+    @staticmethod
+    def check_env_is_for_current_project(env: str, base_env_name: str) -> bool:
+        """
+        Check if env name starts with projects name.
+
+        This is done to prevent action on other project's envs.
+        """
+        return env.startswith(base_env_name)
+
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
 
@@ -745,7 +763,23 @@ class EnvManager:
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
-        if python.startswith(base_env_name):
+        python_path = Path(python)
+        if python_path.is_file():
+            # Validate env name if provided env is a full path to python
+            try:
+                env_dir = decode(
+                    subprocess.check_output(
+                        list_to_shell_command([python, "-c", GET_ENV_PATH_ONELINER]),
+                        shell=True,
+                    )
+                ).strip("\n")
+                env_name = Path(env_dir).name
+                if not self.check_env_is_for_current_project(env_name, base_env_name):
+                    raise IncorrectEnvError(env_name)
+            except CalledProcessError as e:
+                raise EnvCommandError(e)
+
+        if self.check_env_is_for_current_project(python, base_env_name):
             venvs = self.list()
             for venv in venvs:
                 if venv.path.name == python:
@@ -776,6 +810,12 @@ class EnvManager:
             raise ValueError(
                 f'<warning>Environment "{python}" does not exist.</warning>'
             )
+        else:
+            venv_path = self._poetry.config.virtualenvs_path
+            # Get all the poetry envs, even for other projects
+            env_names = [Path(p).name for p in sorted(venv_path.glob("*-*-py*"))]
+            if python in env_names:
+                raise IncorrectEnvError(python)
 
         try:
             python_version = Version.parse(python)
@@ -911,7 +951,7 @@ class EnvManager:
                 python = "python" + python_to_try
 
                 if io.is_debug():
-                    io.write_line(f"<debug>Trying {python}</debug>")
+                    io.write_error_line(f"<debug>Trying {python}</debug>")
 
                 try:
                     python_patch = decode(
@@ -930,7 +970,7 @@ class EnvManager:
                     continue
 
                 if supported_python.allows(Version.parse(python_patch)):
-                    io.write_line(f"Using <c1>{python}</c1> ({python_patch})")
+                    io.write_error_line(f"Using <c1>{python}</c1> ({python_patch})")
                     executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
@@ -955,7 +995,7 @@ class EnvManager:
 
         if not venv.exists():
             if create_venv is False:
-                io.write_line(
+                io.write_error_line(
                     "<fg=black;bg=yellow>"
                     "Skipping virtualenv creation, "
                     "as specified in config file."
@@ -964,7 +1004,7 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_line(
+            io.write_error_line(
                 f"Creating virtualenv <c1>{name}</> in"
                 f" {venv_path if not WINDOWS else get_real_windows_path(venv_path)!s}"
             )
@@ -976,11 +1016,11 @@ class EnvManager:
                         f"<warning>The virtual environment found in {env.path} seems to"
                         " be broken.</warning>"
                     )
-                io.write_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
+                io.write_error_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
                 self.remove_venv(venv)
                 create_venv = True
             elif io.is_very_verbose():
-                io.write_line(f"Virtualenv <c1>{name}</> already exists.")
+                io.write_error_line(f"Virtualenv <c1>{name}</> already exists.")
 
         if create_venv:
             self.build_venv(
@@ -1393,7 +1433,10 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
-        raise NotImplementedError()
+        if embedded or not Path(self._bin(self._pip_executable)).exists():
+            return [self.python, self.pip_embedded]
+        # run as module so that pip can update itself on Windows
+        return [self.python, "-m", "pip"]
 
     def get_supported_tags(self) -> list[Tag]:
         raise NotImplementedError()
@@ -1427,7 +1470,7 @@ class Env:
         return self._run(cmd, **kwargs)
 
     def run_pip(self, *args: str, **kwargs: Any) -> int | str:
-        pip = self.get_pip_command(embedded=True)
+        pip = self.get_pip_command()
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
@@ -1556,11 +1599,6 @@ class SystemEnv(Env):
     def get_python_implementation(self) -> str:
         return platform.python_implementation()
 
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        # If we're not in a venv, assume the interpreter we're running on
-        # has a pip and use that
-        return [sys.executable, self.pip_embedded if embedded else self.pip]
-
     def get_paths(self) -> dict[str, str]:
         # We can't use sysconfig.get_paths() because
         # on some distributions it does not return the proper paths
@@ -1671,14 +1709,6 @@ class VirtualEnv(Env):
     def get_python_implementation(self) -> str:
         implementation: str = self.marker_env["platform_python_implementation"]
         return implementation
-
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        # We're in a virtualenv that is known to be sane,
-        # so assume that we have a functional pip
-        return [
-            self._bin(self._executable),
-            self.pip_embedded if embedded else self.pip,
-        ]
 
     def get_supported_tags(self) -> list[Tag]:
         output = self.run_python_script(GET_SYS_TAGS)
@@ -1858,12 +1888,6 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed: list[list[str]] = []
 
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        return [
-            self._bin(self._executable),
-            self.pip_embedded if embedded else self.pip,
-        ]
-
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         self.executed.append(cmd)
 
@@ -1917,14 +1941,14 @@ def build_environment(
 
             if io:
                 if not overwrite:
-                    io.write_line("")
+                    io.write_error_line("")
 
                 requires = [
                     f"<c1>{requirement}</c1>"
                     for requirement in poetry.pyproject.build_system.requires
                 ]
 
-                io.overwrite(
+                io.overwrite_error(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
@@ -1938,7 +1962,7 @@ def build_environment(
 
             if overwrite:
                 assert io is not None
-                io.write_line("")
+                io.write_error_line("")
 
             yield venv
     else:

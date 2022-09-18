@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import csv
 import itertools
 import json
@@ -27,6 +28,7 @@ from poetry.installation.operations import Update
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -52,13 +54,16 @@ class Executor:
         config: Config,
         io: IO,
         parallel: bool | None = None,
+        disable_cache: bool = False,
     ) -> None:
         self._env = env
         self._io = io
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._authenticator = Authenticator(config, self._io)
+        self._authenticator = Authenticator(
+            config, self._io, disable_cache=disable_cache
+        )
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env, config)
 
@@ -259,7 +264,7 @@ class Executor:
             # error to be picked up by the error handler.
             if result == -2:
                 raise KeyboardInterrupt
-        except Exception as e:
+        except Exception as e:  # noqa: PIE786
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
@@ -542,7 +547,12 @@ class Executor:
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
+        package_poetry = None
         if pyproject.is_poetry_project():
+            with contextlib.suppress(RuntimeError):
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+
+        if package_poetry is not None:
             # Even if there is a build system specified
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
@@ -552,41 +562,29 @@ class Executor:
                 < self._env.pip_version.__class__.from_parts(19, 0, 0)
             )
 
-            try:
-                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
-            except RuntimeError:
-                package_poetry = None
+            builder: Builder
+            if package.develop and not package_poetry.package.build_script:
+                from poetry.masonry.builders.editable import EditableBuilder
 
-            if package_poetry is not None:
-                builder: Builder
-                if package.develop and not package_poetry.package.build_script:
-                    from poetry.masonry.builders.editable import EditableBuilder
+                # This is a Poetry package in editable mode
+                # we can use the EditableBuilder without going through pip
+                # to install it, unless it has a build script.
+                builder = EditableBuilder(package_poetry, self._env, NullIO())
+                builder.build()
 
-                    # This is a Poetry package in editable mode
-                    # we can use the EditableBuilder without going through pip
-                    # to install it, unless it has a build script.
-                    builder = EditableBuilder(package_poetry, self._env, NullIO())
-                    builder.build()
+                return 0
+            elif legacy_pip or package_poetry.package.build_script:
+                from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                    return 0
-                elif legacy_pip or package_poetry.package.build_script:
-                    from poetry.core.masonry.builders.sdist import SdistBuilder
+                # We need to rely on creating a temporary setup.py
+                # file since the version of pip does not support
+                # build-systems
+                # We also need it for non-PEP-517 packages
+                builder = SdistBuilder(package_poetry)
+                with builder.setup_py():
+                    return self.pip_install(req, upgrade=True, editable=package.develop)
 
-                    # We need to rely on creating a temporary setup.py
-                    # file since the version of pip does not support
-                    # build-systems
-                    # We also need it for non-PEP-517 packages
-                    builder = SdistBuilder(package_poetry)
-
-                    with builder.setup_py():
-                        if package.develop:
-                            return self.pip_install(req, upgrade=True, editable=True)
-                        return self.pip_install(req, upgrade=True)
-
-        if package.develop:
-            return self.pip_install(req, upgrade=True, editable=True)
-
-        return self.pip_install(req, upgrade=True)
+        return self.pip_install(req, upgrade=True, editable=package.develop)
 
     def _install_git(self, operation: Install | Update) -> int:
         from poetry.vcs.git import Git
@@ -701,7 +699,7 @@ class Executor:
         done = 0
         archive = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
-        with archive.open("wb") as f:
+        with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if not chunk:
                     break
