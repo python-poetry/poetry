@@ -19,6 +19,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
+from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
@@ -38,6 +39,11 @@ if TYPE_CHECKING:
     from poetry.repositories import Repository
 
 logger = logging.getLogger(__name__)
+_GENERATED_IDENTIFIER = "@" + "generated"
+GENERATED_COMMENT = (
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
+    " changed by hand."
+)
 
 
 class Locker:
@@ -229,6 +235,7 @@ class Locker:
             del package["files"]
 
         lock = document()
+        lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
 
         if root.extras:
