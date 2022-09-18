@@ -110,6 +110,8 @@ class Chef:
     def _prepare(
         self, directory: Path, destination: Path, *, editable: bool = False
     ) -> Path:
+        from subprocess import CalledProcessError
+
         with ephemeral_environment(self._env.python) as venv:
             env = IsolatedEnv(venv, self._config)
             builder = ProjectBuilder(
@@ -124,16 +126,32 @@ class Chef:
             )
 
             stdout = StringIO()
-            with redirect_stdout(stdout):
-                try:
-                    return Path(
+            error: Exception | None = None
+            try:
+                with redirect_stdout(stdout):
+                    path = Path(
                         builder.build(
                             "wheel" if not editable else "editable",
                             destination.as_posix(),
                         )
                     )
-                except BuildBackendException as e:
-                    raise ChefBuildError(str(e))
+            except BuildBackendException as e:
+                if isinstance(e.exception, CalledProcessError) and (
+                    e.exception.stdout is not None or e.exception.stderr is not None
+                ):
+                    message = (
+                        e.exception.stderr.decode()
+                        if e.exception.stderr is not None
+                        else e.exception.stdout.decode()
+                    )
+                    error = ChefBuildError(message)
+                else:
+                    error = ChefBuildError(str(e))
+
+            if error is not None:
+                raise error from None
+
+            return path
 
     def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
         from poetry.core.packages.utils.link import Link

@@ -7,6 +7,7 @@ import shutil
 import tempfile
 
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -14,12 +15,15 @@ from urllib.parse import urlparse
 
 import pytest
 
+from build import BuildBackendException
+from build import ProjectBuilder
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 
+from poetry.factory import Factory
 from poetry.installation.chef import Chef as BaseChef
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
@@ -902,3 +906,53 @@ Package operations: 1 install, 0 updates, 0 removals
     assert mock_pip_install.call_count == 1
     assert mock_pip_install.call_args[1].get("upgrade") is True
     assert mock_pip_install.call_args[1].get("editable") is False
+
+
+def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
+):
+    mocker.patch.object(Factory, "create_pool", return_value=pool)
+
+    error = BuildBackendException(
+        CalledProcessError(1, ["pip"], output=b"Error on stdout")
+    )
+    mocker.patch.object(ProjectBuilder, "build", side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/simple_project")
+        .resolve()
+        .as_posix(),
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+        ]
+    )
+
+    assert return_code == 1
+
+    expected = f"""
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing simple-project (1.2.3 {directory_package.source_url})
+
+  ChefBuildError
+
+  Error on stdout
+"""
+
+    assert io.fetch_output().startswith(expected)
