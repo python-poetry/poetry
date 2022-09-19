@@ -103,7 +103,7 @@ list of installed packages
 
         # Refresh the locker
         self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
+            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
         )
         self.installer.set_locker(self.poetry.locker)
 
