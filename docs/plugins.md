@@ -119,7 +119,7 @@ This will help keep the performances of Poetry good.
 {{% /note %}}
 
 The plugin also must be declared in the `pyproject.toml` file of the plugin package
-as an `poetry.application.plugin` plugin:
+as a `poetry.application.plugin` plugin:
 
 ```toml
 [tool.poetry.plugins."poetry.application.plugin"]

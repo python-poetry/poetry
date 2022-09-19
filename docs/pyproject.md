@@ -414,7 +414,7 @@ Dependencies listed in [dependency groups]({{< relref "managing-dependencies#dep
 
 ## `plugins`
 
-Poetry supports arbitrary plugins which work similarly to `setuptools` entry points.
+Poetry supports arbitrary plugins, which are exposed as the ecosystem-standard [entry points](https://packaging.python.org/en/latest/specifications/entry-points/) and discoverable using `importlib.metadata`. This is similar to (and compatible with) the entry points feature of `setuptools`.
 The syntax for registering a plugin is:
 
 ```toml
@@ -427,8 +427,8 @@ Which are:
 
 - `A` - type of the plugin, for example `poetry.plugin` or `flake8.extension`
 - `B` - name of the plugin
-- `C` - pythonic path to module containing plugin class
-- `D` - name of plugin class
+- `C` - python module import path
+- `D` - the entry point of the plugin (a function or class)
 
 ## `urls`
 
