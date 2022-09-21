@@ -143,10 +143,18 @@ class Executor:
         if operations and (self._enabled or self._dry_run):
             self._display_summary(operations)
 
-        # We group operations by priority
-        groups = itertools.groupby(operations, key=lambda o: -o.priority)
         self._sections = {}
         self._yanked_warnings = []
+
+        # pip has to be installed first without parallelism if we install via pip
+        for i, op in enumerate(operations):
+            if op.package.name == "pip":
+                wait([self._executor.submit(self._execute_operation, op)])
+                del operations[i]
+                break
+
+        # We group operations by priority
+        groups = itertools.groupby(operations, key=lambda o: -o.priority)
         for _, group in groups:
             tasks = []
             serial_operations = []
