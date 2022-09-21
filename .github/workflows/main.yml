@@ -52,6 +52,11 @@ jobs:
         id: full-python-version
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
+      # XXX: Certificates are not correctly installed for 3.11-dev -- remove when fixed.
+      - name: Install missing certificates on 3.11 for macOS
+        if: ${{ matrix.python-version == '3.11-dev' && matrix.os == 'macOS' }}
+        run: /Applications/Python\ 3.11/Install\ Certificates.command
+
       - name: Bootstrap poetry
         run: |
           curl -sL https://install.python-poetry.org | python - -y
