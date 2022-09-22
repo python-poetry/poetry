@@ -26,6 +26,7 @@ from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_cache_directory_for_url
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -77,13 +78,21 @@ class HTTPRepository(CachedRepository, ABC):
         wheel_name = urllib.parse.urlparse(url).path.rsplit("/")[-1]
         self._log(f"Downloading wheel: {wheel_name}", level="debug")
 
-        filename = os.path.basename(wheel_name)
+        # WIP: I'm not sure where to get this from a configuration
+        # hard coded for POC
+        cache_dir = Path().home() / ".cache" / "pypoetry" / "cache" / "url"
 
-        with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, filepath)
+        # Use a helper function that follows a similar method to
+        # Chef.get_cache_directory_for_link for determining
+        # the cache_dir based on the hexdigest
+        # Ideally, I would use the Chef directly but cannot figure
+        # out how to get access to it from here.
+        dest = get_cache_directory_for_url(url, cache_dir)
 
-            return PackageInfo.from_wheel(filepath)
+        if not dest.exists():
+            download_file(url, dest)
+
+        return PackageInfo.from_wheel(dest)
 
     def _get_info_from_sdist(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo

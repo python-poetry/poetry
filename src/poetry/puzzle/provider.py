@@ -33,6 +33,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_cache_directory_for_url
 from poetry.utils.helpers import safe_extra
 from poetry.vcs.git import Git
 
@@ -437,10 +438,22 @@ class Provider:
     @classmethod
     def get_package_from_url(cls, url: str) -> Package:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dest = Path(temp_dir) / file_name
-            download_file(url, dest)
-            package = cls.get_package_from_file(dest)
+
+        # WIP: I'm not sure where to get this from a configuration
+        # hard coded for POC
+        cache_dir = Path().home() / ".cache" / "pypoetry" / "cache" / "url"
+
+        # Use a helper function that follows a similar method to
+        # Chef.get_cache_directory_for_link for determining
+        # the cache_dir based on the hexdigest
+        # Ideally, I would use the Chef directly but cannot figure
+        # out how to get access to it from here.
+        dest = get_cache_directory_for_url(url, cache_dir)
+
+        if not dest.exists():
+             download_file(url, dest)
+
+        package = cls.get_package_from_file(dest)
 
         package._source_type = "url"
         package._source_url = url

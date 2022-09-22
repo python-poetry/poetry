@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import shutil
@@ -265,3 +266,9 @@ def get_real_windows_path(path: str | Path) -> Path:
         path = path.resolve()
 
     return path
+
+
+def get_cache_directory_for_url(url: str, cache_dir: Path) -> Path:
+    key = hashlib.sha256(url.encode("ascii")).hexdigest()
+    split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+    return cache_dir.joinpath(*split_key)
