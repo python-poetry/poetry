@@ -36,11 +36,11 @@ readme = ["README.md", "LICENSE"]
 keywords = ["packaging", "poetry"]
 
 [tool.poetry.dependencies]
-# Compatible python versions must be declared here
-python = "^3.8"
+# Compatible Python versions
+python = ">=3.8"
 # Standard dependency with semver constraints
 aiohttp = "^3.8.1"
-# Python specific dependencies with prereleases allowed
+# Dependency with extras
 requests = { version = "^2.28", extras = ["security"] }
 # Version-specific dependencies with prereleases allowed
 tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
