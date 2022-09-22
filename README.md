@@ -50,10 +50,12 @@ homepage = "https://python-poetry.org"
 keywords = ["packaging", "poetry"]
 
 [tool.poetry.dependencies]
-python = "^3.8"  # Compatible python versions must be declared here
+# Compatible Python versions
+python = ">=3.8"
+# Standard dependency with semver constraints
 aiohttp = "^3.8.1"
-# Dependencies with extras
-requests = { version = "^2.28", extras = [ "security" ] }
+# Dependency with extras
+requests = { version = "^2.28", extras = ["security"] }
 # Python specific dependencies with prereleases allowed
 tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
 # Git dependencies
