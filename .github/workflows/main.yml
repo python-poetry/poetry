@@ -74,14 +74,9 @@ jobs:
 
       - name: Set up cache
         uses: actions/cache@v3
-        id: cache
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Ensure cache is healthy
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: timeout 10s poetry run pip --version || rm -rf .venv
 
       # XXX: https://github.com/pypa/pip/issues/11352 causes random failures -- remove once fixed in a release.
       - name: Upgrade pip on 3.11 for macOS
