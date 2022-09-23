@@ -47,7 +47,8 @@ GENERATED_COMMENT = (
 
 
 class Locker:
-    _VERSION = "1.2"
+    _VERSION = "2.0"
+    _READ_VERSION_RANGE = ">=1,<3"
 
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
@@ -258,8 +259,6 @@ class Locker:
             "lock-version": self._VERSION,
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
-            # TODO stop writing files here, this is deprecated.
-            "files": files,
         }
 
         if not self.is_locked() or lock != self.lock_data:
@@ -307,11 +306,7 @@ class Locker:
         metadata = cast("Table", lock_data["metadata"])
         lock_version = Version.parse(metadata.get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
-        # We expect the locker to be able to read lock files
-        # from the same semantic versioning range
-        accepted_versions = parse_constraint(
-            f"^{Version.from_parts(current_version.major, 0)}"
-        )
+        accepted_versions = parse_constraint(self._READ_VERSION_RANGE)
         lock_version_allowed = accepted_versions.allows(lock_version)
         if lock_version_allowed and current_version < lock_version:
             logger.warning(

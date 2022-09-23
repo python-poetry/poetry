@@ -146,7 +146,7 @@ def test_lock_no_update(
 
     assert len(packages) == len(locked_repository.packages)
 
-    assert locker.lock_data["metadata"].get("lock-version") == "1.2"
+    assert locker.lock_data["metadata"].get("lock-version") == "2.0"
 
     for package in packages:
         assert locked_repository.find_packages(package.to_dependency())

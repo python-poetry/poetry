@@ -30,9 +30,5 @@ url = "tests/fixtures/project_with_extras"
 
 [metadata]
 content-hash = "123456789"
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
-
-[metadata.files]
-project-with-extras = []
-pendulum = []

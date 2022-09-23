@@ -197,20 +197,9 @@ type = "url"
 url = "https://example.org/url-package-1.0-cp39-win_amd64.whl"
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = [
-    {{file = "bar", hash = "123"}},
-    {{file = "foo", hash = "456"}},
-    {{file = "baz", hash = "345"}},
-]
-B = []
-git-package = []
-git-package-subdir = []
-url-package = []
 """  # noqa: E800
 
     assert content == expected
@@ -227,6 +216,7 @@ description = "httplib2 caching for requests"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = []
 
 [package.dependencies]
 msgpack = "*"
@@ -241,12 +231,9 @@ filecache = ["lockfile (>=0.9)"]
 redis = ["redis (>=2.10.5)"]
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-
-[metadata.files]
-cachecontrol = []
 """  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
@@ -274,6 +261,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 b = {{version = "^1.0", optional = true, extras = "c"}}
@@ -288,6 +276,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 c = {{version = "^1.0", optional = true}}
@@ -302,16 +291,12 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 python-versions = "*"
-lock-version = "1.2"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-"a" = []
-"b" = []
-"c" = []
 """  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
@@ -356,6 +341,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 b = {{version = "^1.0", optional = true}}
@@ -370,15 +356,12 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 python-versions = "*"
-lock-version = "1.2"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-"a" = []
-"b" = []
 """  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
@@ -407,6 +390,7 @@ category = "main"
 optional = false
 python-versions = "*"
 develop = false
+files = []
 
 [package.source]
 type = "git"
@@ -416,12 +400,9 @@ resolved_reference = "123456"
 subdirectory = "subdir"
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-git-package-subdir = []
 """
     locker.lock.write(tomlkit.parse(content))
 
@@ -571,12 +552,9 @@ python-versions = "*"
 files = []
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
 
     assert content == expected
@@ -615,12 +593,9 @@ B = [
 foo = ["B (>=1.0.0)"]
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
 
     with locker.lock.open(encoding="utf-8") as f:
@@ -640,6 +615,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.extras]
 foo = ["bar"]
@@ -648,12 +624,9 @@ foo = ["bar"]
 foo = ["bar"]
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
     with locker.lock.open("w", encoding="utf-8") as f:
         f.write(content)
@@ -699,12 +672,9 @@ url = "https://foo.bar"
 reference = "legacy"
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
 
     assert content == expected
@@ -719,8 +689,6 @@ def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
 lock-version = "{version}"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-
-[metadata.files]
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
@@ -748,11 +716,9 @@ def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
 # {GENERATED_COMMENT}
 
 [metadata]
-lock-version = "2.0"
+lock-version = "3.0"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-
-[metadata.files]
 """  # noqa: E800
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
@@ -789,12 +755,9 @@ files = []
 B = {{version = "^1.0.0", extras = ["a", "b", "c"], optional = true}}
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
 
     with locker.lock.open(encoding="utf-8") as f:
@@ -806,10 +769,7 @@ A = []
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
     locker: Locker, caplog: LogCaptureFixture
 ):
-    current_version = Version.parse(Locker._VERSION)
-    older_version = ".".join(
-        [str(current_version.major), str(current_version.minor - 1)]
-    )
+    older_version = "1.1"
     content = f"""\
 [metadata]
 lock-version = "{older_version}"
@@ -887,12 +847,9 @@ E = {{url = "https://python-poetry.org/poetry-1.2.0.tar.gz"}}
 F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
 
     assert content == expected
@@ -935,12 +892,9 @@ resolved_reference = "123456"
 subdirectory = "subdir"
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-git-package-subdir = []
 """  # noqa: E800
 
     assert content == expected
@@ -984,12 +938,9 @@ B = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
 C = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-A = []
 """  # noqa: E800
 
     assert content == expected
@@ -1009,6 +960,7 @@ category = "main"
 optional = false
 python-versions = "^2.7.9"
 develop = true
+file = []
 
 [package.dependencies]
 lib-b = {{path = "../libB", develop = true}}
@@ -1018,13 +970,9 @@ type = "directory"
 url = "lib/libA"
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-lib-a = []
-lib-b = []
 """  # noqa: E800
 
     locker.lock.write(tomlkit.parse(content))
@@ -1166,12 +1114,9 @@ reference = "develop"
 resolved_reference = "123456"
 
 [metadata]
-lock-version = "1.2"
+lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-
-[metadata.files]
-local-package = []
 """  # noqa: E800
 
             assert content == expected

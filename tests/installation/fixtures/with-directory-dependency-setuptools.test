@@ -36,10 +36,5 @@ pendulum = ">=1.4.4"
 
 [metadata]
 python-versions = "*"
-lock-version = "1.2"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-cachy = []
-project-with-setup = []
-pendulum = []

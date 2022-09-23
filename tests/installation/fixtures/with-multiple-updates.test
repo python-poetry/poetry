@@ -43,10 +43,5 @@ files = []
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-lock-version = "1.2"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-A = []
-B = []
-C = []

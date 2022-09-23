@@ -21,9 +21,5 @@ A = "^1.0"
 
 [metadata]
 python-versions = "*"
-lock-version = "1.2"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-"A" = []
-"B" = []

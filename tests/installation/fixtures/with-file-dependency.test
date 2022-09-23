@@ -32,11 +32,5 @@ files = []
 
 [metadata]
 python-versions = "*"
-lock-version = "1.2"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-demo = [
-    {file = "demo-0.1.0-py2.py3-none-any.whl", hash = "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"},
-]
-pendulum = []
