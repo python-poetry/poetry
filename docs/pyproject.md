@@ -430,6 +430,13 @@ Which are:
 - `C` - python module import path
 - `D` - the entry point of the plugin (a function or class)
 
+Example (from [`poetry-plugin-export`](http://github.com/python-poetry/poetry-plugin-export)):
+
+```toml
+[tool.poetry.plugins."poetry.application.plugin"]
+export = "poetry_plugin_export.plugins:ExportApplicationPlugin"
+```
+
 ## `urls`
 
 In addition to the basic urls (`homepage`, `repository` and `documentation`), you can specify
