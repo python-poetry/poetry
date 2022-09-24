@@ -1,0 +1,88 @@
+{
+  "info": {
+    "author": "Daniel Lindsley",
+    "author_email": "daniel@toastdriven.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3"
+    ],
+    "description": "pylev\n=====\n\nA pure Python Levenshtein implementation that's not freaking GPL'd.\n\nBased off the Wikipedia code samples at\nhttp://en.wikipedia.org/wiki/Levenshtein_distance.\n\n\nRequirements\n------------\n\n* Python 2.7.X, Python 3.3+ or PyPy 1.6.0+\n\n\nUsage\n-----\n\nUsage is fairly straightforward.::\n\n    import pylev\n    distance = pylev.levenshtein('kitten', 'sitting')\n    assert(distance, 3)\n\n\nLicense\n-------\n\nNew BSD.\n\n\nTests\n-----\n\nSetup::\n\n    $ git clone https://github.com/toastdriven/pylev.git\n    $ cd pylev\n\nRunning::\n\n    $ python -m unittest tests\n\n[![Build Status](https://travis-ci.org/toastdriven/pylev.png)](https://travis-ci.org/toastdriven/pylev)\n\n\nVersion History\n---------------\n\n* v1.3.0\n\n    * Implemented a considerably faster variants (orders of magnitude).\n    * Tested & working on Python 2.7.4, Python 3.3.1 & PyPy 1.9.0.\n\n* v1.2.0\n\n    * Fixed all incorrect spellings of \"Levenshtein\" (there's no \"c\" in it).\n    * Old methods are aliased for backward-compatibility.\n\n* v1.1.0\n\n    * Implemented a much faster variant (several orders of magnitude).\n    * The older variant was renamed to ``classic_levenschtein``.\n    * Tested & working on Python 3.3 & PyPy 1.6.0 as well.\n\n* v1.0.2\n\n    * Python packaging is **REALLY** hard. Including the README *this time*.\n\n* v1.0.1\n\n    * Python packaging is hard. Including the README this time.\n\n* v1.0.0\n\n    * Initial release, just the naive implementation of Levenshtein.",
+    "description_content_type": null,
+    "docs_url": null,
+    "download_url": "UNKNOWN",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "http://github.com/toastdriven/pylev",
+    "keywords": null,
+    "license": "UNKNOWN",
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "pylev",
+    "package_url": "https://pypi.org/project/pylev/",
+    "platform": "UNKNOWN",
+    "project_url": "https://pypi.org/project/pylev/",
+    "project_urls": {
+      "Download": "UNKNOWN",
+      "Homepage": "http://github.com/toastdriven/pylev"
+    },
+    "release_url": "https://pypi.org/project/pylev/1.3.0/",
+    "requires_dist": null,
+    "requires_python": null,
+    "summary": "A pure Python Levenshtein implementation that's not freaking GPL'd.",
+    "version": "1.3.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 10513237,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "6da14dfce5034873fc5c2d7a6e83dc29",
+        "sha256": "1d29a87beb45ebe1e821e7a3b10da2b6b2f4c79b43f482c2df1a1f748a6e114e"
+      },
+      "downloads": -1,
+      "filename": "pylev-1.3.0-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "6da14dfce5034873fc5c2d7a6e83dc29",
+      "packagetype": "bdist_wheel",
+      "python_version": "2.7",
+      "requires_python": null,
+      "size": 4927,
+      "upload_time": "2014-10-23T00:24:34",
+      "upload_time_iso_8601": "2014-10-23T00:24:34.125905Z",
+      "url": "https://files.pythonhosted.org/packages/40/1c/7dff1d242bf1e19f9c6202f0ba4e6fd18cc7ecb8bc85b17b2d16c806e228/pylev-1.3.0-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "3be579cfc32ce5140cc04001f898741b",
+        "sha256": "063910098161199b81e453025653ec53556c1be7165a9b7c50be2f4d57eae1c3"
+      },
+      "downloads": -1,
+      "filename": "pylev-1.3.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "3be579cfc32ce5140cc04001f898741b",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 3193,
+      "upload_time": "2014-10-23T00:24:19",
+      "upload_time_iso_8601": "2014-10-23T00:24:19.460779Z",
+      "url": "https://files.pythonhosted.org/packages/cc/61/dab2081d3d86dcf0b9f5dcfb11b256d76cd14aad7ccdd7c8dd5e7f7e41a0/pylev-1.3.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

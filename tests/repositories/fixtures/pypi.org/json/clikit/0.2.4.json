@@ -1,0 +1,95 @@
+{
+  "info": {
+    "author": "Sébastien Eustace",
+    "author_email": "sebastien@eustace.io",
+    "bugtrack_url": null,
+    "classifiers": [
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7"
+    ],
+    "description": "# CliKit\n\nCliKit is a group of utilities to build beautiful and testable command line interfaces.\n\nThis is at the core of [Cleo](https://github.com/sdispater/cleo).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/sdispater/clikit",
+    "keywords": "packaging,dependency,poetry",
+    "license": "MIT",
+    "maintainer": "Sébastien Eustace",
+    "maintainer_email": "sebastien@eustace.io",
+    "name": "clikit",
+    "package_url": "https://pypi.org/project/clikit/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/clikit/",
+    "project_urls": {
+      "Homepage": "https://github.com/sdispater/clikit",
+      "Repository": "https://github.com/sdispater/clikit"
+    },
+    "release_url": "https://pypi.org/project/clikit/0.2.4/",
+    "requires_dist": [
+      "enum34 (>=1.1,<2.0); python_version >= \"2.7\" and python_version < \"2.8\"",
+      "typing (>=3.6,<4.0); python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\"",
+      "pylev (>=1.3,<2.0)",
+      "pastel (>=0.1.0,<0.2.0)"
+    ],
+    "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    "summary": "CliKit is a group of utilities to build beautiful and testable command line interfaces.",
+    "version": "0.2.4",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 7436676,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "280f18c82d0810c9b5ca11380529c04c",
+        "sha256": "a7597999555aeb2ce9946f07187f690ab6864213f337e51250178c4bd19bd810"
+      },
+      "downloads": -1,
+      "filename": "clikit-0.2.4-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "280f18c82d0810c9b5ca11380529c04c",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2.py3",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 85786,
+      "upload_time": "2019-05-11T17:09:23",
+      "upload_time_iso_8601": "2019-05-11T17:09:23.516387Z",
+      "url": "https://files.pythonhosted.org/packages/7b/0d/bb4c8a2d0edca8c300373ed736fb4680cf73be5be2ff84544dee5f979c14/clikit-0.2.4-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "2543daad83b072e960ded5f68074a443",
+        "sha256": "d6807cf4a41e6b981b056075c0aefca2db1dabc597ed18fa4d92b8b2e2678835"
+      },
+      "downloads": -1,
+      "filename": "clikit-0.2.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "2543daad83b072e960ded5f68074a443",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 50980,
+      "upload_time": "2019-05-11T17:09:25",
+      "upload_time_iso_8601": "2019-05-11T17:09:25.865051Z",
+      "url": "https://files.pythonhosted.org/packages/c5/33/14fad4c82f256b0ef60dd25d4b6d8145b463da5274fd9cd842f06af318ed/clikit-0.2.4.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

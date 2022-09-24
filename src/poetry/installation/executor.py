@@ -28,6 +28,7 @@ from poetry.installation.operations import Update
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -142,10 +143,18 @@ class Executor:
         if operations and (self._enabled or self._dry_run):
             self._display_summary(operations)
 
-        # We group operations by priority
-        groups = itertools.groupby(operations, key=lambda o: -o.priority)
         self._sections = {}
         self._yanked_warnings = []
+
+        # pip has to be installed first without parallelism if we install via pip
+        for i, op in enumerate(operations):
+            if op.package.name == "pip":
+                wait([self._executor.submit(self._execute_operation, op)])
+                del operations[i]
+                break
+
+        # We group operations by priority
+        groups = itertools.groupby(operations, key=lambda o: -o.priority)
         for _, group in groups:
             tasks = []
             serial_operations = []
@@ -263,7 +272,7 @@ class Executor:
             # error to be picked up by the error handler.
             if result == -2:
                 raise KeyboardInterrupt
-        except Exception as e:
+        except Exception as e:  # noqa: PIE786
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
@@ -698,7 +707,7 @@ class Executor:
         done = 0
         archive = self._chef.get_cache_directory_for_link(link) / link.filename
         archive.parent.mkdir(parents=True, exist_ok=True)
-        with archive.open("wb") as f:
+        with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if not chunk:
                     break

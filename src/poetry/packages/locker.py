@@ -19,6 +19,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
+from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
@@ -35,9 +36,14 @@ if TYPE_CHECKING:
     from tomlkit.items import Table
     from tomlkit.toml_document import TOMLDocument
 
-    from poetry.repositories import Repository
+    from poetry.repositories.lockfile_repository import LockfileRepository
 
 logger = logging.getLogger(__name__)
+_GENERATED_IDENTIFIER = "@" + "generated"
+GENERATED_COMMENT = (
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
+    " changed by hand."
+)
 
 
 class Locker:
@@ -85,22 +91,23 @@ class Locker:
 
         return False
 
-    def locked_repository(self) -> Repository:
+    def locked_repository(self) -> LockfileRepository:
         """
         Searches and returns a repository of locked packages.
         """
         from poetry.factory import Factory
-        from poetry.repositories import Repository
+        from poetry.repositories.lockfile_repository import LockfileRepository
+
+        repository = LockfileRepository()
 
         if not self.is_locked():
-            return Repository("poetry-locked")
+            return repository
 
         lock_data = self.lock_data
-        packages = Repository("poetry-locked")
         locked_packages = cast("list[dict[str, Any]]", lock_data["package"])
 
         if not locked_packages:
-            return packages
+            return repository
 
         for info in locked_packages:
             source = info.get("source", {})
@@ -202,9 +209,9 @@ class Locker:
             if "develop" in info:
                 package.develop = info["develop"]
 
-            packages.add_package(package)
+            repository.add_package(package)
 
-        return packages
+        return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
         files: dict[str, Any] = table()
@@ -229,6 +236,7 @@ class Locker:
             del package["files"]
 
         lock = document()
+        lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
 
         if root.extras:

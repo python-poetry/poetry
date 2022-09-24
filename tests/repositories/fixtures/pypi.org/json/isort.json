@@ -1,160 +1,33 @@
 {
-  "info": {
-    "author": "Timothy Crosley",
-    "author_email": "timothy.crosley@gmail.com",
-    "bugtrack_url": null,
-    "classifiers": [
-      "Development Status :: 6 - Mature",
-      "Environment :: Console",
-      "Intended Audience :: Developers",
-      "License :: OSI Approved :: MIT License",
-      "Natural Language :: English",
-      "Programming Language :: Python",
-      "Programming Language :: Python :: 2",
-      "Programming Language :: Python :: 2.7",
-      "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3.4",
-      "Programming Language :: Python :: 3.5",
-      "Programming Language :: Python :: 3.6",
-      "Programming Language :: Python :: Implementation :: CPython",
-      "Programming Language :: Python :: Implementation :: PyPy",
-      "Topic :: Software Development :: Libraries",
-      "Topic :: Utilities"
-    ],
-    "description": "",
-    "description_content_type": null,
-    "docs_url": null,
-    "download_url": "",
-    "downloads": {
-      "last_day": -1,
-      "last_month": -1,
-      "last_week": -1
-    },
-    "home_page": "https://github.com/timothycrosley/isort",
-    "keywords": "Refactor",
-    "license": "MIT",
-    "maintainer": "",
-    "maintainer_email": "",
-    "name": "isort",
-    "package_url": "https://pypi.org/project/isort/",
-    "platform": "",
-    "project_url": "https://pypi.org/project/isort/",
-    "project_urls": {
-      "Homepage": "https://github.com/timothycrosley/isort"
-    },
-    "release_url": "https://pypi.org/project/isort/4.3.4/",
-    "requires_dist": null,
-    "requires_python": "",
-    "summary": "A Python utility / library to sort Python imports.",
-    "version": "4.3.4"
-  },
-  "last_serial": 3575149,
-  "releases": {
-    "4.3.4": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "f0ad7704b6dc947073398ba290c3517f",
-          "sha256": "ec9ef8f4a9bc6f71eec99e1806bfa2de401650d996c59330782b89a5555c1497"
-        },
-        "downloads": -1,
-        "filename": "isort-4.3.4-py2-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "f0ad7704b6dc947073398ba290c3517f",
-        "packagetype": "bdist_wheel",
-        "python_version": "2.7",
-        "requires_python": null,
-        "size": 45393,
-        "upload_time": "2018-02-12T15:06:38",
-        "url": "https://files.pythonhosted.org/packages/41/d8/a945da414f2adc1d9e2f7d6e7445b27f2be42766879062a2e63616ad4199/isort-4.3.4-py2-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "fbaac4cd669ac21ea9e21ab1ea3180db",
-          "sha256": "1153601da39a25b14ddc54955dbbacbb6b2d19135386699e2ad58517953b34af"
-        },
-        "downloads": -1,
-        "filename": "isort-4.3.4-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "fbaac4cd669ac21ea9e21ab1ea3180db",
-        "packagetype": "bdist_wheel",
-        "python_version": "3.6",
-        "requires_python": null,
-        "size": 45352,
-        "upload_time": "2018-02-12T15:06:20",
-        "url": "https://files.pythonhosted.org/packages/1f/2c/22eee714d7199ae0464beda6ad5fedec8fee6a2f7ffd1e8f1840928fe318/isort-4.3.4-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "fb554e9c8f9aa76e333a03d470a5cf52",
-          "sha256": "b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8"
-        },
-        "downloads": -1,
-        "filename": "isort-4.3.4.tar.gz",
-        "has_sig": false,
-        "md5_digest": "fb554e9c8f9aa76e333a03d470a5cf52",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "requires_python": null,
-        "size": 56070,
-        "upload_time": "2018-02-12T15:06:16",
-        "url": "https://files.pythonhosted.org/packages/b1/de/a628d16fdba0d38cafb3d7e34d4830f2c9cb3881384ce5c08c44762e1846/isort-4.3.4.tar.gz"
-      }
-    ]
-  },
-  "urls": [
+  "name": "isort",
+  "files": [
     {
-      "comment_text": "",
-      "digests": {
+      "filename": "isort-4.3.4-py2-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/41/d8/a945da414f2adc1d9e2f7d6e7445b27f2be42766879062a2e63616ad4199/isort-4.3.4-py2-none-any.whl",
+      "hashes": {
         "md5": "f0ad7704b6dc947073398ba290c3517f",
         "sha256": "ec9ef8f4a9bc6f71eec99e1806bfa2de401650d996c59330782b89a5555c1497"
-      },
-      "downloads": -1,
-      "filename": "isort-4.3.4-py2-none-any.whl",
-      "has_sig": false,
-      "md5_digest": "f0ad7704b6dc947073398ba290c3517f",
-      "packagetype": "bdist_wheel",
-      "python_version": "2.7",
-      "requires_python": null,
-      "size": 45393,
-      "upload_time": "2018-02-12T15:06:38",
-      "url": "https://files.pythonhosted.org/packages/41/d8/a945da414f2adc1d9e2f7d6e7445b27f2be42766879062a2e63616ad4199/isort-4.3.4-py2-none-any.whl"
+      }
     },
     {
-      "comment_text": "",
-      "digests": {
+      "filename": "isort-4.3.4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/1f/2c/22eee714d7199ae0464beda6ad5fedec8fee6a2f7ffd1e8f1840928fe318/isort-4.3.4-py3-none-any.whl",
+      "hashes": {
         "md5": "fbaac4cd669ac21ea9e21ab1ea3180db",
         "sha256": "1153601da39a25b14ddc54955dbbacbb6b2d19135386699e2ad58517953b34af"
-      },
-      "downloads": -1,
-      "filename": "isort-4.3.4-py3-none-any.whl",
-      "has_sig": false,
-      "md5_digest": "fbaac4cd669ac21ea9e21ab1ea3180db",
-      "packagetype": "bdist_wheel",
-      "python_version": "3.6",
-      "requires_python": null,
-      "size": 45352,
-      "upload_time": "2018-02-12T15:06:20",
-      "url": "https://files.pythonhosted.org/packages/1f/2c/22eee714d7199ae0464beda6ad5fedec8fee6a2f7ffd1e8f1840928fe318/isort-4.3.4-py3-none-any.whl"
+      }
     },
     {
-      "comment_text": "",
-      "digests": {
+      "filename": "isort-4.3.4.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/b1/de/a628d16fdba0d38cafb3d7e34d4830f2c9cb3881384ce5c08c44762e1846/isort-4.3.4.tar.gz",
+      "hashes": {
         "md5": "fb554e9c8f9aa76e333a03d470a5cf52",
         "sha256": "b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8"
-      },
-      "downloads": -1,
-      "filename": "isort-4.3.4.tar.gz",
-      "has_sig": false,
-      "md5_digest": "fb554e9c8f9aa76e333a03d470a5cf52",
-      "packagetype": "sdist",
-      "python_version": "source",
-      "requires_python": null,
-      "size": 56070,
-      "upload_time": "2018-02-12T15:06:16",
-      "url": "https://files.pythonhosted.org/packages/b1/de/a628d16fdba0d38cafb3d7e34d4830f2c9cb3881384ce5c08c44762e1846/isort-4.3.4.tar.gz"
+      }
     }
-  ]
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3575149
+  }
 }
