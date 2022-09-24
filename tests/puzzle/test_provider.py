@@ -716,3 +716,25 @@ def test_complete_package_with_extras_preserves_source_name(
     assert requires[0].source_name == source_name
     assert requires[1].name == "b"
     assert requires[1].source_name is None
+
+
+@pytest.mark.parametrize("with_extra", [False, True])
+def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
+    provider: Provider, repository: Repository, mocker: MockerFixture, with_extra: bool
+):
+    optional_vcs_dependency = Factory.create_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git", "optional": True}
+    )
+    package = Package("A", "1.0", features=["foo"] if with_extra else [])
+    package.add_dependency(optional_vcs_dependency)
+    package.extras["foo"] = [optional_vcs_dependency]
+    repository.add_package(package)
+
+    spy = mocker.spy(provider, "_search_for_vcs")
+
+    provider.complete_package(DependencyPackage(package.to_dependency(), package))
+
+    if with_extra:
+        spy.assert_called()
+    else:
+        spy.assert_not_called()
