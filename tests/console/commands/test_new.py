@@ -194,7 +194,6 @@ def test_command_new_with_dependencies(
         "--license 'My License'",
         "--python '^3.8' ",
         "--dependency pendulum",
-        "--dev-dependency pytest",
     ]
     tester.execute(" ".join(options))
     poetry = verify_project_directory(path, "custompackage", package_path, None)
@@ -211,9 +210,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 pendulum = "^2.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
 """
     # Replacing possible \r\n because as_string adds them on Windows
     assert expected in poetry.pyproject.data.as_string().replace("\r\n", "\n")

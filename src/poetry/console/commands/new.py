@@ -39,14 +39,6 @@ class NewCommand(Command):
             flag=False,
             multiple=True,
         ),
-        option(
-            "dev-dependency",
-            None,
-            "Package to require for development, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
-            flag=False,
-            multiple=True,
-        ),
         option("license", "License of the package.", flag=False),
         option("src", None, "Use the src layout for the project."),
         option(
@@ -119,14 +111,6 @@ class NewCommand(Command):
                 )
             )
 
-        dev_requirements: Requirements = {}
-        if self.option("dev-dependency"):
-            dev_requirements = format_requirements(
-                determine_requirements_from_list(
-                    self, self._get_pool(), self.option("dev-dependency")
-                )
-            )
-
         layout_ = layout_cls(
             name,
             version,
@@ -135,7 +119,6 @@ class NewCommand(Command):
             license=license,
             python=python,
             dependencies=requirements,
-            dev_dependencies=dev_requirements,
             readme_format=readme_format,
         )
         layout_.create(path)

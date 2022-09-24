@@ -108,7 +108,6 @@ my-package
 * `--python`: Compatible Python versions.
 * `--license`: License of the package.
 * `--dependency`: Package to require with an optional version constraint, e.g. `requests:^2.10.0` or `requests=2.11.1`. (see [add]({{< relref "#add" >}})).
-* `--dev-dependency`: Development requirements, see `--dependency`.
 * `--src`: Use the src layout for the project.
 * `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
   keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
