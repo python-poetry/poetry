@@ -56,7 +56,7 @@ list of installed packages
         else:
             group = self.option("group", self.default_group)
 
-        content: dict[str, Any] = self.poetry.file.read()
+        content: dict[str, Any] = self.poetry.toml_file.read()
         poetry_content = content["tool"]["poetry"]
 
         if group is None:
@@ -122,7 +122,7 @@ list of installed packages
 
         if not self.option("dry-run") and status == 0:
             assert isinstance(content, TOMLDocument)
-            self.poetry.file.write(content)
+            self.poetry.toml_file.write(content)
 
         return status
 

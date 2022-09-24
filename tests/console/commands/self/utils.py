@@ -24,7 +24,7 @@ def get_self_command_dependencies(locked: bool = True) -> TOMLTable:
 
     poetry = Factory().create_poetry(system_pyproject_file.parent, disable_plugins=True)
 
-    content = poetry.file.read()["tool"]["poetry"]
+    content = poetry.toml_file.read()["tool"]["poetry"]
 
     assert "group" in content
     assert SelfCommand.ADDITIONAL_PACKAGE_GROUP in content["group"]

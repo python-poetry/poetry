@@ -12,7 +12,6 @@ from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.toml.file import TOMLFile
 
 from poetry.config.config import Config
 from poetry.json import validate_object
@@ -20,6 +19,7 @@ from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
+from poetry.toml.file import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -82,7 +82,7 @@ class Factory(BaseFactory):
         config.merge({"repositories": repositories})
 
         poetry = Poetry(
-            base_poetry.file.path,
+            base_poetry.file,
             base_poetry.local_config,
             base_poetry.package,
             locker,

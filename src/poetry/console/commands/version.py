@@ -74,12 +74,12 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 )
 
             if not self.option("dry-run"):
-                content: dict[str, Any] = self.poetry.file.read()
+                content: dict[str, Any] = self.poetry.toml_file.read()
                 poetry_content = content["tool"]["poetry"]
                 poetry_content["version"] = version.text
 
                 assert isinstance(content, TOMLDocument)
-                self.poetry.file.write(content)
+                self.poetry.toml_file.write(content)
         else:
             if self.option("short"):
                 self.line(self.poetry.package.pretty_version)

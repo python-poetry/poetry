@@ -123,7 +123,7 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert not DeepDiff(
         {
             "dir_info": {"editable": True},
-            "url": simple_poetry.file.path.parent.as_uri(),
+            "url": simple_poetry.file.parent.as_uri(),
         },
         json.loads(dist_info.joinpath("direct_url.json").read_text()),
     )
@@ -230,7 +230,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
 
     builder.build()
     pip_install.assert_called_once_with(
-        extended_poetry.pyproject.file.path.parent, env, upgrade=True, editable=True
+        extended_poetry.pyproject.file.parent, env, upgrade=True, editable=True
     )
     assert [] == env.executed
 

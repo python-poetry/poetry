@@ -663,7 +663,7 @@ class Executor:
         package_poetry = None
         if pyproject.is_poetry_project():
             with contextlib.suppress(RuntimeError):
-                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+                package_poetry = Factory().create_poetry(pyproject.file.parent)
 
         if package_poetry is not None:
             # Even if there is a build system specified

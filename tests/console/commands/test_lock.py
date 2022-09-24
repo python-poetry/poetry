@@ -97,7 +97,7 @@ def test_lock_check_outdated(
     http.disable()
 
     locker = Locker(
-        lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry_with_outdated_lockfile.pyproject.file.parent / "poetry.lock",
         local_config=poetry_with_outdated_lockfile.locker._local_config,
     )
     poetry_with_outdated_lockfile.set_locker(locker)
@@ -123,7 +123,7 @@ def test_lock_check_up_to_date(
     http.disable()
 
     locker = Locker(
-        lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry_with_up_to_date_lockfile.pyproject.file.parent / "poetry.lock",
         local_config=poetry_with_up_to_date_lockfile.locker._local_config,
     )
     poetry_with_up_to_date_lockfile.set_locker(locker)
@@ -146,7 +146,7 @@ def test_lock_no_update(
     repo.add_package(get_package("sampleproject", "2.0.0"))
 
     locker = Locker(
-        lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry_with_old_lockfile.pyproject.file.parent / "poetry.lock",
         local_config=poetry_with_old_lockfile.locker._local_config,
     )
     poetry_with_old_lockfile.set_locker(locker)
@@ -161,7 +161,7 @@ def test_lock_no_update(
     tester.execute("--no-update")
 
     locker = Locker(
-        lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry_with_old_lockfile.pyproject.file.parent / "poetry.lock",
         local_config={},
     )
     packages = locker.locked_repository().packages
@@ -188,7 +188,7 @@ def test_lock_no_update_path_dependencies(
     repo.add_package(get_package("sampleproject", "1.3.1"))
 
     locker = Locker(
-        lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.path.parent
+        lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.parent
         / "poetry.lock",
         local_config=poetry_with_nested_path_deps_old_lockfile.locker._local_config,
     )
@@ -217,7 +217,7 @@ def test_lock_path_dependency_does_not_exist(
 ):
     poetry = _project_factory(project, project_factory, fixture_dir)
     locker = Locker(
-        lock=poetry.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry.pyproject.file.parent / "poetry.lock",
         local_config=poetry.locker._local_config,
     )
     poetry.set_locker(locker)
@@ -245,7 +245,7 @@ def test_lock_path_dependency_deleted_from_pyproject(
 ):
     poetry = _project_factory(project, project_factory, fixture_dir)
     locker = Locker(
-        lock=poetry.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry.pyproject.file.parent / "poetry.lock",
         local_config=poetry.locker._local_config,
     )
     poetry.set_locker(locker)
@@ -271,8 +271,7 @@ def test_lock_with_incompatible_lockfile(
     repo.add_package(get_package("sampleproject", "1.3.1"))
 
     locker = Locker(
-        lock=poetry_with_incompatible_lockfile.pyproject.file.path.parent
-        / "poetry.lock",
+        lock=poetry_with_incompatible_lockfile.pyproject.file.parent / "poetry.lock",
         local_config=poetry_with_incompatible_lockfile.locker._local_config,
     )
     poetry_with_incompatible_lockfile.set_locker(locker)
@@ -302,7 +301,7 @@ def test_lock_with_invalid_lockfile(
     repo.add_package(get_package("sampleproject", "1.3.1"))
 
     locker = Locker(
-        lock=poetry_with_invalid_lockfile.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry_with_invalid_lockfile.pyproject.file.parent / "poetry.lock",
         local_config=poetry_with_invalid_lockfile.locker._local_config,
     )
     poetry_with_invalid_lockfile.set_locker(locker)
