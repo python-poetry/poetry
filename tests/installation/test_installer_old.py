@@ -215,7 +215,7 @@ def test_run_update_after_removing_dependencies(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": [], "C": []},
+                "files": {"A": [], "B": [], "C": []},
             },
         }
     )
@@ -292,7 +292,7 @@ def test_run_install_no_group(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": [], "C": []},
+                "files": {"A": [], "B": [], "C": []},
             },
         }
     )
@@ -389,7 +389,7 @@ def test_run_install_with_synchronization(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {pkg.name: [] for pkg in locked_packages},
+                "files": {pkg.name: [] for pkg in locked_packages},
             },
         }
     )
@@ -434,7 +434,7 @@ def test_run_whitelist_add(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": []},
+                "files": {"A": []},
             },
         }
     )
@@ -491,7 +491,7 @@ def test_run_whitelist_remove(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": []},
+                "files": {"A": [], "B": []},
             },
         }
     )
@@ -1013,7 +1013,7 @@ def test_run_with_prereleases(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": []},
+                "files": {"A": []},
             },
         }
     )
@@ -1057,7 +1057,7 @@ def test_run_changes_category_if_needed(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": []},
+                "files": {"A": []},
             },
         }
     )
@@ -1104,7 +1104,7 @@ def test_run_update_all_with_lock(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": []},
+                "files": {"A": []},
             },
         }
     )
@@ -1163,7 +1163,7 @@ def test_run_update_with_locked_extras(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": [], "C": []},
+                "files": {"A": [], "B": [], "C": []},
             },
         }
     )
@@ -1307,7 +1307,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": [], "C": []},
+                "files": {"A": [], "B": [], "C": []},
             },
         }
     )
@@ -1385,7 +1385,7 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": []},
+                "files": {"A": [], "B": []},
             },
         }
     )
@@ -1486,7 +1486,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": [], "C": []},
+                "files": {"A": [], "B": [], "C": []},
             },
         }
     )
@@ -1742,7 +1742,7 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"A": [], "B": []},
+                "files": {"A": [], "B": []},
             },
         }
     )

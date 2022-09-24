@@ -50,7 +50,7 @@ demo = "poetry_demo_plugin.plugin:MyPlugin"
 Every plugin has to supply a class which implements the `poetry.plugins.Plugin` interface.
 
 The `activate()` method of the plugin is called after the plugin is loaded
-and receives an instance of `Poetry` as well as an instance of `cleo.io.IO`.
+and receives an instance of `Poetry` as well as an instance of `cleo.io.io.IO`.
 
 Using these two objects all configuration can be read
 and all public internal objects and state can be manipulated as desired.
@@ -78,7 +78,7 @@ If you want to add commands or options to the `poetry` script you need
 to create an application plugin which implements the `poetry.plugins.ApplicationPlugin` interface.
 
 The `activate()` method of the application plugin is called after the plugin is loaded
-and receives an instance of `console.Application`.
+and receives an instance of `poetry.console.Application`.
 
 ```python
 from cleo.commands.command import Command
@@ -119,7 +119,7 @@ This will help keep the performances of Poetry good.
 {{% /note %}}
 
 The plugin also must be declared in the `pyproject.toml` file of the plugin package
-as an `application.plugin` plugin:
+as a `poetry.application.plugin` plugin:
 
 ```toml
 [tool.poetry.plugins."poetry.application.plugin"]
@@ -135,7 +135,7 @@ A plugin **must not** remove or modify in any way the core commands of Poetry.
 
 Plugins can also listen to specific events and act on them if necessary.
 
-These events are fired by [Cleo](https://github.com/sdispater/cleo)
+These events are fired by [Cleo](https://github.com/python-poetry/cleo)
 and are accessible from the `cleo.events.console_events` module.
 
 - `COMMAND`: this event allows attaching listeners before any command is executed.
