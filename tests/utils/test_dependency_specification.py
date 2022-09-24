@@ -23,6 +23,10 @@ if TYPE_CHECKING:
     ("requirement", "expected_variants"),
     [
         (
+            "git+http://github.com/demo/demo.git",
+            {"git": "http://github.com/demo/demo.git", "name": "demo"},
+        ),
+        (
             "git+https://github.com/demo/demo.git",
             ({"git": "https://github.com/demo/demo.git", "name": "demo"},),
         ),
