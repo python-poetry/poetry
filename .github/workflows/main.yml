@@ -76,7 +76,12 @@ jobs:
 
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
-        run: timeout 10s poetry run pip --version || rm -rf .venv
+        run: |
+          # `timeout` is not available on macOS, so we define a custom function.
+          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+
+          # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
+          timeout 10s poetry run pip --version || rm -rf .venv
 
       - name: Install dependencies
         run: poetry install
