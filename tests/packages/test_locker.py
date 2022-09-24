@@ -700,12 +700,50 @@ regenerate the lock file with the `poetry lock` command.\
     assert record.message == expected
 
 
+def test_locker_can_read_2_0_lockfile_because_backported(
+    locker: Locker, caplog: LogCaptureFixture
+):
+    content = """\
+[[package]]
+name = "demo"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+files = [
+    {file = "demo-1.0-cp39-win_amd64.whl", hash = "sha256"},
+    {file = "demo-1.0.tar.gz", hash = "sha256"},
+    {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
+]
+
+[metadata]
+lock-version = "2.0"
+python-versions = "~2.7 || ^3.4"
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
+"""
+    caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    packages = repository.packages
+    assert len(packages) == 1
+    package = packages[0]
+    assert package.files == [
+        {"file": "demo-1.0-cp39-win_amd64.whl", "hash": "sha256"},
+        {"file": "demo-1.0.tar.gz", "hash": "sha256"},
+        {"file": "demo-1.0-py3-none-any.whl", "hash": "sha256"},
+    ]
+
+
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
     locker: Locker, caplog: LogCaptureFixture
 ):
     content = """\
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
