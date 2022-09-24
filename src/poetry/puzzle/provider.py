@@ -24,6 +24,7 @@ from poetry.core.version.markers import MarkerUnion
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
+from poetry.locations import DEFAULT_CACHE_DIR
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import PythonCause
@@ -36,6 +37,7 @@ from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_cache_directory_for_url
 from poetry.utils.helpers import safe_extra
 from poetry.vcs.git import Git
+
 
 
 if TYPE_CHECKING:
@@ -441,7 +443,7 @@ class Provider:
 
         # WIP: I'm not sure where to get this from a configuration
         # hard coded for POC
-        cache_dir = Path().home() / ".cache" / "pypoetry" / "cache" / "url"
+        cache_dir = DEFAULT_CACHE_DIR / "cache" / "url"
 
         # Use a helper function that follows a similar method to
         # Chef.get_cache_directory_for_link for determining
@@ -449,6 +451,7 @@ class Provider:
         # Ideally, I would use the Chef directly but cannot figure
         # out how to get access to it from here.
         dest = get_cache_directory_for_url(url, cache_dir)
+        dest.parent.mkdir(exist_ok=True, parents=True)
 
         if not dest.exists():
              download_file(url, dest)

@@ -19,6 +19,7 @@ from poetry.core.semver.helpers import parse_constraint
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
+from poetry.locations import DEFAULT_CACHE_DIR
 from poetry.repositories.cached import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
@@ -80,7 +81,8 @@ class HTTPRepository(CachedRepository, ABC):
 
         # WIP: I'm not sure where to get this from a configuration
         # hard coded for POC
-        cache_dir = Path().home() / ".cache" / "pypoetry" / "cache" / "url"
+        cache_dir = DEFAULT_CACHE_DIR / "cache" / "url"
+        #breakpoint()
 
         # Use a helper function that follows a similar method to
         # Chef.get_cache_directory_for_link for determining
@@ -88,6 +90,7 @@ class HTTPRepository(CachedRepository, ABC):
         # Ideally, I would use the Chef directly but cannot figure
         # out how to get access to it from here.
         dest = get_cache_directory_for_url(url, cache_dir)
+        dest.parent.mkdir(exist_ok=True, parents=True)
 
         if not dest.exists():
             download_file(url, dest)

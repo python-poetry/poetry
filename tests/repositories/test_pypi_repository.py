@@ -195,7 +195,9 @@ def test_find_links_for_package_yanked(
         assert link.yanked_reason == yanked_reason
 
 
-def test_fallback_on_downloading_packages() -> None:
+def test_fallback_on_downloading_packages(tmpdir, monkeypatch) -> None:
+    from poetry.puzzle import provider
+    monkeypatch.setattr(provider, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository(fallback=True)
 
     package = repo.package("jupyter", Version.parse("1.0.0"))
@@ -214,7 +216,10 @@ def test_fallback_on_downloading_packages() -> None:
     ]
 
 
-def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> None:
+def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found(
+        tmpdir, monkeypatch) -> None:
+    from poetry.puzzle import provider
+    monkeypatch.setattr(provider, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository(fallback=True)
 
     package = repo.package("isort", Version.parse("4.3.4"))

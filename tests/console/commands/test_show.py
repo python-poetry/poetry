@@ -1995,11 +1995,16 @@ def test_show_dependency_installed_from_git_in_dev(
 
 
 def test_url_dependency_is_not_outdated_by_repository_package(
+    tmpdir,
+    monkeypatch,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
     repo: TestRepository,
 ):
+    from pathlib import Path
+    from poetry.puzzle import provider
+    monkeypatch.setattr(provider, "DEFAULT_CACHE_DIR", Path(tmpdir))
     demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     poetry.package.add_dependency(
         Factory.create_dependency(

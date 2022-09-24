@@ -1818,8 +1818,16 @@ def test_installer_can_install_dependencies_from_forced_source(
 
 
 def test_run_installs_with_url_file(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    tmpdir,
+    monkeypatch,
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
 ):
+    from poetry.puzzle import provider
+    monkeypatch.setattr(provider, "DEFAULT_CACHE_DIR", Path(tmpdir))
+
     url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency(Factory.create_dependency("demo", {"url": url}))
 

@@ -184,7 +184,9 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints() -
     ]
 
 
-def test_package_not_canonicalized() -> None:
+def test_package_not_canonicalized(tmpdir, monkeypatch) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("discord.py", Version.parse("2.0.0"))
@@ -246,7 +248,12 @@ def test_find_packages_yanked(constraint: str, expected: list[str]) -> None:
     assert [str(p.version) for p in packages] == expected
 
 
-def test_get_package_information_chooses_correct_distribution() -> None:
+def test_get_package_information_chooses_correct_distribution(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("isort", Version.parse("4.3.4"))
@@ -259,7 +266,12 @@ def test_get_package_information_chooses_correct_distribution() -> None:
     assert futures_dep.python_versions == "~2.7"
 
 
-def test_get_package_information_includes_python_requires() -> None:
+def test_get_package_information_includes_python_requires(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("futures", Version.parse("3.2.0"))
@@ -269,9 +281,14 @@ def test_get_package_information_includes_python_requires() -> None:
     assert package.python_versions == ">=2.6, <3"
 
 
-def test_get_package_information_sets_appropriate_python_versions_if_wheels_only() -> (
+def test_get_package_information_sets_appropriate_python_versions_if_wheels_only(
+    tmpdir,
+    monkeypatch,
+    ) -> (
     None
 ):
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("futures", Version.parse("3.2.0"))
@@ -281,7 +298,12 @@ def test_get_package_information_sets_appropriate_python_versions_if_wheels_only
     assert package.python_versions == ">=2.6, <3"
 
 
-def test_get_package_from_both_py2_and_py3_specific_wheels() -> None:
+def test_get_package_from_both_py2_and_py3_specific_wheels(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("ipython", Version.parse("5.7.0"))
@@ -319,7 +341,12 @@ def test_get_package_from_both_py2_and_py3_specific_wheels() -> None:
     assert str(required[5].marker) == 'sys_platform != "win32"'
 
 
-def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint() -> None:
+def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("poetry-test-py2-py3-metadata-merge", Version.parse("0.1.0"))
@@ -329,7 +356,12 @@ def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint() -
     assert package.python_versions == ">=2.7,<2.8 || >=3.7,<4.0"
 
 
-def test_get_package_with_dist_and_universal_py3_wheel() -> None:
+def test_get_package_with_dist_and_universal_py3_wheel(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("ipython", Version.parse("7.5.0"))
@@ -357,7 +389,12 @@ def test_get_package_with_dist_and_universal_py3_wheel() -> None:
     assert sorted(required, key=lambda dep: dep.name) == expected
 
 
-def test_get_package_retrieves_non_sha256_hashes() -> None:
+def test_get_package_retrieves_non_sha256_hashes(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("ipython", Version.parse("7.5.0"))
@@ -376,7 +413,12 @@ def test_get_package_retrieves_non_sha256_hashes() -> None:
     assert package.files == expected
 
 
-def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash() -> None:
+def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash(
+    tmpdir,
+    monkeypatch,
+    ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package("ipython", Version.parse("5.7.0"))
@@ -420,8 +462,11 @@ def test_get_package_retrieves_packages_with_no_hashes() -> None:
     ],
 )
 def test_package_yanked(
+    tmpdir, monkeypatch,
     package_name: str, version: str, yanked: bool, yanked_reason: str
 ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package(package_name, Version.parse(version))
@@ -432,7 +477,12 @@ def test_package_yanked(
     assert package.yanked_reason == yanked_reason
 
 
-def test_package_partial_yank():
+def test_package_partial_yank(
+    tmpdir,
+    monkeypatch,
+    ):
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     class SpecialMockRepository(MockRepository):
         def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
             return super()._get_page(f"/{endpoint.strip('/')}_partial_yank/")
@@ -455,8 +505,11 @@ def test_package_partial_yank():
     ],
 )
 def test_find_links_for_package_yanked(
+    tmpdir, monkeypatch,
     package_name: str, version: str, yanked: bool, yanked_reason: str
 ) -> None:
+    from poetry.repositories import http as repos_http
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     repo = MockRepository()
 
     package = repo.package(package_name, Version.parse(version))

@@ -15,10 +15,13 @@ from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
 
+#from poetry import locations
+from poetry.repositories import http as repos_http
 from poetry.factory import Factory
 from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.repositories import repository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.utils.env import MockEnv
@@ -2529,10 +2532,14 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
     assert futures.python_versions == ">=2.6, <3"
 
 
+# HERE
 def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_dists(
+    tmpdir,
+    monkeypatch,
     package: ProjectPackage,
     io: NullIO,
 ):
+    monkeypatch.setattr(repos_http, "DEFAULT_CACHE_DIR", Path(tmpdir))
     package.python_versions = "^3.7"
 
     repo = MockLegacyRepository()
