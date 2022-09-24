@@ -6,16 +6,15 @@ category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
+[[package.files]]
+file = "demo-0.1.0-py2.py3-none-any.whl"
+hash = "sha256:c25eb81459126848a1788eb3520d1a32014eb51ce3d3bae88c56bfdde4ce02db"
+
 [package.source]
 type = "file"
 url = "tests/fixtures/wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
 
 [metadata]
 python-versions = "*"
-lock-version = "1.1"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-demo = [
-    {file = "demo-0.1.0-py2.py3-none-any.whl", hash = "sha256:c25eb81459126848a1788eb3520d1a32014eb51ce3d3bae88c56bfdde4ce02db"},
-]
