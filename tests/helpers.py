@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-from poetry.core.masonry.utils.helpers import distribution_name
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
@@ -235,7 +234,7 @@ class TestRepository(Repository):
     def find_links_for_package(self, package: Package) -> list[Link]:
         return [
             Link(
-                f"https://foo.bar/files/{distribution_name(package.name)}"
+                f"https://foo.bar/files/{package.name.replace('-', '_')}"
                 f"-{package.version.to_string()}-py2.py3-none-any.whl"
             )
         ]
