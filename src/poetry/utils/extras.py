@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def get_extra_package_names(
     packages: Iterable[Package],
-    extras: Mapping[NormalizedName, list[NormalizedName]],
+    extras: Mapping[NormalizedName, Iterable[NormalizedName]],
     extra_names: Collection[NormalizedName],
 ) -> set[NormalizedName]:
     """
