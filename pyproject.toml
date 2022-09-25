@@ -77,6 +77,8 @@ urllib3 = "^1.26.0"
 pre-commit = "^2.6"
 
 [tool.poetry.group.test.dependencies]
+# TODO: remove as soon as poetry-core with poetry-core#476 is available
+poetry-core = { git = "https://github.com/dimbleby/poetry-core.git", branch = "canonicalize-extras" }
 deepdiff = "^5.0"
 flatdict = "^4.0.1"
 httpretty = "^1.0"
