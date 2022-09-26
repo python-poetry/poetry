@@ -87,7 +87,7 @@ def test_show_basic_with_installed_packages(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "pytest": []},
             },
         }
     )
@@ -168,7 +168,7 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "pytest": []},
             },
         }
     )
@@ -293,7 +293,7 @@ def test_show_basic_with_installed_packages_single(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": []},
+                "files": {"cachy": []},
             },
         }
     )
@@ -335,7 +335,7 @@ def test_show_basic_with_installed_packages_single_canonicalized(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"foo-bar": []},
+                "files": {"foo-bar": []},
             },
         }
     )
@@ -390,7 +390,7 @@ def test_show_basic_with_not_installed_packages_non_decorated(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -446,7 +446,7 @@ def test_show_basic_with_not_installed_packages_decorated(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -516,7 +516,7 @@ def test_show_latest_non_decorated(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -586,7 +586,7 @@ def test_show_latest_decorated(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -655,7 +655,7 @@ def test_show_outdated(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -699,7 +699,7 @@ def test_show_outdated_with_only_up_to_date_packages(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": []},
+                "files": {"cachy": []},
             },
         }
     )
@@ -768,7 +768,7 @@ def test_show_outdated_has_prerelease_but_not_allowed(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -843,7 +843,7 @@ def test_show_outdated_has_prerelease_and_allowed(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -912,7 +912,7 @@ def test_show_outdated_formatting(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -1029,7 +1029,7 @@ def test_show_outdated_local_dependencies(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {
+                "files": {
                     "cachy": [],
                     "pendulum": [],
                     "demo": [],
@@ -1136,7 +1136,7 @@ def test_show_outdated_git_dev_dependency(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
             },
         }
     )
@@ -1235,7 +1235,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
             },
         }
     )
@@ -1296,7 +1296,7 @@ def test_show_hides_incompatible_package(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -1353,7 +1353,7 @@ def test_show_all_shows_incompatible_package(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": []},
+                "files": {"cachy": [], "pendulum": []},
             },
         }
     )
@@ -1429,7 +1429,7 @@ def test_show_non_dev_with_basic_installed_packages(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "pytest": []},
             },
         }
     )
@@ -1505,7 +1505,7 @@ def test_show_with_group_only(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "pytest": []},
             },
         }
     )
@@ -1580,7 +1580,7 @@ def test_show_with_optional_group(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+                "files": {"cachy": [], "pendulum": [], "pytest": []},
             },
         }
     )
@@ -1642,7 +1642,7 @@ def test_show_tree(tester: CommandTester, poetry: Poetry, installed: Repository)
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "msgpack-python": []},
+                "files": {"cachy": [], "msgpack-python": []},
             },
         }
     )
@@ -1709,7 +1709,7 @@ def test_show_tree_no_dev(tester: CommandTester, poetry: Poetry, installed: Repo
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "msgpack-python": [], "pytest": []},
+                "files": {"cachy": [], "msgpack-python": [], "pytest": []},
             },
         }
     )
@@ -1768,7 +1768,7 @@ def test_show_tree_why_package(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"a": [], "b": [], "c": []},
+                "files": {"a": [], "b": [], "c": []},
             },
         }
     )
@@ -1825,7 +1825,7 @@ def test_show_tree_why(tester: CommandTester, poetry: Poetry, installed: Reposit
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"a": [], "b": [], "c": []},
+                "files": {"a": [], "b": [], "c": []},
             },
         }
     )
@@ -1894,7 +1894,7 @@ def test_show_required_by_deps(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "msgpack-python": []},
+                "files": {"cachy": [], "pendulum": [], "msgpack-python": []},
             },
         }
     )
@@ -1983,7 +1983,7 @@ def test_show_dependency_installed_from_git_in_dev(
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"demo": [], "pendulum": []},
+                "files": {"demo": [], "pendulum": []},
             },
         }
     )

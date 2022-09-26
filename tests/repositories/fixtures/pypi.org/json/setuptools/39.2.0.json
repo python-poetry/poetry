@@ -1,0 +1,100 @@
+{
+  "info": {
+    "author": "Python Packaging Authority",
+    "author_email": "distutils-sig@python.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      "Topic :: System :: Archiving :: Packaging",
+      "Topic :: System :: Systems Administration",
+      "Topic :: Utilities"
+    ],
+    "description": ".. image:: https://img.shields.io/pypi/v/setuptools.svg\n   :target: https://pypi.org/project/setuptools\n\n.. image:: https://readthedocs.org/projects/setuptools/badge/?version=latest\n    :target: https://setuptools.readthedocs.io\n\n.. image:: https://img.shields.io/travis/pypa/setuptools/master.svg?label=Linux%20build%20%40%20Travis%20CI\n   :target: https://travis-ci.org/pypa/setuptools\n\n.. image:: https://img.shields.io/appveyor/ci/pypa/setuptools/master.svg?label=Windows%20build%20%40%20Appveyor\n   :target: https://ci.appveyor.com/project/pypa/setuptools/branch/master\n\n.. image:: https://img.shields.io/codecov/c/github/pypa/setuptools/master.svg\n   :target: https://codecov.io/gh/pypa/setuptools\n\n.. image:: https://img.shields.io/pypi/pyversions/setuptools.svg\n\nSee the `Installation Instructions\n<https://packaging.python.org/installing/>`_ in the Python Packaging\nUser's Guide for instructions on installing, upgrading, and uninstalling\nSetuptools.\n\nThe project is `maintained at GitHub <https://github.com/pypa/setuptools>`_.\n\nQuestions and comments should be directed to the `distutils-sig\nmailing list <http://mail.python.org/pipermail/distutils-sig/>`_.\nBug reports and especially tested patches may be\nsubmitted directly to the `bug tracker\n<https://github.com/pypa/setuptools/issues>`_.\n\n\nCode of Conduct\n---------------\n\nEveryone interacting in the setuptools project's codebases, issue trackers,\nchat rooms, and mailing lists is expected to follow the\n`PyPA Code of Conduct <https://www.pypa.io/en/latest/code-of-conduct/>`_.\n\n\n",
+    "description_content_type": "text/x-rst; charset=UTF-8",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/pypa/setuptools",
+    "keywords": "CPAN PyPI distutils eggs package management",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "setuptools",
+    "package_url": "https://pypi.org/project/setuptools/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/setuptools/",
+    "project_urls": {
+      "Documentation": "https://setuptools.readthedocs.io/",
+      "Homepage": "https://github.com/pypa/setuptools"
+    },
+    "release_url": "https://pypi.org/project/setuptools/39.2.0/",
+    "requires_dist": [
+      "certifi (==2016.9.26); extra == 'certs'",
+      "wincertstore (==0.2); (sys_platform=='win32') and extra == 'ssl'"
+    ],
+    "requires_python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",
+    "summary": "Easily download, build, install, upgrade, and uninstall Python packages",
+    "version": "39.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14429235,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "8d066d2201311ed30be535b473e32fed",
+        "sha256": "8fca9275c89964f13da985c3656cb00ba029d7f3916b37990927ffdf264e7926"
+      },
+      "downloads": -1,
+      "filename": "setuptools-39.2.0-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "8d066d2201311ed30be535b473e32fed",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2.py3",
+      "requires_python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",
+      "size": 567556,
+      "upload_time": "2018-05-19T19:19:22",
+      "upload_time_iso_8601": "2018-05-19T19:19:22.625819Z",
+      "url": "https://files.pythonhosted.org/packages/7f/e1/820d941153923aac1d49d7fc37e17b6e73bfbd2904959fffbad77900cf92/setuptools-39.2.0-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "dd4e3fa83a21bf7bf9c51026dc8a4e59",
+        "sha256": "f7cddbb5f5c640311eb00eab6e849f7701fa70bf6a183fc8a2c33dd1d1672fb2"
+      },
+      "downloads": -1,
+      "filename": "setuptools-39.2.0.zip",
+      "has_sig": false,
+      "md5_digest": "dd4e3fa83a21bf7bf9c51026dc8a4e59",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",
+      "size": 851112,
+      "upload_time": "2018-05-19T19:19:24",
+      "upload_time_iso_8601": "2018-05-19T19:19:24.480740Z",
+      "url": "https://files.pythonhosted.org/packages/1a/04/d6f1159feaccdfc508517dba1929eb93a2854de729fa68da9d5c6b48fa00/setuptools-39.2.0.zip",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

@@ -1,0 +1,112 @@
+{
+  "info": {
+    "author": "Nicolas Jouanin",
+    "author_email": "nico@beerfactory.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: MacOS",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: POSIX",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Topic :: Communications",
+      "Topic :: Internet"
+    ],
+    "description": "",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/beerfactory/hbmqtt",
+    "keywords": "",
+    "license": "MIT",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "hbmqtt",
+    "package_url": "https://pypi.org/project/hbmqtt/",
+    "platform": "all",
+    "project_url": "https://pypi.org/project/hbmqtt/",
+    "project_urls": {
+      "Homepage": "https://github.com/beerfactory/hbmqtt"
+    },
+    "release_url": "https://pypi.org/project/hbmqtt/0.9.6/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "MQTT client/broker using Python 3.4 asyncio library",
+    "version": "0.9.6",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 6518769,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "e7ecbb2bf3aa2b3b5b2a47dc5289039a",
+        "sha256": "c83ba91dc5cf9a01f83afb5380701504f69bdf9ea1c071f4dfdc1cba412fcd63"
+      },
+      "downloads": -1,
+      "filename": "hbmqtt-0.9.6.linux-x86_64.tar.gz",
+      "has_sig": false,
+      "md5_digest": "e7ecbb2bf3aa2b3b5b2a47dc5289039a",
+      "packagetype": "bdist_dumb",
+      "python_version": "any",
+      "requires_python": null,
+      "size": 126180,
+      "upload_time": "2020-01-25T14:12:53",
+      "upload_time_iso_8601": "2020-01-25T14:12:53.948778Z",
+      "url": "https://files.pythonhosted.org/packages/ee/27/912d1d8c307a72985edf0b6ad9fc1c32e22bfc42efbd0244902c43bd9307/hbmqtt-0.9.6.linux-x86_64.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "d7896681b8d7d27b53302350b5b3c9c2",
+        "sha256": "57799a933500caadb472000ba0c1e043d4768608cd8142104f89c53930d8613c"
+      },
+      "downloads": -1,
+      "filename": "hbmqtt-0.9.6-py3.8.egg",
+      "has_sig": false,
+      "md5_digest": "d7896681b8d7d27b53302350b5b3c9c2",
+      "packagetype": "bdist_egg",
+      "python_version": "3.8",
+      "requires_python": null,
+      "size": 186560,
+      "upload_time": "2020-01-25T14:13:44",
+      "upload_time_iso_8601": "2020-01-25T14:13:44.484402Z",
+      "url": "https://files.pythonhosted.org/packages/4f/4b/69014d0fd585b45bfdb77ef0e70bcf035fc8fc798c2a0610fd7cfae56cfd/hbmqtt-0.9.6-py3.8.egg",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "cc1f010f129465cc396339640fcffed9",
+        "sha256": "6764d3c7cf6d056238c04709c23dbb72e2b0227495efd871c2f1da10a4472cd9"
+      },
+      "downloads": -1,
+      "filename": "hbmqtt-0.9.6.tar.gz",
+      "has_sig": false,
+      "md5_digest": "cc1f010f129465cc396339640fcffed9",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 74727,
+      "upload_time": "2020-01-25T14:12:45",
+      "upload_time_iso_8601": "2020-01-25T14:12:45.640961Z",
+      "url": "https://files.pythonhosted.org/packages/b4/7c/7e1d47e740915bd628f4038083469c5919e759a638f45abab01e09e933cb/hbmqtt-0.9.6.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

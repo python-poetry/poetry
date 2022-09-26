@@ -71,7 +71,7 @@ class PluginManager:
             plugin.activate(*args, **kwargs)
 
     def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
-        logger.debug(f"Loading the {ep.name} plugin")  # type: ignore[attr-defined]
+        logger.debug("Loading the %s plugin", ep.name)  # type: ignore[attr-defined]
 
         plugin = ep.load()  # type: ignore[no-untyped-call]
 

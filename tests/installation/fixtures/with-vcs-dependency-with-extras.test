@@ -5,6 +5,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 develop = false
 
 [package.dependencies]
@@ -27,6 +28,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [[package]]
 name = "cleo"
@@ -35,13 +37,9 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [metadata]
 python-versions = "*"
-lock-version = "1.1"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-demo = []
-pendulum = []
-cleo = []

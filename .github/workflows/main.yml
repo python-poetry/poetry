@@ -52,6 +52,11 @@ jobs:
         id: full-python-version
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
+      # XXX: Certificates are not correctly installed for 3.11-dev -- remove when fixed.
+      - name: Install missing certificates on 3.11 for macOS
+        if: ${{ matrix.python-version == '3.11-dev' && matrix.os == 'macOS' }}
+        run: /Applications/Python\ 3.11/Install\ Certificates.command
+
       - name: Bootstrap poetry
         run: |
           curl -sL https://install.python-poetry.org | python - -y
@@ -76,7 +81,17 @@ jobs:
 
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
-        run: timeout 10s poetry run pip --version || rm -rf .venv
+        run: |
+          # `timeout` is not available on macOS, so we define a custom function.
+          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+
+          # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
+          timeout 10s poetry run pip --version || rm -rf .venv
+
+      # XXX: https://github.com/pypa/pip/issues/11352 causes random failures -- remove once fixed in a release.
+      - name: Upgrade pip on 3.11 for macOS
+        if: ${{ matrix.python-version == '3.11-dev' && matrix.os == 'macOS' }}
+        run: poetry run pip install git+https://github.com/pypa/pip.git@fbb7f0b293f1d9289d8c76a556540325b9a172b2
 
       - name: Install dependencies
         run: poetry install

@@ -6,6 +6,7 @@ import shutil
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -35,7 +36,9 @@ class MockRepository(PyPiRepository):
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
-    def _get(self, url: str) -> dict | None:
+    def _get(
+        self, url: str, headers: dict[str, str] | None = None
+    ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]
         if len(parts) == 3:
@@ -47,8 +50,6 @@ class MockRepository(PyPiRepository):
             fixture = self.JSON_FIXTURES / (name + ".json")
         else:
             fixture = self.JSON_FIXTURES / name / (version + ".json")
-            if not fixture.exists():
-                fixture = self.JSON_FIXTURES / (name + ".json")
 
         if not fixture.exists():
             return None

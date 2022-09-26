@@ -55,7 +55,7 @@ def install_plugin(installed: Repository) -> None:
             "python-versions": "^3.6",
             "platform": "*",
             "content-hash": "123456789",
-            "hashes": {"poetry-plugin": []},
+            "files": {"poetry-plugin": []},
         },
     }
     system_pyproject_file.parent.joinpath("poetry.lock").write_text(

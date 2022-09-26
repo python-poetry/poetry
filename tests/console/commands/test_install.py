@@ -183,3 +183,15 @@ def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture
         == "You cannot specify explicit `--extras` while installing using"
         " `--all-extras`.\n"
     )
+
+
+def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --dry-run option results in extras passed to the installer.
+    """
+
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--dry-run")
+
+    assert tester.command.installer._dry_run is True

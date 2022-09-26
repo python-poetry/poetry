@@ -114,12 +114,18 @@ class HTTPRepository(CachedRepository, ABC):
             return PackageInfo.from_sdist(filepath)
 
     def _get_info_from_urls(self, urls: dict[str, list[str]]) -> PackageInfo:
-        # Checking wheels first as they are more likely to hold
-        # the necessary information
-        if "bdist_wheel" in urls:
-            # Check for a universal wheel
-            wheels = urls["bdist_wheel"]
-
+        # Prefer to read data from wheels: this is faster and more reliable
+        wheels = urls.get("bdist_wheel")
+        if wheels:
+            # We ought just to be able to look at any of the available wheels to read
+            # metadata, they all should give the same answer.
+            #
+            # In practice this hasn't always been true.
+            #
+            # Most of the code in here is to deal with cases such as isort 4.3.4 which
+            # published separate python3 and python2 wheels with quite different
+            # dependencies.  We try to detect such cases and combine the data from the
+            # two wheels into what ought to have been published in the first place...
             universal_wheel = None
             universal_python2_wheel = None
             universal_python3_wheel = None
@@ -207,9 +213,9 @@ class HTTPRepository(CachedRepository, ABC):
             if universal_python2_wheel:
                 return self._get_info_from_wheel(universal_python2_wheel)
 
-            if platform_specific_wheels and "sdist" not in urls:
-                # Pick the first wheel available and hope for the best
-                return self._get_info_from_wheel(platform_specific_wheels[0])
+            if platform_specific_wheels:
+                first_wheel = platform_specific_wheels[0]
+                return self._get_info_from_wheel(first_wheel)
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
