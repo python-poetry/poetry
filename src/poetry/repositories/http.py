@@ -230,7 +230,7 @@ class HTTPRepository(CachedRepository, ABC):
 
             if not link.hash or (
                 link.hash_name is not None
-                and link.hash_name not in ("sha256", "sha384", "sha512")
+                and link.hash_name not in hashlib.algorithms_guaranteed
                 and hasattr(hashlib, link.hash_name)
             ):
                 with temporary_directory() as temp_dir:
