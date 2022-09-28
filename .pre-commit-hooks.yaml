@@ -27,7 +27,6 @@
   description: run poetry export to sync lock file with requirements.txt
   entry: poetry export
   language: python
-  language_version: python3
   pass_filenames: false
   files: ^poetry\.lock$
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
