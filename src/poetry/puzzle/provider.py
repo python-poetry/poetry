@@ -572,18 +572,6 @@ class Provider:
             dependency = dependency_package.dependency
             requires = package.requires
 
-        if self._load_deferred:
-            # Retrieving constraints for deferred dependencies
-            for r in requires:
-                if r.is_direct_origin():
-                    locked = self.get_locked(r)
-                    # If lock file contains exactly the same URL and reference
-                    # (commit hash) of dependency as is requested,
-                    # do not analyze it again: nothing could have changed.
-                    if locked is not None and locked.package.is_same_package_as(r):
-                        continue
-                    self.search_for_direct_origin_dependency(r)
-
         optional_dependencies = []
         _dependencies = []
 
@@ -635,6 +623,18 @@ class Provider:
                 continue
 
             _dependencies.append(dep)
+
+        if self._load_deferred:
+            # Retrieving constraints for deferred dependencies
+            for dep in _dependencies:
+                if dep.is_direct_origin():
+                    locked = self.get_locked(dep)
+                    # If lock file contains exactly the same URL and reference
+                    # (commit hash) of dependency as is requested,
+                    # do not analyze it again: nothing could have changed.
+                    if locked is not None and locked.package.is_same_package_as(dep):
+                        continue
+                    self.search_for_direct_origin_dependency(dep)
 
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package

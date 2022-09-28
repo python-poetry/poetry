@@ -302,14 +302,14 @@ Sometimes, one of your dependency may have different version ranges depending
 on the target Python versions.
 
 Let's say you have a dependency on the package `foo` which is only compatible
-with Python <3.0 up to version 1.9 and compatible with Python 3.4+ from version 2.0:
+with Python 3.6-3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
 you would declare it like so:
 
 ```toml
 [tool.poetry.dependencies]
 foo = [
-    {version = "<=1.9", python = "^3.6"},
-    {version = "^2.0", python = "^3.8"}
+    {version = "<=1.9", python = ">=3.6,<3.8"},
+    {version = "^2.0", python = ">=3.8"}
 ]
 ```
 

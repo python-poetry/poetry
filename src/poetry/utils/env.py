@@ -1475,7 +1475,9 @@ class Env:
         return self._run(cmd, **kwargs)
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
-        return self.run(self._executable, "-W", "ignore", "-", input_=content, **kwargs)
+        return self.run(
+            self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
+        )
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         """
