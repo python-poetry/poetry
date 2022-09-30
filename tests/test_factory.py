@@ -299,7 +299,7 @@ def test_poetry_with_two_default_sources(with_simple_keyring: None):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 
-    assert str(e.value) == "Only one repository can be the default"
+    assert str(e.value) == "Only one repository can be the default."
 
 
 def test_validate():

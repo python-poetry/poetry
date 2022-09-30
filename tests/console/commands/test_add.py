@@ -858,7 +858,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_constraint_with_source_that_does_not_exist(
     app: PoetryTestApplication, tester: CommandTester
 ):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IndexError) as e:
         tester.execute("foo --source i-dont-exist")
 
     assert str(e.value) == 'Repository "i-dont-exist" does not exist.'
@@ -1848,7 +1848,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_constraint_with_source_that_does_not_exist_old_installer(
     app: PoetryTestApplication, old_tester: CommandTester
 ):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IndexError) as e:
         old_tester.execute("foo --source i-dont-exist")
 
     assert str(e.value) == 'Repository "i-dont-exist" does not exist.'

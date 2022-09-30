@@ -32,7 +32,7 @@ def test_pool_with_initial_repositories() -> None:
 def test_repository_no_repository() -> None:
     pool = Pool()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         pool.repository("foo")
 
 
@@ -178,7 +178,9 @@ def test_pool_get_package_in_specified_repository() -> None:
     repo2 = Repository("repo2", [package])
     pool = Pool([repo1, repo2])
 
-    returned_package = pool.package("foo", Version.parse("1.0.0"), repository="repo2")
+    returned_package = pool.package(
+        "foo", Version.parse("1.0.0"), repository_name="repo2"
+    )
 
     assert returned_package == package
 
@@ -198,7 +200,7 @@ def test_pool_no_package_from_specified_repository_raises_package_not_found() ->
     pool = Pool([repo1, repo2])
 
     with pytest.raises(PackageNotFound):
-        pool.package("foo", Version.parse("1.0.0"), repository="repo1")
+        pool.package("foo", Version.parse("1.0.0"), repository_name="repo1")
 
 
 def test_pool_find_packages_in_any_repository() -> None:
