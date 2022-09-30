@@ -33,6 +33,18 @@ class LegacyRepository(HTTPRepository):
 
         super().__init__(name, url.rstrip("/"), config, disable_cache)
 
+    @property
+    def packages(self) -> list[Package]:
+        # LegacyRepository._packages is not populated and other implementations
+        # implicitly rely on this (e.g. Pool.search via
+        # LegacyRepository.search). To avoid special-casing Pool or changing
+        # behavior, we stub and return an empty list.
+        #
+        # TODO: Rethinking search behaviour and design.
+        # Ref: https://github.com/python-poetry/poetry/issues/2446 and
+        # https://github.com/python-poetry/poetry/pull/6669#discussion_r990874908.
+        return []
+
     def package(
         self, name: str, version: Version, extras: list[str] | None = None
     ) -> Package:

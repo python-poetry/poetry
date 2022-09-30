@@ -63,6 +63,13 @@ class MockRepository(LegacyRepository):
         shutil.copyfile(str(filepath), dest)
 
 
+def test_packages_property_returns_empty_list() -> None:
+    repo = MockRepository()
+    repo._packages = [repo.package("jupyter", Version.parse("1.0.0"))]
+
+    assert repo.packages == []
+
+
 def test_page_relative_links_path_are_correct() -> None:
     repo = MockRepository()
 
