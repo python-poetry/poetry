@@ -1503,7 +1503,14 @@ class Env:
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
         return self.run(
-            self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
+            self._executable,
+            "-I",
+            "-W",
+            "ignore",
+            "-",
+            input_=content,
+            stderr=subprocess.PIPE,
+            **kwargs,
         )
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
@@ -1513,23 +1520,22 @@ class Env:
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
         env = kwargs.pop("env", dict(os.environ))
+        stderr = kwargs.pop("stderr", subprocess.STDOUT)
 
         try:
             if input_:
                 output = subprocess.run(
                     cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    stderr=stderr,
                     input=encode(input_),
                     check=True,
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(cmd, stderr=subprocess.STDOUT, env=env, **kwargs)
+                return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
             else:
-                output = subprocess.check_output(
-                    cmd, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
+                output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
 
