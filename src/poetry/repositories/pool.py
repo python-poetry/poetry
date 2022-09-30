@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.repository import Repository
 
 
 if TYPE_CHECKING:
@@ -11,14 +10,16 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
+    from poetry.repositories.repository import Repository
 
-class Pool(Repository):
+
+class Pool:
     def __init__(
         self,
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
-        super().__init__("poetry-pool")
+        self._name = "poetry-pool"
 
         if repositories is None:
             repositories = []
@@ -33,6 +34,10 @@ class Pool(Repository):
             self.add_repository(repository)
 
         self._ignore_repository_names = ignore_repository_names
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def repositories(self) -> list[Repository]:
@@ -127,9 +132,6 @@ class Pool(Repository):
                 self._secondary_start_idx -= 1
 
         return self
-
-    def has_package(self, package: Package) -> bool:
-        raise NotImplementedError()
 
     def package(
         self,
