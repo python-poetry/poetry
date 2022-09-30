@@ -464,11 +464,13 @@ class EnvCommandError(EnvError):
         self.e = e
 
         message = (
-            f"Command {e.cmd} errored with the following return code {e.returncode},"
-            f" and output: \n{decode(e.output)}"
+            f"Command {e.cmd} errored with the following return code {e.returncode}\n"
+            f"Full output:\n{decode(e.output)}\n"
         )
+        if e.stderr:
+            message += f"\nError output:\n{decode(e.stderr)}\n"
         if input:
-            message += f"input was : {input}"
+            message += f"\ninput was : {input}"
         super().__init__(message)
 
 
