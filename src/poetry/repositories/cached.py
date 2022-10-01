@@ -46,7 +46,7 @@ class CachedRepository(Repository, ABC):
     def _get_release_info(
         self, name: NormalizedName, version: Version
     ) -> dict[str, Any]:
-        raise NotImplementedError()
+        ...
 
     def get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
         """
