@@ -6,6 +6,7 @@ from collections import OrderedDict
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+from poetry.repositories.abstract_repository import AbstractRepository
 from poetry.repositories.exceptions import PackageNotFound
 
 
@@ -25,13 +26,13 @@ class Priority(IntEnum):
     SECONDARY = enum.auto()
 
 
-class Pool:
+class Pool(AbstractRepository):
     def __init__(
         self,
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
-        self._name = "poetry-pool"
+        super().__init__("poetry-pool")
         self._repositories: OrderedDict[
             str, tuple[Repository, RepositoryPriority]
         ] = OrderedDict()
@@ -41,10 +42,6 @@ class Pool:
             repositories = []
         for repository in repositories:
             self.add_repository(repository)
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def repositories(self) -> list[Repository]:

@@ -5,7 +5,6 @@ import os
 import urllib
 import urllib.parse
 
-from abc import ABC
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -35,7 +34,7 @@ if TYPE_CHECKING:
     from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
-class HTTPRepository(CachedRepository, ABC):
+class HTTPRepository(CachedRepository):
     def __init__(
         self,
         name: str,
