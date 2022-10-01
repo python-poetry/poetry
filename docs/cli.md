@@ -126,7 +126,7 @@ poetry init
 * `--author`: Author of the package.
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-* `--dev-dependency`: Development requirements, see `--require`.
+* `--dev-dependency`: Development requirements, see `--dependency`.
 
 
 ## install
