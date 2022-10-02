@@ -295,21 +295,5 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.line(self._hint_update_packages)
 
     def migrate_dev_dependencies(self, poetry_content: dict[str, Any]) -> None:
-        from poetry.factory import Factory
-
-        poetry_content["group"]["dev"]["dependencies"].update(
-            poetry_content["dev-dependencies"]
-        )
-        dev_dependencies = poetry_content["dev-dependencies"]
-        for name, constraint in dev_dependencies.items():
-            canonicalized_name = canonicalize_name(name)
-            self.poetry.package.add_dependency(
-                Factory.create_dependency(
-                    canonicalized_name,
-                    constraint,
-                    groups=["dev"],
-                    root_dir=self.poetry.file.parent,
-                )
-            )
-
-        del poetry_content["dev-dependencies"]
+        dev_dependencies = poetry_content.pop("dev-dependencies")
+        poetry_content["group"]["dev"]["dependencies"] = dev_dependencies

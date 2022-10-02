@@ -2134,16 +2134,16 @@ def test_add_with_dry_run_keep_files_intact(
     )
 
 
-@pytest.mark.parametrize("name", ["cachy", "Cachy"])
 def test_add_existing_no_constraint_old_dev_section_does_nothing(
-    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
     content = app.poetry.file.read()
-    content["tool"]["poetry"]["dev-dependencies"] = {name: "^0.2.0"}
+    content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
     app.poetry.file.write(content)
+    app.reset_poetry()
 
     tester.execute("cachy -G dev")
 
@@ -2165,12 +2165,11 @@ Nothing to add.
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "group" not in content
-    assert content["dev-dependencies"] == {name: "^0.2.0"}
+    assert content["dev-dependencies"] == {"cachy": "^0.2.0"}
 
 
-@pytest.mark.parametrize("name", ["cachy"])
 def test_add_existing_constraint_old_dev_section_migrates(
-    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     # Note: Not testing non-canonical names since this is currently broken
     # for this scenario
@@ -2179,8 +2178,9 @@ def test_add_existing_constraint_old_dev_section_migrates(
     repo.add_package(get_package("cachy", "0.2.0"))
 
     content = app.poetry.file.read()
-    content["tool"]["poetry"]["dev-dependencies"] = {name: "^0.2.0"}
+    content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
     app.poetry.file.write(content)
+    app.reset_poetry()
 
     tester.execute("cachy^0.2.0 -G dev")
 
@@ -2211,9 +2211,8 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["group"]["dev"]["dependencies"] == {"cachy": "^0.2.0"}
 
 
-@pytest.mark.parametrize("name", ["docker", "Docker"])
 def test_add_new_no_constraint_old_dev_section_migrates(
-    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(get_package("docker", "4.3.1"))
@@ -2221,8 +2220,9 @@ def test_add_new_no_constraint_old_dev_section_migrates(
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
     app.poetry.file.write(content)
+    app.reset_poetry()
 
-    tester.execute(f"{name} -G dev")
+    tester.execute("docker -G dev")
 
     expected = """\
 Using version ^4.3.1 for docker
@@ -2249,9 +2249,8 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-@pytest.mark.parametrize("name", ["docker", "Docker"])
 def test_add_new_constraint_old_dev_section_migrates(
-    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(get_package("docker", "4.3.1"))
@@ -2259,8 +2258,9 @@ def test_add_new_constraint_old_dev_section_migrates(
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
     app.poetry.file.write(content)
+    app.reset_poetry()
 
-    tester.execute(f"{name}^4.3.1 -G dev")
+    tester.execute("docker^4.3.1 -G dev")
 
     expected = """\
 
