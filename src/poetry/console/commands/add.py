@@ -297,11 +297,12 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
     def migrate_dev_dependencies(self, poetry_content: dict[str, Any]) -> None:
         from poetry.factory import Factory
 
-        dev_group = poetry_content["group"]["dev"]["dependencies"]
+        poetry_content["group"]["dev"]["dependencies"].update(
+            poetry_content["dev-dependencies"]
+        )
         dev_dependencies = poetry_content["dev-dependencies"]
         for name, constraint in dev_dependencies.items():
             canonicalized_name = canonicalize_name(name)
-            dev_group[canonicalized_name] = constraint
             self.poetry.package.add_dependency(
                 Factory.create_dependency(
                     canonicalized_name,

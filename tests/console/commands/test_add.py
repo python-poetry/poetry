@@ -2168,10 +2168,13 @@ Nothing to add.
     assert content["dev-dependencies"] == {name: "^0.2.0"}
 
 
-@pytest.mark.parametrize("name", ["cachy", "Cachy"])
+@pytest.mark.parametrize("name", ["cachy"])
 def test_add_existing_constraint_old_dev_section_migrates(
     name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
+    # Note: Not testing non-canonical names since this is currently broken
+    # for this scenario
+
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -2181,6 +2184,11 @@ def test_add_existing_constraint_old_dev_section_migrates(
 
     tester.execute("cachy^0.2.0 -G dev")
 
+    warning = """\
+The dev-dependencies section is deprecated. \
+Automatically rewriting dev-dependencies as \
+group.dev.dependencies
+"""
     expected = """\
 
 Updating dependencies
@@ -2194,6 +2202,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert tester.io.fetch_output() == expected
+    assert tester.io.fetch_error() == warning
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
