@@ -121,7 +121,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
-        packages_migrated = False
 
         if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
@@ -147,11 +146,11 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             if group == "dev" and "dev-dependencies" in poetry_content:
                 self.line_error(
-                    "<warning>The dev-dependencies section is deprecated."
-                    " Automatically rewriting dev-dependencies as group.dev.dependencies</warning>"
+                    "<warning>The dev-dependencies section is deprecated. "
+                    "Automatically rewriting dev-dependencies as "
+                    "group.dev.dependencies</warning>"
                 )
                 self.migrate_dev_dependencies(poetry_content)
-                packages_migrated = True
 
         existing_packages = self.get_existing_packages_from_input(packages, section)
 
@@ -162,11 +161,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         if not packages:
             self.line("Nothing to add.")
-
-            if packages_migrated and not self.option("dry-run"):
-                assert isinstance(content, TOMLDocument)
-                self.poetry.file.write(content)
-
             return 0
 
         requirements = self._determine_requirements(
