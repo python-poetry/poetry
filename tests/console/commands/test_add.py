@@ -2281,3 +2281,28 @@ Package operations: 2 installs, 0 updates, 0 removals
         "cachy": "^0.2.0",
         "docker": "^4.3.1",
     }
+
+
+def test_add_mixed_old_new_dev_section_migrates(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
+    repo.add_package(get_package("pyyaml", "3.13"))
+
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
+    content["tool"]["poetry"]["group"] = {"dev": {"dependencies": {"docker": "^4.3.1"}}}
+    app.poetry.file.write(content)
+    app.reset_poetry()
+
+    tester.execute("pyyaml^3.13 -G dev")
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "dev-dependencies" not in content
+    assert content["group"]["dev"]["dependencies"] == {
+        "cachy": "^0.2.0",
+        "docker": "^4.3.1",
+        "pyyaml": "^3.13",
+    }

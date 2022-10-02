@@ -151,7 +151,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 )
 
                 dev_dependencies = poetry_content.pop("dev-dependencies")
-                poetry_content["group"]["dev"]["dependencies"] = dev_dependencies
+                poetry_content["group"]["dev"]["dependencies"].update(dev_dependencies)
 
             section = poetry_content["group"][group]["dependencies"]
 
