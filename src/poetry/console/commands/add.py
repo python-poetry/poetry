@@ -142,8 +142,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             if "dependencies" not in poetry_content["group"][group]:
                 poetry_content["group"][group]["dependencies"] = table()
 
-            section = poetry_content["group"][group]["dependencies"]
-
             if group == "dev" and "dev-dependencies" in poetry_content:
                 self.line_error(
                     "<warning>The dev-dependencies section is deprecated. "
@@ -151,6 +149,8 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     "group.dev.dependencies</warning>"
                 )
                 self.migrate_dev_dependencies(poetry_content)
+
+            section = poetry_content["group"][group]["dependencies"]
 
         existing_packages = self.get_existing_packages_from_input(packages, section)
 

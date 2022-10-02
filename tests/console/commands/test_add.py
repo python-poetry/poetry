@@ -2132,3 +2132,146 @@ def test_add_with_dry_run_keep_files_intact(
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )
+
+
+@pytest.mark.parametrize("name", ["cachy", "Cachy"])
+def test_add_existing_no_constraint_old_dev_section_does_nothing(
+    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dev-dependencies"] = {name: "^0.2.0"}
+    app.poetry.file.write(content)
+
+    tester.execute("cachy -G dev")
+
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • cachy
+
+If you want to update it to the latest compatible version, you can use \
+`poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use \
+`poetry add package@latest`.
+
+Nothing to add.
+"""
+
+    assert tester.io.fetch_output() == expected
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "group" not in content
+    assert content["dev-dependencies"] == {name: "^0.2.0"}
+
+
+@pytest.mark.parametrize("name", ["cachy", "Cachy"])
+def test_add_existing_constraint_old_dev_section_migrates(
+    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dev-dependencies"] = {name: "^0.2.0"}
+    app.poetry.file.write(content)
+
+    tester.execute("cachy^0.2.0 -G dev")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing cachy (0.2.0)
+"""
+
+    assert tester.io.fetch_output() == expected
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "dev-dependencies" not in content
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"] == {"cachy": "^0.2.0"}
+
+
+@pytest.mark.parametrize("name", ["docker", "Docker"])
+def test_add_new_no_constraint_old_dev_section_migrates(
+    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
+
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
+    app.poetry.file.write(content)
+
+    tester.execute(f"{name} -G dev")
+
+    expected = """\
+Using version ^4.3.1 for docker
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  • Installing cachy (0.2.0)
+  • Installing docker (4.3.1)
+"""
+
+    assert tester.io.fetch_output() == expected
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "dev-dependencies" not in content
+    assert content["group"]["dev"]["dependencies"] == {
+        "cachy": "^0.2.0",
+        "docker": "^4.3.1",
+    }
+
+
+@pytest.mark.parametrize("name", ["docker", "Docker"])
+def test_add_new_constraint_old_dev_section_migrates(
+    name: str, app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
+
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dev-dependencies"] = {"cachy": "^0.2.0"}
+    app.poetry.file.write(content)
+
+    tester.execute(f"{name}^4.3.1 -G dev")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  • Installing cachy (0.2.0)
+  • Installing docker (4.3.1)
+"""
+
+    assert tester.io.fetch_output() == expected
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "dev-dependencies" not in content
+    assert content["group"]["dev"]["dependencies"] == {
+        "cachy": "^0.2.0",
+        "docker": "^4.3.1",
+    }
