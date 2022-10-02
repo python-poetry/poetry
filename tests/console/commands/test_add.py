@@ -2171,9 +2171,6 @@ Nothing to add.
 def test_add_existing_constraint_old_dev_section_migrates(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
-    # Note: Not testing non-canonical names since this is currently broken
-    # for this scenario
-
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
