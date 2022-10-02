@@ -147,8 +147,8 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             if group == "dev" and "dev-dependencies" in poetry_content:
                 self.line_error(
-                    "<warning>The dev-dependencies are deprecated. "
-                    "Migrating dev-dependencies to group.dev.dependencies</warning>"
+                    "<warning>The dev-dependencies section is deprecated."
+                    " Automatically rewriting dev-dependencies as group.dev.dependencies</warning>"
                 )
                 self.migrate_dev_dependencies(poetry_content)
                 packages_migrated = True
