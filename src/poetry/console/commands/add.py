@@ -143,12 +143,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 poetry_content["group"][group]["dependencies"] = table()
 
             if group == "dev" and "dev-dependencies" in poetry_content:
+                # Migrate dev-dependencies section to group.dev.dependencies
                 self.line_error(
                     "<warning>The dev-dependencies section is deprecated. "
                     "Automatically rewriting dev-dependencies as "
                     "group.dev.dependencies</warning>"
                 )
-                self.migrate_dev_dependencies(poetry_content)
+
+                dev_dependencies = poetry_content.pop("dev-dependencies")
+                poetry_content["group"]["dev"]["dependencies"] = dev_dependencies
 
             section = poetry_content["group"][group]["dependencies"]
 
@@ -293,7 +296,3 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         for name in existing_packages:
             self.line(f"  • <c1>{name}</c1>")
         self.line(self._hint_update_packages)
-
-    def migrate_dev_dependencies(self, poetry_content: dict[str, Any]) -> None:
-        dev_dependencies = poetry_content.pop("dev-dependencies")
-        poetry_content["group"]["dev"]["dependencies"] = dev_dependencies
