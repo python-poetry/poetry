@@ -121,6 +121,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
+        packages_migrated = False
 
         if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
@@ -144,6 +145,14 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             section = poetry_content["group"][group]["dependencies"]
 
+            if group == "dev" and "dev-dependencies" in poetry_content:
+                self.line_error(
+                    "<warning>The dev-dependencies are deprecated. "
+                    "Migrating dev-dependencies to group.dev.dependencies</warning>"
+                )
+                self.migrate_dev_dependencies(poetry_content)
+                packages_migrated = True
+
         existing_packages = self.get_existing_packages_from_input(packages, section)
 
         if existing_packages:
@@ -153,6 +162,11 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         if not packages:
             self.line("Nothing to add.")
+
+            if packages_migrated and not self.option("dry-run"):
+                assert isinstance(content, TOMLDocument)
+                self.poetry.file.write(content)
+
             return 0
 
         requirements = self._determine_requirements(
@@ -285,3 +299,21 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         for name in existing_packages:
             self.line(f"  • <c1>{name}</c1>")
         self.line(self._hint_update_packages)
+
+    def migrate_dev_dependencies(self, poetry_content: TOMLDocument) -> None:
+        from poetry.factory import Factory
+
+        dev_group = poetry_content["group"]["dev"]["dependencies"]
+        for name, constraint in poetry_content["dev-dependencies"].items():
+            canonicalized_name = canonicalize_name(name)
+            dev_group[canonicalized_name] = constraint
+            self.poetry.package.add_dependency(
+                Factory.create_dependency(
+                    canonicalized_name,
+                    constraint,
+                    groups=["dev"],
+                    root_dir=self.poetry.file.parent,
+                )
+            )
+
+        del poetry_content["dev-dependencies"]
