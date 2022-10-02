@@ -130,15 +130,16 @@ Likewise if you have command line tools such as `pytest` or `black` you can run 
 
 ### Activating the virtual environment
 
-The easiest way to activate the virtual environment is to create a new shell with `poetry shell`.
+The easiest way to activate the virtual environment is to create a nested shell with `poetry shell`.
+
 To deactivate the virtual environment and exit this new shell type `exit`.
 To deactivate the virtual environment without leaving the shell use `deactivate`.
 
 {{% note %}}
-**Why a new shell?**
+**Why a nested shell?**
 
 Child processes inherit their environment from their parents, but do not share
-them. As such, any modifications made by a child process, is not persisted after
+them. As such, any modifications made by a child process is not persisted after
 the child process exits. A Python application (Poetry), being a child process,
 cannot modify the environment of the shell that it has been called from such
 that an activated virtual environment remains active after the Poetry command
@@ -149,16 +150,18 @@ in order for the subsequent commands to run from within the virtual environment.
 {{% /note %}}
 
 Alternatively, to avoid creating a new shell, you can manually activate the
-virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` on Windows PowerShell).
+virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` in PowerShell).
 To get the path to your virtual environment run `poetry env info --path`.
-You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
+You can also combine these into a one-liner, such as `source $(poetry env info --path)/bin/activate`
+(`& ((poetry env info --path) + "\Scripts\activate.ps1")` in Powershell).
+
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                     | Windows (PowerShell)                  | Exit/Deactivate |
-| ----------------- | ----------------------------------------------- | ------------------------------------- | --------------- |
-| New Shell         | `poetry shell`                                  | `poetry shell`                        | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1` | `deactivate`    |
-| One-liner         | `source $(poetry env info --path)/bin/activate` |                                       | `deactivate`    |
+|                   | POSIX Shell                                     | Windows (PowerShell)                                     | Exit/Deactivate |
+|-------------------| ----------------------------------------------- |----------------------------------------------------------| --------------- |
+| Sub-shell         | `poetry shell`                                  | `poetry shell`                                           | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1`                    | `deactivate`    |
+| One-liner         | `source $(poetry env info --path)/bin/activate` | `& ((poetry env info --path) + "\Scripts\activate.ps1")` | `deactivate`    |
 
 ## Version constraints
 
