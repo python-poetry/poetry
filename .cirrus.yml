@@ -1,6 +1,6 @@
 freebsd_instance:
   image_family: freebsd-13-1
-  cpu: 1
+  cpu: 2
   memory: 4G
 
 test_task:
