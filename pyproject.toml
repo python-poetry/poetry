@@ -75,9 +75,9 @@ urllib3 = "^1.26.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1"
-pytest-cov = "^3.0"
-pytest-mock = "^3.5"
-pytest-randomly = "^3.10"
+pytest-cov = "^4.0"
+pytest-mock = "^3.9"
+pytest-randomly = "^3.12"
 pytest-sugar = "^0.9"
 pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 pre-commit = "^2.6"
