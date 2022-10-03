@@ -630,7 +630,7 @@ poetry lock
 
 ### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml` and validates the structure of the `pyproject.toml` file.
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ## version
