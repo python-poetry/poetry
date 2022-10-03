@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver.helpers import parse_constraint
@@ -157,6 +158,7 @@ class Locker:
             extras = info.get("extras", {})
             if extras:
                 for name, deps in extras.items():
+                    name = canonicalize_name(name)
                     package.extras[name] = []
 
                     for dep in deps:

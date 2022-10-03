@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Collection
 
 
 if TYPE_CHECKING:
@@ -15,9 +16,9 @@ if TYPE_CHECKING:
 
 def get_extra_package_names(
     packages: Sequence[Package],
-    extras: Mapping[str, list[str]],
-    extra_names: Sequence[str],
-) -> Iterable[str]:
+    extras: Mapping[NormalizedName, Iterable[NormalizedName]],
+    extra_names: Collection[NormalizedName],
+) -> Iterable[NormalizedName]:
     """
     Returns all package names required by the given extras.
 
