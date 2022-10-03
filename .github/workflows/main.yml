@@ -94,22 +94,16 @@ jobs:
         run: poetry run pip install git+https://github.com/pypa/pip.git@fbb7f0b293f1d9289d8c76a556540325b9a172b2
 
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --with github-actions
 
       - name: Run mypy
         run: poetry run mypy
 
-      - name: Install pytest plugin
-        run: poetry run pip install pytest-github-actions-annotate-failures
-
       - name: Run pytest
-        run: poetry run pytest -v tests/
-
-      - name: Run pytest (integration suite)
         env:
           POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
           POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: poetry run pytest -v --integration tests/integration
+        run: poetry run pytest --integration -v
 
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
