@@ -215,7 +215,7 @@ def test_authenticator_request_retries_on_exception(
             raise requests.exceptions.ConnectionError("Disconnected")
         return [200, response_headers, content]
 
-    httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
+    http.register_uri(httpretty.GET, sdist_uri, body=callback)
 
     authenticator = Authenticator(config, NullIO())
     response = authenticator.request("get", sdist_uri)
@@ -233,7 +233,7 @@ def test_authenticator_request_raises_exception_when_attempts_exhausted(
     def callback(*_: Any, **___: Any) -> None:
         raise requests.exceptions.ConnectionError(str(uuid.uuid4()))
 
-    httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
+    http.register_uri(httpretty.GET, sdist_uri, body=callback)
     authenticator = Authenticator(config, NullIO())
 
     with pytest.raises(requests.exceptions.ConnectionError):
@@ -271,7 +271,7 @@ def test_authenticator_request_retries_on_status_code(
     ) -> list[int | dict | str]:
         return [status, response_headers, content]
 
-    httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
+    http.register_uri(httpretty.GET, sdist_uri, body=callback)
     authenticator = Authenticator(config, NullIO())
 
     with pytest.raises(requests.exceptions.HTTPError) as excinfo:
