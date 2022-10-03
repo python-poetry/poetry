@@ -275,12 +275,8 @@ def git_mock(mocker: MockerFixture) -> None:
 @pytest.fixture
 def http() -> Iterator[type[httpretty.httpretty]]:
     httpretty.reset()
-    httpretty.enable(allow_net_connect=False)
-
-    yield httpretty
-
-    httpretty.activate()
-    httpretty.reset()
+    with httpretty.enabled(allow_net_connect=False):
+        yield httpretty
 
 
 @pytest.fixture
