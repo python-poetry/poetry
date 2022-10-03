@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from deepdiff import DeepDiff
+from packaging.utils import canonicalize_name
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
 
@@ -151,6 +152,15 @@ def test_create_pyproject_from_package(project: str):
 
     result = pyproject["tool"]["poetry"]
     expected = poetry.pyproject.poetry_config
+
+    # Extras are normalized as they are read.
+    extras = expected.pop("extras", None)
+    if extras is not None:
+        normalized_extras = {
+            canonicalize_name(extra): dependencies
+            for extra, dependencies in extras.items()
+        }
+        expected["extras"] = normalized_extras
 
     # packages do not support this at present
     expected.pop("scripts", None)

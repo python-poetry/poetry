@@ -115,6 +115,7 @@ dependencies and not including the current project, run the command with the
             )
             return 1
 
+        extras: list[str]
         if self.option("all-extras"):
             extras = list(self.poetry.package.extras.keys())
         else:

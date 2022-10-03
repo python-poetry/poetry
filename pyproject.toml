@@ -45,7 +45,7 @@ generate-setup-file = false
 python = "^3.7"
 
 poetry-core = "1.2.0"
-poetry-plugin-export = "^1.0.7"
+poetry-plugin-export = "^1.1.1"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
@@ -77,6 +77,8 @@ tox = "^3.18"
 pre-commit = "^2.6"
 
 [tool.poetry.group.test.dependencies]
+# TODO: remove as soon as poetry-core with poetry-core#476 is available
+poetry-core = { git = "https://github.com/dimbleby/poetry-core.git", branch = "canonicalize-extras" }
 deepdiff = "^5.0"
 flatdict = "^4.0.1"
 httpretty = "^1.0"

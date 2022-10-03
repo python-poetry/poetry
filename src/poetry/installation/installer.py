@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from cleo.io.null_io import NullIO
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
@@ -63,7 +64,7 @@ class Installer:
 
         self._whitelist: list[str] = []
 
-        self._extras: list[str] = []
+        self._extras: list[NormalizedName] = []
 
         if executor is None:
             executor = Executor(
@@ -175,7 +176,7 @@ class Installer:
         return self
 
     def extras(self, extras: list[str]) -> Installer:
-        self._extras = extras
+        self._extras = [canonicalize_name(extra) for extra in extras]
 
         return self
 
@@ -259,8 +260,12 @@ class Installer:
                     "</warning>"
                 )
 
+            locker_extras = {
+                canonicalize_name(extra)
+                for extra in self._locker.lock_data.get("extras", {})
+            }
             for extra in self._extras:
-                if extra not in self._locker.lock_data.get("extras", {}):
+                if extra not in locker_extras:
                     raise ValueError(f"Extra [{extra}] is not specified.")
 
             # If we are installing from lock
@@ -547,11 +552,17 @@ class Installer:
 
         Maybe we just let the solver handle it?
         """
-        extras: dict[str, list[str]]
+        extras: dict[NormalizedName, list[NormalizedName]]
         if self._update:
             extras = {k: [d.name for d in v] for k, v in self._package.extras.items()}
         else:
-            extras = self._locker.lock_data.get("extras", {})
+            raw_extras = self._locker.lock_data.get("extras", {})
+            extras = {
+                canonicalize_name(extra): [
+                    canonicalize_name(dependency) for dependency in dependencies
+                ]
+                for extra, dependencies in raw_extras.items()
+            }
 
         return list(get_extra_package_names(repo.packages, extras, self._extras))
 
