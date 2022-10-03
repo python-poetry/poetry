@@ -18,7 +18,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
-from poetry.repositories.cached import CachedRepository
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
