@@ -3,6 +3,7 @@ from __future__ import annotations
 import enum
 
 from collections import OrderedDict
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
@@ -26,6 +27,12 @@ class Priority(IntEnum):
     SECONDARY = enum.auto()
 
 
+@dataclass(frozen=True)
+class PrioritizedRepository:
+    repository: Repository
+    priority: Priority
+
+
 class Pool(AbstractRepository):
     def __init__(
         self,
@@ -33,9 +40,7 @@ class Pool(AbstractRepository):
         ignore_repository_names: bool = False,
     ) -> None:
         super().__init__("poetry-pool")
-        self._repositories: OrderedDict[
-            str, tuple[Repository, RepositoryPriority]
-        ] = OrderedDict()
+        self._repositories: OrderedDict[str, PrioritizedRepository] = OrderedDict()
         self._ignore_repository_names = ignore_repository_names
 
         if repositories is None:
@@ -46,8 +51,10 @@ class Pool(AbstractRepository):
     @property
     def repositories(self) -> list[Repository]:
         unsorted_repositories = self._repositories.values()
-        sorted_repositories = sorted(unsorted_repositories, key=lambda p: p[1].value)
-        return [repo for (repo, _) in sorted_repositories]
+        sorted_repositories = sorted(
+            unsorted_repositories, key=lambda prio_repo: prio_repo.priority
+        )
+        return [prio_repo.repository for prio_repo in sorted_repositories]
 
     def has_default(self) -> bool:
         return self._contains_priority(Priority.DEFAULT)
@@ -57,7 +64,7 @@ class Pool(AbstractRepository):
 
     def _contains_priority(self, priority: Priority) -> bool:
         return any(
-            repo_prio is priority for _, repo_prio in self._repositories.values()
+            prio_repo.priority is priority for prio_repo in self._repositories.values()
         )
 
     def has_repository(self, name: str) -> bool:
@@ -66,7 +73,7 @@ class Pool(AbstractRepository):
     def repository(self, name: str) -> Repository:
         name = name.lower()
         if self.has_repository(name):
-            return self._repositories[name][0]
+            return self._repositories[name].repository
         raise IndexError(f'Repository "{name}" does not exist.')
 
     def add_repository(
@@ -89,7 +96,9 @@ class Pool(AbstractRepository):
             priority = Priority.DEFAULT
         elif secondary:
             priority = Priority.SECONDARY
-        self._repositories[repository_name] = (repository, priority)
+        self._repositories[repository_name] = PrioritizedRepository(
+            repository, priority
+        )
         return self
 
     def remove_repository(self, name: str) -> Pool:
