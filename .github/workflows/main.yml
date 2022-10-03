@@ -103,13 +103,13 @@ jobs:
         run: poetry run pip install pytest-github-actions-annotate-failures
 
       - name: Run pytest
-        run: poetry run python -m pytest -n auto -p no:sugar -q tests/
+        run: poetry run pytest -v tests/
 
       - name: Run pytest (integration suite)
         env:
           POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
           POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: poetry run python -m pytest -n auto -p no:sugar -q --integration tests/integration
+        run: poetry run pytest -v --integration tests/integration
 
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
@@ -125,7 +125,7 @@ jobs:
           ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
       - name: Run pytest (poetry-plugin-export)
-        run: poetry run python -m pytest -p no:sugar -q poetry-plugin-export/tests/
+        run: poetry run pytest -v poetry-plugin-export/tests/
 
       - name: Check for clean working tree
         run: |

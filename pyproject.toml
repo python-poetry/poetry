@@ -78,7 +78,6 @@ pytest = "^7.1"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
 pytest-randomly = "^3.12"
-pytest-sugar = "^0.9"
 pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 pre-commit = "^2.6"
 deepdiff = "^5.0"
@@ -165,6 +164,14 @@ module = [
   'xattr.*',
 ]
 ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+addopts = "-n auto"
+testpaths = [
+    "tests"
+]
+
 
 [tool.coverage.report]
 exclude_lines = [
