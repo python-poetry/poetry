@@ -16,21 +16,18 @@ test_task:
       - PYTHON: python3.8
       - PYTHON: python3.9
       - PYTHON: python3.10
-  pkg_script:
-    - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
-    - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
-    - pkg install -y git-lite curl $PYPACKAGE $SQLPACKAGE
-  pip_script:
-    - $PYTHON -m ensurepip
-    - $PYTHON -m pip --disable-pip-version-check install -U pip
-  env_script:
-    - echo "PATH=/.local/bin:${PATH}" >> $CIRRUS_ENV
-  poetry_script:
-    - curl -sL https://install.python-poetry.org | $PYTHON - -y
-    - poetry config virtualenvs.in-project true
-  test_script:
+  install_prereqs_script:
+    - V=$(printf '%s' $PYTHON | tr -d '.[:alpha:]')
+    - pkg install -y python${V} py${V}-sqlite3
+  install_poetry_script:
+    - POETRY_HOME=/opt/poetry
+    - $PYTHON -m venv $POETRY_HOME
+    - $POETRY_HOME/bin/pip install --upgrade pip setuptools wheel
+    - $POETRY_HOME/bin/pip install poetry
+    - echo "PATH=$POETRY_HOME/bin:$PATH" >> $CIRRUS_ENV
+  install_and_test_script:
     - poetry install
-    - poetry run pytest -n auto -q --junitxml=junit.xml tests
+    - poetry run pytest --junitxml=junit.xml -v
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml
