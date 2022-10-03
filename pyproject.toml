@@ -94,6 +94,13 @@ types-jsonschema = ">=4.9.0"
 types-requests = ">=2.28.8"
 typing-extensions = { version = "^4.0.0", python = "<3.8" }
 
+# only used in github actions
+[tool.poetry.group.github-actions]
+optional = true
+[tool.poetry.group.github-actions.dependencies]
+pytest-github-actions-annotate-failures = "^0.1.7"
+
+
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
 
