@@ -72,23 +72,27 @@ xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 dulwich = "^0.20.46"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 tox = "^3.18"
+pre-commit = "^2.6"
+
+[tool.poetry.group.test.dependencies]
+deepdiff = "^5.0"
+flatdict = "^4.0.1"
+httpretty = "^1.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
 pytest-randomly = "^3.12"
 pytest-xdist = { version = "^2.5", extras = ["psutil"] }
-pre-commit = "^2.6"
-deepdiff = "^5.0"
-httpretty = "^1.0"
-typing-extensions = { version = "^4.0.0", python = "<3.8" }
 zipp = { version = "^3.4", python = "<3.8" }
-flatdict = "^4.0.1"
+
+[tool.poetry.group.typing.dependencies]
 mypy = ">=0.971"
 types-html5lib = ">=1.1.9"
 types-jsonschema = ">=4.9.0"
 types-requests = ">=2.28.8"
+typing-extensions = { version = "^4.0.0", python = "<3.8" }
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
