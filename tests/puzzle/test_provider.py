@@ -462,8 +462,8 @@ def test_search_for_directory_poetry(provider: Provider):
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras_a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras_b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
+        "extras-b": [get_dependency("cachy", ">=0.2.0")],
     }
 
 
@@ -491,8 +491,8 @@ def test_search_for_directory_poetry_with_extras(provider: Provider):
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras_a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras_b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
+        "extras-b": [get_dependency("cachy", ">=0.2.0")],
     }
 
 
