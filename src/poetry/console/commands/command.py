@@ -28,7 +28,10 @@ class Command(BaseCommand):  # type: ignore[misc]
         self._poetry = poetry
 
     def get_application(self) -> Application:
-        application: Application = self.application
+        from poetry.console.application import Application
+
+        application = self.application
+        assert isinstance(application, Application)
         return application
 
     def reset_poetry(self) -> None:

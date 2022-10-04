@@ -86,7 +86,7 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command = self.application.find("show")
+            show_command = self.get_application().find("show")
             assert isinstance(show_command, ShowCommand)
             show_command.init_styles(self.io)
 
