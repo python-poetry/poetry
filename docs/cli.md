@@ -971,3 +971,21 @@ poetry self install --sync
 
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+
+### self source
+
+Manage the sources used for plugins at the system level.
+Commands this area affect the Poetry-managed pyproject.toml for Poetry itself.
+Add a source using this system if you want to install a plugin from a PyPI mirror or a PyPI instance inside a firewall.
+
+#### self source add
+
+See the documentation for [source add](#source-add).
+
+#### self source remove
+
+See the documentation for [source remove](#source-remove).
+
+#### self source show
+
+See the documentation for [source show](#source-show).
