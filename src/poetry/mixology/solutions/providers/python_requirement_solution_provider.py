@@ -6,17 +6,15 @@ from typing import TYPE_CHECKING
 
 from crashtest.contracts.has_solutions_for_exception import HasSolutionsForException
 
+from poetry.puzzle.exceptions import SolverProblemError
+
 
 if TYPE_CHECKING:
     from crashtest.contracts.solution import Solution
 
-    from poetry.puzzle.exceptions import SolverProblemError
-
 
 class PythonRequirementSolutionProvider(HasSolutionsForException):  # type: ignore[misc]
     def can_solve(self, exception: Exception) -> bool:
-        from poetry.puzzle.exceptions import SolverProblemError
-
         if not isinstance(exception, SolverProblemError):
             return False
 
@@ -28,9 +26,10 @@ class PythonRequirementSolutionProvider(HasSolutionsForException):  # type: igno
 
         return bool(m)
 
-    def get_solutions(self, exception: SolverProblemError) -> list[Solution]:
+    def get_solutions(self, exception: Exception) -> list[Solution]:
         from poetry.mixology.solutions.solutions.python_requirement_solution import (
             PythonRequirementSolution,
         )
 
+        assert isinstance(exception, SolverProblemError)
         return [PythonRequirementSolution(exception)]
