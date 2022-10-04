@@ -57,7 +57,7 @@ class SelfCommand(InstallerCommand):
     def activated_groups(self) -> set[str]:
         return {self.default_group}
 
-    def generate_system_pyproject(self) -> None:
+    def generate_system_pyproject(self) -> str:
         preserved = {}
 
         if self.system_pyproject.exists():
@@ -77,11 +77,16 @@ class SelfCommand(InstallerCommand):
         for key in preserved:
             content["tool"]["poetry"][key] = preserved[key]  # type: ignore[index]
 
-        self.system_pyproject.write_text(content.as_string(), encoding="utf-8")
+        return content.as_string()
+
+    def overwrite_system_pyproject(self) -> None:
+        self.system_pyproject.write_text(
+            self.generate_system_pyproject(), encoding="utf-8"
+        )
 
     def reset_poetry(self) -> None:
         with directory(self.system_pyproject.parent):
-            self.generate_system_pyproject()
+            self.overwrite_system_pyproject()
             self._poetry = Factory().create_poetry(
                 self.system_pyproject.parent, io=self.io, disable_plugins=True
             )
