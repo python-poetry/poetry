@@ -525,9 +525,9 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 
 [package.source]
 type = "git"
-url = "https://github.com/dimbleby/poetry-core.git"
-reference = "canonicalize-extras"
-resolved_reference = "9f58ecf8dddbafd38a2b4f2367a5f0f1d8ff25f4"
+url = "https://github.com/finswimmer/core.git"
+reference = "fix/available-pythons"
+resolved_reference = "5e133e5547949ec5e0c469dda9231cc850eb83bd"
 
 [[package]]
 name = "poetry-plugin-export"
@@ -958,7 +958,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "1bde59127c0958c1a4b0d097e29478841141558832d05e70b6dd97a8d2388364"
+content-hash = "c7bdae481aa10cd023f9e00b8fd737bae086a828b670f6899e98968bdd587d3c"
 
 [metadata.files]
 attrs = [
