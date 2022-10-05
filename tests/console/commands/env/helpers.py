@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 
 if TYPE_CHECKING:

@@ -12,7 +12,7 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder

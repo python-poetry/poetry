@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import cast
 
-from poetry.core.semver.helpers import parse_constraint
+from poetry.core.constraints.version import parse_constraint
 
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import PythonCause

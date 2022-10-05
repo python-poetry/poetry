@@ -107,7 +107,7 @@ def test_publish_dry_run_skip_existing(
     error = app_tester.io.fetch_error()
 
     assert "Publishing simple-project (1.2.3) to PyPI" in output
-    assert "- Uploading simple-project-1.2.3.tar.gz" in error
+    assert "- Uploading simple_project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
 
 
@@ -125,4 +125,4 @@ def test_skip_existing_output(
     assert exit_code == 0
 
     error = app_tester.io.fetch_error()
-    assert "- Uploading simple-project-1.2.3.tar.gz File exists. Skipping" in error
+    assert "- Uploading simple_project-1.2.3.tar.gz File exists. Skipping" in error

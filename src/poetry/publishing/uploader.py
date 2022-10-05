@@ -10,7 +10,7 @@ from typing import Any
 import requests
 
 from poetry.core.masonry.metadata import Metadata
-from poetry.core.masonry.utils.helpers import escape_name
+from poetry.core.masonry.utils.helpers import distribution_name
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -79,9 +79,11 @@ class Uploader:
         version = self._package.version.to_string()
 
         wheels = list(
-            dist.glob(f"{escape_name(self._package.pretty_name)}-{version}-*.whl")
+            dist.glob(f"{distribution_name(self._package.name)}-{version}-*.whl")
         )
-        tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
+        tars = list(
+            dist.glob(f"{distribution_name(self._package.name)}-{version}.tar.gz")
+        )
 
         return sorted(wheels + tars)
 

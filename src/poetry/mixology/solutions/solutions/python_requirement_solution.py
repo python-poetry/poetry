@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class PythonRequirementSolution(Solution):  # type: ignore[misc]
     def __init__(self, exception: SolverProblemError) -> None:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
 
         from poetry.mixology.incompatibility_cause import PythonCause
 

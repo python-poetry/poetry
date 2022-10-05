@@ -10,8 +10,8 @@ from typing import Any
 
 import pytest
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
-from poetry.core.semver.version import Version
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 

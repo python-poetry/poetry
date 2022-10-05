@@ -533,7 +533,7 @@ lists all packages available."""
         return selector.find_best_candidate(name, f">={package.pretty_version}")
 
     def get_update_status(self, latest: Package, package: Package) -> str:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return "up-to-date"

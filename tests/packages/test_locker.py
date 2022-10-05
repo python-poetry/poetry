@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING
 import pytest
 import tomlkit
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
 from poetry.packages.locker import GENERATED_COMMENT

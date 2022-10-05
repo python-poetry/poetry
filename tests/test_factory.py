@@ -7,7 +7,7 @@ import pytest
 
 from deepdiff import DeepDiff
 from packaging.utils import canonicalize_name
-from poetry.core.semver.helpers import parse_constraint
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory

@@ -5,18 +5,18 @@ import logging
 from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
-from poetry.core.semver.version import Version
-from poetry.core.semver.version_range import VersionRange
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionRange
 
 from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Repository:

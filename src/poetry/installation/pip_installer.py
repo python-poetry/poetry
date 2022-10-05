@@ -10,8 +10,8 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 
+from poetry.core.constraints.version import Version
 from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.core.semver.version import Version
 
 from poetry.installation.base_installer import BaseInstaller
 from poetry.repositories.http import HTTPRepository
