@@ -7,9 +7,9 @@ from unittest.mock import PropertyMock
 import pytest
 
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver.version import Version
 
 from poetry.repositories.link_sources.base import LinkSource
 

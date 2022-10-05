@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver.version import Version
 
 from poetry.repositories.link_sources.html import HTMLPage
 

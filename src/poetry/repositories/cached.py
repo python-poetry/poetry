@@ -7,7 +7,7 @@ from typing import Any
 
 from cachy import CacheManager
 from packaging.utils import canonicalize_name
-from poetry.core.semver.helpers import parse_constraint
+from poetry.core.constraints.version import parse_constraint
 
 from poetry.config.config import Config
 from poetry.repositories.repository import Repository
@@ -15,8 +15,8 @@ from poetry.repositories.repository import Repository
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.package import Package
-    from poetry.core.semver.version import Version
 
     from poetry.inspection.info import PackageInfo
 
