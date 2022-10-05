@@ -9,11 +9,12 @@ from poetry.factory import Factory
 
 
 if TYPE_CHECKING:
+    from poetry.utils.env import VirtualEnv
     from tests.types import CommandTesterFactory
 
 
 def test_build_with_multiple_readme_files(
-    tmp_path: Path, command_tester_factory: CommandTesterFactory
+    tmp_path: Path, tmp_venv: VirtualEnv, command_tester_factory: CommandTesterFactory
 ):
     source_dir = (
         Path(__file__).parent.parent.parent / "fixtures" / "with_multiple_readme_files"
@@ -22,7 +23,7 @@ def test_build_with_multiple_readme_files(
     shutil.copytree(str(source_dir), str(target_dir))
 
     poetry = Factory().create_poetry(target_dir)
-    tester = command_tester_factory("build", poetry)
+    tester = command_tester_factory("build", poetry, environment=tmp_venv)
 
     tester.execute()
 
