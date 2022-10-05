@@ -12,7 +12,7 @@ import pytest
 import tomlkit
 
 from cleo.io.null_io import NullIO
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory

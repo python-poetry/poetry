@@ -6,7 +6,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 
 class SetupReader:
