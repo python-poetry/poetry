@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
-    from poetry.core.semver.version import Version
-    from poetry.core.semver.version_constraint import VersionConstraint
+    from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
 
 SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 

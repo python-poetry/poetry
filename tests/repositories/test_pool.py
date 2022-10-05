@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from poetry.repositories import Pool
 from poetry.repositories import Repository

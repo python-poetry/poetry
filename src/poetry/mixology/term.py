@@ -8,8 +8,8 @@ from poetry.mixology.set_relation import SetRelation
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Term:

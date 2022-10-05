@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from tests.console.commands.env.helpers import check_output_wrapper
 

@@ -44,7 +44,7 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "1.2.0"
+poetry-core = "1.3.1"
 poetry-plugin-export = "^1.1.1"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
@@ -77,8 +77,6 @@ tox = "^3.18"
 pre-commit = "^2.6"
 
 [tool.poetry.group.test.dependencies]
-# TODO: remove when bumping poetry-core to 1.3
-poetry-core = { git = "https://github.com/finswimmer/core.git", branch = "fix/available-pythons" }
 deepdiff = "^5.0"
 flatdict = "^4.0.1"
 httpretty = "^1.0"

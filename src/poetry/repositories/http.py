@@ -13,9 +13,9 @@ from typing import Any
 
 import requests
 
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver.helpers import parse_constraint
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 

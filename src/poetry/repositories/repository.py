@@ -5,10 +5,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
-from poetry.core.semver.version_constraint import VersionConstraint
-from poetry.core.semver.version_range import VersionRange
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionConstraint
+from poetry.core.constraints.version import VersionRange
+from poetry.core.constraints.version import parse_constraint
 
 from poetry.repositories.exceptions import PackageNotFound
 

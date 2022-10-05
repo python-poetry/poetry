@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
-from poetry.core.semver.version import Version
 
 from poetry.__version__ import __version__
 from poetry.factory import Factory
