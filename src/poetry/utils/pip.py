@@ -29,6 +29,7 @@ def pip_install(
         "install",
         "--disable-pip-version-check",
         "--isolated",
+        "--no-input",
         "--prefix",
         str(environment.path),
     ]
