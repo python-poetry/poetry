@@ -122,11 +122,15 @@ def test_run_project_script(
     If RunCommand calls an installed script defined in pyproject.toml, sys.argv[0]
     must be set to the full path of the script.
     """
+    cli_script = "foo"
+
     if installed_script:
-        cli_script = tmp_venv._bin_dir / "foo"
+        if WINDOWS:
+            cli_script += ".exe"
+        cli_script = tmp_venv._bin_dir / cli_script
         cli_script.touch()
-    else:
-        cli_script = "foo"
+        if WINDOWS:
+            cli_script = str(cli_script).replace("\\", "\\\\")
 
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
