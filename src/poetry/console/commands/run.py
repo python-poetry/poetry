@@ -44,7 +44,7 @@ class RunCommand(EnvCommand):
 
         return module
 
-    def run_script(self, script: str | dict[str, str], args: str) -> int:
+    def run_script(self, script: str | dict[str, str], args: list[str]) -> int:
         # Calling `sys.argv` should run the same program as the currently
         # running program. To make calling Poetry scripts through RunCommand
         # match this behavior, we must set `sys.argv[0]` to be the full path of
