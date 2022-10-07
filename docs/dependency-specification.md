@@ -176,7 +176,6 @@ how [repository credentials]({{< relref "repositories#configuring-credentials" >
 ```bash
 poetry config repositories.git-org-project https://github.com/org/project.git
 poetry config http-basic.git-org-project username token
-poetry add git+http://private-repo.example.com/project.git
 poetry add git+https://github.com/org/project.git
 ```
 
