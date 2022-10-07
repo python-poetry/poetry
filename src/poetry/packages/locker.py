@@ -23,10 +23,8 @@ from tomlkit import array
 from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
-from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
-from tomlkit.items import Array
 
 
 if TYPE_CHECKING:
@@ -228,24 +226,19 @@ class Locker:
         return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
-        files: dict[str, Any] = table()
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
-            if package["name"] not in files:
-                files[package["name"]] = []
+            files = array()
 
             for f in package["files"]:
                 file_metadata = inline_table()
                 for k, v in sorted(f.items()):
                     file_metadata[k] = v
 
-                files[package["name"]].append(file_metadata)
+                files.append(file_metadata)
 
-            if files[package["name"]]:
-                package_files = item(files[package["name"]])
-                assert isinstance(package_files, Array)
-                files[package["name"]] = package_files.multiline(True)
+            package["files"] = files.multiline(True)
 
         lock = document()
         lock.add(comment(GENERATED_COMMENT))
