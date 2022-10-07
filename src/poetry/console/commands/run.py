@@ -49,8 +49,7 @@ class RunCommand(EnvCommand):
         # running program. To make calling Poetry scripts through RunCommand
         # match this behavior, we must set `sys.argv[0]` to be the full path of
         # the executable.
-        full_path_args = list(args)
-        full_path_args[0] = self.env._bin(full_path_args[0])
+        args = [self.env._bin(args[0]), *args[1:]]
 
         if isinstance(script, dict):
             script = script["callable"]
@@ -64,7 +63,7 @@ class RunCommand(EnvCommand):
         cmd += [
             "import sys; "
             "from importlib import import_module; "
-            f"sys.argv = {full_path_args!r}; {src_in_sys_path}"
+            f"sys.argv = {args!r}; {src_in_sys_path}"
             f"import_module('{module}').{callable_}()"
         ]
 
