@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.factory import Factory
 from poetry.utils._compat import WINDOWS
 
 
@@ -107,31 +109,32 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
     assert tester.execute("quix") == 123
 
 
-def test_run_script_sets_argv(app):
+@pytest.mark.parametrize(
+    "installed_script", [False, True], ids=["not installed", "installed"]
+)
+def test_run_project_script(
+    installed_script: bool,
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    command_tester_factory: CommandTesterFactory,
+):
     """
-    If RunCommand calls a script defined in pyproject.toml, sys.argv[0] should
-    be set to the full path of the script.
+    If RunCommand calls an installed script defined in pyproject.toml, sys.argv[0]
+    must be set to the full path of the script.
     """
+    if installed_script:
+        cli_script = tmp_venv._bin_dir / "foo"
+        cli_script.touch()
+    else:
+        cli_script = "foo"
 
-    def mock_foo(bin):
-        return "/full/path/to/" + bin
-
-    def mock_run(*args, **kwargs):
-        return dict(args=args, kwargs=kwargs)
-
-    command = app.find("run")
-    command._env = Env.get()
-    # fake the existence of our script
-    command._env._bin = mock_foo
-    # we don't want to run anything
-    command._env.run = mock_run
-    res = command.run_script("cli:cli", ["foogit", "status"])
-    expected = dict(
-        args=(
-            "python",
-            "-c",
-            "\"import sys; from importlib import import_module; sys.argv = ['/full/path/to/foogit', 'status']; import_module('cli').cli()\"",
-        ),
-        kwargs={"call": True, "shell": True},
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
     )
-    assert res == expected
+    env_execute_mock = mocker.patch("poetry.utils.env.Env.execute", return_value=0)
+    tester = command_tester_factory("run", poetry, environment=tmp_venv)
+
+    tester.execute("foo status")
+
+    expected_sys_argv = f"sys.argv = ['{cli_script}', 'status']"
+    assert expected_sys_argv in env_execute_mock.call_args_list[0][0][2]
