@@ -205,7 +205,7 @@ class PackageInfo:
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except ValueError:
                 # Likely unable to parse constraint so we skip it
-                logger.debug(
+                logger.warning(
                     "Invalid constraint (%s) found in %s-%s dependencies, skipping",
                     req,
                     package.name,
