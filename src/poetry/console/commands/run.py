@@ -45,10 +45,16 @@ class RunCommand(EnvCommand):
         return module
 
     def run_script(self, script: str | dict[str, str], args: list[str]) -> int:
-        # Calling `sys.argv` should run the same program as the currently
-        # running program. To make calling Poetry scripts through RunCommand
-        # match this behavior, we must set `sys.argv[0]` to be the full path of
-        # the executable.
+        """Runs an entry point script defined in the section ``[tool.poetry.scripts]``.
+
+        When a script exists in the venv bin folder, i.e. after ``poetry install``,
+        then ``sys.argv[0]`` must be set to the full path of the executable, so
+        ``poetry run foo`` and ``poetry shell``, ``foo`` have the same ``sys.argv[0]``
+        that points to the full path.
+
+        Otherwise (when an entry point script does not exist), ``sys.argv[0]`` is the
+        script name only, i.e. ``poetry run foo`` has ``sys.argv == ['foo']``.
+        """
         args = [self.env._bin(args[0]), *args[1:]]
 
         if isinstance(script, dict):
