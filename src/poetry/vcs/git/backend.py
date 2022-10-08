@@ -364,7 +364,7 @@ class Git:
 
     @staticmethod
     def is_using_legacy_client() -> bool:
-        from poetry.config.config import Config
+        import poetry
 
         legacy_client: bool = (
             poetry.config.get("experimental.new-installer", False)
