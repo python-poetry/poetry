@@ -55,7 +55,7 @@ class RunCommand(EnvCommand):
         Otherwise (when an entry point script does not exist), ``sys.argv[0]`` is the
         script name only, i.e. ``poetry run foo`` has ``sys.argv == ['foo']``.
         """
-        args = [self.env._bin(args[0]), *args[1:]]
+        args = [self.env.get_bin_path(args[0]), *args[1:]]
 
         if isinstance(script, dict):
             script = script["callable"]

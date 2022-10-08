@@ -1249,7 +1249,7 @@ class Env:
         """
         Path to current python executable
         """
-        return self._bin(self._executable)
+        return self.get_bin_path(self._executable)
 
     @property
     def marker_env(self) -> dict[str, Any]:
@@ -1317,7 +1317,7 @@ class Env:
         """
         # we do not use as_posix() here due to issues with windows pathlib2
         # implementation
-        path = self._bin(self._pip_executable)
+        path = self.get_bin_path(self._pip_executable)
         if not Path(path).exists():
             return str(self.pip_embedded)
         return path
@@ -1427,7 +1427,7 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
-        if embedded or not Path(self._bin(self._pip_executable)).exists():
+        if embedded or not Path(self.get_bin_path(self._pip_executable)).exists():
             return [self.python, self.pip_embedded]
         # run as module so that pip can update itself on Windows
         return [self.python, "-m", "pip"]
@@ -1457,7 +1457,7 @@ class Env:
             # embedded pip when pip is not available in the environment
             return self.get_pip_command()
 
-        return [self._bin(bin)]
+        return [self.get_bin_path(bin)]
 
     def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
         cmd = self.get_command_from_bin(bin) + list(args)
@@ -1539,7 +1539,7 @@ class Env:
                 self._script_dirs.append(self.userbase / self._script_dirs[0].name)
         return self._script_dirs
 
-    def _bin(self, bin: str) -> str:
+    def get_bin_path(self, bin: str) -> str:
         """
         Return path to the given executable.
         """
@@ -1898,7 +1898,7 @@ class NullEnv(SystemEnv):
             return super().execute(bin, *args, **kwargs)
         return 0
 
-    def _bin(self, bin: str) -> str:
+    def get_bin_path(self, bin: str) -> str:
         return bin
 
 
