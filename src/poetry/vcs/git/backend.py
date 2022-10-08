@@ -367,7 +367,7 @@ class Git:
         from poetry.config.config import Config
 
         legacy_client: bool = (
-            Config.create().get("experimental", {}).get("system-git-client", False)
+            Config.create().get("experimental.new-installer", False)
         )
         return legacy_client
 
