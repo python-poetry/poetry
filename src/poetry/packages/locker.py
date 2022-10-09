@@ -73,10 +73,7 @@ class Locker:
         """
         Checks whether the locker has been locked (lockfile found).
         """
-        if not self._lock.exists():
-            return False
-
-        return "package" in self.lock_data
+        return self._lock.exists()
 
     def is_fresh(self) -> bool:
         """
@@ -256,12 +253,18 @@ class Locker:
             "content-hash": self._content_hash,
         }
 
-        if not self.is_locked() or lock != self.lock_data:
+        do_write = True
+        if self.is_locked():
+            try:
+                lock_data = self.lock_data
+            except RuntimeError:
+                # incompatible, invalid or no lock file
+                pass
+            else:
+                do_write = lock != lock_data
+        if do_write:
             self._write_lock_data(lock)
-
-            return True
-
-        return False
+        return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
         self.lock.write(data)
