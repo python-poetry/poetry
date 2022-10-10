@@ -1,5 +1,5 @@
 ---
-title: "Contributing to Poetry"
+title: 'Contributing to Poetry'
 draft: false
 type: docs
 layout: single
@@ -8,7 +8,7 @@ menu:
   docs:
     weight: 100
 
-note: "Are you viewing this document on GitHub? For the best experience, view it on the website https://python-poetry.org/docs/contributing."
+note: 'Are you viewing this document on GitHub? For the best experience, view it on the website https://python-poetry.org/docs/contributing.'
 ---
 
 # Contributing to Poetry
@@ -28,11 +28,11 @@ related reports.
 
 #### Before submitting a bug report
 
-* **Check the [FAQ]** for a list of common questions and problems.
-* **Check the [blog]** for release notes from recent releases, including steps for upgrading and known issues.
-* **Check that your issue does not already exist** in the [issue tracker].
-* **Make sure your issue is really a bug, and is not a support request or question** better suited for [Discussions]
-or [Discord].
+- **Check the [FAQ]** for a list of common questions and problems.
+- **Check the [blog]** for release notes from recent releases, including steps for upgrading and known issues.
+- **Check that your issue does not already exist** in the [issue tracker].
+- **Make sure your issue is really a bug, and is not a support request or question** better suited for [Discussions]
+  or [Discord].
 
 {{% note %}}
 If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and
@@ -46,36 +46,36 @@ Bugs concerning Poetry and poetry-core should be submitted to the main [issue tr
 
 Explain the problem and make it easy for others to search for and understand:
 
-* **Use a clear and descriptive title** for the issue to identify the problem.
-* **Describe the exact steps which reproduce the problem** in as many details as possible.
-* **Describe the behavior you observed after following the steps** and point out how this is a bug.
-* **Explain which behavior you expected to see instead and why.**
-* **If the problem involves an unexpected error being raised**, execute the problematic command in **debug** mode
-(with `-vvv` flag).
+- **Use a clear and descriptive title** for the issue to identify the problem.
+- **Describe the exact steps which reproduce the problem** in as many details as possible.
+- **Describe the behavior you observed after following the steps** and point out how this is a bug.
+- **Explain which behavior you expected to see instead and why.**
+- **If the problem involves an unexpected error being raised**, execute the problematic command in **debug** mode
+  (with `-vvv` flag).
 
 Provide detailed steps for reproduction of your issue:
 
-* **Provide your pyproject.toml file** in a [Gist](https://gist.github.com), pastebin, or example repository after
-removing potential private information like private package repositories or names.
-* **Provide specific examples to demonstrate the steps to reproduce the issue**. This could be an example repository, a
-sequence of steps run in a container, or just a pyproject.toml for very simple cases.
-* **Are you unable to reliably reproduce the issue?** If so, provide details about how often the problem happens
-and under which conditions it normally happens.
+- **Provide your pyproject.toml file** in a [Gist](https://gist.github.com), pastebin, or example repository after
+  removing potential private information like private package repositories or names.
+- **Provide specific examples to demonstrate the steps to reproduce the issue**. This could be an example repository, a
+  sequence of steps run in a container, or just a pyproject.toml for very simple cases.
+- **Are you unable to reliably reproduce the issue?** If so, provide details about how often the problem happens
+  and under which conditions it normally happens.
 
 Provide more context by answering these questions:
 
-* **Did the problem start happening recently** (e.g. after updating to a new version of Poetry) or was this always a
-problem?
-* If the problem started happening recently, **can you reproduce the problem in an older version of Poetry?** What's the
-most recent version in which the problem does not happen?
-* **Is there anything exotic or unusual about your environment?** This could include use of special container images,
-newer CPU architectures like Apple Silicon, or corporate proxies that intercept or modify your network traffic.
+- **Did the problem start happening recently** (e.g. after updating to a new version of Poetry) or was this always a
+  problem?
+- If the problem started happening recently, **can you reproduce the problem in an older version of Poetry?** What's the
+  most recent version in which the problem does not happen?
+- **Is there anything exotic or unusual about your environment?** This could include use of special container images,
+  newer CPU architectures like Apple Silicon, or corporate proxies that intercept or modify your network traffic.
 
 Include details about your configuration and environment:
 
-* **Which version of Poetry are you using?** You can get the exact version by running `poetry --version`.
-* **What version of Python is being used to run Poetry?** Execute the `poetry debug info` to get this information.
-* **What's the name and version of the OS you're using?** Examples include Ubuntu 22.04 or macOS 12.6.
+- **Which version of Poetry are you using?** You can get the exact version by running `poetry --version`.
+- **What version of Python is being used to run Poetry?** Execute the `poetry debug info` to get this information.
+- **What's the name and version of the OS you're using?** Examples include Ubuntu 22.04 or macOS 12.6.
 
 To give others the best chance to understand and reproduce your issue, please be sure to put extra effort into your
 reproduction steps. You can both rule out local configuration issues on your end, and ensure others can cleanly
@@ -90,17 +90,17 @@ understand your suggestion and find related suggestions.
 
 #### Before submitting a suggested enhancement
 
-* **Check the [FAQ]** for a list of common questions and problems.
-* **Check that your issue does not already exist** in the [issue tracker].
+- **Check the [FAQ]** for a list of common questions and problems.
+- **Check that your issue does not already exist** in the [issue tracker].
 
 #### How do I submit a suggested enhancement?
 
 Suggested enhancements concerning Poetry and poetry-core should be submitted to the main [issue tracker], using the
 correct [issue template].
 
-* **Use a clear and descriptive title** for the issue to identify the suggestion.
-* **Provide a detailed description of the proposed enhancement**, with specific steps or examples when possible.
-* **Describe the current behavior** and **explain which behavior you would like to see instead**, and why.
+- **Use a clear and descriptive title** for the issue to identify the suggestion.
+- **Provide a detailed description of the proposed enhancement**, with specific steps or examples when possible.
+- **Describe the current behavior** and **explain which behavior you would like to see instead**, and why.
 
 ### Documentation contributions
 
@@ -129,9 +129,9 @@ ask.
 {{% /note %}}
 
 If you would like to take on an issue, feel free to comment on the issue tagging `@python-poetry/triage`.
-We are more than happy to discuss solutions on the issue. If you would like help with navigating the code base, are
-looking for something to work on, or want feedback on a design or change, join us on our [Discord server][Discord] or
-start a [Discussion][Discussions].
+We are more than happy to discuss solutions on the issue. If you would like to help with navigating the code base, are
+looking for something to work on, or want feedback on a design or change, join us on our [Discord server][discord] or
+start a [Discussion][discussions].
 
 #### Local development
 
@@ -176,14 +176,14 @@ poetry run pre-commit run --all-files
 
 #### Pull requests
 
-* Fill out the pull request body completely and describe your changes as accurately as possible. The pull request body
-should be kept up to date as it will usually form the base for the final merge commit and the changelog entry.
-* Be sure that your pull request contains tests that cover the changed or added code. Tests are generally required for
-code be to be considered mergable, and code without passing tests will not be merged.
-* Ensure your pull request passes the mypy and pre-commit checks. Remember that you can run these tools locally
-instead of relying on remote CI.
-* If your changes warrant a documentation change, the pull request must also update the documentation. Make sure to
-review the documentation preview generated by CI for any rendering issues.
+- Fill out the pull request body completely and describe your changes as accurately as possible. The pull request body
+  should be kept up to date as it will usually form the base for the final merge commit and the changelog entry.
+- Be sure that your pull request contains tests that cover the changed or added code. Tests are generally required for
+  code be to be considered mergable, and code without passing tests will not be merged.
+- Ensure your pull request passes the mypy and pre-commit checks. Remember that you can run these tools locally
+  instead of relying on remote CI.
+- If your changes warrant a documentation change, the pull request must also update the documentation. Make sure to
+  review the documentation preview generated by CI for any rendering issues.
 
 {{% note %}}
 Make sure your branch is [rebased](https://docs.github.com/en/get-started/using-git/about-git-rebase) against the latest
@@ -208,13 +208,13 @@ your contribution.
 #### Triage steps
 
 1. Determine what area and versions of Poetry the issue is related to, and set the appropriate labels (e.g.
-`version/x.x.x`, `area/docs`, `area/venv`), and remove the `status/triage` label.
+   `version/x.x.x`, `area/docs`, `area/venv`), and remove the `status/triage` label.
 2. If requested information (such as debug logs, pyproject.toml, etc.) is not provided and is relevant, request it from
-the author.
+   the author.
    1. Set the `status/waiting-on-response` label while waiting to hear back from the author.
 3. Attempt to reproduce the issue with the reported Poetry version or request further clarification from the author.
 4. Ensure the issue is not already resolved. Try reproducing it on the latest stable release, the latest prerelease (if
-present), and the development branch.
+   present), and the development branch.
 5. If the issue cannot be reproduced,
    1. request more reproduction steps and clarification from the issue's author,
    2. set the `status/needs-reproduction` label,
@@ -246,17 +246,19 @@ Do not forget to `pipx upgrade poetry@master` before using it, to make sure you 
 
 {{% note %}}
 This mechanism can also be used to test pull requests by using GitHub's pull request remote refs:
+
 ```sh
 pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@refs/pull/1234/head
 ```
+
 {{% /note %}}
 
-  [Blog]: {{< ref "/blog" >}}
-  [Documentation]: {{< ref "/docs" >}}
-  [FAQ]: {{< relref "faq" >}}
-  [Issue Tracker]: https://github.com/python-poetry/poetry/issues
-  [area/docs label]: https://github.com/python-poetry/poetry/labels/area/docs
-  [kind/question label]: https://github.com/python-poetry/poetry/labels/kind/question
-  [Issue Template]: https://github.com/python-poetry/poetry/issues/new/choose
-  [Discussions]: https://github.com/python-poetry/poetry/discussions
-  [Discord]: https://discord.com/invite/awxPgve
+[Blog]: {{< ref "/blog" >}}
+[Documentation]: {{< ref "/docs" >}}
+[FAQ]: {{< relref "faq" >}}
+[Issue Tracker]: https://github.com/python-poetry/poetry/issues
+[area/docs label]: https://github.com/python-poetry/poetry/labels/area/docs
+[kind/question label]: https://github.com/python-poetry/poetry/labels/kind/question
+[Issue Template]: https://github.com/python-poetry/poetry/issues/new/choose
+[Discussions]: https://github.com/python-poetry/poetry/discussions
+[Discord]: https://discord.com/invite/awxPgve
