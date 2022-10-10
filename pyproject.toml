@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.1"
+version = "1.2.2"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>",
@@ -44,8 +44,8 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "1.3.1"
-poetry-plugin-export = "^1.1.1"
+poetry-core = "1.3.2"
+poetry-plugin-export = "^1.1.2"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
