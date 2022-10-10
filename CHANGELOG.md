@@ -140,6 +140,14 @@
 - Document suggested `tox` config for different use cases ([#6026](https://github.com/python-poetry/poetry/pull/6026))
 
 
+## [1.1.15] - 2022-08-22
+
+### Changed
+
+- Poetry now fallback to gather metadata for dependencies via pep517 if parsing pyproject.toml fail ([#6206](https://github.com/python-poetry/poetry/pull/6206))
+- Extras and extras dependencies are now sorted in lock file ([#6207](https://github.com/python-poetry/poetry/pull/6207))
+
+
 ## [1.2.0b3] - 2022-07-13
 
 **Important**: This release fixes a critical issue that prevented hashes from being retrieved when locking dependencies,
