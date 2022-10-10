@@ -513,7 +513,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-core"
-version = "1.3.1"
+version = "1.3.2"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
@@ -524,7 +524,7 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "poetry-plugin-export"
-version = "1.1.1"
+version = "1.1.2"
 description = "Poetry plugin to export the dependencies to various formats"
 category = "main"
 optional = false
@@ -951,7 +951,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "1ebadc410b20420b0b570d94dc78220ae54ad814498b1c2fa3fb3cbd183a1413"
+content-hash = "6e19a6f10b73d0236013c755105f3ee0ef1b4a619aaab90134cff5bd88dcdb96"
 
 [metadata.files]
 attrs = [
@@ -1360,12 +1360,12 @@ pluggy = [
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
 poetry-core = [
-    {file = "poetry-core-1.3.1.tar.gz", hash = "sha256:f4e68f596ba7560d41f67c705e160a0ed1a061c564cc1f989a5829aa64ea6279"},
-    {file = "poetry_core-1.3.1-py3-none-any.whl", hash = "sha256:da1018d30dcbed101865a24c2a79c60be3f9800e7c91721c6ec9d4bc9e210538"},
+    {file = "poetry-core-1.3.2.tar.gz", hash = "sha256:0ab006a40cb38d6a38b97264f6835da2f08a96912f2728ce668e9ac6a34f686f"},
+    {file = "poetry_core-1.3.2-py3-none-any.whl", hash = "sha256:ea0f5a90b339cde132b4e43cff78a1b440cd928db864bb67cfc97fdfcefe7218"},
 ]
 poetry-plugin-export = [
-    {file = "poetry-plugin-export-1.1.1.tar.gz", hash = "sha256:23e3e512a609b54ef5ac441339fc9e68fd41e61d15bd924eb0094b4fda1e30d0"},
-    {file = "poetry_plugin_export-1.1.1-py3-none-any.whl", hash = "sha256:170fa367794d2385975d75298fe5509f772d35216ee36b8fa50c0350a064b761"},
+    {file = "poetry-plugin-export-1.1.2.tar.gz", hash = "sha256:5e92525dd63f38ce74a51ed68ea91d753523f21ce5f9ef8d3b793e2a4b2222ef"},
+    {file = "poetry_plugin_export-1.1.2-py3-none-any.whl", hash = "sha256:946e3313b3d00c18fb9a50522e9d5e6a7e111beaba8d6ae33297662fc2070ac1"},
 ]
 pre-commit = [
     {file = "pre_commit-2.20.0-py2.py3-none-any.whl", hash = "sha256:51a5ba7c480ae8072ecdb6933df22d2f812dc897d5fe848778116129a681aac7"},
