@@ -9,8 +9,6 @@ from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
-from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.requirements import create_pool
 from poetry.utils.requirements import determine_requirements_from_list
 from poetry.utils.requirements import format_requirements
 
@@ -136,10 +134,11 @@ class NewCommand(Command):
         return 0
 
     def _get_pool(self) -> Pool:
-        if isinstance(self, EnvCommand):
-            return self.poetry.pool
+        from poetry.repositories import Pool
+        from poetry.repositories.pypi_repository import PyPiRepository
 
         if self._pool is None:
-            self._pool = create_pool()
+            self._pool = Pool()
+            self._pool.add_repository(PyPiRepository())
 
         return self._pool
