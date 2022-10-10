@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
-    from poetry.core.semver.version import Version
 
 
 class AbstractRepository(ABC):
