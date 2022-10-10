@@ -12,6 +12,7 @@ repos:
       - id: check-case-conflict
       - id: check-json
       - id: check-toml
+        exclude: tests/fixtures/invalid_lock/poetry\.lock
       - id: check-yaml
       - id: pretty-format-json
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]

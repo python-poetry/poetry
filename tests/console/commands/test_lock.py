@@ -67,6 +67,20 @@ def poetry_with_old_lockfile(
     return _project_factory("old_lock", project_factory, fixture_dir)
 
 
+@pytest.fixture
+def poetry_with_incompatible_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    return _project_factory("incompatible_lock", project_factory, fixture_dir)
+
+
+@pytest.fixture
+def poetry_with_invalid_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    return _project_factory("invalid_lock", project_factory, fixture_dir)
+
+
 def test_lock_check_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
@@ -150,3 +164,60 @@ def test_lock_no_update(
 
     for package in packages:
         assert locked_repository.find_packages(package.to_dependency())
+
+
+@pytest.mark.parametrize("is_no_update", [False, True])
+def test_lock_with_incompatible_lockfile(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_incompatible_lockfile: Poetry,
+    repo: TestRepository,
+    is_no_update: bool,
+) -> None:
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+
+    locker = Locker(
+        lock=poetry_with_incompatible_lockfile.pyproject.file.path.parent
+        / "poetry.lock",
+        local_config=poetry_with_incompatible_lockfile.locker._local_config,
+    )
+    poetry_with_incompatible_lockfile.set_locker(locker)
+
+    tester = command_tester_factory("lock", poetry=poetry_with_incompatible_lockfile)
+    if is_no_update:
+        # not possible because of incompatible lock file
+        expected = (
+            "(?s)lock file is not compatible .*"
+            " regenerate the lock file with the `poetry lock` command"
+        )
+        with pytest.raises(RuntimeError, match=expected):
+            tester.execute("--no-update")
+    else:
+        # still possible because lock file is not required
+        status_code = tester.execute()
+        assert status_code == 0
+
+
+@pytest.mark.parametrize("is_no_update", [False, True])
+def test_lock_with_invalid_lockfile(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_invalid_lockfile: Poetry,
+    repo: TestRepository,
+    is_no_update: bool,
+) -> None:
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+
+    locker = Locker(
+        lock=poetry_with_invalid_lockfile.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry_with_invalid_lockfile.locker._local_config,
+    )
+    poetry_with_invalid_lockfile.set_locker(locker)
+
+    tester = command_tester_factory("lock", poetry=poetry_with_invalid_lockfile)
+    if is_no_update:
+        # not possible because of broken lock file
+        with pytest.raises(RuntimeError, match="Unable to read the lock file"):
+            tester.execute("--no-update")
+    else:
+        # still possible because lock file is not required
+        status_code = tester.execute()
+        assert status_code == 0

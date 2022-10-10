@@ -219,7 +219,7 @@ class Installer:
 
         locked_repository = Repository("poetry-locked")
         if self._update:
-            if self._locker.is_locked() and not self._lock:
+            if not self._lock and self._locker.is_locked():
                 locked_repository = self._locker.locked_repository()
 
                 # If no packages have been whitelisted (The ones we want to update),
