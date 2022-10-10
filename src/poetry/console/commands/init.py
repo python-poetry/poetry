@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
 
-    from poetry.repositories.abstract_repository import AbstractRepository
+    from poetry.repositories import Pool
     from poetry.utils.requirements import Requirements
 
 
@@ -61,7 +61,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def __init__(self) -> None:
         super().__init__()
 
-        self._repository: AbstractRepository | None = None
+        self._pool: Pool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -274,7 +274,7 @@ You can specify a package in the following forms:
                 continue
 
             canonicalized_name = canonicalize_name(constraint["name"])
-            matches = self._get_repository().search(canonicalized_name)
+            matches = self._get_pool().search(canonicalized_name)
             if not matches:
                 self.line_error("<error>Unable to find package</error>")
                 package = False
@@ -322,7 +322,7 @@ You can specify a package in the following forms:
 
                 if package_constraint is None:
                     _, package_constraint = find_best_version_for_package(
-                        self._get_repository(), package
+                        self._get_pool(), package
                     )
 
                     self.line(
@@ -350,7 +350,7 @@ You can specify a package in the following forms:
             return self._determine_requirements_interactive()
         else:
             return determine_requirements_from_list(
-                self, self._get_repository(), requires, allow_prereleases, source
+                self, self._get_pool(), requires, allow_prereleases, source
             )
 
     def _validate_author(self, author: str, default: str) -> str | None:
@@ -377,10 +377,12 @@ You can specify a package in the following forms:
 
         return package
 
-    def _get_repository(self) -> AbstractRepository:
+    def _get_pool(self) -> Pool:
+        from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        if self._repository is None:
-            self._repository = PyPiRepository()
+        if self._pool is None:
+            self._pool = Pool()
+            self._pool.add_repository(PyPiRepository())
 
-        return self._repository
+        return self._pool

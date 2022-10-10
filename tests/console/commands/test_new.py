@@ -182,7 +182,6 @@ def test_command_new_with_dependencies(
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
-    tester.command._repository = repo
 
     package_path = "custompackage"
     path = Path(tmp_dir) / package_path

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from tomlkit.items import InlineTable
 
     from poetry.console.commands.command import Command
-    from poetry.repositories.abstract_repository import AbstractRepository
+    from poetry.repositories import Pool
     from poetry.utils.env import Env
 
 
@@ -61,7 +61,7 @@ def format_requirements(requirements: list[dict[str, str]]) -> Requirements:
 
 
 def find_best_version_for_package(
-    repository: AbstractRepository,
+    pool: Pool,
     name: str,
     required_version: str | None = None,
     allow_prereleases: bool = False,
@@ -69,7 +69,7 @@ def find_best_version_for_package(
 ) -> tuple[str, str]:
     from poetry.version.version_selector import VersionSelector
 
-    selector = VersionSelector(repository)
+    selector = VersionSelector(pool)
     package = selector.find_best_candidate(
         name, required_version, allow_prereleases=allow_prereleases, source=source
     )
@@ -83,7 +83,7 @@ def find_best_version_for_package(
 
 def determine_requirements_from_list(
     command: Command,
-    repository: AbstractRepository,
+    pool: Pool,
     requires: list[str],
     allow_prereleases: bool = False,
     source: str | None = None,
@@ -96,7 +96,7 @@ def determine_requirements_from_list(
         elif "version" not in requirement:
             # determine the best version automatically
             name, version = find_best_version_for_package(
-                repository,
+                pool,
                 requirement["name"],
                 allow_prereleases=allow_prereleases,
                 source=source,
@@ -109,7 +109,7 @@ def determine_requirements_from_list(
             # check that the specified version/constraint exists
             # before we proceed
             name, _ = find_best_version_for_package(
-                repository,
+                pool,
                 requirement["name"],
                 requirement["version"],
                 allow_prereleases=allow_prereleases,

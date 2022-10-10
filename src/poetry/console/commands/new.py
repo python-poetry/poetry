@@ -14,7 +14,7 @@ from poetry.utils.requirements import format_requirements
 
 
 if TYPE_CHECKING:
-    from poetry.repositories.abstract_repository import AbstractRepository
+    from poetry.repositories import Pool
     from poetry.utils.requirements import Requirements
 
 
@@ -50,7 +50,7 @@ class NewCommand(Command):
     def __init__(self) -> None:
         super().__init__()
 
-        self._repository: AbstractRepository | None = None
+        self._pool: Pool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -105,7 +105,7 @@ class NewCommand(Command):
         if self.option("dependency"):
             requirements = format_requirements(
                 determine_requirements_from_list(
-                    self, self._get_repository(), self.option("dependency")
+                    self, self._get_pool(), self.option("dependency")
                 )
             )
 
@@ -133,10 +133,12 @@ class NewCommand(Command):
 
         return 0
 
-    def _get_repository(self) -> AbstractRepository:
+    def _get_pool(self) -> Pool:
+        from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        if self._repository is None:
-            self._repository = PyPiRepository()
+        if self._pool is None:
+            self._pool = Pool()
+            self._pool.add_repository(PyPiRepository())
 
-        return self._repository
+        return self._pool
