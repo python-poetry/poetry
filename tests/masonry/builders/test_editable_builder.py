@@ -12,7 +12,7 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
@@ -148,6 +148,7 @@ Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs

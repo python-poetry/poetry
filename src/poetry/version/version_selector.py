@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 
 if TYPE_CHECKING:

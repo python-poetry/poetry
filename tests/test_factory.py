@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from deepdiff import DeepDiff
-from poetry.core.semver.helpers import parse_constraint
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory
@@ -131,6 +132,7 @@ def test_create_poetry():
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
@@ -151,6 +153,15 @@ def test_create_pyproject_from_package(project: str):
 
     result = pyproject["tool"]["poetry"]
     expected = poetry.pyproject.poetry_config
+
+    # Extras are normalized as they are read.
+    extras = expected.pop("extras", None)
+    if extras is not None:
+        normalized_extras = {
+            canonicalize_name(extra): dependencies
+            for extra, dependencies in extras.items()
+        }
+        expected["extras"] = normalized_extras
 
     # packages do not support this at present
     expected.pop("scripts", None)
@@ -288,7 +299,7 @@ def test_poetry_with_two_default_sources(with_simple_keyring: None):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 
-    assert str(e.value) == "Only one repository can be the default"
+    assert str(e.value) == "Only one repository can be the default."
 
 
 def test_validate():

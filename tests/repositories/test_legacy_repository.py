@@ -11,8 +11,8 @@ import pytest
 import requests
 
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
-from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
@@ -61,6 +61,13 @@ class MockRepository(LegacyRepository):
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
         shutil.copyfile(str(filepath), dest)
+
+
+def test_packages_property_returns_empty_list() -> None:
+    repo = MockRepository()
+    repo._packages = [repo.package("jupyter", Version.parse("1.0.0"))]
+
+    assert repo.packages == []
 
 
 def test_page_relative_links_path_are_correct() -> None:

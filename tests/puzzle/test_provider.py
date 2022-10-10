@@ -462,8 +462,8 @@ def test_search_for_directory_poetry(provider: Provider):
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras_a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras_b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
+        "extras-b": [get_dependency("cachy", ">=0.2.0")],
     }
 
 
@@ -491,8 +491,8 @@ def test_search_for_directory_poetry_with_extras(provider: Provider):
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras_a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras_b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
+        "extras-b": [get_dependency("cachy", ">=0.2.0")],
     }
 
 
@@ -619,6 +619,29 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
+    }
+
+
+def test_complete_package_does_not_merge_different_source_names(
+    provider: Provider, root: ProjectPackage
+) -> None:
+    foo_source_1 = get_dependency("foo")
+    foo_source_1.source_name = "source_1"
+    foo_source_2 = get_dependency("foo")
+    foo_source_2.source_name = "source_2"
+
+    root.add_dependency(foo_source_1)
+    root.add_dependency(foo_source_2)
+
+    complete_package = provider.complete_package(
+        DependencyPackage(root.to_dependency(), root)
+    )
+
+    requires = complete_package.package.all_requires
+    assert len(requires) == 2
+    assert {requires[0].source_name, requires[1].source_name} == {
+        "source_1",
+        "source_2",
     }
 
 

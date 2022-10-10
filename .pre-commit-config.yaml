@@ -12,6 +12,7 @@ repos:
       - id: check-case-conflict
       - id: check-json
       - id: check-toml
+        exclude: tests/fixtures/invalid_lock/poetry\.lock
       - id: check-yaml
       - id: pretty-format-json
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]
@@ -46,7 +47,7 @@ repos:
           - flake8-pie==0.16.0
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.38.0
+    rev: v2.38.2
     hooks:
       - id: pyupgrade
         args: [--py37-plus]

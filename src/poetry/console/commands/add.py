@@ -95,7 +95,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
         from tomlkit import inline_table
         from tomlkit import parse as parse_toml
         from tomlkit import table

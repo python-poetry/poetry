@@ -11,10 +11,11 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
@@ -22,10 +23,8 @@ from tomlkit import array
 from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
-from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
-from tomlkit.items import Array
 
 
 if TYPE_CHECKING:
@@ -74,10 +73,7 @@ class Locker:
         """
         Checks whether the locker has been locked (lockfile found).
         """
-        if not self._lock.exists():
-            return False
-
-        return "package" in self.lock_data
+        return self._lock.exists()
 
     def is_fresh(self) -> bool:
         """
@@ -164,6 +160,7 @@ class Locker:
             extras = info.get("extras", {})
             if extras:
                 for name, deps in extras.items():
+                    name = canonicalize_name(name)
                     package.extras[name] = []
 
                     for dep in deps:
@@ -226,24 +223,19 @@ class Locker:
         return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
-        files: dict[str, Any] = table()
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
-            if package["name"] not in files:
-                files[package["name"]] = []
+            files = array()
 
             for f in package["files"]:
                 file_metadata = inline_table()
                 for k, v in sorted(f.items()):
                     file_metadata[k] = v
 
-                files[package["name"]].append(file_metadata)
+                files.append(file_metadata)
 
-            if files[package["name"]]:
-                package_files = item(files[package["name"]])
-                assert isinstance(package_files, Array)
-                files[package["name"]] = package_files.multiline(True)
+            package["files"] = files.multiline(True)
 
         lock = document()
         lock.add(comment(GENERATED_COMMENT))
@@ -261,12 +253,18 @@ class Locker:
             "content-hash": self._content_hash,
         }
 
-        if not self.is_locked() or lock != self.lock_data:
+        do_write = True
+        if self.is_locked():
+            try:
+                lock_data = self.lock_data
+            except RuntimeError:
+                # incompatible, invalid or no lock file
+                pass
+            else:
+                do_write = lock != lock_data
+        if do_write:
             self._write_lock_data(lock)
-
-            return True
-
-        return False
+        return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
         self.lock.write(data)

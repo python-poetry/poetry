@@ -10,7 +10,7 @@ from typing import Any
 import requests
 
 from poetry.core.masonry.metadata import Metadata
-from poetry.core.masonry.utils.helpers import escape_name
+from poetry.core.masonry.utils.helpers import distribution_name
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -77,11 +77,10 @@ class Uploader:
     def files(self) -> list[Path]:
         dist = self._poetry.file.parent / "dist"
         version = self._package.version.to_string()
+        escaped_name = distribution_name(self._package.name)
 
-        wheels = list(
-            dist.glob(f"{escape_name(self._package.pretty_name)}-{version}-*.whl")
-        )
-        tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
+        wheels = list(dist.glob(f"{escaped_name}-{version}-*.whl"))
+        tars = list(dist.glob(f"{escaped_name}-{version}.tar.gz"))
 
         return sorted(wheels + tars)
 
@@ -301,7 +300,8 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = dist / f"{self._package.name}-{self._package.version.to_string()}.tar.gz"
+        escaped_name = distribution_name(self._package.name)
+        file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 
         if not file.exists():
             raise RuntimeError(f'"{file.name}" does not exist.')

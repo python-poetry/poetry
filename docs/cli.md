@@ -521,6 +521,10 @@ poetry publish
 
 It can also build the package if you pass it the `--build` option.
 
+{{% note %}}
+See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to configure and use publishable repositories.
+{{% /note %}}
+
 ### Options
 
 * `--repository (-r)`: The repository to register the package to (default: `pypi`).

@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING
 import pytest
 import tomlkit
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
 from poetry.packages.locker import GENERATED_COMMENT
@@ -104,14 +104,10 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-
-[[package.files]]
-file = "bar"
-hash = "123"
-
-[[package.files]]
-file = "foo"
-hash = "456"
+files = [
+    {{file = "bar", hash = "123"}},
+    {{file = "foo", hash = "456"}},
+]
 
 [package.dependencies]
 B = "^1.0"
@@ -123,10 +119,9 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-
-[[package.files]]
-file = "baz"
-hash = "345"
+files = [
+    {{file = "baz", hash = "345"}},
+]
 
 [[package]]
 name = "B"

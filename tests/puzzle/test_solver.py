@@ -1368,8 +1368,9 @@ def test_solver_duplicate_dependencies_different_constraints_merge_by_marker(
     )
 
 
+@pytest.mark.parametrize("git_first", [False, True])
 def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
-    solver: Solver, repo: Repository, package: ProjectPackage
+    solver: Solver, repo: Repository, package: ProjectPackage, git_first: bool
 ):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
@@ -1380,8 +1381,12 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
     dependency_git = Factory.create_dependency(
         "demo", {"git": "https://github.com/demo/demo.git"}, groups=["dev"]
     )
-    package.add_dependency(dependency_git)
-    package.add_dependency(dependency_pypi)
+    if git_first:
+        package.add_dependency(dependency_git)
+        package.add_dependency(dependency_pypi)
+    else:
+        package.add_dependency(dependency_pypi)
+        package.add_dependency(dependency_git)
 
     demo = Package(
         "demo",
@@ -1413,7 +1418,10 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
 
     assert len(complete_package.package.all_requires) == 2
 
-    pypi, git = complete_package.package.all_requires
+    if git_first:
+        git, pypi = complete_package.package.all_requires
+    else:
+        pypi, git = complete_package.package.all_requires
 
     assert isinstance(pypi, Dependency)
     assert pypi == dependency_pypi

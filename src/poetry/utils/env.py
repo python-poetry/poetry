@@ -30,8 +30,8 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
@@ -1475,7 +1475,9 @@ class Env:
         return self._run(cmd, **kwargs)
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
-        return self.run(self._executable, "-W", "ignore", "-", input_=content, **kwargs)
+        return self.run(
+            self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
+        )
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         """
