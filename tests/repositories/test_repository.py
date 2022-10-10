@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import pytest
 
-from poetry.core.constraints.version import Version
-from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
 
 from poetry.factory import Factory
 from poetry.repositories import Repository
+from tests.helpers import get_package
 
 
 @pytest.fixture(scope="module")
 def black_repository() -> Repository:
     repo = Repository("repo")
-    repo.add_package(Package("black", "19.10b0"))
-    repo.add_package(Package("black", "21.11b0", yanked="reason"))
+    repo.add_package(get_package("black", "19.10b0"))
+    repo.add_package(get_package("black", "21.11b0", yanked="reason"))
     return repo
 
 
@@ -63,7 +63,18 @@ def test_package_yanked(
 def test_package_pretty_name_is_kept() -> None:
     pretty_name = "Not_canoni-calized.name"
     repo = Repository("repo")
-    repo.add_package(Package(pretty_name, "1.0"))
+    repo.add_package(get_package(pretty_name, "1.0"))
     package = repo.package(pretty_name, Version.parse("1.0"))
 
     assert package.pretty_name == pretty_name
+
+
+def test_search() -> None:
+    package_foo1 = get_package("foo", "1.0.0")
+    package_foo2 = get_package("foo", "2.0.0")
+    package_foobar = get_package("foobar", "1.0.0")
+    repo = Repository("repo", [package_foo1, package_foo2, package_foobar])
+
+    assert repo.search("foo") == [package_foo1, package_foo2, package_foobar]
+    assert repo.search("bar") == [package_foobar]
+    assert repo.search("nothing") == []
