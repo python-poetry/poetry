@@ -13,7 +13,6 @@ from cleo.testers.command_tester import CommandTester
 from packaging.utils import canonicalize_name
 
 from poetry.console.commands.init import InitCommand
-from poetry.repositories import Pool
 from poetry.utils._compat import decode
 from poetry.utils.requirements import parse_requirements
 from tests.helpers import PoetryTestApplication
@@ -47,7 +46,7 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
-        "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
+        "poetry.console.commands.init.InitCommand._get_repository", return_value=repo
     )
 
 
@@ -107,7 +106,7 @@ def test_noninteractive(
     tmp_path: Path,
 ):
     command = app.find("init")
-    command._pool = poetry.pool
+    command._repository = repo
 
     repo.add_package(get_package("pytest", "3.6.0"))
 

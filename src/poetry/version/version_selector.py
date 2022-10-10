@@ -8,12 +8,12 @@ from poetry.core.constraints.version import Version
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
-    from poetry.repositories import Pool
+    from poetry.repositories.abstract_repository import AbstractRepository
 
 
 class VersionSelector:
-    def __init__(self, pool: Pool) -> None:
-        self._pool = pool
+    def __init__(self, repository: AbstractRepository) -> None:
+        self._repository = repository
 
     def find_best_candidate(
         self,
@@ -36,7 +36,7 @@ class VersionSelector:
                 "source": source,
             },
         )
-        candidates = self._pool.find_packages(dependency)
+        candidates = self._repository.find_packages(dependency)
         only_prereleases = all(c.version.is_unstable() for c in candidates)
 
         if not candidates:

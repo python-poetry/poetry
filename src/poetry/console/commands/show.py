@@ -528,7 +528,7 @@ lists all packages available."""
                     return provider.search_for_direct_origin_dependency(dep)
 
         name = package.name
-        selector = VersionSelector(self.poetry.pool)
+        selector = VersionSelector(self.poetry.pool.repositories[0])
 
         return selector.find_best_candidate(name, f">={package.pretty_version}")
 
