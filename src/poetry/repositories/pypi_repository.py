@@ -100,13 +100,7 @@ class PyPiRepository(HTTPRepository):
         The information is returned from the cache if it exists
         or retrieved from the remote server.
         """
-        if self._disable_cache:
-            return self._get_package_info(name)
-
-        package_info: dict[str, Any] = self._cache.store("packages").remember_forever(
-            name, lambda: self._get_package_info(name)
-        )
-        return package_info
+        return self._get_package_info(name)
 
     def _find_packages(
         self, name: NormalizedName, constraint: VersionConstraint
@@ -129,15 +123,11 @@ class PyPiRepository(HTTPRepository):
         if not constraint.is_any():
             key = f"{key}:{constraint!s}"
 
-        if self._cache.store("matches").has(key):
-            versions = self._cache.store("matches").get(key)
-        else:
-            versions = [
-                (version, json_page.yanked(name, version))
-                for version in json_page.versions(name)
-                if constraint.allows(version)
-            ]
-            self._cache.store("matches").put(key, versions, 5)
+        versions = [
+            (version, json_page.yanked(name, version))
+            for version in json_page.versions(name)
+            if constraint.allows(version)
+        ]
 
         pretty_name = json_page.content["name"]
         packages = [
