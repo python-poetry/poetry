@@ -38,7 +38,7 @@ classifiers = [
 ]
 
 [tool.poetry.urls]
-changelog = "https://python-poetry.org/history/"
+Changelog = "https://python-poetry.org/history/"
 
 [tool.poetry.build]
 generate-setup-file = false
