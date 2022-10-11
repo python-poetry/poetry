@@ -100,6 +100,12 @@ class FileCache(Generic[T]):
     path: Path
     hash_type: str = "sha256"
 
+    def __post_init__(self) -> None:
+        if self.hash_type not in _HASHES:
+            raise ValueError(
+                f"FileCache.hash_type is unknown value: '{self.hash_type}'."
+            )
+
     def get(self, key: str) -> T | None:
         return self._get_payload(key)
 
