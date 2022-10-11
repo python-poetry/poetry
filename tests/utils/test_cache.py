@@ -85,6 +85,12 @@ def cachy_dict_cache() -> CacheManager:
     return patch_cachy(cache)
 
 
+def test_cache_validates(repository_cache_dir: Path) -> None:
+    with pytest.raises(ValueError) as e:
+        FileCache(repository_cache_dir / "cache", hash_type="unknown")
+    assert str(e.value) == "FileCache.hash_type is unknown value: 'unknown'."
+
+
 @pytest.mark.parametrize("cache_name", ["cachy_file_cache", "poetry_file_cache"])
 def test_cache_get_put_has(cache_name: str, request: FixtureRequest) -> None:
     cache = request.getfixturevalue(cache_name)
