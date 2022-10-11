@@ -90,23 +90,19 @@ class LegacyRepository(HTTPRepository):
         if not constraint.is_any():
             key = f"{key}:{constraint!s}"
 
-        if self._cache.store("matches").has(key):
-            versions = self._cache.store("matches").get(key)
-        else:
-            page = self._get_page(f"/{name}/")
-            if page is None:
-                self._log(
-                    f"No packages found for {name}",
-                    level="debug",
-                )
-                return []
+        page = self._get_page(f"/{name}/")
+        if page is None:
+            self._log(
+                f"No packages found for {name}",
+                level="debug",
+            )
+            return []
 
-            versions = [
-                (version, page.yanked(name, version))
-                for version in page.versions(name)
-                if constraint.allows(version)
-            ]
-            self._cache.store("matches").put(key, versions, 5)
+        versions = [
+            (version, page.yanked(name, version))
+            for version in page.versions(name)
+            if constraint.allows(version)
+        ]
 
         return [
             Package(
