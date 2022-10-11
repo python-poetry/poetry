@@ -12,7 +12,7 @@ from poetry.console.commands.command import Command
 
 class CacheClearCommand(Command):
     name = "cache clear"
-    description = "Clears a Poetry cache by name (see cache list)."
+    description = "Clears a Poetry cache by name."
 
     arguments = [argument("cache", description="The name of the cache to clear.")]
     options = [option("all", description="Clear all entries in the cache.")]
