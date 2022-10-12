@@ -442,10 +442,10 @@ class Incompatibility:
             return str(term.dependency)
         return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
 
-    def _single_term_where(self, callable: Callable[[Term], bool]) -> Term | None:
+    def _single_term_where(self, callable_: Callable[[Term], bool]) -> Term | None:
         found = None
         for term in self._terms:
-            if not callable(term):
+            if not callable_(term):
                 continue
 
             if found is not None:

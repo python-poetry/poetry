@@ -141,11 +141,11 @@ class Application(BaseApplication):  # type: ignore[misc]
 
     def create_io(
         self,
-        input: Input | None = None,
+        input_: Input | None = None,
         output: Output | None = None,
         error_output: Output | None = None,
     ) -> IO:
-        io = super().create_io(input, output, error_output)
+        io = super().create_io(input_, output, error_output)
 
         # Set our own CLI styles
         formatter = io.output.formatter
@@ -196,11 +196,11 @@ class Application(BaseApplication):  # type: ignore[misc]
         if name == "run":
             from poetry.console.io.inputs.run_argv_input import RunArgvInput
 
-            input = cast("ArgvInput", io.input)
-            run_input = RunArgvInput([self._name or ""] + input._tokens)
+            input_ = cast("ArgvInput", io.input)
+            run_input = RunArgvInput([self._name or ""] + input_._tokens)
             # For the run command reset the definition
             # with only the set options (i.e. the options given before the command)
-            for option_name, value in input.options.items():
+            for option_name, value in input_.options.items():
                 if value:
                     option = definition.option(option_name)
                     run_input.add_parameter_option("--" + option.name)
@@ -213,7 +213,7 @@ class Application(BaseApplication):  # type: ignore[misc]
             with suppress(CleoException):
                 run_input.bind(definition)
 
-            for option_name, value in input.options.items():
+            for option_name, value in input_.options.items():
                 if value:
                     run_input.set_option(option_name, value)
 

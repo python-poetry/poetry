@@ -469,15 +469,15 @@ class IncorrectEnvError(EnvError):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
+    def __init__(self, e: CalledProcessError, input_: str | None = None) -> None:
         self.e = e
 
         message = (
             f"Command {e.cmd} errored with the following return code {e.returncode},"
             f" and output: \n{decode(e.output)}"
         )
-        if input:
-            message += f"input was : {input}"
+        if input_:
+            message += f"input was : {input_}"
         super().__init__(message)
 
 
@@ -1457,16 +1457,16 @@ class Env:
         """
         return True
 
-    def get_command_from_bin(self, bin: str) -> list[str]:
-        if bin == "pip":
+    def get_command_from_bin(self, bin_: str) -> list[str]:
+        if bin_ == "pip":
             # when pip is required we need to ensure that we fallback to
             # embedded pip when pip is not available in the environment
             return self.get_pip_command()
 
-        return [self._bin(bin)]
+        return [self._bin(bin_)]
 
-    def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
-        cmd = self.get_command_from_bin(bin) + list(args)
+    def run(self, bin_: str, *args: str, **kwargs: Any) -> str | int:
+        cmd = self.get_command_from_bin(bin_) + list(args)
         return self._run(cmd, **kwargs)
 
     def run_pip(self, *args: str, **kwargs: Any) -> int | str:
@@ -1515,12 +1515,12 @@ class Env:
                     command, stderr=subprocess.STDOUT, env=env, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e, input=input_)
+            raise EnvCommandError(e, input_=input_)
 
         return decode(output)
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        command = self.get_command_from_bin(bin) + list(args)
+    def execute(self, bin_: str, *args: str, **kwargs: Any) -> int:
+        command = self.get_command_from_bin(bin_) + list(args)
         env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
@@ -1545,14 +1545,14 @@ class Env:
                 self._script_dirs.append(self.userbase / self._script_dirs[0].name)
         return self._script_dirs
 
-    def _bin(self, bin: str) -> str:
+    def _bin(self, bin_: str) -> str:
         """
         Return path to the given executable.
         """
-        if self._is_windows and not bin.endswith(".exe"):
-            bin_path = self._bin_dir / (bin + ".exe")
+        if self._is_windows and not bin_.endswith(".exe"):
+            bin_path = self._bin_dir / (bin_ + ".exe")
         else:
-            bin_path = self._bin_dir / bin
+            bin_path = self._bin_dir / bin_
 
         if not bin_path.exists():
             # On Windows, some executables can be in the base path
@@ -1560,15 +1560,15 @@ class Env:
             # the official installer, where python.exe will be at
             # the root of the env path.
             if self._is_windows:
-                if not bin.endswith(".exe"):
-                    bin_path = self._path / (bin + ".exe")
+                if not bin_.endswith(".exe"):
+                    bin_path = self._path / (bin_ + ".exe")
                 else:
-                    bin_path = self._path / bin
+                    bin_path = self._path / bin_
 
                 if bin_path.exists():
                     return str(bin_path)
 
-            return bin
+            return bin_
 
         return str(bin_path)
 
@@ -1776,9 +1776,9 @@ class VirtualEnv(Env):
 
         return environ
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
+    def execute(self, bin_: str, *args: str, **kwargs: Any) -> int:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
-        return super().execute(bin, *args, **kwargs)
+        return super().execute(bin_, *args, **kwargs)
 
     @contextmanager
     def temp_environ(self) -> Iterator[None]:
@@ -1859,8 +1859,8 @@ class GenericEnv(VirtualEnv):
         paths: dict[str, str] = json.loads(output)
         return paths
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        command = self.get_command_from_bin(bin) + list(args)
+    def execute(self, bin_: str, *args: str, **kwargs: Any) -> int:
+        command = self.get_command_from_bin(bin_) + list(args)
         env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
@@ -1897,15 +1897,15 @@ class NullEnv(SystemEnv):
             return super()._run(cmd, **kwargs)
         return 0
 
-    def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        self.executed.append([bin] + list(args))
+    def execute(self, bin_: str, *args: str, **kwargs: Any) -> int:
+        self.executed.append([bin_] + list(args))
 
         if self._execute:
-            return super().execute(bin, *args, **kwargs)
+            return super().execute(bin_, *args, **kwargs)
         return 0
 
-    def _bin(self, bin: str) -> str:
-        return bin
+    def _bin(self, bin_: str) -> str:
+        return bin_
 
 
 @contextmanager

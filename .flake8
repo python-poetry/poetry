@@ -8,6 +8,8 @@ extend-select =
 extend-ignore =
     # E203: Whitespace before ':' (pycqa/pycodestyle#373)
     E203,
+    # A003: Class attribute is shadowing a python builtin
+    A003,
     # ANN1: Missing type annotation for {self,cls} in {,class}method
     ANN1,
     # PIE781: assign-and-return (used for mypy hinting)
@@ -27,6 +29,8 @@ extend-exclude =
     tests/**/fixtures/*,
 # black: https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 max-line-length = 88
+# flake8-builtins: https://github.com/gforcada/flake8-builtins#options
+builtins-ignorelist = id,license
 # flake8-eradicate: https://github.com/wemake-services/flake8-eradicate#options
 eradicate-aggressive = 1
 eradicate-whitelist-extend = ^-.*;

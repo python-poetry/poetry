@@ -259,9 +259,9 @@ class EditableBuilder(Builder):
         with record.open("w", encoding="utf-8", newline="") as f:
             csv_writer = csv.writer(f)
             for path in added_files:
-                hash = self._get_file_hash(path)
+                hash_ = self._get_file_hash(path)
                 size = path.stat().st_size
-                csv_writer.writerow((path, f"sha256={hash}", size))
+                csv_writer.writerow((path, f"sha256={hash_}", size))
 
             # RECORD itself is recorded with no hash or size
             csv_writer.writerow((record, "", ""))

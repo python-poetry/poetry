@@ -108,10 +108,10 @@ class VersionSolver:
         )
 
         try:
-            next: str | None = self._root.name
-            while next is not None:
-                self._propagate(next)
-                next = self._choose_package_version()
+            next_: str | None = self._root.name
+            while next_ is not None:
+                self._propagate(next_)
+                next_ = self._choose_package_version()
 
             return self._result()
         except Exception:

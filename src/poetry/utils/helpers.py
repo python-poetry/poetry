@@ -187,9 +187,9 @@ def _get_win_folder_from_registry(csidl_name: str) -> str:
         _winreg.HKEY_CURRENT_USER,
         r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
     )
-    dir, type = _winreg.QueryValueEx(key, shell_folder_name)
+    dir_, _ = _winreg.QueryValueEx(key, shell_folder_name)
 
-    return cast(str, dir)
+    return cast(str, dir_)
 
 
 def _get_win_folder_with_ctypes(csidl_name: str) -> str:

@@ -34,7 +34,7 @@ SOME_URL = "https://example.com/path.tar.gz"
 
 
 class MockEnv(BaseMockEnv):
-    def run(self, bin: str, *args: str) -> None:
+    def run(self, bin_: str, *args: str) -> None:
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
 
 
