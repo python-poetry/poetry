@@ -23,12 +23,6 @@ if TYPE_CHECKING:
 _VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
 
 
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = OSError
-
-
 logger = logging.getLogger(__name__)
 
 
