@@ -54,6 +54,7 @@ repos:
           - flake8-broken-line==0.6.0
           - flake8-bugbear==22.9.23
           - flake8-comprehensions==3.10.0
+          - flake8-deprecated==2.0.1
           - flake8-eradicate==1.4.0
           - flake8-logging-format==0.8.1
           - flake8-pie==0.16.0
