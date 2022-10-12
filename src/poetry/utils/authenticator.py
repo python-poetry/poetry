@@ -264,7 +264,7 @@ class Authenticator:
                 continue
 
         # this should never really be hit under any sane circumstance
-        raise PoetryException("Failed HTTP {} request", method.upper())
+        raise PoetryException(f"Failed HTTP {method.upper()} request")
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         return self.request("get", url, **kwargs)

@@ -604,7 +604,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
         except EnvCommandError as e:
             # something went wrong while attempting pep517 metadata build
             # fallback to egg_info if setup.py available
-            logger.debug("PEP517 build failed: %s", e)
+            logger.exception("PEP517 build failed")
             setup_py = path / "setup.py"
             if not setup_py.exists():
                 raise PackageInfoError(

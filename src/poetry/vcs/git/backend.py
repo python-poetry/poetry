@@ -306,11 +306,10 @@ class Git:
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
-            logger.debug(
+            logger.exception(
                 "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and cannot"
-                " be used. The following error was raised:\n\n\t<warning>%s</>",
+                " be used.",
                 refspec.key,
-                e,
             )
 
             raise PoetrySimpleConsoleException(

@@ -18,7 +18,7 @@ DEMO_TEMPLATE = """
   </head>
   <body>
     <h1>Links for demo</h1>
-    {}
+    {anchors}
     </body>
 </html>
 """
@@ -56,7 +56,7 @@ def test_link_attributes(attributes: str, expected_link: Link) -> None:
     anchor = (
         f'<a href="https://example.org/demo-0.1.whl" {attributes}>demo-0.1.whl</a><br/>'
     )
-    content = DEMO_TEMPLATE.format(anchor)
+    content = DEMO_TEMPLATE.format(anchors=anchor)
     page = HTMLPage("https://example.org", content)
 
     assert len(list(page.links)) == 1
@@ -88,7 +88,7 @@ def test_yanked(yanked_attrs: tuple[str, str], expected: bool | str) -> None:
         "demo-0.1.tar.gz</a>"
         f'<a href="https://example.org/demo-0.1.whl" {yanked_attrs[1]}>demo-0.1.whl</a>'
     )
-    content = DEMO_TEMPLATE.format(anchors)
+    content = DEMO_TEMPLATE.format(anchors=anchors)
     page = HTMLPage("https://example.org", content)
 
     assert page.yanked(canonicalize_name("demo"), Version.parse("0.1")) == expected

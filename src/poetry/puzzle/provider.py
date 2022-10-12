@@ -664,7 +664,9 @@ class Provider:
                 dependencies.append(deps[0])
                 continue
 
-            self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
+            self.debug(
+                f"<debug>Duplicate dependencies for {dep_name}</debug>"  # noqa: G004
+            )
 
             # Group dependencies for merging.
             # We must not merge dependencies from different sources!
@@ -690,7 +692,9 @@ class Provider:
                     self._merge_dependencies_by_marker(group)
                 )
             if len(deps) == 1:
-                self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
+                self.debug(
+                    f"<debug>Merging requirements for {deps[0]!s}</debug>"  # noqa: G004
+                )
                 dependencies.append(deps[0])
                 continue
 
@@ -737,7 +741,8 @@ class Provider:
             warnings = ", ".join(fmt_warning(d) for d in deps[:-1])
             warnings += f" and {fmt_warning(deps[-1])}"
             self.debug(
-                f"<warning>Different requirements found for {warnings}.</warning>"
+                f"<warning>Different requirements found for {warnings}."  # noqa: G004
+                "</warning>"
             )
 
             # We need to check if one of the duplicate dependencies
@@ -1026,8 +1031,8 @@ class Provider:
                     deps.extend(_deps)
                 else:
                     self.debug(
-                        f"<debug>Merging constraints for {_deps[0].name} for"
-                        f" marker {_deps[0].marker}</debug>"
+                        f"<debug>Merging constraints for {_deps[0].name}"  # noqa: G004
+                        f" for marker {_deps[0].marker}</debug>"
                     )
                     deps.append(_deps[0].with_constraint(new_constraint))
         return deps

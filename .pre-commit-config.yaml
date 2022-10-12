@@ -55,9 +55,11 @@ repos:
           - flake8-bugbear==22.9.23
           - flake8-comprehensions==3.10.0
           - flake8-eradicate==1.4.0
+          - flake8-logging-format==0.8.1
           - flake8-pie==0.16.0
           - flake8-quotes==3.3.1
           - flake8-simplify==0.19.3
+          - flake8-string-format==0.3.0
           - flake8-tidy-imports==4.8.0
           - flake8-type-checking==2.1.3
           - flake8-typing-imports==1.13.0

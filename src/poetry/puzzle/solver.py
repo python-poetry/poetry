@@ -77,13 +77,13 @@ class Solver:
             if len(self._overrides) > 1:
                 self._provider.debug(
                     # ignore the warning as provider does not do interpolation
-                    f"Complete version solving took {end - start:.3f}"  # noqa: PIE803
-                    f" seconds with {len(self._overrides)} overrides"
+                    "Complete version solving took"  # noqa: G004, PIE803
+                    f" {end - start:.3f} seconds with {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
                     # ignore the warning as provider does not do interpolation
-                    "Resolved with overrides:"  # noqa: PIE803
-                    f" {', '.join(f'({b})' for b in self._overrides)}"
+                    "Resolved with overrides:"  # noqa: G004, PIE803
+                    f" {', '.join(f'({b})' for b in self._overrides)}"  # noqa: G004
                 )
 
         for p in packages:
@@ -128,7 +128,7 @@ class Solver:
         for override in overrides:
             self._provider.debug(
                 # ignore the warning as provider does not do interpolation
-                "<comment>Retrying dependency resolution "  # noqa: PIE803
+                "<comment>Retrying dependency resolution "  # noqa: G004, PIE803
                 f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
