@@ -236,6 +236,10 @@
 - Fixed several style issues in the docs ([#6254](https://github.com/python-poetry/poetry/pull/6254))
 - Fixed outdated info about `--only` parameter ([#6263](https://github.com/python-poetry/poetry/pull/6263))
 
+### Breaking
+
+- Packages with dots in their names will be canonicalised to underscores for compatibility with PEP 503. This will rename projects on PYPI and is potentially breaking on Python versions earlier than 3.10, which may need to use [`importlib-metadata`](https://pypi.org/project/importlib-metadata/) rather than standard library [`importlib.metadata`](https://docs.python.org/3/library/importlib.metadata.html). ([#6022](https://github.com/python-poetry/poetry/pull/6022))
+
 
 ## [1.2.0rc2] - 2022-08-26
 
