@@ -84,9 +84,9 @@ jobs:
           timeout 10s poetry run pip --version || rm -rf .venv
 
       # XXX: https://github.com/pypa/pip/issues/11352 causes random failures -- remove once fixed in a release.
-      - name: Upgrade pip on 3.11 for macOS
-        if: ${{ matrix.python-version == '3.11-dev' && matrix.os == 'macOS' }}
-        run: poetry run pip install git+https://github.com/pypa/pip.git@fbb7f0b293f1d9289d8c76a556540325b9a172b2
+      - name: Upgrade pip on Python 3.11
+        if: ${{ matrix.python-version == '3.11-dev' }}
+        run: poetry run pip install git+https://github.com/pypa/pip.git@f8a25921e5c443b07483017b0ffdeb08b9ba2fdf
 
       - name: Install dependencies
         run: poetry install --with github-actions
