@@ -51,7 +51,7 @@ repos:
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
-        exclude: ^(install|get)-poetry.py$
+        exclude: ^(get-poetry.py|install-poetry.py)$
 
   - repo: https://github.com/hadialqattan/pycln
     rev: v2.1.1
