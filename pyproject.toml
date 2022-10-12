@@ -126,9 +126,11 @@ force_single_line = true
 combine_as_imports = true
 lines_between_types = 1
 lines_after_imports = 2
-src_paths = ["src", "tests"]
-extend_skip = ["setup.py"]
 known_third_party = ["poetry.core"]
+add_imports = ["from __future__ import annotations"]
+src_paths = ["src", "tests"]
+skip_glob = ["install-poetry.py", "get-poetry.py"]
+skip_gitignore = true
 
 
 [tool.black]
