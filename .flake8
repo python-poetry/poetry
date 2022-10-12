@@ -10,14 +10,9 @@ extend-ignore =
     E203,
     # A003: Class attribute is shadowing a python builtin
     A003,
-    # ANN1: Missing type annotation for {self,cls} in {,class}method
-    ANN1,
     # PIE781: assign-and-return (used for mypy hinting)
     PIE781,
 per-file-ignores =
-    # ANN201: Missing return type annotation for public function
-    tests/test_*:ANN201,
-    tests/**/test_*:ANN201,
     # PIE798: no-unnecessary-class: Consider using a module for namespacing instead
     src/poetry/vcs/git/*:PIE798,
 extend-exclude =
