@@ -395,10 +395,8 @@ class VersionSolver:
                 if locked:
                     return is_specific_marker, Preference.LOCKED, 1
 
-            try:
-                num_packages = len(self._dependency_cache.search_for(dependency))
-            except ValueError:
-                num_packages = 0
+            num_packages = len(self._dependency_cache.search_for(dependency))
+
             if num_packages < 2:
                 preference = Preference.NO_CHOICE
             elif use_latest:
