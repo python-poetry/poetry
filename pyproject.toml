@@ -114,6 +114,11 @@ requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.core.masonry.api"
 
 
+[tool.pycln]
+all = true
+expand_stars = true
+
+
 [tool.isort]
 py_version = 37
 profile = "black"

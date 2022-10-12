@@ -57,7 +57,7 @@ repos:
     rev: v2.1.1
     hooks:
       - id: pycln
-        args: [--all]
+        args: [--config=pyproject.toml]
 
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
