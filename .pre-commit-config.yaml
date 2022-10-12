@@ -55,10 +55,12 @@ repos:
           - flake8-bugbear==22.9.23
           - flake8-builtins==2.0.0
           - flake8-comprehensions==3.10.0
+          - flake8-debugger==4.1.2
           - flake8-deprecated==2.0.1
           - flake8-eradicate==1.4.0
           - flake8-logging-format==0.8.1
           - flake8-pie==0.16.0
+          - flake8-print==5.0.0
           - flake8-quotes==3.3.1
           - flake8-simplify==0.19.3
           - flake8-string-format==0.3.0
