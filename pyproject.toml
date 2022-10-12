@@ -49,14 +49,14 @@ python = "^3.7"
 
 poetry-core = "^1.3.2"
 poetry-plugin-export = "^1.1.2"
-"backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
+"backports.cached-property" = { version = "^1.0.2", python = "3.7" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
 dulwich = "^0.20.46"
 filelock = "^3.8.0"
 html5lib = "^1.0"
-importlib-metadata = { version = "^4.4", python = "<3.10" }
+importlib-metadata = { version = "^4.4", python = "3.7" }
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
 # packaging uses calver, so version is unclamped
@@ -72,7 +72,7 @@ tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
 trove-classifiers = "^2022.5.19"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "^20.4.3,!=20.4.5,!=20.4.6"
-xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
+xattr = { version = "^0.9.7", platform = "darwin" }
 urllib3 = "^1.26.0"
 
 [tool.poetry.group.dev.dependencies]
