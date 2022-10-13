@@ -367,7 +367,7 @@ poetry completions bash >> ~/.bash_completion
 #### Lazy-loaded
 
 ```bash
-poetry completions bash > ${XDG_DATA_HOME:~/.local/share}/bash-completion/completions/poetry
+poetry completions bash > ${XDG_DATA_HOME:-~/.local/share}/bash-completion/completions/poetry
 ```
 
 ### Fish
