@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
     from poetry.packages import DependencyPackage
     from poetry.puzzle.transaction import Transaction
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -39,7 +39,7 @@ class Solver:
     def __init__(
         self,
         package: ProjectPackage,
-        pool: Pool,
+        pool: RepositoryPool,
         installed: list[Package],
         locked: list[Package],
         io: IO,

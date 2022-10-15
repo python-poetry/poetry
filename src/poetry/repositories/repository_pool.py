@@ -33,13 +33,13 @@ class PrioritizedRepository:
     priority: Priority
 
 
-class Pool(AbstractRepository):
+class RepositoryPool(AbstractRepository):
     def __init__(
         self,
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
     ) -> None:
-        super().__init__("poetry-pool")
+        super().__init__("poetry-repository-pool")
         self._repositories: OrderedDict[str, PrioritizedRepository] = OrderedDict()
         self._ignore_repository_names = ignore_repository_names
 
@@ -78,7 +78,7 @@ class Pool(AbstractRepository):
 
     def add_repository(
         self, repository: Repository, default: bool = False, secondary: bool = False
-    ) -> Pool:
+    ) -> RepositoryPool:
         """
         Adds a repository to the pool.
         """
@@ -101,7 +101,7 @@ class Pool(AbstractRepository):
         )
         return self
 
-    def remove_repository(self, name: str) -> Pool:
+    def remove_repository(self, name: str) -> RepositoryPool:
         if not self.has_repository(name):
             raise IndexError(f"Pool can not remove unknown repository '{name}'.")
         del self._repositories[name.lower()]

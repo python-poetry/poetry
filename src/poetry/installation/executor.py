@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -49,7 +49,7 @@ class Executor:
     def __init__(
         self,
         env: Env,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         io: IO,
         parallel: bool | None = None,
