@@ -24,8 +24,8 @@ from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -419,7 +419,7 @@ def project_factory(
         poetry.set_locker(locker)
         poetry.set_config(config)
 
-        pool = Pool()
+        pool = RepositoryPool()
         pool.add_repository(repo)
 
         poetry.set_pool(pool)

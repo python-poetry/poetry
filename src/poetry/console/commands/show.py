@@ -194,11 +194,11 @@ lists all packages available."""
 
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.repositories.pool import Pool
+        from poetry.repositories.repository_pool import RepositoryPool
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = Pool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True)
         pool.add_repository(locked_repository)
         solver = Solver(
             root,

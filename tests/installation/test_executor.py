@@ -20,7 +20,7 @@ from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
-from poetry.repositories.pool import Pool
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -73,8 +73,8 @@ def io_not_decorated() -> BufferedIO:
 
 
 @pytest.fixture()
-def pool() -> Pool:
-    pool = Pool()
+def pool() -> RepositoryPool:
+    pool = RepositoryPool()
     pool.add_repository(MockRepository())
 
     return pool
@@ -102,7 +102,7 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
 def test_execute_executes_a_batch_of_operations(
     mocker: MockerFixture,
     config: Config,
-    pool: Pool,
+    pool: RepositoryPool,
     io: BufferedIO,
     tmp_dir: str,
     mock_file_downloads: None,
@@ -203,7 +203,7 @@ Package operations: 4 installs, 1 update, 1 removal
 )
 def test_execute_prints_warning_for_yanked_package(
     config: Config,
-    pool: Pool,
+    pool: RepositoryPool,
     io: BufferedIO,
     tmp_dir: str,
     mock_file_downloads: None,
@@ -234,7 +234,11 @@ def test_execute_prints_warning_for_yanked_package(
 
 
 def test_execute_shows_skipped_operations_if_verbose(
-    config: Config, pool: Pool, io: BufferedIO, config_cache_dir: Path, env: MockEnv
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    config_cache_dir: Path,
+    env: MockEnv,
 ):
     config.merge({"cache-dir": config_cache_dir.as_posix()})
 
@@ -258,7 +262,11 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 
 
 def test_execute_should_show_errors(
-    config: Config, pool: Pool, mocker: MockerFixture, io: BufferedIO, env: MockEnv
+    config: Config,
+    pool: RepositoryPool,
+    mocker: MockerFixture,
+    io: BufferedIO,
+    env: MockEnv,
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -283,7 +291,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_execute_works_with_ansi_output(
     mocker: MockerFixture,
     config: Config,
-    pool: Pool,
+    pool: RepositoryPool,
     io_decorated: BufferedIO,
     tmp_dir: str,
     mock_file_downloads: None,
@@ -325,7 +333,7 @@ def test_execute_works_with_ansi_output(
 def test_execute_works_with_no_ansi_output(
     mocker: MockerFixture,
     config: Config,
-    pool: Pool,
+    pool: RepositoryPool,
     io_not_decorated: BufferedIO,
     tmp_dir: str,
     mock_file_downloads: None,
@@ -358,7 +366,11 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
-    config: Config, pool: Pool, mocker: MockerFixture, io: BufferedIO, env: MockEnv
+    config: Config,
+    pool: RepositoryPool,
+    mocker: MockerFixture,
+    io: BufferedIO,
+    env: MockEnv,
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -379,7 +391,11 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_gracefully_handle_io_error(
-    config: Config, pool: Pool, mocker: MockerFixture, io: BufferedIO, env: MockEnv
+    config: Config,
+    pool: RepositoryPool,
+    mocker: MockerFixture,
+    io: BufferedIO,
+    env: MockEnv,
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -410,7 +426,7 @@ def test_executor_should_delete_incomplete_downloads(
     io: BufferedIO,
     tmp_dir: str,
     mocker: MockerFixture,
-    pool: Pool,
+    pool: RepositoryPool,
     mock_file_downloads: None,
     env: MockEnv,
 ):
@@ -488,7 +504,7 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
     tmp_venv: VirtualEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
 ):
@@ -504,7 +520,7 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
 
 
 def test_executor_should_write_pep610_url_references_for_files(
-    tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
 ):
     url = (
         Path(__file__)
@@ -523,7 +539,7 @@ def test_executor_should_write_pep610_url_references_for_files(
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
-    tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
 ):
     url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
     package = Package(
@@ -538,7 +554,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
-    tmp_venv: VirtualEnv, pool: Pool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
 ):
     url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
     package = Package(
@@ -558,7 +574,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
 
 def test_executor_should_write_pep610_url_references_for_urls(
     tmp_venv: VirtualEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
@@ -579,7 +595,7 @@ def test_executor_should_write_pep610_url_references_for_urls(
 
 def test_executor_should_write_pep610_url_references_for_git(
     tmp_venv: VirtualEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
@@ -611,7 +627,7 @@ def test_executor_should_write_pep610_url_references_for_git(
 
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
     tmp_venv: VirtualEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
@@ -645,7 +661,7 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
 
 def test_executor_should_use_cached_link_and_hash(
     tmp_venv: VirtualEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mocker: MockerFixture,
@@ -688,7 +704,7 @@ def test_executor_should_use_cached_link_and_hash(
 )
 def test_executor_should_be_initialized_with_correct_workers(
     tmp_venv: VirtualEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mocker: MockerFixture,
@@ -709,7 +725,7 @@ def test_executor_should_be_initialized_with_correct_workers(
 def test_executer_fallback_on_poetry_create_error(
     mocker: MockerFixture,
     config: Config,
-    pool: Pool,
+    pool: RepositoryPool,
     io: BufferedIO,
     tmp_dir: str,
     mock_file_downloads: None,

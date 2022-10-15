@@ -25,12 +25,12 @@ if TYPE_CHECKING:
     from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
+    def __init__(self, env: Env, io: IO, pool: RepositoryPool) -> None:
         self._env = env
         self._io = io
         self._pool = pool

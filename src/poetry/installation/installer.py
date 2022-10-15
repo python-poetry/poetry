@@ -10,8 +10,8 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.pip_installer import PipInstaller
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
 from poetry.utils.extras import get_extra_package_names
@@ -39,7 +39,7 @@ class Installer:
         env: Env,
         package: ProjectPackage,
         locker: Locker,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
@@ -300,7 +300,7 @@ class Installer:
             )
 
         # We resolve again by only using the lock file
-        pool = Pool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True)
 
         # Making a new repo containing the packages
         # newly resolved and the ones from the current lock file
