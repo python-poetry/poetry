@@ -77,7 +77,17 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
-        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+        project_path = Path.cwd()
+
+        if self.io.input.option("directory"):
+            project_path = Path(self.io.input.option("directory"))
+            if not project_path.exists() or not project_path.is_dir():
+                self.line_error(
+                    "<error>The --directory path is not a directory.</error>"
+                )
+                return 1
+
+        pyproject = PyProjectTOML(project_path / "pyproject.toml")
 
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
