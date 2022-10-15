@@ -14,7 +14,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.base_installer import BaseInstaller
-from poetry.repositories.http import HTTPRepository
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils._compat import encode
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install

@@ -7,7 +7,7 @@ from poetry.core.packages.package import Package
 
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.http import HTTPRepository
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
