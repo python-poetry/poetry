@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from cleo.io.null_io import NullIO
-from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
@@ -24,6 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
