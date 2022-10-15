@@ -121,8 +121,13 @@ class Application(BaseApplication):  # type: ignore[misc]
         if self._poetry is not None:
             return self._poetry
 
+        project_path = Path.cwd()
+
+        if self._io and self._io.input.option("directory"):
+            project_path = self._io.input.option("directory")
+
         self._poetry = Factory().create_poetry(
-            Path.cwd(),
+            cwd=project_path,
             io=self._io,
             disable_plugins=self._disable_plugins,
             disable_cache=self._disable_cache,
@@ -364,6 +369,18 @@ class Application(BaseApplication):  # type: ignore[misc]
         definition.add_option(
             Option(
                 "--no-cache", flag=True, description="Disables Poetry source caches."
+            )
+        )
+
+        definition.add_option(
+            Option(
+                "--directory",
+                "-C",
+                flag=False,
+                description=(
+                    "The working directory for the Poetry command (defaults to the"
+                    " current working directory)."
+                ),
             )
         )
 
