@@ -493,6 +493,10 @@ When `--only` is specified, `--with` and `--without` options are ignored.
 
 The `build` command builds the source and wheels archives.
 
+{{% note %}}
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-build">}}) for more information.
+{{% /note %}}
+
 ```bash
 poetry build
 ```
