@@ -46,6 +46,17 @@ The hook takes the same arguments as the poetry command.
 For more information see the [lock command]({{< relref "cli#lock" >}}).
 
 
+## poetry-build
+
+The `poetry-build` hook calls the `poetry build` command
+To build the source and wheels archives.
+
+### Arguments
+
+The hook takes the same arguments as the poetry command.
+For more information see the [build command]({{< relref "cli#build" >}}).
+
+
 ## poetry-export
 
 The `poetry-export` hook calls the `poetry export` command
