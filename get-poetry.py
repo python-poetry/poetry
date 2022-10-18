@@ -412,7 +412,7 @@ class Installer:
 
         print(colorize("info", "Retrieving Poetry metadata"))
 
-        metadata = json.loads(self._get(self.METADATA_URL).decode())
+        metadata = json.loads(self._get(self.METADATA_URL).decode("utf-8"))
 
         def _compare_versions(x, y):
             mx = self.VERSION_REGEX.match(x)
