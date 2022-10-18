@@ -24,7 +24,7 @@
   pass_filenames: false
   files: ^poetry.lock$
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
-  
+
 - id: poetry-build
   name: poetry-build
   description: run poetry build build the source and wheels archive
