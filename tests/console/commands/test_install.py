@@ -166,10 +166,10 @@ def test_all_extras_populates_installer(tester: CommandTester, mocker: MockerFix
 
     tester.execute("--all-extras")
 
-    assert tester.command.installer._extras == ["extras_a", "extras_b"]
+    assert tester.command.installer._extras == ["extras-a", "extras-b"]
 
 
-def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture):
+def test_extras_conflicts_all_extras(tester: CommandTester, mocker: MockerFixture):
     """
     The --extras doesn't make sense with --all-extras.
     """
@@ -183,3 +183,15 @@ def test_extras_conlicts_all_extras(tester: CommandTester, mocker: MockerFixture
         == "You cannot specify explicit `--extras` while installing using"
         " `--all-extras`.\n"
     )
+
+
+def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --dry-run option results in extras passed to the installer.
+    """
+
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--dry-run")
+
+    assert tester.command.installer._dry_run is True

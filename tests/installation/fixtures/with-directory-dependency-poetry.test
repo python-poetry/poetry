@@ -4,6 +4,7 @@ category = "main"
 name = "pendulum"
 optional = false
 python-versions = "*"
+files = []
 version = "1.4.4"
 
 [[package]]
@@ -13,14 +14,15 @@ develop = false
 name = "project-with-extras"
 optional = false
 python-versions = "*"
+files = []
 version = "1.2.3"
 
 [package.dependencies]
 pendulum = {version = ">=1.4.4", optional = true}
 
 [package.extras]
-extras_a = ["pendulum (>=1.4.4)"]
-extras_b = ["cachy (>=0.2.0)"]
+extras-a = ["pendulum (>=1.4.4)"]
+extras-b = ["cachy (>=0.2.0)"]
 
 [package.source]
 type = "directory"
@@ -28,9 +30,5 @@ url = "tests/fixtures/project_with_extras"
 
 [metadata]
 content-hash = "123456789"
-lock-version = "1.1"
+lock-version = "2.0"
 python-versions = "*"
-
-[metadata.files]
-project-with-extras = []
-pendulum = []

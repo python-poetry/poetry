@@ -76,11 +76,13 @@ class Solver:
 
             if len(self._overrides) > 1:
                 self._provider.debug(
-                    f"Complete version solving took {end - start:.3f} seconds with"
-                    f" {len(self._overrides)} overrides"
+                    # ignore the warning as provider does not do interpolation
+                    f"Complete version solving took {end - start:.3f}"  # noqa: PIE803
+                    f" seconds with {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
-                    "Resolved with overrides:"
+                    # ignore the warning as provider does not do interpolation
+                    "Resolved with overrides:"  # noqa: PIE803
                     f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
@@ -125,7 +127,8 @@ class Solver:
         depths = []
         for override in overrides:
             self._provider.debug(
-                "<comment>Retrying dependency resolution "
+                # ignore the warning as provider does not do interpolation
+                "<comment>Retrying dependency resolution "  # noqa: PIE803
                 f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 import tomlkit
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 from poetry.core.toml.file import TOMLFile
 
 from poetry.utils.env import MockEnv

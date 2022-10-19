@@ -10,9 +10,7 @@ from typing import Any
 import requests
 
 from poetry.core.masonry.metadata import Metadata
-from poetry.core.masonry.utils.helpers import escape_name
-from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.utils.helpers import normalize_version
+from poetry.core.masonry.utils.helpers import distribution_name
 from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -78,15 +76,11 @@ class Uploader:
     @property
     def files(self) -> list[Path]:
         dist = self._poetry.file.parent / "dist"
-        version = normalize_version(self._package.version.text)
+        version = self._package.version.to_string()
+        escaped_name = distribution_name(self._package.name)
 
-        wheels = list(
-            dist.glob(
-                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}"
-                "-*.whl"
-            )
-        )
-        tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
+        wheels = list(dist.glob(f"{escaped_name}-{version}-*.whl"))
+        tars = list(dist.glob(f"{escaped_name}-{version}.tar.gz"))
 
         return sorted(wheels + tars)
 
@@ -217,8 +211,6 @@ class Uploader:
         skip_existing: bool = False,
     ) -> None:
         for file in self.files:
-            # TODO: Check existence
-
             self._upload_file(session, url, file, dry_run, skip_existing)
 
     def _upload_file(
@@ -230,6 +222,9 @@ class Uploader:
         skip_existing: bool = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
+
+        if not file.is_file():
+            raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
         data.update(
@@ -305,10 +300,8 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = (
-            dist
-            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"  # noqa: E501
-        )
+        escaped_name = distribution_name(self._package.name)
+        file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 
         if not file.exists():
             raise RuntimeError(f'"{file.name}" does not exist.')

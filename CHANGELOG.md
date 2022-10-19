@@ -1,5 +1,83 @@
 # Change Log
 
+## [1.2.2] - 2022-10-10
+
+### Added
+
+- Add forward compatibility for lock file format 2.0, which will be used by Poetry 1.3 ([#6608](https://github.com/python-poetry/poetry/pull/6608)).
+
+### Changed
+
+- Allow `poetry lock` to re-generate the lock file when invalid or incompatible ([#6753](https://github.com/python-poetry/poetry/pull/6753)).
+
+### Fixed
+
+- Fix an issue where the deprecated JSON API was used to query PyPI for available versions of a package ([#6081](https://github.com/python-poetry/poetry/pull/6081)).
+- Fix an issue where versions were escaped wrongly when building the wheel name ([#6476](https://github.com/python-poetry/poetry/pull/6476)).
+- Fix an issue where the installation of dependencies failed if pip is a dependency and is updated in parallel to other dependencies ([#6582](https://github.com/python-poetry/poetry/pull/6582)).
+- Fix an issue where the names of extras were not normalized according to PEP 685 ([#6541](https://github.com/python-poetry/poetry/pull/6541)).
+- Fix an issue where sdist names were not normalized ([#6621](https://github.com/python-poetry/poetry/pull/6621)).
+- Fix an issue where invalid constraints, which are ignored, were only reported in a debug message instead of a warning ([#6730](https://github.com/python-poetry/poetry/pull/6730)).
+- Fix an issue where `poetry shell` was broken in git bash on Windows ([#6560](https://github.com/python-poetry/poetry/pull/6560)).
+
+### Docs
+
+- Rework the README and contribution docs ([#6552](https://github.com/python-poetry/poetry/pull/6552)).
+- Fix for inconsistent docs for multiple-constraint dependencies ([#6604](https://github.com/python-poetry/poetry/pull/6604)).
+- Rephrase plugin configuration ([#6557](https://github.com/python-poetry/poetry/pull/6557)).
+- Add a note about publishable repositories to `publish` ([#6641](https://github.com/python-poetry/poetry/pull/6641)).
+- Fix the path for lazy-loaded bash completion ([#6656](https://github.com/python-poetry/poetry/pull/6656)).
+- Fix a reference to the invalid option `--require` ([#6672](https://github.com/python-poetry/poetry/pull/6672)).
+- Add a PowerShell one-liner to the basic usage section ([#6683](https://github.com/python-poetry/poetry/pull/6683)).
+- Fix the minimum poetry version in the example for plugins ([#6739](https://github.com/python-poetry/poetry/pull/6739)).
+
+### poetry-core ([`1.3.2`](https://github.com/python-poetry/poetry-core/releases/tag/1.3.2))
+
+- Add `3.11` to the list of available Python versions ([#477](https://github.com/python-poetry/poetry-core/pull/477)).
+- Fix an issue where caret constraints of pre-releases with a major version of 0 resulted in an empty version range ([#475](https://github.com/python-poetry/poetry-core/pull/475)).
+
+### poetry-plugin-export ([`^1.1.2`](https://github.com/python-poetry/poetry-plugin-export/releases/tag/1.1.2))
+
+- Add support for exporting `constraints.txt` files ([#128](https://github.com/python-poetry/poetry-plugin-export/pull/128)).
+- Fix an issue where a relative path passed via `-o` was not interpreted relative to the current working directory ([#130](https://github.com/python-poetry/poetry-plugin-export/pull/130)).
+
+
+## [1.2.1] - 2022-09-16
+
+### Changed
+
+- Bump `poetry-core` to [`1.2.0`](https://github.com/python-poetry/poetry-core/releases/tag/1.2.0).
+- Bump `poetry-plugin-export` to [`^1.0.7`](https://github.com/python-poetry/poetry-plugin-export/releases/tag/1.0.7).
+
+### Fixed
+
+- Fix an issue where `poetry cache clear` did not respect the `-n/--no-interaction` flag ([#6338](https://github.com/python-poetry/poetry/pull/6338)).
+- Fix an issue where `poetry lock --no-update` updated dependencies from non-PyPI package sources ([#6335](https://github.com/python-poetry/poetry/pull/6335)).
+- Fix a `poetry install` performance regression by falling back to internal pip ([#6062](https://github.com/python-poetry/poetry/pull/6062)).
+- Fix an issue where a virtual environment was created unnecessarily when running `poetry export` ([#6282](https://github.com/python-poetry/poetry/pull/6282)).
+- Fix an issue where `poetry lock --no-update` added duplicate hashes to the lock file ([#6389](https://github.com/python-poetry/poetry/pull/6389)).
+- Fix an issue where `poetry install` fails because of missing hashes for `url` dependencies ([#6389](https://github.com/python-poetry/poetry/pull/6389)).
+- Fix an issue where Poetry was not able to update pip in Windows virtual environments ([#6430](https://github.com/python-poetry/poetry/pull/6430)).
+- Fix an issue where Poetry was not able to install releases that contained less common link types ([#5767](https://github.com/python-poetry/poetry/pull/5767)).
+- Fix a `poetry lock` performance regression when checking non-PyPI sources for yanked versions ([#6442](https://github.com/python-poetry/poetry/pull/6442)).
+- Fix an issue where `--no-cache` was not respected when running `poetry install` ([#6479](https://github.com/python-poetry/poetry/pull/6479)).
+- Fix an issue where deprecation warnings for `--dev` were missing ([#6475](https://github.com/python-poetry/poetry/pull/6475)).
+- Fix an issue where Git dependencies failed to clone when `insteadOf` was used in `.gitconfig` using the Dulwich Git client ([#6506](https://github.com/python-poetry/poetry/pull/6506)).
+- Fix an issue where no cache entry is found when calling `poetry cache clear` with a non-normalized package name ([#6537](https://github.com/python-poetry/poetry/pull/6537)).
+- Fix an invalid virtualenv constraint on Poetry ([#6402](https://github.com/python-poetry/poetry/pull/6402)).
+- Fix outdated build system requirements for Poetry ([#6509](https://github.com/python-poetry/poetry/pull/6509)).
+
+### Docs
+
+- Add missing path segment to paths used by install.python-poetry.org ([#6311](https://github.com/python-poetry/poetry/pull/6311)).
+- Add recommendations about how to install Poetry in a CI environment ([#6345](https://github.com/python-poetry/poetry/pull/6345)).
+- Fix examples for `--with` and `--without` ([#6318](https://github.com/python-poetry/poetry/pull/6318)).
+- Update configuration folder path for macOS ([#6395](https://github.com/python-poetry/poetry/pull/6395)).
+- Improve the description of the `virtualenv.create` option ([#6460](https://github.com/python-poetry/poetry/pull/6460)).
+- Clarify that `poetry install` removes dependencies of non-installed extras ([#6229](https://github.com/python-poetry/poetry/pull/6229)).
+- Add a note about `pre-commit autoupdate` and Poetry's hooks ([#6497](https://github.com/python-poetry/poetry/pull/6497)).
+
+
 ## [1.2.0] - 2022-08-31
 
 ### Docs
@@ -60,6 +138,14 @@
 
 - Document use of the `subdirectory` parameter ([#5949](https://github.com/python-poetry/poetry/pull/5949))
 - Document suggested `tox` config for different use cases ([#6026](https://github.com/python-poetry/poetry/pull/6026))
+
+
+## [1.1.15] - 2022-08-22
+
+### Changed
+
+- Poetry now fallback to gather metadata for dependencies via pep517 if parsing pyproject.toml fail ([#6206](https://github.com/python-poetry/poetry/pull/6206))
+- Extras and extras dependencies are now sorted in lock file ([#6207](https://github.com/python-poetry/poetry/pull/6207))
 
 
 ## [1.2.0b3] - 2022-07-13
@@ -127,11 +213,13 @@ $ poetry cache clear pypi --all
 - Improved autocompletion documentation ([#5879](https://github.com/python-poetry/poetry/pull/5879))
 - Improved `scripts` definition documentation ([#5884](https://github.com/python-poetry/poetry/pull/5884))
 
+
 ## [1.1.14] - 2022-07-08
 
-## Fixed
+### Fixed
 
 - Fixed an issue where dependencies hashes could not be retrieved when locking due to a breaking change on PyPI JSON API ([#5973](https://github.com/python-poetry/poetry/pull/5973))
+
 
 ## [1.2.0b2] - 2022-06-07
 
@@ -241,6 +329,7 @@ $ poetry cache clear pypi --all
 - Improved contributing documentation ([#5708](https://github.com/python-poetry/poetry/pull/5708))
 - Remove all references to `--dev-only` option ([#5771](https://github.com/python-poetry/poetry/pull/5771))
 
+
 ## [1.2.0b1] - 2022-03-17
 
 ### Fixed
@@ -299,6 +388,7 @@ $ poetry cache clear pypi --all
 - Fixed an issue where conda envs in windows are always reported as broken([#5008](https://github.com/python-poetry/poetry/pull/5008))
 - Fixed an issue where Poetry doesn't find its own venv on `poetry self update` ([#5048](https://github.com/python-poetry/poetry/pull/5048))
 
+
 ## [1.1.12] - 2021-11-27
 
 ### Fixed
@@ -306,6 +396,7 @@ $ poetry cache clear pypi --all
 - Fixed broken caches on Windows due to `Path` starting with a slash ([#4549](https://github.com/python-poetry/poetry/pull/4549))
 - Fixed `JSONDecodeError` when installing packages by updating `cachecontrol` version ([#4831](https://github.com/python-poetry/poetry/pull/4831))
 - Fixed dropped markers in dependency walk ([#4686](https://github.com/python-poetry/poetry/pull/4686))
+
 
 ## [1.1.11] - 2021-10-04
 
@@ -315,11 +406,13 @@ $ poetry cache clear pypi --all
 - Fixed an issue where the wrong `git` executable could be used on Windows. ([python-poetry/poetry-core#213](https://github.com/python-poetry/poetry-core/pull/213))
 - Fixed an issue where the Python 3.10 classifier was not automatically added. ([python-poetry/poetry-core#215](https://github.com/python-poetry/poetry-core/pull/215))
 
+
 ## [1.1.10] - 2021-09-21
 
 ### Fixed
 
 -   Fixed an issue where non-sha256 hashes were not checked. ([#4529](https://github.com/python-poetry/poetry/pull/4529))
+
 
 ## [1.1.9] - 2021-09-18
 
@@ -330,6 +423,7 @@ $ poetry cache clear pypi --all
 -   Fixed an issue where unsafe parameters could be passed to `git` commands. ([python-poetry/poetry-core#203](https://github.com/python-poetry/poetry-core/pull/203))
 -   Fixed an issue where the wrong `git` executable could be used on Windows. ([python-poetry/poetry-core#205](https://github.com/python-poetry/poetry-core/pull/205))
 
+
 ## [1.1.8] - 2021-08-19
 
 ### Fixed
@@ -339,6 +433,7 @@ $ poetry cache clear pypi --all
 -   Fixed the evaluation of relative path dependencies. ([#4246](https://github.com/python-poetry/poetry/pull/4246))
 -   Fixed environment detection for Python 3.10 environments. ([#4387](https://github.com/python-poetry/poetry/pull/4387))
 -   Fixed an error in the evaluation of `in/not in` markers ([python-poetry/poetry-core#189](https://github.com/python-poetry/poetry-core/pull/189))
+
 
 ## [1.2.0a2] - 2021-08-01
 
@@ -376,6 +471,7 @@ You can use `poetry lock` to do so without the `--no-update` option.
 -   Fixed an issue where transitive dependencies of directory or VCS dependencies were not installed or otherwise removed. ([#4203](https://github.com/python-poetry/poetry/pull/4203))
 -   Fixed an issue where the combination of the `--tree` and `--no-dev` options for the show command was still displaying development dependencies. ([#3992](https://github.com/python-poetry/poetry/pull/3992))
 
+
 ## [1.2.0a1] - 2021-05-21
 
 This release is the first testing release of the upcoming 1.2.0 version.
@@ -405,6 +501,7 @@ It **drops** support for Python 2.7 and 3.5.
 - Fixed an error where command line options were not taken into account when using the `run` command. ([#3618](https://github.com/python-poetry/poetry/pull/3618))
 - Fixed an error in the way custom repositories were resolved. ([#3406](https://github.com/python-poetry/poetry/pull/3406))
 
+
 ## [1.1.6] - 2021-04-14
 
 ### Fixed
@@ -416,6 +513,7 @@ It **drops** support for Python 2.7 and 3.5.
 -   Fixed an error where VCS dependencies were always updated. ([#3947](https://github.com/python-poetry/poetry/pull/3947))
 -   Fixed an error where the incorrect version of a package was locked when using environment markers. ([#3945](https://github.com/python-poetry/poetry/pull/3945))
 
+
 ## [1.1.5] - 2021-03-04
 
 ### Fixed
@@ -425,6 +523,7 @@ It **drops** support for Python 2.7 and 3.5.
 - Fixed errors when handling simple indices redirection. (#3622)
 - Fixed errors when trying to handle newer wheels by using the latest version of poetry-core and packaging. (#3677)
 - Fixed an error when using some versions of poetry-core due to an incorrect import. (#3696)
+
 
 ## [1.1.4] - 2020-10-23
 
@@ -446,6 +545,7 @@ It **drops** support for Python 2.7 and 3.5.
 - Fixed recursion error when locked dependencies contain cyclic dependencies. ([#3237](https://github.com/python-poetry/poetry/pull/3237))
 - Fixed propagation of editable flag for VCS dependencies. ([#3264](https://github.com/python-poetry/poetry/pull/3264))
 
+
 ## [1.1.3] - 2020-10-14
 
 ### Changed
@@ -460,6 +560,7 @@ It **drops** support for Python 2.7 and 3.5.
 - Fixed `show` command to use already resolved package metadata. ([#3117](https://github.com/python-poetry/poetry/pull/3117))
 - Fixed multiple issues with `export` command output when using `requirements.txt` format. ([#3119](https://github.com/python-poetry/poetry/pull/3119))
 
+
 ## [1.1.2] - 2020-10-06
 
 ### Changed
@@ -469,6 +570,7 @@ It **drops** support for Python 2.7 and 3.5.
 ### Fixed
 
 - Fixed export of `requirements.txt` when project dependency contains git dependencies. ([#3100](https://github.com/python-poetry/poetry/pull/3100))
+
 
 ## [1.1.1] - 2020-10-05
 
@@ -485,6 +587,7 @@ It **drops** support for Python 2.7 and 3.5.
 - Fixed errors in `init` command  when specifying `--dependency` in non-interactive mode when a `pyproject.toml` file already exists. ([#3076](https://github.com/python-poetry/poetry/pull/3076))
 - Fixed incorrect selection of configured source url when a publish repository url configuration with the same name already exists. ([#3047](https://github.com/python-poetry/poetry/pull/3047))
 - Fixed dependency resolution issues when the same package is specified in multiple dependency extras. ([#3046](https://github.com/python-poetry/poetry/pull/3046))
+
 
 ## [1.1.0] - 2020-10-01
 
@@ -1509,7 +1612,9 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.2...master
+[1.2.2]: https://github.com/python-poetry/poetry/releases/tag/1.2.2
+[1.2.1]: https://github.com/python-poetry/poetry/releases/tag/1.2.1
 [1.2.0]: https://github.com/python-poetry/poetry/releases/tag/1.2.0
 [1.2.0rc2]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc2
 [1.2.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.2.0rc1

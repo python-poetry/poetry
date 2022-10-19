@@ -126,7 +126,7 @@ poetry init
 * `--author`: Author of the package.
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-* `--dev-dependency`: Development requirements, see `--require`.
+* `--dev-dependency`: Development requirements, see `--dependency`.
 
 
 ## install
@@ -514,6 +514,10 @@ poetry publish
 ```
 
 It can also build the package if you pass it the `--build` option.
+
+{{% note %}}
+See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to configure and use publishable repositories.
+{{% /note %}}
 
 ### Options
 

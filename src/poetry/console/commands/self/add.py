@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from poetry.__version__ import __version__
 from poetry.console.commands.add import AddCommand

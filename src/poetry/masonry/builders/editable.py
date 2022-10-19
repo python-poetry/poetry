@@ -10,10 +10,10 @@ from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from poetry.core.constraints.version import Version
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
-from poetry.core.semver.version import Version
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode

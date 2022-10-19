@@ -111,6 +111,13 @@ def remote_default_branch(remote_default_ref: bytes) -> str:
     return remote_default_ref.decode("utf-8").replace("refs/heads/", "")
 
 
+# Regression test for https://github.com/python-poetry/poetry/issues/6722
+def test_use_system_git_client_from_environment_variables():
+    os.environ["POETRY_EXPERIMENTAL_SYSTEM_GIT_CLIENT"] = "true"
+
+    assert Git.is_using_legacy_client()
+
+
 def test_git_local_info(
     source_url: str, remote_refs: FetchPackResult, remote_default_ref: bytes
 ) -> None:

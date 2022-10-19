@@ -11,20 +11,20 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
+from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
-from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
-from tomlkit.items import Array
 
 
 if TYPE_CHECKING:
@@ -35,13 +35,19 @@ if TYPE_CHECKING:
     from tomlkit.items import Table
     from tomlkit.toml_document import TOMLDocument
 
-    from poetry.repositories import Repository
+    from poetry.repositories.lockfile_repository import LockfileRepository
 
 logger = logging.getLogger(__name__)
+_GENERATED_IDENTIFIER = "@" + "generated"
+GENERATED_COMMENT = (
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
+    " changed by hand."
+)
 
 
 class Locker:
-    _VERSION = "1.1"
+    _VERSION = "2.0"
+    _READ_VERSION_RANGE = ">=1,<3"
 
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
@@ -67,10 +73,7 @@ class Locker:
         """
         Checks whether the locker has been locked (lockfile found).
         """
-        if not self._lock.exists():
-            return False
-
-        return "package" in self.lock_data
+        return self._lock.exists()
 
     def is_fresh(self) -> bool:
         """
@@ -85,22 +88,23 @@ class Locker:
 
         return False
 
-    def locked_repository(self) -> Repository:
+    def locked_repository(self) -> LockfileRepository:
         """
         Searches and returns a repository of locked packages.
         """
         from poetry.factory import Factory
-        from poetry.repositories import Repository
+        from poetry.repositories.lockfile_repository import LockfileRepository
+
+        repository = LockfileRepository()
 
         if not self.is_locked():
-            return Repository("poetry-locked")
+            return repository
 
         lock_data = self.lock_data
-        packages = Repository("poetry-locked")
         locked_packages = cast("list[dict[str, Any]]", lock_data["package"])
 
         if not locked_packages:
-            return packages
+            return repository
 
         for info in locked_packages:
             source = info.get("source", {})
@@ -109,8 +113,9 @@ class Locker:
             if source_type in ["directory", "file"]:
                 url = self._lock.path.parent.joinpath(url).resolve().as_posix()
 
+            name = info["name"]
             package = Package(
-                info["name"],
+                name,
                 info["version"],
                 info["version"],
                 source_type=source_type,
@@ -123,9 +128,19 @@ class Locker:
             package.category = info.get("category", "main")
             package.optional = info["optional"]
             metadata = cast("dict[str, Any]", lock_data["metadata"])
-            name = info["name"]
-            if "hashes" in metadata:
-                # Old lock so we create dummy files from the hashes
+
+            # Storing of package files and hashes has been through a few generations in
+            # the lockfile, we can read them all:
+            #
+            # - latest and preferred is that this is read per package, from
+            #   package.files
+            # - oldest is that hashes were stored in metadata.hashes without filenames
+            # - in between those two, hashes were stored alongside filenames in
+            #   metadata.files
+            package_files = info.get("files")
+            if package_files is not None:
+                package.files = package_files
+            elif "hashes" in metadata:
                 hashes = cast("dict[str, Any]", metadata["hashes"])
                 package.files = [{"name": h, "hash": h} for h in hashes[name]]
             elif source_type in {"git", "directory", "url"}:
@@ -145,6 +160,7 @@ class Locker:
             extras = info.get("extras", {})
             if extras:
                 for name, deps in extras.items():
+                    name = canonicalize_name(name)
                     package.extras[name] = []
 
                     for dep in deps:
@@ -202,33 +218,27 @@ class Locker:
             if "develop" in info:
                 package.develop = info["develop"]
 
-            packages.add_package(package)
+            repository.add_package(package)
 
-        return packages
+        return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
-        files: dict[str, Any] = table()
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
-            if package["name"] not in files:
-                files[package["name"]] = []
+            files = array()
 
             for f in package["files"]:
                 file_metadata = inline_table()
                 for k, v in sorted(f.items()):
                     file_metadata[k] = v
 
-                files[package["name"]].append(file_metadata)
+                files.append(file_metadata)
 
-            if files[package["name"]]:
-                package_files = item(files[package["name"]])
-                assert isinstance(package_files, Array)
-                files[package["name"]] = package_files.multiline(True)
-
-            del package["files"]
+            package["files"] = files.multiline(True)
 
         lock = document()
+        lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
 
         if root.extras:
@@ -241,15 +251,20 @@ class Locker:
             "lock-version": self._VERSION,
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
-            "files": files,
         }
 
-        if not self.is_locked() or lock != self.lock_data:
+        do_write = True
+        if self.is_locked():
+            try:
+                lock_data = self.lock_data
+            except RuntimeError:
+                # incompatible, invalid or no lock file
+                pass
+            else:
+                do_write = lock != lock_data
+        if do_write:
             self._write_lock_data(lock)
-
-            return True
-
-        return False
+        return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
         self.lock.write(data)
@@ -289,11 +304,7 @@ class Locker:
         metadata = cast("Table", lock_data["metadata"])
         lock_version = Version.parse(metadata.get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
-        # We expect the locker to be able to read lock files
-        # from the same semantic versioning range
-        accepted_versions = parse_constraint(
-            f"^{Version.from_parts(current_version.major, 0)}"
-        )
+        accepted_versions = parse_constraint(self._READ_VERSION_RANGE)
         lock_version_allowed = accepted_versions.allows(lock_version)
         if lock_version_allowed and current_version < lock_version:
             logger.warning(

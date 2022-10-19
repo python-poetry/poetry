@@ -1,357 +1,137 @@
 {
-  "info": {
-    "author": "Russell Keith-Magee",
-    "author_email": "russell@keith-magee.com",
-    "bugtrack_url": null,
-    "classifiers": [
-      "Development Status :: 3 - Alpha",
-      "Intended Audience :: Developers",
-      "License :: OSI Approved :: BSD License",
-      "Operating System :: OS Independent",
-      "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3.4",
-      "Programming Language :: Python :: 3.5",
-      "Programming Language :: Python :: 3.6",
-      "Programming Language :: Python :: 3 :: Only",
-      "Topic :: Software Development",
-      "Topic :: Software Development :: User Interfaces",
-      "Topic :: Software Development :: Widget Sets"
-    ],
-    "description": "",
-    "description_content_type": null,
-    "docs_url": null,
-    "download_url": "",
-    "downloads": {
-      "last_day": -1,
-      "last_month": -1,
-      "last_week": -1
-    },
-    "home_page": "http://pybee.org/toga",
-    "keywords": "",
-    "license": "New BSD",
-    "maintainer": "",
-    "maintainer_email": "",
-    "name": "toga",
-    "package_url": "https://pypi.org/project/toga/",
-    "platform": "",
-    "project_url": "https://pypi.org/project/toga/",
-    "release_url": "https://pypi.org/project/toga/0.2.15/",
-    "requires_dist": [
-      "toga-cocoa; sys_platform==\"darwin\"",
-      "toga-gtk; sys_platform==\"linux\"",
-      "toga-winforms; sys_platform==\"win32\""
-    ],
-    "requires_python": "",
-    "summary": "A Python native, OS native GUI toolkit.",
-    "version": "0.2.15"
-  },
-  "last_serial": 3682527,
-  "releases": {
-    "0.3.0.dev1": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "7b219b2249b825f28051aae0230f2818",
-          "sha256": "8553bf332d8fbf39b500745ed9c4044a846fbba68e31de70e6fe83fdffcb0a9e"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev1-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "7b219b2249b825f28051aae0230f2818",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4789,
-        "upload_time": "2018-01-14T04:10:57",
-        "url": "https://files.pythonhosted.org/packages/eb/ef/ea806c706d3dc90d4bc8c412c0ad3515fd018074f5fdd4bd020bdd4c0c80/toga-0.3.0.dev1-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "21b8fff4d110ddfb8c3eb939d7b35a1e",
-          "sha256": "4e5c77056792168a4e84c84bb7214dfb614b79f289dcbe1525be614483496439"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev1.tar.gz",
-        "has_sig": false,
-        "md5_digest": "21b8fff4d110ddfb8c3eb939d7b35a1e",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 40187,
-        "upload_time": "2018-01-14T04:11:03",
-        "url": "https://files.pythonhosted.org/packages/4f/71/c55c15950f7275e761fe53fb0dc83fe4f5fba6199d7b8fb05d741dd33566/toga-0.3.0.dev1.tar.gz"
-      }
-    ],
-    "0.3.0.dev2": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "1aa1d5f48b81475569ea80ea04db8852",
-          "sha256": "6e0a2f800a351bbe8639802954d8d283a52b8cdde378541610ff2bfb3b24ad2f"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev2-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "1aa1d5f48b81475569ea80ea04db8852",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4788,
-        "upload_time": "2018-01-14T04:52:03",
-        "url": "https://files.pythonhosted.org/packages/3a/68/d1f6feb2ded26b9f6c36cd2a826e895e0fa6bba5fe489ec30b9f3bc1dbea/toga-0.3.0.dev2-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "a6558d0c5ba3cd763084e564001e9d24",
-          "sha256": "630d2f932bf7aba3a143d3a332190a46a0a3895f509099a20f033caadf131b76"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev2.tar.gz",
-        "has_sig": false,
-        "md5_digest": "a6558d0c5ba3cd763084e564001e9d24",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 40203,
-        "upload_time": "2018-01-14T04:52:09",
-        "url": "https://files.pythonhosted.org/packages/e3/6a/3264b3d48733cac7546fee02fbc516621574252f7d86546255532b095415/toga-0.3.0.dev2.tar.gz"
-      }
-    ],
-    "0.3.0.dev3": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "3398b704f327a489126e8d6038e43e0f",
-          "sha256": "2c073e70e75388791aeb55cc1ad90ef23fb17096b1260792020ef86c49641bfe"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev3-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "3398b704f327a489126e8d6038e43e0f",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4807,
-        "upload_time": "2018-01-14T11:13:36",
-        "url": "https://files.pythonhosted.org/packages/5d/5c/3e59e5bff0c87346b2891e699841f98c0182102c85ed9ca5aff21a721ffa/toga-0.3.0.dev3-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "f3d8c1af53f503b0fcce534777e92d9d",
-          "sha256": "aba75095959aebcbb7b68a565510325974fa0e64cea97bfa6430552b99a748b4"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev3.tar.gz",
-        "has_sig": false,
-        "md5_digest": "f3d8c1af53f503b0fcce534777e92d9d",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 40215,
-        "upload_time": "2018-01-14T11:13:40",
-        "url": "https://files.pythonhosted.org/packages/2c/c1/54e589c84b5581316d74c20d802f49c225998def4eb20f65e8cbf463a19a/toga-0.3.0.dev3.tar.gz"
-      }
-    ],
-    "0.3.0.dev4": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "cd410c02ac67ee3d04ad77724a8080c5",
-          "sha256": "34df30df0e46df9f1932e4f3c93b69d6d2ee9fd7ad061c1d1a28a72e5ea2b242"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev4-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "cd410c02ac67ee3d04ad77724a8080c5",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4963,
-        "upload_time": "2018-01-25T04:52:33",
-        "url": "https://files.pythonhosted.org/packages/ae/70/bf39a92e395d970cba0d161ac20bb0b41868b8d5859b1b3f18e9806a11e5/toga-0.3.0.dev4-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "f5781368d0f85cf2bf2d8a445d21354b",
-          "sha256": "80f26ca9a34667044d58c0bafd54ba41432247dc9c900d607a8b81222052d888"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev4.tar.gz",
-        "has_sig": false,
-        "md5_digest": "f5781368d0f85cf2bf2d8a445d21354b",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 40465,
-        "upload_time": "2018-01-25T04:52:36",
-        "url": "https://files.pythonhosted.org/packages/0d/d2/487e31505d277ff3f620eb78a99925f0d0c8fb710045b2171dd7e18fceb1/toga-0.3.0.dev4.tar.gz"
-      }
-    ],
-    "0.3.0.dev5": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "13ed9819a5821a33724285965da320ec",
-          "sha256": "1526b3d4d5b5824826544ae6e7fbf94415965e6009e57b158485fcb02a2481ab"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev5-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "13ed9819a5821a33724285965da320ec",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4963,
-        "upload_time": "2018-02-21T05:38:24",
-        "url": "https://files.pythonhosted.org/packages/3f/34/965629c9a096a0d4d6d0f994fc2f3253929564c1804af4e837ba34abbe57/toga-0.3.0.dev5-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "6bec5afc03b95423e46f433136067e63",
-          "sha256": "5d6b7e6a0cf4810187c7cf817e2f305e4dc11b267b31cd9faa5da7a0c8add26c"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev5.tar.gz",
-        "has_sig": false,
-        "md5_digest": "6bec5afc03b95423e46f433136067e63",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 41459,
-        "upload_time": "2018-02-21T05:38:28",
-        "url": "https://files.pythonhosted.org/packages/f7/5b/43b93413246cada9d8206430a133d44556956d94eade3d38de4dde5d0cb7/toga-0.3.0.dev5.tar.gz"
-      }
-    ],
-    "0.3.0.dev6": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "9d2bec13272880f6878986ea94f3b429",
-          "sha256": "02c1a2271cec7776809c33a27d48224d75163394d9b0cd46a9c28fa45e584fad"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev6-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "9d2bec13272880f6878986ea94f3b429",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4959,
-        "upload_time": "2018-02-22T05:14:31",
-        "url": "https://files.pythonhosted.org/packages/c2/7a/94f832cf82ce57055af2d815a2329b98ff5117de7fe73931d9dbf5cf542e/toga-0.3.0.dev6-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "da8e6b01527f2c552cba966a559b4b8d",
-          "sha256": "daa78cb5812b594c9eb5a48a62e0ec138e8689309243fee858b81c306612bbe8"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev6.tar.gz",
-        "has_sig": false,
-        "md5_digest": "da8e6b01527f2c552cba966a559b4b8d",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 41473,
-        "upload_time": "2018-02-22T05:14:36",
-        "url": "https://files.pythonhosted.org/packages/f9/42/20ab19addc75e5161a8ea6337ca575c5118371116951a3eed96d30d37f8f/toga-0.3.0.dev6.tar.gz"
-      }
-    ],
-    "0.3.0.dev7": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "9b7594c4d0f00dc2ab820a2e02fa1170",
-          "sha256": "1aac015f89db9766daa6901998146cdce88c56d3b0823bc2ef2cbaec989adbdf"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev7-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "9b7594c4d0f00dc2ab820a2e02fa1170",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 4963,
-        "upload_time": "2018-02-23T03:54:21",
-        "url": "https://files.pythonhosted.org/packages/c7/49/2d30ddb0b9d319f7170f1e0d2cc9a87d247922cb184f8c839a8c3e76199b/toga-0.3.0.dev7-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "77f2b28b8bff397ee076ffe9ecd92775",
-          "sha256": "26a6c321d5423fb9468de3d19646a02d13f8f6c55d5ad275c3a2798180bb3c69"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev7.tar.gz",
-        "has_sig": false,
-        "md5_digest": "77f2b28b8bff397ee076ffe9ecd92775",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 41471,
-        "upload_time": "2018-02-23T03:54:26",
-        "url": "https://files.pythonhosted.org/packages/ca/74/3b8d756bb72584d46ebcf51f6bec368c262b9905168ab53285202571e790/toga-0.3.0.dev7.tar.gz"
-      }
-    ],
-    "0.3.0.dev8": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "69a110faae192b7fecdfe37f373b144a",
-          "sha256": "9fcde5e120556a233d8d53b0594eaa68c5b88f5cd569ce2771d7fafa132ab50b"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev8-py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "69a110faae192b7fecdfe37f373b144a",
-        "packagetype": "bdist_wheel",
-        "python_version": "py3",
-        "size": 5306,
-        "upload_time": "2018-03-19T03:55:38",
-        "url": "https://files.pythonhosted.org/packages/e5/58/0ba5c784dca91273ce8925d3e2b19b04c8d484be4160c68554d0d9cb8591/toga-0.3.0.dev8-py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "22dc187d753570f134e6a12d13f4678d",
-          "sha256": "7dbdbb96c3912d366e52fc5c51c418a14d84bfd0b9b12cd7094f3a1a942a40d7"
-        },
-        "downloads": -1,
-        "filename": "toga-0.3.0.dev8.tar.gz",
-        "has_sig": false,
-        "md5_digest": "22dc187d753570f134e6a12d13f4678d",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 44784,
-        "upload_time": "2018-03-19T03:55:43",
-        "url": "https://files.pythonhosted.org/packages/e9/34/1138b884d83ad3abc76c5b308a19d28e59e3cab8ef56ed0112a779a49202/toga-0.3.0.dev8.tar.gz"
-      }
-    ]
-  },
-  "urls": [
+  "name": "toga",
+  "files": [
     {
-      "comment_text": "",
-      "digests": {
-        "md5": "8f18e5c3cd697b923f37c694fe0c868c",
-        "sha256": "8cd2b2a084998ea28b96a34315a86abdbe596958acfe721f8fe1520645060620"
-      },
-      "downloads": -1,
-      "filename": "toga-0.2.15-py3-none-any.whl",
-      "has_sig": false,
-      "md5_digest": "8f18e5c3cd697b923f37c694fe0c868c",
-      "packagetype": "bdist_wheel",
-      "python_version": "py3",
-      "size": 4290,
-      "upload_time": "2017-08-14T18:29:09",
-      "url": "https://files.pythonhosted.org/packages/b6/d3/655e023785ccfdb62c7f13173112b2e5ae5b507bf595852d0333ca8cd9fd/toga-0.2.15-py3-none-any.whl"
+      "filename": "toga-0.3.0.dev1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/eb/ef/ea806c706d3dc90d4bc8c412c0ad3515fd018074f5fdd4bd020bdd4c0c80/toga-0.3.0.dev1-py3-none-any.whl",
+      "hashes": {
+        "md5": "7b219b2249b825f28051aae0230f2818",
+        "sha256": "8553bf332d8fbf39b500745ed9c4044a846fbba68e31de70e6fe83fdffcb0a9e"
+      }
     },
     {
-      "comment_text": "",
-      "digests": {
-        "md5": "23aa170a3c52f9b97a6c381f988d0aad",
-        "sha256": "e96ca2ccb1322ee22fdc93ae3d1614f14b1148dcdd7fbca28a36f097ed1b3dfa"
-      },
-      "downloads": -1,
-      "filename": "toga-0.2.15.tar.gz",
-      "has_sig": false,
-      "md5_digest": "23aa170a3c52f9b97a6c381f988d0aad",
-      "packagetype": "sdist",
-      "python_version": "source",
-      "size": 31735,
-      "upload_time": "2017-08-14T18:29:24",
-      "url": "https://files.pythonhosted.org/packages/b6/2f/1ed6dcf88bf0b6d211bfdc05690d86600bf18cfc05ec87ef09237bd3795a/toga-0.2.15.tar.gz"
+      "filename": "toga-0.3.0.dev1.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/4f/71/c55c15950f7275e761fe53fb0dc83fe4f5fba6199d7b8fb05d741dd33566/toga-0.3.0.dev1.tar.gz",
+      "hashes": {
+        "md5": "21b8fff4d110ddfb8c3eb939d7b35a1e",
+        "sha256": "4e5c77056792168a4e84c84bb7214dfb614b79f289dcbe1525be614483496439"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/3a/68/d1f6feb2ded26b9f6c36cd2a826e895e0fa6bba5fe489ec30b9f3bc1dbea/toga-0.3.0.dev2-py3-none-any.whl",
+      "hashes": {
+        "md5": "1aa1d5f48b81475569ea80ea04db8852",
+        "sha256": "6e0a2f800a351bbe8639802954d8d283a52b8cdde378541610ff2bfb3b24ad2f"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev2.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/e3/6a/3264b3d48733cac7546fee02fbc516621574252f7d86546255532b095415/toga-0.3.0.dev2.tar.gz",
+      "hashes": {
+        "md5": "a6558d0c5ba3cd763084e564001e9d24",
+        "sha256": "630d2f932bf7aba3a143d3a332190a46a0a3895f509099a20f033caadf131b76"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev3-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/5d/5c/3e59e5bff0c87346b2891e699841f98c0182102c85ed9ca5aff21a721ffa/toga-0.3.0.dev3-py3-none-any.whl",
+      "hashes": {
+        "md5": "3398b704f327a489126e8d6038e43e0f",
+        "sha256": "2c073e70e75388791aeb55cc1ad90ef23fb17096b1260792020ef86c49641bfe"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev3.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/2c/c1/54e589c84b5581316d74c20d802f49c225998def4eb20f65e8cbf463a19a/toga-0.3.0.dev3.tar.gz",
+      "hashes": {
+        "md5": "f3d8c1af53f503b0fcce534777e92d9d",
+        "sha256": "aba75095959aebcbb7b68a565510325974fa0e64cea97bfa6430552b99a748b4"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/ae/70/bf39a92e395d970cba0d161ac20bb0b41868b8d5859b1b3f18e9806a11e5/toga-0.3.0.dev4-py3-none-any.whl",
+      "hashes": {
+        "md5": "cd410c02ac67ee3d04ad77724a8080c5",
+        "sha256": "34df30df0e46df9f1932e4f3c93b69d6d2ee9fd7ad061c1d1a28a72e5ea2b242"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev4.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/0d/d2/487e31505d277ff3f620eb78a99925f0d0c8fb710045b2171dd7e18fceb1/toga-0.3.0.dev4.tar.gz",
+      "hashes": {
+        "md5": "f5781368d0f85cf2bf2d8a445d21354b",
+        "sha256": "80f26ca9a34667044d58c0bafd54ba41432247dc9c900d607a8b81222052d888"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev5-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/3f/34/965629c9a096a0d4d6d0f994fc2f3253929564c1804af4e837ba34abbe57/toga-0.3.0.dev5-py3-none-any.whl",
+      "hashes": {
+        "md5": "13ed9819a5821a33724285965da320ec",
+        "sha256": "1526b3d4d5b5824826544ae6e7fbf94415965e6009e57b158485fcb02a2481ab"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev5.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/f7/5b/43b93413246cada9d8206430a133d44556956d94eade3d38de4dde5d0cb7/toga-0.3.0.dev5.tar.gz",
+      "hashes": {
+        "md5": "6bec5afc03b95423e46f433136067e63",
+        "sha256": "5d6b7e6a0cf4810187c7cf817e2f305e4dc11b267b31cd9faa5da7a0c8add26c"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev6-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/c2/7a/94f832cf82ce57055af2d815a2329b98ff5117de7fe73931d9dbf5cf542e/toga-0.3.0.dev6-py3-none-any.whl",
+      "hashes": {
+        "md5": "9d2bec13272880f6878986ea94f3b429",
+        "sha256": "02c1a2271cec7776809c33a27d48224d75163394d9b0cd46a9c28fa45e584fad"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev6.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/f9/42/20ab19addc75e5161a8ea6337ca575c5118371116951a3eed96d30d37f8f/toga-0.3.0.dev6.tar.gz",
+      "hashes": {
+        "md5": "da8e6b01527f2c552cba966a559b4b8d",
+        "sha256": "daa78cb5812b594c9eb5a48a62e0ec138e8689309243fee858b81c306612bbe8"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev7-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/c7/49/2d30ddb0b9d319f7170f1e0d2cc9a87d247922cb184f8c839a8c3e76199b/toga-0.3.0.dev7-py3-none-any.whl",
+      "hashes": {
+        "md5": "9b7594c4d0f00dc2ab820a2e02fa1170",
+        "sha256": "1aac015f89db9766daa6901998146cdce88c56d3b0823bc2ef2cbaec989adbdf"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev7.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/ca/74/3b8d756bb72584d46ebcf51f6bec368c262b9905168ab53285202571e790/toga-0.3.0.dev7.tar.gz",
+      "hashes": {
+        "md5": "77f2b28b8bff397ee076ffe9ecd92775",
+        "sha256": "26a6c321d5423fb9468de3d19646a02d13f8f6c55d5ad275c3a2798180bb3c69"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev8-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/e5/58/0ba5c784dca91273ce8925d3e2b19b04c8d484be4160c68554d0d9cb8591/toga-0.3.0.dev8-py3-none-any.whl",
+      "hashes": {
+        "md5": "69a110faae192b7fecdfe37f373b144a",
+        "sha256": "9fcde5e120556a233d8d53b0594eaa68c5b88f5cd569ce2771d7fafa132ab50b"
+      }
+    },
+    {
+      "filename": "toga-0.3.0.dev8.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/e9/34/1138b884d83ad3abc76c5b308a19d28e59e3cab8ef56ed0112a779a49202/toga-0.3.0.dev8.tar.gz",
+      "hashes": {
+        "md5": "22dc187d753570f134e6a12d13f4678d",
+        "sha256": "7dbdbb96c3912d366e52fc5c51c418a14d84bfd0b9b12cd7094f3a1a942a40d7"
+      }
     }
-  ]
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3682527
+  }
 }

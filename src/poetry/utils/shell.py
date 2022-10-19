@@ -76,14 +76,23 @@ class Shell:
         # mypy requires using sys.platform instead of WINDOWS constant
         # in if statements to properly type check on Windows
         if sys.platform == "win32":
+            args = None
             if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
-            else:
+            elif self._name == "cmd":
                 # /K will execute the bat file and
                 # keep the cmd process from terminating
                 args = ["/K", str(activate_path)]
-            completed_proc = subprocess.run([self.path, *args])
-            return completed_proc.returncode
+
+            if args:
+                completed_proc = subprocess.run([self.path, *args])
+                return completed_proc.returncode
+            else:
+                # If no args are set, execute the shell within the venv
+                # This activates it, but there could be some features missing:
+                # deactivate command might not work
+                # shell prompt will not be modified.
+                return env.execute(self._path)
 
         import shlex
 

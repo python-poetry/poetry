@@ -16,9 +16,9 @@ from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
+from poetry.core.constraints.version import EmptyConstraint
+from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.semver.empty_constraint import EmptyConstraint
-from poetry.core.semver.version import Version
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import MarkerUnion
 
@@ -33,7 +33,6 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
-from poetry.utils.helpers import safe_extra
 from poetry.vcs.git import Git
 
 
@@ -44,13 +43,13 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-    from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
     from poetry.repositories import Pool
@@ -556,7 +555,7 @@ class Provider:
                         package.pretty_name,
                         package.version,
                         extras=list(dependency.extras),
-                        repository=dependency.source_name,
+                        repository_name=dependency.source_name,
                     ),
                 )
             except PackageNotFound as e:
@@ -572,18 +571,6 @@ class Provider:
             dependency = dependency_package.dependency
             requires = package.requires
 
-        if self._load_deferred:
-            # Retrieving constraints for deferred dependencies
-            for r in requires:
-                if r.is_direct_origin():
-                    locked = self.get_locked(r)
-                    # If lock file contains exactly the same URL and reference
-                    # (commit hash) of dependency as is requested,
-                    # do not analyze it again: nothing could have changed.
-                    if locked is not None and locked.package.is_same_package_as(r):
-                        continue
-                    self.search_for_direct_origin_dependency(r)
-
         optional_dependencies = []
         _dependencies = []
 
@@ -592,7 +579,6 @@ class Provider:
         # to the current package
         if dependency.extras:
             for extra in dependency.extras:
-                extra = safe_extra(extra)
                 if extra not in package.extras:
                     continue
 
@@ -627,14 +613,24 @@ class Provider:
                 (dep.is_optional() and dep.name not in optional_dependencies)
                 or (
                     dep.in_extras
-                    and not set(dep.in_extras).intersection(
-                        {safe_extra(extra) for extra in dependency.extras}
-                    )
+                    and not set(dep.in_extras).intersection(dependency.extras)
                 )
             ):
                 continue
 
             _dependencies.append(dep)
+
+        if self._load_deferred:
+            # Retrieving constraints for deferred dependencies
+            for dep in _dependencies:
+                if dep.is_direct_origin():
+                    locked = self.get_locked(dep)
+                    # If lock file contains exactly the same URL and reference
+                    # (commit hash) of dependency as is requested,
+                    # do not analyze it again: nothing could have changed.
+                    if locked is not None and locked.package.is_same_package_as(dep):
+                        continue
+                    self.search_for_direct_origin_dependency(dep)
 
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package
@@ -670,19 +666,29 @@ class Provider:
 
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
-            non_direct_origin_deps: list[Dependency] = []
-            direct_origin_deps: list[Dependency] = []
-            for dep in deps:
-                if dep.is_direct_origin():
-                    direct_origin_deps.append(dep)
-                else:
-                    non_direct_origin_deps.append(dep)
-            deps = (
-                self._merge_dependencies_by_constraint(
-                    self._merge_dependencies_by_marker(non_direct_origin_deps)
+            # Group dependencies for merging.
+            # We must not merge dependencies from different sources!
+            dep_groups = self._group_by_source(deps)
+            deps = []
+            for group in dep_groups:
+                # In order to reduce the number of overrides we merge duplicate
+                # dependencies by constraint. For instance, if we have:
+                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   - foo (>=2.0) ; python_version >= "3.7"
+                # we can avoid two overrides by merging them to:
+                #   - foo (>=2.0) ; python_version >= "3.6"
+                # However, if we want to merge dependencies by constraint we have to
+                # merge dependencies by markers first in order to avoid unnecessary
+                # solver failures. For instance, if we have:
+                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   - foo (>=2.0) ; python_version >= "3.7"
+                #   - foo (<2.1) ; python_version >= "3.7"
+                # we must not merge the first two constraints but the last two:
+                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   - foo (>=2.0,<2.1) ; python_version >= "3.7"
+                deps += self._merge_dependencies_by_constraint(
+                    self._merge_dependencies_by_marker(group)
                 )
-                + direct_origin_deps
-            )
             if len(deps) == 1:
                 self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
                 dependencies.append(deps[0])
@@ -947,9 +953,33 @@ class Provider:
 
             self._io.write(debug_info)
 
+    def _group_by_source(
+        self, dependencies: Iterable[Dependency]
+    ) -> list[list[Dependency]]:
+        """
+        Takes a list of dependencies and returns a list of groups of dependencies,
+        each group containing all dependencies from the same source.
+        """
+        groups: list[list[Dependency]] = []
+        for dep in dependencies:
+            for group in groups:
+                if (
+                    dep.is_same_source_as(group[0])
+                    and dep.source_name == group[0].source_name
+                ):
+                    group.append(dep)
+                    break
+            else:
+                groups.append([dep])
+        return groups
+
     def _merge_dependencies_by_constraint(
         self, dependencies: Iterable[Dependency]
     ) -> list[Dependency]:
+        """
+        Merge dependencies with the same constraint
+        by building a union of their markers.
+        """
         by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
             by_constraint[dep.constraint].append(dep)
@@ -975,6 +1005,10 @@ class Provider:
     def _merge_dependencies_by_marker(
         self, dependencies: Iterable[Dependency]
     ) -> list[Dependency]:
+        """
+        Merge dependencies with the same marker
+        by building the intersection of their constraints.
+        """
         by_marker: dict[BaseMarker, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
             by_marker[dep.marker].append(dep)

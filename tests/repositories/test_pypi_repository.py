@@ -6,11 +6,12 @@ import shutil
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
-from poetry.core.semver.version import Version
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
@@ -35,7 +36,9 @@ class MockRepository(PyPiRepository):
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
-    def _get(self, url: str) -> dict | None:
+    def _get(
+        self, url: str, headers: dict[str, str] | None = None
+    ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]
         if len(parts) == 3:
@@ -47,8 +50,6 @@ class MockRepository(PyPiRepository):
             fixture = self.JSON_FIXTURES / (name + ".json")
         else:
             fixture = self.JSON_FIXTURES / name / (version + ".json")
-            if not fixture.exists():
-                fixture = self.JSON_FIXTURES / (name + ".json")
 
         if not fixture.exists():
             return None
@@ -237,14 +238,14 @@ def test_fallback_can_read_setup_to_get_dependencies() -> None:
     assert len([r for r in package.requires if r.is_optional()]) == 9
 
     assert package.extras == {
-        "mssql_pymssql": [Dependency("pymssql", "*")],
-        "mssql_pyodbc": [Dependency("pyodbc", "*")],
+        "mssql-pymssql": [Dependency("pymssql", "*")],
+        "mssql-pyodbc": [Dependency("pyodbc", "*")],
         "mysql": [Dependency("mysqlclient", "*")],
         "oracle": [Dependency("cx_oracle", "*")],
         "postgresql": [Dependency("psycopg2", "*")],
-        "postgresql_pg8000": [Dependency("pg8000", "*")],
-        "postgresql_psycopg2binary": [Dependency("psycopg2-binary", "*")],
-        "postgresql_psycopg2cffi": [Dependency("psycopg2cffi", "*")],
+        "postgresql-pg8000": [Dependency("pg8000", "*")],
+        "postgresql-psycopg2binary": [Dependency("psycopg2-binary", "*")],
+        "postgresql-psycopg2cffi": [Dependency("psycopg2cffi", "*")],
         "pymysql": [Dependency("pymysql", "*")],
     }
 
@@ -269,7 +270,7 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
     ]
 
     expected_extras = {
-        "all_non_platform": [
+        "all-non-platform": [
             Dependency("appdirs", ">=1.4.0"),
             Dependency("cryptography", ">=1.5"),
             Dependency("h2", ">=3.0,<4.0"),

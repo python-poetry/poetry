@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING
 from typing import DefaultDict
 from typing import List
 
-from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
-from poetry.core.semver.version import Version
 
 from poetry.utils._compat import cached_property
 from poetry.utils.patterns import sdist_file_re
@@ -73,7 +72,7 @@ class LinkSource:
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:
-            name = canonicalize_name(m.group("name"))
+            name = m.group("name")
             version_string = m.group("ver")
         else:
             info, ext = link.splitext()

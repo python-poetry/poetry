@@ -57,14 +57,14 @@ class Publisher:
             # Check if we have a token first
             token = self._authenticator.get_pypi_token(repository_name)
             if token:
-                logger.debug(f"Found an API token for {repository_name}.")
+                logger.debug("Found an API token for %s.", repository_name)
                 username = "__token__"
                 password = token
             else:
                 auth = self._authenticator.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
-                        f"Found authentication information for {repository_name}."
+                        "Found authentication information for %s.", repository_name
                     )
                     username = auth.username
                     password = auth.password

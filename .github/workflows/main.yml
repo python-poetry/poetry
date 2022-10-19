@@ -76,25 +76,29 @@ jobs:
 
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
-        run: timeout 10s poetry run pip --version || rm -rf .venv
+        run: |
+          # `timeout` is not available on macOS, so we define a custom function.
+          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+
+          # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
+          timeout 10s poetry run pip --version || rm -rf .venv
+
+      # XXX: https://github.com/pypa/pip/issues/11352 causes random failures -- remove once fixed in a release.
+      - name: Upgrade pip on Python 3.11
+        if: ${{ matrix.python-version == '3.11-dev' }}
+        run: poetry run pip install git+https://github.com/pypa/pip.git@f8a25921e5c443b07483017b0ffdeb08b9ba2fdf
 
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --with github-actions
 
       - name: Run mypy
         run: poetry run mypy
 
-      - name: Install pytest plugin
-        run: poetry run pip install pytest-github-actions-annotate-failures
-
       - name: Run pytest
-        run: poetry run python -m pytest -n auto -p no:sugar -q tests/
-
-      - name: Run pytest (integration suite)
         env:
           POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
           POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: poetry run python -m pytest -n auto -p no:sugar -q --integration tests/integration
+        run: poetry run pytest --integration -v
 
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
@@ -110,7 +114,7 @@ jobs:
           ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
       - name: Run pytest (poetry-plugin-export)
-        run: poetry run python -m pytest -p no:sugar -q poetry-plugin-export/tests/
+        run: poetry run pytest -v poetry-plugin-export/tests/
 
       - name: Check for clean working tree
         run: |
