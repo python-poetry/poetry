@@ -3,7 +3,6 @@ from __future__ import annotations
 import warnings
 
 from typing import TYPE_CHECKING
-from unittest import skip
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
