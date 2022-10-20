@@ -31,6 +31,14 @@ class InstallCommand(InstallerCommand):
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
+            "no-path",
+            None,
+            "Do not install any path dependencies "
+            "(useful to install dependencies without source code, e.g. for caching)",
+            flag=True,
+            multiple=False,
+        ),
+        option(
             "dry-run",
             None,
             (
@@ -148,6 +156,7 @@ dependencies and not including the current project, run the command with the
             with_synchronization = True
 
         self.installer.only_groups(self.activated_groups)
+        self.installer.skip_path(self.option("no-path"))
         self.installer.dry_run(self.option("dry-run"))
         self.installer.requires_synchronization(with_synchronization)
         self.installer.executor.enable_bytecode_compilation(self.option("compile"))

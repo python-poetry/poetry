@@ -27,7 +27,7 @@ class Transaction:
         self._root_package = root_package
 
     def calculate_operations(
-        self, with_uninstalls: bool = True, synchronize: bool = False
+        self, with_uninstalls: bool = True, synchronize: bool = False, skip_path: bool = False
     ) -> list[Operation]:
         from poetry.installation.operations import Install
         from poetry.installation.operations import Uninstall
@@ -70,7 +70,7 @@ class Transaction:
 
                     break
 
-            if not installed:
+            if not installed and (not skip_path or result_package.source_type != "directory"):
                 operations.append(Install(result_package, priority=priority))
 
         if with_uninstalls:

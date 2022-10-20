@@ -3,6 +3,7 @@ from __future__ import annotations
 import warnings
 
 from typing import TYPE_CHECKING
+from unittest import skip
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
@@ -59,6 +60,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._groups: Iterable[str] | None = None
+        self._skip_path = False
 
         self._execute_operations = True
         self._lock = False
@@ -147,6 +149,11 @@ class Installer:
 
     def update(self, update: bool = True) -> Installer:
         self._update = update
+
+        return self
+    
+    def skip_path(self, skip_path: bool = False) -> Installer:
+        self._skip_path = skip_path
 
         return self
 
@@ -336,6 +343,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
+                skip_path=self._skip_path
             )
 
         if not self._requires_synchronization:
