@@ -847,7 +847,9 @@ class Provider:
         return dependency_package
 
     def get_locked(self, dependency: Dependency) -> DependencyPackage | None:
-        if dependency.name in self._use_latest:
+        # path dependencies cannot be identified by an immutable tag/commit
+        # so we always "re-explore" them, which is cheap anyways
+        if dependency.name in self._use_latest or dependency.source_type == "directory":
             return None
 
         locked = self._locked.get(dependency.name, [])
