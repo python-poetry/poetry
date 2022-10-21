@@ -51,7 +51,13 @@ class SystemGit:
 
         git_command = find_git_command()
         env = os.environ.copy()
-        env["GIT_TERMINAL_PROMPT"] = "0"
+        try:
+            result = env["GIT_TERMINAL_PROMPT"]
+            print(f"GIT_TERMINAL_PROMPT state:\t{result}")
+        except KeyError:
+            # Preserve default behavior - don't ask for password
+            env["GIT_TERMINAL_PROMPT"] = "0"
+            print("Default GIT_TERMINAL_PROMPT set to \"0\"")
         return (
             subprocess.check_output(
                 git_command + list(args),
