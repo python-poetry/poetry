@@ -150,7 +150,7 @@ class Installer:
         self._update = update
 
         return self
-    
+
     def skip_path(self, skip_path: bool = False) -> Installer:
         self._skip_path = skip_path
 
@@ -342,7 +342,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
-                skip_path=self._skip_path
+                skip_path=self._skip_path,
             )
 
         if not self._requires_synchronization:
