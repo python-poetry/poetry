@@ -6,7 +6,7 @@ ban-relative-imports = true
 format-greedy = 1
 inline-quotes = double
 enable-extensions = TC, TC1
-type-checking-exempt-modules = typing, typing-extensions
+strict-type-checking = true
 eradicate-whitelist-extend = ^-.*;
 extend-ignore =
     # E203: Whitespace before ':' (pycqa/pycodestyle#373)
