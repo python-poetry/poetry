@@ -60,6 +60,9 @@ class GitRefSpec:
             1. a branch or tag; if so, set corresponding properties.
             2. a short sha; if so, resolve full sha and set as revision
         """
+        if self.revision == "HEAD":
+            self.revision = None
+
         if self.revision:
             ref = f"refs/tags/{self.revision}".encode()
             if ref in remote_refs.refs or annotated_tag(ref) in remote_refs.refs:
