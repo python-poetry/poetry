@@ -21,6 +21,7 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
+from poetry.core.version.requirements import InvalidRequirement
 
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
@@ -201,12 +202,18 @@ class PackageInfo:
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except InvalidMarker:
                 # Invalid marker, We strip the markers hoping for the best
+                logger.warning(
+                    "Stripping invalid marker (%s) found in %s-%s dependencies",
+                    req,
+                    package.name,
+                    package.version,
+                )
                 req = req.split(";")[0]
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except ValueError:
-                # Likely unable to parse constraint so we skip it
+            except InvalidRequirement:
+                # Unable to parse requirement so we skip it
                 logger.warning(
-                    "Invalid constraint (%s) found in %s-%s dependencies, skipping",
+                    "Invalid requirement (%s) found in %s-%s dependencies, skipping",
                     req,
                     package.name,
                     package.version,
