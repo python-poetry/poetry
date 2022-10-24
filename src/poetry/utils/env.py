@@ -329,7 +329,7 @@ class SitePackages:
             name=distribution_name, writable_only=writable_only
         ):
             if not distribution.files:
-                break
+                continue
 
             for file in distribution.files:
                 if file.name.endswith(suffix):
@@ -344,7 +344,7 @@ class SitePackages:
             name=distribution_name, writable_only=writable_only
         ):
             if not distribution.files:
-                break
+                continue
 
             for file in distribution.files:
                 if file.name == name:
@@ -377,7 +377,7 @@ class SitePackages:
             name=distribution_name, writable_only=True
         ):
             if not distribution.files:
-                break
+                continue
 
             for file in distribution.files:
                 path = Path(
