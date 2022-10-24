@@ -1041,7 +1041,10 @@ def test_show_outdated_local_dependencies(
 
     tester.execute("--outdated")
 
-    expected = """cachy 0.2.0 0.3.0 Cachy package"""
+    expected = """\
+cachy              0.2.0                       0.3.0
+project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
+"""
     assert (
         "\n".join(line.rstrip() for line in tester.io.fetch_output().splitlines())
         == expected.rstrip()
