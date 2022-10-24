@@ -3795,7 +3795,7 @@ def test_update_with_use_latest_vs_lock(
     )
 
 
-def test_solver_always_relocks_path_dependencies(
+def test_solver_does_always_updates_path_dependencies(
     package: ProjectPackage,
     repo: Repository,
     pool: Pool,
@@ -3817,7 +3817,9 @@ def test_solver_always_relocks_path_dependencies(
         source_url=str(path),
     )
 
-    package.add_dependency(Factory.create_dependency("demo", {"path": str(path)}))
+    package.add_dependency(
+        Factory.create_dependency("demo", {"path": str(path)})
+    )
 
     # transient dependencies of demo
     pendulum = get_package("pendulum", "2.0.3")
@@ -3826,14 +3828,10 @@ def test_solver_always_relocks_path_dependencies(
     solver = Solver(package, pool, installed=[demo], locked=[demo], io=io)
     transaction = solver.solve()
 
-    # we should re-lock demo and pick up any new transitive dependencies
-    # despite the fact that demo is already locked and installed
-    # because we can't identify path dependencies by any sort of immutable
-    # tag or published version
     check_solver_result(
         transaction,
         [
+            {"job": "install", "package": demo},
             {"job": "install", "package": pendulum},
-            {"job": "install", "package": demo, "skipped": True},
         ],
     )
