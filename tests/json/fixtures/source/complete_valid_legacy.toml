@@ -10,7 +10,8 @@ python = "^3.10"
 [[tool.poetry.source]]
 name = "pypi-simple"
 url = "https://pypi.org/simple/"
-priority = "primary"
+default = false
+secondary = false
 
 [build-system]
 requires = ["poetry-core"]

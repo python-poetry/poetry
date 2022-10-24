@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import warnings
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -71,13 +72,24 @@ class RepositoryPool(AbstractRepository):
         return name.lower() in self._repositories
 
     def repository(self, name: str) -> Repository:
+        return self._get_prioritized_repository(name).repository
+
+    def get_priority(self, name: str) -> Priority:
+        return self._get_prioritized_repository(name).priority
+
+    def _get_prioritized_repository(self, name: str) -> PrioritizedRepository:
         name = name.lower()
         if self.has_repository(name):
-            return self._repositories[name].repository
+            return self._repositories[name]
         raise IndexError(f'Repository "{name}" does not exist.')
 
     def add_repository(
-        self, repository: Repository, default: bool = False, secondary: bool = False
+        self,
+        repository: Repository,
+        default: bool = False,
+        secondary: bool = False,
+        *,
+        priority: Priority = Priority.PRIMARY,
     ) -> RepositoryPool:
         """
         Adds a repository to the pool.
@@ -88,14 +100,24 @@ class RepositoryPool(AbstractRepository):
                 f"A repository with name {repository_name} was already added."
             )
 
-        if default and self.has_default():
+        if default or secondary:
+            warnings.warn(
+                (
+                    "Parameters 'default' and 'secondary' to"
+                    " 'RepositoryPool.add_repository' are deprecated. Please provide"
+                    " the keyword-argument 'priority' instead."
+                ),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if default:
+                priority = Priority.DEFAULT
+            else:
+                priority = Priority.SECONDARY
+
+        if priority is Priority.DEFAULT and self.has_default():
             raise ValueError("Only one repository can be the default.")
 
-        priority = Priority.PRIMARY
-        if default:
-            priority = Priority.DEFAULT
-        elif secondary:
-            priority = Priority.SECONDARY
         self._repositories[repository_name] = PrioritizedRepository(
             repository, priority
         )
@@ -103,7 +125,9 @@ class RepositoryPool(AbstractRepository):
 
     def remove_repository(self, name: str) -> RepositoryPool:
         if not self.has_repository(name):
-            raise IndexError(f"Pool can not remove unknown repository '{name}'.")
+            raise IndexError(
+                f"RepositoryPool can not remove unknown repository '{name}'."
+            )
         del self._repositories[name.lower()]
         return self
 

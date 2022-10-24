@@ -258,7 +258,7 @@ you can use the `source` property:
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "secondary"
 
 [tool.poetry.dependencies]
 my-cool-package = { version = "*", source = "foo" }

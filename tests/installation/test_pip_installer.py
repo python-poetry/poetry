@@ -13,6 +13,7 @@ from poetry.core.packages.package import Package
 
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.env import NullEnv
@@ -137,7 +138,7 @@ def test_install_with_non_pypi_default_repository(
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
 
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
     pool.add_repository(another)
 
     foo = Package(
@@ -177,7 +178,7 @@ def test_install_with_certs(
 
     default = LegacyRepository("default", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     installer = PipInstaller(env, NullIO(), pool)
 
@@ -255,7 +256,7 @@ def test_install_with_trusted_host(config: Config, env: NullEnv) -> None:
 
     default = LegacyRepository("default", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     installer = PipInstaller(env, NullIO(), pool)
 
