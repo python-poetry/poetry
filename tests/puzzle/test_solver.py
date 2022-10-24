@@ -3793,3 +3793,45 @@ def test_update_with_use_latest_vs_lock(
             {"job": "install", "package": package_a1},
         ],
     )
+
+
+def test_solver_does_always_updates_path_dependencies(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: Pool,
+    io: NullIO,
+):
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    demo = Package(
+        "demo",
+        "0.1.2",
+        source_type="directory",
+        source_url=str(path),
+    )
+
+    package.add_dependency(
+        Factory.create_dependency("demo", {"path": str(path)})
+    )
+
+    # transient dependencies of demo
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    solver = Solver(package, pool, installed=[demo], locked=[demo], io=io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": demo},
+            {"job": "install", "package": pendulum},
+        ],
+    )
