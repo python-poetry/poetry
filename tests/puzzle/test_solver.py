@@ -3828,14 +3828,14 @@ def test_solver_always_relocks_path_dependencies(
     solver = Solver(package, pool, installed=[demo], locked=[demo], io=io)
     transaction = solver.solve()
 
-    # we should re-install demo and pick up any new transitive dependencies
+    # we should re-lock demo and pick up any new transitive dependencies
     # despite the fact that demo is already locked and installed
     # because we can't identify path dependencies by any sort of immutable
-    # tag or published version -> we always re-lock them
+    # tag or published version
     check_solver_result(
         transaction,
         [
-            {"job": "install", "package": demo},
             {"job": "install", "package": pendulum},
+            {"job": "install", "package": demo, "skipped": True},
         ],
     )
