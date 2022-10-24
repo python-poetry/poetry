@@ -3795,7 +3795,7 @@ def test_update_with_use_latest_vs_lock(
     )
 
 
-def test_solver_does_always_updates_path_dependencies(
+def test_solver_always_relocks_path_dependencies(
     package: ProjectPackage,
     repo: Repository,
     pool: Pool,
