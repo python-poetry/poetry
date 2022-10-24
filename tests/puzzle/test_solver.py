@@ -23,6 +23,7 @@ from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
@@ -2915,7 +2916,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     package.add_dependency(Factory.create_dependency("clikit", {"version": "^0.2.0"}))
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool.add_repository(MockPyPIRepository(), priority=Priority.SECONDARY)
     pool.add_repository(MockLegacyRepository())
 
     solver = Solver(package, pool, [], [], io)
@@ -2965,7 +2966,7 @@ def test_solver_chooses_from_secondary_if_explicit(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool.add_repository(MockPyPIRepository(), priority=Priority.SECONDARY)
     pool.add_repository(MockLegacyRepository())
 
     solver = Solver(package, pool, [], [], io)

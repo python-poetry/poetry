@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.config.source import Source
+from poetry.repositories.repository_pool import Priority
 
 
 if TYPE_CHECKING:
@@ -24,13 +25,30 @@ def source_two() -> Source:
 
 
 @pytest.fixture
-def source_default() -> Source:
+def source_default_deprecated() -> Source:
     return Source(name="default", url="https://default.com", default=True)
 
 
 @pytest.fixture
-def source_secondary() -> Source:
+def source_secondary_deprecated() -> Source:
     return Source(name="secondary", url="https://secondary.com", secondary=True)
+
+
+@pytest.fixture
+def source_primary() -> Source:
+    return Source(name="primary", url="https://primary.com", priority=Priority.PRIMARY)
+
+
+@pytest.fixture
+def source_default() -> Source:
+    return Source(name="default", url="https://default.com", priority=Priority.DEFAULT)
+
+
+@pytest.fixture
+def source_secondary() -> Source:
+    return Source(
+        name="secondary", url="https://secondary.com", priority=Priority.SECONDARY
+    )
 
 
 _existing_source = Source(name="existing", url="https://existing.com")
@@ -41,7 +59,7 @@ def source_existing() -> Source:
     return _existing_source
 
 
-PYPROJECT_WITH_SOURCES = f"""
+PYPROJECT_WITHOUT_SOURCES = """
 [tool.poetry]
 name = "source-command-test"
 version = "0.1.0"
@@ -52,11 +70,20 @@ authors = ["Poetry Tester <tester@poetry.org>"]
 python = "^3.9"
 
 [tool.poetry.dev-dependencies]
+"""
+
+
+PYPROJECT_WITH_SOURCES = f"""{PYPROJECT_WITHOUT_SOURCES}
 
 [[tool.poetry.source]]
 name = "{_existing_source.name}"
 url = "{_existing_source.url}"
 """
+
+
+@pytest.fixture
+def poetry_without_source(project_factory: ProjectFactory) -> Poetry:
+    return project_factory(pyproject_content=PYPROJECT_WITHOUT_SOURCES)
 
 
 @pytest.fixture
@@ -74,3 +101,20 @@ def add_multiple_sources(
     add = command_tester_factory("source add", poetry=poetry_with_source)
     for source in [source_one, source_two]:
         add.execute(f"{source.name} {source.url}")
+
+
+@pytest.fixture
+def add_all_source_types(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_source: Poetry,
+    source_primary: Source,
+    source_default: Source,
+    source_secondary: Source,
+) -> None:
+    add = command_tester_factory("source add", poetry=poetry_with_source)
+    for source in [
+        source_primary,
+        source_default,
+        source_secondary,
+    ]:
+        add.execute(f"{source.name} {source.url} --priority={source.name}")
