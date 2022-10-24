@@ -26,6 +26,7 @@ class Priority(IntEnum):
     DEFAULT = enum.auto()
     PRIMARY = enum.auto()
     SECONDARY = enum.auto()
+    EXPLICIT = enum.auto()
 
 
 @dataclass(frozen=True)
@@ -51,11 +52,30 @@ class RepositoryPool(AbstractRepository):
 
     @property
     def repositories(self) -> list[Repository]:
-        unsorted_repositories = self._repositories.values()
-        sorted_repositories = sorted(
-            unsorted_repositories, key=lambda prio_repo: prio_repo.priority
+        """
+        Returns the repositories in the pool,
+        in the order they will be searched for packages.
+
+        ATTENTION: For backwards compatibility and practical reasons,
+                   repositories with priority EXPLICIT are NOT included,
+                   because they will not be searched.
+        """
+        sorted_repositories = self._sorted_repositories
+        return [
+            prio_repo.repository
+            for prio_repo in sorted_repositories
+            if prio_repo.priority is not Priority.EXPLICIT
+        ]
+
+    @property
+    def all_repositories(self) -> list[Repository]:
+        return [prio_repo.repository for prio_repo in self._sorted_repositories]
+
+    @property
+    def _sorted_repositories(self) -> list[PrioritizedRepository]:
+        return sorted(
+            self._repositories.values(), key=lambda prio_repo: prio_repo.priority
         )
-        return [prio_repo.repository for prio_repo in sorted_repositories]
 
     def has_default(self) -> bool:
         return self._contains_priority(Priority.DEFAULT)

@@ -123,13 +123,15 @@ url = "https://foo.bar/simple/"
 priority = "primary"
 ```
 
-If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI and secondary sources.
+If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary and explicit sources.
 
 Package sources are considered in the following order:
 1. [default source](#default-package-source),
 2. primary sources,
 3. PyPI (unless disabled by another default source),
 4. [secondary sources](#secondary-package-sources),
+
+[Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
 
 Within each priority class, package sources are considered in order of appearance in `pyproject.toml`.
 
@@ -181,6 +183,20 @@ poetry source add --priority=secondary https://foo.bar/simple/
 
 There can be more than one secondary package source.
 
+#### Explicit Package Sources
+
+*Introduced in 1.5.0*
+
+If package sources are configured as explicit, these sources are only searched when a package configuration [explicitly indicates](#package-source-constraint) that it should be found on this package source.
+
+You can configure a package source as an explicit source with `priority = "explicit` in your package source configuration.
+
+```bash
+poetry source add --priority=explicit foo https://foo.bar/simple/
+```
+
+There can be more than one explicit package source.
+
 #### Package Source Constraint
 
 All package sources (including secondary sources) will be searched during the package lookup
@@ -209,6 +225,7 @@ priority = ...
 {{% note %}}
 
 A repository that is configured to be the only source for retrieving a certain package can itself have any priority.
+In particular, it does not need to have priority `"explicit"`.
 If a repository is configured to be the source of a package, it will be the only source that is considered for that package
 and the repository priority will have no effect on the resolution.
 

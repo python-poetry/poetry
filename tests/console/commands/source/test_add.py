@@ -136,6 +136,16 @@ def test_source_add_secondary(
     assert_source_added(tester, poetry_with_source, source_existing, source_secondary)
 
 
+def test_source_add_explicit(
+    tester: CommandTester,
+    source_existing: Source,
+    source_explicit: Source,
+    poetry_with_source: Poetry,
+) -> None:
+    tester.execute(f"--priority=explicit {source_explicit.name} {source_explicit.url}")
+    assert_source_added(tester, poetry_with_source, source_existing, source_explicit)
+
+
 def test_source_add_error_default_and_secondary_legacy(tester: CommandTester) -> None:
     tester.execute("--default --secondary error https://error.com")
     assert (

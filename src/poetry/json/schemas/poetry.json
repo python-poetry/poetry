@@ -45,7 +45,8 @@
           "enum": [
             "primary",
             "default",
-            "secondary"
+            "secondary",
+            "explicit"
           ],
           "description": "Declare the priority of this repository."
         },

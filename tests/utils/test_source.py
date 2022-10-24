@@ -23,10 +23,10 @@ from poetry.utils.source import source_to_table
             },
         ),
         (
-            Source("bar", "https://example.com/bar", priority=Priority.SECONDARY),
+            Source("bar", "https://example.com/bar", priority=Priority.EXPLICIT),
             {
                 "name": "bar",
-                "priority": "secondary",
+                "priority": "explicit",
                 "url": "https://example.com/bar",
             },
         ),
