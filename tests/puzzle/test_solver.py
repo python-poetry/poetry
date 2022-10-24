@@ -3817,9 +3817,7 @@ def test_solver_always_relocks_path_dependencies(
         source_url=str(path),
     )
 
-    package.add_dependency(
-        Factory.create_dependency("demo", {"path": str(path)})
-    )
+    package.add_dependency(Factory.create_dependency("demo", {"path": str(path)}))
 
     # transient dependencies of demo
     pendulum = get_package("pendulum", "2.0.3")
