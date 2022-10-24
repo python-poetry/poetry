@@ -267,7 +267,7 @@ poetry add my-cool-package --source foo
 ```
 
 {{% note %}}
-In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories##installing-from-private-package-sources" >}})
+In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories#installing-from-private-package-sources" >}})
 for further information.
 {{% /note %}}
 
