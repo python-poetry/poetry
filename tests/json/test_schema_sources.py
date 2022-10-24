@@ -36,7 +36,7 @@ def test_pyproject_toml_invalid_priority() -> None:
     assert Factory.validate(content) == {
         "errors": [
             "[source.0.priority] 'arbitrary' is not one of ['primary', 'default',"
-            " 'secondary']"
+            " 'secondary', 'explicit']"
         ],
         "warnings": [],
     }

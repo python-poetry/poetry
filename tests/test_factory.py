@@ -338,6 +338,19 @@ def test_poetry_with_no_default_source():
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI"}
 
 
+def test_poetry_with_explicit_source(with_simple_keyring: None) -> None:
+    poetry = Factory().create_poetry(fixtures_dir / "with_explicit_source")
+
+    assert len(poetry.pool.repositories) == 1
+    assert len(poetry.pool.all_repositories) == 2
+    assert poetry.pool.has_repository("PyPI")
+    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
+    assert poetry.pool.has_repository("explicit")
+    assert isinstance(poetry.pool.repository("explicit"), LegacyRepository)
+    assert [repo.name for repo in poetry.pool.repositories] == ["PyPI"]
+
+
 def test_poetry_with_two_default_sources_legacy(with_simple_keyring: None):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources_legacy")

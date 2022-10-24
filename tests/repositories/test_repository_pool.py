@@ -81,24 +81,41 @@ def test_repository_from_single_repo_pool_legacy(
     assert pool.get_priority("foo") == expected_priority
 
 
-def test_repository_with_normal_default_and_secondary_repositories() -> None:
+def test_repository_with_normal_default_secondary_and_explicit_repositories():
     secondary = LegacyRepository("secondary", "https://secondary.com")
     default = LegacyRepository("default", "https://default.com")
     repo1 = LegacyRepository("foo", "https://foo.bar")
     repo2 = LegacyRepository("bar", "https://bar.baz")
+    explicit = LegacyRepository("explicit", "https://bar.baz")
 
     pool = RepositoryPool()
     pool.add_repository(repo1)
     pool.add_repository(secondary, priority=Priority.SECONDARY)
     pool.add_repository(repo2)
+    pool.add_repository(explicit, priority=Priority.EXPLICIT)
     pool.add_repository(default, priority=Priority.DEFAULT)
 
     assert pool.repository("secondary") is secondary
     assert pool.repository("default") is default
     assert pool.repository("foo") is repo1
     assert pool.repository("bar") is repo2
+    assert pool.repository("explicit") is explicit
     assert pool.has_default()
     assert pool.has_primary_repositories()
+
+
+def test_repository_explicit_repositories_do_not_show() -> None:
+    explicit = LegacyRepository("explicit", "https://explicit.com")
+    default = LegacyRepository("default", "https://default.com")
+
+    pool = RepositoryPool()
+    pool.add_repository(explicit, priority=Priority.EXPLICIT)
+    pool.add_repository(default, priority=Priority.DEFAULT)
+
+    assert pool.repository("explicit") is explicit
+    assert pool.repository("default") is default
+    assert pool.repositories == [default]
+    assert pool.all_repositories == [default, explicit]
 
 
 def test_remove_non_existing_repository_raises_indexerror() -> None:

@@ -51,6 +51,13 @@ def source_secondary() -> Source:
     )
 
 
+@pytest.fixture
+def source_explicit() -> Source:
+    return Source(
+        name="explicit", url="https://explicit.com", priority=Priority.EXPLICIT
+    )
+
+
 _existing_source = Source(name="existing", url="https://existing.com")
 
 
@@ -110,11 +117,13 @@ def add_all_source_types(
     source_primary: Source,
     source_default: Source,
     source_secondary: Source,
+    source_explicit: Source,
 ) -> None:
     add = command_tester_factory("source add", poetry=poetry_with_source)
     for source in [
         source_primary,
         source_default,
         source_secondary,
+        source_explicit,
     ]:
         add.execute(f"{source.name} {source.url} --priority={source.name}")

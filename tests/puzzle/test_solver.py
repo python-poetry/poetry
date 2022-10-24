@@ -2998,6 +2998,71 @@ def test_solver_chooses_from_secondary_if_explicit(
     assert ops[2].package.source_url is None
 
 
+def test_solver_does_not_choose_from_explicit_repository(
+    package: ProjectPackage, io: NullIO
+) -> None:
+    package.python_versions = "^3.7"
+    package.add_dependency(Factory.create_dependency("attrs", {"version": "^17.4.0"}))
+
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, [], [], io)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
+    package: ProjectPackage,
+    io: NullIO,
+) -> None:
+    package.python_versions = "^3.7"
+    package.add_dependency(
+        Factory.create_dependency("pylev", {"version": "^1.2.0", "source": "PyPI"})
+    )
+
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, [], [], io)
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": get_package("pylev", "1.3.0")},
+        ],
+    )
+
+    assert ops[0].package.source_type is None
+    assert ops[0].package.source_url is None
+
+
+def test_solver_ignores_explicit_repo_for_transient_dependencies(
+    package: ProjectPackage,
+    io: NullIO,
+) -> None:
+    # clikit depends on pylev, which is in MockPyPIRepository (explicit) but not in
+    # MockLegacyRepository
+    package.python_versions = "^3.7"
+    package.add_dependency(
+        Factory.create_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
+    )
+
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, [], [], io)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
 def test_solver_discards_packages_with_empty_markers(
     package: ProjectPackage,
     repo: Repository,

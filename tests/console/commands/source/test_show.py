@@ -101,6 +101,7 @@ priority  : primary
         "source_primary",
         "source_default",
         "source_secondary",
+        "source_explicit",
     ),
 )
 def test_source_show_given_priority(
