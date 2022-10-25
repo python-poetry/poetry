@@ -328,10 +328,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            if not distribution.files:
-                continue
-
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name.endswith(suffix):
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -343,10 +341,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            if not distribution.files:
-                continue
-
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name == name:
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -376,10 +372,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=True
         ):
-            if not distribution.files:
-                continue
-
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 path = Path(
                     distribution.locate_file(file),  # type: ignore[no-untyped-call]
                 )
