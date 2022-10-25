@@ -257,7 +257,8 @@ class Factory(BaseFactory):
                     constraint["optional"] = True
 
                 if len(constraint) == 1 and "version" in constraint:
-                    constraint = cast(str, constraint["version"])
+                    assert isinstance(constraint["version"], str)
+                    constraint = constraint["version"]
                 elif not constraint:
                     constraint = "*"
 
