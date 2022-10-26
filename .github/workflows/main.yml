@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         include:
           - os: Ubuntu
             image: ubuntu-22.04
@@ -82,11 +82,6 @@ jobs:
 
           # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
           timeout 10s poetry run pip --version || rm -rf .venv
-
-      # XXX: https://github.com/pypa/pip/issues/11352 causes random failures -- remove once fixed in a release.
-      - name: Upgrade pip on Python 3.11
-        if: ${{ matrix.python-version == '3.11-dev' }}
-        run: poetry run pip install git+https://github.com/pypa/pip.git@f8a25921e5c443b07483017b0ffdeb08b9ba2fdf
 
       - name: Install dependencies
         run: poetry install --with github-actions
