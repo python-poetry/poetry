@@ -152,3 +152,37 @@ This is done so to be compliant with the broader Python ecosystem.
 
 For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
+
+
+### Poetry busts my Docker cache because it requires me to COPY my source files in before installing 3rd party dependencies
+
+By default running `poetry install ...` requires you to have your source files present (both the "root" package and any `path` dependencies you might have).
+This interacts poorly with Docker's caching mechanisms because any change to the source file will make any layers (subsequent commands in your Dockerfile) re-run.
+For example, you might have a Dockerfile that looks something like this:
+
+```text
+FROM python
+COPY pyproject.toml poetry.lock .
+COPY src/ ./src
+RUN pip install poetry && poetry install --no-dev
+```
+
+The `RUN` instruction will always re-run, which forces all 3rd party dependencies (likely the slowest step out of these) to re-run if you changed any files in `src/`.
+
+To avoid this cache busting you can split this into two steps:
+
+1. Install 3rd party dependencies.
+2. Copy over your source code and install just the source code.
+
+This might look something like this:
+
+```text
+FROM python
+COPY pyproject.toml poetry.lock .
+RUN pip install poetry && poetry install --no-root --no-path
+COPY src/ ./src
+RUN poetry install --no-dev
+```
+
+The two key options we are using here are `--no-root` (skips installing the project source) and `--no-path` (skips installing any local path dependencies, you can skip this if you don't have any).
+[More information on the options available for `poetry install`]({{< relref "cli#install" >}}).

@@ -347,3 +347,15 @@ def test_install_path_dependency_does_not_exist(
     else:
         with pytest.raises(ValueError, match="does not exist"):
             tester.execute(options)
+
+
+def test_no_path_is_passed_to_installer(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --no-root options is passed to the installer.
+    """
+
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--no-path")
+
+    assert tester.command.installer._skip_path is True
