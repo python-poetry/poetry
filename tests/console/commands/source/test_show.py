@@ -22,6 +22,23 @@ def tester(
     return command_tester_factory("source show", poetry=poetry_with_source)
 
 
+@pytest.fixture
+def tester_no_source(
+    command_tester_factory: CommandTesterFactory,
+    poetry_without_source: Poetry,
+) -> CommandTester:
+    return command_tester_factory("source show", poetry=poetry_without_source)
+
+
+def test_no_source_show_output(tester_no_source: CommandTester):
+    tester_no_source.execute("")
+    assert (
+        tester_no_source.io.fetch_output().strip()
+        == "No sources configured for this project."
+    )
+    assert tester_no_source.status_code == 0
+
+
 def test_source_show_simple(tester: CommandTester):
     tester.execute("")
 

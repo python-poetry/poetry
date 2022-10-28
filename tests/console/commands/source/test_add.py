@@ -102,3 +102,42 @@ def test_source_add_existing(
     assert len(sources) == 1
     assert sources[0] != source_existing
     assert sources[0] == dataclasses.replace(source_existing, default=True)
+
+
+def test_source_add_duplicate(
+    tester: CommandTester, source_existing: Source, poetry_with_source: Poetry
+):
+    tester.execute(f"{source_existing.name} {source_existing.url}")
+    assert (
+        tester.io.fetch_output().strip()
+        == "Source with name existing already exists. Skipping addition."
+    )
+
+    poetry_with_source.pyproject.reload()
+    sources = poetry_with_source.get_sources()
+
+    assert len(sources) == 1
+    assert sources[0] == source_existing
+
+
+def test_source_add_duplicate_default(
+    tester: CommandTester,
+    source_default: Source,
+    source_one: Source,
+    poetry_with_source: Poetry,
+):
+    tester.execute(f"--default {source_default.name} {source_default.url}")
+    tester.execute(f"--default {source_one.name} {source_one.url}")
+
+    assert (
+        tester.io.fetch_error().strip()
+        == "Source with name default is already set to default. Only one default source"
+        " can be configured at a time."
+    )
+
+    poetry_with_source.pyproject.reload()
+    sources = poetry_with_source.get_sources()
+
+    assert len(sources) == 2
+    assert sources[1] == source_default
+    assert sources[1] == dataclasses.replace(source_default, default=True)

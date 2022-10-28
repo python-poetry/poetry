@@ -64,6 +64,26 @@ def poetry_with_source(project_factory: ProjectFactory) -> Poetry:
     return project_factory(pyproject_content=PYPROJECT_WITH_SOURCES)
 
 
+PYPROJECT_WITHOUT_SOURCE = """
+[tool.poetry]
+name = "source-command-test"
+version = "0.1.0"
+description = ""
+authors = ["Poetry Tester <tester@poetry.org>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+
+"""
+
+
+@pytest.fixture
+def poetry_without_source(project_factory: ProjectFactory) -> Poetry:
+    return project_factory(pyproject_content=PYPROJECT_WITHOUT_SOURCE)
+
+
 @pytest.fixture
 def add_multiple_sources(
     command_tester_factory: CommandTesterFactory,
