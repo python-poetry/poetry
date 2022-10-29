@@ -451,6 +451,12 @@ class SitePackages:
             if value[-1] is True
         ]
 
+    def __getattr__(self, item: str) -> Any:
+        try:
+            return super().__getattribute__(item)
+        except AttributeError:
+            return getattr(self.path, item)
+
 
 class EnvError(Exception):
     pass

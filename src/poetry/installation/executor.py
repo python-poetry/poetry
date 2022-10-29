@@ -13,6 +13,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
@@ -770,8 +771,7 @@ class Executor:
             for dist in self._env.site_packages.distributions(
                 name=package.name, writable_only=True
             ):
-                dist_path = dist._path  # type: ignore[attr-defined]
-                assert isinstance(dist_path, Path)
+                dist_path = cast(Path, dist._path)  # type: ignore[attr-defined]
                 url = dist_path / "direct_url.json"
                 url.write_text(json.dumps(url_reference), encoding="utf-8")
 

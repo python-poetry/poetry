@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterator
 from typing import Mapping
+from typing import cast
 
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
@@ -188,8 +189,7 @@ def _get_win_folder_from_registry(csidl_name: str) -> str:
     )
     dir, type = _winreg.QueryValueEx(key, shell_folder_name)
 
-    assert isinstance(dir, str)
-    return dir
+    return cast(str, dir)
 
 
 def _get_win_folder_with_ctypes(csidl_name: str) -> str:

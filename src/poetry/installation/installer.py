@@ -201,10 +201,15 @@ class Installer:
             self._io,
         )
 
+        use_latest = [
+            p.name for p in locked_repository.packages
+            if p.source_type == "directory"
+        ]
+
         with solver.provider.use_source_root(
             source_root=self._env.path.joinpath("src")
         ):
-            ops = solver.solve(use_latest=[]).calculate_operations()
+            ops = solver.solve(use_latest=use_latest).calculate_operations()
 
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)

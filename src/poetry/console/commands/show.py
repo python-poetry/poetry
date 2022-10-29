@@ -211,7 +211,7 @@ lists all packages available."""
         with solver.use_environment(self.env):
             ops = solver.solve().calculate_operations()
 
-        required_locked_packages = {op.package.name for op in ops if not op.skipped}
+        required_locked_packages = {op.package for op in ops if not op.skipped}
 
         show_latest = self.option("latest")
         show_all = self.option("all")
@@ -223,7 +223,7 @@ lists all packages available."""
 
         # Computing widths
         for locked in locked_packages:
-            if locked.name not in required_locked_packages and not show_all:
+            if locked not in required_locked_packages and not show_all:
                 continue
 
             current_length = len(locked.pretty_name)
@@ -300,7 +300,7 @@ lists all packages available."""
             color = "cyan"
             name = locked.pretty_name
             install_marker = ""
-            if locked.name not in required_locked_packages:
+            if locked not in required_locked_packages:
                 if not show_all:
                     continue
 

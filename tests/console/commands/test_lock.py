@@ -43,6 +43,7 @@ def _project_factory(
         name="foobar",
         pyproject_content=pyproject_content,
         poetry_lock_content=poetry_lock_content,
+        source=source,
     )
 
 
@@ -65,6 +66,13 @@ def poetry_with_old_lockfile(
     project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
 ) -> Poetry:
     return _project_factory("old_lock", project_factory, fixture_dir)
+
+
+@pytest.fixture
+def poetry_with_nested_path_deps_old_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    return _project_factory("old_lock_path_dependency", project_factory, fixture_dir)
 
 
 @pytest.fixture
@@ -164,6 +172,27 @@ def test_lock_no_update(
 
     for package in packages:
         assert locked_repository.find_packages(package.to_dependency())
+
+
+def test_lock_no_update_path_dependencies(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_nested_path_deps_old_lockfile: Poetry,
+    repo: TestRepository,
+):
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+
+    locker = Locker(
+        lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry_with_nested_path_deps_old_lockfile.locker._local_config,
+    )
+    poetry_with_nested_path_deps_old_lockfile.set_locker(locker)
+
+    tester = command_tester_factory("lock", poetry=poetry_with_nested_path_deps_old_lockfile)
+    tester.execute("--no-update")
+
+    packages = locker.locked_repository().packages
+
+    assert {p.name for p in packages} == {"quix", "sampleproject"}
 
 
 @pytest.mark.parametrize("is_no_update", [False, True])
