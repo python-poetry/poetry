@@ -202,8 +202,7 @@ class Installer:
         )
 
         use_latest = [
-            p.name for p in locked_repository.packages
-            if p.source_type == "directory"
+            p.name for p in locked_repository.packages if p.source_type == "directory"
         ]
 
         with solver.provider.use_source_root(

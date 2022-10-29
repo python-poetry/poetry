@@ -182,12 +182,15 @@ def test_lock_no_update_path_dependencies(
     repo.add_package(get_package("sampleproject", "1.3.1"))
 
     locker = Locker(
-        lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.path.parent
+        / "poetry.lock",
         local_config=poetry_with_nested_path_deps_old_lockfile.locker._local_config,
     )
     poetry_with_nested_path_deps_old_lockfile.set_locker(locker)
 
-    tester = command_tester_factory("lock", poetry=poetry_with_nested_path_deps_old_lockfile)
+    tester = command_tester_factory(
+        "lock", poetry=poetry_with_nested_path_deps_old_lockfile
+    )
     tester.execute("--no-update")
 
     packages = locker.locked_repository().packages
