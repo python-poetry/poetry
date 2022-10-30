@@ -179,6 +179,12 @@ def test_lock_no_update_path_dependencies(
     poetry_with_nested_path_deps_old_lockfile: Poetry,
     repo: TestRepository,
 ):
+    """
+    The lock file contains a variant of the directory dependency "quix" that does
+    not depend on "sampleproject". Although the version of "quix" has not been changed,
+    it should be re-solved because there is always only one valid version
+    of a directory dependency at any time.
+    """
     repo.add_package(get_package("sampleproject", "1.3.1"))
 
     locker = Locker(

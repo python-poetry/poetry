@@ -201,6 +201,8 @@ class Installer:
             self._io,
         )
 
+        # Always re-solve directory dependencies, otherwise we can't determine
+        # if anything has changed (and the lock file contains an invalid version).
         use_latest = [
             p.name for p in locked_repository.packages if p.source_type == "directory"
         ]
