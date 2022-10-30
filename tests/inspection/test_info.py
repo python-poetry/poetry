@@ -101,12 +101,23 @@ def demo_check_info(info: PackageInfo, requires_dist: set[str] = None) -> None:
     assert info.version == "0.1.0"
     assert info.requires_dist
 
-    requires_dist = requires_dist or {
-        'cleo; extra == "foo"',
-        "pendulum (>=1.4.4)",
-        'tomlkit; extra == "bar"',
-    }
-    assert set(info.requires_dist) == requires_dist
+    if requires_dist:
+        assert set(info.requires_dist) == requires_dist
+    else:
+        assert set(info.requires_dist) in (
+            # before https://github.com/python-poetry/poetry-core/pull/510
+            {
+                'cleo; extra == "foo"',
+                "pendulum (>=1.4.4)",
+                'tomlkit; extra == "bar"',
+            },
+            # after https://github.com/python-poetry/poetry-core/pull/510
+            {
+                'cleo ; extra == "foo"',
+                "pendulum (>=1.4.4)",
+                'tomlkit ; extra == "bar"',
+            },
+        )
 
 
 def test_info_from_sdist(demo_sdist: Path):
