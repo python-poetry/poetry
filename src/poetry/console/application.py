@@ -12,7 +12,7 @@ from cleo.application import Application as BaseApplication
 from cleo.events.console_command_event import ConsoleCommandEvent
 from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
-from cleo.exceptions import CleoException
+from cleo.exceptions import CleoError
 from cleo.formatters.style import Style
 from cleo.io.null_io import NullIO
 
@@ -93,7 +93,7 @@ COMMANDS = [
 ]
 
 
-class Application(BaseApplication):  # type: ignore[misc]
+class Application(BaseApplication):
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
@@ -194,7 +194,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         # We need to check if the command being run
         # is the "run" command.
         definition = self.definition
-        with suppress(CleoException):
+        with suppress(CleoError):
             io.input.bind(definition)
 
         name = io.input.first_argument
@@ -215,7 +215,7 @@ class Application(BaseApplication):  # type: ignore[misc]
                         for shortcut in shortcuts:
                             run_input.add_parameter_option("-" + shortcut.lstrip("-"))
 
-            with suppress(CleoException):
+            with suppress(CleoError):
                 run_input.bind(definition)
 
             for option_name, value in input.options.items():

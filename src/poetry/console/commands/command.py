@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from cleo.commands.command import Command as BaseCommand
-from cleo.exceptions import ValueException
+from cleo.exceptions import CleoValueError
 
 
 if TYPE_CHECKING:
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
 
 
-class Command(BaseCommand):  # type: ignore[misc]
+class Command(BaseCommand):
     loggers: list[str] = []
 
     _poetry: Poetry | None = None
@@ -40,5 +40,5 @@ class Command(BaseCommand):  # type: ignore[misc]
     def option(self, name: str, default: Any = None) -> Any:
         try:
             return super().option(name)
-        except ValueException:
+        except CleoValueError:
             return default

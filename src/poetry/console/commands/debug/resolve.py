@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.show import ShowCommand
+
+
+if TYPE_CHECKING:
+    from cleo.ui.table import Rows
 
 
 class DebugResolveCommand(InitCommand):
@@ -103,7 +109,7 @@ class DebugResolveCommand(InitCommand):
 
         table = self.table(style="compact")
         table.style.set_vertical_border_chars("", " ")
-        rows = []
+        rows: Rows = []
 
         if self.option("install"):
             env = EnvManager(self.poetry).get()

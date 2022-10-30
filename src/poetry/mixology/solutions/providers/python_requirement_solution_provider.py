@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from crashtest.contracts.solution import Solution
 
 
-class PythonRequirementSolutionProvider(HasSolutionsForException):  # type: ignore[misc]
+class PythonRequirementSolutionProvider(HasSolutionsForException):
     def can_solve(self, exception: Exception) -> bool:
         if not isinstance(exception, SolverProblemError):
             return False

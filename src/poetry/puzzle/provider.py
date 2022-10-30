@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Indicator(ProgressIndicator):  # type: ignore[misc]
+class Indicator(ProgressIndicator):
     CONTEXT: str | None = None
 
     @staticmethod

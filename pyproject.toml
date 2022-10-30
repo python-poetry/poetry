@@ -51,8 +51,8 @@ poetry-core = "^1.3.2"
 poetry-plugin-export = "^1.2.0"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
-cleo = "^1.0.0a5"
-crashtest = "^0.3.0"
+cleo = "^2.0.0"
+crashtest = "^0.4.1"
 dulwich = "^0.20.46"
 filelock = "^3.8.0"
 html5lib = "^1.0"
@@ -168,9 +168,6 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = [
   'cachecontrol.*',
-  'cachy.*',
-  'cleo.*',
-  'crashtest.*',
   'lockfile.*',
   'pexpect.*',
   'pkginfo.*',
