@@ -201,10 +201,16 @@ class Installer:
             self._io,
         )
 
+        # Always re-solve directory dependencies, otherwise we can't determine
+        # if anything has changed (and the lock file contains an invalid version).
+        use_latest = [
+            p.name for p in locked_repository.packages if p.source_type == "directory"
+        ]
+
         with solver.provider.use_source_root(
             source_root=self._env.path.joinpath("src")
         ):
-            ops = solver.solve(use_latest=[]).calculate_operations()
+            ops = solver.solve(use_latest=use_latest).calculate_operations()
 
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
