@@ -290,12 +290,7 @@ def test_builder_installs_proper_files_when_packages_configured(
 def test_builder_should_execute_build_scripts(
     mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_dir: str
 ):
-    import sys
-
-    sys.stdout = sys.stderr
-    env = MockEnv(
-        path=Path(tmp_dir) / "foo",
-    )
+    env = MockEnv(path=Path(tmp_dir) / "foo")
     site_packages_dir = Path(tmp_dir) / "site-packages"
     site_packages_dir.mkdir(parents=True, exist_ok=True)
     mocker.patch.object(
