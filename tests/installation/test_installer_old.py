@@ -126,8 +126,8 @@ def locker(project_root: Path) -> Locker:
 
 
 @pytest.fixture()
-def env() -> NullEnv:
-    return NullEnv()
+def env(tmp_dir: str) -> NullEnv:
+    return NullEnv(path=Path(tmp_dir))
 
 
 @pytest.fixture()
