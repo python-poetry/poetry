@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -141,6 +142,7 @@ class LegacyRepository(HTTPRepository):
             ),
         )
 
+    @lru_cache(maxsize=None)
     def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
         response = self._get_response(endpoint)
         if not response:
