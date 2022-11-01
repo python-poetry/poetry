@@ -1151,12 +1151,13 @@ def test_installer_with_pypi_repository(
     locker: Locker,
     installed: CustomInstalledRepository,
     config: Config,
+    env: NullEnv,
 ):
     pool = RepositoryPool()
     pool.add_repository(MockRepository())
 
     installer = Installer(
-        NullIO(), NullEnv(), package, locker, pool, config, installed=installed
+        NullIO(), env, package, locker, pool, config, installed=installed
     )
 
     package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))

@@ -63,8 +63,8 @@ def env(tmp_dir: str) -> NullEnv:
 
 
 @pytest.fixture
-def installer(pool: RepositoryPool) -> PipInstaller:
-    return PipInstaller(NullEnv(), NullIO(), pool)
+def installer(pool: RepositoryPool, env: NullEnv) -> PipInstaller:
+    return PipInstaller(env, NullIO(), pool)
 
 
 def test_requirement(installer: PipInstaller):
