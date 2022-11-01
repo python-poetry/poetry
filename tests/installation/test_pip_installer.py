@@ -58,8 +58,8 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture()
-def env(tmp_dir: str) -> NullEnv:
-    return NullEnv(path=Path(tmp_dir))
+def env(tmp_path: Path) -> NullEnv:
+    return NullEnv(path=tmp_path)
 
 
 @pytest.fixture
