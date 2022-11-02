@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-import tomli
-
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
@@ -26,6 +24,8 @@ from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import table
+
+from poetry.utils._compat import tomllib
 
 
 if TYPE_CHECKING:
@@ -80,7 +80,7 @@ class Locker:
         Checks whether the lock file is still up to date with the current hash.
         """
         with self.lock.open("rb") as f:
-            lock = tomli.load(f)
+            lock = tomllib.load(f)
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
@@ -300,8 +300,8 @@ class Locker:
 
         with self.lock.open("rb") as f:
             try:
-                lock_data = tomli.load(f)
-            except tomli.TOMLDecodeError as e:
+                lock_data = tomllib.load(f)
+            except tomllib.TOMLDecodeError as e:
                 raise RuntimeError(f"Unable to read the lock file ({e}).")
 
         metadata = lock_data["metadata"]
