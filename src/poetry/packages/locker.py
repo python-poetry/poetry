@@ -271,10 +271,6 @@ class Locker:
         lockfile = TOMLFile(self.lock)
         lockfile.write(data)
 
-        # Checking lock file data consistency
-        if data != lockfile.read():
-            raise RuntimeError("Inconsistent lock file data.")
-
         self._lock_data = None
 
     def _get_content_hash(self) -> str:
