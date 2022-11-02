@@ -82,7 +82,7 @@ If you want to add dependencies to your project, you can specify them in the `to
 
 ```toml
 [tool.poetry.dependencies]
-pendulum = "^2.1"
+pendulum = "^2.1.1"
 ```
 
 As you can see, it takes a mapping of **package names** and **version constraints**.
