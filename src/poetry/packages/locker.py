@@ -12,15 +12,20 @@ from typing import Any
 from typing import cast
 
 import tomli
-import tomli_w
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
+from tomlkit import array
+from tomlkit import comment
+from tomlkit import document
+from tomlkit import inline_table
+from tomlkit import table
 
 
 if TYPE_CHECKING:
@@ -28,6 +33,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
+    from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories.lockfile_repository import LockfileRepository
 
@@ -221,18 +227,19 @@ class Locker:
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
-            files = []
+            files = array()
 
             for f in package["files"]:
-                file_metadata = {}
+                file_metadata = inline_table()
                 for k, v in sorted(f.items()):
                     file_metadata[k] = v
 
                 files.append(file_metadata)
 
-            package["files"] = files
+            package["files"] = files.multiline(True)
 
-        lock: dict[str, Any] = {}
+        lock = document()
+        lock.add(comment(GENERATED_COMMENT))
         lock["package"] = package_specs
 
         if root.extras:
@@ -260,10 +267,13 @@ class Locker:
             self._write_lock_data(lock)
         return do_write
 
-    def _write_lock_data(self, data: dict[str, Any]) -> None:
-        with self.lock.open("wb") as f:
-            f.write(f"# {GENERATED_COMMENT}\n\n".encode())
-            tomli_w.dump(data, f)
+    def _write_lock_data(self, data: TOMLDocument) -> None:
+        lockfile = TOMLFile(self.lock)
+        lockfile.write(data)
+
+        # Checking lock file data consistency
+        if data != lockfile.read():
+            raise RuntimeError("Inconsistent lock file data.")
 
         self._lock_data = None
 
@@ -345,7 +355,7 @@ class Locker:
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
-            constraint: dict[str, Any] = {}
+            constraint = inline_table()
 
             if dependency.is_directory():
                 dependency = cast("DirectoryDependency", dependency)
@@ -411,10 +421,14 @@ class Locker:
         }
 
         if dependencies:
-            data["dependencies"] = {
-                name: constraints[0] if len(constraints) == 1 else constraints
-                for name, constraints in dependencies.items()
-            }
+            data["dependencies"] = table()
+            for k, constraints in dependencies.items():
+                if len(constraints) == 1:
+                    data["dependencies"][k] = constraints[0]
+                else:
+                    data["dependencies"][k] = array().multiline(True)
+                    for constraint in constraints:
+                        data["dependencies"][k].append(constraint)
 
         if package.extras:
             extras = {}
