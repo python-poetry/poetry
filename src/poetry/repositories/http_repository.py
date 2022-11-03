@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import urllib
@@ -50,6 +51,7 @@ class HTTPRepository(CachedRepository):
             disable_cache=disable_cache,
         )
         self._authenticator.add_repository(name, url)
+        self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
 
     @property
     def session(self) -> Authenticator:
