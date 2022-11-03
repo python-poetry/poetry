@@ -1055,6 +1055,44 @@ If you prefer to upgrade it to the latest available version,\
     assert expected in tester.io.fetch_output()
 
 
+def test_add_latest_should_not_create_duplicate_keys(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+):
+    pyproject_content = """\
+    [tool.poetry]
+    name = "simple-project"
+    version = "1.2.3"
+    description = "Some description."
+    authors = [
+        "Python Poetry <tests@python-poetry.org>"
+    ]
+    license = "MIT"
+    readme = "README.md"
+
+    [tool.poetry.dependencies]
+    python = "^3.6"
+    Foo = "^0.6"
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+    content = poetry.file.read()
+
+    assert "Foo" in content["tool"]["poetry"]["dependencies"]
+    assert content["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
+    assert "foo" not in content["tool"]["poetry"]["dependencies"]
+
+    tester = command_tester_factory("add", poetry=poetry)
+    repo.add_package(get_package("foo", "1.1.2"))
+    tester.execute("foo@latest")
+
+    updated_content = poetry.file.read()
+    assert "Foo" in updated_content["tool"]["poetry"]["dependencies"]
+    assert updated_content["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
+    assert "foo" not in updated_content["tool"]["poetry"]["dependencies"]
+
+
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):

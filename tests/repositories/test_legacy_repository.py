@@ -73,7 +73,7 @@ def test_packages_property_returns_empty_list() -> None:
 def test_page_relative_links_path_are_correct() -> None:
     repo = MockRepository()
 
-    page = repo._get_page("/relative")
+    page = repo.get_page("/relative")
     assert page is not None
 
     for link in page.links:
@@ -84,7 +84,7 @@ def test_page_relative_links_path_are_correct() -> None:
 def test_page_absolute_links_path_are_correct() -> None:
     repo = MockRepository()
 
-    page = repo._get_page("/absolute")
+    page = repo.get_page("/absolute")
     assert page is not None
 
     for link in page.links:
@@ -95,7 +95,7 @@ def test_page_absolute_links_path_are_correct() -> None:
 def test_page_clean_link() -> None:
     repo = MockRepository()
 
-    page = repo._get_page("/relative")
+    page = repo.get_page("/relative")
     assert page is not None
 
     cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
@@ -105,7 +105,7 @@ def test_page_clean_link() -> None:
 def test_page_invalid_version_link() -> None:
     repo = MockRepository()
 
-    page = repo._get_page("/invalid-version")
+    page = repo.get_page("/invalid-version")
     assert page is not None
 
     links = list(page.links)
@@ -123,7 +123,7 @@ def test_page_invalid_version_link() -> None:
 
 def test_sdist_format_support() -> None:
     repo = MockRepository()
-    page = repo._get_page("/relative")
+    page = repo.get_page("/relative")
     assert page is not None
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
@@ -490,7 +490,7 @@ class MockHttpRepository(LegacyRepository):
 def test_get_200_returns_page(http: type[httpretty.httpretty]) -> None:
     repo = MockHttpRepository({"/foo": 200}, http)
 
-    assert repo._get_page("/foo")
+    assert repo.get_page("/foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
@@ -499,14 +499,14 @@ def test_get_40x_and_returns_none(
 ) -> None:
     repo = MockHttpRepository({"/foo": status_code}, http)
 
-    assert repo._get_page("/foo") is None
+    assert repo.get_page("/foo") is None
 
 
 def test_get_5xx_raises(http: type[httpretty.httpretty]) -> None:
     repo = MockHttpRepository({"/foo": 500}, http)
 
     with pytest.raises(RepositoryError):
-        repo._get_page("/foo")
+        repo.get_page("/foo")
 
 
 def test_get_redirected_response_url(
@@ -524,7 +524,7 @@ def test_get_redirected_response_url(
         return response
 
     monkeypatch.setattr(repo.session, "get", get_mock)
-    page = repo._get_page("/foo")
+    page = repo.get_page("/foo")
     assert page is not None
     assert page._url == "http://legacy.redirect.bar/foo/"
 
@@ -560,7 +560,7 @@ def test_authenticator_with_implicit_repository_configuration(
     )
 
     repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
-    repo._get_page("/foo")
+    repo.get_page("/foo")
 
     request = http.last_request()
 
