@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import argument
 
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
@@ -44,7 +45,13 @@ class RunCommand(EnvCommand):
 
         return module
 
-    def run_script(self, script: str | dict[str, str], args: str) -> int:
+    def run_script(self, script: str | dict[str, str], args: list[str]) -> int:
+        env = EnvManager(self.poetry).get()
+        if env.platform == "win32":
+            args[0] = rf"{env.path}\Scripts\{args[0]}"
+        else:
+            args[0] = f"{env.path}/bin/{args[0]}"
+
         if isinstance(script, dict):
             script = script["callable"]
 
