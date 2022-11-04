@@ -1953,6 +1953,7 @@ def build_environment(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *poetry.pyproject.build_system.requires,
             )
 
