@@ -868,12 +868,14 @@ def main():
         path=args.path,
         git=args.git,
     )
-    
-    disable_log_file = string_to_bool(os.getenv("POETRY_LOG_STDERR", "0")
-    
+
+    disable_log_file = string_to_bool(os.getenv("POETRY_LOG_STDERR", "0"))
+
     if not disable_log_file and string_to_bool(os.getenv("CI", "0")):
-      installer._write(colorize("info", "CI environment detected. Writing logs to stderr."))
-      disable_log_file = True
+        installer._write(
+            colorize("info", "CI environment detected. Writing logs to stderr.")
+        )
+        disable_log_file = True
 
     if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):
         return installer.uninstall()
@@ -882,19 +884,19 @@ def main():
         return installer.run()
     except PoetryInstallationError as e:
         installer._write(colorize("error", "Poetry installation failed."))
-                                      
-        error = None
-                                      
-        if e.log is not None:
-           import traceback    
 
-           error = (
-               f"{e.log}\n"
-               f"Traceback:\n\n{''.join(traceback.format_tb(e.__traceback__))}"
-           )
+        error = None
+
+        if e.log is not None:
+            import traceback
+
+            error = (
+                f"{e.log}\n"
+                f"Traceback:\n\n{''.join(traceback.format_tb(e.__traceback__))}"
+            )
 
             if disable_log_file:
-                installer._write(colorize("error", error))                          
+                installer._write(colorize("error", error))
             else:
                 _, path = tempfile.mkstemp(
                     suffix=".log",
