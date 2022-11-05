@@ -10,7 +10,7 @@ python-versions = ">=3.5"
 dev = ["cloudpickle", "coverage[toml] (>=5.0.2)", "furo", "hypothesis", "mypy (>=0.900,!=0.940)", "pre-commit", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "sphinx", "sphinx-notfound-page", "zope.interface"]
 docs = ["furo", "sphinx", "sphinx-notfound-page", "zope.interface"]
 tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
+tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
 name = "backports.cached-property"
@@ -86,7 +86,7 @@ optional = false
 python-versions = ">=3.6.0"
 
 [package.extras]
-unicode_backport = ["unicodedata2"]
+unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "cleo"
@@ -524,15 +524,15 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "poetry-plugin-export"
-version = "1.1.2"
+version = "1.2.0"
 description = "Poetry plugin to export the dependencies to various formats"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-poetry = ">=1.2.0,<2.0.0"
-poetry-core = ">=1.1.0,<2.0.0"
+poetry = ">=1.2.2,<2.0.0"
+poetry-core = ">=1.3.0,<2.0.0"
 
 [[package]]
 name = "pre-commit"
@@ -749,7 +749,7 @@ urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
-use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
+use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-toolbelt"
@@ -815,7 +815,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -951,7 +951,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7db62de4ee4f2831829fc08b6a3d190f177c62d5af7676e20fb228bb58274850"
+content-hash = "703e97d65aae512130b6a43ef7c82a27c914b9f4023f5267824b54e901d4bde3"
 
 [metadata.files]
 attrs = [
@@ -1364,8 +1364,8 @@ poetry-core = [
     {file = "poetry_core-1.3.2-py3-none-any.whl", hash = "sha256:ea0f5a90b339cde132b4e43cff78a1b440cd928db864bb67cfc97fdfcefe7218"},
 ]
 poetry-plugin-export = [
-    {file = "poetry-plugin-export-1.1.2.tar.gz", hash = "sha256:5e92525dd63f38ce74a51ed68ea91d753523f21ce5f9ef8d3b793e2a4b2222ef"},
-    {file = "poetry_plugin_export-1.1.2-py3-none-any.whl", hash = "sha256:946e3313b3d00c18fb9a50522e9d5e6a7e111beaba8d6ae33297662fc2070ac1"},
+    {file = "poetry_plugin_export-1.2.0-py3-none-any.whl", hash = "sha256:109fb43ebfd0e79d8be2e7f9d43ba2ae357c4975a18dfc0cfdd9597dd086790e"},
+    {file = "poetry_plugin_export-1.2.0.tar.gz", hash = "sha256:9a1dd42765408931d7831738749022651d43a2968b67c988db1b7a567dfe41ef"},
 ]
 pre-commit = [
     {file = "pre_commit-2.20.0-py2.py3-none-any.whl", hash = "sha256:51a5ba7c480ae8072ecdb6933df22d2f812dc897d5fe848778116129a681aac7"},
