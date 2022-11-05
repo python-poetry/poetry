@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -49,7 +49,7 @@ class Executor:
     def __init__(
         self,
         env: Env,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         io: IO,
         parallel: bool | None = None,
@@ -60,11 +60,6 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._authenticator = Authenticator(
-            config, self._io, disable_cache=disable_cache
-        )
-        self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env, config)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -75,6 +70,12 @@ class Executor:
             )
         else:
             self._max_workers = 1
+
+        self._authenticator = Authenticator(
+            config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
+        )
+        self._chef = Chef(config, self._env)
+        self._chooser = Chooser(pool, self._env, config)
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
         self._total_operations = 0

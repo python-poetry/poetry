@@ -19,8 +19,8 @@ from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import Provider
-from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.helpers import get_dependency
@@ -49,15 +49,15 @@ def repository() -> Repository:
 
 
 @pytest.fixture
-def pool(repository: Repository) -> Pool:
-    pool = Pool()
+def pool(repository: Repository) -> RepositoryPool:
+    pool = RepositoryPool()
     pool.add_repository(repository)
 
     return pool
 
 
 @pytest.fixture
-def provider(root: ProjectPackage, pool: Pool) -> Provider:
+def provider(root: ProjectPackage, pool: RepositoryPool) -> Provider:
     return Provider(root, pool, NullIO())
 
 

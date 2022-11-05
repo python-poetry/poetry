@@ -4,8 +4,8 @@ import pytest
 
 from poetry.core.constraints.version import Version
 
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
@@ -13,7 +13,7 @@ from tests.helpers import get_package
 
 
 def test_pool() -> None:
-    pool = Pool()
+    pool = RepositoryPool()
 
     assert len(pool.repositories) == 0
     assert not pool.has_default()
@@ -22,7 +22,7 @@ def test_pool() -> None:
 
 def test_pool_with_initial_repositories() -> None:
     repo = Repository("repo")
-    pool = Pool([repo])
+    pool = RepositoryPool([repo])
 
     assert len(pool.repositories) == 1
     assert not pool.has_default()
@@ -30,7 +30,7 @@ def test_pool_with_initial_repositories() -> None:
 
 
 def test_repository_no_repository() -> None:
-    pool = Pool()
+    pool = RepositoryPool()
 
     with pytest.raises(IndexError):
         pool.repository("foo")
@@ -41,15 +41,15 @@ def test_adding_repositories_with_same_name_twice_raises_value_error() -> None:
     repo2 = Repository("repo")
 
     with pytest.raises(ValueError):
-        Pool([repo1, repo2])
+        RepositoryPool([repo1, repo2])
 
     with pytest.raises(ValueError):
-        Pool([repo1]).add_repository(repo2)
+        RepositoryPool([repo1]).add_repository(repo2)
 
 
 def test_repository_from_normal_pool() -> None:
     repo = LegacyRepository("foo", "https://foo.bar")
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(repo)
 
     assert pool.repository("foo") is repo
@@ -57,7 +57,7 @@ def test_repository_from_normal_pool() -> None:
 
 def test_repository_from_secondary_pool() -> None:
     repo = LegacyRepository("foo", "https://foo.bar")
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(repo, secondary=True)
 
     assert pool.repository("foo") is repo
@@ -69,7 +69,7 @@ def test_repository_with_normal_default_and_secondary_repositories() -> None:
     repo1 = LegacyRepository("foo", "https://foo.bar")
     repo2 = LegacyRepository("bar", "https://bar.baz")
 
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(repo1)
     pool.add_repository(secondary, secondary=True)
     pool.add_repository(repo2)
@@ -84,7 +84,7 @@ def test_repository_with_normal_default_and_secondary_repositories() -> None:
 
 
 def test_remove_non_existing_repository_raises_indexerror() -> None:
-    pool = Pool()
+    pool = RepositoryPool()
 
     with pytest.raises(IndexError):
         pool.remove_repository("foo")
@@ -95,7 +95,7 @@ def test_remove_existing_repository_successful() -> None:
     repo2 = LegacyRepository("bar", "https://bar.baz")
     repo3 = LegacyRepository("baz", "https://baz.quux")
 
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(repo1)
     pool.add_repository(repo2)
     pool.add_repository(repo3)
@@ -112,7 +112,7 @@ def test_remove_default_repository() -> None:
     repo2 = LegacyRepository("bar", "https://bar.baz")
     new_default = LegacyRepository("new_default", "https://new.default.com")
 
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(repo1)
     pool.add_repository(repo2)
     pool.add_repository(default, default=True)
@@ -140,7 +140,7 @@ def test_repository_ordering() -> None:
     secondary2 = LegacyRepository("secondary2", "https://secondary2.com")
     secondary3 = LegacyRepository("secondary3", "https://secondary3.com")
 
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(secondary1, secondary=True)
     pool.add_repository(primary1)
     pool.add_repository(default1, default=True)
@@ -163,7 +163,7 @@ def test_pool_get_package_in_any_repository() -> None:
     repo1 = Repository("repo1", [package1])
     package2 = get_package("bar", "1.0.0")
     repo2 = Repository("repo2", [package1, package2])
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     returned_package1 = pool.package("foo", Version.parse("1.0.0"))
     returned_package2 = pool.package("bar", Version.parse("1.0.0"))
@@ -176,7 +176,7 @@ def test_pool_get_package_in_specified_repository() -> None:
     package = get_package("foo", "1.0.0")
     repo1 = Repository("repo1")
     repo2 = Repository("repo2", [package])
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     returned_package = pool.package(
         "foo", Version.parse("1.0.0"), repository_name="repo2"
@@ -186,7 +186,7 @@ def test_pool_get_package_in_specified_repository() -> None:
 
 
 def test_pool_no_package_from_any_repository_raises_package_not_found() -> None:
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(Repository("repo"))
 
     with pytest.raises(PackageNotFound):
@@ -197,7 +197,7 @@ def test_pool_no_package_from_specified_repository_raises_package_not_found() ->
     package = get_package("foo", "1.0.0")
     repo1 = Repository("repo1")
     repo2 = Repository("repo2", [package])
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     with pytest.raises(PackageNotFound):
         pool.package("foo", Version.parse("1.0.0"), repository_name="repo1")
@@ -210,7 +210,7 @@ def test_pool_find_packages_in_any_repository() -> None:
     package4 = get_package("bar", "1.2.3")
     repo1 = Repository("repo1", [package1, package3])
     repo2 = Repository("repo2", [package1, package2, package4])
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     available_dependency = get_dependency("foo", "^1.0.0")
     returned_packages_available = pool.find_packages(available_dependency)
@@ -228,7 +228,7 @@ def test_pool_find_packages_in_specified_repository() -> None:
     package_bar = get_package("bar", "1.2.3")
     repo1 = Repository("repo1", [package_foo1, package_foo3])
     repo2 = Repository("repo2", [package_foo1, package_foo2, package_bar])
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     available_dependency = get_dependency("foo", "^1.0.0")
     available_dependency.source_name = "repo2"
@@ -247,7 +247,7 @@ def test_search_no_legacy_repositories() -> None:
     package_foobar = get_package("foobar", "1.0.0")
     repo1 = Repository("repo1", [package_foo1, package_foo2])
     repo2 = Repository("repo2", [package_foo1, package_foobar])
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     assert pool.search("foo") == [
         package_foo1,
@@ -263,6 +263,6 @@ def test_search_legacy_repositories_are_skipped() -> None:
     package = get_package("foo", "1.0.0")
     repo1 = Repository("repo1", [package])
     repo2 = LegacyRepository("repo2", "https://fake.repo/")
-    pool = Pool([repo1, repo2])
+    pool = RepositoryPool([repo1, repo2])
 
     assert pool.search("foo") == [package]

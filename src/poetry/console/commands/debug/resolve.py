@@ -36,8 +36,8 @@ class DebugResolveCommand(InitCommand):
 
         from poetry.factory import Factory
         from poetry.puzzle.solver import Solver
-        from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
+        from poetry.repositories.repository_pool import RepositoryPool
         from poetry.utils.env import EnvManager
 
         packages = self.argument("package")
@@ -107,7 +107,7 @@ class DebugResolveCommand(InitCommand):
 
         if self.option("install"):
             env = EnvManager(self.poetry).get()
-            pool = Pool()
+            pool = RepositoryPool()
             locked_repository = Repository("poetry-locked")
             for op in ops:
                 locked_repository.add_package(op.package)

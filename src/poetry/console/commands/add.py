@@ -215,7 +215,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             constraint_name = _constraint["name"]
             assert isinstance(constraint_name, str)
-            section[constraint_name] = constraint
+
+            canonical_constraint_name = canonicalize_name(constraint_name)
+
+            for key in section:
+                if canonicalize_name(key) == canonical_constraint_name:
+                    section[key] = constraint
+                    break
+            else:
+                section[constraint_name] = constraint
 
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(

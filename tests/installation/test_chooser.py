@@ -13,8 +13,8 @@ from poetry.core.packages.package import Package
 
 from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.pool import Pool
 from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 
 
@@ -111,8 +111,8 @@ def mock_legacy_partial_yank(http: type[httpretty.httpretty]) -> None:
 
 
 @pytest.fixture()
-def pool() -> Pool:
-    pool = Pool()
+def pool() -> RepositoryPool:
+    pool = RepositoryPool()
 
     pool.add_repository(PyPiRepository(disable_cache=True))
     pool.add_repository(
@@ -127,7 +127,11 @@ def pool() -> Pool:
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_universal_wheel_link_if_available(
-    env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
 ):
     chooser = Chooser(pool, env)
 
@@ -162,7 +166,7 @@ def test_chooser_no_binary_policy(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
+    pool: RepositoryPool,
     policy: str,
     filename: str,
     config: Config,
@@ -188,7 +192,11 @@ def test_chooser_no_binary_policy(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
-    env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
 ):
     chooser = Chooser(pool, env)
 
@@ -209,7 +217,7 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_system_specific_wheel_link_if_available(
-    mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
+    mock_pypi: None, mock_legacy: None, source_type: str, pool: RepositoryPool
 ):
     env = MockEnv(
         supported_tags=[Tag("cp37", "cp37m", "win32"), Tag("py3", "none", "any")]
@@ -237,7 +245,7 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
+    pool: RepositoryPool,
 ):
     chooser = Chooser(pool, env)
 
@@ -262,7 +270,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
+    pool: RepositoryPool,
 ):
     chooser = Chooser(pool, env)
 
@@ -295,7 +303,7 @@ def test_chooser_chooses_yanked_if_no_others(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
+    pool: RepositoryPool,
 ) -> None:
     chooser = Chooser(pool, env)
 
@@ -326,7 +334,7 @@ def test_chooser_chooses_yanked_if_no_others(
 def test_chooser_does_not_choose_yanked_if_others(
     mock_legacy: None,
     mock_legacy_partial_yank: None,
-    pool: Pool,
+    pool: RepositoryPool,
 ) -> None:
     chooser = Chooser(pool, MockEnv(supported_tags=[Tag("py2", "none", "any")]))
 
@@ -372,7 +380,7 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     mock_pypi: None,
     mock_legacy: None,
     source_type: None,
-    pool: Pool,
+    pool: RepositoryPool,
 ):
     chooser = Chooser(pool, env)
 
