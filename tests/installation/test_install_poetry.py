@@ -27,6 +27,7 @@ class InstallPoetryTestCase(unittest.TestCase):
         self.__args.accept_all = False
         self.__args.path = None
         self.__args.git = None
+        self.__args.stderr = False
         self.__args.uninstall = False
         self.__mock_argument_parser_cls.return_value = self.__parser
         self.__parser.parse_args.return_value = self.__args
@@ -46,6 +47,9 @@ class InstallPoetryTestCase(unittest.TestCase):
         self.__mock_tempfile.mkstemp.side_effect = self.__mkstemp
         self.__tmp_file = None
 
+        self.__patchers.append(patch("install-poetry.Path"))
+        self.__mock_path_cls = self.__patchers[-1].start()
+
     def tearDown(self):
         for patcher in self.__patchers:
             patcher.stop()
@@ -61,7 +65,7 @@ class InstallPoetryTestCase(unittest.TestCase):
             force=False,
             accept_all=True,
             path=None,
-            git=None,
+            git=None
         )
 
         self.__installer.uninstall.assert_not_called()
@@ -79,8 +83,23 @@ class InstallPoetryTestCase(unittest.TestCase):
         self.__assert_any_matching_message("error", re.compile(f"See {self.__tmp_file} for error logs"))
 
         self.assertEqual(return_code, 1)
+        self.__mock_path_cls(self.__tmp_file).write_text.assert_called_once()
 
-    def test_install_poetry_main__log_stderr(self):
+    def test_install_poetry_main__stderr_arg(self):
+        self.__args.stderr = True
+        self.__installer.run.side_effect = [
+            module.PoetryInstallationError(1, "a fake poetry installation error")
+        ]
+
+        return_code = module.main()
+
+        self.__assert_no_matching_message("info", re.compile("CI environment detected"))
+        self.__assert_any_matching_message("error", re.compile("a fake poetry installation error"))
+
+        self.assertEqual(return_code, 1)
+        self.__mock_path_cls.assert_not_called()
+
+    def test_install_poetry_main__log_stderr_var(self):
         self.__env["POETRY_LOG_STDERR"] = "1"
         self.__installer.run.side_effect = [
             module.PoetryInstallationError(1, "a fake poetry installation error")
@@ -92,6 +111,7 @@ class InstallPoetryTestCase(unittest.TestCase):
         self.__assert_any_matching_message("error", re.compile("a fake poetry installation error"))
 
         self.assertEqual(return_code, 1)
+        self.__mock_path_cls.assert_not_called()
 
     def test_install_poetry_main__ci(self):
         self.__env["CI"] = "1"
@@ -105,6 +125,7 @@ class InstallPoetryTestCase(unittest.TestCase):
         self.__assert_any_matching_message("error", re.compile("a fake poetry installation error"))
 
         self.assertEqual(return_code, 1)
+        self.__mock_path_cls.assert_not_called()
 
     def __colorize(self, severity: str, message: str) -> str:
         self.__messages.append((severity, message))
@@ -114,7 +135,7 @@ class InstallPoetryTestCase(unittest.TestCase):
         return self.__env.get(key, default)
 
     def __mkstemp(self, suffix="suffix", prefix="prefix", dir=None, text=None):
-        self.__tmp_file = f"{prefix}unitest{suffix}"
+        self.__tmp_file = f"{prefix}unittest{suffix}"
         return None, self.__tmp_file
 
     def __assert_any_matching_message(self, severity: str, pattern: re.Pattern):
