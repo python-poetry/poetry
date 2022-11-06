@@ -295,8 +295,8 @@ class Application(BaseApplication):
         io = event.io
         poetry = command.poetry
 
-        env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(io)
+        env_manager = EnvManager(poetry, io=io)
+        env = env_manager.create_venv()
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
