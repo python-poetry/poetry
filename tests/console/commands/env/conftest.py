@@ -66,3 +66,29 @@ def venvs_in_project_dir(app: PoetryTestApplication) -> Iterator[Path]:
         yield venv_dir
     finally:
         venv_dir.rmdir()
+
+
+@pytest.fixture
+def venvs_in_project_dir_none(app: PoetryTestApplication) -> Iterator[Path]:
+    os.environ.pop("VIRTUAL_ENV", None)
+    venv_dir = app.poetry.file.parent.joinpath(".venv")
+    venv_dir.mkdir(exist_ok=True)
+    app.poetry.config.merge({"virtualenvs": {"in-project": None}})
+
+    try:
+        yield venv_dir
+    finally:
+        venv_dir.rmdir()
+
+
+@pytest.fixture
+def venvs_in_project_dir_false(app: PoetryTestApplication) -> Iterator[Path]:
+    os.environ.pop("VIRTUAL_ENV", None)
+    venv_dir = app.poetry.file.parent.joinpath(".venv")
+    venv_dir.mkdir(exist_ok=True)
+    app.poetry.config.merge({"virtualenvs": {"in-project": False}})
+
+    try:
+        yield venv_dir
+    finally:
+        venv_dir.rmdir()
