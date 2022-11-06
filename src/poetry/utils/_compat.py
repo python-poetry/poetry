@@ -7,6 +7,14 @@ from contextlib import suppress
 
 # TODO: use try/except ImportError when
 # https://github.com/python/mypy/issues/1393 is fixed
+
+if sys.version_info < (3, 11):
+    # compatibility for python <3.11
+    import tomli as tomllib
+else:
+    import tomllib  # nopycln: import
+
+
 if sys.version_info < (3, 10):
     # compatibility for python <3.10
     import importlib_metadata as metadata
@@ -67,4 +75,5 @@ __all__ = [
     "list_to_shell_command",
     "metadata",
     "to_str",
+    "tomllib",
 ]

@@ -412,7 +412,7 @@ def project_factory(
         poetry = Factory().create_poetry(project_dir)
 
         locker = TestLocker(
-            poetry.locker.lock.path, locker_config or poetry.locker._local_config
+            poetry.locker.lock, locker_config or poetry.locker._local_config
         )
         locker.write()
 
