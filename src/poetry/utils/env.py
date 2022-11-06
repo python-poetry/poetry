@@ -20,6 +20,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 import packaging.tags
 import tomlkit
@@ -556,6 +557,26 @@ class EnvManager:
             )
         return executable
 
+    def _get_python_version(self) -> tuple[int, int, int]:
+        version_info = tuple(sys.version_info[:3])
+
+        if self._poetry.config.get("virtualenvs.prefer-active-python"):
+            executable = self._detect_active_python()
+
+            if executable:
+                python_patch = decode(
+                    subprocess.check_output(
+                        list_to_shell_command(
+                            [executable, "-c", GET_PYTHON_VERSION_ONELINER]
+                        ),
+                        shell=True,
+                    ).strip()
+                )
+
+                version_info = tuple(int(v) for v in python_patch.split(".")[:3])
+
+        return cast("tuple[int, int, int]", version_info)
+
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
         cwd = self._poetry.file.parent
@@ -667,7 +688,7 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        python_minor = ".".join([str(v) for v in self._get_python_version()[:2]])
 
         venv_path = self._poetry.config.virtualenvs_path
 
