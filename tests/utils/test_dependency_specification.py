@@ -24,12 +24,20 @@ if TYPE_CHECKING:
             {"git": "https://github.com/demo/demo.git", "name": "demo"},
         ),
         (
+            "git+http://github.com/demo/demo.git",
+            {"git": "http://github.com/demo/demo.git", "name": "demo"},
+        ),
+        (
             "git+ssh://github.com/demo/demo.git",
             {"git": "ssh://github.com/demo/demo.git", "name": "demo"},
         ),
         (
             "git+https://github.com/demo/demo.git#main",
             {"git": "https://github.com/demo/demo.git", "name": "demo", "rev": "main"},
+        ),
+        (
+            "git+http://github.com/demo/demo.git#main",
+            {"git": "http://github.com/demo/demo.git", "name": "demo", "rev": "main"},
         ),
         (
             "git+https://github.com/demo/demo.git@main",

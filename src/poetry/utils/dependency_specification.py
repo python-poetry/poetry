@@ -64,7 +64,7 @@ def _parse_dependency_specification_url(
     if not (url_parsed.scheme and url_parsed.netloc):
         return None
 
-    if url_parsed.scheme in ["git+https", "git+ssh"]:
+    if url_parsed.scheme in ["git+https", "git+http", "git+ssh"]:
         return _parse_dependency_specification_git_url(requirement, env)
 
     if url_parsed.scheme in ["http", "https"]:
