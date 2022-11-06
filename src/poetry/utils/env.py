@@ -734,7 +734,7 @@ class EnvManager:
 
         venv = self._poetry.file.parent / ".venv"
         if (
-            self._poetry.config.get("virtualenvs.in-project")
+            self._poetry.config.get("virtualenvs.in-project") is not False
             and venv.exists()
             and venv.is_dir()
         ):
