@@ -61,7 +61,7 @@ use [extras]({{< relref "pyproject#extras" >}}) instead. Extras can be installed
 {{% note %}}
 **A note about defining a `dev` dependencies group**
 
-The proper way to define a `dev` dependencies group as of Poetry 1.2.x is the following:
+The proper way to define a `dev` dependencies group since Poetry 1.2.0 is the following:
 
 ```toml
 [tool.poetry.group.dev.dependencies]
@@ -69,7 +69,7 @@ pytest = "^6.0.0"
 pytest-mock = "*"
 ```
 
-This group notation is preferred for Poetry 1.2.x and not usable in earlier versions.
+This group notation is preferred since Poetry 1.2.0 and not usable in earlier versions.
 For backwards compatibility with older versions of Poetry,
 any dependency declared in the `dev-dependencies` section will automatically be added to the `dev` group.
 So the above and following notations are equivalent:
