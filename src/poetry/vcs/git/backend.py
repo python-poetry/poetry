@@ -324,12 +324,15 @@ class Git:
         return local
 
     @classmethod
-    def _clone_submodules(cls, repo: Repo) -> None:
+    def _clone_submodules(cls, repo: Repo, main_url: str) -> None:
         """
         Helper method to identify configured submodules and clone them recursively.
         """
         repo_root = Path(repo.path)
         modules_config = repo_root.joinpath(".gitmodules")
+
+        # A relative URL by definition starts with ../ or ./
+        relative_submodule_regex = re.compile("^(\\.\\./|\\./),?")
 
         if modules_config.exists():
             config = ConfigFile.from_path(str(modules_config))
@@ -337,9 +340,27 @@ class Git:
             url: bytes
             path: bytes
             submodules = parse_submodules(config)
+
             for path, url, name in submodules:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
+
+                url_string = url.decode()
+                final_url = url_string
+                submodule_is_relative = bool(
+                    relative_submodule_regex.search(url_string)
+                )
+                if submodule_is_relative:
+                    # Find a root list of url sections to mutate according
+                    # to the relative url
+                    url_sections = [section + "/" for section in main_url.split("/")]
+                    directories_upward = url_string.count("../")
+                    # Walk up the main URL until we know where to insert
+                    # the submodule URL
+                    url_portion_remaining = "".join(url_sections[:-directories_upward])
+                    # Insert the submodule URL - the last segment of url_string.split()
+                    # is the path relative to the main URL
+                    final_url = url_portion_remaining + url_string.split("../")[-1]
 
                 source_root = path_absolute.parent
                 source_root.mkdir(parents=True, exist_ok=True)
@@ -357,7 +378,7 @@ class Git:
                         continue
 
                 cls.clone(
-                    url=url.decode("utf-8"),
+                    url=final_url,
                     source_root=source_root,
                     name=path_relative.name,
                     revision=revision,
@@ -427,7 +448,7 @@ class Git:
         try:
             if not cls.is_using_legacy_client():
                 local = cls._clone(url=url, refspec=refspec, target=target)
-                cls._clone_submodules(repo=local)
+                cls._clone_submodules(repo=local, main_url=url)
                 return local
         except HTTPUnauthorized:
             # we do this here to handle http authenticated repositories as dulwich
