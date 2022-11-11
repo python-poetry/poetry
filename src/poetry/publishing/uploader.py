@@ -41,8 +41,8 @@ class UploadError(Exception):
             )
         elif isinstance(error, ConnectionError):
             message = (
-                "Connection Error: We were unable to connect to the repository, "
-                "ensure the url is correct and can be reached."
+                "Connection Error: We were unable to connect to the repository "
+                f"due to '{repr(error)}'."
             )
         else:
             message = str(error)
