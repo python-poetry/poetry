@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
+import requests
 
 from cleo.io.null_io import NullIO
 
@@ -130,3 +132,21 @@ def test_uploader_properly_handles_file_not_existing(
         uploader.upload("https://foo.com")
 
     assert f"Archive ({uploader.files[0]}) does not exist" == str(e.value)
+
+
+def test_uploader_properly_handles_requests_connectionerror(
+    http: type[httpretty.httpretty], uploader: Uploader
+):
+    def request_callback(*_: Any, **__: Any) -> None:
+        raise requests.ConnectionError()
+
+    http.register_uri(http.POST, "https://foo.com", status=200, body=request_callback)
+
+    with pytest.raises(UploadError) as e:
+        uploader.upload("https://foo.com")
+
+    assert str(e.value).startswith(
+        "Connection Error: We were unable to connect to the repository due to"
+    )
+
+    assert "ConnectionError" in str(e.value)
