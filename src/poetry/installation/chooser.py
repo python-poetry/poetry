@@ -14,11 +14,11 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version import Version
 
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -61,7 +61,9 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: Pool, env: Env, config: Config | None = None) -> None:
+    def __init__(
+        self, pool: RepositoryPool, env: Env, config: Config | None = None
+    ) -> None:
         self._pool = pool
         self._env = env
         self._config = config or Config.create()

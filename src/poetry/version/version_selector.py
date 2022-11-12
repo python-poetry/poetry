@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
 
 
 class VersionSelector:
-    def __init__(self, pool: Pool) -> None:
+    def __init__(self, pool: RepositoryPool) -> None:
         self._pool = pool
 
     def find_best_candidate(

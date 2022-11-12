@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import RepositoryPool
 
 
-__all__ = ["Pool", "Repository"]
+__all__ = ["Pool", "Repository", "RepositoryPool"]

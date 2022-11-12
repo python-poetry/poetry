@@ -194,11 +194,11 @@ lists all packages available."""
 
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.repositories.pool import Pool
+        from poetry.repositories.repository_pool import RepositoryPool
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = Pool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True)
         pool.add_repository(locked_repository)
         solver = Solver(
             root,
@@ -533,7 +533,7 @@ lists all packages available."""
         return selector.find_best_candidate(name, f">={package.pretty_version}")
 
     def get_update_status(self, latest: Package, package: Package) -> str:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return "up-to-date"

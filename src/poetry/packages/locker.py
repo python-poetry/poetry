@@ -12,10 +12,10 @@ from typing import Any
 from typing import cast
 
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
@@ -23,10 +23,9 @@ from tomlkit import array
 from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
-from tomlkit import item
 from tomlkit import table
-from tomlkit.exceptions import TOMLKitError
-from tomlkit.items import Array
+
+from poetry.utils._compat import tomllib
 
 
 if TYPE_CHECKING:
@@ -34,7 +33,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-    from tomlkit.items import Table
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories.lockfile_repository import LockfileRepository
@@ -55,17 +53,17 @@ class Locker:
     _relevant_keys = [*_legacy_keys, "group"]
 
     def __init__(self, lock: str | Path, local_config: dict[str, Any]) -> None:
-        self._lock = TOMLFile(lock)
+        self._lock = lock if isinstance(lock, Path) else Path(lock)
         self._local_config = local_config
-        self._lock_data: TOMLDocument | None = None
+        self._lock_data: dict[str, Any] | None = None
         self._content_hash = self._get_content_hash()
 
     @property
-    def lock(self) -> TOMLFile:
+    def lock(self) -> Path:
         return self._lock
 
     @property
-    def lock_data(self) -> TOMLDocument:
+    def lock_data(self) -> dict[str, Any]:
         if self._lock_data is None:
             self._lock_data = self._get_lock_data()
 
@@ -75,16 +73,14 @@ class Locker:
         """
         Checks whether the locker has been locked (lockfile found).
         """
-        if not self._lock.exists():
-            return False
-
-        return "package" in self.lock_data
+        return self._lock.exists()
 
     def is_fresh(self) -> bool:
         """
         Checks whether the lock file is still up to date with the current hash.
         """
-        lock = self._lock.read()
+        with self.lock.open("rb") as f:
+            lock = tomllib.load(f)
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
@@ -116,7 +112,7 @@ class Locker:
             source_type = source.get("type")
             url = source.get("url")
             if source_type in ["directory", "file"]:
-                url = self._lock.path.parent.joinpath(url).resolve().as_posix()
+                url = self.lock.parent.joinpath(url).resolve().as_posix()
 
             name = info["name"]
             package = Package(
@@ -201,7 +197,7 @@ class Locker:
                         package.marker = parse_marker(split_dep[1].strip())
 
             for dep_name, constraint in info.get("dependencies", {}).items():
-                root_dir = self._lock.path.parent
+                root_dir = self.lock.parent
                 if package.source_type == "directory":
                     # root dir should be the source of the package relative to the lock
                     # path
@@ -228,24 +224,19 @@ class Locker:
         return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
-        files: dict[str, Any] = table()
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
-            if package["name"] not in files:
-                files[package["name"]] = []
+            files = array()
 
             for f in package["files"]:
                 file_metadata = inline_table()
                 for k, v in sorted(f.items()):
                     file_metadata[k] = v
 
-                files[package["name"]].append(file_metadata)
+                files.append(file_metadata)
 
-            if files[package["name"]]:
-                package_files = item(files[package["name"]])
-                assert isinstance(package_files, Array)
-                files[package["name"]] = package_files.multiline(True)
+            package["files"] = files.multiline(True)
 
         lock = document()
         lock.add(comment(GENERATED_COMMENT))
@@ -263,19 +254,22 @@ class Locker:
             "content-hash": self._content_hash,
         }
 
-        if not self.is_locked() or lock != self.lock_data:
+        do_write = True
+        if self.is_locked():
+            try:
+                lock_data = self.lock_data
+            except RuntimeError:
+                # incompatible, invalid or no lock file
+                pass
+            else:
+                do_write = lock != lock_data
+        if do_write:
             self._write_lock_data(lock)
-
-            return True
-
-        return False
+        return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
-        self.lock.write(data)
-
-        # Checking lock file data consistency
-        if data != self.lock.read():
-            raise RuntimeError("Inconsistent lock file data.")
+        lockfile = TOMLFile(self.lock)
+        lockfile.write(data)
 
         self._lock_data = None
 
@@ -296,16 +290,17 @@ class Locker:
 
         return sha256(json.dumps(relevant_content, sort_keys=True).encode()).hexdigest()
 
-    def _get_lock_data(self) -> TOMLDocument:
-        if not self._lock.exists():
+    def _get_lock_data(self) -> dict[str, Any]:
+        if not self.lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
-        try:
-            lock_data: TOMLDocument = self._lock.read()
-        except TOMLKitError as e:
-            raise RuntimeError(f"Unable to read the lock file ({e}).")
+        with self.lock.open("rb") as f:
+            try:
+                lock_data = tomllib.load(f)
+            except tomllib.TOMLDecodeError as e:
+                raise RuntimeError(f"Unable to read the lock file ({e}).")
 
-        metadata = cast("Table", lock_data["metadata"])
+        metadata = lock_data["metadata"]
         lock_version = Version.parse(metadata.get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
         accepted_versions = parse_constraint(self._READ_VERSION_RANGE)
@@ -445,7 +440,7 @@ class Locker:
                 url = Path(
                     os.path.relpath(
                         Path(url).resolve(),
-                        Path(self._lock.path.parent).resolve(),
+                        Path(self.lock.parent).resolve(),
                     )
                 ).as_posix()
 

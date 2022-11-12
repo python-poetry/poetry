@@ -5,31 +5,28 @@ import logging
 from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
-from poetry.core.semver.version import Version
-from poetry.core.semver.version_range import VersionRange
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionRange
 
+from poetry.repositories.abstract_repository import AbstractRepository
 from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version_constraint import VersionConstraint
 
 
-class Repository:
+class Repository(AbstractRepository):
     def __init__(self, name: str, packages: list[Package] | None = None) -> None:
-        self._name = name
+        super().__init__(name)
         self._packages: list[Package] = []
 
         for package in packages or []:
             self.add_package(package)
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def packages(self) -> list[Package]:

@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
 
 Requirements = Dict[str, Union[str, Mapping[str, Any]]]
 
@@ -66,7 +66,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def __init__(self) -> None:
         super().__init__()
 
-        self._pool: Pool | None = None
+        self._pool: RepositoryPool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -462,15 +462,15 @@ You can specify a package in the following forms:
 
         return package
 
-    def _get_pool(self) -> Pool:
-        from poetry.repositories import Pool
+    def _get_pool(self) -> RepositoryPool:
+        from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
 
         if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:
-            self._pool = Pool()
+            self._pool = RepositoryPool()
             self._pool.add_repository(PyPiRepository())
 
         return self._pool

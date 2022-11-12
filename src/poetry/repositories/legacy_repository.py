@@ -7,15 +7,15 @@ from poetry.core.packages.package import Package
 
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.http import HTTPRepository
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version import Version
-    from poetry.core.semver.version_constraint import VersionConstraint
 
     from poetry.config.config import Config
 
@@ -32,6 +32,18 @@ class LegacyRepository(HTTPRepository):
             raise ValueError("The name [pypi] is reserved for repositories")
 
         super().__init__(name, url.rstrip("/"), config, disable_cache)
+
+    @property
+    def packages(self) -> list[Package]:
+        # LegacyRepository._packages is not populated and other implementations
+        # implicitly rely on this (e.g. Pool.search via
+        # LegacyRepository.search). To avoid special-casing Pool or changing
+        # behavior, we stub and return an empty list.
+        #
+        # TODO: Rethinking search behaviour and design.
+        # Ref: https://github.com/python-poetry/poetry/issues/2446 and
+        # https://github.com/python-poetry/poetry/pull/6669#discussion_r990874908.
+        return []
 
     def package(
         self, name: str, version: Version, extras: list[str] | None = None
@@ -60,7 +72,7 @@ class LegacyRepository(HTTPRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> list[Link]:
-        page = self._get_page(f"/{package.name}/")
+        page = self.get_page(f"/{package.name}/")
         if page is None:
             return []
 
@@ -78,23 +90,19 @@ class LegacyRepository(HTTPRepository):
         if not constraint.is_any():
             key = f"{key}:{constraint!s}"
 
-        if self._cache.store("matches").has(key):
-            versions = self._cache.store("matches").get(key)
-        else:
-            page = self._get_page(f"/{name}/")
-            if page is None:
-                self._log(
-                    f"No packages found for {name}",
-                    level="debug",
-                )
-                return []
+        page = self.get_page(f"/{name}/")
+        if page is None:
+            self._log(
+                f"No packages found for {name}",
+                level="debug",
+            )
+            return []
 
-            versions = [
-                (version, page.yanked(name, version))
-                for version in page.versions(name)
-                if constraint.allows(version)
-            ]
-            self._cache.store("matches").put(key, versions, 5)
+        versions = [
+            (version, page.yanked(name, version))
+            for version in page.versions(name)
+            if constraint.allows(version)
+        ]
 
         return [
             Package(
@@ -111,7 +119,7 @@ class LegacyRepository(HTTPRepository):
     def _get_release_info(
         self, name: NormalizedName, version: Version
     ) -> dict[str, Any]:
-        page = self._get_page(f"/{name}/")
+        page = self.get_page(f"/{name}/")
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 

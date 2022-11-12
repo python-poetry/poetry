@@ -7,7 +7,7 @@ import pytest
 from poetry.core.packages.package import Package
 
 from poetry.__version__ import __version__
-from poetry.repositories import Pool
+from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 
 
@@ -34,8 +34,8 @@ def save_environ(environ: None) -> Repository:
 
 
 @pytest.fixture()
-def pool(repo: TestRepository) -> Pool:
-    return Pool([repo])
+def pool(repo: TestRepository) -> RepositoryPool:
+    return RepositoryPool([repo])
 
 
 @pytest.fixture(autouse=True)
@@ -43,12 +43,17 @@ def setup_mocks(
     mocker: MockerFixture,
     tmp_venv: VirtualEnv,
     installed: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     http: type[httpretty.httpretty],
 ) -> None:
     mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
-    mocker.patch("poetry.repositories.pool.Pool.find_packages", pool.find_packages)
-    mocker.patch("poetry.repositories.pool.Pool.package", pool.package)
+    mocker.patch(
+        "poetry.repositories.repository_pool.RepositoryPool.find_packages",
+        pool.find_packages,
+    )
+    mocker.patch(
+        "poetry.repositories.repository_pool.RepositoryPool.package", pool.package
+    )
     mocker.patch("poetry.installation.executor.pip_install")
     mocker.patch(
         "poetry.installation.installer.Installer._get_installed",

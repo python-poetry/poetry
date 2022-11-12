@@ -30,8 +30,8 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-from poetry.core.semver.helpers import parse_constraint
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
@@ -328,8 +328,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name.endswith(suffix):
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -341,8 +341,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name == name:
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -372,8 +372,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=True
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 path = Path(
                     distribution.locate_file(file),  # type: ignore[no-untyped-call]
                 )
@@ -450,12 +450,6 @@ class SitePackages:
             )
             if value[-1] is True
         ]
-
-    def __getattr__(self, item: str) -> Any:
-        try:
-            return super().__getattribute__(item)
-        except AttributeError:
-            return getattr(self.path, item)
 
 
 class EnvError(Exception):
@@ -740,7 +734,7 @@ class EnvManager:
 
         venv = self._poetry.file.parent / ".venv"
         if (
-            self._poetry.config.get("virtualenvs.in-project")
+            self._poetry.config.get("virtualenvs.in-project") is not False
             and venv.exists()
             and venv.is_dir()
         ):
@@ -1959,6 +1953,7 @@ def build_environment(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *poetry.pyproject.build_system.requires,
             )
 

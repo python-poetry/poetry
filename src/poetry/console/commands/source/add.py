@@ -34,7 +34,7 @@ class SourceAddCommand(Command):
 
     def handle(self) -> int:
         from poetry.factory import Factory
-        from poetry.repositories import Pool
+        from poetry.repositories import RepositoryPool
         from poetry.utils.source import source_to_table
 
         name = self.argument("name")
@@ -83,7 +83,7 @@ class SourceAddCommand(Command):
             sources.append(source_to_table(new_source))
 
         # ensure new source is valid. eg: invalid name etc.
-        self.poetry._pool = Pool()
+        self.poetry._pool = RepositoryPool()
         try:
             Factory.configure_sources(
                 self.poetry, sources, self.poetry.config, NullIO()

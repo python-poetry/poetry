@@ -17,7 +17,7 @@ import requests
 import requests.auth
 import requests.exceptions
 
-from cachecontrol import CacheControl
+from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import FileCache
 from filelock import FileLock
 
@@ -128,6 +128,7 @@ class Authenticator:
         io: IO | None = None,
         cache_id: str | None = None,
         disable_cache: bool = False,
+        pool_size: int = 10,
     ) -> None:
         self._config = config or Config.create()
         self._io = io
@@ -153,6 +154,7 @@ class Authenticator:
         self.get_repository_config_for_url = functools.lru_cache(maxsize=None)(
             self._get_repository_config_for_url
         )
+        self._pool_size = pool_size
 
     def create_session(self) -> requests.Session:
         session = requests.Session()
@@ -160,7 +162,13 @@ class Authenticator:
         if self._cache_control is None:
             return session
 
-        session = CacheControl(sess=session, cache=self._cache_control)
+        adapter = CacheControlAdapter(
+            cache=self._cache_control,
+            pool_maxsize=self._pool_size,
+        )
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
         return session
 
     def get_session(self, url: str | None = None) -> requests.Session:

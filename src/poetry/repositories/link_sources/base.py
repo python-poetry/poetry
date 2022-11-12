@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 from typing import DefaultDict
 from typing import List
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
-from poetry.core.semver.version import Version
 
 from poetry.utils._compat import cached_property
 from poetry.utils.patterns import sdist_file_re

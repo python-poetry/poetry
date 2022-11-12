@@ -95,7 +95,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
         from tomlkit import inline_table
         from tomlkit import parse as parse_toml
         from tomlkit import table
@@ -215,7 +215,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             constraint_name = _constraint["name"]
             assert isinstance(constraint_name, str)
-            section[constraint_name] = constraint
+
+            canonical_constraint_name = canonicalize_name(constraint_name)
+
+            for key in section:
+                if canonicalize_name(key) == canonical_constraint_name:
+                    section[key] = constraint
+                    break
+            else:
+                section[constraint_name] = constraint
 
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(
@@ -233,7 +241,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         # Refresh the locker
         self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
+            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
         )
         self.installer.set_locker(self.poetry.locker)
 

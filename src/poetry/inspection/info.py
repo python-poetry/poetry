@@ -205,7 +205,7 @@ class PackageInfo:
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except ValueError:
                 # Likely unable to parse constraint so we skip it
-                logger.debug(
+                logger.warning(
                     "Invalid constraint (%s) found in %s-%s dependencies, skipping",
                     req,
                     package.name,
@@ -593,6 +593,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *PEP517_META_BUILD_DEPS,
             )
             venv.run(

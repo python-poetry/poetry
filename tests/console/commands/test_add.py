@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
+from poetry.core.packages.package import Package
 
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
@@ -819,12 +820,26 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_source(
-    app: PoetryTestApplication, poetry: Poetry, tester: CommandTester
+    app: PoetryTestApplication,
+    poetry: Poetry,
+    tester: CommandTester,
+    mocker: MockerFixture,
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put(
-        "cachy:0.2.0", [(Version.parse("0.2.0"), False)], 5
+    mocker.patch.object(
+        repo,
+        "_find_packages",
+        wraps=lambda _, name: [
+            Package(
+                "cachy",
+                Version.parse("0.2.0"),
+                source_type="legacy",
+                source_reference=repo.name,
+                source_url=repo._url,
+                yanked=False,
+            )
+        ],
     )
 
     poetry.pool.add_repository(repo)
@@ -858,7 +873,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_constraint_with_source_that_does_not_exist(
     app: PoetryTestApplication, tester: CommandTester
 ):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IndexError) as e:
         tester.execute("foo --source i-dont-exist")
 
     assert str(e.value) == 'Repository "i-dont-exist" does not exist.'
@@ -1038,6 +1053,44 @@ If you prefer to upgrade it to the latest available version,\
 """
 
     assert expected in tester.io.fetch_output()
+
+
+def test_add_latest_should_not_create_duplicate_keys(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+):
+    pyproject_content = """\
+    [tool.poetry]
+    name = "simple-project"
+    version = "1.2.3"
+    description = "Some description."
+    authors = [
+        "Python Poetry <tests@python-poetry.org>"
+    ]
+    license = "MIT"
+    readme = "README.md"
+
+    [tool.poetry.dependencies]
+    python = "^3.6"
+    Foo = "^0.6"
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+    content = poetry.file.read()
+
+    assert "Foo" in content["tool"]["poetry"]["dependencies"]
+    assert content["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
+    assert "foo" not in content["tool"]["poetry"]["dependencies"]
+
+    tester = command_tester_factory("add", poetry=poetry)
+    repo.add_package(get_package("foo", "1.1.2"))
+    tester.execute("foo@latest")
+
+    updated_content = poetry.file.read()
+    assert "Foo" in updated_content["tool"]["poetry"]["dependencies"]
+    assert updated_content["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
+    assert "foo" not in updated_content["tool"]["poetry"]["dependencies"]
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
@@ -1809,11 +1862,23 @@ def test_add_constraint_with_source_old_installer(
     poetry: Poetry,
     installer: NoopInstaller,
     old_tester: CommandTester,
+    mocker: MockerFixture,
 ):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
-    repo._cache.store("matches").put(
-        "cachy:0.2.0", [(Version.parse("0.2.0"), False)], 5
+    mocker.patch.object(
+        repo,
+        "_find_packages",
+        wraps=lambda _, name: [
+            Package(
+                "cachy",
+                Version.parse("0.2.0"),
+                source_type="legacy",
+                source_reference=repo.name,
+                source_url=repo._url,
+                yanked=False,
+            )
+        ],
     )
 
     poetry.pool.add_repository(repo)
@@ -1848,7 +1913,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_constraint_with_source_that_does_not_exist_old_installer(
     app: PoetryTestApplication, old_tester: CommandTester
 ):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IndexError) as e:
         old_tester.execute("foo --source i-dont-exist")
 
     assert str(e.value) == 'Repository "i-dont-exist" does not exist.'

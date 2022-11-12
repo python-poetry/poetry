@@ -16,9 +16,9 @@ from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
+from poetry.core.constraints.version import EmptyConstraint
+from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.semver.empty_constraint import EmptyConstraint
-from poetry.core.semver.version import Version
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import MarkerUnion
 
@@ -43,16 +43,16 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-    from poetry.core.semver.version_constraint import VersionConstraint
     from poetry.core.version.markers import BaseMarker
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -124,7 +124,7 @@ class Provider:
     def __init__(
         self,
         package: Package,
-        pool: Pool,
+        pool: RepositoryPool,
         io: IO,
         *,
         installed: list[Package] | None = None,
@@ -156,7 +156,7 @@ class Provider:
             )
 
     @property
-    def pool(self) -> Pool:
+    def pool(self) -> RepositoryPool:
         return self._pool
 
     @property
@@ -555,7 +555,7 @@ class Provider:
                         package.pretty_name,
                         package.version,
                         extras=list(dependency.extras),
-                        repository=dependency.source_name,
+                        repository_name=dependency.source_name,
                     ),
                 )
             except PackageNotFound as e:

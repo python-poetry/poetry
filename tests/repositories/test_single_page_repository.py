@@ -35,7 +35,7 @@ class MockSinglePageRepository(SinglePageRepository):
 def test_single_page_repository_get_page():
     repo = MockSinglePageRepository("jax_releases")
 
-    page = repo._get_page("/ignored")
+    page = repo.get_page("/ignored")
     links = list(page.links)
 
     assert len(links) == 21
