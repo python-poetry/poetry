@@ -47,10 +47,7 @@ class RunCommand(EnvCommand):
 
     def run_script(self, script: str | dict[str, str], args: list[str]) -> int:
         env = EnvManager(self.poetry).get()
-        if env.platform == "win32":
-            args[0] = rf"{env.path}\Scripts\{args[0]}"
-        else:
-            args[0] = f"{env.path}/bin/{args[0]}"
+        args[0] = rf"{env.script_dirs[0]}/{args[0]}"
 
         if isinstance(script, dict):
             script = script["callable"]
