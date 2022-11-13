@@ -46,7 +46,7 @@ class PipInstaller(BaseInstaller):
 
             return
 
-        args = ["install", "--no-deps"]
+        args = ["install", "--no-deps", "--no-input"]
 
         if not package.is_direct_origin() and package.source_url:
             assert package.source_reference is not None
