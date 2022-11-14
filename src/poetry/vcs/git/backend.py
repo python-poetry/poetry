@@ -134,7 +134,9 @@ class GitRefSpec:
 
     @property
     def is_ref(self) -> bool:
-        return self.branch is not None and self.branch.startswith("refs/")
+        return self.branch is not None and (
+            self.branch.startswith("refs/") or self.branch == "HEAD"
+        )
 
     @property
     def is_sha_short(self) -> bool:
