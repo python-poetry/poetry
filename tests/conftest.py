@@ -24,8 +24,8 @@ from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -231,7 +231,7 @@ def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
     mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
-    mocker.patch("poetry.repositories.http.download_file", new=mock_download)
+    mocker.patch("poetry.repositories.http_repository.download_file", new=mock_download)
 
 
 @pytest.fixture(autouse=True)
@@ -412,14 +412,14 @@ def project_factory(
         poetry = Factory().create_poetry(project_dir)
 
         locker = TestLocker(
-            poetry.locker.lock.path, locker_config or poetry.locker._local_config
+            poetry.locker.lock, locker_config or poetry.locker._local_config
         )
         locker.write()
 
         poetry.set_locker(locker)
         poetry.set_config(config)
 
-        pool = Pool()
+        pool = RepositoryPool()
         pool.add_repository(repo)
 
         poetry.set_pool(pool)

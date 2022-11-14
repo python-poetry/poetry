@@ -231,7 +231,9 @@ python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     packages = locker.locked_repository().packages
 
@@ -294,7 +296,9 @@ lock-version = "2.0"
 content-hash = "123456789"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 3
@@ -359,7 +363,9 @@ lock-version = "2.0"
 content-hash = "123456789"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 2
@@ -399,7 +405,9 @@ lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 1
@@ -495,7 +503,9 @@ demo = [
     {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
 ]
 """
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 5
@@ -687,7 +697,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     _ = locker.lock_data
 
@@ -717,7 +729,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """  # noqa: E800
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
         _ = locker.lock_data
@@ -775,7 +789,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
 
     _ = locker.lock_data
 
@@ -970,7 +986,10 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    data = tomlkit.parse(content)
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(data.as_string())
+
     create_dependency_patch = mocker.patch(
         "poetry.factory.Factory.create_dependency", autospec=True
     )
@@ -983,7 +1002,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     root_dir = call_kwargs["root_dir"]
     assert root_dir.match("*/lib/libA")
     # relative_to raises an exception if not relative - is_relative_to comes in py3.9
-    assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None
+    assert root_dir.relative_to(locker.lock.parent.resolve()) is not None
 
 
 @pytest.mark.parametrize(
@@ -1017,7 +1036,7 @@ def test_content_hash_with_legacy_is_compatible(
         relevant_content[key] = local_config.get(key)
 
     locker = locker.__class__(
-        lock=locker.lock.path,
+        lock=locker.lock,
         local_config=local_config,
     )
 

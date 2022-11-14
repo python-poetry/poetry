@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from poetry.config.config import Config
     from poetry.packages.locker import Locker
     from poetry.plugins.plugin_manager import PluginManager
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
 
 
 class Poetry(BasePoetry):
@@ -32,13 +32,13 @@ class Poetry(BasePoetry):
         config: Config,
         disable_cache: bool = False,
     ) -> None:
-        from poetry.repositories.pool import Pool
+        from poetry.repositories.repository_pool import RepositoryPool
 
         super().__init__(file, local_config, package)
 
         self._locker = locker
         self._config = config
-        self._pool = Pool()
+        self._pool = RepositoryPool()
         self._plugin_manager: PluginManager | None = None
         self._disable_cache = disable_cache
 
@@ -47,7 +47,7 @@ class Poetry(BasePoetry):
         return self._locker
 
     @property
-    def pool(self) -> Pool:
+    def pool(self) -> RepositoryPool:
         return self._pool
 
     @property
@@ -63,7 +63,7 @@ class Poetry(BasePoetry):
 
         return self
 
-    def set_pool(self, pool: Pool) -> Poetry:
+    def set_pool(self, pool: RepositoryPool) -> Poetry:
         self._pool = pool
 
         return self

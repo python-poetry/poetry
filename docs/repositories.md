@@ -249,7 +249,7 @@ manifest as long dependency resolution times when adding packages from this sour
 
 {{% /warning %}}
 
-These package sources maybe configured via the following command in your project.
+These package sources may be configured via the following command in your project.
 
 ```bash
 poetry source add testpypi https://test.pypi.org/simple/
@@ -286,7 +286,7 @@ inspecting it locally is the only remaining option.
 Some projects choose to release their binary distributions via a single page link source that
 partially follows the structure of a package page in [PEP 503](https://peps.python.org/pep-0503/).
 
-These package sources maybe configured via the following command in your project.
+These package sources may be configured via the following command in your project.
 
 ```bash
 poetry source add jax https://storage.googleapis.com/jax-releases/jax_releases.html

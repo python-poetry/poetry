@@ -15,7 +15,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersion
 
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.http import HTTPRepository
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.utils._compat import to_str
 from poetry.utils.constants import REQUESTS_TIMEOUT

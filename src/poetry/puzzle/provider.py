@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -124,7 +124,7 @@ class Provider:
     def __init__(
         self,
         package: Package,
-        pool: Pool,
+        pool: RepositoryPool,
         io: IO,
         *,
         installed: list[Package] | None = None,
@@ -156,7 +156,7 @@ class Provider:
             )
 
     @property
-    def pool(self) -> Pool:
+    def pool(self) -> RepositoryPool:
         return self._pool
 
     @property

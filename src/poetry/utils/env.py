@@ -328,8 +328,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name.endswith(suffix):
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -341,8 +341,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name == name:
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -372,8 +372,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=True
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 path = Path(
                     distribution.locate_file(file),  # type: ignore[no-untyped-call]
                 )
@@ -734,7 +734,7 @@ class EnvManager:
 
         venv = self._poetry.file.parent / ".venv"
         if (
-            self._poetry.config.get("virtualenvs.in-project")
+            self._poetry.config.get("virtualenvs.in-project") is not False
             and venv.exists()
             and venv.is_dir()
         ):
@@ -1953,6 +1953,7 @@ def build_environment(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *poetry.pyproject.build_system.requires,
             )
 
