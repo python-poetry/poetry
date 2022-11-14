@@ -14,6 +14,7 @@ from typing import Any
 
 import pkginfo
 
+from build import BuildBackendException
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -23,7 +24,6 @@ from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 
 from poetry.utils.env import EnvCommandError
-from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
 
 
@@ -36,28 +36,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-PEP517_META_BUILD = """\
-import build
-import build.env
-import pep517
-
-source = '{source}'
-dest = '{dest}'
-
-with build.env.IsolatedEnvBuilder() as env:
-    builder = build.ProjectBuilder(
-        srcdir=source,
-        scripts_dir=env.scripts_dir,
-        python_executable=env.executable,
-        runner=pep517.quiet_subprocess_runner,
-    )
-    env.install(builder.build_system_requires)
-    env.install(builder.get_requires_for_build('wheel'))
-    builder.metadata_path(dest)
-"""
-
-PEP517_META_BUILD_DEPS = ["build===0.7.0", "pep517==0.12.0"]
 
 
 class PackageInfoError(ValueError):
@@ -577,32 +555,15 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
         if all([info.version, info.name, info.requires_dist]):
             return info
 
-    with ephemeral_environment(
-        flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
-    ) as venv:
-        # TODO: cache PEP 517 build environment corresponding to each project venv
-        dest_dir = venv.path.parent / "dist"
-        dest_dir.mkdir()
+    from poetry.utils.pep517 import pep517_builder_environment
 
-        pep517_meta_build_script = PEP517_META_BUILD.format(
-            source=path.as_posix(), dest=dest_dir.as_posix()
-        )
+    with pep517_builder_environment(source=path) as (venv, builder):
+        dest_dir = venv.path.parent / "dist"
 
         try:
-            venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *PEP517_META_BUILD_DEPS,
-            )
-            venv.run(
-                "python",
-                "-",
-                input_=pep517_meta_build_script,
-            )
+            builder.metadata_path(str(dest_dir))
             info = PackageInfo.from_metadata(dest_dir)
-        except EnvCommandError as e:
+        except BuildBackendException as e:
             # something went wrong while attempting pep517 metadata build
             # fallback to egg_info if setup.py available
             logger.debug("PEP517 build failed: %s", e)

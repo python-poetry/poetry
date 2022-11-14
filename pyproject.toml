@@ -75,6 +75,7 @@ trove-classifiers = "^2022.5.19"
 virtualenv = "^20.4.3,!=20.4.5,!=20.4.6"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
+build = "^0.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^2.6"
@@ -183,7 +184,7 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-addopts = "-n auto"
+#addopts = "-n auto"
 testpaths = [
     "tests"
 ]

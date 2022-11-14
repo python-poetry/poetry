@@ -1,20 +1,31 @@
 from __future__ import annotations
 
+import contextlib
+
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from typing import Iterable
 
 import pytest
+
+from build import BuildBackendException
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
+from poetry.utils.pep517 import pep517_builder_environment
 
 
 if TYPE_CHECKING:
+    import build
+
     from pytest_mock import MockerFixture
+
+    from poetry.utils.env import Env
+
 
 FIXTURE_DIR_BASE = Path(__file__).parent.parent / "fixtures"
 FIXTURE_DIR_INSPECTIONS = FIXTURE_DIR_BASE / "inspection"
@@ -209,10 +220,33 @@ def test_info_setup_complex(demo_setup_complex: Path):
 def test_info_setup_complex_pep517_error(
     mocker: MockerFixture, demo_setup_complex: Path
 ):
+    original = pep517_builder_environment
+
+    @contextlib.contextmanager
+    def _pep517_builder_environment(
+        source: Path, env: Env | None = None
+    ) -> Iterable[tuple[Env, build.ProjectBuilder]]:
+        with original(source, env) as (env, builder):
+            mocker.patch.object(
+                builder,
+                "metadata_path",
+                autospec=True,
+                side_effect=BuildBackendException(
+                    CalledProcessError(1, "mock", output="mock")
+                ),
+            )
+            mocker.patch.object(
+                env,
+                "run",
+                autospec=True,
+                side_effect=EnvCommandError(
+                    CalledProcessError(1, "mock", output="mock")
+                ),
+            )
+            yield env, builder
+
     mocker.patch(
-        "poetry.utils.env.VirtualEnv.run",
-        autospec=True,
-        side_effect=EnvCommandError(CalledProcessError(1, "mock", output="mock")),
+        "poetry.utils.pep517.pep517_builder_environment", _pep517_builder_environment
     )
 
     with pytest.raises(PackageInfoError):
@@ -255,7 +289,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     except PackageInfoError:
         assert spy.call_count == 3
     else:
-        assert spy.call_count == 1
+        assert spy.call_count == 2
 
 
 def test_info_prefer_poetry_config_over_egg_info():
