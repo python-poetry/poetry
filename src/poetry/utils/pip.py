@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from poetry.exceptions import PoetryException
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import SystemEnv
 
 
 if TYPE_CHECKING:
@@ -25,7 +26,10 @@ def pip_install(
     # either the virtual environment or the virtualenv package embedded wheel. Version
     # checks are a wasteful network call that adds a lot of wait time when installing a
     # lot of packages.
-    args = ["install", "--disable-pip-version-check", "--prefix", str(environment.path)]
+    args = ["install", "--disable-pip-version-check"]
+
+    if not isinstance(environment, SystemEnv):
+        args.extend(("--prefix", str(environment.path)))
 
     if not is_wheel and not editable:
         args.insert(1, "--use-pep517")
