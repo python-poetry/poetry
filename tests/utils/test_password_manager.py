@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.utils.password_manager import PasswordManager
 from poetry.utils.password_manager import PoetryKeyring
 from poetry.utils.password_manager import PoetryKeyringError
-
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -122,6 +123,31 @@ def test_get_http_auth_with_unavailable_backend(
 
     assert auth.username == "bar"
     assert auth.password == "baz"
+
+
+def test_get_http_auth_only_uses_keyring_if_needed(
+    config: Config,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+):
+    config.auth_config_source.add_property(
+        "http-basic.foo", {"username": "bar", "password": None}
+    )
+
+    def throw_on_call(*args, **kwargs):
+        raise Exception("Should not be called")
+
+    dummy_keyring.get_password = throw_on_call
+    dummy_keyring.get_credential = throw_on_call
+
+    manager = PasswordManager(config)
+    assert manager._keyring.is_available()
+
+    with pytest.raises(Exception):
+        manager.get_http_auth("foo")
+
+    config.auth_config_source.remove_property("http-basic.foo")
+    manager.get_http_auth("foo")
 
 
 def test_delete_http_password_with_unavailable_backend(
