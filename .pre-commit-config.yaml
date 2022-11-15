@@ -47,14 +47,14 @@ repos:
           - flake8-pie==0.16.0
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.0
+    rev: v3.2.2
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
         exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.1
+    rev: v2.1.2
     hooks:
       - id: pycln
         args: [--all]
