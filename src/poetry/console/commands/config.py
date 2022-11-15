@@ -245,6 +245,8 @@ To remove a repository (repo is a short alias for repositories):
             if self.option("unset"):
                 if m.group(1) == "http-basic":
                     password_manager.delete_http_password(m.group(2))
+                if m.group(1) == "http-fallback":
+                    password_manager.delete_http_fallback(m.group(2))
                 elif m.group(1) == "pypi-token":
                     password_manager.delete_pypi_token(m.group(2))
 
@@ -265,6 +267,12 @@ To remove a repository (repo is a short alias for repositories):
                     password = values[1]
 
                 password_manager.set_http_password(m.group(2), username, password)
+
+            if m.group(1) == "http-fallback":
+                if len(values) != 0:
+                    raise ValueError("Expected no arguments", f"Got {len(values)}")
+                password_manager.set_http_fallback(m.group(2))
+
             elif m.group(1) == "pypi-token":
                 if len(values) != 1:
                     raise ValueError(

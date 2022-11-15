@@ -102,12 +102,12 @@ class AuthenticatorRepositoryConfig:
     def get_http_credentials(
         self, password_manager: PasswordManager, username: str | None = None
     ) -> HTTPAuthCredential:
-        default_auth = password_manager.get_http_auth(self.name)
-        if default_auth.password is None:
-            netloc_auth = password_manager.get_http_auth(self.netloc.replace(".", "-"))
-            if netloc_auth.password is not None:
-                return netloc_auth
-        return default_auth
+        if password_manager.is_http_fallback(self.name):
+            return password_manager.get_http_auth_from_fallback(
+                url=self.url, netloc=self.netloc, username=username
+            )
+        else:
+            return password_manager.get_http_auth(self.name)
 
 
 class Authenticator:

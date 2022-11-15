@@ -59,10 +59,8 @@ def test_run_has_helpful_error_when_command_not_found(
         # The expected string in this assertion assumes Command Prompt (cmd.exe) is the
         # shell used.
         assert capfd.readouterr().err.splitlines() == [
-            (
-                "'nonexistent-command' is not recognized as an internal or external"
-                " command,"
-            ),
+            "'nonexistent-command' is not recognized as an internal or external"
+            " command,",
             "operable program or batch file.",
         ]
     else:

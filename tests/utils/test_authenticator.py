@@ -159,11 +159,13 @@ def test_authenticator_falls_back_to_keyring_url(
     config.merge(
         {
             "repositories": repo,
-            "http-basic": {"foo": {"username": None, "password": None}},
+            "http-fallback": {"foo": True},
         }
     )
 
-    dummy_keyring.set_password("poetry-repository-foo", None, "bar")
+    dummy_keyring.set_password(
+        "https://foo.bar/simple/", None, SimpleCredential(None, "bar")
+    )
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
@@ -184,11 +186,10 @@ def test_authenticator_falls_back_to_keyring_netloc(
     config.merge(
         {
             "repositories": repo,
-            "http-basic": {"foo-bar": {"username": None, "password": None}},
+            "http-fallback": {"foo": True},
         }
     )
-
-    dummy_keyring.set_password("poetry-repository-foo-bar", None, "bar")
+    dummy_keyring.set_password("foo.bar", None, SimpleCredential(None, "bar"))
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
@@ -417,15 +418,19 @@ def test_authenticator_falls_back_to_keyring_url_matched_by_path(
                 "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
                 "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
             },
-            "http-basic": {
-                "foo-alpha": {"username": None, "password": None},
-                "foo-beta": {"username": None, "password": None},
+            "http-fallback": {
+                "foo-alpha": True,
+                "foo-beta": True,
             },
         }
     )
 
-    dummy_keyring.set_password("poetry-repository-foo-alpha", None, "bar")
-    dummy_keyring.set_password("poetry-repository-foo-beta", None, "baz")
+    dummy_keyring.set_password(
+        "https://foo.bar/alpha/files/simple/", None, SimpleCredential(None, "bar")
+    )
+    dummy_keyring.set_password(
+        "https://foo.bar/beta/files/simple/", None, SimpleCredential(None, "baz")
+    )
 
     authenticator = Authenticator(config, NullIO())
 

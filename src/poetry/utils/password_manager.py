@@ -192,17 +192,26 @@ class PasswordManager:
 
         self._keyring.delete_password(name, "__token__")
 
+    def is_http_fallback(self, name: str) -> bool:
+        return self._config.get(f"http-fallback.{name}") is not None
+
     def get_http_auth(self, name: str) -> HTTPAuthCredential:
         auth: Optional[Config] = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
             password = self._config.get(f"http-basic.{name}.password")
+
         else:
             username, password = auth.get("username"), auth.get("password")
             if password is None:
                 password = self._keyring.get_password(name, username)
 
         return HTTPAuthCredential(username=username, password=password)
+
+    def get_http_auth_from_fallback(
+        self, url: str, netloc: str, username: str | None
+    ) -> HTTPAuthCredential:
+        return self._keyring.get_credential(url, netloc, username=username)
 
     def set_http_password(self, name: str, username: str, password: str) -> None:
         auth = {"username": username}
@@ -215,8 +224,15 @@ class PasswordManager:
 
         self._config.auth_config_source.add_property(f"http-basic.{name}", auth)
 
+    def set_http_fallback(self, name: str) -> None:
+        self._config.auth_config_source.add_property(f"http-fallback.{name}", True)
+
+    def delete_http_fallback(self, name: str) -> None:
+        self._config.auth_config_source.remove_property(f"http-fallback.{name}")
+
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
+        self._config
 
         username = auth.username
         if username is None:
