@@ -203,7 +203,6 @@ class PasswordManager:
                 password = self._keyring.get_password(name, username)
 
         return HTTPAuthCredential(username=username, password=password)
-    
 
     def set_http_password(self, name: str, username: str, password: str) -> None:
         auth = {"username": username}

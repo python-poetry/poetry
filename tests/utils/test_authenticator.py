@@ -190,7 +190,6 @@ def test_authenticator_falls_back_to_keyring_netloc(
 
     dummy_keyring.set_password("poetry-repository-foo-bar", None, "bar")
 
-
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
@@ -420,18 +419,13 @@ def test_authenticator_falls_back_to_keyring_url_matched_by_path(
             },
             "http-basic": {
                 "foo-alpha": {"username": None, "password": None},
-                "foo-beta": {"username": None, "password": None}
+                "foo-beta": {"username": None, "password": None},
             },
-
         }
     )
 
-    dummy_keyring.set_password(
-        "poetry-repository-foo-alpha", None,  "bar"
-    )
-    dummy_keyring.set_password(
-        "poetry-repository-foo-beta", None, "baz"
-    )
+    dummy_keyring.set_password("poetry-repository-foo-alpha", None, "bar")
+    dummy_keyring.set_password("poetry-repository-foo-beta", None, "baz")
 
     authenticator = Authenticator(config, NullIO())
 

@@ -43,7 +43,7 @@ def test_get_http_auth(
     assert manager._keyring.is_available()
     auth = manager.get_http_auth("foo")
 
-    assert auth.username== "bar"
+    assert auth.username == "bar"
     assert auth.password == "baz"
 
 
