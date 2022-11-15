@@ -46,9 +46,14 @@ class PoetryKeyring:
             return default
 
         import keyring
+        import keyring.errors
 
         for name in names:
-            credential = keyring.get_credential(name, username)
+            try:
+                credential = keyring.get_credential(name, username)
+            except keyring.errors.KeyringLocked:
+                self._is_available = False
+                break
             if credential:
                 return HTTPAuthCredential(
                     username=credential.username, password=credential.password
