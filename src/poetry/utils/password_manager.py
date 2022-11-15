@@ -4,7 +4,7 @@ import dataclasses
 import logging
 
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 
 if TYPE_CHECKING:
@@ -192,8 +192,8 @@ class PasswordManager:
 
         self._keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> HTTPAuthCredential | None:
-        auth: Config = self._config.get(f"http-basic.{name}")
+    def get_http_auth(self, name: str) -> HTTPAuthCredential:
+        auth: Optional[Config] = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
             password = self._config.get(f"http-basic.{name}.password")
@@ -217,8 +217,6 @@ class PasswordManager:
 
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
-        if not auth:
-            return
 
         username = auth.username
         if username is None:
