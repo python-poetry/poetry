@@ -75,6 +75,7 @@ trove-classifiers = "^2022.5.19"
 virtualenv = "^20.4.3,!=20.4.5,!=20.4.6"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
+installer = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^2.6"
@@ -171,6 +172,7 @@ module = [
   'cachy.*',
   'cleo.*',
   'crashtest.*',
+  'installer.*',
   'lockfile.*',
   'pexpect.*',
   'pkginfo.*',
