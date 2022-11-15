@@ -105,7 +105,9 @@ class AuthenticatorRepositoryConfig:
         default_auth = password_manager.get_http_auth(self.name)
         if default_auth.password is None:
             netloc_auth = password_manager.get_http_auth(self.netloc.replace(".", "-"))
-        return netloc_auth if netloc_auth.password is not None else default_auth
+            if netloc_auth.password is not None:
+                return netloc_auth 
+        return default_auth
 
 
 class Authenticator:
