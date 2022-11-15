@@ -144,31 +144,31 @@ class PoetryKeyring:
 class PasswordManager:
     def __init__(self, config: Config) -> None:
         self._config = config
-        self._keyring: PoetryKeyring | None = None
+        self.__keyring: PoetryKeyring | None = None
 
     @property
-    def keyring(self) -> PoetryKeyring:
-        if self._keyring is None:
-            self._keyring = PoetryKeyring("poetry-repository")
+    def _keyring(self) -> PoetryKeyring:
+        if self.__keyring is None:
+            self.__keyring = PoetryKeyring("poetry-repository")
 
-            if not self._keyring.is_available():
+            if not self.__keyring.is_available():
                 logger.debug(
                     "<warning>Keyring is not available, credentials will be stored and "
                     "retrieved from configuration files as plaintext.</>"
                 )
 
-        return self._keyring
+        return self.__keyring
 
     @staticmethod
     def warn_plaintext_credentials_stored() -> None:
         logger.warning("Using a plaintext file to store credentials")
 
     def set_pypi_token(self, name: str, token: str) -> None:
-        if not self.keyring.is_available():
+        if not self._keyring.is_available():
             self.warn_plaintext_credentials_stored()
             self._config.auth_config_source.add_property(f"pypi-token.{name}", token)
         else:
-            self.keyring.set_password(name, "__token__", token)
+            self._keyring.set_password(name, "__token__", token)
 
     def get_pypi_token(self, repo_name: str) -> str | None:
         """Get PyPi token.
@@ -184,39 +184,35 @@ class PasswordManager:
         if token:
             return token
 
-        return self.keyring.get_password(repo_name, "__token__")
+        return self._keyring.get_password(repo_name, "__token__")
 
     def delete_pypi_token(self, name: str) -> None:
-        if not self.keyring.is_available():
+        if not self._keyring.is_available():
             return self._config.auth_config_source.remove_property(f"pypi-token.{name}")
 
-        self.keyring.delete_password(name, "__token__")
+        self._keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
-        auth = self._config.get(f"http-basic.{name}")
+    def get_http_auth(self, name: str) -> HTTPAuthCredential | None:
+        auth: Config = self._config.get(f"http-basic.{name}")
         if not auth:
             username = self._config.get(f"http-basic.{name}.username")
             password = self._config.get(f"http-basic.{name}.password")
-            if not username and not password:
-                return None
         else:
-            username, password = auth["username"], auth.get("password")
+            username, password = auth.get("username"), auth.get("password")
             if password is None:
-                password = self.keyring.get_password(name, username)
+                password = self._keyring.get_password(name, username)
 
-        return {
-            "username": username,
-            "password": password,
-        }
+        return HTTPAuthCredential(username=username, password=password)
+    
 
     def set_http_password(self, name: str, username: str, password: str) -> None:
         auth = {"username": username}
 
-        if not self.keyring.is_available():
+        if not self._keyring.is_available():
             self.warn_plaintext_credentials_stored()
             auth["password"] = password
         else:
-            self.keyring.set_password(name, username, password)
+            self._keyring.set_password(name, username, password)
 
         self._config.auth_config_source.add_property(f"http-basic.{name}", auth)
 
@@ -225,11 +221,11 @@ class PasswordManager:
         if not auth:
             return
 
-        username = auth.get("username")
+        username = auth.username
         if username is None:
             return
 
         with suppress(PoetryKeyringError):
-            self.keyring.delete_password(name, username)
+            self._keyring.delete_password(name, username)
 
         self._config.auth_config_source.remove_property(f"http-basic.{name}")

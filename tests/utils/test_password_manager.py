@@ -23,7 +23,7 @@ def test_set_http_password(
 ):
     manager = PasswordManager(config)
 
-    assert manager.keyring.is_available()
+    assert manager._keyring.is_available()
     manager.set_http_password("foo", "bar", "baz")
 
     assert dummy_keyring.get_password("poetry-repository-foo", "bar") == "baz"
@@ -40,11 +40,11 @@ def test_get_http_auth(
     config.auth_config_source.add_property("http-basic.foo", {"username": "bar"})
     manager = PasswordManager(config)
 
-    assert manager.keyring.is_available()
+    assert manager._keyring.is_available()
     auth = manager.get_http_auth("foo")
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+    assert auth.username== "bar"
+    assert auth.password == "baz"
 
 
 def test_delete_http_password(
@@ -54,7 +54,7 @@ def test_delete_http_password(
     config.auth_config_source.add_property("http-basic.foo", {"username": "bar"})
     manager = PasswordManager(config)
 
-    assert manager.keyring.is_available()
+    assert manager._keyring.is_available()
     manager.delete_http_password("foo")
 
     assert dummy_keyring.get_password("poetry-repository-foo", "bar") is None
@@ -66,7 +66,7 @@ def test_set_pypi_token(
 ):
     manager = PasswordManager(config)
 
-    assert manager.keyring.is_available()
+    assert manager._keyring.is_available()
     manager.set_pypi_token("foo", "baz")
 
     assert config.get("pypi-token.foo") is None
@@ -80,7 +80,7 @@ def test_get_pypi_token(
     dummy_keyring.set_password("poetry-repository-foo", "__token__", "baz")
     manager = PasswordManager(config)
 
-    assert manager.keyring.is_available()
+    assert manager._keyring.is_available()
     assert manager.get_pypi_token("foo") == "baz"
 
 
@@ -90,7 +90,7 @@ def test_delete_pypi_token(
     dummy_keyring.set_password("poetry-repository-foo", "__token__", "baz")
     manager = PasswordManager(config)
 
-    assert manager.keyring.is_available()
+    assert manager._keyring.is_available()
     manager.delete_pypi_token("foo")
 
     assert dummy_keyring.get_password("poetry-repository-foo", "__token__") is None
@@ -101,7 +101,7 @@ def test_set_http_password_with_unavailable_backend(
 ):
     manager = PasswordManager(config)
 
-    assert not manager.keyring.is_available()
+    assert not manager._keyring.is_available()
     manager.set_http_password("foo", "bar", "baz")
 
     auth = config.get("http-basic.foo")
@@ -117,11 +117,11 @@ def test_get_http_auth_with_unavailable_backend(
     )
     manager = PasswordManager(config)
 
-    assert not manager.keyring.is_available()
+    assert not manager._keyring.is_available()
     auth = manager.get_http_auth("foo")
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+    assert auth.username == "bar"
+    assert auth.password == "baz"
 
 
 def test_delete_http_password_with_unavailable_backend(
@@ -132,7 +132,7 @@ def test_delete_http_password_with_unavailable_backend(
     )
     manager = PasswordManager(config)
 
-    assert not manager.keyring.is_available()
+    assert not manager._keyring.is_available()
     manager.delete_http_password("foo")
 
     assert config.get("http-basic.foo") is None
@@ -143,7 +143,7 @@ def test_set_pypi_token_with_unavailable_backend(
 ):
     manager = PasswordManager(config)
 
-    assert not manager.keyring.is_available()
+    assert not manager._keyring.is_available()
     manager.set_pypi_token("foo", "baz")
 
     assert config.get("pypi-token.foo") == "baz"
@@ -155,7 +155,7 @@ def test_get_pypi_token_with_unavailable_backend(
     config.auth_config_source.add_property("pypi-token.foo", "baz")
     manager = PasswordManager(config)
 
-    assert not manager.keyring.is_available()
+    assert not manager._keyring.is_available()
     assert manager.get_pypi_token("foo") == "baz"
 
 
@@ -165,7 +165,7 @@ def test_delete_pypi_token_with_unavailable_backend(
     config.auth_config_source.add_property("pypi-token.foo", "baz")
     manager = PasswordManager(config)
 
-    assert not manager.keyring.is_available()
+    assert not manager._keyring.is_available()
     manager.delete_pypi_token("foo")
 
     assert config.get("pypi-token.foo") is None
@@ -229,8 +229,8 @@ def test_get_http_auth_from_environment_variables(
 
     auth = manager.get_http_auth("foo")
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+    assert auth.username == "bar"
+    assert auth.password == "baz"
 
 
 def test_get_pypi_token_with_env_var_positive(

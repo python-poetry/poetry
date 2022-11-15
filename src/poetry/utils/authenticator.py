@@ -102,23 +102,10 @@ class AuthenticatorRepositoryConfig:
     def get_http_credentials(
         self, password_manager: PasswordManager, username: str | None = None
     ) -> HTTPAuthCredential:
-        # try with the repository name via the password manager
-        credential = HTTPAuthCredential(
-            **(password_manager.get_http_auth(self.name) or {})
-        )
-
-        if credential.password is None:
-            # fallback to url and netloc based keyring entries
-            credential = password_manager.keyring.get_credential(
-                self.url, self.netloc, username=credential.username
-            )
-
-            if credential.password is not None:
-                return HTTPAuthCredential(
-                    username=credential.username, password=credential.password
-                )
-
-        return credential
+        default_auth = password_manager.get_http_auth(self.name)
+        if default_auth.password is None:
+            netloc_auth =  password_manager.get_http_auth(self.netloc.replace(".", "-"))
+        return netloc_auth if netloc_auth.password is not None else default_auth
 
 
 class Authenticator:
@@ -304,17 +291,6 @@ class Authenticator:
             if repository is not None
             else HTTPAuthCredential()
         )
-
-        if credential.password is None:
-            parsed_url = urllib.parse.urlsplit(url)
-            netloc = parsed_url.netloc
-            credential = self._password_manager.keyring.get_credential(
-                url, netloc, username=credential.username
-            )
-
-            return HTTPAuthCredential(
-                username=credential.username, password=credential.password
-            )
 
         return credential
 
