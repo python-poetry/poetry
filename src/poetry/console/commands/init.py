@@ -11,6 +11,8 @@ from typing import Union
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version.parser import parse_constraint
+from poetry.core.version.pep440 import PEP440Version
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
@@ -127,6 +129,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question = self.create_question(
             f"Version [<comment>{version}</comment>]: ", default=version
         )
+        question.set_validator(self._validate_pep440_version)
         version = self.ask(question)
 
         description = self.option("description")
@@ -165,6 +168,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 f"Compatible Python versions [<comment>{default_python}</comment>]: ",
                 default=default_python,
             )
+            question.set_validator(self._validate_version_constraint)
             python = self.ask(question)
 
         if self.io.is_interactive():
@@ -339,7 +343,7 @@ You can specify a package in the following forms:
                         "(or leave blank to use the latest version):"
                     )
                     question.attempts = 3
-                    question.validator = lambda x: (x or "").strip() or False
+                    question.set_validator(self._validate_version_constraint)
 
                     package_constraint = self.ask(question)
 
@@ -448,6 +452,13 @@ You can specify a package in the following forms:
 
         return requires
 
+    @staticmethod
+    def _validate_pep440_version(version: str) -> str:
+        # if the format is incorrect, an exception will be raised
+        PEP440Version.parse(version)
+
+        return version
+
     def _validate_author(self, author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
 
@@ -464,6 +475,16 @@ You can specify a package in the following forms:
             )
 
         return author
+
+    @staticmethod
+    def _validate_version_constraint(constraint: str | None) -> str | None:
+        if constraint is None:
+            return None
+
+        # if the format is incorrect, an exception will be raised
+        parse_constraint(constraint)
+
+        return constraint
 
     @staticmethod
     def _validate_package(package: str | None) -> str | None:
