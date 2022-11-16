@@ -1057,3 +1057,34 @@ def test_package_include(
         f'python = "^3.10"\n'
     )
     assert expected in tester.io.fetch_output()
+
+
+def test_version_validate(tester: CommandTester, init_basic_toml: str):
+    inputs = [
+        "my-package",  # Package name
+        "aaa",  # invalid version
+        "bbb",  # invalid version again
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "aaaaa",  # invalid python version
+        "~2.7 || ^3.6",  # Python
+        "",  # Interactive packages
+        "pendulu",  # Search for package
+        "1",  # Second option is pendulum
+        "",  # Do not set constraint
+        "Flask",
+        "0",
+        "",
+        "",  # Stop searching for packages
+        "",  # Interactive dev packages
+        "pytest",  # Search for package
+        "0",
+        "aaa",  # Invalid constraint version
+        "",
+        "",
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+    assert init_basic_toml in tester.io.fetch_output()
