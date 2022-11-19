@@ -1535,6 +1535,7 @@ def test_build_environment_called_build_script_specified(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *extended_without_setup_poetry.pyproject.build_system.requires,
             ]
         ]

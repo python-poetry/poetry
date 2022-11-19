@@ -73,7 +73,7 @@ tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
 trove-classifiers = "^2022.5.19"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "^20.4.3,!=20.4.5,!=20.4.6"
-xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
+xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -93,7 +93,7 @@ pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 zipp = { version = "^3.4", python = "<3.8" }
 
 [tool.poetry.group.typing.dependencies]
-mypy = ">=0.971"
+mypy = ">=0.990"
 types-html5lib = ">=1.1.9"
 types-jsonschema = ">=4.9.0"
 types-requests = ">=2.28.8"

@@ -169,6 +169,17 @@ def test_all_extras_populates_installer(tester: CommandTester, mocker: MockerFix
     assert tester.command.installer._extras == ["extras-a", "extras-b"]
 
 
+def test_extras_are_parsed_and_populate_installer(
+    tester: CommandTester,
+    mocker: MockerFixture,
+):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    tester.execute('--extras "first second third"')
+
+    assert tester.command.installer._extras == ["first", "second", "third"]
+
+
 def test_extras_conflicts_all_extras(tester: CommandTester, mocker: MockerFixture):
     """
     The --extras doesn't make sense with --all-extras.
@@ -185,6 +196,48 @@ def test_extras_conflicts_all_extras(tester: CommandTester, mocker: MockerFixtur
     )
 
 
+@pytest.mark.parametrize(
+    "options",
+    [
+        "--with foo",
+        "--without foo",
+        "--with foo,bar --without baz",
+        "--only foo",
+    ],
+)
+def test_only_root_conflicts_with_without_only(
+    options: str,
+    tester: CommandTester,
+    mocker: MockerFixture,
+):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    tester.execute(f"{options} --only-root")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "The `--with`, `--without` and `--only` options cannot be used with"
+        " the `--only-root` option.\n"
+    )
+
+
+def test_remove_untracked_outputs_deprecation_warning(
+    tester: CommandTester,
+    mocker: MockerFixture,
+):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    tester.execute("--remove-untracked")
+
+    assert tester.status_code == 0
+    assert (
+        tester.io.fetch_error()
+        == "The `--remove-untracked` option is deprecated, use the `--sync` option"
+        " instead.\n"
+    )
+
+
 def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixture):
     """
     The --dry-run option results in extras passed to the installer.
@@ -195,3 +248,46 @@ def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixtur
     tester.execute("--dry-run")
 
     assert tester.command.installer._dry_run is True
+
+
+def test_dry_run_does_not_build(tester: CommandTester, mocker: MockerFixture):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+    mocked_editable_builder = mocker.patch(
+        "poetry.masonry.builders.editable.EditableBuilder"
+    )
+
+    tester.execute("--dry-run")
+
+    assert mocked_editable_builder.return_value.build.call_count == 0
+
+
+def test_install_logs_output(tester: CommandTester, mocker: MockerFixture):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+    mocker.patch("poetry.masonry.builders.editable.EditableBuilder")
+
+    tester.execute()
+
+    assert tester.status_code == 0
+    assert (
+        tester.io.fetch_output()
+        == "\nInstalling the current project: simple-project (1.2.3)\n"
+    )
+
+
+def test_install_logs_output_decorated(tester: CommandTester, mocker: MockerFixture):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+    mocker.patch("poetry.masonry.builders.editable.EditableBuilder")
+
+    tester.execute(decorated=True)
+
+    expected = (
+        "\n"
+        "\x1b[39;1mInstalling\x1b[39;22m the current project: "
+        "\x1b[36msimple-project\x1b[39m (\x1b[39;1m1.2.3\x1b[39;22m)"
+        "\x1b[1G\x1b[2K"
+        "\x1b[39;1mInstalling\x1b[39;22m the current project: "
+        "\x1b[36msimple-project\x1b[39m (\x1b[32m1.2.3\x1b[39m)"
+        "\n"
+    )
+    assert tester.status_code == 0
+    assert tester.io.fetch_output() == expected
