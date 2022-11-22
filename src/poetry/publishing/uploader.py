@@ -21,6 +21,7 @@ from urllib3 import util
 
 from poetry.__version__ import __version__
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -68,7 +69,7 @@ class Uploader:
             connect=5,
             total=10,
             allowed_methods=["GET"],
-            status_forcelist=[500, 501, 502, 503],
+            status_forcelist=STATUS_FORCELIST,
         )
 
         return adapters.HTTPAdapter(max_retries=retry)
