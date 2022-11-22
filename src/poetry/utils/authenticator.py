@@ -24,6 +24,7 @@ from filelock import FileLock
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 
@@ -259,7 +260,7 @@ class Authenticator:
                 if is_last_attempt:
                     raise e
             else:
-                if resp.status_code not in [502, 503, 504] or is_last_attempt:
+                if resp.status_code not in STATUS_FORCELIST or is_last_attempt:
                     if raise_for_status:
                         resp.raise_for_status()
                     return resp
