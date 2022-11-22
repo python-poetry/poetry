@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from cleo.helpers import argument
 
 from poetry.console.commands.command import Command
+
+
+if TYPE_CHECKING:
+    from cleo.ui.table import Rows
 
 
 class SourceShowCommand(Command):
@@ -40,7 +46,7 @@ class SourceShowCommand(Command):
                 continue
 
             table = self.table(style="compact")
-            rows = [
+            rows: Rows = [
                 ["<info>name</>", f" : <c1>{source.name}</>"],
                 ["<info>url</>", f" : {source.url}"],
                 [

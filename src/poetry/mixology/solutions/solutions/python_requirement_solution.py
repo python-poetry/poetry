@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from poetry.puzzle.exceptions import SolverProblemError
 
 
-class PythonRequirementSolution(Solution):  # type: ignore[misc]
+class PythonRequirementSolution(Solution):
     def __init__(self, exception: SolverProblemError) -> None:
         from poetry.core.constraints.version import parse_constraint
 
