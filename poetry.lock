@@ -514,7 +514,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-core"
-version = "1.3.2"
+version = "1.4.0"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
@@ -955,7 +955,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "c2607df5992f1075a9a0d1a067e8e935a32e65dac79f0a2445e0c619b08883c7"
+content-hash = "728bc093f740faad6db2b3a1c7a61ea05ca6c6a998b1f144f071cdea5a3b2771"
 
 [metadata.files]
 attrs = [
@@ -1370,8 +1370,8 @@ pluggy = [
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
 poetry-core = [
-    {file = "poetry-core-1.3.2.tar.gz", hash = "sha256:0ab006a40cb38d6a38b97264f6835da2f08a96912f2728ce668e9ac6a34f686f"},
-    {file = "poetry_core-1.3.2-py3-none-any.whl", hash = "sha256:ea0f5a90b339cde132b4e43cff78a1b440cd928db864bb67cfc97fdfcefe7218"},
+    {file = "poetry_core-1.4.0-py3-none-any.whl", hash = "sha256:5559ab80384ac021db329ef317086417e140ee1176bcfcb3a3838b544e213c8e"},
+    {file = "poetry_core-1.4.0.tar.gz", hash = "sha256:514bd33c30e0bf56b0ed44ee15e120d7e47b61ad908b2b1011da68c48a84ada9"},
 ]
 poetry-plugin-export = [
     {file = "poetry_plugin_export-1.2.0-py3-none-any.whl", hash = "sha256:109fb43ebfd0e79d8be2e7f9d43ba2ae357c4975a18dfc0cfdd9597dd086790e"},
