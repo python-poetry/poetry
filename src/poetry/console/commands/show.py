@@ -12,6 +12,7 @@ from poetry.console.commands.group_command import GroupCommand
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from cleo.ui.table import Rows
     from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
@@ -160,7 +161,7 @@ lists all packages available."""
 
             return 0
 
-        rows = [
+        rows: Rows = [
             ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
             ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
             ["<info>description</>", f" : {pkg.description}"],
