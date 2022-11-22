@@ -69,6 +69,7 @@ class Uploader:
             connect=5,
             total=10,
             allowed_methods=["GET"],
+            respect_retry_after_header=True,
             status_forcelist=STATUS_FORCELIST,
         )
 
