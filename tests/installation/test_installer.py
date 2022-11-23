@@ -111,6 +111,17 @@ class Locker(BaseLocker):
     def written_data(self) -> dict | None:
         return self._written_data
 
+    def _get_content_hash(self) -> str:
+        return "123456789"
+
+    def _write_lock_data(self, data: dict) -> None:
+        for package in data["package"]:
+            python_versions = str(package["python-versions"])
+            package["python-versions"] = python_versions
+
+        self._written_data = json.loads(json.dumps(data))
+        self._lock_data = data
+
     def set_lock_path(self, lock: str | Path) -> Locker:
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
 
@@ -129,17 +140,6 @@ class Locker(BaseLocker):
 
     def is_fresh(self) -> bool:
         return True
-
-    def _get_content_hash(self) -> str:
-        return "123456789"
-
-    def _write_lock_data(self, data: dict) -> None:
-        for package in data["package"]:
-            python_versions = str(package["python-versions"])
-            package["python-versions"] = python_versions
-
-        self._written_data = json.loads(json.dumps(data))
-        self._lock_data = data
 
 
 @pytest.fixture()

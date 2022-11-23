@@ -195,6 +195,14 @@ class TestLocker(Locker):
         self._lock_data = None
         self._write = False
 
+    def _write_lock_data(self, data: TOMLDocument) -> None:
+        if self._write:
+            super()._write_lock_data(data)
+            self._locked = True
+            return
+
+        self._lock_data = data
+
     def write(self, write: bool = True) -> None:
         self._write = write
 
@@ -213,14 +221,6 @@ class TestLocker(Locker):
 
     def is_fresh(self) -> bool:
         return True
-
-    def _write_lock_data(self, data: TOMLDocument) -> None:
-        if self._write:
-            super()._write_lock_data(data)
-            self._locked = True
-            return
-
-        self._lock_data = data
 
 
 class TestRepository(Repository):
