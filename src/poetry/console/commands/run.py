@@ -19,6 +19,17 @@ class RunCommand(EnvCommand):
         argument("args", "The command and arguments/options to run.", multiple=True)
     ]
 
+    @property
+    def _module(self) -> Module:
+        from poetry.core.masonry.utils.module import Module
+
+        poetry = self.poetry
+        package = poetry.package
+        path = poetry.file.parent
+        module = Module(package.name, path.as_posix(), package.packages)
+
+        return module
+
     def handle(self) -> int:
         args = self.argument("args")
         script = args[0]
@@ -32,17 +43,6 @@ class RunCommand(EnvCommand):
         except FileNotFoundError:
             self.line_error(f"<error>Command not found: <c1>{script}</c1></error>")
             return 1
-
-    @property
-    def _module(self) -> Module:
-        from poetry.core.masonry.utils.module import Module
-
-        poetry = self.poetry
-        package = poetry.package
-        path = poetry.file.parent
-        module = Module(package.name, path.as_posix(), package.packages)
-
-        return module
 
     def run_script(self, script: str | dict[str, str], args: str) -> int:
         if isinstance(script, dict):

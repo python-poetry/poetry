@@ -15,6 +15,16 @@ if TYPE_CHECKING:
 
 
 class VersionCommand(Command):
+    RESERVED = {
+        "major",
+        "minor",
+        "patch",
+        "premajor",
+        "preminor",
+        "prepatch",
+        "prerelease",
+    }
+
     name = "version"
     description = (
         "Shows the version of the project or bumps it when a valid "
@@ -45,16 +55,6 @@ bump rule is provided.
 The new version should ideally be a valid semver string or a valid bump rule:
 patch, minor, major, prepatch, preminor, premajor, prerelease.
 """
-
-    RESERVED = {
-        "major",
-        "minor",
-        "patch",
-        "premajor",
-        "preminor",
-        "prepatch",
-        "prerelease",
-    }
 
     def handle(self) -> int:
         version = self.argument("version")

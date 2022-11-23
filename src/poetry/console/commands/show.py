@@ -69,52 +69,6 @@ lists all packages available."""
 
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self) -> int:
-        package = self.argument("package")
-
-        if self.option("tree"):
-            self.init_styles(self.io)
-
-        if self.option("why"):
-            if self.option("tree") and package is None:
-                self.line_error(
-                    "<error>Error: --why requires a package when combined with"
-                    " --tree.</error>"
-                )
-
-                return 1
-
-            if not self.option("tree") and package:
-                self.line_error(
-                    "<error>Error: --why cannot be used without --tree when displaying"
-                    " a single package.</error>"
-                )
-
-                return 1
-
-        if self.option("outdated"):
-            self.io.input.set_option("latest", True)
-
-        if not self.poetry.locker.is_locked():
-            self.line_error(
-                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
-                " it.</error>"
-            )
-            return 1
-
-        locked_repo = self.poetry.locker.locked_repository()
-
-        if package:
-            return self._display_single_package_information(package, locked_repo)
-
-        root = self.project_with_activated_groups_only()
-
-        # Show tree view if requested
-        if self.option("tree"):
-            return self._display_packages_tree_information(locked_repo, root)
-
-        return self._display_packages_information(locked_repo, root)
-
     def _display_single_package_information(
         self, package: str, locked_repository: Repository
     ) -> int:
@@ -389,55 +343,6 @@ lists all packages available."""
 
         return 0
 
-    def display_package_tree(
-        self,
-        io: IO,
-        package: Package,
-        installed_packages: list[Package],
-        why_package: Package | None = None,
-    ) -> None:
-        io.write(f"<c1>{package.pretty_name}</c1>")
-        description = ""
-        if package.description:
-            description = " " + package.description
-
-        io.write_line(f" <b>{package.pretty_version}</b>{description}")
-
-        if why_package is not None:
-            dependencies = [p for p in package.requires if p.name == why_package.name]
-        else:
-            dependencies = package.requires
-            dependencies = sorted(
-                dependencies,
-                key=lambda x: x.name,
-            )
-
-        tree_bar = "├"
-        total = len(dependencies)
-        for i, dependency in enumerate(dependencies, 1):
-            if i == total:
-                tree_bar = "└"
-
-            level = 1
-            color = self.colors[level]
-            info = (
-                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
-                f" {dependency.pretty_constraint}"
-            )
-            self._write_tree_line(io, info)
-
-            tree_bar = tree_bar.replace("└", " ")
-            packages_in_tree = [package.name, dependency.name]
-
-            self._display_tree(
-                io,
-                dependency,
-                installed_packages,
-                packages_in_tree,
-                tree_bar,
-                level + 1,
-            )
-
     def _display_tree(
         self,
         io: IO,
@@ -502,6 +407,101 @@ lists all packages available."""
             line = line.replace("│", "|")
 
         io.write_line(line)
+
+    def handle(self) -> int:
+        package = self.argument("package")
+
+        if self.option("tree"):
+            self.init_styles(self.io)
+
+        if self.option("why"):
+            if self.option("tree") and package is None:
+                self.line_error(
+                    "<error>Error: --why requires a package when combined with"
+                    " --tree.</error>"
+                )
+
+                return 1
+
+            if not self.option("tree") and package:
+                self.line_error(
+                    "<error>Error: --why cannot be used without --tree when displaying"
+                    " a single package.</error>"
+                )
+
+                return 1
+
+        if self.option("outdated"):
+            self.io.input.set_option("latest", True)
+
+        if not self.poetry.locker.is_locked():
+            self.line_error(
+                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
+                " it.</error>"
+            )
+            return 1
+
+        locked_repo = self.poetry.locker.locked_repository()
+
+        if package:
+            return self._display_single_package_information(package, locked_repo)
+
+        root = self.project_with_activated_groups_only()
+
+        # Show tree view if requested
+        if self.option("tree"):
+            return self._display_packages_tree_information(locked_repo, root)
+
+        return self._display_packages_information(locked_repo, root)
+
+    def display_package_tree(
+        self,
+        io: IO,
+        package: Package,
+        installed_packages: list[Package],
+        why_package: Package | None = None,
+    ) -> None:
+        io.write(f"<c1>{package.pretty_name}</c1>")
+        description = ""
+        if package.description:
+            description = " " + package.description
+
+        io.write_line(f" <b>{package.pretty_version}</b>{description}")
+
+        if why_package is not None:
+            dependencies = [p for p in package.requires if p.name == why_package.name]
+        else:
+            dependencies = package.requires
+            dependencies = sorted(
+                dependencies,
+                key=lambda x: x.name,
+            )
+
+        tree_bar = "├"
+        total = len(dependencies)
+        for i, dependency in enumerate(dependencies, 1):
+            if i == total:
+                tree_bar = "└"
+
+            level = 1
+            color = self.colors[level]
+            info = (
+                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
+                f" {dependency.pretty_constraint}"
+            )
+            self._write_tree_line(io, info)
+
+            tree_bar = tree_bar.replace("└", " ")
+            packages_in_tree = [package.name, dependency.name]
+
+            self._display_tree(
+                io,
+                dependency,
+                installed_packages,
+                packages_in_tree,
+                tree_bar,
+                level + 1,
+            )
 
     def init_styles(self, io: IO) -> None:
         from cleo.formatters.style import Style

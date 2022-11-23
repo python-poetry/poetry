@@ -94,6 +94,14 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
+    @property
+    def _hint_update_packages(self) -> str:
+        return (
+            "\nIf you want to update it to the latest compatible version, you can use"
+            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
+            " available version, you can use `poetry add package@latest`.\n"
+        )
+
     def handle(self) -> int:
         from poetry.core.constraints.version import parse_constraint
         from tomlkit import inline_table
@@ -276,14 +284,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     existing_packages.append(name)
 
         return existing_packages
-
-    @property
-    def _hint_update_packages(self) -> str:
-        return (
-            "\nIf you want to update it to the latest compatible version, you can use"
-            " `poetry update package`.\nIf you prefer to upgrade it to the latest"
-            " available version, you can use `poetry add package@latest`.\n"
-        )
 
     def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(

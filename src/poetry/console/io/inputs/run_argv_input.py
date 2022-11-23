@@ -23,36 +23,6 @@ class RunArgvInput(ArgvInput):
     def first_argument(self) -> str | None:
         return "run"
 
-    def add_parameter_option(self, name: str) -> None:
-        self._parameter_options.append(name)
-
-    def has_parameter_option(
-        self, values: str | list[str], only_params: bool = False
-    ) -> bool:
-        if not isinstance(values, list):
-            values = [values]
-
-        for token in self._tokens:
-            if only_params and token == "--":
-                return False
-
-            for value in values:
-                if value not in self._parameter_options:
-                    continue
-
-                # Options with values:
-                # For long options, test for '--option=' at beginning
-                # For short options, test for '-o' at beginning
-                if value.find("--") == 0:
-                    leading = value + "="
-                else:
-                    leading = value
-
-                if token == value or leading != "" and token.find(leading) == 0:
-                    return True
-
-        return False
-
     def _parse(self) -> None:
         parse_options = True
         self._parsed = self._tokens[:]
@@ -84,3 +54,33 @@ class RunArgvInput(ArgvInput):
                 token = self._parsed.pop(0)
             except IndexError:
                 token = None
+
+    def add_parameter_option(self, name: str) -> None:
+        self._parameter_options.append(name)
+
+    def has_parameter_option(
+        self, values: str | list[str], only_params: bool = False
+    ) -> bool:
+        if not isinstance(values, list):
+            values = [values]
+
+        for token in self._tokens:
+            if only_params and token == "--":
+                return False
+
+            for value in values:
+                if value not in self._parameter_options:
+                    continue
+
+                # Options with values:
+                # For long options, test for '--option=' at beginning
+                # For short options, test for '-o' at beginning
+                if value.find("--") == 0:
+                    leading = value + "="
+                else:
+                    leading = value
+
+                if token == value or leading != "" and token.find(leading) == 0:
+                    return True
+
+        return False

@@ -68,185 +68,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         self._pool: RepositoryPool | None = None
 
-    def handle(self) -> int:
-        from pathlib import Path
+    @staticmethod
+    def _validate_package(package: str | None) -> str | None:
+        if package and len(package.split()) > 2:
+            raise ValueError("Invalid package definition.")
 
-        from poetry.core.pyproject.toml import PyProjectTOML
-        from poetry.core.vcs.git import GitConfig
-
-        from poetry.layouts import layout
-        from poetry.utils.env import SystemEnv
-
-        project_path = Path.cwd()
-
-        if self.io.input.option("directory"):
-            project_path = Path(self.io.input.option("directory"))
-            if not project_path.exists() or not project_path.is_dir():
-                self.line_error(
-                    "<error>The --directory path is not a directory.</error>"
-                )
-                return 1
-
-        pyproject = PyProjectTOML(project_path / "pyproject.toml")
-
-        if pyproject.file.exists():
-            if pyproject.is_poetry_project():
-                self.line_error(
-                    "<error>A pyproject.toml file with a poetry section already"
-                    " exists.</error>"
-                )
-                return 1
-
-            if pyproject.data.get("build-system"):
-                self.line_error(
-                    "<error>A pyproject.toml file with a defined build-system already"
-                    " exists.</error>"
-                )
-                return 1
-
-        vcs_config = GitConfig()
-
-        if self.io.is_interactive():
-            self.line("")
-            self.line(
-                "This command will guide you through creating your"
-                " <info>pyproject.toml</> config."
-            )
-            self.line("")
-
-        name = self.option("name")
-        if not name:
-            name = Path.cwd().name.lower()
-
-            question = self.create_question(
-                f"Package name [<comment>{name}</comment>]: ", default=name
-            )
-            name = self.ask(question)
-
-        version = "0.1.0"
-        question = self.create_question(
-            f"Version [<comment>{version}</comment>]: ", default=version
-        )
-        version = self.ask(question)
-
-        description = self.option("description")
-        if not description:
-            description = self.ask(self.create_question("Description []: ", default=""))
-
-        author = self.option("author")
-        if not author and vcs_config.get("user.name"):
-            author = vcs_config["user.name"]
-            author_email = vcs_config.get("user.email")
-            if author_email:
-                author += f" <{author_email}>"
-
-        question = self.create_question(
-            f"Author [<comment>{author}</comment>, n to skip]: ", default=author
-        )
-        question.set_validator(lambda v: self._validate_author(v, author))
-        author = self.ask(question)
-
-        if not author:
-            authors = []
-        else:
-            authors = [author]
-
-        license = self.option("license")
-        if not license:
-            license = self.ask(self.create_question("License []: ", default=""))
-
-        python = self.option("python")
-        if not python:
-            current_env = SystemEnv(Path(sys.executable))
-            default_python = "^" + ".".join(
-                str(v) for v in current_env.version_info[:2]
-            )
-            question = self.create_question(
-                f"Compatible Python versions [<comment>{default_python}</comment>]: ",
-                default=default_python,
-            )
-            python = self.ask(question)
-
-        if self.io.is_interactive():
-            self.line("")
-
-        requirements: Requirements = {}
-        if self.option("dependency"):
-            requirements = self._format_requirements(
-                self._determine_requirements(self.option("dependency"))
-            )
-
-        question_text = "Would you like to define your main dependencies interactively?"
-        help_message = """\
-You can specify a package in the following forms:
-  - A single name (<b>requests</b>): this will search for matches on PyPI
-  - A name and a constraint (<b>requests@^2.23.0</b>)
-  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
-  - A git url with a revision\
- (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
-  - A file path (<b>../my-package/my-package.whl</b>)
-  - A directory (<b>../my-package/</b>)
-  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
-"""
-
-        help_displayed = False
-        if self.confirm(question_text, True):
-            if self.io.is_interactive():
-                self.line(help_message)
-                help_displayed = True
-            requirements.update(
-                self._format_requirements(self._determine_requirements([]))
-            )
-            if self.io.is_interactive():
-                self.line("")
-
-        dev_requirements: Requirements = {}
-        if self.option("dev-dependency"):
-            dev_requirements = self._format_requirements(
-                self._determine_requirements(self.option("dev-dependency"))
-            )
-
-        question_text = (
-            "Would you like to define your development dependencies interactively?"
-        )
-        if self.confirm(question_text, True):
-            if self.io.is_interactive() and not help_displayed:
-                self.line(help_message)
-
-            dev_requirements.update(
-                self._format_requirements(self._determine_requirements([]))
-            )
-            if self.io.is_interactive():
-                self.line("")
-
-        layout_ = layout("standard")(
-            name,
-            version,
-            description=description,
-            author=authors[0] if authors else None,
-            license=license,
-            python=python,
-            dependencies=requirements,
-            dev_dependencies=dev_requirements,
-        )
-
-        content = layout_.generate_poetry_content()
-        for section in content:
-            pyproject.data.append(section, content[section])
-        if self.io.is_interactive():
-            self.line("<info>Generated file</info>")
-            self.line("")
-            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
-            self.line("")
-
-        if not self.confirm("Do you confirm generation?", True):
-            self.line_error("<error>Command aborted</error>")
-
-            return 1
-
-        pyproject.save()
-
-        return 0
+        return package
 
     def _generate_choice_list(
         self, matches: list[Package], canonicalized_name: NormalizedName
@@ -465,13 +292,6 @@ You can specify a package in the following forms:
 
         return author
 
-    @staticmethod
-    def _validate_package(package: str | None) -> str | None:
-        if package and len(package.split()) > 2:
-            raise ValueError("Invalid package definition.")
-
-        return package
-
     def _get_pool(self) -> RepositoryPool:
         from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
@@ -484,3 +304,183 @@ You can specify a package in the following forms:
             self._pool.add_repository(PyPiRepository())
 
         return self._pool
+
+    def handle(self) -> int:
+        from pathlib import Path
+
+        from poetry.core.pyproject.toml import PyProjectTOML
+        from poetry.core.vcs.git import GitConfig
+
+        from poetry.layouts import layout
+        from poetry.utils.env import SystemEnv
+
+        project_path = Path.cwd()
+
+        if self.io.input.option("directory"):
+            project_path = Path(self.io.input.option("directory"))
+            if not project_path.exists() or not project_path.is_dir():
+                self.line_error(
+                    "<error>The --directory path is not a directory.</error>"
+                )
+                return 1
+
+        pyproject = PyProjectTOML(project_path / "pyproject.toml")
+
+        if pyproject.file.exists():
+            if pyproject.is_poetry_project():
+                self.line_error(
+                    "<error>A pyproject.toml file with a poetry section already"
+                    " exists.</error>"
+                )
+                return 1
+
+            if pyproject.data.get("build-system"):
+                self.line_error(
+                    "<error>A pyproject.toml file with a defined build-system already"
+                    " exists.</error>"
+                )
+                return 1
+
+        vcs_config = GitConfig()
+
+        if self.io.is_interactive():
+            self.line("")
+            self.line(
+                "This command will guide you through creating your"
+                " <info>pyproject.toml</> config."
+            )
+            self.line("")
+
+        name = self.option("name")
+        if not name:
+            name = Path.cwd().name.lower()
+
+            question = self.create_question(
+                f"Package name [<comment>{name}</comment>]: ", default=name
+            )
+            name = self.ask(question)
+
+        version = "0.1.0"
+        question = self.create_question(
+            f"Version [<comment>{version}</comment>]: ", default=version
+        )
+        version = self.ask(question)
+
+        description = self.option("description")
+        if not description:
+            description = self.ask(self.create_question("Description []: ", default=""))
+
+        author = self.option("author")
+        if not author and vcs_config.get("user.name"):
+            author = vcs_config["user.name"]
+            author_email = vcs_config.get("user.email")
+            if author_email:
+                author += f" <{author_email}>"
+
+        question = self.create_question(
+            f"Author [<comment>{author}</comment>, n to skip]: ", default=author
+        )
+        question.set_validator(lambda v: self._validate_author(v, author))
+        author = self.ask(question)
+
+        if not author:
+            authors = []
+        else:
+            authors = [author]
+
+        license = self.option("license")
+        if not license:
+            license = self.ask(self.create_question("License []: ", default=""))
+
+        python = self.option("python")
+        if not python:
+            current_env = SystemEnv(Path(sys.executable))
+            default_python = "^" + ".".join(
+                str(v) for v in current_env.version_info[:2]
+            )
+            question = self.create_question(
+                f"Compatible Python versions [<comment>{default_python}</comment>]: ",
+                default=default_python,
+            )
+            python = self.ask(question)
+
+        if self.io.is_interactive():
+            self.line("")
+
+        requirements: Requirements = {}
+        if self.option("dependency"):
+            requirements = self._format_requirements(
+                self._determine_requirements(self.option("dependency"))
+            )
+
+        question_text = "Would you like to define your main dependencies interactively?"
+        help_message = """\
+You can specify a package in the following forms:
+  - A single name (<b>requests</b>): this will search for matches on PyPI
+  - A name and a constraint (<b>requests@^2.23.0</b>)
+  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
+  - A git url with a revision\
+ (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
+  - A file path (<b>../my-package/my-package.whl</b>)
+  - A directory (<b>../my-package/</b>)
+  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
+"""
+
+        help_displayed = False
+        if self.confirm(question_text, True):
+            if self.io.is_interactive():
+                self.line(help_message)
+                help_displayed = True
+            requirements.update(
+                self._format_requirements(self._determine_requirements([]))
+            )
+            if self.io.is_interactive():
+                self.line("")
+
+        dev_requirements: Requirements = {}
+        if self.option("dev-dependency"):
+            dev_requirements = self._format_requirements(
+                self._determine_requirements(self.option("dev-dependency"))
+            )
+
+        question_text = (
+            "Would you like to define your development dependencies interactively?"
+        )
+        if self.confirm(question_text, True):
+            if self.io.is_interactive() and not help_displayed:
+                self.line(help_message)
+
+            dev_requirements.update(
+                self._format_requirements(self._determine_requirements([]))
+            )
+            if self.io.is_interactive():
+                self.line("")
+
+        layout_ = layout("standard")(
+            name,
+            version,
+            description=description,
+            author=authors[0] if authors else None,
+            license=license,
+            python=python,
+            dependencies=requirements,
+            dev_dependencies=dev_requirements,
+        )
+
+        content = layout_.generate_poetry_content()
+        for section in content:
+            pyproject.data.append(section, content[section])
+        if self.io.is_interactive():
+            self.line("<info>Generated file</info>")
+            self.line("")
+            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
+            self.line("")
+
+        if not self.confirm("Do you confirm generation?", True):
+            self.line_error("<error>Command aborted</error>")
+
+            return 1
+
+        pyproject.save()
+
+        return 0

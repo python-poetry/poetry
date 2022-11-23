@@ -22,6 +22,11 @@ class ShellCommand(EnvCommand):
 If one doesn't exist yet, it will be created.
 """
 
+    def _is_venv_activated(self) -> bool:
+        return bool(environ.get("POETRY_ACTIVE")) or getattr(
+            sys, "real_prefix", sys.prefix
+        ) == str(self.env.path)
+
     def handle(self) -> int:
         from poetry.utils.shell import Shell
 
@@ -47,8 +52,3 @@ If one doesn't exist yet, it will be created.
         environ.pop("POETRY_ACTIVE")
 
         return 0
-
-    def _is_venv_activated(self) -> bool:
-        return bool(environ.get("POETRY_ACTIVE")) or getattr(
-            sys, "real_prefix", sys.prefix
-        ) == str(self.env.path)

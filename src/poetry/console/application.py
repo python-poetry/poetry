@@ -113,6 +113,36 @@ class Application(BaseApplication):
         self.set_command_loader(command_loader)
 
     @property
+    def _default_definition(self) -> Definition:
+        from cleo.io.inputs.option import Option
+
+        definition = super()._default_definition
+
+        definition.add_option(
+            Option("--no-plugins", flag=True, description="Disables plugins.")
+        )
+
+        definition.add_option(
+            Option(
+                "--no-cache", flag=True, description="Disables Poetry source caches."
+            )
+        )
+
+        definition.add_option(
+            Option(
+                "--directory",
+                "-C",
+                flag=False,
+                description=(
+                    "The working directory for the Poetry command (defaults to the"
+                    " current working directory)."
+                ),
+            )
+        )
+
+        return definition
+
+    @property
     def poetry(self) -> Poetry:
         from pathlib import Path
 
@@ -141,45 +171,40 @@ class Application(BaseApplication):
         assert isinstance(command_loader, CommandLoader)
         return command_loader
 
-    def reset_poetry(self) -> None:
-        self._poetry = None
+    @staticmethod
+    def configure_installer_for_command(command: InstallerCommand, io: IO) -> None:
+        from poetry.installation.installer import Installer
 
-    def create_io(
-        self,
-        input: Input | None = None,
-        output: Output | None = None,
-        error_output: Output | None = None,
-    ) -> IO:
-        io = super().create_io(input, output, error_output)
+        poetry = command.poetry
+        installer = Installer(
+            io,
+            command.env,
+            poetry.package,
+            poetry.locker,
+            poetry.pool,
+            poetry.config,
+            disable_cache=poetry.disable_cache,
+        )
+        installer.use_executor(poetry.config.get("experimental.new-installer", False))
+        command.set_installer(installer)
 
-        # Set our own CLI styles
-        formatter = io.output.formatter
-        formatter.set_style("c1", Style("cyan"))
-        formatter.set_style("c2", Style("default", options=["bold"]))
-        formatter.set_style("info", Style("blue"))
-        formatter.set_style("comment", Style("green"))
-        formatter.set_style("warning", Style("yellow"))
-        formatter.set_style("debug", Style("default", options=["dark"]))
-        formatter.set_style("success", Style("green"))
+    @classmethod
+    def configure_installer_for_event(
+        cls, event: Event, event_name: str, _: EventDispatcher
+    ) -> None:
+        from poetry.console.commands.installer_command import InstallerCommand
 
-        # Dark variants
-        formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
-        formatter.set_style("c2_dark", Style("default", options=["bold", "dark"]))
-        formatter.set_style("success_dark", Style("green", options=["dark"]))
+        assert isinstance(event, ConsoleCommandEvent)
+        command = event.command
+        if not isinstance(command, InstallerCommand):
+            return
 
-        io.output.set_formatter(formatter)
-        io.error_output.set_formatter(formatter)
+        # If the command already has an installer
+        # we skip this step
+        if command._installer is not None:
+            return
 
-        self._io = io
-
-        return io
-
-    def render_error(self, error: Exception, io: IO) -> None:
-        # We set the solution provider repository here to load providers
-        # only when an error occurs
-        self.set_solution_provider_repository(self._get_solution_provider_repository())
-
-        super().render_error(error, io)
+        cls.configure_installer_for_command(command, event.io)
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
@@ -225,6 +250,79 @@ class Application(BaseApplication):
             io.set_input(run_input)
 
         super()._configure_io(io)
+
+    def _load_plugins(self, io: IO | None = None) -> None:
+        if self._plugins_loaded:
+            return
+
+        if io is None:
+            io = NullIO()
+
+        self._disable_plugins = io.input.has_parameter_option("--no-plugins")
+
+        if not self._disable_plugins:
+            from poetry.plugins.application_plugin import ApplicationPlugin
+            from poetry.plugins.plugin_manager import PluginManager
+
+            manager = PluginManager(ApplicationPlugin.group)
+            manager.load_plugins()
+            manager.activate(self)
+
+        self._plugins_loaded = True
+
+    def _get_solution_provider_repository(self) -> SolutionProviderRepository:
+        from crashtest.solution_providers.solution_provider_repository import (
+            SolutionProviderRepository,
+        )
+
+        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (  # noqa: E501
+            PythonRequirementSolutionProvider,
+        )
+
+        repository = SolutionProviderRepository()
+        repository.register_solution_providers([PythonRequirementSolutionProvider])
+
+        return repository
+
+    def reset_poetry(self) -> None:
+        self._poetry = None
+
+    def create_io(
+        self,
+        input: Input | None = None,
+        output: Output | None = None,
+        error_output: Output | None = None,
+    ) -> IO:
+        io = super().create_io(input, output, error_output)
+
+        # Set our own CLI styles
+        formatter = io.output.formatter
+        formatter.set_style("c1", Style("cyan"))
+        formatter.set_style("c2", Style("default", options=["bold"]))
+        formatter.set_style("info", Style("blue"))
+        formatter.set_style("comment", Style("green"))
+        formatter.set_style("warning", Style("yellow"))
+        formatter.set_style("debug", Style("default", options=["dark"]))
+        formatter.set_style("success", Style("green"))
+
+        # Dark variants
+        formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
+        formatter.set_style("c2_dark", Style("default", options=["bold", "dark"]))
+        formatter.set_style("success_dark", Style("green", options=["dark"]))
+
+        io.output.set_formatter(formatter)
+        io.error_output.set_formatter(formatter)
+
+        self._io = io
+
+        return io
+
+    def render_error(self, error: Exception, io: IO) -> None:
+        # We set the solution provider repository here to load providers
+        # only when an error occurs
+        self.set_solution_provider_repository(self._get_solution_provider_repository())
+
+        super().render_error(error, io)
 
     def register_command_loggers(
         self, event: Event, event_name: str, _: EventDispatcher
@@ -302,104 +400,6 @@ class Application(BaseApplication):
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
 
         command.set_env(env)
-
-    @classmethod
-    def configure_installer_for_event(
-        cls, event: Event, event_name: str, _: EventDispatcher
-    ) -> None:
-        from poetry.console.commands.installer_command import InstallerCommand
-
-        assert isinstance(event, ConsoleCommandEvent)
-        command = event.command
-        if not isinstance(command, InstallerCommand):
-            return
-
-        # If the command already has an installer
-        # we skip this step
-        if command._installer is not None:
-            return
-
-        cls.configure_installer_for_command(command, event.io)
-
-    @staticmethod
-    def configure_installer_for_command(command: InstallerCommand, io: IO) -> None:
-        from poetry.installation.installer import Installer
-
-        poetry = command.poetry
-        installer = Installer(
-            io,
-            command.env,
-            poetry.package,
-            poetry.locker,
-            poetry.pool,
-            poetry.config,
-            disable_cache=poetry.disable_cache,
-        )
-        installer.use_executor(poetry.config.get("experimental.new-installer", False))
-        command.set_installer(installer)
-
-    def _load_plugins(self, io: IO | None = None) -> None:
-        if self._plugins_loaded:
-            return
-
-        if io is None:
-            io = NullIO()
-
-        self._disable_plugins = io.input.has_parameter_option("--no-plugins")
-
-        if not self._disable_plugins:
-            from poetry.plugins.application_plugin import ApplicationPlugin
-            from poetry.plugins.plugin_manager import PluginManager
-
-            manager = PluginManager(ApplicationPlugin.group)
-            manager.load_plugins()
-            manager.activate(self)
-
-        self._plugins_loaded = True
-
-    @property
-    def _default_definition(self) -> Definition:
-        from cleo.io.inputs.option import Option
-
-        definition = super()._default_definition
-
-        definition.add_option(
-            Option("--no-plugins", flag=True, description="Disables plugins.")
-        )
-
-        definition.add_option(
-            Option(
-                "--no-cache", flag=True, description="Disables Poetry source caches."
-            )
-        )
-
-        definition.add_option(
-            Option(
-                "--directory",
-                "-C",
-                flag=False,
-                description=(
-                    "The working directory for the Poetry command (defaults to the"
-                    " current working directory)."
-                ),
-            )
-        )
-
-        return definition
-
-    def _get_solution_provider_repository(self) -> SolutionProviderRepository:
-        from crashtest.solution_providers.solution_provider_repository import (
-            SolutionProviderRepository,
-        )
-
-        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (  # noqa: E501
-            PythonRequirementSolutionProvider,
-        )
-
-        repository = SolutionProviderRepository()
-        repository.register_solution_providers([PythonRequirementSolutionProvider])
-
-        return repository
 
 
 def main() -> int:

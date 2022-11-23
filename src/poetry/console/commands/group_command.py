@@ -14,32 +14,6 @@ if TYPE_CHECKING:
 
 
 class GroupCommand(Command):
-    @staticmethod
-    def _group_dependency_options() -> list[Option]:
-        return [
-            option(
-                "without",
-                None,
-                "The dependency groups to ignore.",
-                flag=False,
-                multiple=True,
-            ),
-            option(
-                "with",
-                None,
-                "The optional dependency groups to include.",
-                flag=False,
-                multiple=True,
-            ),
-            option(
-                "only",
-                None,
-                "The only dependency groups to include.",
-                flag=False,
-                multiple=True,
-            ),
-        ]
-
     @property
     def non_optional_groups(self) -> set[str]:
         # TODO: this should move into poetry-core
@@ -102,6 +76,32 @@ class GroupCommand(Command):
         return groups["only"] or self.default_groups.union(groups["with"]).difference(
             groups["without"]
         )
+
+    @staticmethod
+    def _group_dependency_options() -> list[Option]:
+        return [
+            option(
+                "without",
+                None,
+                "The dependency groups to ignore.",
+                flag=False,
+                multiple=True,
+            ),
+            option(
+                "with",
+                None,
+                "The optional dependency groups to include.",
+                flag=False,
+                multiple=True,
+            ),
+            option(
+                "only",
+                None,
+                "The only dependency groups to include.",
+                flag=False,
+                multiple=True,
+            ),
+        ]
 
     def project_with_activated_groups_only(self) -> ProjectPackage:
         return self.poetry.package.with_dependency_groups(

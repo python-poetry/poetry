@@ -39,6 +39,22 @@ list of installed packages
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
+    def _remove_packages(
+        self, packages: list[str], section: dict[str, Any], group_name: str
+    ) -> list[str]:
+        removed = []
+        group = self.poetry.package.dependency_group(group_name)
+        section_keys = list(section.keys())
+
+        for package in packages:
+            for existing_package in section_keys:
+                if canonicalize_name(existing_package) == canonicalize_name(package):
+                    del section[existing_package]
+                    removed.append(package)
+                    group.remove_dependency(package)
+
+        return removed
+
     def handle(self) -> int:
         packages = self.argument("packages")
 
@@ -120,19 +136,3 @@ list of installed packages
             self.poetry.file.write(content)
 
         return status
-
-    def _remove_packages(
-        self, packages: list[str], section: dict[str, Any], group_name: str
-    ) -> list[str]:
-        removed = []
-        group = self.poetry.package.dependency_group(group_name)
-        section_keys = list(section.keys())
-
-        for package in packages:
-            for existing_package in section_keys:
-                if canonicalize_name(existing_package) == canonicalize_name(package):
-                    del section[existing_package]
-                    removed.append(package)
-                    group.remove_dependency(package)
-
-        return removed

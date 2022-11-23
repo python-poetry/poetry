@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
 
 class ConfigCommand(Command):
+    LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
+
     name = "config"
     description = "Manages configuration settings."
 
@@ -48,8 +50,6 @@ To add a repository:
 To remove a repository (repo is a short alias for repositories):
 
     <comment>poetry config --unset repo.foo</comment>"""
-
-    LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
 
     @property
     def unique_config_values(self) -> dict[str, tuple[Any, Any, Any]]:
@@ -124,6 +124,60 @@ To remove a repository (repo is a short alias for repositories):
         }
 
         return unique_config_values
+
+    def _handle_single_value(
+        self,
+        source: ConfigSource,
+        key: str,
+        callbacks: tuple[Any, Any, Any],
+        values: list[Any],
+    ) -> int:
+        validator, normalizer, _ = callbacks
+
+        if len(values) > 1:
+            raise RuntimeError("You can only pass one value.")
+
+        value = values[0]
+        if not validator(value):
+            raise RuntimeError(f'"{value}" is an invalid value for {key}')
+
+        source.add_property(key, normalizer(value))
+
+        return 0
+
+    def _list_configuration(
+        self, config: dict[str, Any], raw: dict[str, Any], k: str = ""
+    ) -> None:
+        orig_k = k
+        for key, value in sorted(config.items()):
+            if k + key in self.LIST_PROHIBITED_SETTINGS:
+                continue
+
+            raw_val = raw.get(key)
+
+            if isinstance(value, dict):
+                k += f"{key}."
+                raw_val = cast("dict[str, Any]", raw_val)
+                self._list_configuration(value, raw_val, k=k)
+                k = orig_k
+
+                continue
+            elif isinstance(value, list):
+                value = ", ".join(
+                    json.dumps(val) if isinstance(val, list) else val for val in value
+                )
+                value = f"[{value}]"
+
+            if k.startswith("repositories."):
+                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>"
+            elif isinstance(raw_val, str) and raw_val != value:
+                message = (
+                    f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>  # {value}"
+                )
+            else:
+                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
+
+            self.line(message)
 
     def handle(self) -> int:
         from pathlib import Path
@@ -305,57 +359,3 @@ To remove a repository (repo is a short alias for repositories):
             return 0
 
         raise ValueError(f"Setting {self.argument('key')} does not exist")
-
-    def _handle_single_value(
-        self,
-        source: ConfigSource,
-        key: str,
-        callbacks: tuple[Any, Any, Any],
-        values: list[Any],
-    ) -> int:
-        validator, normalizer, _ = callbacks
-
-        if len(values) > 1:
-            raise RuntimeError("You can only pass one value.")
-
-        value = values[0]
-        if not validator(value):
-            raise RuntimeError(f'"{value}" is an invalid value for {key}')
-
-        source.add_property(key, normalizer(value))
-
-        return 0
-
-    def _list_configuration(
-        self, config: dict[str, Any], raw: dict[str, Any], k: str = ""
-    ) -> None:
-        orig_k = k
-        for key, value in sorted(config.items()):
-            if k + key in self.LIST_PROHIBITED_SETTINGS:
-                continue
-
-            raw_val = raw.get(key)
-
-            if isinstance(value, dict):
-                k += f"{key}."
-                raw_val = cast("dict[str, Any]", raw_val)
-                self._list_configuration(value, raw_val, k=k)
-                k = orig_k
-
-                continue
-            elif isinstance(value, list):
-                value = ", ".join(
-                    json.dumps(val) if isinstance(val, list) else val for val in value
-                )
-                value = f"[{value}]"
-
-            if k.startswith("repositories."):
-                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>"
-            elif isinstance(raw_val, str) and raw_val != value:
-                message = (
-                    f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>  # {value}"
-                )
-            else:
-                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
-
-            self.line(message)
