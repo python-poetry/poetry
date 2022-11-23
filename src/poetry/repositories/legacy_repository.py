@@ -45,39 +45,6 @@ class LegacyRepository(HTTPRepository):
         # https://github.com/python-poetry/poetry/pull/6669#discussion_r990874908.
         return []
 
-    def package(
-        self, name: str, version: Version, extras: list[str] | None = None
-    ) -> Package:
-        """
-        Retrieve the release information.
-
-        This is a heavy task which takes time.
-        We have to download a package to get the dependencies.
-        We also need to download every file matching this release
-        to get the various hashes.
-
-        Note that this will be cached so the subsequent operations
-        should be much faster.
-        """
-        try:
-            index = self._packages.index(Package(name, version))
-
-            return self._packages[index]
-        except ValueError:
-            package = super().package(name, version, extras)
-            package._source_type = "legacy"
-            package._source_url = self._url
-            package._source_reference = self.name
-
-            return package
-
-    def find_links_for_package(self, package: Package) -> list[Link]:
-        page = self.get_page(f"/{package.name}/")
-        if page is None:
-            return []
-
-        return list(page.links_for_version(package.name, package.version))
-
     def _find_packages(
         self, name: NormalizedName, constraint: VersionConstraint
     ) -> list[Package]:
@@ -146,3 +113,36 @@ class LegacyRepository(HTTPRepository):
         if not response:
             return None
         return SimpleRepositoryPage(response.url, response.text)
+
+    def package(
+        self, name: str, version: Version, extras: list[str] | None = None
+    ) -> Package:
+        """
+        Retrieve the release information.
+
+        This is a heavy task which takes time.
+        We have to download a package to get the dependencies.
+        We also need to download every file matching this release
+        to get the various hashes.
+
+        Note that this will be cached so the subsequent operations
+        should be much faster.
+        """
+        try:
+            index = self._packages.index(Package(name, version))
+
+            return self._packages[index]
+        except ValueError:
+            package = super().package(name, version, extras)
+            package._source_type = "legacy"
+            package._source_url = self._url
+            package._source_reference = self.name
+
+            return package
+
+    def find_links_for_package(self, package: Package) -> list[Link]:
+        page = self.get_page(f"/{package.name}/")
+        if page is None:
+            return []
+
+        return list(page.links_for_version(package.name, package.version))

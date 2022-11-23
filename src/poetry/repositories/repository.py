@@ -32,6 +32,36 @@ class Repository(AbstractRepository):
     def packages(self) -> list[Package]:
         return self._packages
 
+    @staticmethod
+    def _get_constraints_from_dependency(
+        dependency: Dependency,
+    ) -> tuple[VersionConstraint, bool]:
+        constraint = dependency.constraint
+
+        allow_prereleases = dependency.allows_prereleases()
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
+
+        return constraint, allow_prereleases
+
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
+        return [
+            package
+            for package in self._packages
+            if package.name == name and constraint.allows(package.version)
+        ]
+
+    def _log(self, msg: str, level: str = "info") -> None:
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        getattr(logger, level)(f"<c1>Source ({self.name}):</c1> {msg}")
+
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
         constraint, allow_prereleases = self._get_constraints_from_dependency(
@@ -94,39 +124,6 @@ class Repository(AbstractRepository):
 
         return results
 
-    @staticmethod
-    def _get_constraints_from_dependency(
-        dependency: Dependency,
-    ) -> tuple[VersionConstraint, bool]:
-        constraint = dependency.constraint
-
-        allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange) and (
-            constraint.max is not None
-            and constraint.max.is_unstable()
-            or constraint.min is not None
-            and constraint.min.is_unstable()
-        ):
-            allow_prereleases = True
-
-        return constraint, allow_prereleases
-
-    def _find_packages(
-        self, name: NormalizedName, constraint: VersionConstraint
-    ) -> list[Package]:
-        return [
-            package
-            for package in self._packages
-            if package.name == name and constraint.allows(package.version)
-        ]
-
-    def _log(self, msg: str, level: str = "info") -> None:
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        getattr(logger, level)(f"<c1>Source ({self.name}):</c1> {msg}")
-
-    def __len__(self) -> int:
-        return len(self._packages)
-
     def find_links_for_package(self, package: Package) -> list[Link]:
         return []
 
@@ -139,3 +136,6 @@ class Repository(AbstractRepository):
                 return package.clone()
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")
+
+    def __len__(self) -> int:
+        return len(self._packages)

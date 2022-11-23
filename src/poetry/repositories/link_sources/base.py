@@ -43,12 +43,13 @@ class LinkSource:
     def __init__(self, url: str) -> None:
         self._url = url
 
+    @cached_property
+    def _link_cache(self) -> LinkCache:
+        raise NotImplementedError()
+
     @property
     def url(self) -> str:
         return self._url
-
-    def versions(self, name: NormalizedName) -> Iterator[Version]:
-        yield from self._link_cache[name]
 
     @property
     def packages(self) -> Iterator[Package]:
@@ -95,6 +96,9 @@ class LinkSource:
             pkg = Package(name, version, source_url=link.url)
         return pkg
 
+    def versions(self, name: NormalizedName) -> Iterator[Version]:
+        yield from self._link_cache[name]
+
     def links_for_version(
         self, name: NormalizedName, version: Version
     ) -> Iterator[Link]:
@@ -119,7 +123,3 @@ class LinkSource:
         if reasons:
             return "\n".join(sorted(reasons))
         return True
-
-    @cached_property
-    def _link_cache(self) -> LinkCache:
-        raise NotImplementedError()

@@ -56,16 +56,16 @@ class RepositoryPool(AbstractRepository):
         )
         return [prio_repo.repository for prio_repo in sorted_repositories]
 
+    def _contains_priority(self, priority: Priority) -> bool:
+        return any(
+            prio_repo.priority is priority for prio_repo in self._repositories.values()
+        )
+
     def has_default(self) -> bool:
         return self._contains_priority(Priority.DEFAULT)
 
     def has_primary_repositories(self) -> bool:
         return self._contains_priority(Priority.PRIMARY)
-
-    def _contains_priority(self, priority: Priority) -> bool:
-        return any(
-            prio_repo.priority is priority for prio_repo in self._repositories.values()
-        )
 
     def has_repository(self, name: str) -> bool:
         return name.lower() in self._repositories

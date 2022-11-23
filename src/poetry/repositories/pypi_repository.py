@@ -47,60 +47,11 @@ class PyPiRepository(HTTPRepository):
         self._base_url = url
         self._fallback = fallback
 
-    def search(self, query: str) -> list[Package]:
-        results = []
-
-        search = {"q": query}
-
-        response = requests.session().get(
-            self._base_url + "search", params=search, timeout=REQUESTS_TIMEOUT
-        )
-        content = parse(response.content, namespaceHTMLElements=False)
-        for result in content.findall(".//*[@class='package-snippet']"):
-            name_element = result.find("h3/*[@class='package-snippet__name']")
-            version_element = result.find("h3/*[@class='package-snippet__version']")
-
-            if (
-                name_element is None
-                or version_element is None
-                or not name_element.text
-                or not version_element.text
-            ):
-                continue
-
-            name = name_element.text
-            version = version_element.text
-
-            description_element = result.find(
-                "p[@class='package-snippet__description']"
-            )
-            description = (
-                description_element.text
-                if description_element is not None and description_element.text
-                else ""
-            )
-
-            try:
-                package = Package(name, version)
-                package.description = to_str(description.strip())
-                results.append(package)
-            except InvalidVersion:
-                self._log(
-                    f'Unable to parse version "{version}" for the {name} package,'
-                    " skipping",
-                    level="debug",
-                )
-
-        return results
-
-    def get_package_info(self, name: NormalizedName) -> dict[str, Any]:
-        """
-        Return the package information given its name.
-
-        The information is returned from the cache if it exists
-        or retrieved from the remote server.
-        """
-        return self._get_package_info(name)
+    @staticmethod
+    def _get_yanked(json_data: dict[str, Any]) -> str | bool:
+        if json_data.get("yanked", False):
+            return json_data.get("yanked_reason") or True  # noqa: SIM222
+        return False
 
     def _find_packages(
         self, name: NormalizedName, constraint: VersionConstraint
@@ -143,19 +94,6 @@ class PyPiRepository(HTTPRepository):
             raise PackageNotFound(f"Package [{name}] not found.")
 
         return info
-
-    def find_links_for_package(self, package: Package) -> list[Link]:
-        json_data = self._get(f"pypi/{package.name}/{package.version}/json")
-        if json_data is None:
-            return []
-
-        links = []
-        for url in json_data["urls"]:
-            if url["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                h = f"sha256={url['digests']['sha256']}"
-                links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
-
-        return links
 
     def _get_release_info(
         self, name: NormalizedName, version: Version
@@ -224,11 +162,6 @@ class PyPiRepository(HTTPRepository):
 
         return data.asdict()
 
-    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
-        source = self._base_url + f"simple/{name}/"
-        info = self.get_package_info(name)
-        return SimpleJsonPage(source, info)
-
     def _get(
         self, endpoint: str, headers: dict[str, str] | None = None
     ) -> dict[str, Any] | None:
@@ -256,8 +189,75 @@ class PyPiRepository(HTTPRepository):
         json: dict[str, Any] = json_response.json()
         return json
 
-    @staticmethod
-    def _get_yanked(json_data: dict[str, Any]) -> str | bool:
-        if json_data.get("yanked", False):
-            return json_data.get("yanked_reason") or True  # noqa: SIM222
-        return False
+    def search(self, query: str) -> list[Package]:
+        results = []
+
+        search = {"q": query}
+
+        response = requests.session().get(
+            self._base_url + "search", params=search, timeout=REQUESTS_TIMEOUT
+        )
+        content = parse(response.content, namespaceHTMLElements=False)
+        for result in content.findall(".//*[@class='package-snippet']"):
+            name_element = result.find("h3/*[@class='package-snippet__name']")
+            version_element = result.find("h3/*[@class='package-snippet__version']")
+
+            if (
+                name_element is None
+                or version_element is None
+                or not name_element.text
+                or not version_element.text
+            ):
+                continue
+
+            name = name_element.text
+            version = version_element.text
+
+            description_element = result.find(
+                "p[@class='package-snippet__description']"
+            )
+            description = (
+                description_element.text
+                if description_element is not None and description_element.text
+                else ""
+            )
+
+            try:
+                package = Package(name, version)
+                package.description = to_str(description.strip())
+                results.append(package)
+            except InvalidVersion:
+                self._log(
+                    f'Unable to parse version "{version}" for the {name} package,'
+                    " skipping",
+                    level="debug",
+                )
+
+        return results
+
+    def get_package_info(self, name: NormalizedName) -> dict[str, Any]:
+        """
+        Return the package information given its name.
+
+        The information is returned from the cache if it exists
+        or retrieved from the remote server.
+        """
+        return self._get_package_info(name)
+
+    def find_links_for_package(self, package: Package) -> list[Link]:
+        json_data = self._get(f"pypi/{package.name}/{package.version}/json")
+        if json_data is None:
+            return []
+
+        links = []
+        for url in json_data["urls"]:
+            if url["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                h = f"sha256={url['digests']['sha256']}"
+                links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
+
+        return links
+
+    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+        source = self._base_url + f"simple/{name}/"
+        info = self.get_package_info(name)
+        return SimpleJsonPage(source, info)
