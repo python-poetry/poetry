@@ -28,15 +28,6 @@ class PluginManager:
         self._disable_plugins = disable_plugins
         self._plugins: list[Plugin] = []
 
-    def load_plugins(self, env: Env | None = None) -> None:
-        if self._disable_plugins:
-            return
-
-        plugin_entrypoints = self.get_plugin_entry_points(env=env)
-
-        for ep in plugin_entrypoints:
-            self._load_plugin_entry_point(ep)
-
     @staticmethod
     def _is_plugin_candidate(ep: metadata.EntryPoint, env: Env | None = None) -> bool:
         """
@@ -48,6 +39,27 @@ class PluginManager:
             ep.dist is not None
             and env.site_packages.find_distribution(ep.dist.name) is not None
         )
+
+    def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
+        logger.debug("Loading the %s plugin", ep.name)  # type: ignore[attr-defined]
+
+        plugin = ep.load()  # type: ignore[no-untyped-call]
+
+        if not issubclass(plugin, (Plugin, ApplicationPlugin)):
+            raise ValueError(
+                "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
+            )
+
+        self.add_plugin(plugin())
+
+    def load_plugins(self, env: Env | None = None) -> None:
+        if self._disable_plugins:
+            return
+
+        plugin_entrypoints = self.get_plugin_entry_points(env=env)
+
+        for ep in plugin_entrypoints:
+            self._load_plugin_entry_point(ep)
 
     def get_plugin_entry_points(
         self, env: Env | None = None
@@ -69,15 +81,3 @@ class PluginManager:
     def activate(self, *args: Any, **kwargs: Any) -> None:
         for plugin in self._plugins:
             plugin.activate(*args, **kwargs)
-
-    def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
-        logger.debug("Loading the %s plugin", ep.name)  # type: ignore[attr-defined]
-
-        plugin = ep.load()  # type: ignore[no-untyped-call]
-
-        if not issubclass(plugin, (Plugin, ApplicationPlugin)):
-            raise ValueError(
-                "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
-            )
-
-        self.add_plugin(plugin())
