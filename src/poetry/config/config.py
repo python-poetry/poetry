@@ -49,16 +49,6 @@ class PackageFilterPolicy:
             policy = self.normalize(policy)
         self.packages = policy
 
-    def allows(self, package_name: str) -> bool:
-        if ":all:" in self.packages:
-            return False
-
-        return (
-            not self.packages
-            or ":none:" in self.packages
-            or canonicalize_name(package_name) not in self.packages
-        )
-
     @classmethod
     def is_reserved(cls, name: str) -> bool:
         return bool(re.match(r":(all|none):", name))
@@ -96,6 +86,16 @@ class PackageFilterPolicy:
             return False
 
         return True
+
+    def allows(self, package_name: str) -> bool:
+        if ":all:" in self.packages:
+            return False
+
+        return (
+            not self.packages
+            or ":none:" in self.packages
+            or canonicalize_name(package_name) not in self.packages
+        )
 
 
 logger = logging.getLogger(__name__)
@@ -149,43 +149,16 @@ class Config:
     def auth_config_source(self) -> ConfigSource:
         return self._auth_config_source
 
-    def set_config_source(self, config_source: ConfigSource) -> Config:
-        self._config_source = config_source
+    @property
+    def repository_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")) / "cache" / "repositories"
 
-        return self
-
-    def set_auth_config_source(self, config_source: ConfigSource) -> Config:
-        self._auth_config_source = config_source
-
-        return self
-
-    def merge(self, config: dict[str, Any]) -> None:
-        from poetry.utils.helpers import merge_dicts
-
-        merge_dicts(self._config, config)
-
-    def all(self) -> dict[str, Any]:
-        def _all(config: dict[str, Any], parent_key: str = "") -> dict[str, Any]:
-            all_ = {}
-
-            for key in config:
-                value = self.get(parent_key + key)
-                if isinstance(value, dict):
-                    if parent_key != "":
-                        current_parent = parent_key + key + "."
-                    else:
-                        current_parent = key + "."
-                    all_[key] = _all(config[key], parent_key=current_parent)
-                    continue
-
-                all_[key] = value
-
-            return all_
-
-        return _all(self.config)
-
-    def raw(self) -> dict[str, Any]:
-        return self._config
+    @property
+    def virtualenvs_path(self) -> Path:
+        path = self.get("virtualenvs.path")
+        if path is None:
+            path = Path(self.get("cache-dir")) / "virtualenvs"
+        return Path(path).expanduser()
 
     @staticmethod
     def _get_environment_repositories() -> dict[str, dict[str, str]]:
@@ -200,62 +173,6 @@ class Config:
                 }
 
         return repositories
-
-    @property
-    def repository_cache_directory(self) -> Path:
-        return Path(self.get("cache-dir")) / "cache" / "repositories"
-
-    @property
-    def virtualenvs_path(self) -> Path:
-        path = self.get("virtualenvs.path")
-        if path is None:
-            path = Path(self.get("cache-dir")) / "virtualenvs"
-        return Path(path).expanduser()
-
-    def get(self, setting_name: str, default: Any = None) -> Any:
-        """
-        Retrieve a setting value.
-        """
-        keys = setting_name.split(".")
-
-        # Looking in the environment if the setting
-        # is set via a POETRY_* environment variable
-        if self._use_environment:
-            if setting_name == "repositories":
-                # repositories setting is special for now
-                repositories = self._get_environment_repositories()
-                if repositories:
-                    return repositories
-
-            env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
-            env_value = os.getenv(env)
-            if env_value is not None:
-                return self.process(self._get_normalizer(setting_name)(env_value))
-
-        value = self._config
-        for key in keys:
-            if key not in value:
-                return self.process(default)
-
-            value = value[key]
-
-        return self.process(value)
-
-    def process(self, value: Any) -> Any:
-        if not isinstance(value, str):
-            return value
-
-        def resolve_from_config(match: re.Match[str]) -> Any:
-            key = match.group(1)
-            config_value = self.get(key)
-            if config_value:
-                return config_value
-
-            # The key doesn't exist in the config but might be resolved later,
-            # so we keep it as a format variable.
-            return f"{{{key}}}"
-
-        return re.sub(r"{(.+?)}", resolve_from_config, value)
 
     @staticmethod
     def _get_normalizer(name: str) -> Callable[[str], Any]:
@@ -306,3 +223,86 @@ class Config:
             _default_config.set_auth_config_source(FileConfigSource(auth_config_file))
 
         return _default_config
+
+    def set_config_source(self, config_source: ConfigSource) -> Config:
+        self._config_source = config_source
+
+        return self
+
+    def set_auth_config_source(self, config_source: ConfigSource) -> Config:
+        self._auth_config_source = config_source
+
+        return self
+
+    def merge(self, config: dict[str, Any]) -> None:
+        from poetry.utils.helpers import merge_dicts
+
+        merge_dicts(self._config, config)
+
+    def all(self) -> dict[str, Any]:
+        def _all(config: dict[str, Any], parent_key: str = "") -> dict[str, Any]:
+            all_ = {}
+
+            for key in config:
+                value = self.get(parent_key + key)
+                if isinstance(value, dict):
+                    if parent_key != "":
+                        current_parent = parent_key + key + "."
+                    else:
+                        current_parent = key + "."
+                    all_[key] = _all(config[key], parent_key=current_parent)
+                    continue
+
+                all_[key] = value
+
+            return all_
+
+        return _all(self.config)
+
+    def raw(self) -> dict[str, Any]:
+        return self._config
+
+    def get(self, setting_name: str, default: Any = None) -> Any:
+        """
+        Retrieve a setting value.
+        """
+        keys = setting_name.split(".")
+
+        # Looking in the environment if the setting
+        # is set via a POETRY_* environment variable
+        if self._use_environment:
+            if setting_name == "repositories":
+                # repositories setting is special for now
+                repositories = self._get_environment_repositories()
+                if repositories:
+                    return repositories
+
+            env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
+            env_value = os.getenv(env)
+            if env_value is not None:
+                return self.process(self._get_normalizer(setting_name)(env_value))
+
+        value = self._config
+        for key in keys:
+            if key not in value:
+                return self.process(default)
+
+            value = value[key]
+
+        return self.process(value)
+
+    def process(self, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+
+        def resolve_from_config(match: re.Match[str]) -> Any:
+            key = match.group(1)
+            config_value = self.get(key)
+            if config_value:
+                return config_value
+
+            # The key doesn't exist in the config but might be resolved later,
+            # so we keep it as a format variable.
+            return f"{{{key}}}"
+
+        return re.sub(r"{(.+?)}", resolve_from_config, value)
