@@ -79,6 +79,33 @@ class Layout:
     def package_path(self) -> Path:
         return self.basedir / self._package_path_relative
 
+    @staticmethod
+    def _create_tests(path: Path) -> None:
+        tests = path / "tests"
+        tests.mkdir()
+
+        tests_init = tests / "__init__.py"
+        tests_init.touch(exist_ok=False)
+
+    def _create_default(self, path: Path, src: bool = True) -> None:
+        package_path = path / self.package_path
+        package_path.mkdir(parents=True)
+
+        package_init = package_path / "__init__.py"
+        package_init.touch()
+
+    def _create_readme(self, path: Path) -> Path:
+        readme_file = path.joinpath(f"README.{self._readme_format}")
+        readme_file.touch()
+        return readme_file
+
+    def _write_poetry(self, path: Path) -> None:
+        pyproject = PyProjectTOML(path / "pyproject.toml")
+        content = self.generate_poetry_content()
+        for section in content:
+            pyproject.data.append(section, content[section])
+        pyproject.save()
+
     def get_package_include(self) -> InlineTable | None:
         package = inline_table()
 
@@ -170,30 +197,3 @@ class Layout:
         content.add("build-system", build_system)
 
         return content
-
-    def _create_default(self, path: Path, src: bool = True) -> None:
-        package_path = path / self.package_path
-        package_path.mkdir(parents=True)
-
-        package_init = package_path / "__init__.py"
-        package_init.touch()
-
-    def _create_readme(self, path: Path) -> Path:
-        readme_file = path.joinpath(f"README.{self._readme_format}")
-        readme_file.touch()
-        return readme_file
-
-    @staticmethod
-    def _create_tests(path: Path) -> None:
-        tests = path / "tests"
-        tests.mkdir()
-
-        tests_init = tests / "__init__.py"
-        tests_init.touch(exist_ok=False)
-
-    def _write_poetry(self, path: Path) -> None:
-        pyproject = PyProjectTOML(path / "pyproject.toml")
-        content = self.generate_poetry_content()
-        for section in content:
-            pyproject.data.append(section, content[section])
-        pyproject.save()
