@@ -49,39 +49,6 @@ class EditableBuilder(Builder):
         self._env = env
         self._io = io
 
-    def build(self, target_dir: Path | None = None) -> Path:
-        self._debug(
-            f"  - Building package <c1>{self._package.name}</c1> in"
-            " <info>editable</info> mode"
-        )
-
-        if self._package.build_script:
-            if self._package.build_should_generate_setup():
-                self._debug(
-                    "  - <warning>Falling back on using a <b>setup.py</b></warning>"
-                )
-                self._setup_build()
-                path: Path = self._path
-                return path
-
-            self._run_build_script(self._package.build_script)
-
-        for removed in self._env.site_packages.remove_distribution_files(
-            distribution_name=self._package.name
-        ):
-            self._debug(
-                f"  - Removed <c2>{removed.name}</c2> directory from"
-                f" <b>{removed.parent}</b>"
-            )
-
-        added_files = []
-        added_files += self._add_pth()
-        added_files += self._add_scripts()
-        self._add_dist_info(added_files)
-
-        path = self._path
-        return path
-
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
             self._debug(f"  - Executing build script: <b>{build_script}</b>")
@@ -282,3 +249,36 @@ class EditableBuilder(Builder):
     def _debug(self, msg: str) -> None:
         if self._io.is_debug():
             self._io.write_line(msg)
+
+    def build(self, target_dir: Path | None = None) -> Path:
+        self._debug(
+            f"  - Building package <c1>{self._package.name}</c1> in"
+            " <info>editable</info> mode"
+        )
+
+        if self._package.build_script:
+            if self._package.build_should_generate_setup():
+                self._debug(
+                    "  - <warning>Falling back on using a <b>setup.py</b></warning>"
+                )
+                self._setup_build()
+                path: Path = self._path
+                return path
+
+            self._run_build_script(self._package.build_script)
+
+        for removed in self._env.site_packages.remove_distribution_files(
+            distribution_name=self._package.name
+        ):
+            self._debug(
+                f"  - Removed <c2>{removed.name}</c2> directory from"
+                f" <b>{removed.parent}</b>"
+            )
+
+        added_files = []
+        added_files += self._add_pth()
+        added_files += self._add_scripts()
+        self._add_dist_info(added_files)
+
+        path = self._path
+        return path
