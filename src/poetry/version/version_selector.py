@@ -15,6 +15,12 @@ class VersionSelector:
     def __init__(self, pool: RepositoryPool) -> None:
         self._pool = pool
 
+    def _transform_version(self, version: str, pretty_version: str) -> str:
+        try:
+            return f"^{Version.parse(version).to_string()}"
+        except ValueError:
+            return pretty_version
+
     def find_best_candidate(
         self,
         package_name: str,
@@ -61,9 +67,3 @@ class VersionSelector:
         version = package.version
 
         return self._transform_version(version.text, package.pretty_version)
-
-    def _transform_version(self, version: str, pretty_version: str) -> str:
-        try:
-            return f"^{Version.parse(version).to_string()}"
-        except ValueError:
-            return pretty_version
