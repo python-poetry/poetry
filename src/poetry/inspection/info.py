@@ -97,139 +97,35 @@ class PackageInfo:
     def cache_version(self) -> str | None:
         return self._cache_version
 
-    def update(self, other: PackageInfo) -> PackageInfo:
-        self.name = other.name or self.name
-        self.version = other.version or self.version
-        self.summary = other.summary or self.summary
-        self.platform = other.platform or self.platform
-        self.requires_dist = other.requires_dist or self.requires_dist
-        self.requires_python = other.requires_python or self.requires_python
-        self.files = other.files or self.files
-        self._cache_version = other.cache_version or self._cache_version
-        return self
-
-    def asdict(self) -> dict[str, Any]:
+    @staticmethod
+    def _find_dist_info(path: Path) -> Iterator[Path]:
         """
-        Helper method to convert package info into a dictionary used for caching.
+        Discover all `*.*-info` directories in a given path.
+
+        :param path: Path to search.
         """
-        return {
-            "name": self.name,
-            "version": self.version,
-            "summary": self.summary,
-            "platform": self.platform,
-            "requires_dist": self.requires_dist,
-            "requires_python": self.requires_python,
-            "files": self.files,
-            "yanked": self.yanked,
-            "_cache_version": self._cache_version,
-        }
+        pattern = "**/*.*-info"
+        # Sometimes pathlib will fail on recursive symbolic links, so we need to work
+        # around it and use the glob module instead. Note that this does not happen with
+        # pathlib2 so it's safe to use it for Python < 3.4.
+        directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
 
-    @classmethod
-    def load(cls, data: dict[str, Any]) -> PackageInfo:
-        """
-        Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
+        for d in directories:
+            yield Path(d)
 
-        :param data: Data to load. This is expected to be a `dict` object output by
-            `asdict()`.
-        """
-        cache_version = data.pop("_cache_version", None)
-        return cls(cache_version=cache_version, **data)
+    @staticmethod
+    def _get_poetry_package(path: Path) -> ProjectPackage | None:
+        # Note: we ignore any setup.py file at this step
+        # TODO: add support for handling non-poetry PEP-517 builds
+        if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
+            with contextlib.suppress(RuntimeError):
+                return Factory().create_poetry(path).package
 
-    def to_package(
-        self,
-        name: str | None = None,
-        extras: list[str] | None = None,
-        root_dir: Path | None = None,
-    ) -> Package:
-        """
-        Create a new `poetry.core.packages.package.Package` instance using metadata from
-        this instance.
+        return None
 
-        :param name: Name to use for the package, if not specified name from this
-            instance is used.
-        :param extras: Extras to activate for this package.
-        :param root_dir:  Optional root directory to use for the package. If set,
-            dependency strings will be parsed relative to this directory.
-        """
-        name = name or self.name
-
-        if not name:
-            raise RuntimeError("Unable to create package with no name")
-
-        if not self.version:
-            # The version could not be determined, so we raise an error since it is
-            # mandatory.
-            raise RuntimeError(f"Unable to retrieve the package version for {name}")
-
-        package = Package(
-            name=name,
-            version=self.version,
-            source_type=self._source_type,
-            source_url=self._source_url,
-            source_reference=self._source_reference,
-            yanked=self.yanked,
-        )
-        if self.summary is not None:
-            package.description = self.summary
-        package.root_dir = root_dir
-        package.python_versions = self.requires_python or "*"
-        package.files = self.files
-
-        # If this is a local poetry project, we can extract "richer" requirement
-        # information, eg: development requirements etc.
-        if root_dir is not None:
-            path = root_dir
-        elif self._source_type == "directory" and self._source_url is not None:
-            path = Path(self._source_url)
-        else:
-            path = None
-
-        if path is not None:
-            poetry_package = self._get_poetry_package(path=path)
-            if poetry_package:
-                package.extras = poetry_package.extras
-                for dependency in poetry_package.requires:
-                    package.add_dependency(dependency)
-
-                return package
-
-        seen_requirements = set()
-
-        for req in self.requires_dist or []:
-            try:
-                # Attempt to parse the PEP-508 requirement string
-                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except InvalidMarker:
-                # Invalid marker, We strip the markers hoping for the best
-                req = req.split(";")[0]
-                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except ValueError:
-                # Likely unable to parse constraint so we skip it
-                logger.warning(
-                    "Invalid constraint (%s) found in %s-%s dependencies, skipping",
-                    req,
-                    package.name,
-                    package.version,
-                )
-                continue
-
-            if dependency.in_extras:
-                # this dependency is required by an extra package
-                for extra in dependency.in_extras:
-                    if extra not in package.extras:
-                        # this is the first time we encounter this extra for this
-                        # package
-                        package.extras[extra] = []
-
-                    package.extras[extra].append(dependency)
-
-            req = dependency.to_pep_508(with_extras=True)
-
-            if req not in seen_requirements:
-                package.add_dependency(dependency)
-                seen_requirements.add(req)
-
-        return package
+    @staticmethod
+    def has_setup_files(path: Path) -> bool:
+        return any((path / f).exists() for f in SetupReader.FILES)
 
     @classmethod
     def _from_distribution(
@@ -329,9 +225,16 @@ class PackageInfo:
 
         return info.update(new_info)
 
-    @staticmethod
-    def has_setup_files(path: Path) -> bool:
-        return any((path / f).exists() for f in SetupReader.FILES)
+    @classmethod
+    def load(cls, data: dict[str, Any]) -> PackageInfo:
+        """
+        Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
+
+        :param data: Data to load. This is expected to be a `dict` object output by
+            `asdict()`.
+        """
+        cache_version = data.pop("_cache_version", None)
+        return cls(cache_version=cache_version, **data)
 
     @classmethod
     def from_setup_files(cls, path: Path) -> PackageInfo:
@@ -388,22 +291,6 @@ class PackageInfo:
 
         return info
 
-    @staticmethod
-    def _find_dist_info(path: Path) -> Iterator[Path]:
-        """
-        Discover all `*.*-info` directories in a given path.
-
-        :param path: Path to search.
-        """
-        pattern = "**/*.*-info"
-        # Sometimes pathlib will fail on recursive symbolic links, so we need to work
-        # around it and use the glob module instead. Note that this does not happen with
-        # pathlib2 so it's safe to use it for Python < 3.4.
-        directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
-
-        for d in directories:
-            yield Path(d)
-
     @classmethod
     def from_metadata(cls, path: Path) -> PackageInfo | None:
         """
@@ -459,16 +346,6 @@ class PackageInfo:
             files=package.files,
             yanked=package.yanked_reason if package.yanked else False,
         )
-
-    @staticmethod
-    def _get_poetry_package(path: Path) -> ProjectPackage | None:
-        # Note: we ignore any setup.py file at this step
-        # TODO: add support for handling non-poetry PEP-517 builds
-        if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
-            with contextlib.suppress(RuntimeError):
-                return Factory().create_poetry(path).package
-
-        return None
 
     @classmethod
     def from_directory(cls, path: Path, disable_build: bool = False) -> PackageInfo:
@@ -561,6 +438,129 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
+
+    def to_package(
+        self,
+        name: str | None = None,
+        extras: list[str] | None = None,
+        root_dir: Path | None = None,
+    ) -> Package:
+        """
+        Create a new `poetry.core.packages.package.Package` instance using metadata from
+        this instance.
+
+        :param name: Name to use for the package, if not specified name from this
+            instance is used.
+        :param extras: Extras to activate for this package.
+        :param root_dir:  Optional root directory to use for the package. If set,
+            dependency strings will be parsed relative to this directory.
+        """
+        name = name or self.name
+
+        if not name:
+            raise RuntimeError("Unable to create package with no name")
+
+        if not self.version:
+            # The version could not be determined, so we raise an error since it is
+            # mandatory.
+            raise RuntimeError(f"Unable to retrieve the package version for {name}")
+
+        package = Package(
+            name=name,
+            version=self.version,
+            source_type=self._source_type,
+            source_url=self._source_url,
+            source_reference=self._source_reference,
+            yanked=self.yanked,
+        )
+        if self.summary is not None:
+            package.description = self.summary
+        package.root_dir = root_dir
+        package.python_versions = self.requires_python or "*"
+        package.files = self.files
+
+        # If this is a local poetry project, we can extract "richer" requirement
+        # information, eg: development requirements etc.
+        if root_dir is not None:
+            path = root_dir
+        elif self._source_type == "directory" and self._source_url is not None:
+            path = Path(self._source_url)
+        else:
+            path = None
+
+        if path is not None:
+            poetry_package = self._get_poetry_package(path=path)
+            if poetry_package:
+                package.extras = poetry_package.extras
+                for dependency in poetry_package.requires:
+                    package.add_dependency(dependency)
+
+                return package
+
+        seen_requirements = set()
+
+        for req in self.requires_dist or []:
+            try:
+                # Attempt to parse the PEP-508 requirement string
+                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
+            except InvalidMarker:
+                # Invalid marker, We strip the markers hoping for the best
+                req = req.split(";")[0]
+                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
+            except ValueError:
+                # Likely unable to parse constraint so we skip it
+                logger.warning(
+                    "Invalid constraint (%s) found in %s-%s dependencies, skipping",
+                    req,
+                    package.name,
+                    package.version,
+                )
+                continue
+
+            if dependency.in_extras:
+                # this dependency is required by an extra package
+                for extra in dependency.in_extras:
+                    if extra not in package.extras:
+                        # this is the first time we encounter this extra for this
+                        # package
+                        package.extras[extra] = []
+
+                    package.extras[extra].append(dependency)
+
+            req = dependency.to_pep_508(with_extras=True)
+
+            if req not in seen_requirements:
+                package.add_dependency(dependency)
+                seen_requirements.add(req)
+
+        return package
+
+    def update(self, other: PackageInfo) -> PackageInfo:
+        self.name = other.name or self.name
+        self.version = other.version or self.version
+        self.summary = other.summary or self.summary
+        self.platform = other.platform or self.platform
+        self.requires_dist = other.requires_dist or self.requires_dist
+        self.requires_python = other.requires_python or self.requires_python
+        self.files = other.files or self.files
+        self._cache_version = other.cache_version or self._cache_version
+        return self
+
+    def asdict(self) -> dict[str, Any]:
+        """
+        Helper method to convert package info into a dictionary used for caching.
+        """
+        return {
+            "name": self.name,
+            "version": self.version,
+            "summary": self.summary,
+            "platform": self.platform,
+            "requires_dist": self.requires_dist,
+            "requires_python": self.requires_python,
+            "files": self.files,
+            "yanked": self.yanked,
+            "_cache_version": self._cache_version,
+        }
 
 
 @functools.lru_cache(maxsize=None)
