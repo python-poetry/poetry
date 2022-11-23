@@ -47,12 +47,21 @@ class GitRefSpec:
     tag: str | None = None
     ref: bytes = dataclasses.field(default_factory=lambda: b"HEAD")
 
-    def resolve(self, remote_refs: FetchPackResult) -> None:
-        """
-        Resolve the ref using the provided remote refs.
-        """
-        self._normalise(remote_refs=remote_refs)
-        self._set_head(remote_refs=remote_refs)
+    @property
+    def key(self) -> str:
+        return self.revision or self.branch or self.tag or self.ref.decode("utf-8")
+
+    @property
+    def is_sha(self) -> bool:
+        return is_revision_sha(revision=self.revision)
+
+    @property
+    def is_ref(self) -> bool:
+        return self.branch is not None and self.branch.startswith("refs/")
+
+    @property
+    def is_sha_short(self) -> bool:
+        return self.revision is not None and self.is_sha and len(self.revision) < 40
 
     def _normalise(self, remote_refs: FetchPackResult) -> None:
         """
@@ -117,21 +126,12 @@ class GitRefSpec:
 
         remote_refs.refs[self.ref] = remote_refs.refs[b"HEAD"] = head
 
-    @property
-    def key(self) -> str:
-        return self.revision or self.branch or self.tag or self.ref.decode("utf-8")
-
-    @property
-    def is_sha(self) -> bool:
-        return is_revision_sha(revision=self.revision)
-
-    @property
-    def is_ref(self) -> bool:
-        return self.branch is not None and self.branch.startswith("refs/")
-
-    @property
-    def is_sha_short(self) -> bool:
-        return self.revision is not None and self.is_sha and len(self.revision) < 40
+    def resolve(self, remote_refs: FetchPackResult) -> None:
+        """
+        Resolve the ref using the provided remote refs.
+        """
+        self._normalise(remote_refs=remote_refs)
+        self._set_head(remote_refs=remote_refs)
 
 
 @dataclasses.dataclass
@@ -147,64 +147,6 @@ class GitRepoLocalInfo:
 
 
 class Git:
-    @staticmethod
-    def as_repo(repo: Path | str) -> Repo:
-        return Repo(str(repo))
-
-    @staticmethod
-    def get_remote_url(repo: Repo, remote: str = "origin") -> str:
-        with repo:
-            config = repo.get_config()
-            section = (b"remote", remote.encode("utf-8"))
-
-            url = ""
-            if config.has_section(section):
-                value = config.get(section, b"url")
-                url = value.decode("utf-8")
-
-            return url
-
-    @staticmethod
-    def get_revision(repo: Repo) -> str:
-        with repo:
-            return repo.head().decode("utf-8")
-
-    @classmethod
-    def info(cls, repo: Repo | Path | str) -> GitRepoLocalInfo:
-        return GitRepoLocalInfo(repo=repo)
-
-    @staticmethod
-    def get_name_from_source_url(url: str) -> str:
-        return re.sub(r"(.git)?$", "", url.rsplit("/", 1)[-1])
-
-    @classmethod
-    def _fetch_remote_refs(cls, url: str, local: Repo) -> FetchPackResult:
-        """
-        Helper method to fetch remote refs.
-        """
-        client: GitClient
-        path: str
-
-        kwargs: dict[str, str] = {}
-        credentials = get_default_authenticator().get_credentials_for_git_url(url=url)
-
-        if credentials.password and credentials.username:
-            # we do this conditionally as otherwise, dulwich might complain if these
-            # parameters are passed in for an ssh url
-            kwargs["username"] = credentials.username
-            kwargs["password"] = credentials.password
-
-        config = local.get_config_stack()
-        client, path = get_transport_and_path(url, config=config, **kwargs)
-
-        with local:
-            result: FetchPackResult = client.fetch(
-                path,
-                local,
-                determine_wants=local.object_store.determine_wants_all,
-            )
-            return result
-
     @staticmethod
     def _clone_legacy(url: str, refspec: GitRefSpec, target: Path) -> Repo:
         """
@@ -239,6 +181,75 @@ class Git:
 
         repo = Repo(str(target))
         return repo
+
+    @staticmethod
+    def as_repo(repo: Path | str) -> Repo:
+        return Repo(str(repo))
+
+    @staticmethod
+    def get_remote_url(repo: Repo, remote: str = "origin") -> str:
+        with repo:
+            config = repo.get_config()
+            section = (b"remote", remote.encode("utf-8"))
+
+            url = ""
+            if config.has_section(section):
+                value = config.get(section, b"url")
+                url = value.decode("utf-8")
+
+            return url
+
+    @staticmethod
+    def get_revision(repo: Repo) -> str:
+        with repo:
+            return repo.head().decode("utf-8")
+
+    @staticmethod
+    def get_name_from_source_url(url: str) -> str:
+        return re.sub(r"(.git)?$", "", url.rsplit("/", 1)[-1])
+
+    @staticmethod
+    def is_using_legacy_client() -> bool:
+        from poetry.config.config import Config
+
+        legacy_client: bool = Config.create().get(
+            "experimental.system-git-client", False
+        )
+        return legacy_client
+
+    @staticmethod
+    def get_default_source_root() -> Path:
+        from poetry.config.config import Config
+
+        return Path(Config.create().get("cache-dir")) / "src"
+
+    @classmethod
+    def _fetch_remote_refs(cls, url: str, local: Repo) -> FetchPackResult:
+        """
+        Helper method to fetch remote refs.
+        """
+        client: GitClient
+        path: str
+
+        kwargs: dict[str, str] = {}
+        credentials = get_default_authenticator().get_credentials_for_git_url(url=url)
+
+        if credentials.password and credentials.username:
+            # we do this conditionally as otherwise, dulwich might complain if these
+            # parameters are passed in for an ssh url
+            kwargs["username"] = credentials.username
+            kwargs["password"] = credentials.password
+
+        config = local.get_config_stack()
+        client, path = get_transport_and_path(url, config=config, **kwargs)
+
+        with local:
+            result: FetchPackResult = client.fetch(
+                path,
+                local,
+                determine_wants=local.object_store.determine_wants_all,
+            )
+            return result
 
     @classmethod
     def _clone(cls, url: str, refspec: GitRefSpec, target: Path) -> Repo:
@@ -360,20 +371,9 @@ class Git:
                     and not path_absolute.joinpath(".git").is_dir(),
                 )
 
-    @staticmethod
-    def is_using_legacy_client() -> bool:
-        from poetry.config.config import Config
-
-        legacy_client: bool = Config.create().get(
-            "experimental.system-git-client", False
-        )
-        return legacy_client
-
-    @staticmethod
-    def get_default_source_root() -> Path:
-        from poetry.config.config import Config
-
-        return Path(Config.create().get("cache-dir")) / "src"
+    @classmethod
+    def info(cls, repo: Repo | Path | str) -> GitRepoLocalInfo:
+        return GitRepoLocalInfo(repo=repo)
 
     @classmethod
     def clone(
