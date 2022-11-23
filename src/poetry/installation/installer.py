@@ -87,103 +87,6 @@ class Installer:
     def installer(self) -> BaseInstaller:
         return self._installer
 
-    def set_package(self, package: ProjectPackage) -> Installer:
-        self._package = package
-
-        return self
-
-    def set_locker(self, locker: Locker) -> Installer:
-        self._locker = locker
-
-        return self
-
-    def run(self) -> int:
-        # Check if refresh
-        if not self._update and self._lock and self._locker.is_locked():
-            return self._do_refresh()
-
-        # Force update if there is no lock file present
-        if not self._update and not self._locker.is_locked():
-            self._update = True
-
-        if self.is_dry_run():
-            self.verbose(True)
-            self._write_lock = False
-            self._execute_operations = False
-
-        return self._do_install()
-
-    def dry_run(self, dry_run: bool = True) -> Installer:
-        self._dry_run = dry_run
-        self._executor.dry_run(dry_run)
-
-        return self
-
-    def is_dry_run(self) -> bool:
-        return self._dry_run
-
-    def requires_synchronization(
-        self, requires_synchronization: bool = True
-    ) -> Installer:
-        self._requires_synchronization = requires_synchronization
-
-        return self
-
-    def verbose(self, verbose: bool = True) -> Installer:
-        self._verbose = verbose
-        self._executor.verbose(verbose)
-
-        return self
-
-    def is_verbose(self) -> bool:
-        return self._verbose
-
-    def only_groups(self, groups: Iterable[str]) -> Installer:
-        self._groups = groups
-
-        return self
-
-    def update(self, update: bool = True) -> Installer:
-        self._update = update
-
-        return self
-
-    def lock(self, update: bool = True) -> Installer:
-        """
-        Prepare the installer for locking only.
-        """
-        self.update(update=update)
-        self.execute_operations(False)
-        self._lock = True
-
-        return self
-
-    def is_updating(self) -> bool:
-        return self._update
-
-    def execute_operations(self, execute: bool = True) -> Installer:
-        self._execute_operations = execute
-
-        if not execute:
-            self._executor.disable()
-
-        return self
-
-    def whitelist(self, packages: Iterable[str]) -> Installer:
-        self._whitelist = [canonicalize_name(p) for p in packages]
-
-        return self
-
-    def extras(self, extras: list[str]) -> Installer:
-        self._extras = [canonicalize_name(extra) for extra in extras]
-
-        return self
-
-    def use_executor(self, use_executor: bool = True) -> Installer:
-        self._use_executor = use_executor
-
-        return self
-
     def _do_refresh(self) -> int:
         from poetry.puzzle.solver import Solver
 
@@ -567,3 +470,100 @@ class Installer:
 
     def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)
+
+    def set_package(self, package: ProjectPackage) -> Installer:
+        self._package = package
+
+        return self
+
+    def set_locker(self, locker: Locker) -> Installer:
+        self._locker = locker
+
+        return self
+
+    def run(self) -> int:
+        # Check if refresh
+        if not self._update and self._lock and self._locker.is_locked():
+            return self._do_refresh()
+
+        # Force update if there is no lock file present
+        if not self._update and not self._locker.is_locked():
+            self._update = True
+
+        if self.is_dry_run():
+            self.verbose(True)
+            self._write_lock = False
+            self._execute_operations = False
+
+        return self._do_install()
+
+    def dry_run(self, dry_run: bool = True) -> Installer:
+        self._dry_run = dry_run
+        self._executor.dry_run(dry_run)
+
+        return self
+
+    def is_dry_run(self) -> bool:
+        return self._dry_run
+
+    def requires_synchronization(
+        self, requires_synchronization: bool = True
+    ) -> Installer:
+        self._requires_synchronization = requires_synchronization
+
+        return self
+
+    def verbose(self, verbose: bool = True) -> Installer:
+        self._verbose = verbose
+        self._executor.verbose(verbose)
+
+        return self
+
+    def is_verbose(self) -> bool:
+        return self._verbose
+
+    def only_groups(self, groups: Iterable[str]) -> Installer:
+        self._groups = groups
+
+        return self
+
+    def update(self, update: bool = True) -> Installer:
+        self._update = update
+
+        return self
+
+    def lock(self, update: bool = True) -> Installer:
+        """
+        Prepare the installer for locking only.
+        """
+        self.update(update=update)
+        self.execute_operations(False)
+        self._lock = True
+
+        return self
+
+    def is_updating(self) -> bool:
+        return self._update
+
+    def execute_operations(self, execute: bool = True) -> Installer:
+        self._execute_operations = execute
+
+        if not execute:
+            self._executor.disable()
+
+        return self
+
+    def whitelist(self, packages: Iterable[str]) -> Installer:
+        self._whitelist = [canonicalize_name(p) for p in packages]
+
+        return self
+
+    def extras(self, extras: list[str]) -> Installer:
+        self._extras = [canonicalize_name(extra) for extra in extras]
+
+        return self
+
+    def use_executor(self, use_executor: bool = True) -> Installer:
+        self._use_executor = use_executor
+
+        return self

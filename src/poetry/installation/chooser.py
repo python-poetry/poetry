@@ -71,44 +71,6 @@ class Chooser:
             self._config.get("installer.no-binary", [])
         )
 
-    def choose_for(self, package: Package) -> Link:
-        """
-        Return the url of the selected archive for a given package.
-        """
-        links = []
-        for link in self._get_links(package):
-            if link.is_wheel:
-                if not self._no_binary_policy.allows(package.name):
-                    logger.debug(
-                        "Skipping wheel for %s as requested in no binary policy for"
-                        " package (%s)",
-                        link.filename,
-                        package.name,
-                    )
-                    continue
-
-                if not Wheel(link.filename).is_supported_by_environment(self._env):
-                    logger.debug(
-                        "Skipping wheel %s as this is not supported by the current"
-                        " environment",
-                        link.filename,
-                    )
-                    continue
-
-            if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
-                logger.debug("Skipping unsupported distribution %s", link.filename)
-                continue
-
-            links.append(link)
-
-        if not links:
-            raise RuntimeError(f"Unable to find installation candidates for {package}")
-
-        # Get the best link
-        chosen = max(links, key=lambda link: self._sort_key(package, link))
-
-        return chosen
-
     def _get_links(self, package: Package) -> list[Link]:
         if package.source_type:
             assert package.source_reference is not None
@@ -219,3 +181,41 @@ class Chooser:
         h = link.hash_name + ":" + link.hash
 
         return h in {f["hash"] for f in package.files}
+
+    def choose_for(self, package: Package) -> Link:
+        """
+        Return the url of the selected archive for a given package.
+        """
+        links = []
+        for link in self._get_links(package):
+            if link.is_wheel:
+                if not self._no_binary_policy.allows(package.name):
+                    logger.debug(
+                        "Skipping wheel for %s as requested in no binary policy for"
+                        " package (%s)",
+                        link.filename,
+                        package.name,
+                    )
+                    continue
+
+                if not Wheel(link.filename).is_supported_by_environment(self._env):
+                    logger.debug(
+                        "Skipping wheel %s as this is not supported by the current"
+                        " environment",
+                        link.filename,
+                    )
+                    continue
+
+            if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
+                logger.debug("Skipping unsupported distribution %s", link.filename)
+                continue
+
+            links.append(link)
+
+        if not links:
+            raise RuntimeError(f"Unable to find installation candidates for {package}")
+
+        # Get the best link
+        chosen = max(links, key=lambda link: self._sort_key(package, link))
+
+        return chosen

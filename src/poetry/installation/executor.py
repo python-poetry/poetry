@@ -100,105 +100,6 @@ class Executor:
     def removals_count(self) -> int:
         return self._executed["uninstall"]
 
-    def supports_fancy_output(self) -> bool:
-        return self._io.output.is_decorated() and not self._dry_run
-
-    def disable(self) -> Executor:
-        self._enabled = False
-
-        return self
-
-    def dry_run(self, dry_run: bool = True) -> Executor:
-        self._dry_run = dry_run
-
-        return self
-
-    def verbose(self, verbose: bool = True) -> Executor:
-        self._verbose = verbose
-
-        return self
-
-    def pip_install(
-        self, req: Path, upgrade: bool = False, editable: bool = False
-    ) -> int:
-        try:
-            pip_install(req, self._env, upgrade=upgrade, editable=editable)
-        except EnvCommandError as e:
-            output = decode(e.e.output)
-            if (
-                "KeyboardInterrupt" in output
-                or "ERROR: Operation cancelled by user" in output
-            ):
-                return -2
-            raise
-
-        return 0
-
-    def execute(self, operations: list[Operation]) -> int:
-        self._total_operations = len(operations)
-        for job_type in self._executed:
-            self._executed[job_type] = 0
-            self._skipped[job_type] = 0
-
-        if operations and (self._enabled or self._dry_run):
-            self._display_summary(operations)
-
-        self._sections = {}
-        self._yanked_warnings = []
-
-        # pip has to be installed first without parallelism if we install via pip
-        for i, op in enumerate(operations):
-            if op.package.name == "pip":
-                wait([self._executor.submit(self._execute_operation, op)])
-                del operations[i]
-                break
-
-        # We group operations by priority
-        groups = itertools.groupby(operations, key=lambda o: -o.priority)
-        for _, group in groups:
-            tasks = []
-            serial_operations = []
-            for operation in group:
-                if self._shutdown:
-                    break
-
-                # Some operations are unsafe, we must execute them serially in a group
-                # https://github.com/python-poetry/poetry/issues/3086
-                # https://github.com/python-poetry/poetry/issues/2658
-                #
-                # We need to explicitly check source type here, see:
-                # https://github.com/python-poetry/poetry-core/pull/98
-                is_parallel_unsafe = operation.job_type == "uninstall" or (
-                    operation.package.develop
-                    and operation.package.source_type in {"directory", "git"}
-                )
-                if not operation.skipped and is_parallel_unsafe:
-                    serial_operations.append(operation)
-                    continue
-
-                tasks.append(self._executor.submit(self._execute_operation, operation))
-
-            try:
-                wait(tasks)
-
-                for operation in serial_operations:
-                    wait([self._executor.submit(self._execute_operation, operation)])
-
-            except KeyboardInterrupt:
-                self._shutdown = True
-
-            if self._shutdown:
-                # Cancelling further tasks from being executed
-                [task.cancel() for task in tasks]
-                self._executor.shutdown(wait=True)
-
-                break
-
-        for warning in self._yanked_warnings:
-            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
-
-        return 1 if self._shutdown else 0
-
     @staticmethod
     def _get_max_workers(desired_max_workers: int | None = None) -> int:
         # This should be directly handled by ThreadPoolExecutor
@@ -213,6 +114,20 @@ class Executor:
         if desired_max_workers is None:
             return default_max_workers
         return min(default_max_workers, desired_max_workers)
+
+    @staticmethod
+    def _validate_archive_hash(archive: Path, package: Package) -> str:
+        file_dep = FileDependency(package.name, archive)
+        archive_hash: str = "sha256:" + file_dep.hash()
+        known_hashes = {f["hash"] for f in package.files}
+
+        if archive_hash not in known_hashes:
+            raise RuntimeError(
+                f"Hash for {package} from archive {archive.name} not found in"
+                f" known hashes (was: {archive_hash})"
+            )
+
+        return archive_hash
 
     def _write(self, operation: Operation, line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
@@ -351,71 +266,6 @@ class Executor:
                 self._executed[operation.job_type] += 1
             else:
                 self._skipped[operation.job_type] += 1
-
-    def run_pip(self, *args: Any, **kwargs: Any) -> int:
-        try:
-            self._env.run_pip(*args, **kwargs)
-        except EnvCommandError as e:
-            output = decode(e.e.output)
-            if (
-                "KeyboardInterrupt" in output
-                or "ERROR: Operation cancelled by user" in output
-            ):
-                return -2
-
-            raise
-
-        return 0
-
-    def get_operation_message(
-        self,
-        operation: Operation,
-        done: bool = False,
-        error: bool = False,
-        warning: bool = False,
-    ) -> str:
-        base_tag = "fg=default"
-        operation_color = "c2"
-        source_operation_color = "c2"
-        package_color = "c1"
-
-        if error:
-            operation_color = "error"
-        elif warning:
-            operation_color = "warning"
-        elif done:
-            operation_color = "success"
-
-        if operation.skipped:
-            base_tag = "fg=default;options=dark"
-            operation_color += "_dark"
-            source_operation_color += "_dark"
-            package_color += "_dark"
-
-        if isinstance(operation, Install):
-            return (
-                f"<{base_tag}>Installing"
-                f" <{package_color}>{operation.package.name}</{package_color}>"
-                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
-            )
-
-        if isinstance(operation, Uninstall):
-            return (
-                f"<{base_tag}>Removing"
-                f" <{package_color}>{operation.package.name}</{package_color}>"
-                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
-            )
-
-        if isinstance(operation, Update):
-            return (
-                f"<{base_tag}>Updating"
-                f" <{package_color}>{operation.initial_package.name}</{package_color}> "
-                f"(<{source_operation_color}>"
-                f"{operation.initial_package.full_pretty_version}"
-                f"</{source_operation_color}> -> <{operation_color}>"
-                f"{operation.target_package.full_pretty_version}</>)</>"
-            )
-        return ""
 
     def _display_summary(self, operations: list[Operation]) -> None:
         installs = 0
@@ -664,20 +514,6 @@ class Executor:
 
         return archive
 
-    @staticmethod
-    def _validate_archive_hash(archive: Path, package: Package) -> str:
-        file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + file_dep.hash()
-        known_hashes = {f["hash"] for f in package.files}
-
-        if archive_hash not in known_hashes:
-            raise RuntimeError(
-                f"Hash for {package} from archive {archive.name} not found in"
-                f" known hashes (was: {archive_hash})"
-            )
-
-        return archive_hash
-
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
@@ -830,3 +666,167 @@ class Executor:
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
+
+    def supports_fancy_output(self) -> bool:
+        return self._io.output.is_decorated() and not self._dry_run
+
+    def disable(self) -> Executor:
+        self._enabled = False
+
+        return self
+
+    def dry_run(self, dry_run: bool = True) -> Executor:
+        self._dry_run = dry_run
+
+        return self
+
+    def verbose(self, verbose: bool = True) -> Executor:
+        self._verbose = verbose
+
+        return self
+
+    def pip_install(
+        self, req: Path, upgrade: bool = False, editable: bool = False
+    ) -> int:
+        try:
+            pip_install(req, self._env, upgrade=upgrade, editable=editable)
+        except EnvCommandError as e:
+            output = decode(e.e.output)
+            if (
+                "KeyboardInterrupt" in output
+                or "ERROR: Operation cancelled by user" in output
+            ):
+                return -2
+            raise
+
+        return 0
+
+    def execute(self, operations: list[Operation]) -> int:
+        self._total_operations = len(operations)
+        for job_type in self._executed:
+            self._executed[job_type] = 0
+            self._skipped[job_type] = 0
+
+        if operations and (self._enabled or self._dry_run):
+            self._display_summary(operations)
+
+        self._sections = {}
+        self._yanked_warnings = []
+
+        # pip has to be installed first without parallelism if we install via pip
+        for i, op in enumerate(operations):
+            if op.package.name == "pip":
+                wait([self._executor.submit(self._execute_operation, op)])
+                del operations[i]
+                break
+
+        # We group operations by priority
+        groups = itertools.groupby(operations, key=lambda o: -o.priority)
+        for _, group in groups:
+            tasks = []
+            serial_operations = []
+            for operation in group:
+                if self._shutdown:
+                    break
+
+                # Some operations are unsafe, we must execute them serially in a group
+                # https://github.com/python-poetry/poetry/issues/3086
+                # https://github.com/python-poetry/poetry/issues/2658
+                #
+                # We need to explicitly check source type here, see:
+                # https://github.com/python-poetry/poetry-core/pull/98
+                is_parallel_unsafe = operation.job_type == "uninstall" or (
+                    operation.package.develop
+                    and operation.package.source_type in {"directory", "git"}
+                )
+                if not operation.skipped and is_parallel_unsafe:
+                    serial_operations.append(operation)
+                    continue
+
+                tasks.append(self._executor.submit(self._execute_operation, operation))
+
+            try:
+                wait(tasks)
+
+                for operation in serial_operations:
+                    wait([self._executor.submit(self._execute_operation, operation)])
+
+            except KeyboardInterrupt:
+                self._shutdown = True
+
+            if self._shutdown:
+                # Cancelling further tasks from being executed
+                [task.cancel() for task in tasks]
+                self._executor.shutdown(wait=True)
+
+                break
+
+        for warning in self._yanked_warnings:
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
+
+        return 1 if self._shutdown else 0
+
+    def run_pip(self, *args: Any, **kwargs: Any) -> int:
+        try:
+            self._env.run_pip(*args, **kwargs)
+        except EnvCommandError as e:
+            output = decode(e.e.output)
+            if (
+                "KeyboardInterrupt" in output
+                or "ERROR: Operation cancelled by user" in output
+            ):
+                return -2
+
+            raise
+
+        return 0
+
+    def get_operation_message(
+        self,
+        operation: Operation,
+        done: bool = False,
+        error: bool = False,
+        warning: bool = False,
+    ) -> str:
+        base_tag = "fg=default"
+        operation_color = "c2"
+        source_operation_color = "c2"
+        package_color = "c1"
+
+        if error:
+            operation_color = "error"
+        elif warning:
+            operation_color = "warning"
+        elif done:
+            operation_color = "success"
+
+        if operation.skipped:
+            base_tag = "fg=default;options=dark"
+            operation_color += "_dark"
+            source_operation_color += "_dark"
+            package_color += "_dark"
+
+        if isinstance(operation, Install):
+            return (
+                f"<{base_tag}>Installing"
+                f" <{package_color}>{operation.package.name}</{package_color}>"
+                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
+            )
+
+        if isinstance(operation, Uninstall):
+            return (
+                f"<{base_tag}>Removing"
+                f" <{package_color}>{operation.package.name}</{package_color}>"
+                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
+            )
+
+        if isinstance(operation, Update):
+            return (
+                f"<{base_tag}>Updating"
+                f" <{package_color}>{operation.initial_package.name}</{package_color}> "
+                f"(<{source_operation_color}>"
+                f"{operation.initial_package.full_pretty_version}"
+                f"</{source_operation_color}> -> <{operation_color}>"
+                f"{operation.target_package.full_pretty_version}</>)</>"
+            )
+        return ""
