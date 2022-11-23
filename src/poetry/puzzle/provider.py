@@ -163,6 +163,235 @@ class Provider:
     def use_latest(self) -> Collection[NormalizedName]:
         return self._use_latest
 
+    @staticmethod
+    def validate_package_for_dependency(
+        dependency: Dependency, package: Package
+    ) -> None:
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                f"The dependency name for {dependency.name} does not match the actual"
+                f" package's name: {package.name}"
+            )
+
+    @staticmethod
+    def get_package_from_vcs(
+        vcs: str,
+        url: str,
+        branch: str | None = None,
+        tag: str | None = None,
+        rev: str | None = None,
+        subdirectory: str | None = None,
+        source_root: Path | None = None,
+    ) -> Package:
+        if vcs != "git":
+            raise ValueError(f"Unsupported VCS dependency {vcs}")
+
+        return _get_package_from_git(
+            url=url,
+            branch=branch,
+            tag=tag,
+            rev=rev,
+            subdirectory=subdirectory,
+            source_root=source_root,
+        )
+
+    @classmethod
+    def get_package_from_file(cls, file_path: Path) -> Package:
+        try:
+            package = PackageInfo.from_path(path=file_path).to_package(
+                root_dir=file_path
+            )
+        except PackageInfoError:
+            raise RuntimeError(
+                f"Unable to determine package info from path: {file_path}"
+            )
+
+        return package
+
+    @classmethod
+    def get_package_from_directory(cls, directory: Path) -> Package:
+        return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
+
+    @classmethod
+    def get_package_from_url(cls, url: str) -> Package:
+        file_name = os.path.basename(urllib.parse.urlparse(url).path)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dest = Path(temp_dir) / file_name
+            download_file(url, dest)
+            package = cls.get_package_from_file(dest)
+
+        package._source_type = "url"
+        package._source_url = url
+
+        return package
+
+    def _search_for_vcs(self, dependency: VCSDependency) -> Package:
+        """
+        Search for the specifications that match the given VCS dependency.
+
+        Basically, we clone the repository in a temporary directory
+        and get the information we need by checking out the specified reference.
+        """
+        package = self.get_package_from_vcs(
+            dependency.vcs,
+            dependency.source,
+            branch=dependency.branch,
+            tag=dependency.tag,
+            rev=dependency.rev,
+            subdirectory=dependency.source_subdirectory,
+            source_root=self._source_root
+            or (self._env.path.joinpath("src") if self._env else None),
+        )
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
+
+        package.develop = dependency.develop
+
+        return package
+
+    def _search_for_file(self, dependency: FileDependency) -> Package:
+        package = self.get_package_from_file(dependency.full_path)
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
+
+        if dependency.base is not None:
+            package.root_dir = dependency.base
+
+        package.files = [
+            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+        ]
+
+        return package
+
+    def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
+        package = self.get_package_from_directory(dependency.full_path)
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
+
+        package.develop = dependency.develop
+
+        if dependency.base is not None:
+            package.root_dir = dependency.base
+
+        return package
+
+    def _search_for_url(self, dependency: URLDependency) -> Package:
+        package = self.get_package_from_url(dependency.url)
+
+        self.validate_package_for_dependency(dependency=dependency, package=package)
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                for extra_dep in package.extras[extra]:
+                    package.add_dependency(extra_dep)
+
+        return package
+
+    def _get_dependencies_with_overrides(
+        self, dependencies: list[Dependency], package: DependencyPackage
+    ) -> list[Dependency]:
+        overrides = self._overrides.get(package, {})
+        _dependencies = []
+        overridden = []
+        for dep in dependencies:
+            if dep.name in overrides:
+                if dep.name in overridden:
+                    continue
+
+                # empty constraint is used in overrides to mark that the package has
+                # already been handled and is not required for the attached markers
+                if not overrides[dep.name].constraint.is_empty():
+                    _dependencies.append(overrides[dep.name])
+                overridden.append(dep.name)
+
+                continue
+
+            _dependencies.append(dep)
+        return _dependencies
+
+    def _group_by_source(
+        self, dependencies: Iterable[Dependency]
+    ) -> list[list[Dependency]]:
+        """
+        Takes a list of dependencies and returns a list of groups of dependencies,
+        each group containing all dependencies from the same source.
+        """
+        groups: list[list[Dependency]] = []
+        for dep in dependencies:
+            for group in groups:
+                if (
+                    dep.is_same_source_as(group[0])
+                    and dep.source_name == group[0].source_name
+                ):
+                    group.append(dep)
+                    break
+            else:
+                groups.append([dep])
+        return groups
+
+    def _merge_dependencies_by_constraint(
+        self, dependencies: Iterable[Dependency]
+    ) -> list[Dependency]:
+        """
+        Merge dependencies with the same constraint
+        by building a union of their markers.
+        """
+        by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
+        for dep in dependencies:
+            by_constraint[dep.constraint].append(dep)
+        for constraint, _deps in by_constraint.items():
+            new_markers = []
+            for dep in _deps:
+                marker = dep.marker.without_extras()
+                if marker.is_any():
+                    # No marker or only extras
+                    continue
+
+                new_markers.append(marker)
+
+            if not new_markers:
+                continue
+
+            dep = _deps[0]
+            dep.marker = dep.marker.union(MarkerUnion(*new_markers))
+            by_constraint[constraint] = [dep]
+
+        return [value[0] for value in by_constraint.values()]
+
+    def _merge_dependencies_by_marker(
+        self, dependencies: Iterable[Dependency]
+    ) -> list[Dependency]:
+        """
+        Merge dependencies with the same marker
+        by building the intersection of their constraints.
+        """
+        by_marker: dict[BaseMarker, list[Dependency]] = defaultdict(list)
+        for dep in dependencies:
+            by_marker[dep.marker].append(dep)
+        deps = []
+        for _deps in by_marker.values():
+            if len(_deps) == 1:
+                deps.extend(_deps)
+            else:
+                new_constraint = _deps[0].constraint
+                for dep in _deps[1:]:
+                    new_constraint = new_constraint.intersect(dep.constraint)
+                if new_constraint.is_empty():
+                    # leave dependencies as-is so the resolver will pickup
+                    # the conflict and display a proper error.
+                    deps.extend(_deps)
+                else:
+                    self.debug(
+                        f"<debug>Merging constraints for {_deps[0].name} for"
+                        f" marker {_deps[0].marker}</debug>"
+                    )
+                    deps.append(_deps[0].with_constraint(new_constraint))
+        return deps
+
     def is_debugging(self) -> bool:
         return self._is_debugging
 
@@ -205,17 +434,6 @@ class Provider:
             yield self
         finally:
             self._use_latest = []
-
-    @staticmethod
-    def validate_package_for_dependency(
-        dependency: Dependency, package: Package
-    ) -> None:
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                f"The dependency name for {dependency.name} does not match the actual"
-                f" package's name: {package.name}"
-            )
 
     def search_for_installed_packages(
         self,
@@ -328,145 +546,6 @@ class Provider:
             packages = self.search_for_installed_packages(dependency)
 
         return PackageCollection(dependency, packages)
-
-    def _search_for_vcs(self, dependency: VCSDependency) -> Package:
-        """
-        Search for the specifications that match the given VCS dependency.
-
-        Basically, we clone the repository in a temporary directory
-        and get the information we need by checking out the specified reference.
-        """
-        package = self.get_package_from_vcs(
-            dependency.vcs,
-            dependency.source,
-            branch=dependency.branch,
-            tag=dependency.tag,
-            rev=dependency.rev,
-            subdirectory=dependency.source_subdirectory,
-            source_root=self._source_root
-            or (self._env.path.joinpath("src") if self._env else None),
-        )
-
-        self.validate_package_for_dependency(dependency=dependency, package=package)
-
-        package.develop = dependency.develop
-
-        return package
-
-    @staticmethod
-    def get_package_from_vcs(
-        vcs: str,
-        url: str,
-        branch: str | None = None,
-        tag: str | None = None,
-        rev: str | None = None,
-        subdirectory: str | None = None,
-        source_root: Path | None = None,
-    ) -> Package:
-        if vcs != "git":
-            raise ValueError(f"Unsupported VCS dependency {vcs}")
-
-        return _get_package_from_git(
-            url=url,
-            branch=branch,
-            tag=tag,
-            rev=rev,
-            subdirectory=subdirectory,
-            source_root=source_root,
-        )
-
-    def _search_for_file(self, dependency: FileDependency) -> Package:
-        package = self.get_package_from_file(dependency.full_path)
-
-        self.validate_package_for_dependency(dependency=dependency, package=package)
-
-        if dependency.base is not None:
-            package.root_dir = dependency.base
-
-        package.files = [
-            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
-        ]
-
-        return package
-
-    @classmethod
-    def get_package_from_file(cls, file_path: Path) -> Package:
-        try:
-            package = PackageInfo.from_path(path=file_path).to_package(
-                root_dir=file_path
-            )
-        except PackageInfoError:
-            raise RuntimeError(
-                f"Unable to determine package info from path: {file_path}"
-            )
-
-        return package
-
-    def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
-        package = self.get_package_from_directory(dependency.full_path)
-
-        self.validate_package_for_dependency(dependency=dependency, package=package)
-
-        package.develop = dependency.develop
-
-        if dependency.base is not None:
-            package.root_dir = dependency.base
-
-        return package
-
-    @classmethod
-    def get_package_from_directory(cls, directory: Path) -> Package:
-        return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
-
-    def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url)
-
-        self.validate_package_for_dependency(dependency=dependency, package=package)
-
-        for extra in dependency.extras:
-            if extra in package.extras:
-                for dep in package.extras[extra]:
-                    dep.activate()
-
-                for extra_dep in package.extras[extra]:
-                    package.add_dependency(extra_dep)
-
-        return package
-
-    @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
-        file_name = os.path.basename(urllib.parse.urlparse(url).path)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dest = Path(temp_dir) / file_name
-            download_file(url, dest)
-            package = cls.get_package_from_file(dest)
-
-        package._source_type = "url"
-        package._source_url = url
-
-        return package
-
-    def _get_dependencies_with_overrides(
-        self, dependencies: list[Dependency], package: DependencyPackage
-    ) -> list[Dependency]:
-        overrides = self._overrides.get(package, {})
-        _dependencies = []
-        overridden = []
-        for dep in dependencies:
-            if dep.name in overrides:
-                if dep.name in overridden:
-                    continue
-
-                # empty constraint is used in overrides to mark that the package has
-                # already been handled and is not required for the attached markers
-                if not overrides[dep.name].constraint.is_empty():
-                    _dependencies.append(overrides[dep.name])
-                overridden.append(dep.name)
-
-                continue
-
-            _dependencies.append(dep)
-        return _dependencies
 
     def incompatibilities_for(
         self, dependency_package: DependencyPackage
@@ -942,82 +1021,3 @@ class Provider:
             )
 
             self._io.write(debug_info)
-
-    def _group_by_source(
-        self, dependencies: Iterable[Dependency]
-    ) -> list[list[Dependency]]:
-        """
-        Takes a list of dependencies and returns a list of groups of dependencies,
-        each group containing all dependencies from the same source.
-        """
-        groups: list[list[Dependency]] = []
-        for dep in dependencies:
-            for group in groups:
-                if (
-                    dep.is_same_source_as(group[0])
-                    and dep.source_name == group[0].source_name
-                ):
-                    group.append(dep)
-                    break
-            else:
-                groups.append([dep])
-        return groups
-
-    def _merge_dependencies_by_constraint(
-        self, dependencies: Iterable[Dependency]
-    ) -> list[Dependency]:
-        """
-        Merge dependencies with the same constraint
-        by building a union of their markers.
-        """
-        by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
-        for dep in dependencies:
-            by_constraint[dep.constraint].append(dep)
-        for constraint, _deps in by_constraint.items():
-            new_markers = []
-            for dep in _deps:
-                marker = dep.marker.without_extras()
-                if marker.is_any():
-                    # No marker or only extras
-                    continue
-
-                new_markers.append(marker)
-
-            if not new_markers:
-                continue
-
-            dep = _deps[0]
-            dep.marker = dep.marker.union(MarkerUnion(*new_markers))
-            by_constraint[constraint] = [dep]
-
-        return [value[0] for value in by_constraint.values()]
-
-    def _merge_dependencies_by_marker(
-        self, dependencies: Iterable[Dependency]
-    ) -> list[Dependency]:
-        """
-        Merge dependencies with the same marker
-        by building the intersection of their constraints.
-        """
-        by_marker: dict[BaseMarker, list[Dependency]] = defaultdict(list)
-        for dep in dependencies:
-            by_marker[dep.marker].append(dep)
-        deps = []
-        for _deps in by_marker.values():
-            if len(_deps) == 1:
-                deps.extend(_deps)
-            else:
-                new_constraint = _deps[0].constraint
-                for dep in _deps[1:]:
-                    new_constraint = new_constraint.intersect(dep.constraint)
-                if new_constraint.is_empty():
-                    # leave dependencies as-is so the resolver will pickup
-                    # the conflict and display a proper error.
-                    deps.extend(_deps)
-                else:
-                    self.debug(
-                        f"<debug>Merging constraints for {_deps[0].name} for"
-                        f" marker {_deps[0].marker}</debug>"
-                    )
-                    deps.append(_deps[0].with_constraint(new_constraint))
-        return deps

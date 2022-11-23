@@ -60,50 +60,6 @@ class Solver:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env: Env) -> Iterator[None]:
-        with self.provider.use_environment(env):
-            yield
-
-    def solve(
-        self, use_latest: Collection[NormalizedName] | None = None
-    ) -> Transaction:
-        from poetry.puzzle.transaction import Transaction
-
-        with self._progress(), self._provider.use_latest_for(use_latest or []):
-            start = time.time()
-            packages, depths = self._solve()
-            end = time.time()
-
-            if len(self._overrides) > 1:
-                self._provider.debug(
-                    # ignore the warning as provider does not do interpolation
-                    f"Complete version solving took {end - start:.3f}"  # noqa: PIE803
-                    f" seconds with {len(self._overrides)} overrides"
-                )
-                self._provider.debug(
-                    # ignore the warning as provider does not do interpolation
-                    "Resolved with overrides:"  # noqa: PIE803
-                    f" {', '.join(f'({b})' for b in self._overrides)}"
-                )
-
-        for p in packages:
-            if p.yanked:
-                message = (
-                    f"The locked version {p.pretty_version} for {p.pretty_name} is a"
-                    " yanked version."
-                )
-                if p.yanked_reason:
-                    message += f" Reason for being yanked: {p.yanked_reason}"
-                self._io.write_error_line(f"<warning>Warning: {message}</warning>")
-
-        return Transaction(
-            self._locked_packages,
-            list(zip(packages, depths)),
-            installed_packages=self._installed_packages,
-            root_package=self._package,
-        )
-
-    @contextmanager
     def _progress(self) -> Iterator[None]:
         if not self._io.output.is_decorated() or self._provider.is_debugging():
             self._io.write_line("Resolving dependencies...")
@@ -189,6 +145,50 @@ class Solver:
 
         # Return the packages in their original order with associated depths
         return final_packages, depths
+
+    @contextmanager
+    def use_environment(self, env: Env) -> Iterator[None]:
+        with self.provider.use_environment(env):
+            yield
+
+    def solve(
+        self, use_latest: Collection[NormalizedName] | None = None
+    ) -> Transaction:
+        from poetry.puzzle.transaction import Transaction
+
+        with self._progress(), self._provider.use_latest_for(use_latest or []):
+            start = time.time()
+            packages, depths = self._solve()
+            end = time.time()
+
+            if len(self._overrides) > 1:
+                self._provider.debug(
+                    # ignore the warning as provider does not do interpolation
+                    f"Complete version solving took {end - start:.3f}"  # noqa: PIE803
+                    f" seconds with {len(self._overrides)} overrides"
+                )
+                self._provider.debug(
+                    # ignore the warning as provider does not do interpolation
+                    "Resolved with overrides:"  # noqa: PIE803
+                    f" {', '.join(f'({b})' for b in self._overrides)}"
+                )
+
+        for p in packages:
+            if p.yanked:
+                message = (
+                    f"The locked version {p.pretty_version} for {p.pretty_name} is a"
+                    " yanked version."
+                )
+                if p.yanked_reason:
+                    message += f" Reason for being yanked: {p.yanked_reason}"
+                self._io.write_error_line(f"<warning>Warning: {message}</warning>")
+
+        return Transaction(
+            self._locked_packages,
+            list(zip(packages, depths)),
+            installed_packages=self._installed_packages,
+            root_package=self._package,
+        )
 
 
 DFSNodeID = Tuple[str, FrozenSet[str], bool]
