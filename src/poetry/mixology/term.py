@@ -38,18 +38,6 @@ class Term:
     def constraint(self) -> VersionConstraint:
         return self._dependency.constraint
 
-    def is_positive(self) -> bool:
-        return self._positive
-
-    def satisfies(self, other: Term) -> bool:
-        """
-        Returns whether this term satisfies another.
-        """
-        return (
-            self.dependency.complete_name == other.dependency.complete_name
-            and self.relation(other) == SetRelation.SUBSET
-        )
-
     def _relation(self, other: Term) -> str:
         """
         Returns the relationship between the package versions
@@ -144,13 +132,6 @@ class Term:
         else:
             return None
 
-    def difference(self, other: Term) -> Term | None:
-        """
-        Returns a Term that represents packages
-        allowed by this term and not by the other
-        """
-        return self.intersect(other.inverse)
-
     def _compatible_dependency(self, other: Dependency) -> bool:
         return (
             self.dependency.is_root
@@ -178,6 +159,25 @@ class Term:
             else self.dependency
         )
         return Term(dependency.with_constraint(constraint), is_positive)
+
+    def is_positive(self) -> bool:
+        return self._positive
+
+    def satisfies(self, other: Term) -> bool:
+        """
+        Returns whether this term satisfies another.
+        """
+        return (
+            self.dependency.complete_name == other.dependency.complete_name
+            and self.relation(other) == SetRelation.SUBSET
+        )
+
+    def difference(self, other: Term) -> Term | None:
+        """
+        Returns a Term that represents packages
+        allowed by this term and not by the other
+        """
+        return self.intersect(other.inverse)
 
     def __str__(self) -> str:
         prefix = "not " if not self.is_positive() else ""

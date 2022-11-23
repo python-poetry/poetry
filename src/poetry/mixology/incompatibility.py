@@ -103,138 +103,6 @@ class Incompatibility:
         else:
             yield self
 
-    def is_failure(self) -> bool:
-        return len(self._terms) == 0 or (
-            len(self._terms) == 1 and self._terms[0].dependency.is_root
-        )
-
-    def __str__(self) -> str:
-        if isinstance(self._cause, DependencyCause):
-            assert len(self._terms) == 2
-
-            depender = self._terms[0]
-            dependee = self._terms[1]
-            assert depender.is_positive()
-            assert not dependee.is_positive()
-
-            return (
-                f"{self._terse(depender, allow_every=True)} depends on"
-                f" {self._terse(dependee)}"
-            )
-        elif isinstance(self._cause, PythonCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
-
-            text = f"{self._terse(self._terms[0], allow_every=True)} requires "
-            text += f"Python {self._cause.python_version}"
-
-            return text
-        elif isinstance(self._cause, PlatformCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
-
-            text = f"{self._terse(self._terms[0], allow_every=True)} requires "
-            text += f"platform {self._cause.platform}"
-
-            return text
-        elif isinstance(self._cause, NoVersionsCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
-
-            return (
-                f"no versions of {self._terms[0].dependency.name} match"
-                f" {self._terms[0].constraint}"
-            )
-        elif isinstance(self._cause, RootCause):
-            assert len(self._terms) == 1
-            assert not self._terms[0].is_positive()
-            assert self._terms[0].dependency.is_root
-
-            return (
-                f"{self._terms[0].dependency.name} is"
-                f" {self._terms[0].dependency.constraint}"
-            )
-        elif self.is_failure():
-            return "version solving failed"
-
-        if len(self._terms) == 1:
-            term = self._terms[0]
-            verb = "forbidden" if term.is_positive() else "required"
-            return f"{term.dependency.name} is {verb}"
-
-        if len(self._terms) == 2:
-            term1 = self._terms[0]
-            term2 = self._terms[1]
-
-            if term1.is_positive() == term2.is_positive():
-                if not term1.is_positive():
-                    return f"either {self._terse(term1)} or {self._terse(term2)}"
-
-                package1 = (
-                    term1.dependency.name
-                    if term1.constraint.is_any()
-                    else self._terse(term1)
-                )
-                package2 = (
-                    term2.dependency.name
-                    if term2.constraint.is_any()
-                    else self._terse(term2)
-                )
-
-                return f"{package1} is incompatible with {package2}"
-
-        positive = []
-        negative = []
-
-        for term in self._terms:
-            if term.is_positive():
-                positive.append(self._terse(term))
-            else:
-                negative.append(self._terse(term))
-
-        if positive and negative:
-            if len(positive) != 1:
-                return f"if {' and '.join(positive)} then {' or '.join(negative)}"
-
-            positive_term = [term for term in self._terms if term.is_positive()][0]
-            return (
-                f"{self._terse(positive_term, allow_every=True)} requires"
-                f" {' or '.join(negative)}"
-            )
-        elif positive:
-            return f"one of {' or '.join(positive)} must be false"
-        else:
-            return f"one of {' or '.join(negative)} must be true"
-
-    def and_to_string(
-        self,
-        other: Incompatibility,
-        this_line: int | None,
-        other_line: int | None,
-    ) -> str:
-        requires_both = self._try_requires_both(other, this_line, other_line)
-        if requires_both is not None:
-            return requires_both
-
-        requires_through = self._try_requires_through(other, this_line, other_line)
-        if requires_through is not None:
-            return requires_through
-
-        requires_forbidden = self._try_requires_forbidden(other, this_line, other_line)
-        if requires_forbidden is not None:
-            return requires_forbidden
-
-        buffer = [str(self)]
-        if this_line is not None:
-            buffer.append(f" {this_line!s}")
-
-        buffer.append(f" and {other!s}")
-
-        if other_line is not None:
-            buffer.append(f" {other_line!s}")
-
-        return "\n".join(buffer)
-
     def _try_requires_both(
         self,
         other: Incompatibility,
@@ -447,5 +315,137 @@ class Incompatibility:
 
         return found
 
+    def is_failure(self) -> bool:
+        return len(self._terms) == 0 or (
+            len(self._terms) == 1 and self._terms[0].dependency.is_root
+        )
+
+    def and_to_string(
+        self,
+        other: Incompatibility,
+        this_line: int | None,
+        other_line: int | None,
+    ) -> str:
+        requires_both = self._try_requires_both(other, this_line, other_line)
+        if requires_both is not None:
+            return requires_both
+
+        requires_through = self._try_requires_through(other, this_line, other_line)
+        if requires_through is not None:
+            return requires_through
+
+        requires_forbidden = self._try_requires_forbidden(other, this_line, other_line)
+        if requires_forbidden is not None:
+            return requires_forbidden
+
+        buffer = [str(self)]
+        if this_line is not None:
+            buffer.append(f" {this_line!s}")
+
+        buffer.append(f" and {other!s}")
+
+        if other_line is not None:
+            buffer.append(f" {other_line!s}")
+
+        return "\n".join(buffer)
+
     def __repr__(self) -> str:
         return f"<Incompatibility {self!s}>"
+
+    def __str__(self) -> str:
+        if isinstance(self._cause, DependencyCause):
+            assert len(self._terms) == 2
+
+            depender = self._terms[0]
+            dependee = self._terms[1]
+            assert depender.is_positive()
+            assert not dependee.is_positive()
+
+            return (
+                f"{self._terse(depender, allow_every=True)} depends on"
+                f" {self._terse(dependee)}"
+            )
+        elif isinstance(self._cause, PythonCause):
+            assert len(self._terms) == 1
+            assert self._terms[0].is_positive()
+
+            text = f"{self._terse(self._terms[0], allow_every=True)} requires "
+            text += f"Python {self._cause.python_version}"
+
+            return text
+        elif isinstance(self._cause, PlatformCause):
+            assert len(self._terms) == 1
+            assert self._terms[0].is_positive()
+
+            text = f"{self._terse(self._terms[0], allow_every=True)} requires "
+            text += f"platform {self._cause.platform}"
+
+            return text
+        elif isinstance(self._cause, NoVersionsCause):
+            assert len(self._terms) == 1
+            assert self._terms[0].is_positive()
+
+            return (
+                f"no versions of {self._terms[0].dependency.name} match"
+                f" {self._terms[0].constraint}"
+            )
+        elif isinstance(self._cause, RootCause):
+            assert len(self._terms) == 1
+            assert not self._terms[0].is_positive()
+            assert self._terms[0].dependency.is_root
+
+            return (
+                f"{self._terms[0].dependency.name} is"
+                f" {self._terms[0].dependency.constraint}"
+            )
+        elif self.is_failure():
+            return "version solving failed"
+
+        if len(self._terms) == 1:
+            term = self._terms[0]
+            verb = "forbidden" if term.is_positive() else "required"
+            return f"{term.dependency.name} is {verb}"
+
+        if len(self._terms) == 2:
+            term1 = self._terms[0]
+            term2 = self._terms[1]
+
+            if term1.is_positive() == term2.is_positive():
+                if not term1.is_positive():
+                    return f"either {self._terse(term1)} or {self._terse(term2)}"
+
+                package1 = (
+                    term1.dependency.name
+                    if term1.constraint.is_any()
+                    else self._terse(term1)
+                )
+                package2 = (
+                    term2.dependency.name
+                    if term2.constraint.is_any()
+                    else self._terse(term2)
+                )
+
+                return f"{package1} is incompatible with {package2}"
+
+        positive = []
+        negative = []
+
+        for term in self._terms:
+            if term.is_positive():
+                positive.append(self._terse(term))
+            else:
+                negative.append(self._terse(term))
+
+        if positive and negative:
+            if len(positive) != 1:
+                return f"if {' and '.join(positive)} then {' or '.join(negative)}"
+
+            positive_term = [term for term in self._terms if term.is_positive()][0]
+            return (
+                f"{self._terse(positive_term, allow_every=True)} requires"
+                f" {' or '.join(negative)}"
+            )
+        elif positive:
+            return f"one of {' or '.join(positive)} must be false"
+        else:
+            return f"one of {' or '.join(negative)} must be true"

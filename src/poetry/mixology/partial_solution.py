@@ -72,6 +72,40 @@ class PartialSolution:
             if term.dependency.complete_name not in self._decisions
         ]
 
+    def _assign(self, assignment: Assignment) -> None:
+        """
+        Adds an Assignment to _assignments and _positive or _negative.
+        """
+        self._assignments.append(assignment)
+        self._register(assignment)
+
+    def _register(self, assignment: Assignment) -> None:
+        """
+        Registers an Assignment in _positive or _negative.
+        """
+        name = assignment.dependency.complete_name
+        old_positive = self._positive.get(name)
+        if old_positive is not None:
+            value = old_positive.intersect(assignment)
+            assert value is not None
+            self._positive[name] = value
+
+            return
+
+        old_negative = self._negative.get(name)
+        term = (
+            assignment if old_negative is None else assignment.intersect(old_negative)
+        )
+        assert term is not None
+
+        if term.is_positive():
+            if name in self._negative:
+                del self._negative[name]
+
+            self._positive[name] = term
+        else:
+            self._negative[name] = term
+
     def decide(self, package: Package) -> None:
         """
         Adds an assignment of package as a decision
@@ -107,13 +141,6 @@ class PartialSolution:
             )
         )
 
-    def _assign(self, assignment: Assignment) -> None:
-        """
-        Adds an Assignment to _assignments and _positive or _negative.
-        """
-        self._assignments.append(assignment)
-        self._register(assignment)
-
     def backtrack(self, decision_level: int) -> None:
         """
         Resets the current decision level to decision_level, and removes all
@@ -139,33 +166,6 @@ class PartialSolution:
         for assignment in self._assignments:
             if assignment.dependency.complete_name in packages:
                 self._register(assignment)
-
-    def _register(self, assignment: Assignment) -> None:
-        """
-        Registers an Assignment in _positive or _negative.
-        """
-        name = assignment.dependency.complete_name
-        old_positive = self._positive.get(name)
-        if old_positive is not None:
-            value = old_positive.intersect(assignment)
-            assert value is not None
-            self._positive[name] = value
-
-            return
-
-        old_negative = self._negative.get(name)
-        term = (
-            assignment if old_negative is None else assignment.intersect(old_negative)
-        )
-        assert term is not None
-
-        if term.is_positive():
-            if name in self._negative:
-                del self._negative[name]
-
-            self._positive[name] = term
-        else:
-            self._negative[name] = term
 
     def satisfier(self, term: Term) -> Assignment:
         """

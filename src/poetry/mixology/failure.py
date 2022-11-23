@@ -33,67 +33,6 @@ class _Writer:
 
         self._count_derivations(self._root)
 
-    def write(self) -> str:
-        buffer = []
-
-        required_python_version_notification = False
-        for incompatibility in self._root.external_incompatibilities:
-            if isinstance(incompatibility.cause, PythonCause):
-                if not required_python_version_notification:
-                    buffer.append(
-                        "The current project's Python requirement"
-                        f" ({incompatibility.cause.root_python_version}) is not"
-                        " compatible with some of the required packages Python"
-                        " requirement:"
-                    )
-                    required_python_version_notification = True
-
-                root_constraint = parse_constraint(
-                    incompatibility.cause.root_python_version
-                )
-                constraint = parse_constraint(incompatibility.cause.python_version)
-                buffer.append(
-                    f"  - {incompatibility.terms[0].dependency.name} requires Python"
-                    f" {incompatibility.cause.python_version}, so it will not be"
-                    f" satisfied for Python {root_constraint.difference(constraint)}"
-                )
-
-        if required_python_version_notification:
-            buffer.append("")
-
-        if isinstance(self._root.cause, ConflictCause):
-            self._visit(self._root)
-        else:
-            self._write(self._root, f"Because {self._root}, version solving failed.")
-
-        padding = (
-            0
-            if not self._line_numbers
-            else len(f"({list(self._line_numbers.values())[-1]}) ")
-        )
-
-        last_was_empty = False
-        for line in self._lines:
-            message = line[0]
-            if not message:
-                if not last_was_empty:
-                    buffer.append("")
-
-                last_was_empty = True
-                continue
-
-            last_was_empty = False
-
-            number = line[-1]
-            if number is not None:
-                message = f"({number})".ljust(padding) + message
-            else:
-                message = " " * padding + message
-
-            buffer.append(message)
-
-        return "\n".join(buffer)
-
     def _write(
         self, incompatibility: Incompatibility, message: str, numbered: bool = False
     ) -> None:
@@ -268,3 +207,64 @@ class _Writer:
             if isinstance(cause, ConflictCause):
                 self._count_derivations(cause.conflict)
                 self._count_derivations(cause.other)
+
+    def write(self) -> str:
+        buffer = []
+
+        required_python_version_notification = False
+        for incompatibility in self._root.external_incompatibilities:
+            if isinstance(incompatibility.cause, PythonCause):
+                if not required_python_version_notification:
+                    buffer.append(
+                        "The current project's Python requirement"
+                        f" ({incompatibility.cause.root_python_version}) is not"
+                        " compatible with some of the required packages Python"
+                        " requirement:"
+                    )
+                    required_python_version_notification = True
+
+                root_constraint = parse_constraint(
+                    incompatibility.cause.root_python_version
+                )
+                constraint = parse_constraint(incompatibility.cause.python_version)
+                buffer.append(
+                    f"  - {incompatibility.terms[0].dependency.name} requires Python"
+                    f" {incompatibility.cause.python_version}, so it will not be"
+                    f" satisfied for Python {root_constraint.difference(constraint)}"
+                )
+
+        if required_python_version_notification:
+            buffer.append("")
+
+        if isinstance(self._root.cause, ConflictCause):
+            self._visit(self._root)
+        else:
+            self._write(self._root, f"Because {self._root}, version solving failed.")
+
+        padding = (
+            0
+            if not self._line_numbers
+            else len(f"({list(self._line_numbers.values())[-1]}) ")
+        )
+
+        last_was_empty = False
+        for line in self._lines:
+            message = line[0]
+            if not message:
+                if not last_was_empty:
+                    buffer.append("")
+
+                last_was_empty = True
+                continue
+
+            last_was_empty = False
+
+            number = line[-1]
+            if number is not None:
+                message = f"({number})".ljust(padding) + message
+            else:
+                message = " " * padding + message
+
+            buffer.append(message)
+
+        return "\n".join(buffer)

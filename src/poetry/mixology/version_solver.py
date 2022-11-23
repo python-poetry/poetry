@@ -92,34 +92,6 @@ class VersionSolver:
     def solution(self) -> PartialSolution:
         return self._solution
 
-    def solve(self) -> SolverResult:
-        """
-        Finds a set of dependencies that match the root package's constraints,
-        or raises an error if no such set is available.
-        """
-        start = time.time()
-        root_dependency = Dependency(self._root.name, self._root.version)
-        root_dependency.is_root = True
-
-        self._add_incompatibility(
-            Incompatibility([Term(root_dependency, False)], RootCause())
-        )
-
-        try:
-            next: str | None = self._root.name
-            while next is not None:
-                self._propagate(next)
-                next = self._choose_package_version()
-
-            return self._result()
-        except Exception:
-            raise
-        finally:
-            self._log(
-                f"Version solving took {time.time() - start:.3f} seconds.\n"
-                f"Tried {self._solution.attempted_solutions} solutions."
-            )
-
     def _propagate(self, package: str) -> None:
         """
         Performs unit propagation on incompatibilities transitively
@@ -483,3 +455,31 @@ class VersionSolver:
 
     def _log(self, text: str) -> None:
         self._provider.debug(text, self._solution.attempted_solutions)
+
+    def solve(self) -> SolverResult:
+        """
+        Finds a set of dependencies that match the root package's constraints,
+        or raises an error if no such set is available.
+        """
+        start = time.time()
+        root_dependency = Dependency(self._root.name, self._root.version)
+        root_dependency.is_root = True
+
+        self._add_incompatibility(
+            Incompatibility([Term(root_dependency, False)], RootCause())
+        )
+
+        try:
+            next: str | None = self._root.name
+            while next is not None:
+                self._propagate(next)
+                next = self._choose_package_version()
+
+            return self._result()
+        except Exception:
+            raise
+        finally:
+            self._log(
+                f"Version solving took {time.time() - start:.3f} seconds.\n"
+                f"Tried {self._solution.attempted_solutions} solutions."
+            )
