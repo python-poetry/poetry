@@ -41,70 +41,6 @@ class Factory(BaseFactory):
     Factory class to create various elements needed by Poetry.
     """
 
-    def create_poetry(
-        self,
-        cwd: Path | None = None,
-        with_groups: bool = True,
-        io: IO | None = None,
-        disable_plugins: bool = False,
-        disable_cache: bool = False,
-    ) -> Poetry:
-        if io is None:
-            io = NullIO()
-
-        base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
-
-        locker = Locker(
-            base_poetry.file.parent / "poetry.lock", base_poetry.local_config
-        )
-
-        # Loading global configuration
-        config = Config.create()
-
-        # Loading local configuration
-        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
-        if local_config_file.exists():
-            if io.is_debug():
-                io.write_line(f"Loading configuration file {local_config_file.path}")
-
-            config.merge(local_config_file.read())
-
-        # Load local sources
-        repositories = {}
-        existing_repositories = config.get("repositories", {})
-        for source in base_poetry.pyproject.poetry_config.get("source", []):
-            name = source.get("name")
-            url = source.get("url")
-            if name and url and name not in existing_repositories:
-                repositories[name] = {"url": url}
-
-        config.merge({"repositories": repositories})
-
-        poetry = Poetry(
-            base_poetry.file.path,
-            base_poetry.local_config,
-            base_poetry.package,
-            locker,
-            config,
-            disable_cache,
-        )
-
-        # Configuring sources
-        self.configure_sources(
-            poetry,
-            poetry.local_config.get("source", []),
-            config,
-            io,
-            disable_cache=disable_cache,
-        )
-
-        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
-        plugin_manager.load_plugins()
-        poetry.set_plugin_manager(plugin_manager)
-        plugin_manager.activate(poetry, io)
-
-        return poetry
-
     @classmethod
     def get_package(cls, name: str, version: str) -> ProjectPackage:
         return ProjectPackage(name, version, version)
@@ -299,3 +235,67 @@ class Factory(BaseFactory):
         results["errors"].extend(validate_object(config))
 
         return results
+
+    def create_poetry(
+        self,
+        cwd: Path | None = None,
+        with_groups: bool = True,
+        io: IO | None = None,
+        disable_plugins: bool = False,
+        disable_cache: bool = False,
+    ) -> Poetry:
+        if io is None:
+            io = NullIO()
+
+        base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
+
+        locker = Locker(
+            base_poetry.file.parent / "poetry.lock", base_poetry.local_config
+        )
+
+        # Loading global configuration
+        config = Config.create()
+
+        # Loading local configuration
+        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
+        if local_config_file.exists():
+            if io.is_debug():
+                io.write_line(f"Loading configuration file {local_config_file.path}")
+
+            config.merge(local_config_file.read())
+
+        # Load local sources
+        repositories = {}
+        existing_repositories = config.get("repositories", {})
+        for source in base_poetry.pyproject.poetry_config.get("source", []):
+            name = source.get("name")
+            url = source.get("url")
+            if name and url and name not in existing_repositories:
+                repositories[name] = {"url": url}
+
+        config.merge({"repositories": repositories})
+
+        poetry = Poetry(
+            base_poetry.file.path,
+            base_poetry.local_config,
+            base_poetry.package,
+            locker,
+            config,
+            disable_cache,
+        )
+
+        # Configuring sources
+        self.configure_sources(
+            poetry,
+            poetry.local_config.get("source", []),
+            config,
+            io,
+            disable_cache=disable_cache,
+        )
+
+        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
+        plugin_manager.load_plugins()
+        poetry.set_plugin_manager(plugin_manager)
+        plugin_manager.activate(poetry, io)
+
+        return poetry
