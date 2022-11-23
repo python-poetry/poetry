@@ -44,80 +44,6 @@ class SetupReader:
 
         return result
 
-    def read_setup_py(self, filepath: str | Path) -> dict[str, Any]:
-        if isinstance(filepath, str):
-            filepath = Path(filepath)
-
-        with filepath.open(encoding="utf-8") as f:
-            content = f.read()
-
-        result: dict[str, Any] = {}
-
-        body = ast.parse(content).body
-
-        setup_call = self._find_setup_call(body)
-        if setup_call is None:
-            return self.DEFAULT
-
-        # Inspecting keyword arguments
-        call, body = setup_call
-        result["name"] = self._find_single_string(call, body, "name")
-        result["version"] = self._find_single_string(call, body, "version")
-        result["install_requires"] = self._find_install_requires(call, body)
-        result["extras_require"] = self._find_extras_require(call, body)
-        result["python_requires"] = self._find_single_string(
-            call, body, "python_requires"
-        )
-
-        return result
-
-    def read_setup_cfg(self, filepath: str | Path) -> dict[str, Any]:
-        parser = ConfigParser()
-
-        parser.read(str(filepath))
-
-        name = None
-        version = None
-        if parser.has_option("metadata", "name"):
-            name = parser.get("metadata", "name")
-
-        if parser.has_option("metadata", "version"):
-            version = Version.parse(parser.get("metadata", "version")).text
-
-        install_requires = []
-        extras_require: dict[str, list[str]] = {}
-        python_requires = None
-        if parser.has_section("options"):
-            if parser.has_option("options", "install_requires"):
-                for dep in parser.get("options", "install_requires").split("\n"):
-                    dep = dep.strip()
-                    if not dep:
-                        continue
-
-                    install_requires.append(dep)
-
-            if parser.has_option("options", "python_requires"):
-                python_requires = parser.get("options", "python_requires")
-
-        if parser.has_section("options.extras_require"):
-            for group in parser.options("options.extras_require"):
-                extras_require[group] = []
-                deps = parser.get("options.extras_require", group)
-                for dep in deps.split("\n"):
-                    dep = dep.strip()
-                    if not dep:
-                        continue
-
-                    extras_require[group].append(dep)
-
-        return {
-            "name": name,
-            "version": version,
-            "install_requires": install_requires,
-            "extras_require": extras_require,
-            "python_requires": python_requires,
-        }
-
     def _find_setup_call(
         self, elements: list[ast.stmt]
     ) -> tuple[ast.Call, list[ast.stmt]] | None:
@@ -365,3 +291,77 @@ class SetupReader:
                 return val
 
         return None
+
+    def read_setup_py(self, filepath: str | Path) -> dict[str, Any]:
+        if isinstance(filepath, str):
+            filepath = Path(filepath)
+
+        with filepath.open(encoding="utf-8") as f:
+            content = f.read()
+
+        result: dict[str, Any] = {}
+
+        body = ast.parse(content).body
+
+        setup_call = self._find_setup_call(body)
+        if setup_call is None:
+            return self.DEFAULT
+
+        # Inspecting keyword arguments
+        call, body = setup_call
+        result["name"] = self._find_single_string(call, body, "name")
+        result["version"] = self._find_single_string(call, body, "version")
+        result["install_requires"] = self._find_install_requires(call, body)
+        result["extras_require"] = self._find_extras_require(call, body)
+        result["python_requires"] = self._find_single_string(
+            call, body, "python_requires"
+        )
+
+        return result
+
+    def read_setup_cfg(self, filepath: str | Path) -> dict[str, Any]:
+        parser = ConfigParser()
+
+        parser.read(str(filepath))
+
+        name = None
+        version = None
+        if parser.has_option("metadata", "name"):
+            name = parser.get("metadata", "name")
+
+        if parser.has_option("metadata", "version"):
+            version = Version.parse(parser.get("metadata", "version")).text
+
+        install_requires = []
+        extras_require: dict[str, list[str]] = {}
+        python_requires = None
+        if parser.has_section("options"):
+            if parser.has_option("options", "install_requires"):
+                for dep in parser.get("options", "install_requires").split("\n"):
+                    dep = dep.strip()
+                    if not dep:
+                        continue
+
+                    install_requires.append(dep)
+
+            if parser.has_option("options", "python_requires"):
+                python_requires = parser.get("options", "python_requires")
+
+        if parser.has_section("options.extras_require"):
+            for group in parser.options("options.extras_require"):
+                extras_require[group] = []
+                deps = parser.get("options.extras_require", group)
+                for dep in deps.split("\n"):
+                    dep = dep.strip()
+                    if not dep:
+                        continue
+
+                    extras_require[group].append(dep)
+
+        return {
+            "name": name,
+            "version": version,
+            "install_requires": install_requires,
+            "extras_require": extras_require,
+            "python_requires": python_requires,
+        }

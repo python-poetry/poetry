@@ -279,6 +279,39 @@ class SitePackages:
 
         return self._writable_candidates
 
+    def _path_method_wrapper(
+        self,
+        path: str | Path,
+        method: str,
+        *args: Any,
+        return_first: bool = True,
+        writable_only: bool = False,
+        **kwargs: Any,
+    ) -> tuple[Path, Any] | list[tuple[Path, Any]]:
+        if isinstance(path, str):
+            path = Path(path)
+
+        candidates = self.make_candidates(
+            path, writable_only=writable_only, strict=True
+        )
+
+        results = []
+
+        for candidate in candidates:
+            try:
+                result = candidate, getattr(candidate, method)(*args, **kwargs)
+                if return_first:
+                    return result
+                results.append(result)
+            except OSError:
+                # TODO: Replace with PermissionError
+                pass
+
+        if results:
+            return results
+
+        raise OSError(f"Unable to access any of {paths_csv(candidates)}")
+
     def make_candidates(
         self, path: Path, writable_only: bool = False, strict: bool = False
     ) -> list[Path]:
@@ -391,39 +424,6 @@ class SitePackages:
 
         return paths
 
-    def _path_method_wrapper(
-        self,
-        path: str | Path,
-        method: str,
-        *args: Any,
-        return_first: bool = True,
-        writable_only: bool = False,
-        **kwargs: Any,
-    ) -> tuple[Path, Any] | list[tuple[Path, Any]]:
-        if isinstance(path, str):
-            path = Path(path)
-
-        candidates = self.make_candidates(
-            path, writable_only=writable_only, strict=True
-        )
-
-        results = []
-
-        for candidate in candidates:
-            try:
-                result = candidate, getattr(candidate, method)(*args, **kwargs)
-                if return_first:
-                    return result
-                results.append(result)
-            except OSError:
-                # TODO: Replace with PermissionError
-                pass
-
-        if results:
-            return results
-
-        raise OSError(f"Unable to access any of {paths_csv(candidates)}")
-
     def write_text(self, path: str | Path, *args: Any, **kwargs: Any) -> Path:
         paths = self._path_method_wrapper(path, "write_text", *args, **kwargs)
         assert isinstance(paths, tuple)
@@ -513,13 +513,167 @@ class EnvManager:
     Environments manager
     """
 
-    _env = None
-
     ENVS_FILE = "envs.toml"
+
+    _env = None
 
     def __init__(self, poetry: Poetry, io: None | IO = None) -> None:
         self._poetry = poetry
         self._io = io or NullIO()
+
+    @staticmethod
+    def check_env_is_for_current_project(env: str, base_env_name: str) -> bool:
+        """
+        Check if env name starts with projects name.
+
+        This is done to prevent action on other project's envs.
+        """
+        return env.startswith(base_env_name)
+
+    @classmethod
+    def build_venv(
+        cls,
+        path: Path | str,
+        executable: str | Path | None = None,
+        flags: dict[str, bool] | None = None,
+        with_pip: bool | None = None,
+        with_wheel: bool | None = None,
+        with_setuptools: bool | None = None,
+        prompt: str | None = None,
+    ) -> virtualenv.run.session.Session:
+        if WINDOWS:
+            path = get_real_windows_path(path)
+            executable = get_real_windows_path(executable) if executable else None
+
+        flags = flags or {}
+
+        flags["no-pip"] = (
+            not with_pip if with_pip is not None else flags.pop("no-pip", True)
+        )
+
+        flags["no-setuptools"] = (
+            not with_setuptools
+            if with_setuptools is not None
+            else flags.pop("no-setuptools", True)
+        )
+
+        # we want wheels to be enabled when pip is required and it has not been
+        # explicitly disabled
+        flags["no-wheel"] = (
+            not with_wheel
+            if with_wheel is not None
+            else flags.pop("no-wheel", flags["no-pip"])
+        )
+
+        if isinstance(executable, Path):
+            executable = executable.resolve().as_posix()
+
+        args = [
+            "--no-download",
+            "--no-periodic-update",
+            "--python",
+            executable or sys.executable,
+        ]
+
+        if prompt is not None:
+            args.extend(["--prompt", prompt])
+
+        for flag, value in flags.items():
+            if value is True:
+                args.append(f"--{flag}")
+
+        args.append(str(path))
+
+        cli_result = virtualenv.cli_run(args)
+
+        # Exclude the venv folder from from macOS Time Machine backups
+        # TODO: Add backup-ignore markers for other platforms too
+        if sys.platform == "darwin":
+            import xattr
+
+            xattr.setxattr(
+                str(path),
+                "com.apple.metadata:com_apple_backup_excludeItem",
+                plistlib.dumps("com.apple.backupd", fmt=plistlib.FMT_BINARY),
+            )
+
+        return cli_result
+
+    @classmethod
+    def remove_venv(cls, path: Path | str) -> None:
+        if isinstance(path, str):
+            path = Path(path)
+        assert path.is_dir()
+        try:
+            remove_directory(path)
+            return
+        except OSError as e:
+            # Continue only if e.errno == 16
+            if e.errno != 16:  # ERRNO 16: Device or resource busy
+                raise e
+
+        # Delete all files and folders but the toplevel one. This is because sometimes
+        # the venv folder is mounted by the OS, such as in a docker volume. In such
+        # cases, an attempt to delete the folder itself will result in an `OSError`.
+        # See https://github.com/python-poetry/poetry/pull/2064
+        for file_path in path.iterdir():
+            if file_path.is_file() or file_path.is_symlink():
+                file_path.unlink()
+            elif file_path.is_dir():
+                remove_directory(file_path, force=True)
+
+    @classmethod
+    def get_system_env(cls, naive: bool = False) -> Env:
+        """
+        Retrieve the current Python environment.
+
+        This can be the base Python environment or an activated virtual environment.
+
+        This method also workaround the issue that the virtual environment
+        used by Poetry internally (when installed via the custom installer)
+        is incorrectly detected as the system environment. Note that this workaround
+        happens only when `naive` is False since there are times where we actually
+        want to retrieve Poetry's custom virtual environment
+        (e.g. plugin installation or self update).
+        """
+        prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
+        env: Env = SystemEnv(prefix)
+        if not naive:
+            if prefix.joinpath("poetry_env").exists():
+                env = GenericEnv(base_prefix, child_env=env)
+            else:
+                from poetry.locations import data_dir
+
+                try:
+                    prefix.relative_to(data_dir())
+                except ValueError:
+                    pass
+                else:
+                    env = GenericEnv(base_prefix, child_env=env)
+
+        return env
+
+    @classmethod
+    def get_base_prefix(cls) -> Path:
+        real_prefix = getattr(sys, "real_prefix", None)
+        if real_prefix is not None:
+            return Path(real_prefix)
+
+        base_prefix = getattr(sys, "base_prefix", None)
+        if base_prefix is not None:
+            return Path(base_prefix)
+
+        return Path(sys.prefix)
+
+    @classmethod
+    def generate_env_name(cls, name: str, cwd: str) -> str:
+        name = name.lower()
+        sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
+        normalized_cwd = os.path.normcase(os.path.realpath(cwd))
+        h_bytes = hashlib.sha256(encode(normalized_cwd)).digest()
+        h_str = base64.urlsafe_b64encode(h_bytes).decode()[:8]
+
+        return f"{sanitized_name}-{h_str}"
 
     def _full_python_path(self, python: str) -> str:
         try:
@@ -765,15 +919,6 @@ class EnvManager:
         ):
             env_list.insert(0, VirtualEnv(venv))
         return env_list
-
-    @staticmethod
-    def check_env_is_for_current_project(env: str, base_env_name: str) -> bool:
-        """
-        Check if env name starts with projects name.
-
-        This is done to prevent action on other project's envs.
-        """
-        return env.startswith(base_env_name)
 
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
@@ -1070,151 +1215,6 @@ class EnvManager:
 
         return VirtualEnv(venv)
 
-    @classmethod
-    def build_venv(
-        cls,
-        path: Path | str,
-        executable: str | Path | None = None,
-        flags: dict[str, bool] | None = None,
-        with_pip: bool | None = None,
-        with_wheel: bool | None = None,
-        with_setuptools: bool | None = None,
-        prompt: str | None = None,
-    ) -> virtualenv.run.session.Session:
-        if WINDOWS:
-            path = get_real_windows_path(path)
-            executable = get_real_windows_path(executable) if executable else None
-
-        flags = flags or {}
-
-        flags["no-pip"] = (
-            not with_pip if with_pip is not None else flags.pop("no-pip", True)
-        )
-
-        flags["no-setuptools"] = (
-            not with_setuptools
-            if with_setuptools is not None
-            else flags.pop("no-setuptools", True)
-        )
-
-        # we want wheels to be enabled when pip is required and it has not been
-        # explicitly disabled
-        flags["no-wheel"] = (
-            not with_wheel
-            if with_wheel is not None
-            else flags.pop("no-wheel", flags["no-pip"])
-        )
-
-        if isinstance(executable, Path):
-            executable = executable.resolve().as_posix()
-
-        args = [
-            "--no-download",
-            "--no-periodic-update",
-            "--python",
-            executable or sys.executable,
-        ]
-
-        if prompt is not None:
-            args.extend(["--prompt", prompt])
-
-        for flag, value in flags.items():
-            if value is True:
-                args.append(f"--{flag}")
-
-        args.append(str(path))
-
-        cli_result = virtualenv.cli_run(args)
-
-        # Exclude the venv folder from from macOS Time Machine backups
-        # TODO: Add backup-ignore markers for other platforms too
-        if sys.platform == "darwin":
-            import xattr
-
-            xattr.setxattr(
-                str(path),
-                "com.apple.metadata:com_apple_backup_excludeItem",
-                plistlib.dumps("com.apple.backupd", fmt=plistlib.FMT_BINARY),
-            )
-
-        return cli_result
-
-    @classmethod
-    def remove_venv(cls, path: Path | str) -> None:
-        if isinstance(path, str):
-            path = Path(path)
-        assert path.is_dir()
-        try:
-            remove_directory(path)
-            return
-        except OSError as e:
-            # Continue only if e.errno == 16
-            if e.errno != 16:  # ERRNO 16: Device or resource busy
-                raise e
-
-        # Delete all files and folders but the toplevel one. This is because sometimes
-        # the venv folder is mounted by the OS, such as in a docker volume. In such
-        # cases, an attempt to delete the folder itself will result in an `OSError`.
-        # See https://github.com/python-poetry/poetry/pull/2064
-        for file_path in path.iterdir():
-            if file_path.is_file() or file_path.is_symlink():
-                file_path.unlink()
-            elif file_path.is_dir():
-                remove_directory(file_path, force=True)
-
-    @classmethod
-    def get_system_env(cls, naive: bool = False) -> Env:
-        """
-        Retrieve the current Python environment.
-
-        This can be the base Python environment or an activated virtual environment.
-
-        This method also workaround the issue that the virtual environment
-        used by Poetry internally (when installed via the custom installer)
-        is incorrectly detected as the system environment. Note that this workaround
-        happens only when `naive` is False since there are times where we actually
-        want to retrieve Poetry's custom virtual environment
-        (e.g. plugin installation or self update).
-        """
-        prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
-        env: Env = SystemEnv(prefix)
-        if not naive:
-            if prefix.joinpath("poetry_env").exists():
-                env = GenericEnv(base_prefix, child_env=env)
-            else:
-                from poetry.locations import data_dir
-
-                try:
-                    prefix.relative_to(data_dir())
-                except ValueError:
-                    pass
-                else:
-                    env = GenericEnv(base_prefix, child_env=env)
-
-        return env
-
-    @classmethod
-    def get_base_prefix(cls) -> Path:
-        real_prefix = getattr(sys, "real_prefix", None)
-        if real_prefix is not None:
-            return Path(real_prefix)
-
-        base_prefix = getattr(sys, "base_prefix", None)
-        if base_prefix is not None:
-            return Path(base_prefix)
-
-        return Path(sys.prefix)
-
-    @classmethod
-    def generate_env_name(cls, name: str, cwd: str) -> str:
-        name = name.lower()
-        sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
-        normalized_cwd = os.path.normcase(os.path.realpath(cwd))
-        h_bytes = hashlib.sha256(encode(normalized_cwd)).digest()
-        h_str = base64.urlsafe_b64encode(h_bytes).decode()[:8]
-
-        return f"{sanitized_name}-{h_str}"
-
 
 class Env:
     """
@@ -1289,48 +1289,6 @@ class Env:
     @property
     def parent_env(self) -> GenericEnv:
         return GenericEnv(self.base, child_env=self)
-
-    def _find_python_executable(self) -> None:
-        bin_dir = self._bin_dir
-
-        if self._is_windows and self._is_conda:
-            bin_dir = self._path
-
-        python_executables = sorted(
-            p.name
-            for p in bin_dir.glob("python*")
-            if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-        )
-        if python_executables:
-            executable = python_executables[0]
-            if executable.endswith(".exe"):
-                executable = executable[:-4]
-
-            self._executable = executable
-
-    def _find_pip_executable(self) -> None:
-        pip_executables = sorted(
-            p.name
-            for p in self._bin_dir.glob("pip*")
-            if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-        )
-        if pip_executables:
-            pip_executable = pip_executables[0]
-            if pip_executable.endswith(".exe"):
-                pip_executable = pip_executable[:-4]
-
-            self._pip_executable = pip_executable
-
-    def find_executables(self) -> None:
-        self._find_python_executable()
-        self._find_pip_executable()
-
-    def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel: Wheel = get_embed_wheel(
-            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
-        )
-        path: Path = wheel.path
-        return path
 
     @property
     def pip_embedded(self) -> str:
@@ -1407,14 +1365,6 @@ class Env:
 
         return self._platlib
 
-    def is_path_relative_to_lib(self, path: Path) -> bool:
-        for lib_path in [self.purelib, self.platlib]:
-            with contextlib.suppress(ValueError):
-                path.relative_to(lib_path)
-                return True
-
-        return False
-
     @property
     def sys_path(self) -> list[str]:
         raise NotImplementedError()
@@ -1433,6 +1383,17 @@ class Env:
 
         return self._supported_tags
 
+    @property
+    def script_dirs(self) -> list[Path]:
+        if self._script_dirs is None:
+            scripts = self.paths.get("scripts")
+            self._script_dirs = [
+                Path(scripts) if scripts is not None else self._bin_dir
+            ]
+            if self.userbase:
+                self._script_dirs.append(self.userbase / self._script_dirs[0].name)
+        return self._script_dirs
+
     @classmethod
     def get_base_prefix(cls) -> Path:
         real_prefix = getattr(sys, "real_prefix", None)
@@ -1444,6 +1405,123 @@ class Env:
             return Path(base_prefix)
 
         return Path(sys.prefix)
+
+    def _bin(self, bin: str) -> str:
+        """
+        Return path to the given executable.
+        """
+        if self._is_windows and not bin.endswith(".exe"):
+            bin_path = self._bin_dir / (bin + ".exe")
+        else:
+            bin_path = self._bin_dir / bin
+
+        if not bin_path.exists():
+            # On Windows, some executables can be in the base path
+            # This is especially true when installing Python with
+            # the official installer, where python.exe will be at
+            # the root of the env path.
+            if self._is_windows:
+                if not bin.endswith(".exe"):
+                    bin_path = self._path / (bin + ".exe")
+                else:
+                    bin_path = self._path / bin
+
+                if bin_path.exists():
+                    return str(bin_path)
+
+            return bin
+
+        return str(bin_path)
+
+    def _find_python_executable(self) -> None:
+        bin_dir = self._bin_dir
+
+        if self._is_windows and self._is_conda:
+            bin_dir = self._path
+
+        python_executables = sorted(
+            p.name
+            for p in bin_dir.glob("python*")
+            if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+        )
+        if python_executables:
+            executable = python_executables[0]
+            if executable.endswith(".exe"):
+                executable = executable[:-4]
+
+            self._executable = executable
+
+    def _find_pip_executable(self) -> None:
+        pip_executables = sorted(
+            p.name
+            for p in self._bin_dir.glob("pip*")
+            if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+        )
+        if pip_executables:
+            pip_executable = pip_executables[0]
+            if pip_executable.endswith(".exe"):
+                pip_executable = pip_executable[:-4]
+
+            self._pip_executable = pip_executable
+
+    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+        """
+        Run a command inside the Python environment.
+        """
+        call = kwargs.pop("call", False)
+        input_ = kwargs.pop("input_", None)
+        env = kwargs.pop("env", dict(os.environ))
+
+        try:
+            if self._is_windows:
+                kwargs["shell"] = True
+
+            command: str | list[str]
+            if kwargs.get("shell", False):
+                command = list_to_shell_command(cmd)
+            else:
+                command = cmd
+
+            if input_:
+                output = subprocess.run(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    input=encode(input_),
+                    check=True,
+                    **kwargs,
+                ).stdout
+            elif call:
+                return subprocess.call(
+                    command, stderr=subprocess.STDOUT, env=env, **kwargs
+                )
+            else:
+                output = subprocess.check_output(
+                    command, stderr=subprocess.STDOUT, env=env, **kwargs
+                )
+        except CalledProcessError as e:
+            raise EnvCommandError(e, input=input_)
+
+        return decode(output)
+
+    def find_executables(self) -> None:
+        self._find_python_executable()
+        self._find_pip_executable()
+
+    def get_embedded_wheel(self, distribution: str) -> Path:
+        wheel: Wheel = get_embed_wheel(
+            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
+        )
+        path: Path = wheel.path
+        return path
+
+    def is_path_relative_to_lib(self, path: Path) -> bool:
+        for lib_path in [self.purelib, self.platlib]:
+            with contextlib.suppress(ValueError):
+                path.relative_to(lib_path)
+                return True
+
+        return False
 
     def get_version_info(self) -> tuple[Any, ...]:
         raise NotImplementedError()
@@ -1501,46 +1579,6 @@ class Env:
             self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
         )
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
-        """
-        Run a command inside the Python environment.
-        """
-        call = kwargs.pop("call", False)
-        input_ = kwargs.pop("input_", None)
-        env = kwargs.pop("env", dict(os.environ))
-
-        try:
-            if self._is_windows:
-                kwargs["shell"] = True
-
-            command: str | list[str]
-            if kwargs.get("shell", False):
-                command = list_to_shell_command(cmd)
-            else:
-                command = cmd
-
-            if input_:
-                output = subprocess.run(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    input=encode(input_),
-                    check=True,
-                    **kwargs,
-                ).stdout
-            elif call:
-                return subprocess.call(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
-            else:
-                output = subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
-        except CalledProcessError as e:
-            raise EnvCommandError(e, input=input_)
-
-        return decode(output)
-
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)
         env = kwargs.pop("env", dict(os.environ))
@@ -1555,44 +1593,6 @@ class Env:
 
     def is_venv(self) -> bool:
         raise NotImplementedError()
-
-    @property
-    def script_dirs(self) -> list[Path]:
-        if self._script_dirs is None:
-            scripts = self.paths.get("scripts")
-            self._script_dirs = [
-                Path(scripts) if scripts is not None else self._bin_dir
-            ]
-            if self.userbase:
-                self._script_dirs.append(self.userbase / self._script_dirs[0].name)
-        return self._script_dirs
-
-    def _bin(self, bin: str) -> str:
-        """
-        Return path to the given executable.
-        """
-        if self._is_windows and not bin.endswith(".exe"):
-            bin_path = self._bin_dir / (bin + ".exe")
-        else:
-            bin_path = self._bin_dir / bin
-
-        if not bin_path.exists():
-            # On Windows, some executables can be in the base path
-            # This is especially true when installing Python with
-            # the official installer, where python.exe will be at
-            # the root of the env path.
-            if self._is_windows:
-                if not bin.endswith(".exe"):
-                    bin_path = self._path / (bin + ".exe")
-                else:
-                    bin_path = self._path / bin
-
-                if bin_path.exists():
-                    return str(bin_path)
-
-            return bin
-
-        return str(bin_path)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Env):
@@ -1724,6 +1724,22 @@ class VirtualEnv(Env):
         paths: list[str] = json.loads(output)
         return paths
 
+    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+        kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
+        return super()._run(cmd, **kwargs)
+
+    def _updated_path(self) -> str:
+        return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
+
+    @contextmanager
+    def temp_environ(self) -> Iterator[None]:
+        environ = dict(os.environ)
+        try:
+            yield
+        finally:
+            os.environ.clear()
+            os.environ.update(environ)
+
     def get_version_info(self) -> tuple[Any, ...]:
         output = self.run_python_script(GET_PYTHON_VERSION)
         assert isinstance(output, str)
@@ -1771,10 +1787,6 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if "python" exists.
         return os.path.exists(self.python)
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
-        kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
-        return super()._run(cmd, **kwargs)
-
     def get_temp_environ(
         self,
         environ: dict[str, str] | None = None,
@@ -1802,18 +1814,6 @@ class VirtualEnv(Env):
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super().execute(bin, *args, **kwargs)
 
-    @contextmanager
-    def temp_environ(self) -> Iterator[None]:
-        environ = dict(os.environ)
-        try:
-            yield
-        finally:
-            os.environ.clear()
-            os.environ.update(environ)
-
-    def _updated_path(self) -> str:
-        return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
-
 
 class GenericEnv(VirtualEnv):
     def __init__(
@@ -1822,6 +1822,9 @@ class GenericEnv(VirtualEnv):
         self._child_env = child_env
 
         super().__init__(path, base=base)
+
+    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+        return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def find_executables(self) -> None:
         patterns = [("python*", "pip*")]
@@ -1893,9 +1896,6 @@ class GenericEnv(VirtualEnv):
 
         return exe.returncode
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
-        return super(VirtualEnv, self)._run(cmd, **kwargs)
-
     def is_venv(self) -> bool:
         return self._path != self._base
 
@@ -1919,15 +1919,15 @@ class NullEnv(SystemEnv):
             return super()._run(cmd, **kwargs)
         return 0
 
+    def _bin(self, bin: str) -> str:
+        return bin
+
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         self.executed.append([bin] + list(args))
 
         if self._execute:
             return super().execute(bin, *args, **kwargs)
         return 0
-
-    def _bin(self, bin: str) -> str:
-        return bin
 
 
 @contextmanager

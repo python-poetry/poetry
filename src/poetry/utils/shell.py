@@ -68,6 +68,27 @@ class Shell:
 
         return cls._shell
 
+    def _get_activate_script(self) -> str:
+        if self._name == "fish":
+            suffix = ".fish"
+        elif self._name in ("csh", "tcsh"):
+            suffix = ".csh"
+        elif self._name in ("powershell", "pwsh"):
+            suffix = ".ps1"
+        elif self._name == "cmd":
+            suffix = ".bat"
+        elif self._name == "nu":
+            suffix = ".nu"
+        else:
+            suffix = ""
+
+        return "activate" + suffix
+
+    def _get_source_command(self) -> str:
+        if self._name in ("fish", "csh", "tcsh", "nu"):
+            return "source"
+        return "."
+
     def activate(self, env: VirtualEnv) -> int | None:
         activate_script = self._get_activate_script()
         bin_dir = "Scripts" if WINDOWS else "bin"
@@ -123,27 +144,6 @@ class Shell:
         c.close()
 
         sys.exit(c.exitstatus)
-
-    def _get_activate_script(self) -> str:
-        if self._name == "fish":
-            suffix = ".fish"
-        elif self._name in ("csh", "tcsh"):
-            suffix = ".csh"
-        elif self._name in ("powershell", "pwsh"):
-            suffix = ".ps1"
-        elif self._name == "cmd":
-            suffix = ".bat"
-        elif self._name == "nu":
-            suffix = ".nu"
-        else:
-            suffix = ""
-
-        return "activate" + suffix
-
-    def _get_source_command(self) -> str:
-        if self._name in ("fish", "csh", "tcsh", "nu"):
-            return "source"
-        return "."
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}("{self._name}", "{self._path}")'

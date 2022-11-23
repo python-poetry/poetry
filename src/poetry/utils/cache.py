@@ -106,6 +106,38 @@ class FileCache(Generic[T]):
                 f"FileCache.hash_type is unknown value: '{self.hash_type}'."
             )
 
+    def _get_payload(self, key: str) -> T | None:
+        path = self._path(key)
+
+        if not path.exists():
+            return None
+
+        with open(path, "rb") as f:
+            payload = self._deserialize(f.read())
+
+        if payload.expired:
+            self.forget(key)
+            return None
+        else:
+            return payload.data
+
+    def _path(self, key: str) -> Path:
+        hash_type, parts_count = _HASHES[self.hash_type]
+        h = hash_type(encode(key)).hexdigest()
+        parts = [h[i : i + 2] for i in range(0, len(h), 2)][:parts_count]
+        return Path(self.path, *parts, h)
+
+    def _serialize(self, payload: CacheItem[T]) -> bytes:
+        expires = payload.expires or MAX_DATE
+        data = json.dumps(payload.data)
+        return encode(f"{expires:010d}{data}")
+
+    def _deserialize(self, data_raw: bytes) -> CacheItem[T]:
+        data_str = decode(data_raw)
+        data = json.loads(data_str[10:])
+        expires = int(data_str[:10])
+        return CacheItem(data, expires)
+
     def get(self, key: str) -> T | None:
         return self._get_payload(key)
 
@@ -164,35 +196,3 @@ class FileCache(Generic[T]):
             value = callback() if callable(callback) else callback
             self.put(key, value, minutes)
         return value
-
-    def _get_payload(self, key: str) -> T | None:
-        path = self._path(key)
-
-        if not path.exists():
-            return None
-
-        with open(path, "rb") as f:
-            payload = self._deserialize(f.read())
-
-        if payload.expired:
-            self.forget(key)
-            return None
-        else:
-            return payload.data
-
-    def _path(self, key: str) -> Path:
-        hash_type, parts_count = _HASHES[self.hash_type]
-        h = hash_type(encode(key)).hexdigest()
-        parts = [h[i : i + 2] for i in range(0, len(h), 2)][:parts_count]
-        return Path(self.path, *parts, h)
-
-    def _serialize(self, payload: CacheItem[T]) -> bytes:
-        expires = payload.expires or MAX_DATE
-        data = json.dumps(payload.data)
-        return encode(f"{expires:010d}{data}")
-
-    def _deserialize(self, data_raw: bytes) -> CacheItem[T]:
-        data_str = decode(data_raw)
-        data = json.loads(data_str[10:])
-        expires = int(data_str[:10])
-        return CacheItem(data, expires)

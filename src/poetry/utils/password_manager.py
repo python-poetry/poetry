@@ -34,6 +34,40 @@ class PoetryKeyring:
 
         self._check()
 
+    def _check(self) -> None:
+        try:
+            import keyring
+        except ImportError as e:
+            logger.debug("An error occurred while importing keyring: %s", e)
+            self._is_available = False
+
+            return
+
+        backend = keyring.get_keyring()
+        name = backend.name.split(" ")[0]
+        if name in ("fail", "null"):
+            logger.debug("No suitable keyring backend found")
+            self._is_available = False
+        elif "plaintext" in backend.name.lower():
+            logger.debug("Only a plaintext keyring backend is available. Not using it.")
+            self._is_available = False
+        elif name == "chainer":
+            try:
+                import keyring.backend
+
+                backends = keyring.backend.get_all_keyring()
+
+                self._is_available = any(
+                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
+                    and "plaintext" not in b.name.lower()
+                    for b in backends
+                )
+            except ImportError:
+                self._is_available = False
+
+        if not self._is_available:
+            logger.debug("No suitable keyring backends were found")
+
     def is_available(self) -> bool:
         return self._is_available
 
@@ -105,40 +139,6 @@ class PoetryKeyring:
 
     def get_entry_name(self, name: str) -> str:
         return f"{self._namespace}-{name}"
-
-    def _check(self) -> None:
-        try:
-            import keyring
-        except ImportError as e:
-            logger.debug("An error occurred while importing keyring: %s", e)
-            self._is_available = False
-
-            return
-
-        backend = keyring.get_keyring()
-        name = backend.name.split(" ")[0]
-        if name in ("fail", "null"):
-            logger.debug("No suitable keyring backend found")
-            self._is_available = False
-        elif "plaintext" in backend.name.lower():
-            logger.debug("Only a plaintext keyring backend is available. Not using it.")
-            self._is_available = False
-        elif name == "chainer":
-            try:
-                import keyring.backend
-
-                backends = keyring.backend.get_all_keyring()
-
-                self._is_available = any(
-                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
-                    and "plaintext" not in b.name.lower()
-                    for b in backends
-                )
-            except ImportError:
-                self._is_available = False
-
-        if not self._is_available:
-            logger.debug("No suitable keyring backends were found")
 
 
 class PasswordManager:
