@@ -8,6 +8,23 @@ inline-quotes = double
 enable-extensions = TC, TC1
 type-checking-strict = true
 eradicate-whitelist-extend = ^-.*;
+class_attributes_order =
+    constant,
+    field,
+    nested_class,
+    __new__,
+    __init__,
+    __post_init__,
+    private_property_method
+    property_method,
+    private_static_method,
+    static_method,
+    private_class_method,
+    class_method,
+    private_method,
+    method,
+    magic_method
+
 extend-ignore =
     # E203: Whitespace before ':' (pycqa/pycodestyle#373)
     E203,
