@@ -740,55 +740,7 @@ class Provider:
                 f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
-            # We need to check if one of the duplicate dependencies
-            # has no markers. If there is one, we need to change its
-            # environment markers to the inverse of the union of the
-            # other dependencies markers.
-            # For instance, if we have the following dependencies:
-            #   - ipython
-            #   - ipython (1.2.4) ; implementation_name == "pypy"
-            #
-            # the marker for `ipython` will become `implementation_name != "pypy"`.
-            #
-            # Further, we have to merge the constraints of the requirements
-            # without markers into the constraints of the requirements with markers.
-            # for instance, if we have the following dependencies:
-            #   - foo (>= 1.2)
-            #   - foo (!= 1.2.1) ; python == 3.10
-            #
-            # the constraint for the second entry will become (!= 1.2.1, >= 1.2)
-            any_markers_dependencies = [d for d in deps if d.marker.is_any()]
-            other_markers_dependencies = [d for d in deps if not d.marker.is_any()]
-
-            marker = other_markers_dependencies[0].marker
-            for other_dep in other_markers_dependencies[1:]:
-                marker = marker.union(other_dep.marker)
-            inverted_marker = marker.invert()
-
-            if any_markers_dependencies:
-                for dep_any in any_markers_dependencies:
-                    dep_any.marker = inverted_marker
-                    for dep_other in other_markers_dependencies:
-                        dep_other.constraint = dep_other.constraint.intersect(
-                            dep_any.constraint
-                        )
-            elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
-                get_python_constraint_from_marker(inverted_marker)
-            ):
-                # if there is no any marker dependency
-                # and the inverted marker is not empty,
-                # a dependency with the inverted union of all markers is required
-                # in order to not miss other dependencies later, for instance:
-                #   - foo (1.0) ; python == 3.7
-                #   - foo (2.0) ; python == 3.8
-                #   - bar (2.0) ; python == 3.8
-                #   - bar (3.0) ; python == 3.9
-                #
-                # the last dependency would be missed without this,
-                # because the intersection with both foo dependencies is empty
-                inverted_marker_dep = deps[0].with_constraint(EmptyConstraint())
-                inverted_marker_dep.marker = inverted_marker
-                deps.append(inverted_marker_dep)
+            self._handle_any_marker_dependencies(deps)
 
             overrides = []
             overrides_marker_intersection: BaseMarker = AnyMarker()
@@ -1021,3 +973,56 @@ class Provider:
                     )
                     deps.append(_deps[0].with_constraint(new_constraint))
         return deps
+
+    def _handle_any_marker_dependencies(self, dependencies: list[Dependency]) -> None:
+        """
+        We need to check if one of the duplicate dependencies
+        has no markers. If there is one, we need to change its
+        environment markers to the inverse of the union of the
+        other dependencies markers.
+        For instance, if we have the following dependencies:
+          - ipython
+          - ipython (1.2.4) ; implementation_name == "pypy"
+
+        the marker for `ipython` will become `implementation_name != "pypy"`.
+
+        Further, we have to merge the constraints of the requirements
+        without markers into the constraints of the requirements with markers.
+        for instance, if we have the following dependencies:
+          - foo (>= 1.2)
+          - foo (!= 1.2.1) ; python == 3.10
+
+        the constraint for the second entry will become (!= 1.2.1, >= 1.2).
+        """
+        any_markers_dependencies = [d for d in dependencies if d.marker.is_any()]
+        other_markers_dependencies = [d for d in dependencies if not d.marker.is_any()]
+
+        marker = other_markers_dependencies[0].marker
+        for other_dep in other_markers_dependencies[1:]:
+            marker = marker.union(other_dep.marker)
+        inverted_marker = marker.invert()
+
+        if any_markers_dependencies:
+            for dep_any in any_markers_dependencies:
+                dep_any.marker = inverted_marker
+                for dep_other in other_markers_dependencies:
+                    dep_other.constraint = dep_other.constraint.intersect(
+                        dep_any.constraint
+                    )
+        elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
+                get_python_constraint_from_marker(inverted_marker)
+        ):
+            # if there is no any marker dependency
+            # and the inverted marker is not empty,
+            # a dependency with the inverted union of all markers is required
+            # in order to not miss other dependencies later, for instance:
+            #   - foo (1.0) ; python == 3.7
+            #   - foo (2.0) ; python == 3.8
+            #   - bar (2.0) ; python == 3.8
+            #   - bar (3.0) ; python == 3.9
+            #
+            # the last dependency would be missed without this,
+            # because the intersection with both foo dependencies is empty
+            inverted_marker_dep = dependencies[0].with_constraint(EmptyConstraint())
+            inverted_marker_dep.marker = inverted_marker
+            dependencies.append(inverted_marker_dep)
