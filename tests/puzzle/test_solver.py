@@ -1480,6 +1480,143 @@ def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
     )
 
 
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers1(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python >= 3.10
+        A (<1.1) ; python < 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; <empty>
+        A (>=1.0,<1.2) ; python >= 3.10
+        A (>=1.0,<1.1) ; python < 3.10
+
+    The dependency with an empty marker has to be ignored.
+    """
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": ">=3.10"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.1", "python": "<3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            # only a10 and a11, not a12
+            {"job": "install", "package": package_a10},
+            {"job": "install", "package": package_a11},
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers2(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python == 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; python != 3.10
+        A (>=1.0,<1.2) ; python == 3.10
+
+    The first dependency has to be ignored
+    because it is not compatible with the project's python constraint.
+    """
+    set_package_python_versions(solver.provider, "~3.10")
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": "3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a11},  # only a11, not a12
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers3(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python == 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; python != 3.10
+        A (>=1.0,<1.2) ; python == 3.10
+
+    The first dependency has to be ignored
+    because it is not compatible with the current environment.
+    """
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": "3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    with solver.use_environment(MockEnv((3, 10, 0))):
+        transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a11},  # only a11, not a12
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_intersection(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
