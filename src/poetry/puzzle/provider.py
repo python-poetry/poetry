@@ -740,7 +740,7 @@ class Provider:
                 f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
-            self._handle_any_marker_dependencies(deps)
+            deps = self._handle_any_marker_dependencies(deps)
 
             overrides = []
             overrides_marker_intersection: BaseMarker = AnyMarker()
@@ -974,7 +974,9 @@ class Provider:
                     deps.append(_deps[0].with_constraint(new_constraint))
         return deps
 
-    def _handle_any_marker_dependencies(self, dependencies: list[Dependency]) -> None:
+    def _handle_any_marker_dependencies(
+        self, dependencies: list[Dependency]
+    ) -> list[Dependency]:
         """
         We need to check if one of the duplicate dependencies
         has no markers. If there is one, we need to change its
@@ -997,32 +999,42 @@ class Provider:
         any_markers_dependencies = [d for d in dependencies if d.marker.is_any()]
         other_markers_dependencies = [d for d in dependencies if not d.marker.is_any()]
 
+        for dep_any in any_markers_dependencies:
+            for dep_other in other_markers_dependencies:
+                dep_other.constraint = dep_other.constraint.intersect(
+                    dep_any.constraint
+                )
+
         marker = other_markers_dependencies[0].marker
         for other_dep in other_markers_dependencies[1:]:
             marker = marker.union(other_dep.marker)
         inverted_marker = marker.invert()
 
-        if any_markers_dependencies:
-            for dep_any in any_markers_dependencies:
-                dep_any.marker = inverted_marker
-                for dep_other in other_markers_dependencies:
-                    dep_other.constraint = dep_other.constraint.intersect(
-                        dep_any.constraint
-                    )
-        elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
+        if (
+            not inverted_marker.is_empty()
+            and self._python_constraint.allows_any(
                 get_python_constraint_from_marker(inverted_marker)
+            )
+            and (not self._env or inverted_marker.validate(self._env.marker_env))
         ):
-            # if there is no any marker dependency
-            # and the inverted marker is not empty,
-            # a dependency with the inverted union of all markers is required
-            # in order to not miss other dependencies later, for instance:
-            #   - foo (1.0) ; python == 3.7
-            #   - foo (2.0) ; python == 3.8
-            #   - bar (2.0) ; python == 3.8
-            #   - bar (3.0) ; python == 3.9
-            #
-            # the last dependency would be missed without this,
-            # because the intersection with both foo dependencies is empty
-            inverted_marker_dep = dependencies[0].with_constraint(EmptyConstraint())
-            inverted_marker_dep.marker = inverted_marker
-            dependencies.append(inverted_marker_dep)
+            if any_markers_dependencies:
+                for dep_any in any_markers_dependencies:
+                    dep_any.marker = inverted_marker
+            else:
+                # If there is no any marker dependency
+                # and the inverted marker is not empty,
+                # a dependency with the inverted union of all markers is required
+                # in order to not miss other dependencies later, for instance:
+                #   - foo (1.0) ; python == 3.7
+                #   - foo (2.0) ; python == 3.8
+                #   - bar (2.0) ; python == 3.8
+                #   - bar (3.0) ; python == 3.9
+                #
+                # the last dependency would be missed without this,
+                # because the intersection with both foo dependencies is empty.
+                inverted_marker_dep = dependencies[0].with_constraint(EmptyConstraint())
+                inverted_marker_dep.marker = inverted_marker
+                dependencies.append(inverted_marker_dep)
+        else:
+            dependencies = other_markers_dependencies
+        return dependencies
