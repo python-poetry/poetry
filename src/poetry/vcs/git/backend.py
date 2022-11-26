@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from urllib.parse import urljoin
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
@@ -345,22 +346,13 @@ class Git:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
 
-                url_string = url.decode()
+                url_string = url.decode("utf-8")
                 final_url = url_string
                 submodule_is_relative = bool(
                     relative_submodule_regex.search(url_string)
                 )
                 if submodule_is_relative:
-                    # Find a root list of url sections to mutate according
-                    # to the relative url
-                    url_sections = [section + "/" for section in main_url.split("/")]
-                    directories_upward = url_string.count("../")
-                    # Walk up the main URL until we know where to insert
-                    # the submodule URL
-                    url_portion_remaining = "".join(url_sections[:-directories_upward])
-                    # Insert the submodule URL - the last segment of url_string.split()
-                    # is the path relative to the main URL
-                    final_url = url_portion_remaining + url_string.split("../")[-1]
+                    final_url = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
 
                 source_root = path_absolute.parent
                 source_root.mkdir(parents=True, exist_ok=True)

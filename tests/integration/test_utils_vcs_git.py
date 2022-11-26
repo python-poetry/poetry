@@ -240,7 +240,7 @@ def test_git_clone_clones_submodules(source_url: str) -> None:
     assert len(list(submodule_package_directory.glob("*"))) > 1
 
 
-def test_git_clone_clones_submodules1_with_relative_urls(source_url: str) -> None:
+def test_git_clone_clones_submodules_with_relative_urls(source_url: str) -> None:
     with Git.clone(url=source_url, branch="relative_submodule") as repo:
         submodule_package_directory = (
             Path(repo.path) / "submodules" / "relative-url-submodule"
