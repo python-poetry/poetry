@@ -59,6 +59,18 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class IncompatibleConstraintsError(Exception):
+    """
+    Exception when there are duplicate dependencies with incompatible constraints.
+    """
+
+    def __init__(self, package: Package, *dependencies: Dependency) -> None:
+        constraints = "\n".join(dep.to_pep_508() for dep in dependencies)
+        super().__init__(
+            f"Incompatible constraints in requirements of {package}:\n{constraints}"
+        )
+
+
 class Indicator(ProgressIndicator):
     CONTEXT: str | None = None
 
@@ -740,7 +752,7 @@ class Provider:
                 f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
-            deps = self._handle_any_marker_dependencies(deps)
+            deps = self._handle_any_marker_dependencies(package, deps)
 
             overrides = []
             overrides_marker_intersection: BaseMarker = AnyMarker()
@@ -975,7 +987,7 @@ class Provider:
         return deps
 
     def _handle_any_marker_dependencies(
-        self, dependencies: list[Dependency]
+        self, package: Package, dependencies: list[Dependency]
     ) -> list[Dependency]:
         """
         We need to check if one of the duplicate dependencies
@@ -999,11 +1011,16 @@ class Provider:
         any_markers_dependencies = [d for d in dependencies if d.marker.is_any()]
         other_markers_dependencies = [d for d in dependencies if not d.marker.is_any()]
 
-        for dep_any in any_markers_dependencies:
+        if any_markers_dependencies:
             for dep_other in other_markers_dependencies:
-                dep_other.constraint = dep_other.constraint.intersect(
-                    dep_any.constraint
-                )
+                new_constraint = dep_other.constraint
+                for dep_any in any_markers_dependencies:
+                    new_constraint = new_constraint.intersect(dep_any.constraint)
+                if new_constraint.is_empty():
+                    raise IncompatibleConstraintsError(
+                        package, dep_other, *any_markers_dependencies
+                    )
+                dep_other.constraint = new_constraint
 
         marker = other_markers_dependencies[0].marker
         for other_dep in other_markers_dependencies[1:]:
