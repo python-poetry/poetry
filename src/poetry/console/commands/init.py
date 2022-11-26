@@ -164,7 +164,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             default_python = (
                 "^"
                 + EnvManager.get_python_version(
-                    precious=2,
+                    precision=2,
                     prefer_active_python=config.get("virtualenvs.prefer-active-python"),
                     io=self.io,
                 ).to_string()

@@ -563,11 +563,11 @@ class EnvManager:
 
     @staticmethod
     def get_python_version(
-        precious: int = 3,
+        precision: int = 3,
         prefer_active_python: bool = False,
         io: None | IO = None,
     ) -> Version:
-        version = ".".join(str(v) for v in sys.version_info[:precious])
+        version = ".".join(str(v) for v in sys.version_info[:precision])
 
         if prefer_active_python:
             executable = EnvManager._detect_active_python(io)
@@ -582,7 +582,7 @@ class EnvManager:
                     ).strip()
                 )
 
-                version = ".".join(str(v) for v in python_patch.split(".")[:precious])
+                version = ".".join(str(v) for v in python_patch.split(".")[:precision])
 
         return Version.parse(version)
 
@@ -701,7 +701,7 @@ class EnvManager:
             "virtualenvs.prefer-active-python"
         )
         python_minor = self.get_python_version(
-            precious=2, prefer_active_python=prefer_active_python, io=self._io
+            precision=2, prefer_active_python=prefer_active_python, io=self._io
         ).to_string()
 
         venv_path = self._poetry.config.virtualenvs_path
