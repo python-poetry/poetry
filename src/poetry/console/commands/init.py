@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -78,8 +76,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
 
+        from poetry.config.config import Config
         from poetry.layouts import layout
-        from poetry.utils.env import SystemEnv
+        from poetry.utils.env import EnvManager
 
         project_path = Path.cwd()
 
@@ -161,10 +160,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         python = self.option("python")
         if not python:
-            current_env = SystemEnv(Path(sys.executable))
-            default_python = "^" + ".".join(
-                str(v) for v in current_env.version_info[:2]
+            config = Config.create()
+            default_python = (
+                "^"
+                + EnvManager.get_python_version(
+                    precious=2,
+                    prefer_active_python=config.get("virtualenvs.prefer-active-python"),
+                    io=self.io,
+                ).to_string()
             )
+
             question = self.create_question(
                 f"Compatible Python versions [<comment>{default_python}</comment>]: ",
                 default=default_python,

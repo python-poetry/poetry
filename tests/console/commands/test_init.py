@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -26,6 +28,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from pytest_mock import MockerFixture
 
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
@@ -1061,3 +1064,46 @@ def test_package_include(
         f'python = "^3.10"\n'
     )
     assert expected in tester.io.fetch_output()
+
+
+@pytest.mark.parametrize(
+    ["prefer_active", "python"],
+    [
+        (True, "1.1"),
+        (False, f"{sys.version_info[0]}.{sys.version_info[1]}"),
+    ],
+)
+def test_respect_prefer_active_on_init(
+    prefer_active: bool,
+    python: str,
+    config: Config,
+    mocker: MockerFixture,
+    tester: CommandTester,
+    source_dir: Path,
+):
+    from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
+
+    orig_check_output = subprocess.check_output
+
+    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
+        if GET_PYTHON_VERSION_ONELINER in cmd:
+            return "1.1.1"
+
+        return orig_check_output(cmd, *_, **__)
+
+    mocker.patch("subprocess.check_output", side_effect=mock_check_output)
+
+    config.config["virtualenvs"]["prefer-active-python"] = prefer_active
+    pyproject_file = source_dir / "pyproject.toml"
+
+    tester.execute(
+        "--author 'Your Name <you@example.com>' --name 'my-package'",
+        interactive=False,
+    )
+
+    expected = f"""\
+[tool.poetry.dependencies]
+python = "^{python}"
+"""
+
+    assert expected in pyproject_file.read_text()
