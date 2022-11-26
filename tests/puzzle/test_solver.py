@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -19,6 +21,7 @@ from poetry.factory import Factory
 from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
@@ -1478,6 +1481,27 @@ def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
             {"job": "install", "package": package_b},
         ],
     )
+
+
+def test_solver_duplicate_dependencies_different_constraints_conflict(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    package.add_dependency(Factory.create_dependency("A", ">=1.1"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.1", "python": "3.10"})
+    )
+
+    repo.add_package(get_package("A", "1.0"))
+    repo.add_package(get_package("A", "1.1"))
+    repo.add_package(get_package("A", "1.2"))
+
+    expectation = (
+        "Incompatible constraints in requirements of root (1.0):\n"
+        'A (<1.1) ; python_version == "3.10"\n'
+        "A (>=1.1)"
+    )
+    with pytest.raises(IncompatibleConstraintsError, match=re.escape(expectation)):
+        solver.solve()
 
 
 def test_solver_duplicate_dependencies_different_constraints_discard_no_markers1(
