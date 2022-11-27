@@ -331,6 +331,40 @@ as the target environment managed by Poetry. If Poetry and your project are inst
 is likely to upgrade or uninstall its own dependencies (causing hard-to-debug and understand errors).
 {{% /note %}}
 
+**Using pip-tools**
+
+You can use `pip-tools` to generate `requirements.txt` for your poetry.
+
+The first thing you need is to create `requirements-poetry.in` with
+the following content:
+
+```text title="requirement-poetry.in"
+poetry==<poetry-version>
+```
+
+Then with `pip-tools` you can generate a `requirements-poetry.txt` file
+with hashes:
+
+```shell
+pip-compile --generate-hashes --rebuild --resolver backtracking --output-file requirements-poetry.txt requirements-poetry.in
+```
+
+The output file will contain all required dependencies for a given `poetry`
+version.
+
+Since Poetry has to be installed in its own virtual environment, you need
+to create one when you will use `requirements-poetry.txt` in you CI workflow.
+
+```shell
+python -m venv $POETRY_HOME && $POETRY_HOME/bin/pip install --no-cache-dir --require-hashes --requirement requirements-poetry.txt
+```
+
+The path to `$POETRY_HOME/bin` has to be in your `$PATH`:
+
+```shell
+PATH="$POETRY_HOME/bin:$PATH"
+```
+
 **Version pinning**
 
 Whatever method you use, it is highly recommended to explicitly control the version of Poetry used, so that you are able
