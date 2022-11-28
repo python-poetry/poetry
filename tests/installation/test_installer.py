@@ -2555,3 +2555,107 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
         source_reference="HEAD",
         source_resolved_reference=expected_reference,
     )
+
+
+# https://github.com/python-poetry/poetry/issues/6710
+@pytest.mark.parametrize("env_platform", ["darwin", "linux"])
+def test_installer_distinguishes_locked_packages_by_source(
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    repo: Repository,
+    package: ProjectPackage,
+    env_platform: str,
+):
+    # Require 1.11.0+cpu from pytorch for most platforms, but specify 1.11.0 and pypi on
+    # darwin.
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch",
+            {
+                "version": "1.11.0+cpu",
+                "markers": "sys_platform != 'darwin'",
+                "source": "pytorch",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch",
+            {
+                "version": "1.11.0",
+                "markers": "sys_platform == 'darwin'",
+                "source": "pypi",
+            },
+        )
+    )
+
+    # Locking finds both the pypi and the pytorch packages.
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "torch",
+                    "version": "1.11.0",
+                    "category": "main",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                },
+                {
+                    "name": "torch",
+                    "version": "1.11.0+cpu",
+                    "category": "main",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://download.pytorch.org/whl",
+                        "reference": "pytorch",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+            },
+        }
+    )
+    installer = Installer(
+        NullIO(),
+        MockEnv(platform=env_platform),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(platform=env_platform),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    installer.use_executor(True)
+    installer.run()
+
+    # Results of installation are consistent with the platform requirements.
+    version = "1.11.0" if env_platform == "darwin" else "1.11.0+cpu"
+    source_type = None if env_platform == "darwin" else "legacy"
+    source_url = (
+        None if env_platform == "darwin" else "https://download.pytorch.org/whl"
+    )
+    source_reference = None if env_platform == "darwin" else "pytorch"
+
+    assert len(installer.executor.installations) == 1
+    assert installer.executor.installations[0] == Package(
+        "torch",
+        version,
+        source_type=source_type,
+        source_url=source_url,
+        source_reference=source_reference,
+    )

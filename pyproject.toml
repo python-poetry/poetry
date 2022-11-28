@@ -47,7 +47,7 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "^1.3.2"
+poetry-core = "^1.4.0"
 poetry-plugin-export = "^1.2.0"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
@@ -70,7 +70,7 @@ shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
 # exclude 0.11.2 and 0.11.3 due to https://github.com/sdispater/tomlkit/issues/225
 tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
-trove-classifiers = "^2022.5.19"
+trove-classifiers = ">=2022.5.19"
 # exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
 virtualenv = "^20.4.3,!=20.4.5,!=20.4.6"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
