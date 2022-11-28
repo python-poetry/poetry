@@ -193,13 +193,12 @@ class Uploader:
             "requires_dist": meta.requires_dist,
             "requires_external": meta.requires_external,
             "requires_python": meta.requires_python,
+            "provides_extra": meta.provides_extra,
         }
 
         # Metadata 2.1
         if meta.description_content_type:
             data["description_content_type"] = meta.description_content_type
-
-        # TODO: Provides extra
 
         return data
 
