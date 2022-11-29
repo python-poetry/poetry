@@ -431,7 +431,7 @@ class Provider:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url)
+        package = self.get_package_from_url(dependency.url, dependency.hash)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -446,12 +446,18 @@ class Provider:
         return package
 
     @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
+    def get_package_from_url(
+        cls, url: str, hash_func: Callable[..., str] | None = None
+    ) -> Package:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
             package = cls.get_package_from_file(dest)
+            if hash_func is not None:
+                package.files = [
+                    {"file": file_name, "hash": "sha256:" + hash_func(dest)}
+                ]
 
         package._source_type = "url"
         package._source_url = url
