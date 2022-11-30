@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import string
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -66,6 +67,21 @@ def test_config_get_from_environment_variable(
 ):
     os.environ[env_var] = env_value
     assert config.get(name) is value
+
+
+@pytest.mark.parametrize("separator", string.punctuation)
+def test_config_get_handles_punctuation(
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
+    environ: Iterator[None],
+    separator: str,
+):
+    repo_name = f"example{separator}repo"
+    var_name = f"POETRY_HTTP_BASIC_{repo_name.replace(separator, '_').upper()}_PASSWORD"
+    var_value = "deploy-token"
+    monkeypatch.setenv(var_name, var_value)
+
+    assert config.get(f"http-basic.{repo_name}.password") == var_value
 
 
 @pytest.mark.parametrize(
