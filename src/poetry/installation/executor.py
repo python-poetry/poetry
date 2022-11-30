@@ -28,6 +28,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
+from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -667,7 +668,7 @@ class Executor:
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
         file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + file_dep.hash()
+        archive_hash: str = "sha256:" + get_file_hash(file_dep.full_path)
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:

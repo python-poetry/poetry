@@ -33,6 +33,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
 
 
@@ -396,7 +397,10 @@ class Provider:
             package.root_dir = dependency.base
 
         package.files = [
-            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
         ]
 
         return package
@@ -431,7 +435,7 @@ class Provider:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url, dependency.hash)
+        package = self.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -446,18 +450,16 @@ class Provider:
         return package
 
     @classmethod
-    def get_package_from_url(
-        cls, url: str, hash_func: Callable[..., str] | None = None
-    ) -> Package:
+    def get_package_from_url(cls, url: str) -> Package:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
             package = cls.get_package_from_file(dest)
-            if hash_func is not None:
-                package.files = [
-                    {"file": file_name, "hash": "sha256:" + hash_func(dest)}
-                ]
+
+            package.files = [
+                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
+            ]
 
         package._source_type = "url"
         package._source_url = url
