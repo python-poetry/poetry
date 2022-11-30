@@ -227,7 +227,7 @@ class Config:
                 if repositories:
                     return repositories
 
-            env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
+            env = "POETRY_" + "_".join(re.sub(r"[\W]", "_", k.upper()) for k in keys)
             env_value = os.getenv(env)
             if env_value is not None:
                 return self.process(self._get_normalizer(setting_name)(env_value))
