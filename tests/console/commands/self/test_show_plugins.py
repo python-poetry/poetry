@@ -64,7 +64,7 @@ def plugin_package(plugin_package_requires_dist: list[str]) -> Package:
 
 
 @pytest.fixture()
-def plugin_distro(plugin_package: Package, tmp_dir: str) -> metadata.Distribution:
+def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribution:
     class MockDistribution(metadata.Distribution):
         def read_text(self, filename: str) -> str | None:
             if filename == "METADATA":
@@ -81,7 +81,7 @@ def plugin_distro(plugin_package: Package, tmp_dir: str) -> metadata.Distributio
             return None
 
         def locate_file(self, path: PathLike[str]) -> PathLike[str]:
-            return Path(tmp_dir, path)
+            return Path(tmp_path, path)
 
     return MockDistribution()
 

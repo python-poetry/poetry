@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -12,6 +11,7 @@ from poetry.utils.env import EnvManager
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
     from tests.helpers import PoetryTestApplication
 
@@ -25,8 +25,8 @@ def venv_name(app: PoetryTestApplication) -> str:
 
 
 @pytest.fixture
-def venv_cache(tmp_dir: str) -> Path:
-    return Path(tmp_dir)
+def venv_cache(tmp_path: Path) -> Path:
+    return tmp_path
 
 
 @pytest.fixture(scope="module")

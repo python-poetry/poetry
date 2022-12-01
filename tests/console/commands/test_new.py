@@ -149,18 +149,20 @@ def test_command_new(
     package_path: str,
     include_from: str | None,
     tester: CommandTester,
-    tmp_dir: str,
+    tmp_path: Path,
 ):
-    path = Path(tmp_dir) / directory
+    path = tmp_path / directory
     options.append(path.as_posix())
     tester.execute(" ".join(options))
     verify_project_directory(path, package_name, package_path, include_from)
 
 
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
-def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir: str):
+def test_command_new_with_readme(
+    fmt: str | None, tester: CommandTester, tmp_path: Path
+):
     package = "package"
-    path = Path(tmp_dir) / package
+    path = tmp_path / package
     options = [path.as_posix()]
 
     if fmt:

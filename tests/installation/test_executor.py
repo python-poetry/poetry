@@ -38,8 +38,8 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def env(tmp_dir: str) -> MockEnv:
-    path = Path(tmp_dir) / ".venv"
+def env(tmp_path: Path) -> MockEnv:
+    path = tmp_path / ".venv"
     path.mkdir(parents=True)
 
     return MockEnv(path=path, is_venv=True)
@@ -104,13 +104,13 @@ def test_execute_executes_a_batch_of_operations(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
 ):
     pip_install = mocker.patch("poetry.installation.executor.pip_install")
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
@@ -205,13 +205,13 @@ def test_execute_prints_warning_for_yanked_package(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     operations: list[Operation],
     has_warning: bool,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
@@ -293,11 +293,11 @@ def test_execute_works_with_ansi_output(
     config: Config,
     pool: RepositoryPool,
     io_decorated: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io_decorated)
 
@@ -335,11 +335,11 @@ def test_execute_works_with_no_ansi_output(
     config: Config,
     pool: RepositoryPool,
     io_not_decorated: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io_not_decorated)
 
@@ -424,7 +424,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_executor_should_delete_incomplete_downloads(
     config: Config,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mocker: MockerFixture,
     pool: RepositoryPool,
     mock_file_downloads: None,
@@ -433,7 +433,7 @@ def test_executor_should_delete_incomplete_downloads(
     fixture = Path(__file__).parent.parent.joinpath(
         "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
     )
-    destination_fixture = Path(tmp_dir) / "tomlkit-0.5.3-py2.py3-none-any.whl"
+    destination_fixture = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
     shutil.copyfile(str(fixture), str(destination_fixture))
     mocker.patch(
         "poetry.installation.executor.Executor._download_archive",
@@ -445,10 +445,10 @@ def test_executor_should_delete_incomplete_downloads(
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cache_directory_for_link",
-        return_value=Path(tmp_dir),
+        return_value=tmp_path,
     )
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
@@ -727,7 +727,7 @@ def test_executer_fallback_on_poetry_create_error(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
 ):
@@ -740,7 +740,7 @@ def test_executer_fallback_on_poetry_create_error(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 

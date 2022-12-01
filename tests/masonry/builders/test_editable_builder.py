@@ -74,8 +74,8 @@ def env_manager(simple_poetry: Poetry) -> EnvManager:
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
-    venv_path = Path(tmp_dir) / "venv"
+def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> VirtualEnv:
+    venv_path = tmp_path / "venv"
 
     env_manager.build_venv(str(venv_path))
 
@@ -213,10 +213,10 @@ if __name__ == '__main__':
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    mocker: MockerFixture, extended_poetry: Poetry, tmp_dir: str
+    mocker: MockerFixture, extended_poetry: Poetry, tmp_path: Path
 ):
     pip_install = mocker.patch("poetry.masonry.builders.editable.pip_install")
-    env = MockEnv(path=Path(tmp_dir) / "foo")
+    env = MockEnv(path=tmp_path / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
@@ -226,10 +226,10 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     assert [] == env.executed
 
 
-def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
+def test_builder_setup_generation_runs_with_pip_editable(tmp_path: Path) -> None:
     # create an isolated copy of the project
     fixture = Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
-    extended_project = Path(tmp_dir) / "extended_project"
+    extended_project = tmp_path / "extended_project"
 
     shutil.copytree(fixture, extended_project)
     assert extended_project.exists()

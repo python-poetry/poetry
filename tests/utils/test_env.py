@@ -85,9 +85,9 @@ def manager(poetry: Poetry) -> EnvManager:
 
 
 def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
-    tmp_dir: str, manager: EnvManager
+    tmp_path: Path, manager: EnvManager
 ):
-    venv_path = Path(tmp_dir) / "Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
 
     manager.build_venv(str(venv_path))
 
@@ -97,10 +97,10 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
-def test_venv_backup_exclusion(tmp_dir: str, manager: EnvManager):
+def test_venv_backup_exclusion(tmp_path: Path, manager: EnvManager):
     import xattr
 
-    venv_path = Path(tmp_dir) / "Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
 
     manager.build_venv(str(venv_path))
 
@@ -118,9 +118,9 @@ def test_venv_backup_exclusion(tmp_dir: str, manager: EnvManager):
 
 
 def test_env_commands_with_spaces_in_their_arg_work_as_expected(
-    tmp_dir: str, manager: EnvManager
+    tmp_path: Path, manager: EnvManager
 ):
-    venv_path = Path(tmp_dir) / "Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
     assert venv.run("python", venv.pip, "--version", shell=True).startswith(
@@ -129,9 +129,9 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(
 
 
 def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
-    tmp_dir: str, manager: EnvManager
+    tmp_path: Path, manager: EnvManager
 ):
-    venv_path = Path(tmp_dir) / "Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
     run_output_path = Path(
@@ -142,9 +142,9 @@ def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
 
 
 def test_env_get_supported_tags_matches_inside_virtualenv(
-    tmp_dir: str, manager: EnvManager
+    tmp_path: Path, manager: EnvManager
 ):
-    venv_path = Path(tmp_dir) / "Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
 
@@ -203,7 +203,7 @@ def check_output_wrapper(
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -213,7 +213,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -228,7 +228,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     env = manager.activate("python3.7")
 
     m.assert_called_with(
-        Path(tmp_dir) / f"{venv_name}-py3.7",
+        tmp_path / f"{venv_name}-py3.7",
         executable="/usr/bin/python3.7",
         flags={
             "always-copy": False,
@@ -239,18 +239,18 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         prompt="simple-project-py3.7",
     )
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
+    assert env.path == tmp_path / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
 def test_activate_activates_existing_virtualenv_no_envs_file(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -260,9 +260,9 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
+    os.mkdir(tmp_path / f"{venv_name}-py3.7")
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -278,18 +278,18 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     m.assert_not_called()
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
+    assert env.path == tmp_path / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
 def test_activate_activates_same_virtualenv_with_envs_file(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -299,14 +299,14 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
+    os.mkdir(tmp_path / f"{venv_name}-py3.7")
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -327,12 +327,12 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
+    assert env.path == tmp_path / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
 def test_activate_activates_different_virtualenv_with_envs_file(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -342,14 +342,14 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
+    os.mkdir(tmp_path / f"{venv_name}-py3.7")
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -364,7 +364,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6")
 
     m.assert_called_with(
-        Path(tmp_dir) / f"{venv_name}-py3.6",
+        tmp_path / f"{venv_name}-py3.6",
         executable="/usr/bin/python3.6",
         flags={
             "always-copy": False,
@@ -380,12 +380,12 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.6"
+    assert env.path == tmp_path / f"{venv_name}-py3.6"
     assert env.base == Path("/prefix")
 
 
 def test_activate_activates_recreates_for_different_patch(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -395,14 +395,14 @@ def test_activate_activates_recreates_for_different_patch(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
+    os.mkdir(tmp_path / f"{venv_name}-py3.7")
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -428,7 +428,7 @@ def test_activate_activates_recreates_for_different_patch(
     env = manager.activate("python3.7")
 
     build_venv_m.assert_called_with(
-        Path(tmp_dir) / f"{venv_name}-py3.7",
+        tmp_path / f"{venv_name}-py3.7",
         executable="/usr/bin/python3.7",
         flags={
             "always-copy": False,
@@ -438,20 +438,20 @@ def test_activate_activates_recreates_for_different_patch(
         },
         prompt="simple-project-py3.7",
     )
-    remove_venv_m.assert_called_with(Path(tmp_dir) / f"{venv_name}-py3.7")
+    remove_venv_m.assert_called_with(tmp_path / f"{venv_name}-py3.7")
 
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
+    assert env.path == tmp_path / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
-    assert (Path(tmp_dir) / f"{venv_name}-py3.7").exists()
+    assert (tmp_path / f"{venv_name}-py3.7").exists()
 
 
 def test_activate_does_not_recreate_when_switching_minor(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -461,15 +461,15 @@ def test_activate_does_not_recreate_when_switching_minor(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
-    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.6"))
+    os.mkdir(tmp_path / f"{venv_name}-py3.7")
+    os.mkdir(tmp_path / f"{venv_name}-py3.6")
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -496,13 +496,13 @@ def test_activate_does_not_recreate_when_switching_minor(
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.6"
+    assert env.path == tmp_path / f"{venv_name}-py3.6"
     assert env.base == Path("/prefix")
-    assert (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
+    assert (tmp_path / f"{venv_name}-py3.6").exists()
 
 
 def test_deactivate_non_activated_but_existing(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -513,9 +513,9 @@ def test_deactivate_non_activated_but_existing(
         del os.environ["VIRTUAL_ENV"]
 
     python = ".".join(str(c) for c in sys.version_info[:2])
-    (Path(tmp_dir) / f"{venv_name}-py{python}").mkdir()
+    (tmp_path / f"{venv_name}-py{python}").mkdir()
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -525,12 +525,12 @@ def test_deactivate_non_activated_but_existing(
     manager.deactivate()
     env = manager.get()
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py{python}"
+    assert env.path == tmp_path / f"{venv_name}-py{python}"
     assert Path("/prefix")
 
 
 def test_deactivate_activated(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -542,12 +542,10 @@ def test_deactivate_activated(
 
     version = Version.from_parts(*sys.version_info[:3])
     other_version = Version.parse("3.4") if version.major == 2 else version.next_minor()
-    (Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}").mkdir()
-    (
-        Path(tmp_dir) / f"{venv_name}-py{other_version.major}.{other_version.minor}"
-    ).mkdir()
+    (tmp_path / f"{venv_name}-py{version.major}.{version.minor}").mkdir()
+    (tmp_path / f"{venv_name}-py{other_version.major}.{other_version.minor}").mkdir()
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {
         "minor": f"{other_version.major}.{other_version.minor}",
@@ -555,7 +553,7 @@ def test_deactivate_activated(
     }
     envs_file.write(doc)
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     mocker.patch(
         "subprocess.check_output",
@@ -565,7 +563,7 @@ def test_deactivate_activated(
     manager.deactivate()
     env = manager.get()
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}"
+    assert env.path == tmp_path / f"{venv_name}-py{version.major}.{version.minor}"
     assert Path("/prefix")
 
     envs = envs_file.read()
@@ -573,7 +571,7 @@ def test_deactivate_activated(
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -582,10 +580,10 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 ):
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
@@ -601,41 +599,41 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     env = manager.get()
 
-    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
+    assert env.path == tmp_path / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
 def test_list(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     venv_name: str,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
-    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     venvs = manager.list()
 
     assert len(venvs) == 2
-    assert venvs[0].path == (Path(tmp_dir) / f"{venv_name}-py3.6")
-    assert venvs[1].path == (Path(tmp_dir) / f"{venv_name}-py3.7")
+    assert venvs[0].path == (tmp_path / f"{venv_name}-py3.6")
+    assert venvs[1].path == (tmp_path / f"{venv_name}-py3.7")
 
 
 def test_remove_by_python_version(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
-    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
@@ -644,23 +642,23 @@ def test_remove_by_python_version(
 
     venv = manager.remove("3.6")
 
-    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    expected_venv_path = tmp_path / f"{venv_name}-py3.6"
     assert venv.path == expected_venv_path
     assert not expected_venv_path.exists()
 
 
 def test_remove_by_name(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
-    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
@@ -669,23 +667,23 @@ def test_remove_by_name(
 
     venv = manager.remove(f"{venv_name}-py3.6")
 
-    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    expected_venv_path = tmp_path / f"{venv_name}-py3.6"
     assert venv.path == expected_venv_path
     assert not expected_venv_path.exists()
 
 
 def test_remove_by_string_with_python_and_version(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
-    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
@@ -694,30 +692,30 @@ def test_remove_by_string_with_python_and_version(
 
     venv = manager.remove("python3.6")
 
-    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    expected_venv_path = tmp_path / f"{venv_name}-py3.6"
     assert venv.path == expected_venv_path
     assert not expected_venv_path.exists()
 
 
 def test_remove_by_full_path_to_python(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
-    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    expected_venv_path = tmp_path / f"{venv_name}-py3.6"
     python_path = expected_venv_path / "bin" / "python"
 
     venv = manager.remove(str(python_path))
@@ -727,16 +725,16 @@ def test_remove_by_full_path_to_python(
 
 
 def test_raises_if_acting_on_different_project_by_full_path(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     different_venv_name = "different-project"
-    different_venv_path = Path(tmp_dir) / f"{different_venv_name}-py3.6"
+    different_venv_path = tmp_path / f"{different_venv_name}-py3.6"
     different_venv_bin_path = different_venv_path / "bin"
     different_venv_bin_path.mkdir(parents=True)
 
@@ -754,12 +752,12 @@ def test_raises_if_acting_on_different_project_by_full_path(
 
 
 def test_raises_if_acting_on_different_project_by_name(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     different_venv_name = (
         EnvManager.generate_env_name(
@@ -768,7 +766,7 @@ def test_raises_if_acting_on_different_project_by_name(
         )
         + "-py3.6"
     )
-    different_venv_path = Path(tmp_dir) / different_venv_name
+    different_venv_path = tmp_path / different_venv_name
     different_venv_bin_path = different_venv_path / "bin"
     different_venv_bin_path.mkdir(parents=True)
 
@@ -780,7 +778,7 @@ def test_raises_if_acting_on_different_project_by_name(
 
 
 def test_raises_when_passing_old_env_after_dir_rename(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -790,17 +788,17 @@ def test_raises_when_passing_old_env_after_dir_rename(
     # root directory of the project, which will create another venv with new name.
     # This is not ideal as you still "can't" remove it by name, but it at least doesn't
     # cause any unwanted side effects
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
     previous_venv_name = EnvManager.generate_env_name(
         poetry.package.name,
         "previous_dir_name",
     )
-    venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    venv_path = tmp_path / f"{venv_name}-py3.6"
     venv_path.mkdir()
 
     previous_venv_name = f"{previous_venv_name}-py3.6"
-    previous_venv_path = Path(tmp_dir) / previous_venv_name
+    previous_venv_path = tmp_path / previous_venv_name
     previous_venv_path.mkdir()
 
     with pytest.raises(IncorrectEnvError):
@@ -808,31 +806,31 @@ def test_raises_when_passing_old_env_after_dir_rename(
 
 
 def test_remove_also_deactivates(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
 ):
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
-    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.6", "patch": "3.6.6"}
     envs_file.write(doc)
 
     venv = manager.remove("python3.6")
 
-    expected_venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    expected_venv_path = tmp_path / f"{venv_name}-py3.6"
     assert venv.path == expected_venv_path
     assert not expected_venv_path.exists()
 
@@ -841,7 +839,7 @@ def test_remove_also_deactivates(
 
 
 def test_remove_keeps_dir_if_not_deleteable(
-    tmp_dir: str,
+    tmp_path: Path,
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
@@ -850,9 +848,9 @@ def test_remove_keeps_dir_if_not_deleteable(
 ):
     # Ensure we empty rather than delete folder if its is an active mount point.
     # See https://github.com/python-poetry/poetry/pull/2064
-    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
-    venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
+    venv_path = tmp_path / f"{venv_name}-py3.6"
     venv_path.mkdir()
 
     folder1_path = venv_path / "folder1"
@@ -894,17 +892,17 @@ def test_remove_keeps_dir_if_not_deleteable(
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
-def test_env_has_symlinks_on_nix(tmp_dir: str, tmp_venv: VirtualEnv):
+def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv):
     assert os.path.islink(tmp_venv.python)
 
 
-def test_run_with_input(tmp_dir: str, tmp_venv: VirtualEnv):
+def test_run_with_input(tmp_path: Path, tmp_venv: VirtualEnv):
     result = tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
 
     assert result == "Minimal Output" + os.linesep
 
 
-def test_run_with_input_non_zero_return(tmp_dir: str, tmp_venv: VirtualEnv):
+def test_run_with_input_non_zero_return(tmp_path: Path, tmp_venv: VirtualEnv):
     with pytest.raises(EnvCommandError) as process_error:
         # Test command that will return non-zero returncode.
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
@@ -913,7 +911,7 @@ def test_run_with_input_non_zero_return(tmp_dir: str, tmp_venv: VirtualEnv):
 
 
 def test_run_with_keyboard_interrupt(
-    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     with pytest.raises(KeyboardInterrupt):
@@ -922,7 +920,7 @@ def test_run_with_keyboard_interrupt(
 
 
 def test_call_with_input_and_keyboard_interrupt(
-    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     kwargs = {"call": True}
@@ -932,7 +930,7 @@ def test_call_with_input_and_keyboard_interrupt(
 
 
 def test_call_no_input_with_keyboard_interrupt(
-    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch("subprocess.call", side_effect=KeyboardInterrupt())
     kwargs = {"call": True}
@@ -942,7 +940,7 @@ def test_call_no_input_with_keyboard_interrupt(
 
 
 def test_run_with_called_process_error(
-    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
         "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
@@ -953,7 +951,7 @@ def test_run_with_called_process_error(
 
 
 def test_call_with_input_and_called_process_error(
-    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
         "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
@@ -965,7 +963,7 @@ def test_call_with_input_and_called_process_error(
 
 
 def test_call_no_input_with_called_process_error(
-    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
         "subprocess.call", side_effect=subprocess.CalledProcessError(42, "some_command")
@@ -1211,7 +1209,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
-    tmp_dir: str,
+    tmp_path: Path,
     mocker: MockerFixture,
 ):
     if "VIRTUAL_ENV" in os.environ:
@@ -1220,7 +1218,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     config.merge(
         {
             "virtualenvs": {
-                "path": str(Path(tmp_dir) / "virtualenvs"),
+                "path": str(tmp_path / "virtualenvs"),
                 "in-project": True,
             }
         }
@@ -1250,7 +1248,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
         prompt="simple-project-py3.7",
     )
 
-    envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
+    envs_file = TOMLFile(tmp_path / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()
 
 
@@ -1325,8 +1323,8 @@ def test_env_no_pip(
     assert installed_packages == packages
 
 
-def test_env_finds_the_correct_executables(tmp_dir: str, manager: EnvManager):
-    venv_path = Path(tmp_dir) / "Virtual Env"
+def test_env_finds_the_correct_executables(tmp_path: Path, manager: EnvManager):
+    venv_path = tmp_path / "Virtual Env"
     manager.build_venv(str(venv_path), with_pip=True)
     venv = VirtualEnv(venv_path)
 
@@ -1356,10 +1354,10 @@ def test_env_finds_the_correct_executables(tmp_dir: str, manager: EnvManager):
 
 
 def test_env_finds_the_correct_executables_for_generic_env(
-    tmp_dir: str, manager: EnvManager
+    tmp_path: Path, manager: EnvManager
 ):
-    venv_path = Path(tmp_dir) / "Virtual Env"
-    child_venv_path = Path(tmp_dir) / "Child Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
+    child_venv_path = tmp_path / "Child Virtual Env"
     manager.build_venv(str(venv_path), with_pip=True)
     parent_venv = VirtualEnv(venv_path)
     manager.build_venv(
@@ -1383,10 +1381,10 @@ def test_env_finds_the_correct_executables_for_generic_env(
 
 
 def test_env_finds_fallback_executables_for_generic_env(
-    tmp_dir: str, manager: EnvManager
+    tmp_path: Path, manager: EnvManager
 ):
-    venv_path = Path(tmp_dir) / "Virtual Env"
-    child_venv_path = Path(tmp_dir) / "Child Virtual Env"
+    venv_path = tmp_path / "Virtual Env"
+    child_venv_path = tmp_path / "Child Virtual Env"
     manager.build_venv(str(venv_path), with_pip=True)
     parent_venv = VirtualEnv(venv_path)
     manager.build_venv(
@@ -1487,7 +1485,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
 
 def test_generate_env_name_ignores_case_for_case_insensitive_fs(
     poetry: Poetry,
-    tmp_dir: str,
+    tmp_path: Path,
 ):
     venv_name1 = EnvManager.generate_env_name(poetry.package.name, "MyDiR")
     venv_name2 = EnvManager.generate_env_name(poetry.package.name, "mYdIr")
@@ -1497,7 +1495,7 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(
         assert venv_name1 != venv_name2
 
 
-def test_generate_env_name_uses_real_path(tmp_dir: str, mocker: MockerFixture):
+def test_generate_env_name_uses_real_path(tmp_path: Path, mocker: MockerFixture):
     mocker.patch("os.path.realpath", return_value="the_real_dir")
     venv_name1 = EnvManager.generate_env_name("simple-project", "the_real_dir")
     venv_name2 = EnvManager.generate_env_name("simple-project", "linked_dir")
@@ -1514,10 +1512,10 @@ def extended_without_setup_poetry() -> Poetry:
 
 
 def test_build_environment_called_build_script_specified(
-    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_dir: str
+    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_path: Path
 ):
-    project_env = MockEnv(path=Path(tmp_dir) / "project")
-    ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
+    project_env = MockEnv(path=tmp_path / "project")
+    ephemeral_env = MockEnv(path=tmp_path / "ephemeral")
 
     mocker.patch(
         "poetry.utils.env.ephemeral_environment"
@@ -1539,10 +1537,10 @@ def test_build_environment_called_build_script_specified(
 
 
 def test_build_environment_not_called_without_build_script_specified(
-    mocker: MockerFixture, poetry: Poetry, tmp_dir: str
+    mocker: MockerFixture, poetry: Poetry, tmp_path: Path
 ):
-    project_env = MockEnv(path=Path(tmp_dir) / "project")
-    ephemeral_env = MockEnv(path=Path(tmp_dir) / "ephemeral")
+    project_env = MockEnv(path=tmp_path / "project")
+    ephemeral_env = MockEnv(path=tmp_path / "ephemeral")
 
     mocker.patch(
         "poetry.utils.env.ephemeral_environment"
