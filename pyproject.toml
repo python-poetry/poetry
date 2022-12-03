@@ -56,7 +56,7 @@ crashtest = "^0.4.1"
 dulwich = "^0.20.46"
 filelock = "^3.8.0"
 html5lib = "^1.0"
-importlib-metadata = { version = "^4.4", python = "<3.10" }
+importlib-metadata = { version = ">=4.4,<6", python = "<3.10" }
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
 lockfile = "^0.12.2"
@@ -88,14 +88,14 @@ pre-commit = "^2.6"
 [tool.poetry.group.test.dependencies]
 # Cachy frozen to test backwards compatibility for `poetry.utils.cache`.
 cachy = "0.3.0"
-deepdiff = "^5.0"
+deepdiff = "^6.2"
 flatdict = "^4.0.1"
 httpretty = "^1.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
 pytest-randomly = "^3.12"
-pytest-xdist = { version = "^2.5", extras = ["psutil"] }
+pytest-xdist = { version = "^3.1", extras = ["psutil"] }
 zipp = { version = "^3.4", python = "<3.8" }
 
 [tool.poetry.group.typing.dependencies]
