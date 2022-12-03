@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 PEP517_META_BUILD = """\
 import build
 import build.env
-import pep517
+import pyproject_hooks
 
 source = '{source}'
 dest = '{dest}'
@@ -51,14 +51,14 @@ with build.env.IsolatedEnvBuilder() as env:
         srcdir=source,
         scripts_dir=env.scripts_dir,
         python_executable=env.executable,
-        runner=pep517.quiet_subprocess_runner,
+        runner=pyproject_hooks.quiet_subprocess_runner,
     )
     env.install(builder.build_system_requires)
     env.install(builder.get_requires_for_build('wheel'))
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build===0.7.0", "pep517==0.12.0"]
+PEP517_META_BUILD_DEPS = ["build==0.9.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
