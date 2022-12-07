@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from cleo.io.null_io import NullIO
-from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -667,8 +666,7 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + get_file_hash(file_dep.full_path)
+        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:
