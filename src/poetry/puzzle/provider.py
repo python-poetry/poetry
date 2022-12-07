@@ -33,6 +33,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
 
 
@@ -396,7 +397,10 @@ class Provider:
             package.root_dir = dependency.base
 
         package.files = [
-            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
         ]
 
         return package
@@ -452,6 +456,10 @@ class Provider:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
             package = cls.get_package_from_file(dest)
+
+            package.files = [
+                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
+            ]
 
         package._source_type = "url"
         package._source_url = url

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import io
 import os
 import shutil
 import stat
@@ -252,3 +254,12 @@ def get_real_windows_path(path: str | Path) -> Path:
         path = path.resolve()
 
     return path
+
+
+def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
+    h = hashlib.new(hash_name)
+    with path.open("rb") as fp:
+        for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
+            h.update(content)
+
+    return h.hexdigest()
