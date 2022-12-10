@@ -59,3 +59,23 @@ def test_installer_file_contains_valid_version(default_installation: Path) -> No
     match = re.match(r"Poetry (?P<version>.*)", installer_content)
     assert match
     parse_constraint(match.group("version"))  # must not raise an error
+
+
+def test_default_installation_no_bytecode(default_installation: Path) -> None:
+    cache_dir = default_installation / "demo" / "__pycache__"
+    assert not cache_dir.exists()
+
+
+@pytest.mark.parametrize("compile", [True, False])
+def test_enable_bytecode_compilation(
+    env: MockEnv, demo_wheel: Path, compile: bool
+) -> None:
+    installer = WheelInstaller(env)
+    installer.enable_bytecode_compilation(compile)
+    installer.install(demo_wheel)
+    cache_dir = Path(env.paths["purelib"]) / "demo" / "__pycache__"
+    if compile:
+        assert cache_dir.exists()
+        assert list(cache_dir.glob("*.pyc"))
+    else:
+        assert not cache_dir.exists()
