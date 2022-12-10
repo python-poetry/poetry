@@ -66,7 +66,10 @@ class WheelDestination(SchemeDictionaryDestination):
         scheme_dict["headers"] = str(Path(scheme_dict["headers"]) / source.distribution)
 
         return self.__class__(
-            scheme_dict, interpreter=self.interpreter, script_kind=self.script_kind
+            scheme_dict,
+            interpreter=self.interpreter,
+            script_kind=self.script_kind,
+            bytecode_optimization_levels=self.bytecode_optimization_levels,
         )
 
 
@@ -89,6 +92,9 @@ class WheelInstaller:
         self._destination = WheelDestination(
             schemes, interpreter=self._env.python, script_kind=script_kind
         )
+
+    def enable_bytecode_compilation(self, enable: bool = True) -> None:
+        self._destination.bytecode_optimization_levels = (1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
         with WheelFile.open(Path(wheel.as_posix())) as source:
