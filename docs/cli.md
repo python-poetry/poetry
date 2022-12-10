@@ -225,6 +225,21 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
+By default `poetry` does not compile Python source files to bytecode during installation.
+This speeds up the installation process, but the first execution may take a little more
+time because Python then compiles source files to bytecode automatically.
+If you want to compile source files to bytecode during installation,
+you can use the `--compile` option:
+
+```bash
+poetry install --compile
+```
+
+{{% note %}}
+The `--compile` option has no effect if `installer.modern-installation`
+is set to `false` because the old installer always compiles source files to bytecode.
+{{% /note %}}
+
 ### Options
 
 * `--without`: The dependency groups to ignore.
@@ -236,6 +251,7 @@ poetry install --no-root
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
+* `--compile`: Compile Python source files to bytecode.
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 

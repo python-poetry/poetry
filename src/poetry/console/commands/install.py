@@ -54,12 +54,15 @@ class InstallCommand(InstallerCommand):
             multiple=True,
         ),
         option("all-extras", None, "Install all extra dependencies."),
+        option("only-root", None, "Exclude all dependencies."),
         option(
-            "only-root",
+            "compile",
             None,
-            "Exclude all dependencies.",
-            flag=True,
-            multiple=False,
+            (
+                "Compile Python source files to bytecode."
+                " (This option has no effect if modern-installation is disabled"
+                " because the old installer always compiles.)"
+            ),
         ),
     ]
 
@@ -146,6 +149,7 @@ dependencies and not including the current project, run the command with the
         self.installer.only_groups(self.activated_groups)
         self.installer.dry_run(self.option("dry-run"))
         self.installer.requires_synchronization(with_synchronization)
+        self.installer.executor.enable_bytecode_compilation(self.option("compile"))
         self.installer.verbose(self.io.is_verbose())
 
         return_code = self.installer.run()
