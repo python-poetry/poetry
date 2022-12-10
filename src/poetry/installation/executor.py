@@ -122,6 +122,9 @@ class Executor:
 
         return self
 
+    def enable_bytecode_compilation(self, enable: bool = True) -> None:
+        self._wheel_installer.enable_bytecode_compilation(enable)
+
     def pip_install(
         self, req: Path, upgrade: bool = False, editable: bool = False
     ) -> int:
