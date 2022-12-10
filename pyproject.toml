@@ -51,6 +51,7 @@ poetry-core = "1.4.0"
 poetry-plugin-export = "^1.2.0"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
+lockfile = "^0.12.2"
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
 dulwich = "^0.20.46"
