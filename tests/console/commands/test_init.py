@@ -13,7 +13,7 @@ from cleo.testers.command_tester import CommandTester
 from packaging.utils import canonicalize_name
 
 from poetry.console.commands.init import InitCommand
-from poetry.repositories import Pool
+from poetry.repositories import RepositoryPool
 from poetry.utils._compat import decode
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
@@ -46,7 +46,8 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
-        "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
+        "poetry.console.commands.init.InitCommand._get_pool",
+        return_value=RepositoryPool([repo]),
     )
 
 

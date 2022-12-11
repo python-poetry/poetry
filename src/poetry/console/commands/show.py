@@ -12,6 +12,7 @@ from poetry.console.commands.group_command import GroupCommand
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from cleo.ui.table import Rows
     from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
@@ -160,7 +161,7 @@ lists all packages available."""
 
             return 0
 
-        rows = [
+        rows: Rows = [
             ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
             ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
             ["<info>description</>", f" : {pkg.description}"],
@@ -194,11 +195,11 @@ lists all packages available."""
 
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.repositories.pool import Pool
+        from poetry.repositories.repository_pool import RepositoryPool
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = Pool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True)
         pool.add_repository(locked_repository)
         solver = Solver(
             root,

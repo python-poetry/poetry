@@ -247,7 +247,7 @@ for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}
 
 ## `source` dependencies
 
-To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
+To depend on a package from an [alternate repository]({{< relref "repositories#installing-from-private-package-sources" >}}),
 you can use the `source` property:
 
 ```toml
@@ -267,7 +267,7 @@ poetry add my-cool-package --source foo
 ```
 
 {{% note %}}
-In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository)
+In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories#installing-from-private-package-sources" >}})
 for further information.
 {{% /note %}}
 

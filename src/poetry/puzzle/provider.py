@@ -33,6 +33,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
 
 
@@ -52,14 +53,26 @@ if TYPE_CHECKING:
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
 logger = logging.getLogger(__name__)
 
 
-class Indicator(ProgressIndicator):  # type: ignore[misc]
+class IncompatibleConstraintsError(Exception):
+    """
+    Exception when there are duplicate dependencies with incompatible constraints.
+    """
+
+    def __init__(self, package: Package, *dependencies: Dependency) -> None:
+        constraints = "\n".join(dep.to_pep_508() for dep in dependencies)
+        super().__init__(
+            f"Incompatible constraints in requirements of {package}:\n{constraints}"
+        )
+
+
+class Indicator(ProgressIndicator):
     CONTEXT: str | None = None
 
     @staticmethod
@@ -124,7 +137,7 @@ class Provider:
     def __init__(
         self,
         package: Package,
-        pool: Pool,
+        pool: RepositoryPool,
         io: IO,
         *,
         installed: list[Package] | None = None,
@@ -156,7 +169,7 @@ class Provider:
             )
 
     @property
-    def pool(self) -> Pool:
+    def pool(self) -> RepositoryPool:
         return self._pool
 
     @property
@@ -384,7 +397,10 @@ class Provider:
             package.root_dir = dependency.base
 
         package.files = [
-            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
         ]
 
         return package
@@ -440,6 +456,10 @@ class Provider:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
             package = cls.get_package_from_file(dest)
+
+            package.files = [
+                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
+            ]
 
         package._source_type = "url"
         package._source_url = url
@@ -740,55 +760,7 @@ class Provider:
                 f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
-            # We need to check if one of the duplicate dependencies
-            # has no markers. If there is one, we need to change its
-            # environment markers to the inverse of the union of the
-            # other dependencies markers.
-            # For instance, if we have the following dependencies:
-            #   - ipython
-            #   - ipython (1.2.4) ; implementation_name == "pypy"
-            #
-            # the marker for `ipython` will become `implementation_name != "pypy"`.
-            #
-            # Further, we have to merge the constraints of the requirements
-            # without markers into the constraints of the requirements with markers.
-            # for instance, if we have the following dependencies:
-            #   - foo (>= 1.2)
-            #   - foo (!= 1.2.1) ; python == 3.10
-            #
-            # the constraint for the second entry will become (!= 1.2.1, >= 1.2)
-            any_markers_dependencies = [d for d in deps if d.marker.is_any()]
-            other_markers_dependencies = [d for d in deps if not d.marker.is_any()]
-
-            marker = other_markers_dependencies[0].marker
-            for other_dep in other_markers_dependencies[1:]:
-                marker = marker.union(other_dep.marker)
-            inverted_marker = marker.invert()
-
-            if any_markers_dependencies:
-                for dep_any in any_markers_dependencies:
-                    dep_any.marker = inverted_marker
-                    for dep_other in other_markers_dependencies:
-                        dep_other.constraint = dep_other.constraint.intersect(
-                            dep_any.constraint
-                        )
-            elif not inverted_marker.is_empty() and self._python_constraint.allows_any(
-                get_python_constraint_from_marker(inverted_marker)
-            ):
-                # if there is no any marker dependency
-                # and the inverted marker is not empty,
-                # a dependency with the inverted union of all markers is required
-                # in order to not miss other dependencies later, for instance:
-                #   - foo (1.0) ; python == 3.7
-                #   - foo (2.0) ; python == 3.8
-                #   - bar (2.0) ; python == 3.8
-                #   - bar (3.0) ; python == 3.9
-                #
-                # the last dependency would be missed without this,
-                # because the intersection with both foo dependencies is empty
-                inverted_marker_dep = deps[0].with_constraint(EmptyConstraint())
-                inverted_marker_dep.marker = inverted_marker
-                deps.append(inverted_marker_dep)
+            deps = self._handle_any_marker_dependencies(package, deps)
 
             overrides = []
             overrides_marker_intersection: BaseMarker = AnyMarker()
@@ -853,17 +825,7 @@ class Provider:
         locked = self._locked.get(dependency.name, [])
         for dependency_package in locked:
             package = dependency_package.package
-            if (
-                # Locked dependencies are always without features.
-                # Thus, we can't use is_same_package_as() here because it compares
-                # the complete_name (including features).
-                dependency.name == package.name
-                and (
-                    dependency.source_type is None
-                    or dependency.is_same_source_as(package)
-                )
-                and dependency.constraint.allows(package.version)
-            ):
+            if package.satisfies(dependency):
                 return DependencyPackage(dependency, package)
         return None
 
@@ -1031,3 +993,73 @@ class Provider:
                     )
                     deps.append(_deps[0].with_constraint(new_constraint))
         return deps
+
+    def _handle_any_marker_dependencies(
+        self, package: Package, dependencies: list[Dependency]
+    ) -> list[Dependency]:
+        """
+        We need to check if one of the duplicate dependencies
+        has no markers. If there is one, we need to change its
+        environment markers to the inverse of the union of the
+        other dependencies markers.
+        For instance, if we have the following dependencies:
+          - ipython
+          - ipython (1.2.4) ; implementation_name == "pypy"
+
+        the marker for `ipython` will become `implementation_name != "pypy"`.
+
+        Further, we have to merge the constraints of the requirements
+        without markers into the constraints of the requirements with markers.
+        for instance, if we have the following dependencies:
+          - foo (>= 1.2)
+          - foo (!= 1.2.1) ; python == 3.10
+
+        the constraint for the second entry will become (!= 1.2.1, >= 1.2).
+        """
+        any_markers_dependencies = [d for d in dependencies if d.marker.is_any()]
+        other_markers_dependencies = [d for d in dependencies if not d.marker.is_any()]
+
+        if any_markers_dependencies:
+            for dep_other in other_markers_dependencies:
+                new_constraint = dep_other.constraint
+                for dep_any in any_markers_dependencies:
+                    new_constraint = new_constraint.intersect(dep_any.constraint)
+                if new_constraint.is_empty():
+                    raise IncompatibleConstraintsError(
+                        package, dep_other, *any_markers_dependencies
+                    )
+                dep_other.constraint = new_constraint
+
+        marker = other_markers_dependencies[0].marker
+        for other_dep in other_markers_dependencies[1:]:
+            marker = marker.union(other_dep.marker)
+        inverted_marker = marker.invert()
+
+        if (
+            not inverted_marker.is_empty()
+            and self._python_constraint.allows_any(
+                get_python_constraint_from_marker(inverted_marker)
+            )
+            and (not self._env or inverted_marker.validate(self._env.marker_env))
+        ):
+            if any_markers_dependencies:
+                for dep_any in any_markers_dependencies:
+                    dep_any.marker = inverted_marker
+            else:
+                # If there is no any marker dependency
+                # and the inverted marker is not empty,
+                # a dependency with the inverted union of all markers is required
+                # in order to not miss other dependencies later, for instance:
+                #   - foo (1.0) ; python == 3.7
+                #   - foo (2.0) ; python == 3.8
+                #   - bar (2.0) ; python == 3.8
+                #   - bar (3.0) ; python == 3.9
+                #
+                # the last dependency would be missed without this,
+                # because the intersection with both foo dependencies is empty.
+                inverted_marker_dep = dependencies[0].with_constraint(EmptyConstraint())
+                inverted_marker_dep.marker = inverted_marker
+                dependencies.append(inverted_marker_dep)
+        else:
+            dependencies = other_markers_dependencies
+        return dependencies

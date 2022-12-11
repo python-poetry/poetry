@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
 
 Requirements = Dict[str, Union[str, Mapping[str, Any]]]
 
@@ -66,7 +66,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def __init__(self) -> None:
         super().__init__()
 
-        self._pool: Pool | None = None
+        self._pool: RepositoryPool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
@@ -77,7 +77,17 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
-        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+        project_path = Path.cwd()
+
+        if self.io.input.option("directory"):
+            project_path = Path(self.io.input.option("directory"))
+            if not project_path.exists() or not project_path.is_dir():
+                self.line_error(
+                    "<error>The --directory path is not a directory.</error>"
+                )
+                return 1
+
+        pyproject = PyProjectTOML(project_path / "pyproject.toml")
 
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
@@ -166,7 +176,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 self._determine_requirements(self.option("dependency"))
             )
 
-        question = "Would you like to define your main dependencies interactively?"
+        question_text = "Would you like to define your main dependencies interactively?"
         help_message = """\
 You can specify a package in the following forms:
   - A single name (<b>requests</b>): this will search for matches on PyPI
@@ -180,7 +190,7 @@ You can specify a package in the following forms:
 """
 
         help_displayed = False
-        if self.confirm(question, True):
+        if self.confirm(question_text, True):
             if self.io.is_interactive():
                 self.line(help_message)
                 help_displayed = True
@@ -196,10 +206,10 @@ You can specify a package in the following forms:
                 self._determine_requirements(self.option("dev-dependency"))
             )
 
-        question = (
+        question_text = (
             "Would you like to define your development dependencies interactively?"
         )
-        if self.confirm(question, True):
+        if self.confirm(question_text, True):
             if self.io.is_interactive() and not help_displayed:
                 self.line(help_message)
 
@@ -328,8 +338,8 @@ You can specify a package in the following forms:
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
                     )
-                    question.attempts = 3
-                    question.validator = lambda x: (x or "").strip() or False
+                    question.set_max_attempts(3)
+                    question.set_validator(lambda x: (x or "").strip() or None)
 
                     package_constraint = self.ask(question)
 
@@ -462,15 +472,15 @@ You can specify a package in the following forms:
 
         return package
 
-    def _get_pool(self) -> Pool:
-        from poetry.repositories import Pool
+    def _get_pool(self) -> RepositoryPool:
+        from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
 
         if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:
-            self._pool = Pool()
+            self._pool = RepositoryPool()
             self._pool.add_repository(PyPiRepository())
 
         return self._pool

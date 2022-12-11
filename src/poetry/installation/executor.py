@@ -13,10 +13,8 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 from cleo.io.null_io import NullIO
-from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -29,6 +27,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
+from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -50,7 +49,7 @@ class Executor:
     def __init__(
         self,
         env: Env,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         io: IO,
         parallel: bool | None = None,
@@ -61,11 +60,6 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._authenticator = Authenticator(
-            config, self._io, disable_cache=disable_cache
-        )
-        self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env, config)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -76,6 +70,12 @@ class Executor:
             )
         else:
             self._max_workers = 1
+
+        self._authenticator = Authenticator(
+            config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
+        )
+        self._chef = Chef(config, self._env)
+        self._chooser = Chooser(pool, self._env, config)
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
         self._total_operations = 0
@@ -666,8 +666,7 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + file_dep.hash()
+        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:
@@ -771,7 +770,8 @@ class Executor:
             for dist in self._env.site_packages.distributions(
                 name=package.name, writable_only=True
             ):
-                dist_path = cast(Path, dist._path)  # type: ignore[attr-defined]
+                dist_path = dist._path  # type: ignore[attr-defined]
+                assert isinstance(dist_path, Path)
                 url = dist_path / "direct_url.json"
                 url.write_text(json.dumps(url_reference), encoding="utf-8")
 

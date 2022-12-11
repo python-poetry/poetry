@@ -288,9 +288,9 @@ def test_builder_installs_proper_files_when_packages_configured(
 
 
 def test_builder_should_execute_build_scripts(
-    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_dir: str
+    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_path: Path
 ):
-    env = MockEnv(path=Path(tmp_dir) / "foo")
+    env = MockEnv(path=tmp_path / "foo")
     mocker.patch(
         "poetry.masonry.builders.editable.build_environment"
     ).return_value.__enter__.return_value = env

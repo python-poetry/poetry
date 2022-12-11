@@ -29,6 +29,7 @@ then `--help` combined with any of those can give you more information.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
 * `--no-cache`: Disables Poetry source caches.
+* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory).
 
 
 ## new

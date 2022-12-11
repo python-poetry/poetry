@@ -60,3 +60,19 @@ def test_in_project_venv(tester: CommandTester, venvs_in_project_dir: list[str])
     tester.execute()
     expected = ".venv (Activated)\n"
     assert tester.io.fetch_output() == expected
+
+
+def test_in_project_venv_no_explicit_config(
+    tester: CommandTester, venvs_in_project_dir_none: list[str]
+):
+    tester.execute()
+    expected = ".venv (Activated)\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_in_project_venv_is_false(
+    tester: CommandTester, venvs_in_project_dir_false: list[str]
+):
+    tester.execute()
+    expected = ""
+    assert tester.io.fetch_output() == expected

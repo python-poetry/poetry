@@ -181,7 +181,7 @@ class PoetryTestApplication(Application):
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
         self._poetry.set_locker(
-            TestLocker(poetry.locker.lock.path, self._poetry.local_config)
+            TestLocker(poetry.locker.lock, self._poetry.local_config)
         )
 
 

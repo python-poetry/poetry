@@ -20,11 +20,13 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 import packaging.tags
 import tomlkit
 import virtualenv
 
+from cleo.io.null_io import NullIO
 from cleo.io.outputs.output import Verbosity
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
@@ -328,8 +330,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name.endswith(suffix):
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -341,8 +343,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=writable_only
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 if file.name == name:
                     yield Path(
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
@@ -372,8 +374,8 @@ class SitePackages:
         for distribution in self.distributions(
             name=distribution_name, writable_only=True
         ):
-            assert distribution.files is not None
-            for file in distribution.files:
+            files = [] if distribution.files is None else distribution.files
+            for file in files:
                 path = Path(
                     distribution.locate_file(file),  # type: ignore[no-untyped-call]
                 )
@@ -451,12 +453,6 @@ class SitePackages:
             if value[-1] is True
         ]
 
-    def __getattr__(self, item: str) -> Any:
-        try:
-            return super().__getattribute__(item)
-        except AttributeError:
-            return getattr(self.path, item)
-
 
 class EnvError(Exception):
     pass
@@ -521,8 +517,9 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry) -> None:
+    def __init__(self, poetry: Poetry, io: None | IO = None) -> None:
         self._poetry = poetry
+        self._io = io or NullIO()
 
     def _full_python_path(self, python: str) -> str:
         try:
@@ -539,26 +536,48 @@ class EnvManager:
 
         return executable
 
-    def _detect_active_python(self, io: IO) -> str | None:
+    def _detect_active_python(self) -> str | None:
         executable = None
 
         try:
-            io.write_error_line(
+            self._io.write_error_line(
                 "Trying to detect current active python executable as specified in the"
                 " config.",
                 verbosity=Verbosity.VERBOSE,
             )
             executable = self._full_python_path("python")
-            io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+            self._io.write_error_line(
+                f"Found: {executable}", verbosity=Verbosity.VERBOSE
+            )
         except CalledProcessError:
-            io.write_error_line(
+            self._io.write_error_line(
                 "Unable to detect the current active python executable. Falling back to"
                 " default.",
                 verbosity=Verbosity.VERBOSE,
             )
         return executable
 
-    def activate(self, python: str, io: IO) -> Env:
+    def _get_python_version(self) -> tuple[int, int, int]:
+        version_info = tuple(sys.version_info[:3])
+
+        if self._poetry.config.get("virtualenvs.prefer-active-python"):
+            executable = self._detect_active_python()
+
+            if executable:
+                python_patch = decode(
+                    subprocess.check_output(
+                        list_to_shell_command(
+                            [executable, "-c", GET_PYTHON_VERSION_ONELINER]
+                        ),
+                        shell=True,
+                    ).strip()
+                )
+
+                version_info = tuple(int(v) for v in python_patch.split(".")[:3])
+
+        return cast("tuple[int, int, int]", version_info)
+
+    def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
         cwd = self._poetry.file.parent
 
@@ -604,7 +623,7 @@ class EnvManager:
                 if patch != current_patch:
                     create = True
 
-            self.create_venv(io, executable=python, force=create)
+            self.create_venv(executable=python, force=create)
 
             return self.get(reload=True)
 
@@ -638,7 +657,7 @@ class EnvManager:
                 if patch != current_patch:
                     create = True
 
-            self.create_venv(io, executable=python, force=create)
+            self.create_venv(executable=python, force=create)
 
         # Activate
         envs[base_env_name] = {"minor": minor, "patch": patch}
@@ -646,7 +665,7 @@ class EnvManager:
 
         return self.get(reload=True)
 
-    def deactivate(self, io: IO) -> None:
+    def deactivate(self) -> None:
         venv_path = self._poetry.config.virtualenvs_path
         name = self.generate_env_name(
             self._poetry.package.name, str(self._poetry.file.parent)
@@ -658,7 +677,7 @@ class EnvManager:
             env = envs.get(name)
             if env is not None:
                 venv = venv_path / f"{name}-py{env['minor']}"
-                io.write_error_line(
+                self._io.write_error_line(
                     f"Deactivating virtualenv: <comment>{venv}</comment>"
                 )
                 del envs[name]
@@ -669,7 +688,7 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        python_minor = ".".join([str(v) for v in self._get_python_version()[:2]])
 
         venv_path = self._poetry.config.virtualenvs_path
 
@@ -740,7 +759,7 @@ class EnvManager:
 
         venv = self._poetry.file.parent / ".venv"
         if (
-            self._poetry.config.get("virtualenvs.in-project")
+            self._poetry.config.get("virtualenvs.in-project") is not False
             and venv.exists()
             and venv.is_dir()
         ):
@@ -861,7 +880,6 @@ class EnvManager:
 
     def create_venv(
         self,
-        io: IO,
         name: str | None = None,
         executable: str | None = None,
         force: bool = False,
@@ -894,7 +912,7 @@ class EnvManager:
         venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
         if not executable and prefer_active_python:
-            executable = self._detect_active_python(io)
+            executable = self._detect_active_python()
 
         venv_path = cwd / ".venv" if root_venv else self._poetry.config.virtualenvs_path
         if not name:
@@ -927,7 +945,7 @@ class EnvManager:
                     self._poetry.package.python_versions, python_patch
                 )
 
-            io.write_error_line(
+            self._io.write_error_line(
                 f"<warning>The currently activated Python version {python_patch} is not"
                 f" supported by the project ({self._poetry.package.python_versions}).\n"
                 "Trying to find and use a compatible version.</warning> "
@@ -950,8 +968,8 @@ class EnvManager:
 
                 python = "python" + python_to_try
 
-                if io.is_debug():
-                    io.write_error_line(f"<debug>Trying {python}</debug>")
+                if self._io.is_debug():
+                    self._io.write_error_line(f"<debug>Trying {python}</debug>")
 
                 try:
                     python_patch = decode(
@@ -970,7 +988,9 @@ class EnvManager:
                     continue
 
                 if supported_python.allows(Version.parse(python_patch)):
-                    io.write_error_line(f"Using <c1>{python}</c1> ({python_patch})")
+                    self._io.write_error_line(
+                        f"Using <c1>{python}</c1> ({python_patch})"
+                    )
                     executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
@@ -995,7 +1015,7 @@ class EnvManager:
 
         if not venv.exists():
             if create_venv is False:
-                io.write_error_line(
+                self._io.write_error_line(
                     "<fg=black;bg=yellow>"
                     "Skipping virtualenv creation, "
                     "as specified in config file."
@@ -1004,7 +1024,7 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_error_line(
+            self._io.write_error_line(
                 f"Creating virtualenv <c1>{name}</> in"
                 f" {venv_path if not WINDOWS else get_real_windows_path(venv_path)!s}"
             )
@@ -1012,15 +1032,17 @@ class EnvManager:
             create_venv = False
             if force:
                 if not env.is_sane():
-                    io.write_error_line(
+                    self._io.write_error_line(
                         f"<warning>The virtual environment found in {env.path} seems to"
                         " be broken.</warning>"
                     )
-                io.write_error_line(f"Recreating virtualenv <c1>{name}</> in {venv!s}")
+                self._io.write_error_line(
+                    f"Recreating virtualenv <c1>{name}</> in {venv!s}"
+                )
                 self.remove_venv(venv)
                 create_venv = True
-            elif io.is_very_verbose():
-                io.write_error_line(f"Virtualenv <c1>{name}</> already exists.")
+            elif self._io.is_very_verbose():
+                self._io.write_error_line(f"Virtualenv <c1>{name}</> already exists.")
 
         if create_venv:
             self.build_venv(
@@ -1959,6 +1981,7 @@ def build_environment(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *poetry.pyproject.build_system.requires,
             )
 
@@ -2015,6 +2038,17 @@ class MockEnv(NullEnv):
             return super().sys_path
 
         return self._sys_path
+
+    @property
+    def paths(self) -> dict[str, str]:
+        if self._paths is None:
+            self._paths = self.get_paths()
+            self._paths["platlib"] = str(self._path / "platlib")
+            self._paths["purelib"] = str(self._path / "purelib")
+            self._paths["scripts"] = str(self._path / "scripts")
+            self._paths["data"] = str(self._path / "data")
+
+        return self._paths
 
     def get_marker_env(self) -> dict[str, Any]:
         if self._mock_marker_env is not None:

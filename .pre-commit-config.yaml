@@ -40,21 +40,21 @@ repos:
           - flake8-quotes==3.3.1
           - flake8-simplify==0.19.3
           - flake8-tidy-imports==4.8.0
-          - flake8-type-checking==2.1.2
+          - flake8-type-checking==2.2.0
           - flake8-typing-imports==1.12.0
           - flake8-use-fstring==1.4
           - pep8-naming==0.13.1
           - flake8-pie==0.16.0
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.1.0
+    rev: v3.2.2
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
         exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.1
+    rev: v2.1.2
     hooks:
       - id: pycln
         args: [--all]

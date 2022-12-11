@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import io
 import os
 import shutil
 import stat
@@ -12,7 +14,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterator
 from typing import Mapping
-from typing import cast
 
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
@@ -189,7 +190,8 @@ def _get_win_folder_from_registry(csidl_name: str) -> str:
     )
     dir, type = _winreg.QueryValueEx(key, shell_folder_name)
 
-    return cast(str, dir)
+    assert isinstance(dir, str)
+    return dir
 
 
 def _get_win_folder_with_ctypes(csidl_name: str) -> str:
@@ -252,3 +254,12 @@ def get_real_windows_path(path: str | Path) -> Path:
         path = path.resolve()
 
     return path
+
+
+def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
+    h = hashlib.new(hash_name)
+    with path.open("rb") as fp:
+        for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
+            h.update(content)
+
+    return h.hexdigest()

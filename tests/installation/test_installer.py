@@ -25,8 +25,8 @@ from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
@@ -156,8 +156,8 @@ def repo() -> Repository:
 
 
 @pytest.fixture()
-def pool(repo: Repository) -> Pool:
-    pool = Pool()
+def pool(repo: Repository) -> RepositoryPool:
+    pool = RepositoryPool()
     pool.add_repository(repo)
 
     return pool
@@ -174,14 +174,14 @@ def locker(project_root: Path) -> Locker:
 
 
 @pytest.fixture()
-def env() -> NullEnv:
-    return NullEnv()
+def env(tmp_path: Path) -> NullEnv:
+    return NullEnv(path=tmp_path)
 
 
 @pytest.fixture()
 def installer(
     package: ProjectPackage,
-    pool: Pool,
+    pool: RepositoryPool,
     locker: Locker,
     env: NullEnv,
     installed: CustomInstalledRepository,
@@ -1151,12 +1151,13 @@ def test_installer_with_pypi_repository(
     locker: Locker,
     installed: CustomInstalledRepository,
     config: Config,
+    env: NullEnv,
 ):
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(MockRepository())
 
     installer = Installer(
-        NullIO(), NullEnv(), package, locker, pool, config, installed=installed
+        NullIO(), env, package, locker, pool, config, installed=installed
     )
 
     package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
@@ -1911,7 +1912,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     package: ProjectPackage,
     installed: CustomInstalledRepository,
     env: NullEnv,
-    pool: Pool,
+    pool: RepositoryPool,
     config: Config,
 ):
     package.add_dependency(Factory.create_dependency("A", {"version": "^1.0"}))
@@ -1982,7 +1983,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 ):
     mocker.patch("sys.platform", "darwin")
 
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(MockRepository())
 
     installer = Installer(
@@ -2043,7 +2044,7 @@ def test_installer_required_extras_should_be_installed(
     env: NullEnv,
     config: Config,
 ):
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(MockRepository())
 
     installer = Installer(
@@ -2185,7 +2186,7 @@ def test_installer_can_install_dependencies_from_forced_source(
         Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
     )
 
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(MockLegacyRepository())
     pool.add_repository(MockRepository())
 
@@ -2228,7 +2229,7 @@ def test_run_installs_with_url_file(
 
 @pytest.mark.parametrize("env_platform", ["linux", "win32"])
 def test_run_installs_with_same_version_url_files(
-    pool: Pool,
+    pool: RepositoryPool,
     locker: Locker,
     installed: CustomInstalledRepository,
     config: Config,
@@ -2313,7 +2314,7 @@ def test_installer_can_handle_old_lock_files(
     installed: CustomInstalledRepository,
     config: Config,
 ):
-    pool = Pool()
+    pool = RepositoryPool()
     pool.add_repository(MockRepository())
 
     package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
@@ -2553,4 +2554,108 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
         source_url="https://github.com/demo/demo.git",
         source_reference="HEAD",
         source_resolved_reference=expected_reference,
+    )
+
+
+# https://github.com/python-poetry/poetry/issues/6710
+@pytest.mark.parametrize("env_platform", ["darwin", "linux"])
+def test_installer_distinguishes_locked_packages_by_source(
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    repo: Repository,
+    package: ProjectPackage,
+    env_platform: str,
+):
+    # Require 1.11.0+cpu from pytorch for most platforms, but specify 1.11.0 and pypi on
+    # darwin.
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch",
+            {
+                "version": "1.11.0+cpu",
+                "markers": "sys_platform != 'darwin'",
+                "source": "pytorch",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch",
+            {
+                "version": "1.11.0",
+                "markers": "sys_platform == 'darwin'",
+                "source": "pypi",
+            },
+        )
+    )
+
+    # Locking finds both the pypi and the pytorch packages.
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "torch",
+                    "version": "1.11.0",
+                    "category": "main",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                },
+                {
+                    "name": "torch",
+                    "version": "1.11.0+cpu",
+                    "category": "main",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://download.pytorch.org/whl",
+                        "reference": "pytorch",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+            },
+        }
+    )
+    installer = Installer(
+        NullIO(),
+        MockEnv(platform=env_platform),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(platform=env_platform),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    installer.use_executor(True)
+    installer.run()
+
+    # Results of installation are consistent with the platform requirements.
+    version = "1.11.0" if env_platform == "darwin" else "1.11.0+cpu"
+    source_type = None if env_platform == "darwin" else "legacy"
+    source_url = (
+        None if env_platform == "darwin" else "https://download.pytorch.org/whl"
+    )
+    source_reference = None if env_platform == "darwin" else "pytorch"
+
+    assert len(installer.executor.installations) == 1
+    assert installer.executor.installations[0] == Package(
+        "torch",
+        version,
+        source_type=source_type,
+        source_url=source_url,
+        source_reference=source_reference,
     )
