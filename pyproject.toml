@@ -51,7 +51,6 @@ poetry-core = "1.4.0"
 poetry-plugin-export = "^1.2.0"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
-lockfile = "^0.12.2"
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
 dulwich = "^0.20.46"
@@ -60,6 +59,7 @@ html5lib = "^1.0"
 importlib-metadata = { version = "^4.4", python = "<3.10" }
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
+lockfile = "^0.12.2"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
