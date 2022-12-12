@@ -181,8 +181,16 @@ class Solver:
                             if _package.name == dep.name:
                                 continue
 
-                            if dep not in _package.requires:
+                            try:
+                                index = _package.requires.index(dep)
+                            except ValueError:
                                 _package.add_dependency(dep)
+                            else:
+                                _dep = _package.requires[index]
+                                if _dep.marker != dep.marker:
+                                    # marker of feature package is more accurate
+                                    # because it includes relevant extras
+                                    _dep.marker = dep.marker
             else:
                 final_packages.append(package)
                 depths.append(results[package])
