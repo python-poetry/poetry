@@ -1,6 +1,13 @@
 # Change Log
 
 
+## [1.3.1] - 2022-12-12
+
+### Fixed
+
+- Fix an issue where an explicit dependency on `lockfile` was missing, resulting in a broken Poetry in rare circumstances ([7169](https://github.com/python-poetry/poetry/pull/7169)).
+
+
 ## [1.3.0] - 2022-12-09
 
 ### Added
@@ -1681,7 +1688,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.3.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.3.1...master
+[1.3.1]: https://github.com/python-poetry/poetry/releases/tag/1.3.1
 [1.3.0]: https://github.com/python-poetry/poetry/releases/tag/1.3.0
 [1.2.2]: https://github.com/python-poetry/poetry/releases/tag/1.2.2
 [1.2.1]: https://github.com/python-poetry/poetry/releases/tag/1.2.1
