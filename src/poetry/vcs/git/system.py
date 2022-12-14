@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING
 
 from dulwich.client import find_git_command
 
+
 if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
 
 class SystemGit:
-    fetchedTargetList: list[Path] = []
+    fetched_target_list: list[Path] = []
 
     @classmethod
     def clone(cls, repository: str, dest: Path) -> str:
@@ -36,10 +37,7 @@ class SystemGit:
 
     @classmethod
     def reset(cls, rev: str, target: Path, hard: bool = False) -> str:
-        args = []
-
-        if target:
-            args += cls._construct_dir_args(target)
+        args = cls._construct_dir_args(target)
 
         cls._check_parameter(rev)
 
@@ -53,32 +51,29 @@ class SystemGit:
     @classmethod
     def fetch(cls, target: Path) -> str | None:
         # fetch once for dependencies from same repo.
-        if target in cls.fetchedTargetList:
+        if target in cls.fetched_target_list:
             return None
 
-        args = []
-
-        if target:
-            args += cls._construct_dir_args(target)
-
+        args = cls._construct_dir_args(target)
         args += ["fetch"]
 
         result = cls.run(*args)
-        cls.fetchedTargetList.append(target)
+        cls.fetched_target_list.append(target)
         return result
 
     @classmethod
     def run(cls, *args: Any, **kwargs: Any) -> str:
         folder = kwargs.pop("folder", None)
+        arg_list = list(args)
         if folder:
-            args += cls._construct_dir_args(folder)
+            arg_list += cls._construct_dir_args(folder)
 
         git_command = find_git_command()
         env = os.environ.copy()
         env["GIT_TERMINAL_PROMPT"] = "0"
         return (
             subprocess.check_output(
-                git_command + list(args),
+                git_command + arg_list,
                 stderr=subprocess.STDOUT,
                 env=env,
             )
@@ -87,13 +82,13 @@ class SystemGit:
         )
 
     @staticmethod
-    def _construct_dir_args(target: Path) -> tuple:
-        return (
+    def _construct_dir_args(target: Path) -> list[str]:
+        return [
             "--git-dir",
             (target / ".git").as_posix(),
             "--work-tree",
             target.as_posix(),
-        )
+        ]
 
     @staticmethod
     def _check_parameter(parameter: str) -> None:

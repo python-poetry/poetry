@@ -219,8 +219,8 @@ class Git:
                 SystemGit.clone(url, target)
             except CalledProcessError:
                 raise PoetryConsoleError(
-                    f"Failed to clone {url}, check your git configuration and permissions"
-                    " for this repository."
+                    f"Failed to clone {url}, check your git configuration and"
+                    " permissions for this repository."
                 )
 
         revision = refspec.tag or refspec.branch or refspec.revision or "HEAD"

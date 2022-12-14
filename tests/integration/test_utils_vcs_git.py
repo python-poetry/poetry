@@ -357,3 +357,31 @@ def test_system_git_called_when_configured(
         target=path,
         refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
     )
+
+
+def test_system_git_should_lazy_clone_when_called_twice(
+    mocker: MockerFixture, source_url: str, use_system_git_client: None
+) -> None:
+    from poetry.vcs.git import system
+
+    spy_legacy = mocker.spy(Git, "_clone_legacy")
+    spy = mocker.spy(Git, "_clone")
+    spy_system_git = mocker.spy(system.SystemGit, "clone")
+
+    with Git.clone(url=source_url, branch="0.1") as repo:
+        path = Path(repo.path)
+
+    Git.clone(url=source_url, branch="0.1")
+
+    spy.assert_not_called()
+
+    spy_legacy.assert_called_with(
+        url=source_url,
+        target=path,
+        refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
+    )
+
+    spy_system_git.assert_called_once_with(
+        source_url,
+        path,
+    )
