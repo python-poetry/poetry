@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING
 
 from dulwich.client import find_git_command
 
-
 if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
 
 class SystemGit:
+    fetchedTargetList: list[Path] = []
+
     @classmethod
     def clone(cls, repository: str, dest: Path) -> str:
         cls._check_parameter(repository)
@@ -25,12 +26,7 @@ class SystemGit:
         args = []
 
         if target:
-            args += [
-                "--git-dir",
-                (target / ".git").as_posix(),
-                "--work-tree",
-                target.as_posix(),
-            ]
+            args += cls._construct_dir_args(target)
 
         cls._check_parameter(rev)
 
@@ -38,16 +34,44 @@ class SystemGit:
 
         return cls.run(*args)
 
-    @staticmethod
-    def run(*args: Any, **kwargs: Any) -> str:
+    @classmethod
+    def reset(cls, rev: str, target: Path, hard: bool = False) -> str:
+        args = []
+
+        if target:
+            args += cls._construct_dir_args(target)
+
+        cls._check_parameter(rev)
+
+        if hard:
+            args += ["reset", "--hard", rev]
+        else:
+            args += ["reset", rev]
+
+        return cls.run(*args)
+
+    @classmethod
+    def fetch(cls, target: Path) -> str | None:
+        # fetch once for dependencies from same repo.
+        if target in cls.fetchedTargetList:
+            return None
+
+        args = []
+
+        if target:
+            args += cls._construct_dir_args(target)
+
+        args += ["fetch"]
+
+        result = cls.run(*args)
+        cls.fetchedTargetList.append(target)
+        return result
+
+    @classmethod
+    def run(cls, *args: Any, **kwargs: Any) -> str:
         folder = kwargs.pop("folder", None)
         if folder:
-            args = (
-                "--git-dir",
-                (folder / ".git").as_posix(),
-                "--work-tree",
-                folder.as_posix(),
-            ) + args
+            args += cls._construct_dir_args(folder)
 
         git_command = find_git_command()
         env = os.environ.copy()
@@ -60,6 +84,15 @@ class SystemGit:
             )
             .decode()
             .strip()
+        )
+
+    @staticmethod
+    def _construct_dir_args(target: Path) -> tuple:
+        return (
+            "--git-dir",
+            (target / ".git").as_posix(),
+            "--work-tree",
+            target.as_posix(),
         )
 
     @staticmethod

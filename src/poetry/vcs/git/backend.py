@@ -213,29 +213,34 @@ class Git:
         """
         from poetry.vcs.git.system import SystemGit
 
-        logger.debug("Cloning '%s' using system git client", url)
-
-        if target.exists():
-            remove_directory(path=target, force=True)
+        if not target.exists():
+            logger.debug("Cloning '%s' using system git client", url)
+            try:
+                SystemGit.clone(url, target)
+            except CalledProcessError:
+                raise PoetryConsoleError(
+                    f"Failed to clone {url}, check your git configuration and permissions"
+                    " for this repository."
+                )
 
         revision = refspec.tag or refspec.branch or refspec.revision or "HEAD"
-
-        try:
-            SystemGit.clone(url, target)
-        except CalledProcessError:
-            raise PoetryConsoleError(
-                f"Failed to clone {url}, check your git configuration and permissions"
-                " for this repository."
-            )
 
         if revision:
             revision.replace("refs/head/", "")
             revision.replace("refs/tags/", "")
 
+        if not refspec.is_sha:
+            revision = f"origin/{revision}"
+
         try:
-            SystemGit.checkout(revision, target)
+            SystemGit.fetch(target)
         except CalledProcessError:
-            raise PoetryConsoleError(f"Failed to checkout {url} at '{revision}'")
+            raise PoetryConsoleError(f"Failed to fetch {url}")
+
+        try:
+            SystemGit.reset(revision, target, hard=True)
+        except CalledProcessError:
+            raise PoetryConsoleError(f"Failed to hard reset {url} to '{revision}'")
 
         repo = Repo(str(target))
         return repo
@@ -393,7 +398,8 @@ class Git:
         target = source_root / name
         refspec = GitRefSpec(branch=branch, revision=revision, tag=tag)
 
-        if target.exists():
+        target_exists = target.exists()
+        if target_exists:
             if clean:
                 # force clean the local copy if it exists, do not reuse
                 remove_directory(target, force=True)
@@ -437,6 +443,9 @@ class Git:
                 " system git",
                 url,
             )
+            # remove repo created by dulwich.
+            if not target_exists:
+                remove_directory(target, force=True)
 
         # fallback to legacy git client
         return cls._clone_legacy(url=url, refspec=refspec, target=target)
