@@ -11,7 +11,8 @@ class BuildCommand(EnvCommand):
     description = "Builds a package, as a tarball and a wheel by default."
 
     options = [
-        option("format", "f", "Limit the format to either sdist or wheel.", flag=False)
+        option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
+        option("output", "o", "Set output directory name", flag=False, default="dist"),
     ]
 
     loggers = [
@@ -31,6 +32,6 @@ class BuildCommand(EnvCommand):
             )
 
             builder = Builder(self.poetry)
-            builder.build(fmt, executable=env.python)
+            builder.build(fmt, executable=env.python, target_dir=self.option("output"))
 
         return 0
