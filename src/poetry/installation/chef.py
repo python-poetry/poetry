@@ -94,8 +94,8 @@ class Chef:
             return archive
 
         if archive.is_dir():
-            tmp_dir = tempfile.mkdtemp(prefix="poetry-chef-")
-            return self._prepare(archive, Path(tmp_dir), editable=editable)
+            destination = output_dir or Path(tempfile.mkdtemp(prefix="poetry-chef-"))
+            return self._prepare(archive, destination=destination, editable=editable)
 
         return self._prepare_sdist(archive, destination=output_dir)
 
