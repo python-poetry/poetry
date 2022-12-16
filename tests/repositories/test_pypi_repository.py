@@ -139,11 +139,18 @@ def test_package() -> None:
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
-    assert (
-        str(win_inet.marker)
-        == 'sys_platform == "win32" and (python_version == "2.7"'
-        ' or python_version == "2.6") and extra == "socks"'
+
+    # Different versions of poetry-core simplify the following marker differently,
+    # either is fine.
+    marker1 = (
+        'sys_platform == "win32" and (python_version == "2.7" or python_version =='
+        ' "2.6") and extra == "socks"'
     )
+    marker2 = (
+        'sys_platform == "win32" and python_version == "2.7" and extra == "socks" or'
+        ' sys_platform == "win32" and python_version == "2.6" and extra == "socks"'
+    )
+    assert str(win_inet.marker) in {marker1, marker2}
 
 
 @pytest.mark.parametrize(
