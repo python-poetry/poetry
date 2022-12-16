@@ -529,7 +529,7 @@ class Executor:
         cleanup_archive: bool = False
         if package.source_type == "git":
             archive = self._prepare_git_archive(operation)
-            cleanup_archive = True
+            cleanup_archive = operation.package.develop
         elif package.source_type == "file":
             archive = self._prepare_archive(operation)
         elif package.source_type == "directory":
@@ -584,7 +584,9 @@ class Executor:
 
             raise
 
-    def _prepare_archive(self, operation: Install | Update) -> Path:
+    def _prepare_archive(
+        self, operation: Install | Update, *, output_dir: Path | None = None
+    ) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -603,12 +605,28 @@ class Executor:
 
         self._populate_hashes_dict(archive, package)
 
-        return self._chef.prepare(archive, editable=package.develop)
+        return self._chef.prepare(
+            archive, editable=package.develop, output_dir=output_dir
+        )
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
         from poetry.vcs.git import Git
 
         package = operation.package
+        assert package.source_url is not None
+
+        if package.source_resolved_reference and not package.develop:
+            # Only cache git archives when we know precise reference hash,
+            # otherwise we might get stale archives
+            cached_archive = self._artifact_cache.get_cached_archive_for_git(
+                package.source_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+                env=self._env,
+            )
+            if cached_archive is not None:
+                return cached_archive
+
         operation_message = self.get_operation_message(operation)
 
         message = (
@@ -616,7 +634,6 @@ class Executor:
         )
         self._write(operation, message)
 
-        assert package.source_url is not None
         source = Git.clone(
             url=package.source_url,
             source_root=self._env.path / "src",
@@ -627,9 +644,21 @@ class Executor:
         original_url = package.source_url
         package._source_url = str(source.path)
 
-        archive = self._prepare_archive(operation)
+        output_dir = None
+        if package.source_resolved_reference and not package.develop:
+            output_dir = self._artifact_cache.get_cache_directory_for_git(
+                original_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+            )
 
+        archive = self._prepare_archive(operation, output_dir=output_dir)
         package._source_url = original_url
+
+        if output_dir is not None and output_dir.is_dir():
+            # Mark directories with cached git packages, to distinguish from
+            # "normal" cache
+            (output_dir / ".created_from_git_dependency").touch()
 
         return archive
 
