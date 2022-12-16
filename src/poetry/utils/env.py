@@ -2039,6 +2039,17 @@ class MockEnv(NullEnv):
 
         return self._sys_path
 
+    @property
+    def paths(self) -> dict[str, str]:
+        if self._paths is None:
+            self._paths = self.get_paths()
+            self._paths["platlib"] = str(self._path / "platlib")
+            self._paths["purelib"] = str(self._path / "purelib")
+            self._paths["scripts"] = str(self._path / "scripts")
+            self._paths["data"] = str(self._path / "data")
+
+        return self._paths
+
     def get_marker_env(self) -> dict[str, Any]:
         if self._mock_marker_env is not None:
             return self._mock_marker_env
