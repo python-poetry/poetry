@@ -250,6 +250,12 @@ class Chef:
             self._env.marker_env["interpreter_version"].split(".")[:2]
         )
 
+        return self._get_directory_from_hash(key_parts)
+
+    def get_cache_directory_for_git(self, url: str, ref: str) -> Path:
+        return self._get_directory_from_hash({"url": url, "ref": ref})
+
+    def _get_directory_from_hash(self, key_parts: object) -> Path:
         key = hashlib.sha256(
             json.dumps(
                 key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True

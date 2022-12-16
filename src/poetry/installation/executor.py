@@ -5,6 +5,7 @@ import csv
 import itertools
 import json
 import os
+import shutil
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -488,7 +489,6 @@ class Executor:
         cleanup_archive: bool = False
         if package.source_type == "git":
             archive = self._prepare_git_archive(operation)
-            cleanup_archive = True
         elif package.source_type == "file":
             archive = self._prepare_archive(operation)
         elif package.source_type == "directory":
@@ -585,6 +585,18 @@ class Executor:
         from poetry.vcs.git import Git
 
         package = operation.package
+        reference = package.source_resolved_reference or package.source_reference
+        assert package.source_url is not None
+        assert reference is not None
+
+        cache_dir = self._chef.get_cache_directory_for_git(
+            package.source_url, reference
+        )
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cached_archive = next(cache_dir.glob("*.whl"), None)
+        if cached_archive is not None and not operation.package.develop:
+            return cached_archive
+
         operation_message = self.get_operation_message(operation)
 
         message = (
@@ -592,7 +604,6 @@ class Executor:
         )
         self._write(operation, message)
 
-        assert package.source_url is not None
         source = Git.clone(
             url=package.source_url,
             source_root=self._env.path / "src",
@@ -607,7 +618,13 @@ class Executor:
 
         package._source_url = original_url
 
-        return archive
+        if operation.package.develop:
+            return archive
+        else:
+            cached_archive = cache_dir / archive.name
+            shutil.copy(archive, cached_archive)
+
+            return cached_archive
 
     def _install_directory_without_wheel_installer(
         self, operation: Install | Update
