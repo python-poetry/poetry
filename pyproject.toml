@@ -63,7 +63,7 @@ jsonschema = "^4.10.0"
 keyring = "^23.9.0"
 lockfile = "^0.12.2"
 # packaging uses calver, so version is unclamped
-packaging = ">=20.4"
+packaging = ">=20.4,<22.0"  # TODO remove upper bound when poetry-core with vendored packaging 22.0 is available
 pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = "^2.5.2"
