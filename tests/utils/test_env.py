@@ -1601,3 +1601,15 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
         },
         prompt="virtualenv-py3.7",
     )
+
+
+def test_fallback_on_detect_active_python(poetry: Poetry, mocker: MockerFixture):
+    m = mocker.patch(
+        "subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(1, "some command"),
+    )
+    env_manager = EnvManager(poetry)
+    active_python = env_manager._detect_active_python()
+
+    assert active_python is None
+    assert m.call_count == 1

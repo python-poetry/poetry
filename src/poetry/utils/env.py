@@ -551,7 +551,7 @@ class EnvManager:
             self._io.write_error_line(
                 f"Found: {executable}", verbosity=Verbosity.VERBOSE
             )
-        except CalledProcessError:
+        except EnvCommandError:
             self._io.write_error_line(
                 (
                     "Unable to detect the current active python executable. Falling"
