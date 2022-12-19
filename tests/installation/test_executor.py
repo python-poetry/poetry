@@ -324,8 +324,9 @@ def test_execute_prints_warning_for_yanked_package(
         "(black-21.11b0-py3-none-any.whl) is yanked. Reason for being yanked: "
         "Broken regex dependency. Use 21.11b1 instead."
     )
+    out = io.fetch_output()
     error = io.fetch_error()
-    assert return_code == 0
+    assert return_code == 0, f"\nout: {out}\nerror: {error}\n"
     assert "pytest" not in error
     if has_warning:
         assert expected in error
