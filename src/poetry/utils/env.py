@@ -995,7 +995,7 @@ class EnvManager:
                     self._io.write_error_line(
                         f"Using <c1>{python}</c1> ({python_patch})"
                     )
-                    executable = python
+                    executable = self._full_python_path(python)
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
 
