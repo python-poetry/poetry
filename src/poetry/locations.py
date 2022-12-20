@@ -34,7 +34,7 @@ if sys.platform == "darwin":
     if any(file.exists() for file in (auth_toml, config_toml)):
         logger.warning(
             "Configuration file exists at %s, reusing this directory.\n\nConsider"
-            " moving toml configuration files to %s, as support for the legacy"
+            " moving TOML configuration files to %s, as support for the legacy"
             " directory will be removed in an upcoming release.",
             _LEGACY_CONFIG_DIR,
             CONFIG_DIR,
