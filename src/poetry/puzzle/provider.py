@@ -20,6 +20,7 @@ from poetry.core.constraints.version import EmptyConstraint
 from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import EmptyMarker
 from poetry.core.version.markers import MarkerUnion
 
 from poetry.inspection.info import PackageInfo
@@ -33,6 +34,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
 
 
@@ -396,7 +398,10 @@ class Provider:
             package.root_dir = dependency.base
 
         package.files = [
-            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
         ]
 
         return package
@@ -452,6 +457,10 @@ class Provider:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
             package = cls.get_package_from_file(dest)
+
+            package.files = [
+                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
+            ]
 
         package._source_type = "url"
         package._source_url = url
@@ -938,20 +947,13 @@ class Provider:
         for dep in dependencies:
             by_constraint[dep.constraint].append(dep)
         for constraint, _deps in by_constraint.items():
-            new_markers = []
-            for dep in _deps:
-                marker = dep.marker.without_extras()
-                if marker.is_any():
-                    # No marker or only extras
-                    continue
-
-                new_markers.append(marker)
-
-            if not new_markers:
-                continue
+            new_markers = [dep.marker for dep in _deps]
 
             dep = _deps[0]
-            dep.marker = dep.marker.union(MarkerUnion(*new_markers))
+
+            # Union with EmptyMarker is to make sure we get the benefit of marker
+            # simplifications.
+            dep.marker = MarkerUnion(*new_markers).union(EmptyMarker())
             by_constraint[constraint] = [dep]
 
         return [value[0] for value in by_constraint.values()]

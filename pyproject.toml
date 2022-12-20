@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.3.0.dev0"
+version = "1.4.0.dev0"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>",
@@ -47,7 +47,7 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.7"
 
-poetry-core = "^1.4.0"
+poetry-core = "1.4.0"
 poetry-plugin-export = "^1.2.0"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
@@ -56,9 +56,10 @@ crashtest = "^0.4.1"
 dulwich = "^0.20.46"
 filelock = "^3.8.0"
 html5lib = "^1.0"
-importlib-metadata = { version = "^4.4", python = "<3.10" }
+importlib-metadata = { version = ">=4.4,<6", python = "<3.10" }
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
+lockfile = "^0.12.2"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
@@ -87,14 +88,14 @@ pre-commit = "^2.6"
 [tool.poetry.group.test.dependencies]
 # Cachy frozen to test backwards compatibility for `poetry.utils.cache`.
 cachy = "0.3.0"
-deepdiff = "^5.0"
+deepdiff = "^6.2"
 flatdict = "^4.0.1"
 httpretty = "^1.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
 pytest-randomly = "^3.12"
-pytest-xdist = { version = "^2.5", extras = ["psutil"] }
+pytest-xdist = { version = "^3.1", extras = ["psutil"] }
 zipp = { version = "^3.4", python = "<3.8" }
 
 [tool.poetry.group.typing.dependencies]
@@ -162,8 +163,6 @@ enable_error_code = [
 [[tool.mypy.overrides]]
 module = [
   'poetry.console.commands.self.show.plugins',
-  'poetry.installation.executor',
-  'poetry.mixology.version_solver',
   'poetry.plugins.plugin_manager',
   'poetry.repositories.installed_repository',
   'poetry.utils.env',

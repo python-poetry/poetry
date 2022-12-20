@@ -791,6 +791,45 @@ def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
     assert len(ops[0].package.requires) == 0, "a should not require itself"
 
 
+def test_solver_returns_extras_if_excluded_by_markers_without_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+
+    # mandatory dependency with marker
+    dep = get_dependency("B", "^1.0")
+    dep.marker = parse_marker("sys_platform != 'linux'")
+    package_a.add_dependency(dep)
+
+    # optional dependency with same constraint and no marker except for extra
+    dep = get_dependency("B", "^1.0", optional=True)
+    dep.marker = parse_marker("extra == 'foo'")
+    package_a.extras = {"foo": [dep]}
+    package_a.add_dependency(dep)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+    assert (
+        str(ops[1].package.requires[0].marker)
+        == 'sys_platform != "linux" or extra == "foo"'
+    )
+
+
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
