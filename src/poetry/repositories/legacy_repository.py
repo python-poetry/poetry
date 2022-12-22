@@ -72,7 +72,7 @@ class LegacyRepository(HTTPRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> list[Link]:
-        page = self.get_page(f"/{package.name}/")
+        page = self.get_page(package.name)
         if page is None:
             return []
 
@@ -90,12 +90,9 @@ class LegacyRepository(HTTPRepository):
         if not constraint.is_any():
             key = f"{key}:{constraint!s}"
 
-        page = self.get_page(f"/{name}/")
+        page = self.get_page(name)
         if page is None:
-            self._log(
-                f"No packages found for {name}",
-                level="debug",
-            )
+            self._log(f"No packages found for {name}", level="debug")
             return []
 
         versions = [
@@ -119,7 +116,7 @@ class LegacyRepository(HTTPRepository):
     def _get_release_info(
         self, name: NormalizedName, version: Version
     ) -> dict[str, Any]:
-        page = self.get_page(f"/{name}/")
+        page = self.get_page(name)
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
@@ -141,8 +138,8 @@ class LegacyRepository(HTTPRepository):
             ),
         )
 
-    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
-        response = self._get_response(endpoint)
+    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage | None:
+        response = self._get_response(f"/{name}/")
         if not response:
             return None
         return SimpleRepositoryPage(response.url, response.text)
