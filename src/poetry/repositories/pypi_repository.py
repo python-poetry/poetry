@@ -111,13 +111,11 @@ class PyPiRepository(HTTPRepository):
         Find packages on the remote server.
         """
         try:
-            json_page = self.get_json_page(name)
+            json_page = self.get_page(name)
         except PackageNotFound:
-            self._log(
-                f"No packages found for {name}",
-                level="debug",
-            )
+            self._log(f"No packages found for {name}", level="debug")
             return []
+        assert isinstance(json_page, SimpleJsonPage)
 
         versions: list[tuple[Version, str | bool]]
 
@@ -226,7 +224,7 @@ class PyPiRepository(HTTPRepository):
 
         return data.asdict()
 
-    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+    def _get_page(self, name: NormalizedName) -> SimpleJsonPage:
         source = self._base_url + f"simple/{name}/"
         info = self.get_package_info(name)
         return SimpleJsonPage(source, info)
