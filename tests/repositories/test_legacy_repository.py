@@ -46,10 +46,10 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage | None:
+    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
         fixture = self.FIXTURES / (name + ".html")
         if not fixture.exists():
-            return None
+            raise PackageNotFound(f"Package [{name}] not found.")
 
         with fixture.open(encoding="utf-8") as f:
             return SimpleRepositoryPage(self._url + f"/{name}/", f.read())
@@ -439,7 +439,7 @@ def test_package_yanked(
 
 def test_package_partial_yank():
     class SpecialMockRepository(MockRepository):
-        def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage | None:
+        def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
             return super()._get_page(canonicalize_name(f"{name}-partial-yank"))
 
     repo = MockRepository()
@@ -497,7 +497,8 @@ def test_get_40x_and_returns_none(
 ) -> None:
     repo = MockHttpRepository({"/foo/": status_code}, http)
 
-    assert repo.get_page("foo") is None
+    with pytest.raises(PackageNotFound):
+        repo.get_page("foo")
 
 
 def test_get_5xx_raises(http: type[httpretty.httpretty]) -> None:
