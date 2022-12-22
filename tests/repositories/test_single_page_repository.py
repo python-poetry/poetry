@@ -3,11 +3,16 @@ from __future__ import annotations
 import re
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 from poetry.repositories.single_page_repository import SinglePageRepository
+
+
+if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
 
 
 class MockSinglePageRepository(SinglePageRepository):
@@ -20,7 +25,7 @@ class MockSinglePageRepository(SinglePageRepository):
             disable_cache=True,
         )
 
-    def _get_page(self, endpoint: str = None) -> SimpleRepositoryPage | None:
+    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage | None:
         fixture = self.FIXTURES / self.url.rsplit("/", 1)[-1]
         if not fixture.exists():
             return
