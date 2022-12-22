@@ -296,8 +296,8 @@ class HTTPRepository(CachedRepository):
             )
         return response
 
-    def _get_page(self, name: NormalizedName) -> LinkSource | None:
+    def _get_page(self, name: NormalizedName) -> LinkSource:
         response = self._get_response(f"/{name}/")
         if not response:
-            return None
+            raise PackageNotFound(f"Package [{name}] not found.")
         return HTMLPage(response.url, response.text)

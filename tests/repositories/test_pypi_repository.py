@@ -332,14 +332,6 @@ def test_urls() -> None:
     assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
-def test_use_pypi_pretty_name() -> None:
-    repo = MockRepository(fallback=True)
-
-    package = repo.find_packages(Factory.create_dependency("twisted", "*"))
-    assert len(package) == 1
-    assert package[0].pretty_name == "Twisted"
-
-
 def test_find_links_for_package_of_supported_types():
     repo = MockRepository()
     package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))

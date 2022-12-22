@@ -113,13 +113,6 @@ class PyPiRepository(HTTPRepository):
         except PackageNotFound:
             self._log(f"No packages found for {name}", level="debug")
             return []
-        assert isinstance(json_page, SimpleJsonPage)
-
-        versions: list[tuple[Version, str | bool]]
-
-        key: str = name
-        if not constraint.is_any():
-            key = f"{key}:{constraint!s}"
 
         versions = [
             (version, json_page.yanked(name, version))
@@ -127,12 +120,7 @@ class PyPiRepository(HTTPRepository):
             if constraint.allows(version)
         ]
 
-        pretty_name = json_page.content["name"]
-        packages = [
-            Package(pretty_name, version, yanked=yanked) for version, yanked in versions
-        ]
-
-        return packages
+        return [Package(name, version, yanked=yanked) for version, yanked in versions]
 
     def _get_package_info(self, name: str) -> dict[str, Any]:
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
