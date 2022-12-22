@@ -520,18 +520,25 @@ lists all packages available."""
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
+        requires = root.all_requires
         if package.is_direct_origin():
-            requires = root.all_requires
-
             for dep in requires:
                 if dep.name == package.name and dep.source_type == package.source_type:
                     provider = Provider(root, self.poetry.pool, NullIO())
                     return provider.search_for_direct_origin_dependency(dep)
 
+        allow_prereleases = False
+        for dep in requires:
+            if dep.name == package.name:
+                allow_prereleases = dep.allows_prereleases()
+                break
+
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
-        return selector.find_best_candidate(name, f">={package.pretty_version}")
+        return selector.find_best_candidate(
+            name, f">={package.pretty_version}", allow_prereleases
+        )
 
     def get_update_status(self, latest: Package, package: Package) -> str:
         from poetry.core.constraints.version import parse_constraint
