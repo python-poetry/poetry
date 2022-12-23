@@ -5,7 +5,7 @@
   language: python
   language_version: python3
   pass_filenames: false
-  files: ^pyproject.toml$
+  files: .*pyproject.toml
 
 - id: poetry-lock
   name: poetry-lock
