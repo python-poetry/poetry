@@ -87,7 +87,7 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
 
 
 @pytest.mark.parametrize(
-    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+    ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
 def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     repo = MockRepository()

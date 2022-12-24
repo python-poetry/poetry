@@ -50,9 +50,7 @@ class Repository(AbstractRepository):
                 and not allow_prereleases
                 and not package.is_direct_origin()
             ):
-                if constraint.is_any():
-                    # we need this when all versions of the package are pre-releases
-                    ignored_pre_release_packages.append(package)
+                ignored_pre_release_packages.append(package)
                 continue
 
             packages.append(package)

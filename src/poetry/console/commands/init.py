@@ -413,7 +413,7 @@ You can specify a package in the following forms:
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, selector.find_recommended_require_version(package)
+        return package.pretty_name, f"^{package.version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException
