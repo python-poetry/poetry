@@ -19,6 +19,7 @@ from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.packages import DependencyPackage
+from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.puzzle.provider import Provider
 from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import RepositoryPool
@@ -584,6 +585,36 @@ def test_search_for_file_wheel_with_extras(
     }
 
 
+def test_complete_package_merges_same_source_and_no_source(
+    provider: Provider, root: ProjectPackage
+) -> None:
+    foo_no_source_1 = get_dependency("foo", ">=1")
+    foo_source_1 = get_dependency("foo", "!=1.1.*")
+    foo_source_1.source_name = "source"
+    foo_source_2 = get_dependency("foo", "!=1.2.*")
+    foo_source_2.source_name = "source"
+    foo_no_source_2 = get_dependency("foo", "<2")
+
+    root.add_dependency(foo_no_source_1)
+    root.add_dependency(foo_source_1)
+    root.add_dependency(foo_source_2)
+    root.add_dependency(foo_no_source_2)
+
+    complete_package = provider.complete_package(
+        DependencyPackage(root.to_dependency(), root)
+    )
+
+    requires = complete_package.package.all_requires
+    assert len(requires) == 1
+    assert requires[0].source_name == "source"
+    assert str(requires[0].constraint) in {
+        ">=1,<1.1 || >=1.3,<2",
+        ">=1,<1.1.dev0 || >=1.3.dev0,<2",
+        ">=1,<1.1.0 || >=1.3.0,<2",
+        ">=1,<1.1.0.dev0 || >=1.3.0.dev0,<2",
+    }
+
+
 def test_complete_package_does_not_merge_different_source_names(
     provider: Provider, root: ProjectPackage
 ) -> None:
@@ -595,19 +626,39 @@ def test_complete_package_does_not_merge_different_source_names(
     root.add_dependency(foo_source_1)
     root.add_dependency(foo_source_2)
 
+    with pytest.raises(IncompatibleConstraintsError) as e:
+        provider.complete_package(DependencyPackage(root.to_dependency(), root))
+
+    expected = """\
+Incompatible constraints in requirements of root (1.2.3):
+foo ; source=source_2
+foo ; source=source_1"""
+
+    assert str(e.value) == expected
+
+
+def test_complete_package_merges_same_source_type_and_no_source(
+    provider: Provider, root: ProjectPackage, fixture_dir: FixtureDirGetter
+) -> None:
+    project_dir = fixture_dir("with_conditional_path_deps")
+    path = (project_dir / "demo_one").as_posix()
+
+    root.add_dependency(Factory.create_dependency("demo", ">=1.0"))
+    root.add_dependency(Factory.create_dependency("demo", {"path": path}))
+    root.add_dependency(Factory.create_dependency("demo", {"path": path}))  # duplicate
+    root.add_dependency(Factory.create_dependency("demo", "<2.0"))
+
     complete_package = provider.complete_package(
         DependencyPackage(root.to_dependency(), root)
     )
 
     requires = complete_package.package.all_requires
-    assert len(requires) == 2
-    assert {requires[0].source_name, requires[1].source_name} == {
-        "source_1",
-        "source_2",
-    }
+    assert len(requires) == 1
+    assert requires[0].source_url == path
+    assert str(requires[0].constraint) == "1.2.3"
 
 
-def test_complete_package_preserves_source_type(
+def test_complete_package_does_not_merge_different_source_types(
     provider: Provider, root: ProjectPackage, fixture_dir: FixtureDirGetter
 ) -> None:
     project_dir = fixture_dir("with_conditional_path_deps")
@@ -615,19 +666,40 @@ def test_complete_package_preserves_source_type(
         path = (project_dir / folder).as_posix()
         root.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
-    complete_package = provider.complete_package(
-        DependencyPackage(root.to_dependency(), root)
-    )
+    with pytest.raises(IncompatibleConstraintsError) as e:
+        provider.complete_package(DependencyPackage(root.to_dependency(), root))
 
-    requires = complete_package.package.all_requires
-    assert len(requires) == 2
-    assert {requires[0].source_url, requires[1].source_url} == {
-        project_dir.joinpath("demo_one").as_posix(),
-        project_dir.joinpath("demo_two").as_posix(),
-    }
+    expected = f"""\
+Incompatible constraints in requirements of root (1.2.3):
+demo @ {project_dir.as_uri()}/demo_two (1.2.3)
+demo @ {project_dir.as_uri()}/demo_one (1.2.3)"""
+
+    assert str(e.value) == expected
 
 
-def test_complete_package_preserves_source_type_with_subdirectories(
+def test_complete_package_does_not_merge_different_source_type_and_name(
+    provider: Provider, root: ProjectPackage, fixture_dir: FixtureDirGetter
+) -> None:
+    project_dir = fixture_dir("with_conditional_path_deps")
+    path = (project_dir / "demo_one").as_posix()
+
+    dep_with_source_name = Factory.create_dependency("demo", ">=1.0")
+    dep_with_source_name.source_name = "source"
+    root.add_dependency(dep_with_source_name)
+    root.add_dependency(Factory.create_dependency("demo", {"path": path}))
+
+    with pytest.raises(IncompatibleConstraintsError) as e:
+        provider.complete_package(DependencyPackage(root.to_dependency(), root))
+
+    expected = f"""\
+Incompatible constraints in requirements of root (1.2.3):
+demo @ {project_dir.as_uri()}/demo_one (1.2.3)
+demo (>=1.0) ; source=source"""
+
+    assert str(e.value) == expected
+
+
+def test_complete_package_does_not_merge_different_subdirectories(
     provider: Provider, root: ProjectPackage
 ) -> None:
     dependency_one = Factory.create_dependency(
@@ -644,34 +716,19 @@ def test_complete_package_preserves_source_type_with_subdirectories(
             "subdirectory": "one-copy",
         },
     )
-    dependency_two = Factory.create_dependency(
-        "two",
-        {"git": "https://github.com/demo/subdirectories.git", "subdirectory": "two"},
-    )
 
-    root.add_dependency(
-        Factory.create_dependency(
-            "one",
-            {
-                "git": "https://github.com/demo/subdirectories.git",
-                "subdirectory": "one",
-            },
-        )
-    )
+    root.add_dependency(dependency_one)
     root.add_dependency(dependency_one_copy)
-    root.add_dependency(dependency_two)
 
-    complete_package = provider.complete_package(
-        DependencyPackage(root.to_dependency(), root)
-    )
+    with pytest.raises(IncompatibleConstraintsError) as e:
+        provider.complete_package(DependencyPackage(root.to_dependency(), root))
 
-    requires = complete_package.package.all_requires
-    assert len(requires) == 3
-    assert {r.to_pep_508() for r in requires} == {
-        dependency_one.to_pep_508(),
-        dependency_one_copy.to_pep_508(),
-        dependency_two.to_pep_508(),
-    }
+    expected = """\
+Incompatible constraints in requirements of root (1.2.3):
+one @ git+https://github.com/demo/subdirectories.git#subdirectory=one-copy (1.0.0)
+one @ git+https://github.com/demo/subdirectories.git#subdirectory=one (1.0.0)"""
+
+    assert str(e.value) == expected
 
 
 @pytest.mark.parametrize("source_name", [None, "repo"])
