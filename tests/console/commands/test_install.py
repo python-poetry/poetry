@@ -285,6 +285,18 @@ def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixtur
     assert tester.command.installer._dry_run is True
 
 
+def test_no_path_is_passed_to_installer(tester: CommandTester, mocker: MockerFixture):
+    """
+    The --no-root options is passed to the installer.
+    """
+
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--no-path")
+
+    assert tester.command.installer._skip_path is True
+
+
 def test_dry_run_does_not_build(tester: CommandTester, mocker: MockerFixture):
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     mocked_editable_builder = mocker.patch(
