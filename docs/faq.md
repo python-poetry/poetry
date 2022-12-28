@@ -167,7 +167,7 @@ COPY src/ ./src
 RUN pip install poetry && poetry install --no-dev
 ```
 
-The `RUN` instruction will always re-run, which forces all 3rd party dependencies (likely the slowest step out of these) to re-run if you changed any files in `src/`.
+As soon as *any* source file changes the cache for the `RUN` layer will be invalidated, which forces all 3rd party dependencies (likely the slowest step out of these) to re-run if you changed any files in `src/`.
 
 To avoid this cache busting you can split this into two steps:
 
