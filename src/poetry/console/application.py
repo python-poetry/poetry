@@ -6,13 +6,13 @@ import re
 from contextlib import suppress
 from importlib import import_module
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import cast
 
 from cleo.application import Application as BaseApplication
+from cleo.events.console_command_event import ConsoleCommandEvent
 from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
-from cleo.exceptions import CleoException
+from cleo.exceptions import CleoError
 from cleo.formatters.style import Style
 from cleo.io.null_io import NullIO
 
@@ -24,7 +24,7 @@ from poetry.console.commands.command import Command
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from cleo.events.console_command_event import ConsoleCommandEvent
+    from cleo.events.event import Event
     from cleo.io.inputs.argv_input import ArgvInput
     from cleo.io.inputs.definition import Definition
     from cleo.io.inputs.input import Input
@@ -93,7 +93,7 @@ COMMANDS = [
 ]
 
 
-class Application(BaseApplication):  # type: ignore[misc]
+class Application(BaseApplication):
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
@@ -137,8 +137,8 @@ class Application(BaseApplication):  # type: ignore[misc]
 
     @property
     def command_loader(self) -> CommandLoader:
-        command_loader: CommandLoader | None = self._command_loader
-        assert command_loader is not None
+        command_loader = self._command_loader
+        assert isinstance(command_loader, CommandLoader)
         return command_loader
 
     def reset_poetry(self) -> None:
@@ -194,7 +194,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         # We need to check if the command being run
         # is the "run" command.
         definition = self.definition
-        with suppress(CleoException):
+        with suppress(CleoError):
             io.input.bind(definition)
 
         name = io.input.first_argument
@@ -215,7 +215,7 @@ class Application(BaseApplication):  # type: ignore[misc]
                         for shortcut in shortcuts:
                             run_input.add_parameter_option("-" + shortcut.lstrip("-"))
 
-            with suppress(CleoException):
+            with suppress(CleoError):
                 run_input.bind(definition)
 
             for option_name, value in input.options.items():
@@ -227,12 +227,13 @@ class Application(BaseApplication):  # type: ignore[misc]
         super()._configure_io(io)
 
     def register_command_loggers(
-        self, event: ConsoleCommandEvent, event_name: str, _: Any
+        self, event: Event, event_name: str, _: EventDispatcher
     ) -> None:
         from poetry.console.logging.filters import POETRY_FILTER
         from poetry.console.logging.io_formatter import IOFormatter
         from poetry.console.logging.io_handler import IOHandler
 
+        assert isinstance(event, ConsoleCommandEvent)
         command = event.command
         if not isinstance(command, Command):
             return
@@ -277,12 +278,11 @@ class Application(BaseApplication):  # type: ignore[misc]
 
             logger.setLevel(_level)
 
-    def configure_env(
-        self, event: ConsoleCommandEvent, event_name: str, _: Any
-    ) -> None:
+    def configure_env(self, event: Event, event_name: str, _: EventDispatcher) -> None:
         from poetry.console.commands.env_command import EnvCommand
         from poetry.console.commands.self.self_command import SelfCommand
 
+        assert isinstance(event, ConsoleCommandEvent)
         command = event.command
         if not isinstance(command, EnvCommand) or isinstance(command, SelfCommand):
             return
@@ -295,8 +295,8 @@ class Application(BaseApplication):  # type: ignore[misc]
         io = event.io
         poetry = command.poetry
 
-        env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(io)
+        env_manager = EnvManager(poetry, io=io)
+        env = env_manager.create_venv()
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
@@ -305,10 +305,11 @@ class Application(BaseApplication):  # type: ignore[misc]
 
     @classmethod
     def configure_installer_for_event(
-        cls, event: ConsoleCommandEvent, event_name: str, _: Any
+        cls, event: Event, event_name: str, _: EventDispatcher
     ) -> None:
         from poetry.console.commands.installer_command import InstallerCommand
 
+        assert isinstance(event, ConsoleCommandEvent)
         command = event.command
         if not isinstance(command, InstallerCommand):
             return

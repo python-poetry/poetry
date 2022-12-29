@@ -120,7 +120,7 @@ class Chooser:
             repository = self._pool.repository("pypi")
         links = repository.find_links_for_package(package)
 
-        hashes = [f["hash"] for f in package.files]
+        hashes = {f["hash"] for f in package.files}
         if not hashes:
             return links
 

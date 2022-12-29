@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -19,6 +21,7 @@ from poetry.factory import Factory
 from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
@@ -788,6 +791,45 @@ def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
     assert len(ops[0].package.requires) == 0, "a should not require itself"
 
 
+def test_solver_returns_extras_if_excluded_by_markers_without_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+):
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+
+    # mandatory dependency with marker
+    dep = get_dependency("B", "^1.0")
+    dep.marker = parse_marker("sys_platform != 'linux'")
+    package_a.add_dependency(dep)
+
+    # optional dependency with same constraint and no marker except for extra
+    dep = get_dependency("B", "^1.0", optional=True)
+    dep.marker = parse_marker("extra == 'foo'")
+    package_a.extras = {"foo": [dep]}
+    package_a.add_dependency(dep)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+    assert (
+        str(ops[1].package.requires[0].marker)
+        == 'sys_platform != "linux" or extra == "foo"'
+    )
+
+
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
@@ -1475,6 +1517,164 @@ def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
         [
             {"job": "install", "package": package_c10},
             {"job": "install", "package": package_a10},  # only a10, not a20
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_conflict(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    package.add_dependency(Factory.create_dependency("A", ">=1.1"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.1", "python": "3.10"})
+    )
+
+    repo.add_package(get_package("A", "1.0"))
+    repo.add_package(get_package("A", "1.1"))
+    repo.add_package(get_package("A", "1.2"))
+
+    expectation = (
+        "Incompatible constraints in requirements of root (1.0):\n"
+        'A (<1.1) ; python_version == "3.10"\n'
+        "A (>=1.1)"
+    )
+    with pytest.raises(IncompatibleConstraintsError, match=re.escape(expectation)):
+        solver.solve()
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers1(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python >= 3.10
+        A (<1.1) ; python < 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; <empty>
+        A (>=1.0,<1.2) ; python >= 3.10
+        A (>=1.0,<1.1) ; python < 3.10
+
+    The dependency with an empty marker has to be ignored.
+    """
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": ">=3.10"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.1", "python": "<3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            # only a10 and a11, not a12
+            {"job": "install", "package": package_a10},
+            {"job": "install", "package": package_a11},
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers2(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python == 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; python != 3.10
+        A (>=1.0,<1.2) ; python == 3.10
+
+    The first dependency has to be ignored
+    because it is not compatible with the project's python constraint.
+    """
+    set_package_python_versions(solver.provider, "~3.10")
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": "3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a11},  # only a11, not a12
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers3(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python == 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; python != 3.10
+        A (>=1.0,<1.2) ; python == 3.10
+
+    The first dependency has to be ignored
+    because it is not compatible with the current environment.
+    """
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": "3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    with solver.use_environment(MockEnv((3, 10, 0))):
+        transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a11},  # only a11, not a12
             {"job": "install", "package": package_b},
         ],
     )
