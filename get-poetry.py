@@ -446,13 +446,16 @@ class Installer:
         print(
             colorize(
                 "deprecation",
-                "This installer is deprecated, and scheduled for removal from the"
-                " Poetry repository on or after January 1, 2023.\nSee"
-                " https://github.com/python-poetry/poetry/issues/6377 for"
-                " details.\n\nYou should migrate to https://install.python-poetry.org"
-                " instead, which supports all versions of Poetry, and allows for `self"
-                " update` of versions 1.1.7 or newer.\nInstructions are available at"
-                " https://python-poetry.org/docs/#installation.\n",
+                (
+                    "This installer is deprecated, and scheduled for removal from the"
+                    " Poetry repository on or after January 1, 2023.\nSee"
+                    " https://github.com/python-poetry/poetry/issues/6377 for"
+                    " details.\n\nYou should migrate to"
+                    " https://install.python-poetry.org instead, which supports all"
+                    " versions of Poetry, and allows for `self update` of versions"
+                    " 1.1.7 or newer.\nInstructions are available at"
+                    " https://python-poetry.org/docs/#installation.\n"
+                ),
             )
         )
 
@@ -460,14 +463,17 @@ class Installer:
             print(
                 colorize(
                     "deprecation",
-                    "Without an explicit version, this installer will attempt to"
-                    " install the latest version of Poetry.\nThis installer cannot"
-                    " install Poetry 1.2.0a1 or newer (and installs will be unable to"
-                    " `self update` to 1.2.0a1 or newer).\n\nTo continue to use this"
-                    " deprecated installer, you must specify an explicit version with"
-                    " --version <version> or POETRY_VERSION=<version>.\nAlternatively,"
-                    " if you wish to force this deprecated installer to use the latest"
-                    " installable release, set GET_POETRY_IGNORE_DEPRECATION=1.\n",
+                    (
+                        "Without an explicit version, this installer will attempt to"
+                        " install the latest version of Poetry.\nThis installer cannot"
+                        " install Poetry 1.2.0a1 or newer (and installs will be unable"
+                        " to `self update` to 1.2.0a1 or newer).\n\nTo continue to use"
+                        " this deprecated installer, you must specify an explicit"
+                        " version with --version <version> or"
+                        " POETRY_VERSION=<version>.\nAlternatively, if you wish to"
+                        " force this deprecated installer to use the latest installable"
+                        " release, set GET_POETRY_IGNORE_DEPRECATION=1.\n"
+                    ),
                 )
             )
 
@@ -817,8 +823,10 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "\nUnable to get the PATH value. It will not be updated"
-                    " automatically.",
+                    (
+                        "\nUnable to get the PATH value. It will not be updated"
+                        " automatically."
+                    ),
                 )
             )
             self._modify_path = False
@@ -853,8 +861,10 @@ class Installer:
             print(
                 colorize(
                     "warning",
-                    "Unable to get the PATH value. It will not be updated"
-                    " automatically",
+                    (
+                        "Unable to get the PATH value. It will not be updated"
+                        " automatically"
+                    ),
                 )
             )
             self._modify_path = False

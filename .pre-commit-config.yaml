@@ -82,7 +82,8 @@ repos:
       - id: black
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6027577
+    # freeze to commit rev to prevent automatic updates, since newer versions of flake8 are not compatible with plugins
+    rev: 6027577d325b0dd8bf1e465ebd29b71b5f0d005b
     hooks:
       - id: flake8
         additional_dependencies: *flake8_deps

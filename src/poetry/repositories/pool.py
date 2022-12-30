@@ -18,9 +18,11 @@ class Pool(RepositoryPool):
         ignore_repository_names: bool = False,
     ) -> None:
         warnings.warn(
-            "Object Pool from poetry.repositories.pool is renamed and scheduled for"
-            " removal in poetry release 1.4.0. Please migrate to RepositoryPool from"
-            " poetry.repositories.repository_pool.",
+            (
+                "Object Pool from poetry.repositories.pool is renamed and scheduled for"
+                " removal in poetry release 1.4.0. Please migrate to RepositoryPool"
+                " from poetry.repositories.repository_pool."
+            ),
             DeprecationWarning,
             stacklevel=2,
         )
