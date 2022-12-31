@@ -844,13 +844,15 @@ def test_predefined_all_options(tester: CommandTester, repo: TestRepository):
     ]
 
     tester.execute(
-        "--name my-package "
-        "--description 'This is a description' "
-        "--author 'Foo Bar <foo@example.com>' "
-        "--python '^3.8' "
-        "--license MIT "
-        "--dependency pendulum "
-        "--dev-dependency pytest",
+        (
+            "--name my-package "
+            "--description 'This is a description' "
+            "--author 'Foo Bar <foo@example.com>' "
+            "--python '^3.8' "
+            "--license MIT "
+            "--dependency pendulum "
+            "--dev-dependency pytest"
+        ),
         inputs="\n".join(inputs),
     )
 
@@ -941,10 +943,12 @@ line-length = 88
     repo.add_package(get_package("foo", "1.19.2"))
 
     tester.execute(
-        "--author 'Your Name <you@example.com>' "
-        "--name 'my-package' "
-        "--python '^3.6' "
-        "--dependency foo",
+        (
+            "--author 'Your Name <you@example.com>' "
+            "--name 'my-package' "
+            "--python '^3.6' "
+            "--dependency foo"
+        ),
         interactive=False,
     )
 

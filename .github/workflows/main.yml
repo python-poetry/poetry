@@ -83,6 +83,9 @@ jobs:
           # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
           timeout 10s poetry run pip --version || rm -rf .venv
 
+      - name: Check lock file
+        run: poetry lock --check
+
       - name: Install dependencies
         run: poetry install --with github-actions
 
