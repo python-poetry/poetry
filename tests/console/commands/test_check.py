@@ -71,4 +71,4 @@ def test_check_private(mocker: MockerFixture, tester: CommandTester):
 All set!
 """
 
-    assert tester.io.fetch_error() == expected
+    assert tester.io.fetch_output() == expected
