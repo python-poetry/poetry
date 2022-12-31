@@ -25,9 +25,11 @@ class SourceAddCommand(Command):
         option(
             "default",
             "d",
-            "Set this source as the default (disable PyPI). A "
-            "default source will also be the fallback source if "
-            "you add other sources.",
+            (
+                "Set this source as the default (disable PyPI). A "
+                "default source will also be the fallback source if "
+                "you add other sources."
+            ),
         ),
         option("secondary", "s", "Set this source as secondary."),
     ]

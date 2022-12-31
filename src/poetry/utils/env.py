@@ -541,8 +541,10 @@ class EnvManager:
 
         try:
             self._io.write_error_line(
-                "Trying to detect current active python executable as specified in the"
-                " config.",
+                (
+                    "Trying to detect current active python executable as specified in"
+                    " the config."
+                ),
                 verbosity=Verbosity.VERBOSE,
             )
             executable = self._full_python_path("python")
@@ -551,8 +553,10 @@ class EnvManager:
             )
         except CalledProcessError:
             self._io.write_error_line(
-                "Unable to detect the current active python executable. Falling back to"
-                " default.",
+                (
+                    "Unable to detect the current active python executable. Falling"
+                    " back to default."
+                ),
                 verbosity=Verbosity.VERBOSE,
             )
         return executable
