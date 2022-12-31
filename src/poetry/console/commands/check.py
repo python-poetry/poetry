@@ -33,8 +33,8 @@ class CheckCommand(Command):
         unrecognized = sorted(
             project_classifiers - set(classifiers) - set(deprecated_classifiers)
         )
-        # Allow "Private ::" classifiers as recommended on PyPI and the packaging guide to allow
-        # users to avoid accidentally publishing private packages to PyPI.
+        # Allow "Private ::" classifiers as recommended on PyPI and the packaging guide
+        # to allow users to avoid accidentally publishing private packages to PyPI.
         # https://pypi.org/classifiers/
         unrecognized = [u for u in unrecognized if not u.startswith("Private ::")]
         if unrecognized:
