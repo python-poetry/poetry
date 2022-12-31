@@ -42,16 +42,20 @@ class InitCommand(Command):
         option(
             "dependency",
             None,
-            "Package to require, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            (
+                "Package to require, with an optional version constraint, "
+                "e.g. requests:^2.10.0 or requests=2.11.1."
+            ),
             flag=False,
             multiple=True,
         ),
         option(
             "dev-dependency",
             None,
-            "Package to require for development, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            (
+                "Package to require for development, with an optional version"
+                " constraint, e.g. requests:^2.10.0 or requests=2.11.1."
+            ),
             flag=False,
             multiple=True,
         ),
@@ -318,8 +322,10 @@ You can specify a package in the following forms:
                     choices.append("")
 
                     package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it"
-                        " is not listed",
+                        (
+                            "\nEnter package # to add, or the complete package name if"
+                            " it is not listed"
+                        ),
                         choices,
                         attempts=3,
                         default=len(choices) - 1,
