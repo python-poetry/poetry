@@ -42,16 +42,20 @@ class InitCommand(Command):
         option(
             "dependency",
             None,
-            "Package to require, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            (
+                "Package to require, with an optional version constraint, "
+                "e.g. requests:^2.10.0 or requests=2.11.1."
+            ),
             flag=False,
             multiple=True,
         ),
         option(
             "dev-dependency",
             None,
-            "Package to require for development, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            (
+                "Package to require for development, with an optional version"
+                " constraint, e.g. requests:^2.10.0 or requests=2.11.1."
+            ),
             flag=False,
             multiple=True,
         ),
@@ -77,7 +81,17 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
-        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+        project_path = Path.cwd()
+
+        if self.io.input.option("directory"):
+            project_path = Path(self.io.input.option("directory"))
+            if not project_path.exists() or not project_path.is_dir():
+                self.line_error(
+                    "<error>The --directory path is not a directory.</error>"
+                )
+                return 1
+
+        pyproject = PyProjectTOML(project_path / "pyproject.toml")
 
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
@@ -166,7 +180,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 self._determine_requirements(self.option("dependency"))
             )
 
-        question = "Would you like to define your main dependencies interactively?"
+        question_text = "Would you like to define your main dependencies interactively?"
         help_message = """\
 You can specify a package in the following forms:
   - A single name (<b>requests</b>): this will search for matches on PyPI
@@ -180,7 +194,7 @@ You can specify a package in the following forms:
 """
 
         help_displayed = False
-        if self.confirm(question, True):
+        if self.confirm(question_text, True):
             if self.io.is_interactive():
                 self.line(help_message)
                 help_displayed = True
@@ -196,10 +210,10 @@ You can specify a package in the following forms:
                 self._determine_requirements(self.option("dev-dependency"))
             )
 
-        question = (
+        question_text = (
             "Would you like to define your development dependencies interactively?"
         )
-        if self.confirm(question, True):
+        if self.confirm(question_text, True):
             if self.io.is_interactive() and not help_displayed:
                 self.line(help_message)
 
@@ -308,8 +322,10 @@ You can specify a package in the following forms:
                     choices.append("")
 
                     package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it"
-                        " is not listed",
+                        (
+                            "\nEnter package # to add, or the complete package name if"
+                            " it is not listed"
+                        ),
                         choices,
                         attempts=3,
                         default=len(choices) - 1,
@@ -328,8 +344,8 @@ You can specify a package in the following forms:
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
                     )
-                    question.attempts = 3
-                    question.validator = lambda x: (x or "").strip() or False
+                    question.set_max_attempts(3)
+                    question.set_validator(lambda x: (x or "").strip() or None)
 
                     package_constraint = self.ask(question)
 
@@ -403,7 +419,7 @@ You can specify a package in the following forms:
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, selector.find_recommended_require_version(package)
+        return package.pretty_name, f"^{package.version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException

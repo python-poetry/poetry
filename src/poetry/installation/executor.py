@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from cleo.io.null_io import NullIO
-from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -28,6 +27,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
+from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -318,10 +318,12 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
-                    "<fg=default;options=bold,dark>Skipped</> "
-                    "<fg=default;options=dark>for the following reason:</> "
-                    f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
+                    (
+                        f"  <fg=default;options=bold,dark>•</> {operation_message}: "
+                        "<fg=default;options=bold,dark>Skipped</> "
+                        "<fg=default;options=dark>for the following reason:</> "
+                        f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
+                    ),
                 )
 
             self._skipped[operation.job_type] += 1
@@ -666,8 +668,7 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + file_dep.hash()
+        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:

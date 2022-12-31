@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from cleo.io.inputs.definition import Definition
 
 
-class RunArgvInput(ArgvInput):  # type: ignore[misc]
+class RunArgvInput(ArgvInput):
     def __init__(
         self,
         argv: list[str] | None = None,

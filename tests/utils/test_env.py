@@ -11,7 +11,6 @@ from typing import Any
 import pytest
 import tomlkit
 
-from cleo.io.null_io import NullIO
 from poetry.core.constraints.version import Version
 from poetry.core.toml.file import TOMLFile
 
@@ -226,7 +225,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    env = manager.activate("python3.7", NullIO())
+    env = manager.activate("python3.7")
 
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
@@ -275,7 +274,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    env = manager.activate("python3.7", NullIO())
+    env = manager.activate("python3.7")
 
     m.assert_not_called()
 
@@ -319,7 +318,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.create_venv")
 
-    env = manager.activate("python3.7", NullIO())
+    env = manager.activate("python3.7")
 
     m.assert_not_called()
 
@@ -362,7 +361,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    env = manager.activate("python3.6", NullIO())
+    env = manager.activate("python3.6")
 
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.6",
@@ -426,7 +425,7 @@ def test_activate_activates_recreates_for_different_patch(
         "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
     )
 
-    env = manager.activate("python3.7", NullIO())
+    env = manager.activate("python3.7")
 
     build_venv_m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
@@ -487,7 +486,7 @@ def test_activate_does_not_recreate_when_switching_minor(
         "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
     )
 
-    env = manager.activate("python3.6", NullIO())
+    env = manager.activate("python3.6")
 
     build_venv_m.assert_not_called()
     remove_venv_m.assert_not_called()
@@ -523,7 +522,7 @@ def test_deactivate_non_activated_but_existing(
         side_effect=check_output_wrapper(),
     )
 
-    manager.deactivate(NullIO())
+    manager.deactivate()
     env = manager.get()
 
     assert env.path == Path(tmp_dir) / f"{venv_name}-py{python}"
@@ -563,7 +562,7 @@ def test_deactivate_activated(
         side_effect=check_output_wrapper(),
     )
 
-    manager.deactivate(NullIO())
+    manager.deactivate()
     env = manager.get()
 
     assert env.path == Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}"
@@ -999,7 +998,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    manager.create_venv(NullIO())
+    manager.create_venv()
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
@@ -1033,7 +1032,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    manager.create_venv(NullIO())
+    manager.create_venv()
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.9",
@@ -1062,7 +1061,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
     )
 
     with pytest.raises(NoCompatiblePythonVersionFound) as e:
-        manager.create_venv(NullIO())
+        manager.create_venv()
 
     expected_message = (
         "Poetry was unable to find a compatible version. "
@@ -1088,7 +1087,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     )
 
     with pytest.raises(NoCompatiblePythonVersionFound) as e:
-        manager.create_venv(NullIO(), executable="3.8")
+        manager.create_venv(executable="3.8")
 
     expected_message = (
         "The specified Python version (3.8.0) is not supported by the project (^4.8).\n"
@@ -1125,7 +1124,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    manager.create_venv(NullIO())
+    manager.create_venv()
 
     assert not check_output.called
     m.assert_called_with(
@@ -1165,9 +1164,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    manager.create_venv(
-        NullIO(), executable=f"python{version.major}.{version.minor - 1}"
-    )
+    manager.create_venv(executable=f"python{version.major}.{version.minor - 1}")
 
     assert check_output.called
     m.assert_called_with(
@@ -1189,7 +1186,7 @@ def test_create_venv_fails_if_current_python_version_is_not_supported(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    manager.create_venv(NullIO())
+    manager.create_venv()
 
     current_version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
     next_version = ".".join(
@@ -1199,7 +1196,7 @@ def test_create_venv_fails_if_current_python_version_is_not_supported(
     poetry.package.python_versions = package_version
 
     with pytest.raises(InvalidCurrentPythonVersionError) as e:
-        manager.create_venv(NullIO())
+        manager.create_venv()
 
     expected_message = (
         f"Current Python version ({current_version}) is not allowed by the project"
@@ -1239,7 +1236,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
 
-    manager.activate("python3.7", NullIO())
+    manager.activate("python3.7")
 
     m.assert_called_with(
         poetry.file.parent / ".venv",
@@ -1472,7 +1469,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    manager.create_venv(NullIO())
+    manager.create_venv()
 
     assert check_output.called
     m.assert_called_with(
@@ -1535,6 +1532,7 @@ def test_build_environment_called_build_script_specified(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *extended_without_setup_poetry.pyproject.build_system.requires,
             ]
         ]
@@ -1580,7 +1578,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    manager.create_venv(NullIO())
+    manager.create_venv()
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",

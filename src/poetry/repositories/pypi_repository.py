@@ -86,8 +86,10 @@ class PyPiRepository(HTTPRepository):
                 results.append(package)
             except InvalidVersion:
                 self._log(
-                    f'Unable to parse version "{version}" for the {name} package,'
-                    " skipping",
+                    (
+                        f'Unable to parse version "{version}" for the {name} package,'
+                        " skipping"
+                    ),
                     level="debug",
                 )
 

@@ -34,6 +34,12 @@ class NewCommand(Command):
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
+        if self.io.input.option("directory"):
+            self.line_error(
+                "<warning>--directory only makes sense with existing projects, and will"
+                " be ignored. You should consider the option --path instead.</warning>"
+            )
+
         if self.option("src"):
             layout_cls = layout("src")
         else:

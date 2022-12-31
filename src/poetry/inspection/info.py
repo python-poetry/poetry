@@ -21,6 +21,7 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
+from poetry.core.version.requirements import InvalidRequirement
 
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 PEP517_META_BUILD = """\
 import build
 import build.env
-import pep517
+import pyproject_hooks
 
 source = '{source}'
 dest = '{dest}'
@@ -50,14 +51,14 @@ with build.env.IsolatedEnvBuilder() as env:
         srcdir=source,
         scripts_dir=env.scripts_dir,
         python_executable=env.executable,
-        runner=pep517.quiet_subprocess_runner,
+        runner=pyproject_hooks.quiet_subprocess_runner,
     )
     env.install(builder.build_system_requires)
     env.install(builder.get_requires_for_build('wheel'))
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build===0.7.0", "pep517==0.12.0"]
+PEP517_META_BUILD_DEPS = ["build==0.9.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
@@ -201,12 +202,18 @@ class PackageInfo:
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except InvalidMarker:
                 # Invalid marker, We strip the markers hoping for the best
+                logger.warning(
+                    "Stripping invalid marker (%s) found in %s-%s dependencies",
+                    req,
+                    package.name,
+                    package.version,
+                )
                 req = req.split(";")[0]
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except ValueError:
-                # Likely unable to parse constraint so we skip it
+            except InvalidRequirement:
+                # Unable to parse requirement so we skip it
                 logger.warning(
-                    "Invalid constraint (%s) found in %s-%s dependencies, skipping",
+                    "Invalid requirement (%s) found in %s-%s dependencies, skipping",
                     req,
                     package.name,
                     package.version,
@@ -593,6 +600,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *PEP517_META_BUILD_DEPS,
             )
             venv.run(

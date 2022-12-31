@@ -138,7 +138,7 @@ You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 ### Cache Directory
 
 - Linux: `$XDG_CACHE_HOME/pypoetry` or `~/.cache/pypoetry`
-- Windows: `%APPDATA%\pypoetry\Cache`
+- Windows: `%LOCALAPPDATA%\pypoetry`
 - MacOS: `~/Library/Caches/pypoetry`
 
 You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
