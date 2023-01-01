@@ -8,8 +8,11 @@ from poetry.repositories.cached_repository import (  # isort: skip # nopycln: im
 )
 
 warnings.warn(
-    "Module poetry.repositories.cached is renamed and scheduled for removal in poetry"
-    " release 1.4.0. Please migrate to poetry.repositories.cached_repository.",
+    (
+        "Module poetry.repositories.cached is renamed and scheduled for removal in"
+        " poetry release 1.4.0. Please migrate to"
+        " poetry.repositories.cached_repository."
+    ),
     DeprecationWarning,
     stacklevel=2,
 )
