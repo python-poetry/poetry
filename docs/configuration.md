@@ -356,6 +356,13 @@ Applies on virtualenv creation.
 
 Directory where virtual environments will be created.
 
+{{% note %}}
+Please note that this is a global variable and it should not be used as a local configuration, as you may get unpredicted behaviour.
+{{% /note %}}
+{{% note %}}
+If you want to have a virtual environment close to your project, check the `virtualenvs.in-project` settings.
+{{% /note %}}
+
 ### `virtualenvs.prefer-active-python` (experimental)
 
 **Type**: `boolean`
