@@ -357,10 +357,7 @@ Applies on virtualenv creation.
 Directory where virtual environments will be created.
 
 {{% note %}}
-Please note that this is a global variable and it should not be used as a local configuration, as you may get unpredicted behaviour.
-{{% /note %}}
-{{% note %}}
-If you want to have a virtual environment close to your project, check the `virtualenvs.in-project` settings.
+This setting controls the global virtual environment storage path. It most likely will not be useful at the local level. To store virtual environments in the project root, see `virtualenvs.in-project`.
 {{% /note %}}
 
 ### `virtualenvs.prefer-active-python` (experimental)
