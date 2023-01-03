@@ -46,9 +46,13 @@ The script can be executed directly (i.e. 'curl python') or downloaded and then 
 (e.g. in a CI environment).
 
 {{% warning %}}
-The previous `get-poetry.py` and `install-poetry.py` installers are deprecated. Any installs performed
-using `get-poetry.py` should be uninstalled and reinstalled using `install.python-poetry.org` to ensure
-in-place upgrades are possible.
+The `get-poetry.py` installer has been deprecated and removed. If you installed
+Poetry using `get-poetry.py`, please uninstall (as documented in the relevant
+step below), and then follow these installation instructions.
+
+The previous `install-poetry.py` script as included in the Poetry repository
+is deprecated and frozen. Please migrate to the standalone version described
+above, as the in-tree version is [scheduled to be removed](https://github.com/python-poetry/poetry/issues/6676).
 {{% /warning %}}
 
 **Linux, macOS, Windows (WSL)**
@@ -182,11 +186,13 @@ curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
 
 {{% warning %}}
-If you installed using the deprecated `get-poetry.py` script, you should use it to uninstall instead:
+If you installed using the deprecated `get-poetry.py` script, you should remove the path it uses manually, e.g.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 - --uninstall
+rm -rf "${POETRY_HOME:-~/.poetry}"
 ```
+
+Also remove ~/.poetry/bin from your `$PATH` in your shell configuration, if it is present.
 {{% /warning %}}
 
 {{< /step >}}
