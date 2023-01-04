@@ -14,6 +14,7 @@
   language: python
   language_version: python3
   pass_filenames: false
+  files: .*/(poetry.lock|pyproject.toml)$
 
 - id: poetry-export
   name: poetry-export
