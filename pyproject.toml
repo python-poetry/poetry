@@ -59,7 +59,6 @@ html5lib = "^1.0"
 importlib-metadata = { version = ">=4.4,<6", python = "<3.10" }
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
-lockfile = "^0.12.2"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
@@ -172,7 +171,6 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = [
   'cachecontrol.*',
-  'lockfile.*',
   'pexpect.*',
   'requests_toolbelt.*',
   'shellingham.*',

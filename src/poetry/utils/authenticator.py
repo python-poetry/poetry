@@ -4,6 +4,9 @@ import contextlib
 import dataclasses
 import functools
 import logging
+import os
+import socket
+import threading
 import time
 import urllib.parse
 
@@ -12,7 +15,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-import lockfile
 import requests
 import requests.auth
 import requests.exceptions
@@ -35,7 +37,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class FileLockLockFile(lockfile.LockBase):  # type: ignore[misc]
+class FileLockLockFile:
     # The default LockFile from the lockfile package as used by cachecontrol can remain
     # locked if a process exits ungracefully.  See eg
     # <https://github.com/python-poetry/poetry/issues/6030#issuecomment-1189383875>.
@@ -45,7 +47,24 @@ class FileLockLockFile(lockfile.LockBase):  # type: ignore[misc]
     def __init__(
         self, path: str, threaded: bool = True, timeout: float | None = None
     ) -> None:
-        super().__init__(path, threaded, timeout)
+        self.path = path
+        self.lock_file = f"{Path(path).absolute()}.lock"
+        self.hostname = socket.gethostname()
+        self.pid = os.getpid()
+        thread_ident = threading.current_thread().ident
+        assert thread_ident is not None
+        self.tname = f"-{thread_ident & 0xffffffff}" if threaded else ""
+        # unique name is mostly about the current process, but must
+        # also contain the path -- otherwise, two adjacent locked
+        # files conflict (one file gets locked, creating lock-file and
+        # unique file, the other one gets locked, creating lock-file
+        # and overwriting the already existing lock-file, then one
+        # gets unlocked, deleting both lock-file and unique file,
+        # finally the last lock errors out upon releasing.
+        self.unique_name = Path(self.lock_file).parent.joinpath(
+            f"{self.hostname}{self.tname}.{self.pid}{hash(self.path)}"
+        )
+        self.timeout = timeout
         self.file_lock = FileLock(self.lock_file)
 
     def acquire(self, timeout: float | None = None) -> None:
@@ -53,6 +72,16 @@ class FileLockLockFile(lockfile.LockBase):  # type: ignore[misc]
 
     def release(self) -> None:
         self.file_lock.release()
+
+    def __enter__(self) -> FileLockLockFile:
+        self.acquire()
+        return self
+
+    def __exit__(self, *_exc: tuple[Any, ...]) -> None:
+        self.release()
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: {self.unique_name!r} -- {self.path!r}>"
 
 
 @dataclasses.dataclass(frozen=True)
