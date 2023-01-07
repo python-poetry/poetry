@@ -1,6 +1,19 @@
 # Change Log
 
 
+## [1.3.2] - 2022-01-10
+
+### Fixed
+
+- Fix a performance regression when locking dependencies from PyPI ([#7232](https://github.com/python-poetry/poetry/pull/7232)).
+- Fix an issue where passing a relative path via `-C, --directory` fails ([#7266](https://github.com/python-poetry/poetry/pull/7266)).
+
+### Docs
+
+- Update docs to reflect the removal of the deprecated `get-poetry.py` installer from the repository ([#7288](https://github.com/python-poetry/poetry/pull/7288)).
+- Add clarifications for `virtualenvs.path` settings ([#7286](https://github.com/python-poetry/poetry/pull/7286)).
+
+
 ## [1.3.1] - 2022-12-12
 
 ### Fixed
@@ -1688,7 +1701,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.3.1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.3.2...master
+[1.3.2]: https://github.com/python-poetry/poetry/releases/tag/1.3.2
 [1.3.1]: https://github.com/python-poetry/poetry/releases/tag/1.3.1
 [1.3.0]: https://github.com/python-poetry/poetry/releases/tag/1.3.0
 [1.2.2]: https://github.com/python-poetry/poetry/releases/tag/1.2.2
