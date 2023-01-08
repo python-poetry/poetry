@@ -162,7 +162,6 @@ class PyPiRepository(HTTPRepository):
             name=info["name"],
             version=info["version"],
             summary=info["summary"],
-            platform=info["platform"],
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
             files=info.get("files", []),
