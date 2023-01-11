@@ -3,7 +3,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -47,20 +47,20 @@ repos:
           - flake8-pie==0.16.0
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.0
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
         exclude: ^(install|get)-poetry.py$
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.1
+    rev: v2.1.2
     hooks:
       - id: pycln
         args: [--all]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.11.4
     hooks:
       - id: isort
         name: "isort (python)"
@@ -77,17 +77,18 @@ repos:
         args: [--lines-after-imports, "-1"]
 
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 22.12.0
     hooks:
       - id: black
 
   - repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+    # freeze to commit rev to prevent automatic updates, since newer versions of flake8 are not compatible with plugins
+    rev: 6027577d325b0dd8bf1e465ebd29b71b5f0d005b
     hooks:
       - id: flake8
         additional_dependencies: *flake8_deps
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v2.20.0
+    rev: v2.21.0
     hooks:
       - id: validate_manifest

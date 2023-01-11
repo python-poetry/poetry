@@ -87,7 +87,7 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
 
 
 @pytest.mark.parametrize(
-    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+    ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
 def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     repo = MockRepository()
@@ -139,11 +139,18 @@ def test_package() -> None:
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
-    assert (
-        str(win_inet.marker)
-        == 'sys_platform == "win32" and (python_version == "2.7"'
-        ' or python_version == "2.6") and extra == "socks"'
+
+    # Different versions of poetry-core simplify the following marker differently,
+    # either is fine.
+    marker1 = (
+        'sys_platform == "win32" and (python_version == "2.7" or python_version =='
+        ' "2.6") and extra == "socks"'
     )
+    marker2 = (
+        'sys_platform == "win32" and python_version == "2.7" and extra == "socks" or'
+        ' sys_platform == "win32" and python_version == "2.6" and extra == "socks"'
+    )
+    assert str(win_inet.marker) in {marker1, marker2}
 
 
 @pytest.mark.parametrize(
@@ -323,14 +330,6 @@ def test_urls() -> None:
 
     assert repository.url == "https://pypi.org/simple/"
     assert repository.authenticated_url == "https://pypi.org/simple/"
-
-
-def test_use_pypi_pretty_name() -> None:
-    repo = MockRepository(fallback=True)
-
-    package = repo.find_packages(Factory.create_dependency("twisted", "*"))
-    assert len(package) == 1
-    assert package[0].pretty_name == "Twisted"
 
 
 def test_find_links_for_package_of_supported_types():

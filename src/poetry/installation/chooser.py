@@ -80,8 +80,10 @@ class Chooser:
             if link.is_wheel:
                 if not self._no_binary_policy.allows(package.name):
                     logger.debug(
-                        "Skipping wheel for %s as requested in no binary policy for"
-                        " package (%s)",
+                        (
+                            "Skipping wheel for %s as requested in no binary policy for"
+                            " package (%s)"
+                        ),
                         link.filename,
                         package.name,
                     )
@@ -89,8 +91,10 @@ class Chooser:
 
                 if not Wheel(link.filename).is_supported_by_environment(self._env):
                     logger.debug(
-                        "Skipping wheel %s as this is not supported by the current"
-                        " environment",
+                        (
+                            "Skipping wheel %s as this is not supported by the current"
+                            " environment"
+                        ),
                         link.filename,
                     )
                     continue
@@ -120,7 +124,7 @@ class Chooser:
             repository = self._pool.repository("pypi")
         links = repository.find_links_for_package(package)
 
-        hashes = [f["hash"] for f in package.files]
+        hashes = {f["hash"] for f in package.files}
         if not hashes:
             return links
 

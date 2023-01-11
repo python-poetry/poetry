@@ -17,7 +17,7 @@ from dulwich.errors import NotGitRepository
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
-from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.console.exceptions import PoetryConsoleError
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.helpers import remove_directory
 
@@ -223,7 +223,7 @@ class Git:
         try:
             SystemGit.clone(url, target)
         except CalledProcessError:
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url}, check your git configuration and permissions"
                 " for this repository."
             )
@@ -235,9 +235,7 @@ class Git:
         try:
             SystemGit.checkout(revision, target)
         except CalledProcessError:
-            raise PoetrySimpleConsoleException(
-                f"Failed to checkout {url} at '{revision}'"
-            )
+            raise PoetryConsoleError(f"Failed to checkout {url} at '{revision}'")
 
         repo = Repo(str(target))
         return repo
@@ -264,7 +262,7 @@ class Git:
         try:
             refspec.resolve(remote_refs=remote_refs)
         except KeyError:  # branch / ref does not exist
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
                 " remote."
             )
@@ -297,8 +295,10 @@ class Git:
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
                 logger.debug(
-                    "Removing local clone (<c1>%s</>) of repository as it is in a"
-                    " broken state.",
+                    (
+                        "Removing local clone (<c1>%s</>) of repository as it is in a"
+                        " broken state."
+                    ),
                     local.path,
                 )
                 remove_directory(local.path, force=True)
@@ -307,13 +307,16 @@ class Git:
                 raise
 
             logger.debug(
-                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and cannot"
-                " be used. The following error was raised:\n\n\t<warning>%s</>",
+                (
+                    "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                    " cannot be used. The following error was"
+                    " raised:\n\n\t<warning>%s</>"
+                ),
                 refspec.key,
                 e,
             )
 
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
                 " remote."
             )
@@ -435,8 +438,10 @@ class Git:
             # without additional configuration or changes for existing projects that
             # use http basic auth credentials.
             logger.debug(
-                "Unable to fetch from private repository '%s', falling back to"
-                " system git",
+                (
+                    "Unable to fetch from private repository '%s', falling back to"
+                    " system git"
+                ),
                 url,
             )
 
