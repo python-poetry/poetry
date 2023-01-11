@@ -25,6 +25,7 @@ from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import table
 
+from poetry.__version__ import __version__
 from poetry.utils._compat import tomllib
 
 
@@ -40,8 +41,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 _GENERATED_IDENTIFIER = "@" + "generated"
 GENERATED_COMMENT = (
-    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
-    " changed by hand."
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry"
+    f" {__version__} and should not be changed by hand."
 )
 
 
