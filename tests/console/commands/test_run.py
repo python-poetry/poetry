@@ -153,7 +153,7 @@ def test_run_script_exit_code(
 @pytest.mark.parametrize(
     "installed_script", [False, True], ids=["not installed", "installed"]
 )
-def test_run_project_script(
+def test_run_project_script_sys_argv0(
     installed_script: bool,
     mocker: MockerFixture,
     tmp_venv: VirtualEnv,
