@@ -17,6 +17,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 
+from poetry.__version__ import __version__
 from poetry.factory import Factory
 from poetry.packages.locker import GENERATED_COMMENT
 from poetry.packages.locker import Locker
@@ -1169,3 +1170,29 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 """  # noqa: E800
 
             assert content == expected
+
+
+def test_lockfile_is_not_rewritten_if_only_poetry_version_changed(
+    locker: Locker, root: ProjectPackage
+) -> None:
+    generated_comment_old_version = GENERATED_COMMENT.replace(__version__, "1.3.2")
+    assert generated_comment_old_version != GENERATED_COMMENT
+    old_content = f"""\
+# {generated_comment_old_version}
+package = []
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""  # noqa: E800
+
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(old_content)
+
+    assert not locker.set_lock_data(root, [])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == old_content
