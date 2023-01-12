@@ -81,7 +81,7 @@ def test_uploader_properly_handles_redirects(
     http: type[httpretty.httpretty], uploader: Uploader, status: int, body: str
 ):
     http.register_uri(http.POST, "https://foo.com", status=status, body=body)
-    
+
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
