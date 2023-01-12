@@ -98,7 +98,7 @@ def mock_legacy_partial_yank(http: type[httpretty.httpretty]) -> None:
         parts = uri.rsplit("/")
         name = parts[-2]
 
-        fixture = LEGACY_FIXTURES / (name + "_partial_yank" + ".html")
+        fixture = LEGACY_FIXTURES / (name + "-partial-yank" + ".html")
 
         with fixture.open(encoding="utf-8") as f:
             return [200, headers, f.read()]
