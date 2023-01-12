@@ -82,15 +82,33 @@ isolated_build = true
 
 [testenv]
 allowlist_externals = poetry
-commands_pre =
-    poetry install --no-root --sync
+commands_pre = poetry install --no-root --sync --with test
+commands = pytest tests/
+
+[testenv:style]
+skip_install = true
+commands_pre = poetry install --no-root --sync --with style
 commands =
-    poetry run pytest tests/ --import-mode importlib
+    flake8 src/
+    black --check src/
+
+[testenv:typing]
+commands_pre = poetry install --no-root --sync --with typing
+commands = mypy src/
 ```
 
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
 Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry,
- which will install the locked dependencies into the environment.
+which will install the locked dependencies into the environment.
+
+In the `style` testenv, `tox` will only create the virtual environment, and
+again we will rely on Poetry to install requirements. The project itself will
+not be installed at all.
+
+`poetry` is used to sync package dependencies and named dependency groups into
+the `tox`-created virtual environments. This allows dependency groups to provide
+dependencies for different `tox` environments, providing `test` to the main
+testenv, `style` to the `style` env, and `typing` to the `typing` env.
 
 #### Usecase #3
 ```ini
