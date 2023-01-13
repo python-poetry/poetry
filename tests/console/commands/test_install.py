@@ -145,6 +145,19 @@ def test_sync_option_is_passed_to_the_installer(
     assert tester.command.installer._requires_synchronization
 
 
+def test_check_lock_option_is_passed_to_the_installer(
+    tester: CommandTester, mocker: MockerFixture
+):
+    """
+    The --check-lock option is passed properly to the installer.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--check-lock")
+
+    assert tester.command.installer._check_lock
+
+
 def test_no_all_extras_doesnt_populate_installer(
     tester: CommandTester, mocker: MockerFixture
 ):

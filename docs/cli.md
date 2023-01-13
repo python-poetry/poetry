@@ -234,6 +234,7 @@ poetry install --no-root
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--check-lock`: Verify that `poetry.lock` is consistent with `pyproject.toml` before installation.
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)

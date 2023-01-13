@@ -105,6 +105,7 @@ class Locker(BaseLocker):
         self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
+        self._fresh = True
         self._content_hash = self._get_content_hash()
 
     @property
@@ -113,6 +114,11 @@ class Locker(BaseLocker):
 
     def set_lock_path(self, lock: str | Path) -> Locker:
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
+
+        return self
+
+    def fresh(self, is_fresh: bool = True) -> Locker:
+        self._fresh = is_fresh
 
         return self
 
@@ -128,7 +134,7 @@ class Locker(BaseLocker):
         return self._locked
 
     def is_fresh(self) -> bool:
-        return True
+        return self._fresh
 
     def _get_content_hash(self) -> str:
         return "123456789"
@@ -206,6 +212,37 @@ def fixture(name: str) -> dict:
     file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
 
     return json.loads(json.dumps(file.read()))
+
+
+def test_run_check_lock(installer: Installer, locker: Locker):
+    locker.fresh(False)
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"A": []},
+            },
+        }
+    )
+    installer.check_lock(True)
+
+    return_code = installer.run()
+
+    assert return_code == 1
 
 
 def test_run_no_dependencies(installer: Installer, locker: Locker):

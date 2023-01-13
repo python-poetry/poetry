@@ -47,6 +47,15 @@ class InstallCommand(InstallerCommand):
             ),
         ),
         option(
+            "check-lock",
+            None,
+            (
+                "Verify that the poetry.lock file"
+                " is consistent with `pyproject.toml`"
+                " before installation."
+            ),
+        ),
+        option(
             "extras",
             "E",
             "Extra sets of dependencies to install.",
@@ -145,6 +154,7 @@ dependencies and not including the current project, run the command with the
 
         self.installer.only_groups(self.activated_groups)
         self.installer.dry_run(self.option("dry-run"))
+        self.installer.check_lock(self.option("check-lock"))
         self.installer.requires_synchronization(with_synchronization)
         self.installer.verbose(self.io.is_verbose())
 

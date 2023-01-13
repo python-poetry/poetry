@@ -60,6 +60,7 @@ class Installer:
 
         self._execute_operations = True
         self._lock = False
+        self._check_lock = False
 
         self._whitelist: list[NormalizedName] = []
 
@@ -112,6 +113,11 @@ class Installer:
             self._execute_operations = False
 
         return self._do_install()
+
+    def check_lock(self, check_lock: bool) -> Installer:
+        self._check_lock = check_lock
+
+        return self
 
     def dry_run(self, dry_run: bool = True) -> Installer:
         self._dry_run = dry_run
@@ -264,6 +270,8 @@ class Installer:
                     "Run `poetry lock [--no-update]` to fix it."
                     "</warning>"
                 )
+                if self._check_lock:
+                    return 1
 
             locker_extras = {
                 canonicalize_name(extra)
