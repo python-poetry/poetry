@@ -81,7 +81,7 @@ Thus, dependencies are resolved by `pip`.
 isolated_build = true
 
 [testenv]
-whitelist_externals = poetry
+allowlist_externals = poetry
 commands_pre =
     poetry install --no-root --sync
 commands =
@@ -99,7 +99,7 @@ isolated_build = true
 
 [testenv]
 skip_install = true
-whitelist_externals = poetry
+allowlist_externals = poetry
 commands_pre =
     poetry install
 commands =

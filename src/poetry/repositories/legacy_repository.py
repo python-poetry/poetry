@@ -123,7 +123,6 @@ class LegacyRepository(HTTPRepository):
                 name=name,
                 version=version.text,
                 summary="",
-                platform=None,
                 requires_dist=[],
                 requires_python=None,
                 files=[],
