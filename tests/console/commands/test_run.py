@@ -181,5 +181,9 @@ def test_run_project_script_sys_argv0(
 
     tester.execute("foo status")
 
+    # `poetry run` dispatches to `Env.execute("python", "-c", <code>)`
+    # we get the arg `code` to verify if it was built with the proper `sys.argv`
+    code: str = env_execute_mock.call_args[0][2]
+
     expected_sys_argv = f"sys.argv = ['{cli_script}', 'status']"
-    assert expected_sys_argv in env_execute_mock.call_args_list[0][0][2]
+    assert expected_sys_argv in code
