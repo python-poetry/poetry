@@ -176,14 +176,20 @@ def test_run_project_script_sys_argv0(
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
     )
-    env_execute_mock = mocker.patch("poetry.utils.env.Env.execute", return_value=0)
+    env_execute_mock = mocker.patch(
+        "poetry.utils.env.VirtualEnv.execute", return_value=0
+    )
     tester = command_tester_factory("run", poetry, environment=tmp_venv)
 
     tester.execute("foo status")
 
-    # `poetry run` dispatches to `Env.execute("python", "-c", <code>)`
-    # we get the arg `code` to verify if it was built with the proper `sys.argv`
-    code: str = env_execute_mock.call_args[0][2]
-
-    expected_sys_argv = f"sys.argv = ['{cli_script}', 'status']"
-    assert expected_sys_argv in code
+    env_execute_mock.assert_called_once_with(
+        "python",
+        "-c",
+        (
+            "import sys; "
+            "from importlib import import_module; "
+            f"sys.argv = ['{cli_script}', 'status']; "
+            "sys.exit(import_module('foo').bar())"
+        ),
+    )
