@@ -335,10 +335,6 @@ class Application(BaseApplication):
             poetry.config,
             disable_cache=poetry.disable_cache,
         )
-        use_executor = poetry.config.get("experimental.new-installer", False)
-        if not use_executor:
-            # only set if false because the method is deprecated
-            installer.use_executor(False)
         command.set_installer(installer)
 
     def _load_plugins(self, io: IO | None = None) -> None:

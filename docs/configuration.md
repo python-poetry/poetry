@@ -229,9 +229,6 @@ specific packages.
 | `package[,package,..]` | Disallow binary distributions for specified packages only. |
 
 {{% note %}}
-This configuration is only respected when using the new installer. If you have disabled it please
-consider re-enabling it.
-
 As with all configurations described here, this is a user specific configuration. This means that this
 is not taken into consideration when a lockfile is generated or dependencies are resolved. This is
 applied only when selecting which distribution for dependency should be installed into a Poetry managed

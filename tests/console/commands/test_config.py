@@ -52,7 +52,6 @@ def test_list_displays_default_value_if_not_set(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -82,7 +81,6 @@ def test_list_displays_set_get_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -136,7 +134,6 @@ def test_list_displays_set_get_local_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -174,7 +171,6 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true

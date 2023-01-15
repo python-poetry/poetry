@@ -68,7 +68,6 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.path": (str, lambda val: str(Path(val))),
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
-            "experimental.new-installer": (boolean_validator, boolean_normalizer),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
             "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
