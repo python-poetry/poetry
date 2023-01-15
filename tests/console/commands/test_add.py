@@ -50,7 +50,8 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 @pytest.fixture()
 def old_tester(tester: CommandTester) -> CommandTester:
-    tester.command.installer.use_executor(False)
+    with pytest.warns(DeprecationWarning):
+        tester.command.installer.use_executor(False)
 
     return tester
 
