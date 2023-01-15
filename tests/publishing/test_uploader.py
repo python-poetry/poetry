@@ -65,6 +65,32 @@ def test_uploader_properly_handles_nonstandard_errors(
     assert str(e.value) == f"HTTP Error 400: Bad Request | {content}"
 
 
+@pytest.mark.parametrize(
+    "status, body",
+    [
+        (308, "Permanent Redirect"),
+        (307, "Temporary Redirect"),
+        (304, "Not Modified"),
+        (303, "See Other"),
+        (302, "Found"),
+        (301, "Moved Permanently"),
+        (300, "Multiple Choices"),
+    ],
+)
+def test_uploader_properly_handles_redirects(
+    http: type[httpretty.httpretty], uploader: Uploader, status: int, body: str
+):
+    http.register_uri(http.POST, "https://foo.com", status=status, body=body)
+
+    with pytest.raises(UploadError) as e:
+        uploader.upload("https://foo.com")
+
+    assert (
+        str(e.value)
+        == "Redirects are not supported. Is the URL missing a trailing slash?"
+    )
+
+
 def test_uploader_properly_handles_301_redirects(
     http: type[httpretty.httpretty], uploader: Uploader
 ):
