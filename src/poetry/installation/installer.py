@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 from typing import TYPE_CHECKING
 
 from cleo.io.null_io import NullIO
@@ -71,7 +73,7 @@ class Installer:
             )
 
         self._executor = executor
-        self._use_executor = False
+        self._use_executor = True
 
         self._installer = self._get_installer()
         if installed is None:
@@ -180,6 +182,14 @@ class Installer:
         return self
 
     def use_executor(self, use_executor: bool = True) -> Installer:
+        warnings.warn(
+            (
+                "Calling use_executor() is deprecated since it's true by default now"
+                " and deactivating it will be removed in a future release."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._use_executor = use_executor
 
         return self
@@ -365,6 +375,14 @@ class Installer:
     def _execute(self, operations: list[Operation]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
+
+        self._io.write_error(
+            "<warning>"
+            "Setting `experimental.new-installer` to false is deprecated and"
+            " slated for removal in an upcoming minor release.\n"
+            "(Despite of the setting's name the new installer is not experimental!)"
+            "</warning>"
+        )
 
         if not operations and (self._execute_operations or self._dry_run):
             self._io.write_line("No dependencies to install or update")
