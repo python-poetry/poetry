@@ -8,8 +8,10 @@ from poetry.repositories.http_repository import (  # isort: skip # nopycln: impo
 )
 
 warnings.warn(
-    "Module poetry.repositories.http is renamed and scheduled for removal in poetry"
-    " release 1.4.0. Please migrate to poetry.repositories.http_repository.",
+    (
+        "Module poetry.repositories.http is renamed and scheduled for removal in poetry"
+        " release 1.4.0. Please migrate to poetry.repositories.http_repository."
+    ),
     DeprecationWarning,
     stacklevel=2,
 )

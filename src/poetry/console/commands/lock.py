@@ -16,8 +16,10 @@ class LockCommand(InstallerCommand):
         option(
             "check",
             None,
-            "Check that the <comment>poetry.lock</> file corresponds to the current"
-            " version of <comment>pyproject.toml</>.",
+            (
+                "Check that the <comment>poetry.lock</> file corresponds to the current"
+                " version of <comment>pyproject.toml</>."
+            ),
         ),
     ]
 

@@ -63,8 +63,10 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables"
-            " --verbose).",
+            (
+                "Output the operations but do not execute anything (implicitly enables"
+                " --verbose)."
+            ),
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]

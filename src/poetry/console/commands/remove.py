@@ -21,14 +21,18 @@ class RemoveCommand(InstallerCommand):
         option(
             "dev",
             "D",
-            "Remove a package from the development dependencies."
-            " (<warning>Deprecated</warning>)",
+            (
+                "Remove a package from the development dependencies."
+                " (<warning>Deprecated</warning>)"
+            ),
         ),
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything "
-            "(implicitly enables --verbose).",
+            (
+                "Output the operations but do not execute anything "
+                "(implicitly enables --verbose)."
+            ),
         ),
     ]
 

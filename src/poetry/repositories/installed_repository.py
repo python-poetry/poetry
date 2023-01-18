@@ -270,9 +270,11 @@ class InstalledRepository(Repository):
                     name = canonicalize_name(distribution.metadata["name"])
                 except TypeError:
                     logger.warning(
-                        "Project environment contains an invalid distribution"
-                        " (<c1>%s</>). Consider removing it manually or recreate the"
-                        " environment.",
+                        (
+                            "Project environment contains an invalid distribution"
+                            " (<c1>%s</>). Consider removing it manually or recreate"
+                            " the environment."
+                        ),
                         path,
                     )
                     skipped.add(path)
