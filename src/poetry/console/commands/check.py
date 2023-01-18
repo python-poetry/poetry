@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from poetry.console.commands.command import Command
 
 
@@ -61,7 +59,7 @@ class CheckCommand(Command):
         from poetry.factory import Factory
 
         # Load poetry config and display errors, if any
-        poetry_file = Factory.locate(Path.cwd())
+        poetry_file = self.poetry.file.path
         config = PyProjectTOML(poetry_file).poetry_config
         check_result = Factory.validate(config, strict=True)
 
