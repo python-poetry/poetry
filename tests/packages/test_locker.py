@@ -759,7 +759,7 @@ package = []
 
 [extras]
 B = ["first", "second", "third"]
-C = ["third", "second", "first"]
+C = ["first", "second", "third"]
 
 [metadata]
 lock-version = "2.0"
