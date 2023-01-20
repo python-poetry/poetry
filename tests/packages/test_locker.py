@@ -749,8 +749,6 @@ def test_root_extras_dependencies_are_ordered(locker: Locker, root: ProjectPacka
         "C": [package_third, package_second, package_first],
         "B": [package_first, package_second, package_third],
     }
-    # root.requires[-1].activate()
-
     locker.set_lock_data(root, [])
 
     expected = f"""\

@@ -244,7 +244,7 @@ class Locker:
 
         if root.extras:
             lock["extras"] = {
-                extra: [dep.pretty_name for dep in sorted(deps, key=lambda dep: dep.pretty_name)]
+                extra: sorted(dep.pretty_name for dep in deps)
                 for extra, deps in sorted(root.extras.items())
             }
 
