@@ -59,3 +59,21 @@ Warning: Deprecated classifier\
 """
 
     assert tester.io.fetch_error() == expected
+
+
+def test_check_private(mocker: MockerFixture, tester: CommandTester):
+    mocker.patch(
+        "poetry.factory.Factory.locate",
+        return_value=Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "private_pyproject"
+        / "pyproject.toml",
+    )
+
+    tester.execute()
+
+    expected = """\
+All set!
+"""
+
+    assert tester.io.fetch_output() == expected
