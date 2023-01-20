@@ -737,6 +737,41 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
         _ = locker.lock_data
 
 
+def test_root_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
+    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+
+    root.extras = {
+        "C": [package_third, package_second, package_first],
+        "B": [package_first, package_second, package_third],
+    }
+    locker.set_lock_data(root, [])
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+package = []
+
+[extras]
+B = ["first", "second", "third"]
+C = ["first", "second", "third"]
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""  # noqa: E800
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    print(content)
+    assert content == expected
+
+
 def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
