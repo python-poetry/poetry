@@ -29,12 +29,17 @@ All set!
 
 
 def test_check_invalid(mocker: MockerFixture, tester: CommandTester):
+    from poetry.core.toml import TOMLFile
+
     mocker.patch(
-        "poetry.factory.Factory.locate",
-        return_value=Path(__file__).parent.parent.parent
-        / "fixtures"
-        / "invalid_pyproject"
-        / "pyproject.toml",
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(
+            Path(__file__).parent.parent.parent
+            / "fixtures"
+            / "invalid_pyproject"
+            / "pyproject.toml"
+        ),
+        new_callable=mocker.PropertyMock,
     )
 
     tester.execute()

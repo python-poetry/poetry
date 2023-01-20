@@ -239,11 +239,11 @@ poetry@preview --version
 Finally, `pipx` can install any valid [pip requirement spec](https://pip.pypa.io/en/stable/cli/pip_install/), which
 allows for installations of the development version from `git`, or even for local testing of pull requests:
 
-```
+```bash
 pipx install --suffix @master git+https://github.com/python-poetry/poetry.git@master
 pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@refs/pull/1234/head
-
 ```
+
 {{< /step >}}
 {{< step >}}
 **Update Poetry**
