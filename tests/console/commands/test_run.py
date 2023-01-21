@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import subprocess
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.factory import Factory
 from poetry.utils._compat import WINDOWS
 
 
@@ -153,43 +151,35 @@ def test_run_script_exit_code(
 @pytest.mark.parametrize(
     "installed_script", [False, True], ids=["not installed", "installed"]
 )
-def test_run_project_script_sys_argv0(
+def test_run_script_sys_argv0(
     installed_script: bool,
-    mocker: MockerFixture,
-    tmp_venv: VirtualEnv,
+    poetry_with_scripts: Poetry,
     command_tester_factory: CommandTesterFactory,
-):
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+) -> None:
     """
-    If RunCommand calls an installed script defined in pyproject.toml, sys.argv[0]
-    must be set to the full path of the script.
+    If RunCommand calls an installed script defined in pyproject.toml,
+    sys.argv[0] must be set to the full path of the script.
     """
-    cli_script = "foo"
-
-    if installed_script:
-        if WINDOWS:
-            cli_script += ".exe"
-        cli_script = tmp_venv._bin_dir / cli_script
-        cli_script.touch()
-        if WINDOWS:
-            cli_script = str(cli_script).replace("\\", "\\\\")
-
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file] + args[1:], env=env),
     )
-    env_execute_mock = mocker.patch(
-        "poetry.utils.env.VirtualEnv.execute", return_value=0
-    )
-    tester = command_tester_factory("run", poetry, environment=tmp_venv)
 
-    tester.execute("foo status")
-
-    env_execute_mock.assert_called_once_with(
-        "python",
-        "-c",
-        (
-            "import sys; "
-            "from importlib import import_module; "
-            f"sys.argv = ['{cli_script}', 'status']; "
-            "sys.exit(import_module('foo').bar())"
-        ),
+    install_tester = command_tester_factory(
+        "install",
+        poetry=poetry_with_scripts,
+        environment=tmp_venv,
     )
+    assert install_tester.execute() == 0
+    if not installed_script:
+        for path in tmp_venv.script_dirs[0].glob("check-argv0*"):
+            path.unlink()
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_scripts, environment=tmp_venv
+    )
+    argv1 = "absolute" if installed_script else "relative"
+    assert tester.execute(f"check-argv0 {argv1}") == 0
