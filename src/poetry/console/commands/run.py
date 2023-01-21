@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import argument
 
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
@@ -57,6 +58,8 @@ class RunCommand(EnvCommand):
         """
         for script_dir in self.env.script_dirs:
             script_path = script_dir / args[0]
+            if WINDOWS:
+                script_path = script_path.with_suffix(".cmd")
             if script_path.exists():
                 args[0] = str(script_path)
                 break
