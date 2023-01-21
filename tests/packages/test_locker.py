@@ -12,12 +12,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
 
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 
+from poetry.__version__ import __version__
 from poetry.factory import Factory
 from poetry.packages.locker import GENERATED_COMMENT
 from poetry.packages.locker import Locker
@@ -231,9 +231,8 @@ python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 """  # noqa: E800
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     packages = locker.locked_repository().packages
 
@@ -296,9 +295,8 @@ lock-version = "2.0"
 content-hash = "123456789"
 """  # noqa: E800
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 3
@@ -363,9 +361,8 @@ lock-version = "2.0"
 content-hash = "123456789"
 """  # noqa: E800
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 2
@@ -405,9 +402,8 @@ lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 1
@@ -503,9 +499,8 @@ demo = [
     {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
 ]
 """
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 5
@@ -697,9 +692,8 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     _ = locker.lock_data
 
@@ -729,9 +723,8 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """  # noqa: E800
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
         _ = locker.lock_data
@@ -824,9 +817,8 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     _ = locker.lock_data
 
@@ -1031,9 +1023,8 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """  # noqa: E800
 
-    data = tomlkit.parse(content)
     with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(data.as_string())
+        f.write(content)
 
     create_dependency_patch = mocker.patch(
         "poetry.factory.Factory.create_dependency", autospec=True
@@ -1179,3 +1170,29 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 """  # noqa: E800
 
             assert content == expected
+
+
+def test_lockfile_is_not_rewritten_if_only_poetry_version_changed(
+    locker: Locker, root: ProjectPackage
+) -> None:
+    generated_comment_old_version = GENERATED_COMMENT.replace(__version__, "1.3.2")
+    assert generated_comment_old_version != GENERATED_COMMENT
+    old_content = f"""\
+# {generated_comment_old_version}
+package = []
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""  # noqa: E800
+
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(old_content)
+
+    assert not locker.set_lock_data(root, [])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == old_content
