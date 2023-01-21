@@ -20,15 +20,6 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-_VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
-
-
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = OSError
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -281,13 +272,6 @@ class InstalledRepository(Repository):
                     continue
 
                 if name in seen:
-                    continue
-
-                try:
-                    path.relative_to(_VENDORS)
-                except ValueError:
-                    pass
-                else:
                     continue
 
                 package = cls.create_package_from_distribution(distribution, env)
