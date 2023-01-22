@@ -266,7 +266,7 @@ class Uploader:
                         f" - Uploading <c1>{file.name}</c1> <fg=green>%percent%%</>"
                     )
                     bar.finish()
-                elif resp.status_code == 301:
+                elif 300 <= resp.status_code < 400:
                     if self._io.output.is_decorated():
                         self._io.overwrite(
                             f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"

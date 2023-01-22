@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from poetry.console.commands.command import Command
 
 
@@ -33,6 +31,10 @@ class CheckCommand(Command):
         unrecognized = sorted(
             project_classifiers - set(classifiers) - set(deprecated_classifiers)
         )
+        # Allow "Private ::" classifiers as recommended on PyPI and the packaging guide
+        # to allow users to avoid accidentally publishing private packages to PyPI.
+        # https://pypi.org/classifiers/
+        unrecognized = [u for u in unrecognized if not u.startswith("Private ::")]
         if unrecognized:
             errors.append(f"Unrecognized classifiers: {unrecognized!r}.")
 
@@ -61,7 +63,7 @@ class CheckCommand(Command):
         from poetry.factory import Factory
 
         # Load poetry config and display errors, if any
-        poetry_file = Factory.locate(Path.cwd())
+        poetry_file = self.poetry.file.path
         config = PyProjectTOML(poetry_file).poetry_config
         check_result = Factory.validate(config, strict=True)
 

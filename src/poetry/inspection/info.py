@@ -74,7 +74,6 @@ class PackageInfo:
         name: str | None = None,
         version: str | None = None,
         summary: str | None = None,
-        platform: str | None = None,
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
@@ -84,7 +83,6 @@ class PackageInfo:
         self.name = name
         self.version = version
         self.summary = summary
-        self.platform = platform
         self.requires_dist = requires_dist
         self.requires_python = requires_python
         self.files = files or []
@@ -102,7 +100,6 @@ class PackageInfo:
         self.name = other.name or self.name
         self.version = other.version or self.version
         self.summary = other.summary or self.summary
-        self.platform = other.platform or self.platform
         self.requires_dist = other.requires_dist or self.requires_dist
         self.requires_python = other.requires_python or self.requires_python
         self.files = other.files or self.files
@@ -117,7 +114,6 @@ class PackageInfo:
             "name": self.name,
             "version": self.version,
             "summary": self.summary,
-            "platform": self.platform,
             "requires_dist": self.requires_dist,
             "requires_python": self.requires_python,
             "files": self.files,
@@ -262,7 +258,6 @@ class PackageInfo:
             name=dist.name,
             version=dist.version,
             summary=dist.summary,
-            platform=dist.supported_platforms,
             requires_dist=requirements,
             requires_python=dist.requires_python,
         )
@@ -423,6 +418,7 @@ class PackageInfo:
         else:
             directories = list(cls._find_dist_info(path=path))
 
+        dist: pkginfo.BDist | pkginfo.SDist | pkginfo.Wheel
         for directory in directories:
             try:
                 if directory.suffix == ".egg-info":
@@ -460,7 +456,6 @@ class PackageInfo:
             name=package.name,
             version=str(package.version),
             summary=package.description,
-            platform=package.platform,
             requires_dist=list(requires),
             requires_python=package.python_versions,
             files=package.files,

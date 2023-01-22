@@ -53,7 +53,7 @@ poetry-plugin-export = "^1.2.0"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
-dulwich = "^0.20.46"
+dulwich = "^0.21.2"
 filelock = "^3.8.0"
 html5lib = "^1.0"
 importlib-metadata = { version = ">=4.4,<6", python = "<3.10" }
@@ -63,7 +63,7 @@ lockfile = "^0.12.2"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
-pkginfo = "^1.5"
+pkginfo = "^1.9.4"
 platformdirs = "^2.5.2"
 requests = "^2.18"
 requests-toolbelt = ">=0.9.1,<0.11.0"
@@ -89,7 +89,6 @@ pre-commit = "^2.6"
 # Cachy frozen to test backwards compatibility for `poetry.utils.cache`.
 cachy = "0.3.0"
 deepdiff = "^6.2"
-flatdict = "^4.0.1"
 httpretty = "^1.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
@@ -174,7 +173,6 @@ module = [
   'cachecontrol.*',
   'lockfile.*',
   'pexpect.*',
-  'pkginfo.*',
   'requests_toolbelt.*',
   'shellingham.*',
   'virtualenv.*',

@@ -25,6 +25,7 @@ from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import table
 
+from poetry.__version__ import __version__
 from poetry.utils._compat import tomllib
 
 
@@ -40,8 +41,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 _GENERATED_IDENTIFIER = "@" + "generated"
 GENERATED_COMMENT = (
-    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry and should not be"
-    " changed by hand."
+    f"This file is automatically {_GENERATED_IDENTIFIER} by Poetry"
+    f" {__version__} and should not be changed by hand."
 )
 
 
@@ -117,7 +118,6 @@ class Locker:
             name = info["name"]
             package = Package(
                 name,
-                info["version"],
                 info["version"],
                 source_type=source_type,
                 source_url=url,
@@ -244,7 +244,7 @@ class Locker:
 
         if root.extras:
             lock["extras"] = {
-                extra: [dep.pretty_name for dep in deps]
+                extra: sorted(dep.pretty_name for dep in deps)
                 for extra, deps in sorted(root.extras.items())
             }
 
@@ -378,6 +378,10 @@ class Locker:
                     constraint["tag"] = dependency.tag
                 elif dependency.rev:
                     constraint["rev"] = dependency.rev
+
+                if dependency.directory:
+                    constraint["subdirectory"] = dependency.directory
+
             else:
                 constraint["version"] = str(dependency.pretty_constraint)
 
