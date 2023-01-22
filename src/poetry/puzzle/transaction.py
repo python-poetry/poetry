@@ -74,6 +74,7 @@ class Transaction:
                 operations.append(Install(result_package, priority=priority))
 
         if with_uninstalls:
+            uninstalls: set[str] = set()
             for current_package in self._current_packages:
                 found = any(
                     current_package.name == result_package.name
@@ -83,11 +84,12 @@ class Transaction:
                 if not found:
                     for installed_package in self._installed_packages:
                         if installed_package.name == current_package.name:
+                            uninstalls.add(installed_package.name)
                             operations.append(Uninstall(current_package))
 
             if synchronize:
-                current_package_names = {
-                    current_package.name for current_package in self._current_packages
+                result_package_names = {
+                    result_package.name for result_package, _ in self._result_packages
                 }
                 # We preserve pip/setuptools/wheel when not managed by poetry, this is
                 # done to avoid externally managed virtual environments causing
@@ -96,9 +98,12 @@ class Transaction:
                     "pip",
                     "setuptools",
                     "wheel",
-                } - current_package_names
+                } - result_package_names
 
                 for installed_package in self._installed_packages:
+                    if installed_package.name in uninstalls:
+                        continue
+
                     if (
                         self._root_package
                         and installed_package.name == self._root_package.name
@@ -108,7 +113,8 @@ class Transaction:
                     if installed_package.name in preserved_package_names:
                         continue
 
-                    if installed_package.name not in current_package_names:
+                    if installed_package.name not in result_package_names:
+                        uninstalls.add(installed_package.name)
                         operations.append(Uninstall(installed_package))
 
         return sorted(
