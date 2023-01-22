@@ -8,11 +8,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flatdict import FlatDict
-
 from poetry.config.config import Config
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
+from tests.helpers import flatten_dict
 
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def get_options_based_on_normalizer(normalizer: Callable) -> str:
-    flattened_config = FlatDict(Config.default_config, delimiter=".")
+    flattened_config = flatten_dict(obj=Config.default_config, delimiter=".")
 
     for k in flattened_config:
         if Config._get_normalizer(k) == normalizer:
