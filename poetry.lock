@@ -490,17 +490,6 @@ docs = ["furo (>=2022.9.29)", "sphinx (>=5.3)", "sphinx-autodoc-typehints (>=1.1
 testing = ["covdefaults (>=2.2.2)", "coverage (>=6.5)", "pytest (>=7.2)", "pytest-cov (>=4)", "pytest-timeout (>=2.1)"]
 
 [[package]]
-name = "flatdict"
-version = "4.0.1"
-description = "Python module for interacting with nested dicts as a single level dict with delimited keys."
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "flatdict-4.0.1.tar.gz", hash = "sha256:cd32f08fd31ed21eb09ebc76f06b6bd12046a24f77beb1fd0281917e47f26742"},
-]
-
-[[package]]
 name = "html5lib"
 version = "1.1"
 description = "HTML parser based on the WHATWG HTML specification"
@@ -1792,4 +1781,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "0ec7c852f1ac947add292b5e4d33f8d7ad79358ca6da3661480c94608fd4c4a6"
+content-hash = "39120ecbb0a8005ab2bab602a5f36ca178588521343d56c87ea2596f14c1c88a"
