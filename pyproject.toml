@@ -53,7 +53,7 @@ poetry-plugin-export = "^1.2.0"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
-dulwich = "^0.20.46"
+dulwich = "^0.21.2"
 filelock = "^3.8.0"
 html5lib = "^1.0"
 importlib-metadata = { version = ">=4.4,<6", python = "<3.10" }
