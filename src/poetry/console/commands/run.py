@@ -61,7 +61,7 @@ class RunCommand(EnvCommand):
             if WINDOWS:
                 script_path = script_path.with_suffix(".cmd")
             if script_path.exists():
-                args[0] = str(script_path)
+                args = [str(script_path), *args[1:]]
                 break
 
         if isinstance(script, dict):
