@@ -33,8 +33,10 @@ class InstallCommand(InstallerCommand):
         option(
             "no-path",
             None,
-            "Do not install any path dependencies "
-            "(useful to install dependencies without source code, e.g. for caching)",
+            (
+                "Do not install any path dependencies "
+                "(useful to install dependencies without source code, e.g. for caching)"
+            ),
             flag=True,
             multiple=False,
         ),
