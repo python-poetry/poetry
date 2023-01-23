@@ -342,7 +342,7 @@ when uploading packages to PyPI.
 Once you have created a new token, you can tell Poetry to use it:
 
 ```bash
-poetry config pypi-token.pypi my-token
+poetry config pypi-token.pypi <my-token>
 ```
 
 If you still want to use your username and password, you can do so with the following
