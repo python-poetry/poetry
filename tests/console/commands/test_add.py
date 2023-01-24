@@ -10,6 +10,7 @@ import pytest
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -43,6 +44,20 @@ def poetry_with_up_to_date_lockfile(
         pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
         poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
     )
+
+
+@pytest.fixture
+def poetry_with_path_dependency(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("with_path_dependency")
+
+    poetry = project_factory(
+        name="foobar",
+        source=source,
+        use_test_locker=False,
+    )
+    return poetry
 
 
 @pytest.fixture()
@@ -2238,3 +2253,21 @@ Resolving dependencies...
     assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
     assert poetry_with_up_to_date_lockfile.locker.lock_data == original_lockfile_content
     assert tester.io.fetch_output() == expected
+
+
+# https://github.com/python-poetry/poetry/issues/7398
+def test_add_with_path_dependency_no_loopiness(
+    poetry_with_path_dependency: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    tester = command_tester_factory("add", poetry=poetry_with_path_dependency)
+
+    requests_old = get_package("requests", "2.25.1")
+    requests_new = get_package("requests", "2.28.2")
+
+    repo.add_package(requests_old)
+    repo.add_package(requests_new)
+
+    with pytest.raises(SolverProblemError):
+        tester.execute("requests")
