@@ -96,6 +96,10 @@ def copy_or_symlink(source: Path, dest: Path) -> None:
         os.symlink(str(source), str(dest))
 
 
+def modtime(path: str | Path | TOMLFile) -> float:
+    return os.path.getmtime(str(path))
+
+
 class MockDulwichRepo:
     def __init__(self, root: Path | str, **__: Any) -> None:
         self.path = str(root)

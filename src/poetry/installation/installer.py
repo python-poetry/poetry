@@ -158,6 +158,9 @@ class Installer:
 
         return self
 
+    def touch_lockfile(self) -> None:
+        self._locker.lock.touch()
+
     def is_updating(self) -> bool:
         return self._update
 

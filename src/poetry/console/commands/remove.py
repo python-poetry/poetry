@@ -105,10 +105,7 @@ list of installed packages
                 "The following packages were not found: " + ", ".join(sorted(not_found))
             )
 
-        # Refresh the locker
-        self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
-        )
+        self.poetry.locker.refresh(poetry_content)
         self.installer.set_locker(self.poetry.locker)
 
         self.installer.set_package(self.poetry.package)
@@ -122,6 +119,7 @@ list of installed packages
         if not self.option("dry-run") and status == 0:
             assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
+            self.installer.touch_lockfile()
 
         return status
 

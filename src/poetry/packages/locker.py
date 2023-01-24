@@ -9,6 +9,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypeVar
 from typing import cast
 
 from packaging.utils import canonicalize_name
@@ -34,9 +35,12 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
+    from tomlkit.container import Container
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories.lockfile_repository import LockfileRepository
+
+    Self = TypeVar("Self", bound="Locker")
 
 logger = logging.getLogger(__name__)
 _GENERATED_IDENTIFIER = "@" + "generated"
@@ -89,6 +93,17 @@ class Locker:
             return fresh
 
         return False
+
+    def refresh(
+        self: Self, new_config: dict[str, Any] | Container | None = None
+    ) -> Self:
+        """
+        Refreshes the locker using new_config (or existing config, if not provided).
+        """
+        self._local_config = self._local_config if new_config is None else new_config
+        self._lock_data = None
+        self._content_hash = self._get_content_hash()
+        return self
 
     def locked_repository(self) -> LockfileRepository:
         """

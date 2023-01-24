@@ -13,6 +13,7 @@ from poetry.core.packages.package import Package
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.helpers import modtime
 
 
 if TYPE_CHECKING:
@@ -151,6 +152,7 @@ No changes were applied.
     assert tester.io.fetch_error() == expected
     assert tester.command.installer.executor.installations_count == 0
     assert content == app.poetry.file.read()["tool"]["poetry"]
+    assert not app.poetry.locker.is_locked()
 
 
 def test_add_equal_constraint(
@@ -1193,6 +1195,18 @@ Writing lock file
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
+def test_add_refreshes_lockfile_modtime(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy")
+
+    assert app.poetry.locker.is_locked()
+    assert modtime(app.poetry.locker.lock) >= modtime(app.poetry.file)
+
+
 def test_add_no_constraint_old_installer(
     app: PoetryTestApplication,
     repo: TestRepository,
@@ -2145,29 +2159,45 @@ Writing lock file
     assert old_tester.io.fetch_output() == expected
 
 
+def test_add_refreshes_lockfile_modtime_old_installer(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installer: NoopInstaller,
+    old_tester: CommandTester,
+):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    old_tester.execute("cachy")
+
+    assert app.poetry.locker.is_locked()
+    assert modtime(app.poetry.locker.lock) >= modtime(app.poetry.file)
+
+
 def test_add_keyboard_interrupt_restore_content(
     poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ):
-    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+    poetry = poetry_with_up_to_date_lockfile
+    tester = command_tester_factory("add", poetry=poetry)
 
     mocker.patch(
         "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
     )
-    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
-    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
+    original_pyproject_content = poetry.file.read()
+    original_lockfile_content = poetry._locker.lock_data
+    original_lockfile_modtime = modtime(poetry.locker.lock)
 
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute("cachy")
 
-    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
-    assert (
-        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
-    )
+    assert poetry.file.read() == original_pyproject_content
+    assert poetry._locker.lock_data == original_lockfile_content
+    assert modtime(poetry.locker.lock) == original_lockfile_modtime
 
 
 @pytest.mark.parametrize(
@@ -2183,17 +2213,18 @@ def test_add_with_dry_run_keep_files_intact(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
 ):
-    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+    poetry = poetry_with_up_to_date_lockfile
+    tester = command_tester_factory("add", poetry=poetry)
 
-    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
-    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
+    original_pyproject_content = poetry.file.read()
+    original_lockfile_content = poetry._locker.lock_data
+    original_lockfile_modtime = modtime(poetry.locker.lock)
 
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute(command)
 
-    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
-    assert (
-        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
-    )
+    assert poetry.file.read() == original_pyproject_content
+    assert poetry._locker.lock_data == original_lockfile_content
+    assert modtime(poetry.locker.lock) == original_lockfile_modtime

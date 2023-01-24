@@ -9,6 +9,7 @@ from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
 from tests.helpers import get_package
+from tests.helpers import modtime
 
 
 if TYPE_CHECKING:
@@ -98,6 +99,8 @@ baz = "^1.0.0"
 
     assert expected in string_content
 
+    assert modtime(app.poetry.locker.lock) >= modtime(app.poetry.file)
+
 
 def test_remove_without_specific_group_removes_from_specific_groups(
     tester: CommandTester,
@@ -154,6 +157,8 @@ baz = "^1.0.0"
         expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
+
+    assert modtime(app.poetry.locker.lock) >= modtime(app.poetry.file)
 
 
 def test_remove_does_not_live_empty_groups(
@@ -275,10 +280,12 @@ def test_remove_command_should_not_write_changes_upon_installer_errors(
     mocker.patch("poetry.installation.installer.Installer.run", return_value=1)
 
     original_content = app.poetry.file.read().as_string()
+    original_lockfile_modtime = modtime(app.poetry.locker.lock)
 
     tester.execute("foo")
 
     assert app.poetry.file.read().as_string() == original_content
+    assert modtime(app.poetry.locker.lock) == original_lockfile_modtime
 
 
 def test_remove_with_dry_run_keep_files_intact(
@@ -286,16 +293,17 @@ def test_remove_with_dry_run_keep_files_intact(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
 ):
-    tester = command_tester_factory("remove", poetry=poetry_with_up_to_date_lockfile)
+    poetry = poetry_with_up_to_date_lockfile
+    tester = command_tester_factory("remove", poetry=poetry)
 
-    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
-    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
+    original_pyproject_content = poetry.file.read()
+    original_lockfile_content = poetry._locker.lock_data
+    original_lockfile_modtime = modtime(poetry.locker.lock)
 
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute("docker --dry-run")
 
-    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
-    assert (
-        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
-    )
+    assert poetry.file.read() == original_pyproject_content
+    assert poetry._locker.lock_data == original_lockfile_content
+    assert modtime(poetry.locker.lock) == original_lockfile_modtime

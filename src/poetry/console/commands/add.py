@@ -241,10 +241,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 )
             )
 
-        # Refresh the locker
-        self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
-        )
+        self.poetry.locker.refresh(poetry_content)
         self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
@@ -264,6 +261,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         if status == 0 and not self.option("dry-run"):
             assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
+            self.installer.touch_lockfile()
 
         return status
 
