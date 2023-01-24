@@ -41,6 +41,9 @@ INSTALLED_RESULTS = [
         SITE_PURELIB / "git_pep_610_subdirectory-1.2.3.dist-info"
     ),
     metadata.PathDistribution(SITE_PURELIB / "url_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(
+        SITE_PURELIB / "url_pep_610_subdirectory-1.2.3.dist-info"
+    ),
     metadata.PathDistribution(SITE_PURELIB / "file_pep_610-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "directory_pep_610-1.2.3.dist-info"),
     metadata.PathDistribution(
@@ -256,6 +259,22 @@ def test_load_pep_610_compliant_url_packages(repository: InstalledRepository):
     assert (
         package.source_url
         == "https://python-poetry.org/distributions/url-pep-610-1.2.3.tar.gz"
+    )
+
+
+def test_load_pep_610_compliant_url_packages_with_subdirectory(
+    repository: InstalledRepository,
+):
+    package = get_package_from_repository("url-pep-610-subdirectory", repository)
+
+    assert package is not None
+    assert package.name == "url-pep-610-subdirectory"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "url"
+    assert package.source_subdirectory == "subdir"
+    assert (
+        package.source_url
+        == "https://python-poetry.org/distributions/url-pep-610-subdirectory-1.2.3.zip"
     )
 
 

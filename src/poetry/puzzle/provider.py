@@ -407,8 +407,11 @@ class Provider:
         return package
 
     @classmethod
-    def get_package_from_file(cls, file_path: Path) -> Package:
+    def get_package_from_file(
+        cls, file_path: Path, source_subdirectory: str | None = None
+    ) -> Package:
         try:
+            PackageInfo._source_subdirectory = source_subdirectory
             package = PackageInfo.from_path(path=file_path).to_package(
                 root_dir=file_path
             )
@@ -436,7 +439,12 @@ class Provider:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url)
+        if dependency.directory:
+            url = f"{dependency.url}#subdirectory={dependency.directory}"
+        else:
+            url = dependency.url
+
+        package = self.get_package_from_url(url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -456,7 +464,14 @@ class Provider:
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
-            package = cls.get_package_from_file(dest)
+            _subdirectory_fragment_re = re.compile(r"[#&]subdirectory=([^&]*)")
+            match = _subdirectory_fragment_re.search(url)
+            if not match:
+                source_subdirectory = None
+            else:
+                url = re.sub(r"[#&]subdirectory=([^&]*)", "", url)
+                source_subdirectory = match.group(1)
+            package = cls.get_package_from_file(dest, source_subdirectory)
 
             package.files = [
                 {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}

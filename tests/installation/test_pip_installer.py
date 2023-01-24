@@ -10,6 +10,7 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -46,6 +47,19 @@ def package_git_with_subdirectory() -> Package:
         source_type="git",
         source_url="https://github.com/demo/subdirectories.git",
         source_reference="master",
+        source_subdirectory="two",
+    )
+
+    return package
+
+
+@pytest.fixture
+def package_url_zip_with_subdirectory() -> Package:
+    package = Package(
+        "subdirectories",
+        "2.0.0",
+        source_type="url",
+        source_url="https://github.com/demo/subdirectories.zip",
         source_subdirectory="two",
     )
 
@@ -119,6 +133,27 @@ def test_requirement_git_subdirectory(
     assert len(env.executed) == 1
     cmd = env.executed[0]
     assert Path(cmd[-1]).parts[-3:] == ("demo", "subdirectories", "two")
+
+
+def test_requirement_url_zip_subdirectory(
+    pool: RepositoryPool, package_url_zip_with_subdirectory: Package
+) -> None:
+    null_env = NullEnv()
+    installer = PipInstaller(null_env, NullIO(), pool)
+    result = installer.requirement(package_url_zip_with_subdirectory)
+    expected = (
+        "https://github.com/demo/subdirectories.zip#egg=subdirectories&subdirectory=two"
+    )
+
+    assert result == expected
+    installer.install(package_url_zip_with_subdirectory)
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+
+    link = Link(cmd[-1])
+    assert link.filename == "subdirectories.zip"
+    assert link.subdirectory_fragment == "two"
+    assert link.is_sdist
 
 
 def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):

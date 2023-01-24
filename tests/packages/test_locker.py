@@ -79,6 +79,13 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         source_type="url",
         source_url="https://example.org/url-package-1.0-cp39-win_amd64.whl",
     )
+    package_url_zip = Package(
+        "url-zip-subdir",
+        "1.0",
+        source_type="url",
+        source_url="https://example.org/archive/1.0.zip",
+        source_subdirectory="subdir",
+    )
     packages = [
         package_a2,
         package_a,
@@ -87,6 +94,7 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
         package_git_with_subdirectory,
         package_url_win32,
         package_url_linux,
+        package_url_zip,
     ]
 
     locker.set_lock_data(root, packages)
@@ -190,6 +198,20 @@ files = []
 [package.source]
 type = "url"
 url = "https://example.org/url-package-1.0-cp39-win_amd64.whl"
+
+[[package]]
+name = "url-zip-subdir"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+files = []
+
+[package.source]
+type = "url"
+url = "https://example.org/archive/1.0.zip"
+subdirectory = "subdir"
 
 [metadata]
 lock-version = "2.0"
@@ -409,6 +431,39 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert len(repository.packages) == 1
 
     packages = repository.find_packages(get_dependency("git-package-subdir", "1.2.3"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert package.source_subdirectory == "subdir"
+
+
+def test_locker_properly_loads_url_zip_with_subdir(locker: Locker) -> None:
+    content = """\
+[[package]]
+name = "url-zip-subdir"
+version = "1.2.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+files = []
+
+[package.source]
+type = "url"
+url = "https://github.com/python-poetry/archive/1.2.0.zip"
+subdirectory = "subdir"
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert len(repository.packages) == 1
+
+    packages = repository.find_packages(get_dependency("url-zip-subdir", "1.2.0"))
     assert len(packages) == 1
 
     package = packages[0]
@@ -937,6 +992,46 @@ type = "git"
 url = "https://github.com/python-poetry/poetry.git"
 reference = "develop"
 resolved_reference = "123456"
+subdirectory = "subdir"
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""  # noqa: E800
+
+    assert content == expected
+
+
+def test_locker_dumps_url_zip_with_subdir(locker: Locker, root: ProjectPackage) -> None:
+    package_git_with_subdirectory = Package(
+        "url-zip-subdir",
+        "1.2.0",
+        source_type="url",
+        source_url="https://github.com/python-poetry/archive/1.2.0.zip",
+        source_subdirectory="subdir",
+    )
+
+    locker.set_lock_data(root, [package_git_with_subdirectory])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "url-zip-subdir"
+version = "1.2.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+files = []
+
+[package.source]
+type = "url"
+url = "https://github.com/python-poetry/archive/1.2.0.zip"
 subdirectory = "subdir"
 
 [metadata]

@@ -748,6 +748,46 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
+def test_add_url_constraint_zip_with_subdir(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    mocker: MockerFixture,
+):
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = Path(__file__) / ".."
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    tester.execute(
+        "https://python-poetry.org/distributions/demo-0.1.0.zip#subdirectory=subdir"
+    )
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  • Installing pendulum (1.4.4)
+  • Installing demo\
+ (0.1.0 https://python-poetry.org/distributions/demo-0.1.0.zip)
+"""
+    assert tester.io.fetch_output() == expected
+    assert tester.command.installer.executor.installations_count == 2
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "url": "https://python-poetry.org/distributions/demo-0.1.0.zip",
+        "subdirectory": "subdir",
+    }
+
+
 def test_add_constraint_with_python(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):

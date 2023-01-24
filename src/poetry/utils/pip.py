@@ -18,6 +18,7 @@ def pip_install(
     editable: bool = False,
     deps: bool = False,
     upgrade: bool = False,
+    subdirectory: str | None = None,
 ) -> int | str:
     is_wheel = path.suffix == ".whl"
 
@@ -49,6 +50,9 @@ def pip_install(
                 "Cannot install non directory dependencies in editable mode"
             )
         args.append("-e")
+
+    if subdirectory:
+        path = f"file:{str(path)}#subdirectory={subdirectory}"  # type: ignore[assignment] # noqa: E501
 
     args.append(str(path))
 

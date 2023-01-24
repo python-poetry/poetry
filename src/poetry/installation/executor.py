@@ -119,10 +119,20 @@ class Executor:
         return self
 
     def pip_install(
-        self, req: Path, upgrade: bool = False, editable: bool = False
+        self,
+        req: Path,
+        upgrade: bool = False,
+        editable: bool = False,
+        subdirectory: str | None = None,
     ) -> int:
         try:
-            pip_install(req, self._env, upgrade=upgrade, editable=editable)
+            pip_install(
+                req,
+                self._env,
+                upgrade=upgrade,
+                editable=editable,
+                subdirectory=subdirectory,
+            )
         except EnvCommandError as e:
             output = decode(e.e.output)
             if (
@@ -495,7 +505,13 @@ class Executor:
             " <info>Installing...</info>"
         )
         self._write(operation, message)
-        return self.pip_install(archive, upgrade=operation.job_type == "update")
+        if hasattr(package, "source_subdirectory"):
+            subdirectory = package.source_subdirectory
+        else:
+            subdirectory = None
+        return self.pip_install(
+            archive, upgrade=operation.job_type == "update", subdirectory=subdirectory
+        )
 
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
@@ -805,6 +821,8 @@ class Executor:
             archive_info["hash"] = self._hashes[package.name]
 
         reference = {"url": package.source_url, "archive_info": archive_info}
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
 
         return reference
 
@@ -815,10 +833,13 @@ class Executor:
             archive_info["hash"] = self._hashes[package.name]
 
         assert package.source_url is not None
-        return {
+        reference = {
             "url": Path(package.source_url).as_uri(),
             "archive_info": archive_info,
         }
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
+        return reference
 
     def _create_directory_url_reference(self, package: Package) -> dict[str, Any]:
         dir_info = {}
@@ -827,7 +848,10 @@ class Executor:
             dir_info["editable"] = True
 
         assert package.source_url is not None
-        return {
+        reference = {
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
+        return reference
