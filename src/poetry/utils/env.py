@@ -526,7 +526,9 @@ class EnvManager:
 
         if WINDOWS and python.startswith("python"):
             command[0] = "py"
-            python_version = python.replace("python", "")  # Could use python.removeprefix in 3.9
+            python_version = python.replace(
+                "python", ""
+            )  # Could use python.removeprefix in 3.9
             if python_version:
                 command.insert(1, f"-{python_version}")
 
