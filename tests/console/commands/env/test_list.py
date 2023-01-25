@@ -39,7 +39,7 @@ def test_none_activated(
 ):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
     tester.execute()
-    expected = "\n".join(venvs_in_cache_dirs).strip()
+    expected = "\n".join(venvs_in_cache_dirs)
     assert tester.io.fetch_output().strip() == expected
 
 
@@ -50,9 +50,7 @@ def test_activated(
     venv_activate_37: None,
 ):
     tester.execute()
-    expected = (
-        "\n".join(venvs_in_cache_dirs).strip().replace("py3.7", "py3.7 (Activated)")
-    )
+    expected = "\n".join(venvs_in_cache_dirs).replace("py3.7", "py3.7 (Activated)")
     assert tester.io.fetch_output().strip() == expected
 
 

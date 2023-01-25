@@ -5,7 +5,6 @@ import os
 import re
 import shutil
 import sys
-import tempfile
 
 from contextlib import suppress
 from pathlib import Path
@@ -28,7 +27,6 @@ from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
-from poetry.utils.helpers import remove_directory
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
@@ -169,8 +167,8 @@ def with_chained_null_keyring(mocker: MockerFixture) -> None:
 
 
 @pytest.fixture
-def config_cache_dir(tmp_dir: str) -> Path:
-    path = Path(tmp_dir) / ".cache" / "pypoetry"
+def config_cache_dir(tmp_path: Path) -> Path:
+    path = tmp_path / ".cache" / "pypoetry"
     path.mkdir(parents=True)
     return path
 
@@ -219,8 +217,10 @@ def config(
 
 
 @pytest.fixture()
-def config_dir(tmp_dir: str) -> Path:
-    return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
+def config_dir(tmp_path: Path) -> Path:
+    path = tmp_path / "config"
+    path.mkdir()
+    return path
 
 
 @pytest.fixture(autouse=True)
@@ -296,18 +296,8 @@ def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
 
 
 @pytest.fixture
-def tmp_dir() -> Iterator[str]:
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-    path = Path(dir_)
-
-    yield path.resolve().as_posix()
-
-    remove_directory(path, force=True)
-
-
-@pytest.fixture
-def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
-    venv_path = Path(tmp_dir) / "venv"
+def tmp_venv(tmp_path: Path) -> Iterator[VirtualEnv]:
+    venv_path = tmp_path / "venv"
 
     EnvManager.build_venv(venv_path)
 
@@ -348,14 +338,14 @@ def repo(http: type[httpretty.httpretty]) -> TestRepository:
 
 @pytest.fixture
 def project_factory(
-    tmp_dir: str,
+    tmp_path: Path,
     config: Config,
     repo: TestRepository,
     installed: Repository,
     default_python: str,
     load_required_fixtures: None,
 ) -> ProjectFactory:
-    workspace = Path(tmp_dir)
+    workspace = tmp_path
 
     def _factory(
         name: str | None = None,
@@ -380,9 +370,7 @@ def project_factory(
                 project_dir.mkdir(parents=True, exist_ok=True)
 
             if pyproject_content:
-                with project_dir.joinpath("pyproject.toml").open(
-                    "w", encoding="utf-8"
-                ) as f:
+                with (project_dir / "pyproject.toml").open("w", encoding="utf-8") as f:
                     f.write(pyproject_content)
         else:
             assert name is not None
@@ -446,10 +434,10 @@ def set_simple_log_formatter() -> None:
 
 
 @pytest.fixture
-def fixture_copier(fixture_base: Path, tmp_dir: str) -> FixtureCopier:
+def fixture_copier(fixture_base: Path, tmp_path: Path) -> FixtureCopier:
     def _copy(relative_path: str, target: Path | None = None) -> Path:
-        path = fixture_base.joinpath(relative_path)
-        target = target or Path(tmp_dir, relative_path)
+        path = fixture_base / relative_path
+        target = target or (tmp_path / relative_path)
         target.parent.mkdir(parents=True, exist_ok=True)
 
         if target.exists():

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -17,6 +16,7 @@ from poetry.utils._compat import metadata
 
 if TYPE_CHECKING:
     from os import PathLike
+    from pathlib import Path
 
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
@@ -64,7 +64,7 @@ def plugin_package(plugin_package_requires_dist: list[str]) -> Package:
 
 
 @pytest.fixture()
-def plugin_distro(plugin_package: Package, tmp_dir: str) -> metadata.Distribution:
+def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribution:
     class MockDistribution(metadata.Distribution):
         def read_text(self, filename: str) -> str | None:
             if filename == "METADATA":
@@ -81,7 +81,7 @@ def plugin_distro(plugin_package: Package, tmp_dir: str) -> metadata.Distributio
             return None
 
         def locate_file(self, path: PathLike[str]) -> PathLike[str]:
-            return Path(tmp_dir, path)
+            return tmp_path / path
 
     return MockDistribution()
 
