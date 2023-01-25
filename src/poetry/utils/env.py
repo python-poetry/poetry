@@ -522,12 +522,18 @@ class EnvManager:
         self._io = io or NullIO()
 
     def _full_python_path(self, python: str) -> str:
+        command = [python, "-c", '"import sys; print(sys.executable)"']
+
+        if WINDOWS and python.startswith("python"):
+            command[0] = "py"
+            python_version = python.replace("python", "")  # Could use python.removeprefix in 3.9
+            if python_version:
+                command.insert(1, f"-{python_version}")
+
         try:
             executable = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [python, "-c", '"import sys; print(sys.executable)"']
-                    ),
+                    list_to_shell_command(command),
                     shell=True,
                 ).strip()
             )

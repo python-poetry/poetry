@@ -228,9 +228,10 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     env = manager.activate("python3.7")
 
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.7"
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
-        executable="/usr/bin/python3.7",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -364,9 +365,10 @@ def test_activate_activates_different_virtualenv_with_envs_file(
 
     env = manager.activate("python3.6")
 
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.6"
     m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.6",
-        executable="/usr/bin/python3.6",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -428,9 +430,10 @@ def test_activate_activates_recreates_for_different_patch(
 
     env = manager.activate("python3.7")
 
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.7"
     build_venv_m.assert_called_with(
         Path(tmp_dir) / f"{venv_name}-py3.7",
-        executable="/usr/bin/python3.7",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1001,9 +1004,10 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 
     manager.create_venv()
 
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.7"
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
-        executable="/usr/bin/python3",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1241,9 +1245,10 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     manager.activate("python3.7")
 
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.7"
     m.assert_called_with(
         poetry.file.parent / ".venv",
-        executable="/usr/bin/python3.7",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1590,9 +1595,10 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
 
     manager.create_venv()
 
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3"
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
-        executable="/usr/bin/python3",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
