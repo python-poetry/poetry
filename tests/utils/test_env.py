@@ -1004,7 +1004,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 
     manager.create_venv()
 
-    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.7"
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3"
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
         executable=executable,
