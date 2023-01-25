@@ -64,6 +64,7 @@ class ShowCommand(GroupCommand, EnvCommand):
             "a",
             "Show all packages (even those not compatible with current system).",
         ),
+        option("top-level", "T", "Show only top-level dependencies."),
     ]
 
     help = """The show command displays detailed information about a package, or
@@ -76,6 +77,20 @@ lists all packages available."""
 
         if self.option("tree"):
             self.init_styles(self.io)
+
+        if self.option("top-level"):
+            if self.option("tree"):
+                self.line_error(
+                    "<error>Error: Cannot use --tree and --top-level at the same"
+                    " time.</error>"
+                )
+                return 1
+            if package is not None:
+                self.line_error(
+                    "<error>Error: Cannot use --top-level when displaying a single"
+                    " package.</error>"
+                )
+                return 1
 
         if self.option("why"):
             if self.option("tree") and package is None:
@@ -303,6 +318,10 @@ lists all packages available."""
             color = "cyan"
             name = locked.pretty_name
             install_marker = ""
+
+            if self.option("top-level") and reverse_deps(locked, locked_repository):
+                continue
+
             if locked not in required_locked_packages:
                 if not show_all:
                     continue
