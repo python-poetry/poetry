@@ -2240,6 +2240,6 @@ def test_show_top_level_with_explicitly_defined_depenancy(
 
     tester.execute("--top-level")
 
-    expected = """a 0.1.0 \n"""
+    expected = """a 0.1.0 \nb 0.2.0 \n"""
 
     assert tester.io.fetch_output() == expected

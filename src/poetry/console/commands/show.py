@@ -319,7 +319,9 @@ lists all packages available."""
             name = locked.pretty_name
             install_marker = ""
 
-            if self.option("top-level") and reverse_deps(locked, locked_repository):
+            if self.option("top-level") and not any(
+                locked.is_same_package_as(r) for r in root.all_requires
+            ):
                 continue
 
             if locked not in required_locked_packages:
