@@ -85,6 +85,42 @@ allowlist_externals = poetry
 install_command =
     python -m pip install --no-deps {opts} {packages}
 commands_pre =
+    poetry install --no-root --sync
+commands =
+    pytest tests/ --import-mode importlib
+```
+
+`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment,
+but because `--no-deps` is used, `pip` will not resolve any dependencies.
+Afterwards we run Poetry, which will install the locked dependencies into the environment.
+
+#### Usecase #3
+```ini
+[tox]
+isolated_build = true
+
+[testenv]
+skip_install = true
+allowlist_externals = poetry
+commands_pre =
+    poetry install
+commands =
+    poetry run pytest tests/ --import-mode importlib
+```
+
+`tox` will not do any install. Poetry installs all the dependencies and the current package an editable mode.
+Thus, tests are running against the local files and not the built and installed package.
+
+#### Usecase #4
+```ini
+[tox]
+isolated_build = true
+
+[testenv]
+allowlist_externals = poetry
+install_command =
+    python -m pip install --no-deps {opts} {packages}
+commands_pre =
     poetry install --no-root --sync --with test
 commands =
     pytest tests/
@@ -104,7 +140,7 @@ commands =
     mypy src/
 ```
 
-`tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment,
+`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment,
 but because `--no-deps` is used, `pip` will not resolve any dependencies.
 Afterwards we run Poetry, which will install the locked dependencies into the environment.
 
@@ -116,23 +152,6 @@ not be installed at all.
 the `tox`-created virtual environments. This allows dependency groups to provide
 dependencies for different `tox` environments, providing `test` to the main
 testenv, `style` to the `style` env, and `typing` to the `typing` env.
-
-#### Usecase #3
-```ini
-[tox]
-isolated_build = true
-
-[testenv]
-skip_install = true
-allowlist_externals = poetry
-commands_pre =
-    poetry install
-commands =
-    poetry run pytest tests/ --import-mode importlib
-```
-
-`tox` will not do any install. Poetry installs all the dependencies and the current package an editable mode.
-Thus, tests are running against the local files and not the built and installed package.
 
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
