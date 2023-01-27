@@ -82,17 +82,15 @@ isolated_build = true
 
 [testenv]
 allowlist_externals = poetry
-install_command =
-    python -m pip install --no-deps {opts} {packages}
 commands_pre =
     poetry install --no-root --sync
 commands =
     pytest tests/ --import-mode importlib
 ```
 
-`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment,
-but because `--no-deps` is used, `pip` will not resolve any dependencies.
-Afterwards we run Poetry, which will install the locked dependencies into the environment.
+`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment.
+Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry, which will
+install the locked dependencies into the environment.
 
 #### Usecase #3
 ```ini
@@ -118,8 +116,6 @@ isolated_build = true
 
 [testenv]
 allowlist_externals = poetry
-install_command =
-    python -m pip install --no-deps {opts} {packages}
 commands_pre =
     poetry install --no-root --sync --with test
 commands =
@@ -140,9 +136,9 @@ commands =
     mypy src/
 ```
 
-`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment,
-but because `--no-deps` is used, `pip` will not resolve any dependencies.
-Afterwards we run Poetry, which will install the locked dependencies into the environment.
+`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment.
+Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry, which will
+install the locked dependencies into the environment.
 
 In the `style` testenv, `tox` will only create the virtual environment, and
 again we will rely on Poetry to install requirements. The project itself will
