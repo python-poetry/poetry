@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
 from deepdiff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import parse_constraint
@@ -207,9 +208,24 @@ def test_create_poetry_with_multi_constraints_dependency():
 
 
 def test_poetry_with_default_source(with_simple_keyring: None):
-    poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
+    io = BufferedIO()
+    poetry = Factory().create_poetry(fixtures_dir / "with_default_source", io=io)
 
     assert len(poetry.pool.repositories) == 1
+
+    assert poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "foo"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
+
+    assert "deprecated" in io.fetch_error()
+
+
+def test_poetry_with_two_default_sources(with_simple_keyring: None):
+    with pytest.raises(ValueError) as e:
+        Factory().create_poetry(fixtures_dir / "with_two_default_sources")
+
+    assert str(e.value) == "Only one repository can be the default."
 
 
 def test_poetry_with_non_default_source(with_simple_keyring: None):
@@ -224,6 +240,19 @@ def test_poetry_with_non_default_source(with_simple_keyring: None):
 
     assert poetry.pool.repositories[1].name == "PyPI"
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
+
+
+def test_poetry_with_nondefault_source_pypi_disabled(with_simple_keyring: None):
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_non_default_source_pypi_disabled"
+    )
+
+    assert len(poetry.pool.repositories) == 1
+
+    assert not poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "foo"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
 
 
 def test_poetry_with_non_default_secondary_source(with_simple_keyring: None):
@@ -284,7 +313,7 @@ def test_poetry_with_non_default_multiple_sources(with_simple_keyring: None):
     assert isinstance(repository, PyPiRepository)
 
 
-def test_poetry_with_no_default_source():
+def test_poetry_with_no_explicit_source():
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
     assert len(poetry.pool.repositories) == 1
@@ -295,11 +324,9 @@ def test_poetry_with_no_default_source():
     assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
-def test_poetry_with_two_default_sources(with_simple_keyring: None):
-    with pytest.raises(ValueError) as e:
-        Factory().create_poetry(fixtures_dir / "with_two_default_sources")
-
-    assert str(e.value) == "Only one repository can be the default."
+def test_poetry_with_no_explicit_source_pypi_disabled():
+    with pytest.raises(RuntimeError, match="no sources"):
+        Factory().create_poetry(fixtures_dir / "with_no_explicit_source_pypi_disabled")
 
 
 def test_validate():

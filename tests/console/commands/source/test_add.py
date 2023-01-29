@@ -33,6 +33,9 @@ def assert_source_added(
         == f"Adding source with name {source_added.name}."
     )
     poetry.pyproject.reload()
+    for source_table in poetry.pyproject.poetry_config["source"]:
+        # "default" is deprecated and should only be written if set to True
+        assert "default" not in source_table or source_table["default"] is True
     sources = poetry.get_sources()
     assert sources == [source_existing, source_added]
     assert tester.status_code == 0
@@ -55,6 +58,7 @@ def test_source_add_default(
     poetry_with_source: Poetry,
 ):
     tester.execute(f"--default {source_default.name} {source_default.url}")
+    assert "deprecated" in tester.io.fetch_error()
     assert_source_added(tester, poetry_with_source, source_existing, source_default)
 
 
@@ -95,6 +99,7 @@ def test_source_add_existing(
         tester.io.fetch_output().strip()
         == f"Source with name {source_existing.name} already exists. Updating."
     )
+    assert "deprecated" in tester.io.fetch_error()
 
     poetry_with_source.pyproject.reload()
     sources = poetry_with_source.get_sources()

@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Your Name <you@example.com>"
+]
+license = "MIT"
+default-source-pypi = false
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+
+[tool.poetry.dev-dependencies]

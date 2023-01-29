@@ -61,5 +61,12 @@ class SourceShowCommand(Command):
             table.add_rows(rows)
             table.render()
             self.line("")
+        if not names:
+            state = (
+                "enabled"
+                if self.poetry.pyproject.poetry_config.get("default-source-pypi", True)
+                else "disabled"
+            )
+            self.line(f"PyPI is {state} as implicit default source.")
 
         return 0

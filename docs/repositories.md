@@ -120,7 +120,6 @@ This will generate the following configuration snippet in your
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-default = false
 secondary = false
 ```
 
@@ -129,7 +128,9 @@ Any package source not marked as `secondary` will take precedence over [PyPI](ht
 
 {{% note %}}
 
-If you prefer to disable [PyPI](https://pypi.org) completely, you may choose to set one of your package sources to be the [default](#default-package-source).
+If you prefer to disable [PyPI](https://pypi.org) completely,
+you can run `poetry source default --disable-pypi`.
+If you disable PyPI, you have to configure at least one other source.
 
 If you prefer to specify a package source for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
 
@@ -146,18 +147,39 @@ you must declare **all** package sources to be [secondary](#secondary-package-so
 
 #### Default Package Source
 
-By default, Poetry configures [PyPI](https://pypi.org) as the default package source for your
-project. You can alter this behaviour and exclusively look up packages only from the configured
-package sources by adding a **single** source with `default = true`.
+By default, Poetry configures [PyPI](https://pypi.org) as the default package source for
+your project. If you configure additional sources, these are preferred to PyPI unless
+they are configured as secondary. Nevertheless, packages are looked up on PyPI.
+
+If you want to exclusively look up packages only from the configured package sources,
+you can disable the implicit default source PyPI:
 
 ```bash
-poetry source add --default foo https://foo.bar/simple/
+poetry source default --disable-pypi
+```
+
+This will generate the following entry in your `pyproject.toml` file:
+
+```toml
+[tool.poetry]
+...
+default-source-pypi = false
 ```
 
 {{% warning %}}
 
-Configuring a custom package source as default, will effectively disable [PyPI](https://pypi.org)
-as a package source for your project.
+Configuring a custom package source as default (`default = true`, **deprecated**),
+will effectively disable [PyPI](https://pypi.org) as a package source for your project.
+Whereas the implicit default source PyPI is looked up before secondary but after other
+repositories, an explicit default source will be looked up before all other repositories.
+
+{{% /warning %}}
+
+{{% warning %}}
+
+Strictly speaking, PyPI is only configured as default package source if there is at
+least one other non-secondary source. Otherwise PyPI is configured as last secondary
+source.
 
 {{% /warning %}}
 
@@ -229,10 +251,12 @@ This will generate the following configuration snippet in your `pyproject.toml` 
 httpx = {version = "^0.22.0", source = "pypi"}
 ```
 
+If you want to disable PyPI completely, see [Default Package Source](#default-package-source).
+
 {{% warning %}}
 
-If any source within a project is configured with `default = true`, The implicit `pypi` source will
-be disabled and not used for any packages.
+If any source within a project is configured with `default = true` (**deprecated**),
+the implicit `pypi` source will be disabled and not used for any packages.
 
 {{% /warning %}}
 

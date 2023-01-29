@@ -15,6 +15,9 @@ def source_to_table(source: Source) -> Table:
 
     source_table: Table = table()
     for key, value in source.to_dict().items():
+        if key == "default" and not value:
+            # default is deprecated, so we don't add it if it is not set
+            continue
         source_table.add(key, value)
     source_table.add(nl())
     return source_table

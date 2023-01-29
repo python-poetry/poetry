@@ -96,6 +96,9 @@ class Factory(BaseFactory):
                 poetry.local_config.get("source", []),
                 io,
                 disable_cache=disable_cache,
+                default_source_pypi=poetry.local_config.get(
+                    "default-source-pypi", True
+                ),
             )
         )
 
@@ -117,12 +120,13 @@ class Factory(BaseFactory):
         sources: Iterable[dict[str, Any]] = (),
         io: IO | None = None,
         disable_cache: bool = False,
+        *,
+        default_source_pypi: bool = True,
     ) -> RepositoryPool:
         from poetry.repositories import RepositoryPool
 
         if io is None:
             io = NullIO()
-
         if disable_cache:
             logger.debug("Disabling source caches")
 
@@ -142,13 +146,29 @@ class Factory(BaseFactory):
                     message += " and setting it as secondary"
 
                 io.write_line(message)
+            if is_default:
+                # TODO: replace command
+                io.write_error_line(
+                    "<warning>"
+                    "The 'default' option is deprecated.\n"
+                    " If you want to disable PyPI, TODO command\n"
+                    " If you want to set a source as the first source to be searched"
+                    " for packages, just make it the first source in your"
+                    " pyproject.toml."
+                    "</warning>"
+                )
 
             pool.add_repository(repository, is_default, secondary=is_secondary)
 
         # Put PyPI last to prefer private repositories
         # unless we have no default source AND no primary sources
         # (default = false, secondary = false)
-        if pool.has_default():
+        if pool.has_default() or not default_source_pypi:
+            if not sources:
+                raise RuntimeError(
+                    "If no sources are configured,"
+                    ' "default-source-pypi" must not be set to false!'
+                )
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
         else:

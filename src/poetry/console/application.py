@@ -88,6 +88,7 @@ COMMANDS = [
     "self show plugins",
     # Source commands
     "source add",
+    "source default",
     "source remove",
     "source show",
 ]

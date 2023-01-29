@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from cleo.helpers import argument
 from cleo.helpers import option
-from cleo.io.null_io import NullIO
 from tomlkit.items import AoT
 
 from poetry.config.source import Source
@@ -85,7 +84,7 @@ class SourceAddCommand(Command):
 
         # ensure new source is valid. eg: invalid name etc.
         try:
-            pool = Factory.create_pool(self.poetry.config, sources, NullIO())
+            pool = Factory.create_pool(self.poetry.config, sources, self._io)
             pool.repository(name)
         except ValueError as e:
             self.line_error(

@@ -774,7 +774,7 @@ You cannot use the name `pypi` as it is reserved for use by the default PyPI sou
 
 #### Options
 
-* `--default`: Set this source as the [default]({{< relref "repositories#disabling-the-pypi-repository" >}}) (disable PyPI).
+* `--default`: Set this source as the default (**Deprecated**, use `poetry source default --disable-pypi` to disable PyPI).
 * `--secondary`: Set this source as a [secondary]({{< relref "repositories#install-dependencies-from-a-private-repository" >}}) source.
 
 {{% note %}}
@@ -806,6 +806,19 @@ The `source remove` command removes a configured source from your `pyproject.tom
 ```bash
 poetry source remove pypi-test
 ```
+
+### source default
+
+The `source default` command enables or disables the implicit default source PyPI for the project.
+
+```bash
+poetry source default --disable-pypi
+```
+
+#### Options
+
+* `--disable-pypi`: Disable PyPI as implicit default source.
+* `--enable-pypi`: Enable PyPI as implicit default source.
 
 ## about
 

@@ -16,7 +16,6 @@ from poetry.utils.source import source_to_table
         (
             Source("foo", "https://example.com"),
             {
-                "default": False,
                 "name": "foo",
                 "secondary": False,
                 "url": "https://example.com",

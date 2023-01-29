@@ -40,6 +40,32 @@ name       : two
 url        : https://two.com
 default    : no
 secondary  : no
+
+PyPI is enabled as implicit default source.
+""".splitlines()
+    assert [
+        line.strip() for line in tester.io.fetch_output().strip().splitlines()
+    ] == expected
+    assert tester.status_code == 0
+
+
+def test_source_show_default_pypi_disabled(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_source: Poetry,
+) -> None:
+    tester = command_tester_factory("source default", poetry=poetry_with_source)
+    tester.execute("--disable-pypi")
+
+    tester = command_tester_factory("source show", poetry=poetry_with_source)
+    tester.execute("")
+
+    expected = """\
+name       : existing
+url        : https://existing.com
+default    : no
+secondary  : no
+
+PyPI is disabled as implicit default source.
 """.splitlines()
     assert [
         line.strip() for line in tester.io.fetch_output().strip().splitlines()

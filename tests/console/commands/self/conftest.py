@@ -47,12 +47,14 @@ def pool(repo: TestRepository) -> RepositoryPool:
 
 def create_pool_factory(
     repo: Repository,
-) -> Callable[[Config, Iterable[dict[str, Any]], IO, bool], RepositoryPool]:
+) -> Callable[[Config, Iterable[dict[str, Any]], IO, bool, bool], RepositoryPool]:
     def _create_pool(
         config: Config,
         sources: Iterable[dict[str, Any]] = (),
         io: IO | None = None,
         disable_cache: bool = False,
+        *,
+        default_source_pypi: bool = True,
     ) -> RepositoryPool:
         pool = RepositoryPool()
         pool.add_repository(repo)
