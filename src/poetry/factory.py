@@ -107,7 +107,7 @@ class Factory(BaseFactory):
 
     @classmethod
     def get_package(cls, name: str, version: str) -> ProjectPackage:
-        return ProjectPackage(name, version, version)
+        return ProjectPackage(name, version)
 
     @classmethod
     def configure_sources(

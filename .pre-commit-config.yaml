@@ -32,19 +32,18 @@ repos:
     hooks:
       - id: yesqa
         additional_dependencies: &flake8_deps
-          - flake8-annotations==2.9.0
-          - flake8-broken-line==0.5.0
-          - flake8-bugbear==22.7.1
-          - flake8-comprehensions==3.10.0
-          - flake8-eradicate==1.3.0
-          - flake8-quotes==3.3.1
+          - flake8-annotations==3.0.0
+          - flake8-bugbear==23.1.20
+          - flake8-comprehensions==3.10.1
+          - flake8-eradicate==1.4.0
+          - flake8-pie==0.16.0
+          - flake8-quotes==3.3.2
           - flake8-simplify==0.19.3
           - flake8-tidy-imports==4.8.0
-          - flake8-type-checking==2.2.0
-          - flake8-typing-imports==1.12.0
+          - flake8-type-checking==2.3.0
+          - flake8-typing-imports==1.14.0
           - flake8-use-fstring==1.4
-          - pep8-naming==0.13.1
-          - flake8-pie==0.16.0
+          - pep8-naming==0.13.3
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
@@ -60,7 +59,7 @@ repos:
         args: [--all]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.11.4
+    rev: 5.12.0
     hooks:
       - id: isort
         name: "isort (python)"

@@ -119,7 +119,6 @@ class Locker:
             package = Package(
                 name,
                 info["version"],
-                info["version"],
                 source_type=source_type,
                 source_url=url,
                 source_reference=source.get("reference"),
