@@ -18,6 +18,7 @@ from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import WINDOWS
 from poetry.utils.env import GET_BASE_PREFIX
+from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv
@@ -1002,7 +1003,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
-        executable="python3",
+        executable="/usr/bin/python3",
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1027,7 +1028,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     poetry.package.python_versions = "^3.6"
 
     mocker.patch("sys.version_info", (2, 7, 16))
-    mocker.patch("subprocess.check_output", side_effect=["3.5.3", "3.9.0"])
+    mocker.patch(
+        "subprocess.check_output", side_effect=["3.5.3", "3.9.0", "/usr/bin/python3.9"]
+    )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -1036,7 +1039,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.9",
-        executable="python3.9",
+        executable="/usr/bin/python3.9",
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1459,11 +1462,18 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
 
     poetry.package.python_versions = "~3.5.1"
 
+    def mock_check_output(cmd: str, *args: Any, **kwargs: Any) -> str:
+        if GET_PYTHON_VERSION_ONELINER in cmd:
+            if "python3.5" in cmd:
+                return "3.5.12"
+            else:
+                return "3.7.1"
+        else:
+            return "/usr/bin/python3.5"
+
     check_output = mocker.patch(
         "subprocess.check_output",
-        side_effect=lambda cmd, *args, **kwargs: str(
-            "3.5.12" if "python3.5" in cmd else "3.7.1"
-        ),
+        side_effect=mock_check_output,
     )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
@@ -1474,7 +1484,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     assert check_output.called
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.5",
-        executable="python3.5",
+        executable="/usr/bin/python3.5",
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1582,7 +1592,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
-        executable="python3",
+        executable="/usr/bin/python3",
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -1591,3 +1601,15 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
         },
         prompt="virtualenv-py3.7",
     )
+
+
+def test_fallback_on_detect_active_python(poetry: Poetry, mocker: MockerFixture):
+    m = mocker.patch(
+        "subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(1, "some command"),
+    )
+    env_manager = EnvManager(poetry)
+    active_python = env_manager._detect_active_python()
+
+    assert active_python is None
+    assert m.call_count == 1

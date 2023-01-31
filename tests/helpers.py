@@ -9,7 +9,6 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
@@ -28,6 +27,8 @@ from poetry.utils._compat import metadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Any
+    from typing import Mapping
 
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
@@ -284,3 +285,33 @@ def mock_metadata_entry_points(
         "entry_points",
         return_value=[make_entry_point_from_plugin(name, cls, dist)],
     )
+
+
+def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, Any]:
+    """
+    Flatten a nested dict.
+
+    A flatdict replacement.
+
+    :param obj: A nested dict to be flattened
+    :delimiter str: A delimiter used in the key path
+    :return: Flattened dict
+    """
+
+    def recurse_keys(obj: Mapping[str, Any]) -> Iterator[tuple[list[str], Any]]:
+        """
+        A recursive generator to yield key paths and their values
+
+        :param obj: A nested dict to be flattened
+        :return:  dict
+        """
+        if isinstance(obj, dict):
+            for key in obj.keys():
+                for leaf in recurse_keys(obj[key]):
+                    leaf_path, leaf_value = leaf
+                    leaf_path.insert(0, key)
+                    yield (leaf_path, leaf_value)
+        else:
+            yield ([], obj)
+
+    return {delimiter.join(path): value for path, value in recurse_keys(obj)}

@@ -144,8 +144,10 @@ class _Writer:
                 self._visit(without_line)
                 self._write(
                     incompatibility,
-                    f"{conjunction} because {with_line!s} ({line}),"
-                    f" {incompatibility_string}.",
+                    (
+                        f"{conjunction} because {with_line!s} ({line}),"
+                        f" {incompatibility_string}."
+                    ),
                     numbered=numbered,
                 )
             else:
@@ -170,9 +172,11 @@ class _Writer:
 
                     self._write(
                         incompatibility,
-                        f"{conjunction} because"
-                        f" {cause.conflict!s} ({self._line_numbers[cause.conflict]}),"
-                        f" {incompatibility_string}",
+                        (
+                            f"{conjunction} because {cause.conflict!s}"
+                            f" ({self._line_numbers[cause.conflict]}),"
+                            f" {incompatibility_string}"
+                        ),
                         numbered=numbered,
                     )
         elif isinstance(cause.conflict.cause, ConflictCause) or isinstance(

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import argument
 
 from poetry.console.commands.env_command import EnvCommand
+from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
@@ -44,7 +45,25 @@ class RunCommand(EnvCommand):
 
         return module
 
-    def run_script(self, script: str | dict[str, str], args: str) -> int:
+    def run_script(self, script: str | dict[str, str], args: list[str]) -> int:
+        """Runs an entry point script defined in the section ``[tool.poetry.scripts]``.
+
+        When a script exists in the venv bin folder, i.e. after ``poetry install``,
+        then ``sys.argv[0]`` must be set to the full path of the executable, so
+        ``poetry run foo`` and ``poetry shell``, ``foo`` have the same ``sys.argv[0]``
+        that points to the full path.
+
+        Otherwise (when an entry point script does not exist), ``sys.argv[0]`` is the
+        script name only, i.e. ``poetry run foo`` has ``sys.argv == ['foo']``.
+        """
+        for script_dir in self.env.script_dirs:
+            script_path = script_dir / args[0]
+            if WINDOWS:
+                script_path = script_path.with_suffix(".cmd")
+            if script_path.exists():
+                args = [str(script_path), *args[1:]]
+                break
+
         if isinstance(script, dict):
             script = script["callable"]
 

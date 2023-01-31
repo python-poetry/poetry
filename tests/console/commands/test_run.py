@@ -65,26 +65,23 @@ def test_run_keeps_options_passed_before_command(
 def test_run_has_helpful_error_when_command_not_found(
     app_tester: ApplicationTester, env: MockEnv, capfd: pytest.CaptureFixture[str]
 ):
+    nonexistent_command = "nonexistent-command"
     env._execute = True
-    app_tester.execute("run nonexistent-command")
+    app_tester.execute(f"run {nonexistent_command}")
 
-    assert env.executed == [["nonexistent-command"]]
+    assert env.executed == [[nonexistent_command]]
     assert app_tester.status_code == 1
     if WINDOWS:
         # On Windows we use a shell to run commands which provides its own error
         # message when a command is not found that is not captured by the
         # ApplicationTester but is captured by pytest, and we can access it via capfd.
-        # The expected string in this assertion assumes Command Prompt (cmd.exe) is the
-        # shell used.
-        assert capfd.readouterr().err.splitlines() == [
-            (
-                "'nonexistent-command' is not recognized as an internal or external"
-                " command,"
-            ),
-            "operable program or batch file.",
-        ]
+        # The exact error message depends on the system language. Thus, we check only
+        # for the name of the command.
+        assert nonexistent_command in capfd.readouterr().err
     else:
-        assert app_tester.io.fetch_error() == "Command not found: nonexistent-command\n"
+        assert (
+            app_tester.io.fetch_error() == f"Command not found: {nonexistent_command}\n"
+        )
 
 
 @pytest.mark.skipif(
@@ -146,3 +143,40 @@ def test_run_script_exit_code(
     )
     assert tester.execute("exit-code") == 42
     assert tester.execute("return-code") == 42
+
+
+@pytest.mark.parametrize(
+    "installed_script", [False, True], ids=["not installed", "installed"]
+)
+def test_run_script_sys_argv0(
+    installed_script: bool,
+    poetry_with_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+) -> None:
+    """
+    If RunCommand calls an installed script defined in pyproject.toml,
+    sys.argv[0] must be set to the full path of the script.
+    """
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file] + args[1:], env=env),
+    )
+
+    install_tester = command_tester_factory(
+        "install",
+        poetry=poetry_with_scripts,
+        environment=tmp_venv,
+    )
+    assert install_tester.execute() == 0
+    if not installed_script:
+        for path in tmp_venv.script_dirs[0].glob("check-argv0*"):
+            path.unlink()
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_scripts, environment=tmp_venv
+    )
+    argv1 = "absolute" if installed_script else "relative"
+    assert tester.execute(f"check-argv0 {argv1}") == 0

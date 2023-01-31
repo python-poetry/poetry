@@ -67,15 +67,7 @@ def provider(root: ProjectPackage, pool: RepositoryPool) -> Provider:
         (Dependency("foo", "<2"), [Package("foo", "1")]),
         (Dependency("foo", "<2", extras=["bar"]), [Package("foo", "1")]),
         (Dependency("foo", ">=1"), [Package("foo", "2"), Package("foo", "1")]),
-        (
-            Dependency("foo", ">=1a"),
-            [
-                Package("foo", "3a"),
-                Package("foo", "2"),
-                Package("foo", "2a"),
-                Package("foo", "1"),
-            ],
-        ),
+        (Dependency("foo", ">=1a"), [Package("foo", "2"), Package("foo", "1")]),
         (
             Dependency("foo", ">=1", allows_prereleases=True),
             [
@@ -101,6 +93,17 @@ def test_search_for(
     repository.add_package(foo2a)
     repository.add_package(foo2)
     repository.add_package(foo3a)
+    # TODO: remove workaround when poetry-core with
+    #       https://github.com/python-poetry/poetry-core/pull/543 is available
+    if str(dependency.constraint) == ">=1a":
+        result = provider.search_for(dependency)
+        assert result == expected or result == [
+            Package("foo", "3a"),
+            Package("foo", "2"),
+            Package("foo", "2a"),
+            Package("foo", "1"),
+        ]
+        return
     assert provider.search_for(dependency) == expected
 
 
