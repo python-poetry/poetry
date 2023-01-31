@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import tarfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -37,3 +38,7 @@ def test_build_with_multiple_readme_files(
     (wheel_file,) = build_dir.glob("my_package-0.1-*.whl")
     assert wheel_file.exists()
     assert wheel_file.stat().st_size > 0
+
+    sdist_content = tarfile.open(sdist_file).getnames()
+    assert "my_package-0.1/README-1.rst" in sdist_content
+    assert "my_package-0.1/README-2.rst" in sdist_content
