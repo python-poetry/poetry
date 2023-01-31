@@ -106,7 +106,10 @@ class Shell:
             c.setecho(False)
             if self._name == "zsh":
                 # Under ZSH the source command should be invoked in zsh's bash emulator
-                c.sendline(f'''emulate bash -c ". {shlex.quote(str(activate_path))}"''')
+                quoted_activate_path = shlex.quote(str(activate_path))
+                c.sendline(
+                    f"emulate bash -c {shlex.quote(f'. {quoted_activate_path}')}"
+                )
         else:
             c.sendline(
                 f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
