@@ -30,7 +30,7 @@ def test_build_with_multiple_readme_files(
     build_dir = target_dir / "dist"
     assert build_dir.exists()
 
-    sdist_file = build_dir / "my-package-0.1.tar.gz"
+    sdist_file = build_dir / "my_package-0.1.tar.gz"
     assert sdist_file.exists()
     assert sdist_file.stat().st_size > 0
 
