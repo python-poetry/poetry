@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from poetry.console.commands.command import Command
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class CheckCommand(Command):
@@ -57,6 +63,22 @@ class CheckCommand(Command):
 
         return errors, warnings
 
+    def validate_readme(
+        self, readme: str | list[str], poetry_file: Path
+    ) -> tuple[list[str], list[str]]:
+        """Check existence of referenced readme files"""
+
+        errors = []
+        warnings: list[str] = []
+
+        readmes = [readme] if isinstance(readme, str) else readme
+
+        for name in readmes:
+            if not (poetry_file.parent / name).exists():
+                errors.append(f"Declared README file must exist: found {name}")
+
+        return errors, warnings
+
     def handle(self) -> int:
         from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -72,6 +94,12 @@ class CheckCommand(Command):
         errors, warnings = self.validate_classifiers(project_classifiers)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
+
+        # Validate readme (files must exist)
+        if "readme" in config:
+            errors, warnings = self.validate_readme(config["readme"], poetry_file)
+            check_result["errors"].extend(errors)
+            check_result["warnings"].extend(warnings)
 
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")
