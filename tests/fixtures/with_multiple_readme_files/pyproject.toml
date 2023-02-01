@@ -3,7 +3,7 @@ name = "my-package"
 version = "0.1"
 description = "Some description."
 authors = [
-    "Wagner Macedo <wagnerluis1982@gmail.com>"
+    "Your Name <you@example.com>"
 ]
 license = "MIT"
 

@@ -316,8 +316,8 @@ Version: 0.1
 Summary: Some description.
 Home-page: https://python-poetry.org
 License: MIT
-Author: Wagner Macedo
-Author-email: wagnerluis1982@gmail.com
+Author: Your Name
+Author-email: you@example.com
 Requires-Python: >=2.7,<3.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 2
@@ -331,7 +331,7 @@ Changelog
 =========
 
 """
-    assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
+    assert dist_info.joinpath("METADATA").read_text(encoding="utf-8") == metadata
 
 
 def test_builder_should_execute_build_scripts(
