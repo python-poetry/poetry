@@ -8,6 +8,7 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 
 from poetry.factory import Factory
+from poetry.utils._compat import tomllib
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_package
 
@@ -2140,3 +2141,33 @@ def test_url_dependency_is_not_outdated_by_repository_package(
     # version in the repository.
     tester.execute("--outdated")
     assert tester.io.fetch_output() == ""
+
+
+@pytest.mark.parametrize(
+    ("project_directory", "required_fixtures"),
+    [
+        (
+            "deleted_directory_dependency",
+            [],
+        ),
+    ],
+)
+def test_show_outdated_missing_directory_dependency(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: TestRepository,
+):
+    with (poetry.pyproject.file.path.parent / "poetry.lock").open(mode="rb") as f:
+        data = tomllib.load(f)
+    poetry.locker.mock_lock_data(data)
+
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "missing",
+            {"path": data["package"][0]["source"]["url"]},
+        )
+    )
+
+    with pytest.raises(ValueError, match="does not exist"):
+        tester.execute("")

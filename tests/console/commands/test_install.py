@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
 
@@ -67,6 +68,22 @@ def tester(
     command_tester_factory: CommandTesterFactory, poetry: Poetry
 ) -> CommandTester:
     return command_tester_factory("install")
+
+
+def _project_factory(
+    fixture_name: str,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+) -> Poetry:
+    source = fixture_dir(fixture_name)
+    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
+    poetry_lock_content = (source / "poetry.lock").read_text(encoding="utf-8")
+    return project_factory(
+        name="foobar",
+        pyproject_content=pyproject_content,
+        poetry_lock_content=poetry_lock_content,
+        source=source,
+    )
 
 
 @pytest.mark.parametrize(
@@ -291,3 +308,24 @@ def test_install_logs_output_decorated(tester: CommandTester, mocker: MockerFixt
     )
     assert tester.status_code == 0
     assert tester.io.fetch_output() == expected
+
+
+@pytest.mark.parametrize("options", ["", "--without dev"])
+@pytest.mark.parametrize(
+    "project", ["missing_directory_dependency", "missing_file_dependency"]
+)
+def test_install_path_dependency_does_not_exist(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    project: str,
+    options: str,
+):
+    poetry = _project_factory(project, project_factory, fixture_dir)
+    poetry.locker.locked(True)
+    tester = command_tester_factory("install", poetry=poetry)
+    if options:
+        tester.execute(options)
+    else:
+        with pytest.raises(ValueError, match="does not exist"):
+            tester.execute(options)
