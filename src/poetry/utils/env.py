@@ -134,9 +134,13 @@ else:
     iver = "0"
     implementation_name = platform.python_implementation().lower()
 
-    
-_pep_440_and_deadsnakes_regex = "^\\d+\\.([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)(\\+([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)?)?$"
-_clean_python_version = re.compile(_pep_440_and_deadsnakes_regex).match(platform.python_version()).group()
+_primary_version_regex = "\\d+\\.([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)"
+_local_segment_regex = "(\\+([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)?)?$"
+_pep_440_and_deadsnakes_regex = f"^{_primary_version_regex}{_local_segment_regex}$"
+match = re.compile(_pep_440_and_deadsnakes_regex).match(platform.python_version())
+if match is None:
+    raise ValueError("Python version must be PEP 440 compatible")
+_clean_python_version = match.group()
 _clean_python_version = _clean_python_version.rstrip("+")
 
 env = {
@@ -1684,8 +1688,15 @@ class SystemEnv(Env):
             iver = "0"
             implementation_name = ""
 
-        pep_440_and_deadsnakes_regex = "^\\d+\\.([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)(\\+([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)?)?$"
-        clean_python_version = re.compile(pep_440_and_deadsnakes_regex).match(platform.python_version()).group()
+        primary_version_regex = "\\d+\\.([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)"
+        local_segment_regex = "(\\+([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)?)?$"
+        pep_440_and_deadsnakes_regex = f"^{primary_version_regex}{local_segment_regex}$"
+        match = re.compile(pep_440_and_deadsnakes_regex).match(
+            platform.python_version()
+        )
+        if match is None:
+            raise ValueError("Python version must be PEP 440 compatible.")
+        clean_python_version = match.group()
         clean_python_version = clean_python_version.rstrip("+")
 
         return {
