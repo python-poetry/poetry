@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+import platform
 import subprocess
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from unittest import mock
 
 import pytest
 import tomlkit
@@ -1613,3 +1615,62 @@ def test_fallback_on_detect_active_python(poetry: Poetry, mocker: MockerFixture)
 
     assert active_python is None
     assert m.call_count == 1
+
+
+# list taken from https://peps.python.org/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering
+_PEP_440_VERSION_STRINGS = [
+        "1.dev0",
+        "1.0.dev456",
+        "1.0a1",
+        "1.0a2.dev456",
+        "1.0a12.dev456",
+        "1.0a12",
+        "1.0b1.dev456",
+        "1.0b2",
+        "1.0b2.post345.dev456",
+        "1.0b2.post345",
+        "1.0rc1.dev456",
+        "1.0rc1",
+        "1.0",
+        "1.0+abc.5",
+        "1.0+abc.7",
+        "1.0+5",
+        "1.0.post456.dev34",
+        "1.0.post456",
+        "1.0.15",
+        "1.1.dev1",
+]
+
+def _get_parsed_version(platform_version: str) -> str:
+    with mock.patch.object(platform, 'python_version') as m:
+        m.return_value = platform_version
+        sys_env = SystemEnv(Path(sys.prefix))
+        return sys_env.get_marker_env()["python_full_version"]
+    
+def test_allows_pep_440_version_strings() -> None:
+    for version_string in _PEP_440_VERSION_STRINGS:
+        print(version_string)
+        assert _get_parsed_version(version_string) == version_string
+
+def test_allows_deadsnakes_version_strings() -> None:
+    # See https://github.com/python-poetry/poetry/issues/6925
+    for version_string in _PEP_440_VERSION_STRINGS:
+        if "+" in version_string:
+            continue
+        empty_local_version_string = version_string + "+"
+        assert _get_parsed_version(empty_local_version_string) == version_string   
+    
+    # version "3.11.1+" used to cause an issue.
+    assert _get_parsed_version("3.11.1+") == "3.11.1"
+
+def _is_version_rejected(platform_version: str) -> bool:
+    try:
+        _version = _get_parsed_version(platform_version)
+    except:
+        return True
+    return False    
+
+def test_rejects_non_pep_440_or_deadsnakes_version_strings() -> None:
+    assert _is_version_rejected("abcd")
+    assert _is_version_rejected("3.11.1+foo+bar")
+    

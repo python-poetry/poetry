@@ -90,6 +90,7 @@ GET_ENVIRONMENT_INFO = """\
 import json
 import os
 import platform
+import re
 import sys
 import sysconfig
 
@@ -133,6 +134,11 @@ else:
     iver = "0"
     implementation_name = platform.python_implementation().lower()
 
+    
+_pep_440_and_deadsnakes_regex = "^\\d+\\.([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)(\\+([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)?)?$"
+_clean_python_version = re.compile(_pep_440_and_deadsnakes_regex).match(platform.python_version()).group()
+_clean_python_version = _clean_python_version.rstrip("+")
+
 env = {
     "implementation_name": implementation_name,
     "implementation_version": iver,
@@ -141,9 +147,9 @@ env = {
     "platform_release": platform.release(),
     "platform_system": platform.system(),
     "platform_version": platform.version(),
-    "python_full_version": platform.python_version(),
+    "python_full_version": _clean_python_version,
     "platform_python_implementation": platform.python_implementation(),
-    "python_version": ".".join(platform.python_version_tuple()[:2]),
+    "python_version": ".".join(_clean_python_version.split('.')[:2]),
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
     # Extra information
@@ -1678,6 +1684,10 @@ class SystemEnv(Env):
             iver = "0"
             implementation_name = ""
 
+        pep_440_and_deadsnakes_regex = "^\\d+\\.([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)(\\+([a-zA-Z\\d]+(\\.[a-zA-Z\\d]+)*)?)?$"
+        clean_python_version = re.compile(pep_440_and_deadsnakes_regex).match(platform.python_version()).group()
+        clean_python_version = clean_python_version.rstrip("+")
+
         return {
             "implementation_name": implementation_name,
             "implementation_version": iver,
@@ -1686,9 +1696,9 @@ class SystemEnv(Env):
             "platform_release": platform.release(),
             "platform_system": platform.system(),
             "platform_version": platform.version(),
-            "python_full_version": platform.python_version(),
+            "python_full_version": clean_python_version,
             "platform_python_implementation": platform.python_implementation(),
-            "python_version": ".".join(platform.python_version().split(".")[:2]),
+            "python_version": ".".join(clean_python_version.split(".")[:2]),
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
             "interpreter_name": interpreter_name(),
