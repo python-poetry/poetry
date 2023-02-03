@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import shutil
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
 import pytest
 
+from build.__main__ import build_package
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
 
@@ -166,6 +169,30 @@ def test_prepare_directory_with_extensions(
     wheel = chef.prepare(archive)
 
     assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
+
+
+def test_build(tmp_path: Path):
+    archive = tmp_path / "extended_with_no_setup"
+
+    # Copy `pep_517_backend` to a temporary directory as we need to dynamically add the
+    # build system during the test. This ensures that we don't update the source, since
+    # the value of `requires` is dynamic.
+    shutil.copytree(
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/extended_with_no_setup")
+        .resolve(),
+        archive,
+    )
+
+    build_package(
+        srcdir=str(archive),
+        outdir=str(archive),
+        distributions=["wheel"],
+    )
+    distributions = list(archive.glob("extended-0.1-cp*-cp*-*.whl"))
+    assert len(distributions) == 1
+    whl = distributions[0]
+    assert whl.stem.rsplit("-")[-1] == "dummy"
 
 
 def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
