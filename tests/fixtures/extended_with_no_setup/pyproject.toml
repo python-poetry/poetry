@@ -22,5 +22,5 @@ script = "build.py"
 generate-setup-file = false
 
 [build-system]
-requires = ["poetry-core>=1.1.0rc1"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"

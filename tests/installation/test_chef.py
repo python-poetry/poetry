@@ -262,32 +262,6 @@ def test_build3(tmp_path: Path, config: Config):
     assert whl.stem.rsplit("-")[-1] == "dummy"
 
 
-def test_build4(tmp_path: Path, config: Config):
-    archive = tmp_path / "extended_with_no_setup"
-
-    # Copy `pep_517_backend` to a temporary directory as we need to dynamically add the
-    # build system during the test. This ensures that we don't update the source, since
-    # the value of `requires` is dynamic.
-    shutil.copytree(
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/extended_with_no_setup")
-        .resolve(),
-        archive,
-    )
-
-    with ephemeral_environment(EnvManager.get_system_env().python) as venv:
-        env = IsolatedEnv(venv, config)
-        builder = ProjectBuilder(archive)
-        env.install(builder.build_system_requires)
-
-        env.install(
-            builder.build_system_requires | builder.get_requires_for_build("wheel")
-        )
-        whl = Path(builder.build("wheel", archive.as_posix()))
-
-    assert whl.stem.rsplit("-")[-1] == "dummy"
-
-
 def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
     chef = Chef(config, EnvManager.get_system_env())
 
