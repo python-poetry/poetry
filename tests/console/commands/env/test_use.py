@@ -11,6 +11,7 @@ import tomlkit
 from poetry.core.constraints.version import Version
 from poetry.core.toml.file import TOMLFile
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
@@ -68,9 +69,10 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tester.execute("3.7")
 
     venv_py37 = venv_cache / f"{venv_name}-py3.7"
+    executable = "/usr/bin/py" if WINDOWS else "/usr/bin/python3.7"
     mock_build_env.assert_called_with(
         venv_py37,
-        executable="/usr/bin/python3.7",
+        executable=executable,
         flags={
             "always-copy": False,
             "system-site-packages": False,
