@@ -8,15 +8,19 @@ from zipfile import ZipFile
 
 import pytest
 
+from build import ProjectBuilder
 from build.__main__ import build_package
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
+from pyproject_hooks import quiet_subprocess_runner
 
 from poetry.factory import Factory
 from poetry.installation.chef import Chef
+from poetry.installation.chef import IsolatedEnv
 from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
+from poetry.utils.env import ephemeral_environment
 from tests.repositories.test_pypi_repository import MockRepository
 
 
@@ -192,6 +196,37 @@ def test_build(tmp_path: Path):
     distributions = list(archive.glob("extended-0.1-cp*-cp*-*.whl"))
     assert len(distributions) == 1
     whl = distributions[0]
+    assert whl.stem.rsplit("-")[-1] == "dummy"
+
+
+def test_build2(tmp_path: Path, config: Config):
+    archive = tmp_path / "extended_with_no_setup"
+
+    # Copy `pep_517_backend` to a temporary directory as we need to dynamically add the
+    # build system during the test. This ensures that we don't update the source, since
+    # the value of `requires` is dynamic.
+    shutil.copytree(
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/extended_with_no_setup")
+        .resolve(),
+        archive,
+    )
+
+    with ephemeral_environment(EnvManager.get_system_env().python) as venv:
+        env = IsolatedEnv(venv, config)
+        builder = ProjectBuilder(
+            archive,
+            python_executable=env.executable,
+            scripts_dir=env.scripts_dir,
+            runner=quiet_subprocess_runner,
+        )
+        env.install(builder.build_system_requires)
+
+        env.install(
+            builder.build_system_requires | builder.get_requires_for_build("wheel")
+        )
+        whl = Path(builder.build("wheel", archive.as_posix()))
+
     assert whl.stem.rsplit("-")[-1] == "dummy"
 
 
