@@ -58,7 +58,7 @@ with build.env.IsolatedEnvBuilder() as env:
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build==0.9.0", "pyproject_hooks==1.0.0"]
+PEP517_META_BUILD_DEPS = ["build==0.10.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
