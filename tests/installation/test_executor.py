@@ -30,7 +30,7 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.wheel_installer import WheelInstaller
-from poetry.repositories.pool import RepositoryPool
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
