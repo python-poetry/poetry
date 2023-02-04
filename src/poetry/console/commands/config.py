@@ -211,6 +211,7 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     # Only username, so we prompt for password
                     password = self.secret("Password:")
+                    assert isinstance(password, str)
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "
