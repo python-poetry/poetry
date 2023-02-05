@@ -801,9 +801,10 @@ class Executor:
     def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
         archive_info = self._get_archive_info(package)
 
-        reference = {"url": package.source_url, "archive_info": archive_info}
-
-        return reference
+        return {
+            "url": package.source_url,
+            "archive_info": archive_info
+        }
 
     def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
         archive_info = self._get_archive_info(package)
