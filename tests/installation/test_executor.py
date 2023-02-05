@@ -4,23 +4,33 @@ import csv
 import json
 import re
 import shutil
+import tempfile
 
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
+from urllib.parse import urlparse
 
 import pytest
 
+from build import BuildBackendException
+from build import ProjectBuilder
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
+from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 
+from poetry.factory import Factory
+from poetry.installation.chef import Chef as BaseChef
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
-from poetry.repositories.repository_pool import RepositoryPool
+from poetry.installation.wheel_installer import WheelInstaller
+from poetry.repositories.pool import RepositoryPool
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -35,6 +45,43 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.utils.env import VirtualEnv
     from tests.types import FixtureDirGetter
+
+
+class Chef(BaseChef):
+    _directory_wheels: list[Path] | None = None
+    _sdist_wheels: list[Path] | None = None
+
+    def set_directory_wheel(self, wheels: Path | list[Path]) -> None:
+        if not isinstance(wheels, list):
+            wheels = [wheels]
+
+        self._directory_wheels = wheels
+
+    def set_sdist_wheel(self, wheels: Path | list[Path]) -> None:
+        if not isinstance(wheels, list):
+            wheels = [wheels]
+
+        self._sdist_wheels = wheels
+
+    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
+        if self._sdist_wheels is not None:
+            wheel = self._sdist_wheels.pop(0)
+            self._sdist_wheels.append(wheel)
+
+            return wheel
+
+        return super()._prepare_sdist(archive)
+
+    def _prepare(
+        self, directory: Path, destination: Path, *, editable: bool = False
+    ) -> Path:
+        if self._directory_wheels is not None:
+            wheel = self._directory_wheels.pop(0)
+            self._directory_wheels.append(wheel)
+
+            return wheel
+
+        return super()._prepare(directory, destination, editable=editable)
 
 
 @pytest.fixture
@@ -85,18 +132,59 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
     def callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | str]:
+        name = Path(urlparse(uri).path).name
+
         fixture = Path(__file__).parent.parent.joinpath(
-            "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            "repositories/fixtures/pypi.org/dists/" + name
         )
 
-        with fixture.open("rb") as f:
-            return [200, headers, f.read()]
+        if not fixture.exists():
+            fixture = Path(__file__).parent.parent.joinpath(
+                "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            )
+
+        return [200, headers, fixture.read_bytes()]
 
     http.register_uri(
         http.GET,
         re.compile("^https://files.pythonhosted.org/.*$"),
         body=callback,
     )
+
+
+@pytest.fixture()
+def copy_wheel(tmp_dir: Path) -> Callable[[], Path]:
+    def _copy_wheel() -> Path:
+        tmp_name = tempfile.mktemp()
+        Path(tmp_dir).joinpath(tmp_name).mkdir()
+
+        shutil.copyfile(
+            Path(__file__)
+            .parent.parent.joinpath(
+                "fixtures/distributions/demo-0.1.2-py2.py3-none-any.whl"
+            )
+            .as_posix(),
+            Path(tmp_dir)
+            .joinpath(tmp_name)
+            .joinpath("demo-0.1.2-py2.py3-none-any.whl")
+            .as_posix(),
+        )
+
+        return (
+            Path(tmp_dir).joinpath(tmp_name).joinpath("demo-0.1.2-py2.py3-none-any.whl")
+        )
+
+    return _copy_wheel
+
+
+@pytest.fixture()
+def wheel(copy_wheel: Callable[[], Path]) -> Path:
+    archive = copy_wheel()
+
+    yield archive
+
+    if archive.exists():
+        archive.unlink()
 
 
 def test_execute_executes_a_batch_of_operations(
@@ -107,12 +195,21 @@ def test_execute_executes_a_batch_of_operations(
     tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
+    copy_wheel: Callable[[], Path],
 ):
-    pip_install = mocker.patch("poetry.installation.executor.pip_install")
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
 
     config.merge({"cache-dir": tmp_dir})
 
+    prepare_spy = mocker.spy(Chef, "_prepare")
+    chef = Chef(config, env)
+    chef.set_directory_wheel([copy_wheel(), copy_wheel()])
+    chef.set_sdist_wheel(copy_wheel())
+
+    io.set_verbosity(Verbosity.VERY_VERBOSE)
+
     executor = Executor(env, pool, config, io)
+    executor._chef = chef
 
     file_package = Package(
         "demo",
@@ -171,11 +268,16 @@ Package operations: 4 installs, 1 update, 1 removal
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
     assert output == expected
-    assert len(env.executed) == 1
+    assert wheel_install.call_count == 5
+    # Two pip uninstalls: one for the remove operation one for the update operation
+    assert len(env.executed) == 2
     assert return_code == 0
-    assert pip_install.call_count == 5
-    assert pip_install.call_args.kwargs.get("upgrade", False)
-    assert pip_install.call_args.kwargs.get("editable", False)
+
+    assert prepare_spy.call_count == 2
+    assert prepare_spy.call_args_list == [
+        mocker.call(chef, mocker.ANY, mocker.ANY, editable=False),
+        mocker.call(chef, mocker.ANY, mocker.ANY, editable=True),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -222,8 +324,9 @@ def test_execute_prints_warning_for_yanked_package(
         "(black-21.11b0-py3-none-any.whl) is yanked. Reason for being yanked: "
         "Broken regex dependency. Use 21.11b1 instead."
     )
+    output = io.fetch_output()
     error = io.fetch_error()
-    assert return_code == 0
+    assert return_code == 0, f"\noutput: {output}\nerror: {error}\n"
     assert "pytest" not in error
     if has_warning:
         assert expected in error
@@ -289,7 +392,6 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_works_with_ansi_output(
-    mocker: MockerFixture,
     config: Config,
     pool: RepositoryPool,
     io_decorated: BufferedIO,
@@ -301,24 +403,19 @@ def test_execute_works_with_ansi_output(
 
     executor = Executor(env, pool, config, io_decorated)
 
-    install_output = (
-        "some string that does not contain a keyb0ard !nterrupt or cance11ed by u$er"
-    )
-    mocker.patch.object(env, "_run", return_value=install_output)
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.1")),
+            Install(Package("cleo", "1.0.0a5")),
         ]
     )
-    env._run.assert_called_once()
 
     # fmt: off
     expected = [
         "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.1\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.1\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.1\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",  # noqa: E501
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.1\x1b[39m\x1b[39m)\x1b[39m",  # finished  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",  # noqa: E501
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",  # noqa: E501
+        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished  # noqa: E501
     ]
     # fmt: on
 
@@ -343,21 +440,16 @@ def test_execute_works_with_no_ansi_output(
 
     executor = Executor(env, pool, config, io_not_decorated)
 
-    install_output = (
-        "some string that does not contain a keyb0ard !nterrupt or cance11ed by u$er"
-    )
-    mocker.patch.object(env, "_run", return_value=install_output)
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.1")),
+            Install(Package("cleo", "1.0.0a5")),
         ]
     )
-    env._run.assert_called_once()
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing pytest (3.5.1)
+  • Installing cleo (1.0.0a5)
 """
     expected = set(expected.splitlines())
     output = set(io_not_decorated.fetch_output().splitlines())
@@ -539,14 +631,26 @@ def test_executor_should_write_pep610_url_references_for_files(
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
-    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    wheel: Path,
 ):
-    url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    url = (
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/git/github.com/demo/demo")
+        .resolve()
+    )
     package = Package(
-        "simple-project", "1.2.3", source_type="directory", source_url=url.as_posix()
+        "demo", "0.1.2", source_type="directory", source_url=url.as_posix()
     )
 
+    chef = Chef(config, tmp_venv)
+    chef.set_directory_wheel(wheel)
+
     executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
     executor.execute([Install(package)])
     verify_installed_distribution(
         tmp_venv, package, {"dir_info": {}, "url": url.as_uri()}
@@ -554,18 +658,30 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
-    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    wheel: Path,
 ):
-    url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    url = (
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/git/github.com/demo/demo")
+        .resolve()
+    )
     package = Package(
-        "simple-project",
-        "1.2.3",
+        "demo",
+        "0.1.2",
         source_type="directory",
         source_url=url.as_posix(),
         develop=True,
     )
 
+    chef = Chef(config, tmp_venv)
+    chef.set_directory_wheel(wheel)
+
     executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
     executor.execute([Install(package)])
     verify_installed_distribution(
         tmp_venv, package, {"dir_info": {"editable": True}, "url": url.as_uri()}
@@ -614,6 +730,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
+    wheel: Path,
 ):
     package = Package(
         "demo",
@@ -624,7 +741,11 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_url="https://github.com/demo/demo.git",
     )
 
+    chef = Chef(config, tmp_venv)
+    chef.set_directory_wheel(wheel)
+
     executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
     executor.execute([Install(package)])
     verify_installed_distribution(
         tmp_venv,
@@ -646,10 +767,11 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
+    wheel: Path,
 ):
     package = Package(
-        "two",
-        "2.0.0",
+        "demo",
+        "0.1.2",
         source_type="git",
         source_reference="master",
         source_resolved_reference="123456",
@@ -657,7 +779,11 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
         source_subdirectory="two",
     )
 
+    chef = Chef(config, tmp_venv)
+    chef.set_directory_wheel(wheel)
+
     executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
     executor.execute([Install(package)])
     verify_installed_distribution(
         tmp_venv,
@@ -737,7 +863,7 @@ def test_executor_should_be_initialized_with_correct_workers(
     assert executor._max_workers == expected_workers
 
 
-def test_executer_fallback_on_poetry_create_error(
+def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     mocker: MockerFixture,
     config: Config,
     pool: RepositoryPool,
@@ -755,7 +881,12 @@ def test_executer_fallback_on_poetry_create_error(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge(
+        {
+            "cache-dir": tmp_dir,
+            "installer": {"modern-installation": False},
+        }
+    )
 
     executor = Executor(env, pool, config, io)
 
@@ -791,3 +922,71 @@ Package operations: 1 install, 0 updates, 0 removals
     assert mock_pip_install.call_count == 1
     assert mock_pip_install.call_args[1].get("upgrade") is True
     assert mock_pip_install.call_args[1].get("editable") is False
+
+
+@pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
+def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
+    failing_method: str,
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
+):
+    mocker.patch.object(Factory, "create_pool", return_value=pool)
+
+    error = BuildBackendException(
+        CalledProcessError(1, ["pip"], output=b"Error on stdout")
+    )
+    mocker.patch.object(ProjectBuilder, failing_method, side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/simple_project")
+        .resolve()
+        .as_posix(),
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+        ]
+    )
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing {package_name} ({package_version} {package_url})
+
+  ChefBuildError
+
+  Backend operation failed: CalledProcessError(1, ['pip'])
+  \
+
+  Error on stdout
+"""
+
+    requirement = directory_package.to_dependency().to_pep_508()
+    expected_end = f"""
+Note: This error originates from the build backend, and is likely not a problem with \
+poetry but with {package_name} ({package_version} {package_url}) not supporting \
+PEP 517 builds. You can verify this by running 'pip wheel --use-pep517 "{requirement}"'.
+
+"""
+
+    output = io.fetch_output()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)

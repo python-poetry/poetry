@@ -162,6 +162,24 @@ def test_sync_option_is_passed_to_the_installer(
     assert tester.command.installer._requires_synchronization
 
 
+@pytest.mark.parametrize("compile", [False, True])
+def test_compile_option_is_passed_to_the_installer(
+    tester: CommandTester, mocker: MockerFixture, compile: bool
+):
+    """
+    The --compile option is passed properly to the installer.
+    """
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+    enable_bytecode_compilation_mock = mocker.patch.object(
+        tester.command.installer.executor._wheel_installer,
+        "enable_bytecode_compilation",
+    )
+
+    tester.execute("--compile" if compile else "")
+
+    enable_bytecode_compilation_mock.assert_called_once_with(compile)
+
+
 def test_no_all_extras_doesnt_populate_installer(
     tester: CommandTester, mocker: MockerFixture
 ):

@@ -100,7 +100,6 @@ class PackageFilterPolicy:
 
 logger = logging.getLogger(__name__)
 
-
 _default_config: Config | None = None
 
 
@@ -124,8 +123,16 @@ class Config:
             "prefer-active-python": False,
             "prompt": "{project_name}-py{python_version}",
         },
-        "experimental": {"new-installer": True, "system-git-client": False},
-        "installer": {"parallel": True, "max-workers": None, "no-binary": None},
+        "experimental": {
+            "new-installer": True,
+            "system-git-client": False,
+        },
+        "installer": {
+            "modern-installation": True,
+            "parallel": True,
+            "max-workers": None,
+            "no-binary": None,
+        },
     }
 
     def __init__(
@@ -267,6 +274,7 @@ class Config:
             "virtualenvs.options.prefer-active-python",
             "experimental.new-installer",
             "experimental.system-git-client",
+            "installer.modern-installation",
             "installer.parallel",
         }:
             return boolean_normalizer
