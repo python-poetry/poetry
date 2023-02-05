@@ -48,7 +48,7 @@ class WheelDestination(SchemeDictionaryDestination):
 
         parent_folder = target_path.parent
         if not parent_folder.exists():
-            os.makedirs(parent_folder)
+            os.makedirs(parent_folder, exist_ok=True)
 
         with open(target_path, "wb") as f:
             hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
