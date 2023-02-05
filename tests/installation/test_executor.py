@@ -598,7 +598,6 @@ def test_executor_should_write_pep610_url_references_for_urls(
     expected_url_reference = {
         "archive_info": {
             "hashes": {"sha256": "70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"},
-            "hash": "sha256=70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
         },
         "url": package.source_url
     }
