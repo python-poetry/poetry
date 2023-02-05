@@ -799,20 +799,14 @@ class Executor:
         return reference
 
     def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
-        archive_info = {}
-
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
+        archive_info = self._get_archive_info(package)
 
         reference = {"url": package.source_url, "archive_info": archive_info}
 
         return reference
 
     def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
-        archive_info = {}
-
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
+        archive_info = self._get_archive_info(package)
 
         assert package.source_url is not None
         return {
@@ -831,3 +825,11 @@ class Executor:
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
+    
+    def _get_archive_info(self, package: Package) -> dict[str, Any]:
+        archive_info = {}
+
+        if package.name in self._hashes:
+            archive_info["hash"] = self._hashes[package.name]
+
+        return archive_info
