@@ -833,5 +833,6 @@ class Executor:
         if package.name in self._hashes:
             algorithm, value = self._hashes[package.name].split(":")
             archive_info["hashes"] = {algorithm: value}
+            archive_info["hash"] = f"{algorithm}={value}"
 
         return archive_info
