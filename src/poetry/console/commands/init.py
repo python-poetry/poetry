@@ -240,8 +240,9 @@ You can specify a package in the following forms:
         )
 
         content = layout_.generate_poetry_content()
-        for section in content:
-            pyproject.data.append(section, content[section])
+        for section, item in content.items():
+            pyproject.data.append(section, item)
+
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")

@@ -194,6 +194,6 @@ class Layout:
     def _write_poetry(self, path: Path) -> None:
         pyproject = PyProjectTOML(path / "pyproject.toml")
         content = self.generate_poetry_content()
-        for section in content:
-            pyproject.data.append(section, content[section])
+        for section, item in content.items():
+            pyproject.data.append(section, item)
         pyproject.save()
