@@ -900,6 +900,13 @@ class Executor:
         }
 
     def _get_archive_info(self, package: Package) -> dict[str, Any]:
+        """
+        Create dictionary `archive_info` for file `direct_url.json`.
+
+        Specification: https://packaging.python.org/en/latest/specifications/direct-url/ (it supersedes PEP 610)
+
+        :param package: This must be a poetry package instance.
+        """
         archive_info = {}
 
         if package.name in self._hashes:
