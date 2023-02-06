@@ -903,7 +903,8 @@ class Executor:
         """
         Create dictionary `archive_info` for file `direct_url.json`.
 
-        Specification: https://packaging.python.org/en/latest/specifications/direct-url/ (it supersedes PEP 610)
+        Specification: https://packaging.python.org/en/latest/specifications/direct-url
+        (it supersedes PEP 610)
 
         :param package: This must be a poetry package instance.
         """
