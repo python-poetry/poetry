@@ -572,6 +572,10 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
+        if package.files and archive.name in {f["file"] for f in package.files}:
+            archive_hash = self._validate_archive_hash(archive, package)
+            self._hashes[package.name] = archive_hash
+
         return self._chef.prepare(archive, editable=package.develop)
 
     def _prepare_directory_archive(self, operation: Install | Update) -> Path:
