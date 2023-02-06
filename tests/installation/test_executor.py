@@ -622,12 +622,27 @@ def test_executor_should_write_pep610_url_references_for_files(
         .resolve()
     )
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
+        }
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-    verify_installed_distribution(
-        tmp_venv, package, {"archive_info": {}, "url": url.as_uri()}
-    )
+    expected_url_reference = {
+        "archive_info": {
+            "hashes": {
+                "sha256": (
+                    "70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+                )
+            },
+        },
+        "url": url.as_uri(),
+    }
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
