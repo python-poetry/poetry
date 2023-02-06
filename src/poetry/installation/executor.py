@@ -572,9 +572,7 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
-        if package.files and archive.name in {f["file"] for f in package.files}:
-            archive_hash = self._validate_archive_hash(archive, package)
-            self._hashes[package.name] = archive_hash
+        self._populate_hashes_dict(archive, package)
 
         return self._chef.prepare(archive, editable=package.develop)
 
@@ -738,12 +736,14 @@ class Executor:
 
             archive = self._chef.prepare(archive, output_dir=output_dir)
 
-        if package.files and archive.name in {f["file"] for f in package.files}:
-            archive_hash = self._validate_archive_hash(archive, package)
-
-            self._hashes[package.name] = archive_hash
+        self._populate_hashes_dict(archive, package)
 
         return archive
+
+    def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
+        if package.files and archive.name in {f["file"] for f in package.files}:
+            archive_hash = self._validate_archive_hash(archive, package)
+            self._hashes[package.name] = archive_hash
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
