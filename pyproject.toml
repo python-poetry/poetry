@@ -72,16 +72,10 @@ requests = "^2.18"
 requests-toolbelt = ">=0.9.1,<0.11.0"
 shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
-# exclude 0.11.2 and 0.11.3 due to https://github.com/sdispater/tomlkit/issues/225
-tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
+tomlkit = ">=0.11.4,<1.0.0"
 # trove-classifiers uses calver, so version is unclamped
 trove-classifiers = ">=2022.5.19"
-# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
-virtualenv = [
-    { version = "^20.4.3,!=20.4.5,!=20.4.6" },
-    # see https://github.com/python-poetry/poetry/pull/6950 for details
-    { version = "<20.16.6", markers = "sys_platform == 'win32' and python_version == '3.9'" },
-]
+virtualenv = "^20.4.7"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 
