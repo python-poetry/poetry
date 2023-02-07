@@ -20,7 +20,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 import packaging.tags
 import tomlkit
@@ -60,7 +59,6 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
 
-
 GET_SYS_TAGS = f"""
 import importlib.util
 import json
@@ -84,7 +82,6 @@ print(
     json.dumps([(t.interpreter, t.abi, t.platform) for t in packaging_tags.sys_tags()])
 )
 """
-
 
 GET_ENVIRONMENT_INFO = """\
 import json
@@ -155,7 +152,6 @@ env = {
 
 print(json.dumps(env))
 """
-
 
 GET_BASE_PREFIX = """\
 import sys
@@ -521,7 +517,8 @@ class EnvManager:
         self._poetry = poetry
         self._io = io or NullIO()
 
-    def _full_python_path(self, python: str) -> str:
+    @staticmethod
+    def _full_python_path(python: str) -> str:
         try:
             executable = decode(
                 subprocess.check_output(
@@ -536,23 +533,23 @@ class EnvManager:
 
         return executable
 
-    def _detect_active_python(self) -> str | None:
+    @staticmethod
+    def _detect_active_python(io: None | IO = None) -> str | None:
+        io = io or NullIO()
         executable = None
 
         try:
-            self._io.write_error_line(
+            io.write_error_line(
                 (
                     "Trying to detect current active python executable as specified in"
                     " the config."
                 ),
                 verbosity=Verbosity.VERBOSE,
             )
-            executable = self._full_python_path("python")
-            self._io.write_error_line(
-                f"Found: {executable}", verbosity=Verbosity.VERBOSE
-            )
+            executable = EnvManager._full_python_path("python")
+            io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         except EnvCommandError:
-            self._io.write_error_line(
+            io.write_error_line(
                 (
                     "Unable to detect the current active python executable. Falling"
                     " back to default."
@@ -561,11 +558,16 @@ class EnvManager:
             )
         return executable
 
-    def _get_python_version(self) -> tuple[int, int, int]:
-        version_info = tuple(sys.version_info[:3])
+    @staticmethod
+    def get_python_version(
+        precision: int = 3,
+        prefer_active_python: bool = False,
+        io: None | IO = None,
+    ) -> Version:
+        version = ".".join(str(v) for v in sys.version_info[:precision])
 
-        if self._poetry.config.get("virtualenvs.prefer-active-python"):
-            executable = self._detect_active_python()
+        if prefer_active_python:
+            executable = EnvManager._detect_active_python(io)
 
             if executable:
                 python_patch = decode(
@@ -577,9 +579,9 @@ class EnvManager:
                     ).strip()
                 )
 
-                version_info = tuple(int(v) for v in python_patch.split(".")[:3])
+                version = ".".join(str(v) for v in python_patch.split(".")[:precision])
 
-        return cast("tuple[int, int, int]", version_info)
+        return Version.parse(version)
 
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
@@ -692,7 +694,12 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in self._get_python_version()[:2]])
+        prefer_active_python = self._poetry.config.get(
+            "virtualenvs.prefer-active-python"
+        )
+        python_minor = self.get_python_version(
+            precision=2, prefer_active_python=prefer_active_python, io=self._io
+        ).to_string()
 
         venv_path = self._poetry.config.virtualenvs_path
 
@@ -1427,6 +1434,16 @@ class Env:
     def paths(self) -> dict[str, str]:
         if self._paths is None:
             self._paths = self.get_paths()
+
+            if self.is_venv():
+                # We copy pip's logic here for the `include` path
+                self._paths["include"] = str(
+                    self.path.joinpath(
+                        "include",
+                        "site",
+                        f"python{self.version_info[0]}.{self.version_info[1]}",
+                    )
+                )
 
         return self._paths
 

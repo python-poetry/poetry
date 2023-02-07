@@ -787,6 +787,7 @@ def test_add_constraint_with_platform(
 ):
     platform = sys.platform
     env._platform = platform
+    env._marker_env = None
 
     cachy2 = get_package("cachy", "0.2.0")
 
@@ -1824,6 +1825,7 @@ def test_add_constraint_with_platform_old_installer(
 ):
     platform = sys.platform
     env._platform = platform
+    env._marker_env = None
 
     cachy2 = get_package("cachy", "0.2.0")
 

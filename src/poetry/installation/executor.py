@@ -16,13 +16,14 @@ from typing import Any
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.utils.link import Link
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.chef import Chef
+from poetry.installation.chef import ChefBuildError
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.wheel_installer import WheelInstaller
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
@@ -60,6 +61,10 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
+        self._wheel_installer = WheelInstaller(self._env)
+        self._use_modern_installation = config.get(
+            "installer.modern-installation", True
+        )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -117,6 +122,9 @@ class Executor:
         self._verbose = verbose
 
         return self
+
+    def enable_bytecode_compilation(self, enable: bool = True) -> None:
+        self._wheel_installer.enable_bytecode_compilation(enable)
 
     def pip_install(
         self, req: Path, upgrade: bool = False, editable: bool = False
@@ -291,6 +299,19 @@ class Executor:
                 with self._lock:
                     trace = ExceptionTrace(e)
                     trace.render(io)
+                    if isinstance(e, ChefBuildError):
+                        pkg = operation.package
+                        requirement = pkg.to_dependency().to_pep_508()
+                        io.write_line("")
+                        io.write_line(
+                            "<info>"
+                            "Note: This error originates from the build backend,"
+                            " and is likely not a problem with poetry"
+                            f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
+                            " not supporting PEP 517 builds. You can verify this by"
+                            f" running 'pip wheel --use-pep517 \"{requirement}\"'."
+                            "</info>"
+                        )
                     io.write_line("")
             finally:
                 with self._lock:
@@ -471,18 +492,22 @@ class Executor:
         message = f"  <fg=blue;options=bold>•</> {op_msg}: <info>Removing...</info>"
         self._write(operation, message)
 
-        return self._remove(operation)
+        return self._remove(operation.package)
 
     def _install(self, operation: Install | Update) -> int:
         package = operation.package
-        if package.source_type == "directory":
-            return self._install_directory(operation)
+        if package.source_type == "directory" and not self._use_modern_installation:
+            return self._install_directory_without_wheel_installer(operation)
 
+        cleanup_archive: bool = False
         if package.source_type == "git":
-            return self._install_git(operation)
-
-        if package.source_type == "file":
-            archive = self._prepare_file(operation)
+            archive = self._prepare_git_archive(operation)
+            cleanup_archive = True
+        elif package.source_type == "file":
+            archive = self._prepare_archive(operation)
+        elif package.source_type == "directory":
+            archive = self._prepare_directory_archive(operation)
+            cleanup_archive = True
         elif package.source_type == "url":
             assert package.source_url is not None
             archive = self._download_link(operation, Link(package.source_url))
@@ -495,14 +520,29 @@ class Executor:
             " <info>Installing...</info>"
         )
         self._write(operation, message)
-        return self.pip_install(archive, upgrade=operation.job_type == "update")
+
+        if not self._use_modern_installation:
+            return self.pip_install(archive, upgrade=operation.job_type == "update")
+
+        try:
+            if operation.job_type == "update":
+                # Uninstall first
+                # TODO: Make an uninstaller and find a way to rollback in case
+                # the new package can't be installed
+                assert isinstance(operation, Update)
+                self._remove(operation.initial_package)
+
+            self._wheel_installer.install(archive)
+        finally:
+            if cleanup_archive:
+                archive.unlink()
+
+        return 0
 
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
-    def _remove(self, operation: Uninstall) -> int:
-        package = operation.package
-
+    def _remove(self, package: Package) -> int:
         # If we have a VCS package, remove its source directory
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
@@ -517,7 +557,7 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Install | Update) -> Path:
+    def _prepare_archive(self, operation: Install | Update) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -532,9 +572,62 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
+        return self._chef.prepare(archive, editable=package.develop)
+
+    def _prepare_directory_archive(self, operation: Install | Update) -> Path:
+        package = operation.package
+        operation_message = self.get_operation_message(operation)
+
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            " <info>Building...</info>"
+        )
+        self._write(operation, message)
+
+        assert package.source_url is not None
+        if package.root_dir:
+            req = package.root_dir / package.source_url
+        else:
+            req = Path(package.source_url).resolve(strict=False)
+
+        if package.source_subdirectory:
+            req /= package.source_subdirectory
+
+        return self._prepare_archive(operation)
+
+    def _prepare_git_archive(self, operation: Install | Update) -> Path:
+        from poetry.vcs.git import Git
+
+        package = operation.package
+        operation_message = self.get_operation_message(operation)
+
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
+        )
+        self._write(operation, message)
+
+        assert package.source_url is not None
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
+
+        # Now we just need to install from the source directory
+        original_url = package.source_url
+        package._source_url = str(source.path)
+
+        archive = self._prepare_directory_archive(operation)
+
+        package._source_url = original_url
+
         return archive
 
-    def _install_directory(self, operation: Install | Update) -> int:
+    def _install_directory_without_wheel_installer(
+        self, operation: Install | Update
+    ) -> int:
+        from poetry.core.pyproject.toml import PyProjectTOML
+
         from poetry.factory import Factory
 
         package = operation.package
@@ -596,34 +689,6 @@ class Executor:
 
         return self.pip_install(req, upgrade=True, editable=package.develop)
 
-    def _install_git(self, operation: Install | Update) -> int:
-        from poetry.vcs.git import Git
-
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
-        )
-        self._write(operation, message)
-
-        assert package.source_url is not None
-        source = Git.clone(
-            url=package.source_url,
-            source_root=self._env.path / "src",
-            revision=package.source_resolved_reference or package.source_reference,
-        )
-
-        # Now we just need to install from the source directory
-        original_url = package.source_url
-        package._source_url = str(source.path)
-
-        status_code = self._install_directory(operation)
-
-        package._source_url = original_url
-
-        return status_code
-
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
 
@@ -644,6 +709,7 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
+        output_dir = self._chef.get_cache_directory_for_link(link)
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is None:
             # No cached distributions was found, so we download and prepare it
@@ -659,7 +725,16 @@ class Executor:
 
                 raise
 
-        if package.files:
+        if archive.suffix != ".whl":
+            message = (
+                f"  <fg=blue;options=bold>•</> {self.get_operation_message(operation)}:"
+                " <info>Preparing...</info>"
+            )
+            self._write(operation, message)
+
+            archive = self._chef.prepare(archive, output_dir=output_dir)
+
+        if package.files and archive.name in {f["file"] for f in package.files}:
             archive_hash = self._validate_archive_hash(archive, package)
 
             self._hashes[package.name] = archive_hash

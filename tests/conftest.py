@@ -279,12 +279,12 @@ def http() -> Iterator[type[httpretty.httpretty]]:
         yield httpretty
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fixture_base() -> Path:
     return Path(__file__).parent / "fixtures"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
     def _fixture_dir(name: str) -> Path:
         return fixture_base / name
