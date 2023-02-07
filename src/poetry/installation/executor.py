@@ -572,6 +572,8 @@ class Executor:
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
+        self._populate_hashes_dict(archive, package)
+
         return self._chef.prepare(archive, editable=package.develop)
 
     def _prepare_directory_archive(self, operation: Install | Update) -> Path:
@@ -734,12 +736,14 @@ class Executor:
 
             archive = self._chef.prepare(archive, output_dir=output_dir)
 
-        if package.files and archive.name in {f["file"] for f in package.files}:
-            archive_hash = self._validate_archive_hash(archive, package)
-
-            self._hashes[package.name] = archive_hash
+        self._populate_hashes_dict(archive, package)
 
         return archive
+
+    def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
+        if package.files and archive.name in {f["file"] for f in package.files}:
+            archive_hash = self._validate_archive_hash(archive, package)
+            self._hashes[package.name] = archive_hash
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
@@ -874,20 +878,12 @@ class Executor:
         return reference
 
     def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
-        archive_info = {}
+        archive_info = self._get_archive_info(package)
 
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
-
-        reference = {"url": package.source_url, "archive_info": archive_info}
-
-        return reference
+        return {"url": package.source_url, "archive_info": archive_info}
 
     def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
-        archive_info = {}
-
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
+        archive_info = self._get_archive_info(package)
 
         assert package.source_url is not None
         return {
@@ -906,3 +902,20 @@ class Executor:
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
+
+    def _get_archive_info(self, package: Package) -> dict[str, Any]:
+        """
+        Create dictionary `archive_info` for file `direct_url.json`.
+
+        Specification: https://packaging.python.org/en/latest/specifications/direct-url
+        (it supersedes PEP 610)
+
+        :param package: This must be a poetry package instance.
+        """
+        archive_info = {}
+
+        if package.name in self._hashes:
+            algorithm, value = self._hashes[package.name].split(":")
+            archive_info["hashes"] = {algorithm: value}
+
+        return archive_info
