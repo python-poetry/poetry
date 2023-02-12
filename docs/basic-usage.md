@@ -219,7 +219,11 @@ but they may not all be at the very latest available versions
 (some dependencies listed in the `poetry.lock` file may have released newer versions since the file was created).
 This is by design, it ensures that your project does not break because of unexpected changes in dependencies.
 
-### Commit your `poetry.lock` file to version control
+### Committing your `poetry.lock` file to version control
+
+#### As an application developer
+
+Application developers commit `poetry.lock` to get more reproducible builds.
 
 Committing this file to VC is important because it will cause anyone who sets up the project
 to use the exact same versions of the dependencies that you are using.
@@ -230,9 +234,13 @@ Even if you develop alone, in six months when reinstalling the project you can f
 the dependencies installed are still working even if your dependencies released many new versions since then.
 (See note below about using the update command.)
 
-{{% note %}}
-For libraries it is not necessary to commit the lock file.
-{{% /note %}}
+#### As a library developer
+
+Library developers have more to consider. Your users are application developers, and your library will run in a Python environment you don't control. The application ignores your library's lock file. It can use whatever version meets your library's dependency declarations. The application will probably use the latest compatible dependency. If your library's poetry.lock falls behind some new version that breaks things for consumers of your library, you're likely to be the last to find out about it.
+
+To work with your library as users are likely to, omit the poetry.lock file.
+
+If you still want the reproducibility benefits, consider a regular refresh of `poetry.lock` to stay up-to-date to make sure you don't break suddenly for users.
 
 ### Installing dependencies only
 
