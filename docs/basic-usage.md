@@ -236,11 +236,13 @@ the dependencies installed are still working even if your dependencies released 
 
 #### As a library developer
 
-Library developers have more to consider. Your users are application developers, and your library will run in a Python environment you don't control. The application ignores your library's lock file. It can use whatever version meets your library's dependency declarations. The application will probably use the latest compatible dependency. If your library's poetry.lock falls behind some new version that breaks things for consumers of your library, you're likely to be the last to find out about it.
+Library developers have more to consider. Your users are application developers, and your library will run in a Python environment you don't control.
 
-To work with your library as users are likely to, omit the poetry.lock file.
+The application ignores your library's lock file. It can use whatever dependency version meets the constraints in your `pyproject.toml`. The application will probably use the latest compatible dependency version. If your library's `poetry.lock` falls behind some new dependency version that breaks things for your users, you're likely to be the last to find out about it.
 
-If you still want the reproducibility benefits, consider a regular refresh of `poetry.lock` to stay up-to-date to make sure you don't break suddenly for users.
+To work with your library as users are likely to, omit the `poetry.lock` file.
+
+If you still want the reproducibility benefits, consider a regular refresh of `poetry.lock` to stay up-to-date and reduce the risk of sudden breakage for users.
 
 ### Installing dependencies only
 
