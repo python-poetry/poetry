@@ -36,11 +36,10 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Iterator[Path]:
-    cwd = os.getcwd()
-
+    cwd = Path.cwd()
     try:
-        os.chdir(str(tmp_path))
-        yield Path(tmp_path.as_posix())
+        os.chdir(tmp_path)
+        yield tmp_path
     finally:
         os.chdir(cwd)
 

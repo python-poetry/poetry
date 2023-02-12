@@ -617,7 +617,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 )
 
             cwd = Path.cwd()
-            os.chdir(path.as_posix())
+            os.chdir(path)
             try:
                 venv.run("python", "setup.py", "egg_info")
                 info = PackageInfo.from_metadata(path)
@@ -626,7 +626,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                     path, "Fallback egg_info generation failed.", fbe
                 )
             finally:
-                os.chdir(cwd.as_posix())
+                os.chdir(cwd)
 
     if info:
         logger.debug("Falling back to parsed setup.py file for %s", path)

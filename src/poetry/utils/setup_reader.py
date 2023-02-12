@@ -3,10 +3,14 @@ from __future__ import annotations
 import ast
 
 from configparser import ConfigParser
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.constraints.version import Version
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class SetupReader:
@@ -25,10 +29,7 @@ class SetupReader:
     FILES = ["setup.py", "setup.cfg"]
 
     @classmethod
-    def read_from_directory(cls, directory: str | Path) -> dict[str, Any]:
-        if isinstance(directory, str):
-            directory = Path(directory)
-
+    def read_from_directory(cls, directory: Path) -> dict[str, Any]:
         result = cls.DEFAULT.copy()
         for filename in cls.FILES:
             filepath = directory / filename
@@ -44,10 +45,7 @@ class SetupReader:
 
         return result
 
-    def read_setup_py(self, filepath: str | Path) -> dict[str, Any]:
-        if isinstance(filepath, str):
-            filepath = Path(filepath)
-
+    def read_setup_py(self, filepath: Path) -> dict[str, Any]:
         with filepath.open(encoding="utf-8") as f:
             content = f.read()
 
@@ -71,7 +69,7 @@ class SetupReader:
 
         return result
 
-    def read_setup_cfg(self, filepath: str | Path) -> dict[str, Any]:
+    def read_setup_cfg(self, filepath: Path) -> dict[str, Any]:
         parser = ConfigParser()
 
         parser.read(str(filepath))
