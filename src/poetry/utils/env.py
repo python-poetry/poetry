@@ -463,15 +463,16 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
         self.e = e
 
-        message = (
-            f"Command {e.cmd} errored with the following return code {e.returncode}\n"
-            f"Full output:\n{decode(e.output)}\n"
-        )
+        message_parts = [
+            f"Command {e.cmd} errored with the following return code {e.returncode}"
+        ]
+        if e.output:
+            message_parts.append(f"Output:\n{decode(e.output)}")
         if e.stderr:
-            message += f"\nError output:\n{decode(e.stderr)}\n"
+            message_parts.append(f"Error output:\n{decode(e.stderr)}")
         if input:
-            message += f"\ninput was : {input}"
-        super().__init__(message)
+            message_parts.append(f"Input:\n{input}")
+        super().__init__("\n\n".join(message_parts))
 
 
 class NoCompatiblePythonVersionFound(EnvError):
@@ -1535,7 +1536,9 @@ class Env:
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
+                return subprocess.call(
+                    cmd, stdout=subprocess.PIPE, stderr=stderr, env=env, **kwargs
+                )
             else:
                 output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
