@@ -325,7 +325,7 @@ class Git:
         return local
 
     @classmethod
-    def _clone_submodules(cls, repo: Repo, main_url: str) -> None:
+    def _clone_submodules(cls, repo: Repo) -> None:
         """
         Helper method to identify configured submodules and clone them recursively.
         """
@@ -440,7 +440,7 @@ class Git:
         try:
             if not cls.is_using_legacy_client():
                 local = cls._clone(url=url, refspec=refspec, target=target)
-                cls._clone_submodules(repo=local, main_url=url)
+                cls._clone_submodules(repo=local)
                 return local
         except HTTPUnauthorized:
             # we do this here to handle http authenticated repositories as dulwich
