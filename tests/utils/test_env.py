@@ -94,7 +94,7 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
 
     venv = VirtualEnv(venv_path)
 
-    assert venv.run("python", "-V", shell=True).startswith("Python")
+    assert venv.run("python", "-V").startswith("Python")
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
@@ -124,7 +124,7 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     venv_path = Path(tmp_dir) / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
-    assert venv.run("python", venv.pip, "--version", shell=True).startswith(
+    assert venv.run("python", venv.pip, "--version").startswith(
         f"pip {venv.pip_version} from "
     )
 
@@ -135,9 +135,7 @@ def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
     venv_path = Path(tmp_dir) / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
-    run_output_path = Path(
-        venv.run("python", "-", input_=GET_BASE_PREFIX, shell=True).strip()
-    )
+    run_output_path = Path(venv.run("python", "-", input_=GET_BASE_PREFIX).strip())
     venv_base_prefix_path = Path(str(venv.get_base_prefix()))
     assert run_output_path.resolve() == venv_base_prefix_path.resolve()
 
@@ -189,15 +187,18 @@ VERSION_3_7_1 = Version.parse("3.7.1")
 
 def check_output_wrapper(
     version: Version = VERSION_3_7_1,
-) -> Callable[[str, Any, Any], str]:
-    def check_output(cmd: str, *args: Any, **kwargs: Any) -> str:
-        if "sys.version_info[:3]" in cmd:
+) -> Callable[[list[str], Any, Any], str]:
+    def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
+        # cmd is a list, like ["python", "-c", "do stuff"]
+        python_cmd = cmd[2]
+        if "sys.version_info[:3]" in python_cmd:
             return version.text
-        elif "sys.version_info[:2]" in cmd:
+        elif "sys.version_info[:2]" in python_cmd:
             return f"{version.major}.{version.minor}"
-        elif '-c "import sys; print(sys.executable)"' in cmd:
-            return f"/usr/bin/{cmd.split()[0]}"
+        elif "import sys; print(sys.executable)" in python_cmd:
+            return f"/usr/bin/{cmd[0]}"
         else:
+            assert "import sys; print(sys.prefix)" in python_cmd
             return str(Path("/prefix"))
 
     return check_output

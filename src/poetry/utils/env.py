@@ -40,7 +40,6 @@ from virtualenv.seed.wheels.embed import get_embed_wheel
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
-from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import get_real_windows_path
 from poetry.utils.helpers import is_dir_writable
@@ -171,9 +170,9 @@ print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
 
 GET_PYTHON_VERSION_ONELINER = (
-    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
+    "import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))"
 )
-GET_ENV_PATH_ONELINER = '"import sys; print(sys.prefix)"'
+GET_ENV_PATH_ONELINER = "import sys; print(sys.prefix)"
 
 GET_SYS_PATH = """\
 import json
@@ -522,10 +521,7 @@ class EnvManager:
         try:
             executable = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [python, "-c", '"import sys; print(sys.executable)"']
-                    ),
-                    shell=True,
+                    [python, "-c", "import sys; print(sys.executable)"],
                 ).strip()
             )
         except CalledProcessError as e:
@@ -572,10 +568,7 @@ class EnvManager:
             if executable:
                 python_patch = decode(
                     subprocess.check_output(
-                        list_to_shell_command(
-                            [executable, "-c", GET_PYTHON_VERSION_ONELINER]
-                        ),
-                        shell=True,
+                        [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                     ).strip()
                 )
 
@@ -603,8 +596,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
-                    shell=True,
+                    [python, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -799,8 +791,7 @@ class EnvManager:
             try:
                 env_dir = decode(
                     subprocess.check_output(
-                        list_to_shell_command([python, "-c", GET_ENV_PATH_ONELINER]),
-                        shell=True,
+                        [python, "-c", GET_ENV_PATH_ONELINER],
                     )
                 ).strip("\n")
                 env_name = Path(env_dir).name
@@ -859,8 +850,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
-                    shell=True,
+                    [python, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -935,10 +925,7 @@ class EnvManager:
         if executable:
             python_patch = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [executable, "-c", GET_PYTHON_VERSION_ONELINER]
-                    ),
-                    shell=True,
+                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                 ).strip()
             )
             python_minor = ".".join(python_patch.split(".")[:2])
@@ -985,11 +972,8 @@ class EnvManager:
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            list_to_shell_command(
-                                [python, "-c", GET_PYTHON_VERSION_ONELINER]
-                            ),
+                            [python, "-c", GET_PYTHON_VERSION_ONELINER],
                             stderr=subprocess.STDOUT,
-                            shell=True,
                         ).strip()
                     )
                 except CalledProcessError:
@@ -1531,18 +1515,9 @@ class Env:
         env = kwargs.pop("env", dict(os.environ))
 
         try:
-            if self._is_windows:
-                kwargs["shell"] = True
-
-            command: str | list[str]
-            if kwargs.get("shell", False):
-                command = list_to_shell_command(cmd)
-            else:
-                command = cmd
-
             if input_:
                 output = subprocess.run(
-                    command,
+                    cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     input=encode(input_),
@@ -1550,12 +1525,10 @@ class Env:
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
+                return subprocess.call(cmd, stderr=subprocess.STDOUT, env=env, **kwargs)
             else:
                 output = subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
+                    cmd, stderr=subprocess.STDOUT, env=env, **kwargs
                 )
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
@@ -1570,7 +1543,7 @@ class Env:
             return os.execvpe(command[0], command, env=env)
 
         kwargs["shell"] = True
-        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
         return exe.returncode
 
@@ -1909,7 +1882,7 @@ class GenericEnv(VirtualEnv):
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
 
-        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
 
         return exe.returncode
