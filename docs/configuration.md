@@ -12,7 +12,7 @@ menu:
 # Configuration
 
 Poetry can be configured via the `config` command ([see more about its usage here]({{< relref "cli#config" >}} "config command documentation"))
-or directly in the `config.toml` file that will be automatically be created when you first run that command.
+or directly in the `config.toml` file that will be automatically created when you first run that command.
 This file can typically be found in one of the following directories:
 
 - macOS:   `~/Library/Preferences/pypoetry`
