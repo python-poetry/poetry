@@ -94,7 +94,7 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
 
     venv = VirtualEnv(venv_path)
 
-    assert venv.run("python", "-V", shell=True).startswith("Python")
+    assert venv.run("python", "-V").startswith("Python")
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
@@ -124,7 +124,7 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     venv_path = Path(tmp_dir) / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
-    assert venv.run("python", venv.pip, "--version", shell=True).startswith(
+    assert venv.run("python", venv.pip, "--version").startswith(
         f"pip {venv.pip_version} from "
     )
 
@@ -135,9 +135,7 @@ def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
     venv_path = Path(tmp_dir) / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
-    run_output_path = Path(
-        venv.run("python", "-", input_=GET_BASE_PREFIX, shell=True).strip()
-    )
+    run_output_path = Path(venv.run("python", "-", input_=GET_BASE_PREFIX).strip())
     venv_base_prefix_path = Path(str(venv.get_base_prefix()))
     assert run_output_path.resolve() == venv_base_prefix_path.resolve()
 
@@ -189,15 +187,18 @@ VERSION_3_7_1 = Version.parse("3.7.1")
 
 def check_output_wrapper(
     version: Version = VERSION_3_7_1,
-) -> Callable[[str, Any, Any], str]:
-    def check_output(cmd: str, *args: Any, **kwargs: Any) -> str:
-        if "sys.version_info[:3]" in cmd:
+) -> Callable[[list[str], Any, Any], str]:
+    def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
+        # cmd is a list, like ["python", "-c", "do stuff"]
+        python_cmd = cmd[2]
+        if "sys.version_info[:3]" in python_cmd:
             return version.text
-        elif "sys.version_info[:2]" in cmd:
+        elif "sys.version_info[:2]" in python_cmd:
             return f"{version.major}.{version.minor}"
-        elif '-c "import sys; print(sys.executable)"' in cmd:
-            return f"/usr/bin/{cmd.split()[0]}"
+        elif "import sys; print(sys.executable)" in python_cmd:
+            return f"/usr/bin/{cmd[0]}"
         else:
+            assert "import sys; print(sys.prefix)" in python_cmd
             return str(Path("/prefix"))
 
     return check_output
@@ -946,35 +947,89 @@ def test_run_with_called_process_error(
     tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
-        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
     )
-    with pytest.raises(EnvCommandError):
+    with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
     subprocess.run.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
 
 
 def test_call_with_input_and_called_process_error(
     tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
-        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
     )
     kwargs = {"call": True}
-    with pytest.raises(EnvCommandError):
+    with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
     subprocess.run.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
 
 
 def test_call_no_input_with_called_process_error(
     tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
-        "subprocess.call", side_effect=subprocess.CalledProcessError(42, "some_command")
+        "subprocess.call",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
     )
     kwargs = {"call": True}
-    with pytest.raises(EnvCommandError):
+    with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", **kwargs)
     subprocess.call.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
+
+
+def test_check_output_with_called_process_error(
+    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+):
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
+    )
+    with pytest.raises(EnvCommandError) as error:
+        tmp_venv.run("python", "-")
+    subprocess.check_output.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
+
+
+def test_run_python_script_called_process_error(
+    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+):
+    mocker.patch(
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
+    )
+    with pytest.raises(EnvCommandError) as error:
+        tmp_venv.run_python_script(MINIMAL_SCRIPT)
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
+
+
+def test_run_python_script_only_stdout(tmp_dir: str, tmp_venv: VirtualEnv):
+    output = tmp_venv.run_python_script(
+        "import sys; print('some warning', file=sys.stderr); print('some output')"
+    )
+    assert "some output" in output
+    assert "some warning" not in output
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(  # noqa: E501
@@ -1155,7 +1210,8 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         del os.environ["VIRTUAL_ENV"]
 
     version = Version.from_parts(*sys.version_info[:3])
-    poetry.package.python_versions = f"~{version.major}.{version.minor-1}.0"
+    poetry.package.python_versions = f"~{version.major}.{version.minor - 1}.0"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -1266,6 +1322,7 @@ def test_system_env_has_correct_paths():
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
     assert env.site_packages.path == Path(paths["purelib"])
+    assert paths["include"] is not None
 
 
 @pytest.mark.parametrize(
@@ -1287,6 +1344,11 @@ def test_venv_has_correct_paths(tmp_venv: VirtualEnv):
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
     assert tmp_venv.site_packages.path == Path(paths["purelib"])
+    assert paths["include"] == str(
+        tmp_venv.path.joinpath(
+            f"include/site/python{tmp_venv.version_info[0]}.{tmp_venv.version_info[1]}"
+        )
+    )
 
 
 def test_env_system_packages(tmp_path: Path, poetry: Poetry):

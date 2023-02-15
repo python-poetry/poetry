@@ -54,6 +54,7 @@ def test_list_displays_default_value_if_not_set(
 experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
+installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = true
@@ -83,6 +84,7 @@ def test_list_displays_set_get_setting(
 experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
+installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = false
@@ -136,6 +138,7 @@ def test_list_displays_set_get_local_setting(
 experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
+installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 virtualenvs.create = false

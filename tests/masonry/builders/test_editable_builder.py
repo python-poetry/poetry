@@ -68,6 +68,15 @@ def extended_without_setup_poetry() -> Poetry:
     return poetry
 
 
+@pytest.fixture
+def with_multiple_readme_files() -> Poetry:
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent / "fixtures" / "with_multiple_readme_files"
+    )
+
+    return poetry
+
+
 @pytest.fixture()
 def env_manager(simple_poetry: Poetry) -> EnvManager:
     return EnvManager(simple_poetry)
@@ -285,6 +294,44 @@ def test_builder_installs_proper_files_when_packages_configured(
 
     assert paths.issubset(expected)
     assert len(paths) == len(expected)
+
+
+def test_builder_generates_proper_metadata_when_multiple_readme_files(
+    with_multiple_readme_files: Poetry, tmp_venv: VirtualEnv
+):
+    builder = EditableBuilder(with_multiple_readme_files, tmp_venv, NullIO())
+
+    builder.build()
+
+    dist_info = "my_package-0.1.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info)
+
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
+    assert dist_info.joinpath("METADATA").exists()
+
+    metadata = """\
+Metadata-Version: 2.1
+Name: my-package
+Version: 0.1
+Summary: Some description.
+Home-page: https://python-poetry.org
+License: MIT
+Author: Your Name
+Author-email: you@example.com
+Requires-Python: >=2.7,<3.0
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Description-Content-Type: text/x-rst
+
+Single Python
+=============
+
+Changelog
+=========
+
+"""
+    assert dist_info.joinpath("METADATA").read_text(encoding="utf-8") == metadata
 
 
 def test_builder_should_execute_build_scripts(
