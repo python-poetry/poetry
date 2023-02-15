@@ -208,7 +208,7 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific [build](#build) format you can specify
+If you want to restrict a package to a specific build format you can specify
 it by using `format`:
 
 ```toml
