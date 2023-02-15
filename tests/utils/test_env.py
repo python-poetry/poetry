@@ -947,35 +947,89 @@ def test_run_with_called_process_error(
     tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
-        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
     )
-    with pytest.raises(EnvCommandError):
+    with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
     subprocess.run.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
 
 
 def test_call_with_input_and_called_process_error(
     tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
-        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
     )
     kwargs = {"call": True}
-    with pytest.raises(EnvCommandError):
+    with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
     subprocess.run.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
 
 
 def test_call_no_input_with_called_process_error(
     tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
 ):
     mocker.patch(
-        "subprocess.call", side_effect=subprocess.CalledProcessError(42, "some_command")
+        "subprocess.call",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
     )
     kwargs = {"call": True}
-    with pytest.raises(EnvCommandError):
+    with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", **kwargs)
     subprocess.call.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
+
+
+def test_check_output_with_called_process_error(
+    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+):
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
+    )
+    with pytest.raises(EnvCommandError) as error:
+        tmp_venv.run("python", "-")
+    subprocess.check_output.assert_called_once()
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
+
+
+def test_run_python_script_called_process_error(
+    tmp_dir: str, tmp_venv: VirtualEnv, mocker: MockerFixture
+):
+    mocker.patch(
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            42, "some_command", "some output", "some error"
+        ),
+    )
+    with pytest.raises(EnvCommandError) as error:
+        tmp_venv.run_python_script(MINIMAL_SCRIPT)
+    assert "some output" in str(error.value)
+    assert "some error" in str(error.value)
+
+
+def test_run_python_script_only_stdout(tmp_dir: str, tmp_venv: VirtualEnv):
+    output = tmp_venv.run_python_script(
+        "import sys; print('some warning', file=sys.stderr); print('some output')"
+    )
+    assert "some output" in output
+    assert "some warning" not in output
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(  # noqa: E501
