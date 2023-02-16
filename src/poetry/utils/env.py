@@ -463,13 +463,16 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
         self.e = e
 
-        message = (
-            f"Command {e.cmd} errored with the following return code {e.returncode},"
-            f" and output: \n{decode(e.output)}"
-        )
+        message_parts = [
+            f"Command {e.cmd} errored with the following return code {e.returncode}"
+        ]
+        if e.output:
+            message_parts.append(f"Output:\n{decode(e.output)}")
+        if e.stderr:
+            message_parts.append(f"Error output:\n{decode(e.stderr)}")
         if input:
-            message += f"input was : {input}"
-        super().__init__(message)
+            message_parts.append(f"Input:\n{input}")
+        super().__init__("\n\n".join(message_parts))
 
 
 class NoCompatiblePythonVersionFound(EnvError):
@@ -1503,7 +1506,14 @@ class Env:
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
         return self.run(
-            self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
+            self._executable,
+            "-I",
+            "-W",
+            "ignore",
+            "-",
+            input_=content,
+            stderr=subprocess.PIPE,
+            **kwargs,
         )
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
@@ -1513,23 +1523,24 @@ class Env:
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
         env = kwargs.pop("env", dict(os.environ))
+        stderr = kwargs.pop("stderr", subprocess.STDOUT)
 
         try:
             if input_:
                 output = subprocess.run(
                     cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    stderr=stderr,
                     input=encode(input_),
                     check=True,
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(cmd, stderr=subprocess.STDOUT, env=env, **kwargs)
-            else:
-                output = subprocess.check_output(
-                    cmd, stderr=subprocess.STDOUT, env=env, **kwargs
+                return subprocess.call(
+                    cmd, stdout=subprocess.PIPE, stderr=stderr, env=env, **kwargs
                 )
+            else:
+                output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
 
