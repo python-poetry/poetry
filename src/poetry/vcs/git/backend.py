@@ -333,7 +333,7 @@ class Git:
         modules_config = repo_root.joinpath(".gitmodules")
 
         # A relative URL by definition starts with ../ or ./
-        relative_submodule_regex = re.compile("^(\\.\\./|\\./),?")
+        relative_submodule_regex = re.compile(r"^(\.{1,2})/?")
 
         if modules_config.exists():
             config = ConfigFile.from_path(str(modules_config))
@@ -347,12 +347,8 @@ class Git:
                 path_absolute = repo_root.joinpath(path_relative)
 
                 url_string = url.decode("utf-8")
-                final_url = url_string
-                submodule_is_relative = bool(
-                    relative_submodule_regex.search(url_string)
-                )
-                if submodule_is_relative:
-                    final_url = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
+                if relative_submodule_regex.search(url_string):
+                    url_string = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
 
                 source_root = path_absolute.parent
                 source_root.mkdir(parents=True, exist_ok=True)
@@ -370,7 +366,7 @@ class Git:
                         continue
 
                 cls.clone(
-                    url=final_url,
+                    url=url_string,
                     source_root=source_root,
                     name=path_relative.name,
                     revision=revision,
