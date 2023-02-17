@@ -257,6 +257,42 @@ def test_only_root_conflicts_with_without_only(
     )
 
 
+@pytest.mark.parametrize(
+    ("options", "valid_groups"),
+    [
+        ({"--with": MAIN_GROUP}, {MAIN_GROUP}),
+        ({"--with": "spam"}, set()),
+        ({"--with": "spam,foo"}, {"foo"}),
+        ({"--without": "spam"}, set()),
+        ({"--without": "spam,bar"}, {"bar"}),
+        ({"--with": "eggs,ham", "--without": "spam"}, set()),
+        ({"--with": "eggs,ham", "--without": "spam,baz"}, {"baz"}),
+        ({"--only": "spam"}, set()),
+        ({"--only": "bim"}, {"bim"}),
+        ({"--only": MAIN_GROUP}, {MAIN_GROUP}),
+    ],
+)
+def test_invalid_groups_with_without_only(
+    tester: CommandTester,
+    mocker: MockerFixture,
+    options: dict[str, str],
+    valid_groups: set[str],
+):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    cmd_args = " ".join(f"{flag} {groups}" for (flag, groups) in options.items())
+    tester.execute(cmd_args)
+
+    assert tester.status_code == 0
+
+    io_error = tester.io.fetch_error()
+    for opt, groups in options.items():
+        group_list = groups.split(",")
+        invalid_groups = ",".join(sorted(set(group_list) - valid_groups))
+        if invalid_groups:
+            assert f"Invalid {invalid_groups} provided to {opt}." in io_error
+
+
 def test_remove_untracked_outputs_deprecation_warning(
     tester: CommandTester,
     mocker: MockerFixture,

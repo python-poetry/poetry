@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
@@ -78,6 +79,7 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
+        self.validate_groups(groups)
 
         for opt, new, group in [
             ("no-dev", "only", MAIN_GROUP),
@@ -107,3 +109,33 @@ class GroupCommand(Command):
         return self.poetry.package.with_dependency_groups(
             list(self.activated_groups), only=True
         )
+
+    def validate_groups(self, group_options: dict[str, set[str]]) -> bool:
+        """
+        Currently issues a warning if it detects that a group is
+        not part of pyproject.toml
+
+        Can be overridden to adapt behavior.
+        """
+        invalid_options = defaultdict(set)
+        for opt, groups in group_options.items():
+            for group in groups:
+                try:
+                    self.poetry.package.dependency_group(group)
+                except ValueError:
+                    invalid_options[opt].add(group)
+        if invalid_options:
+            line_err = (
+                "<warning>The <fg=yellow;options=bold>--with</>, "
+                "<fg=yellow;options=bold>--without</>, "
+                "and <fg=yellow;options=bold>--only</> "
+                "options may only have valid groups."
+            )
+            for opt, invalid_groups in invalid_options.items():
+                line_err += (
+                    " <fg=red;options=bold>Invalid"
+                    f" {','.join(sorted(invalid_groups))} provided to --{opt}.</>"
+                )
+            line_err += "</warning>"
+            self.line_error(line_err)
+        return len(invalid_options) == 0
