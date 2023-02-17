@@ -333,7 +333,7 @@ class Git:
         modules_config = repo_root.joinpath(".gitmodules")
 
         # A relative URL by definition starts with ../ or ./
-        relative_submodule_regex = re.compile(r"^(\.{1,2})/?")
+        relative_submodule_regex = re.compile(r"^\.{1,2}/")
 
         if modules_config.exists():
             config = ConfigFile.from_path(str(modules_config))
