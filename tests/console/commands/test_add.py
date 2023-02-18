@@ -2233,7 +2233,6 @@ Resolving dependencies...
 
   BuildError
 
-Writing lock file
 """
 
     assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content

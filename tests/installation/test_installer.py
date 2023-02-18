@@ -2416,6 +2416,28 @@ def test_installer_can_handle_old_lock_files(
     assert installer.executor.installations_count == 8
 
 
+def test_installer_does_not_write_lock_file_when_installation_fails(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
+):
+    repo.add_package(get_package("A", "1.0"))
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+
+    locker.locked(False)
+
+    mocker.patch("poetry.installation.installer.Installer._execute", return_value=1)
+    installer.run()
+
+    assert locker._lock_data is None
+
+    assert installer.executor.installations_count == 0
+    assert installer.executor.updates_count == 0
+    assert installer.executor.removals_count == 0
+
+
 @pytest.mark.parametrize("quiet", [True, False])
 def test_run_with_dependencies_quiet(
     installer: Installer,
