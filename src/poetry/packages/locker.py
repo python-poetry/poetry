@@ -224,6 +224,18 @@ class Locker:
         return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
+        """Store lock data and eventually persist to the lock file"""
+        lock = self._compute_lock_data(root, packages)
+
+        if self._should_write(lock):
+            self._write_lock_data(lock)
+            return True
+
+        return False
+
+    def _compute_lock_data(
+        self, root: Package, packages: list[Package]
+    ) -> TOMLDocument:
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
@@ -254,6 +266,10 @@ class Locker:
             "content-hash": self._content_hash,
         }
 
+        return lock
+
+    def _should_write(self, lock: TOMLDocument) -> bool:
+        # if lock file exists: compare with existing lock data
         do_write = True
         if self.is_locked():
             try:
@@ -263,8 +279,6 @@ class Locker:
                 pass
             else:
                 do_write = lock != lock_data
-        if do_write:
-            self._write_lock_data(lock)
         return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
