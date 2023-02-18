@@ -16,6 +16,8 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
@@ -2200,3 +2202,40 @@ def test_add_with_dry_run_keep_files_intact(
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )
+
+
+def test_add_should_not_change_lock_file_when_dependency_installation_fail(
+    poetry_with_up_to_date_lockfile: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+):
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+
+    repo.add_package(get_package("docker", "4.3.1"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile.locker.lock_data
+
+    def error(_: Any) -> int:
+        tester.io.write("\n  BuildError\n\n")
+        return 1
+
+    mocker.patch("poetry.installation.installer.Installer._execute", side_effect=error)
+    tester.execute("cachy")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+  BuildError
+
+Writing lock file
+"""
+
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert poetry_with_up_to_date_lockfile.locker.lock_data == original_lockfile_content
+    assert tester.io.fetch_output() == expected
