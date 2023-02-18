@@ -72,11 +72,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -102,11 +102,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
@@ -121,11 +121,11 @@ Package operations: 1 install, 0 updates, 0 removals
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.1.0)
+
+Writing lock file
 """
     assert tester.io.fetch_output() == expected
 
@@ -169,11 +169,11 @@ def test_add_equal_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -193,11 +193,11 @@ def test_add_greater_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -227,12 +227,12 @@ def test_add_constraint_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing msgpack-python (0.5.3)
   • Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -257,12 +257,12 @@ def test_add_constraint_dependencies(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing msgpack-python (0.5.3)
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -287,12 +287,12 @@ def test_add_git_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -323,12 +323,12 @@ def test_add_git_constraint_with_poetry(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -356,14 +356,14 @@ def test_add_git_constraint_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   • Installing cleo (0.6.5)
   • Installing pendulum (1.4.4)
   • Installing tomlkit (0.5.5)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output().strip() == expected.strip()
@@ -402,11 +402,11 @@ def test_add_git_constraint_with_subdirectory(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing two (2.0.0 9cf87a2)
+
+Writing lock file
 """
     assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 1
@@ -446,12 +446,12 @@ def test_add_git_ssh_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -493,12 +493,12 @@ def test_add_directory_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -534,12 +534,12 @@ def test_add_directory_with_poetry(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -566,12 +566,12 @@ def test_add_file_constraint_wheel(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -602,12 +602,12 @@ def test_add_file_constraint_sdist(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -642,12 +642,12 @@ def test_add_constraint_with_extras_option(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing msgpack-python (0.5.3)
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -682,13 +682,13 @@ def test_add_url_constraint_wheel(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -724,8 +724,6 @@ def test_add_url_constraint_wheel_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   • Installing cleo (0.6.5)
@@ -733,6 +731,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing tomlkit (0.5.5)
   • Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
     # Order might be different, split into lines and compare the overall output.
     expected = set(expected.splitlines())
@@ -766,11 +766,11 @@ def test_add_constraint_with_python(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -804,11 +804,11 @@ def test_add_constraint_with_platform(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -855,11 +855,11 @@ def test_add_constraint_with_source(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -917,11 +917,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -964,11 +964,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_error() == warning
@@ -995,11 +995,11 @@ Using version ^3.13 for pyyaml
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing pyyaml (3.13)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -1114,11 +1114,11 @@ Using version ^1.1.2 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.1.2)
+
+Writing lock file
 """
 
     assert expected in tester.io.fetch_output()
@@ -1143,11 +1143,11 @@ Using version ^1.2.3b1 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3b1)
+
+Writing lock file
 """
     assert expected in tester.io.fetch_output()
 
@@ -1166,11 +1166,11 @@ Using version ^1.2.3 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3)
+
+Writing lock file
 """
 
     assert expected in tester.io.fetch_output()
@@ -1214,11 +1214,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1247,11 +1247,11 @@ def test_add_equal_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1275,11 +1275,11 @@ def test_add_greater_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1311,12 +1311,12 @@ def test_add_constraint_with_extras_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1345,12 +1345,12 @@ def test_add_constraint_dependencies_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1374,12 +1374,12 @@ def test_add_git_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1409,12 +1409,12 @@ def test_add_git_constraint_with_poetry_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1441,14 +1441,14 @@ def test_add_git_constraint_with_extras_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   - Installing cleo (0.6.5)
   - Installing pendulum (1.4.4)
   - Installing tomlkit (0.5.5)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1480,12 +1480,12 @@ def test_add_git_ssh_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1522,12 +1522,12 @@ def test_add_directory_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1560,12 +1560,12 @@ def test_add_directory_with_poetry_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1593,12 +1593,12 @@ def test_add_file_constraint_wheel_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1631,12 +1631,12 @@ def test_add_file_constraint_sdist_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1673,12 +1673,12 @@ def test_add_constraint_with_extras_option_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1715,13 +1715,13 @@ def test_add_url_constraint_wheel_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1758,8 +1758,6 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   - Installing cleo (0.6.5)
@@ -1767,6 +1765,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing tomlkit (0.5.5)
   - Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1802,11 +1802,11 @@ def test_add_constraint_with_python_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1842,11 +1842,11 @@ def test_add_constraint_with_platform_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1895,11 +1895,11 @@ def test_add_constraint_with_source_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1961,11 +1961,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1995,11 +1995,11 @@ Using version ^3.13 for pyyaml
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing pyyaml (3.13)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -2060,11 +2060,11 @@ Using version ^1.1.2 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.1.2)
+
+Writing lock file
 """
 
     assert expected in old_tester.io.fetch_output()
@@ -2092,11 +2092,11 @@ Using version ^1.2.3b1 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
+
+Writing lock file
 """
     assert expected in old_tester.io.fetch_output()
 
@@ -2118,11 +2118,11 @@ Using version ^1.2.3 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3)
+
+Writing lock file
 """
 
     assert expected in old_tester.io.fetch_output()

@@ -71,12 +71,12 @@ Using version ^{new_version} for poetry
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 0 installs, 2 updates, 0 removals
 
   • Updating cleo (0.8.2 -> 1.0.0)
   • Updating poetry ({__version__} -> {new_version})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected_output
