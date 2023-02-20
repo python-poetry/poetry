@@ -4,6 +4,7 @@ import itertools
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -40,6 +41,10 @@ RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
 
 class Installer(BaseInstaller):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._use_executor = False
+
     def _get_installer(self) -> NoopInstaller:
         return NoopInstaller()
 

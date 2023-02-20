@@ -40,7 +40,6 @@ from virtualenv.seed.wheels.embed import get_embed_wheel
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
-from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import get_real_windows_path
 from poetry.utils.helpers import is_dir_writable
@@ -171,9 +170,9 @@ print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
 
 GET_PYTHON_VERSION_ONELINER = (
-    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
+    "import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))"
 )
-GET_ENV_PATH_ONELINER = '"import sys; print(sys.prefix)"'
+GET_ENV_PATH_ONELINER = "import sys; print(sys.prefix)"
 
 GET_SYS_PATH = """\
 import json
@@ -464,13 +463,16 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
         self.e = e
 
-        message = (
-            f"Command {e.cmd} errored with the following return code {e.returncode},"
-            f" and output: \n{decode(e.output)}"
-        )
+        message_parts = [
+            f"Command {e.cmd} errored with the following return code {e.returncode}"
+        ]
+        if e.output:
+            message_parts.append(f"Output:\n{decode(e.output)}")
+        if e.stderr:
+            message_parts.append(f"Error output:\n{decode(e.stderr)}")
         if input:
-            message += f"input was : {input}"
-        super().__init__(message)
+            message_parts.append(f"Input:\n{input}")
+        super().__init__("\n\n".join(message_parts))
 
 
 class NoCompatiblePythonVersionFound(EnvError):
@@ -522,10 +524,7 @@ class EnvManager:
         try:
             executable = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [python, "-c", '"import sys; print(sys.executable)"']
-                    ),
-                    shell=True,
+                    [python, "-c", "import sys; print(sys.executable)"],
                 ).strip()
             )
         except CalledProcessError as e:
@@ -572,10 +571,7 @@ class EnvManager:
             if executable:
                 python_patch = decode(
                     subprocess.check_output(
-                        list_to_shell_command(
-                            [executable, "-c", GET_PYTHON_VERSION_ONELINER]
-                        ),
-                        shell=True,
+                        [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                     ).strip()
                 )
 
@@ -603,8 +599,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
-                    shell=True,
+                    [python, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -799,8 +794,7 @@ class EnvManager:
             try:
                 env_dir = decode(
                     subprocess.check_output(
-                        list_to_shell_command([python, "-c", GET_ENV_PATH_ONELINER]),
-                        shell=True,
+                        [python, "-c", GET_ENV_PATH_ONELINER],
                     )
                 ).strip("\n")
                 env_name = Path(env_dir).name
@@ -859,8 +853,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
-                    shell=True,
+                    [python, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -935,10 +928,7 @@ class EnvManager:
         if executable:
             python_patch = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [executable, "-c", GET_PYTHON_VERSION_ONELINER]
-                    ),
-                    shell=True,
+                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                 ).strip()
             )
             python_minor = ".".join(python_patch.split(".")[:2])
@@ -985,11 +975,8 @@ class EnvManager:
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            list_to_shell_command(
-                                [python, "-c", GET_PYTHON_VERSION_ONELINER]
-                            ),
+                            [python, "-c", GET_PYTHON_VERSION_ONELINER],
                             stderr=subprocess.STDOUT,
-                            shell=True,
                         ).strip()
                     )
                 except CalledProcessError:
@@ -1519,7 +1506,14 @@ class Env:
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
         return self.run(
-            self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
+            self._executable,
+            "-I",
+            "-W",
+            "ignore",
+            "-",
+            input_=content,
+            stderr=subprocess.PIPE,
+            **kwargs,
         )
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
@@ -1529,34 +1523,24 @@ class Env:
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
         env = kwargs.pop("env", dict(os.environ))
+        stderr = kwargs.pop("stderr", subprocess.STDOUT)
 
         try:
-            if self._is_windows:
-                kwargs["shell"] = True
-
-            command: str | list[str]
-            if kwargs.get("shell", False):
-                command = list_to_shell_command(cmd)
-            else:
-                command = cmd
-
             if input_:
                 output = subprocess.run(
-                    command,
+                    cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    stderr=stderr,
                     input=encode(input_),
                     check=True,
                     **kwargs,
                 ).stdout
             elif call:
                 return subprocess.call(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
+                    cmd, stdout=subprocess.PIPE, stderr=stderr, env=env, **kwargs
                 )
             else:
-                output = subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
+                output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
 
@@ -1570,7 +1554,7 @@ class Env:
             return os.execvpe(command[0], command, env=env)
 
         kwargs["shell"] = True
-        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
         return exe.returncode
 
@@ -1909,7 +1893,7 @@ class GenericEnv(VirtualEnv):
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
 
-        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
 
         return exe.returncode
@@ -1932,6 +1916,17 @@ class NullEnv(SystemEnv):
 
         self._execute = execute
         self.executed: list[list[str]] = []
+
+    @property
+    def paths(self) -> dict[str, str]:
+        if self._paths is None:
+            self._paths = self.get_paths()
+            self._paths["platlib"] = str(self._path / "platlib")
+            self._paths["purelib"] = str(self._path / "purelib")
+            self._paths["scripts"] = str(self._path / "scripts")
+            self._paths["data"] = str(self._path / "data")
+
+        return self._paths
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         self.executed.append(cmd)
@@ -2059,17 +2054,6 @@ class MockEnv(NullEnv):
             return super().sys_path
 
         return self._sys_path
-
-    @property
-    def paths(self) -> dict[str, str]:
-        if self._paths is None:
-            self._paths = self.get_paths()
-            self._paths["platlib"] = str(self._path / "platlib")
-            self._paths["purelib"] = str(self._path / "purelib")
-            self._paths["scripts"] = str(self._path / "scripts")
-            self._paths["data"] = str(self._path / "data")
-
-        return self._paths
 
     def get_marker_env(self) -> dict[str, Any]:
         if self._mock_marker_env is not None:
