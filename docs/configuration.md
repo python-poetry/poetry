@@ -131,7 +131,7 @@ You can override the Config directory by setting the `POETRY_CONFIG_DIR` environ
 
 - Linux: `$XDG_DATA_HOME/pypoetry` or `~/.local/share/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Application Support/pypoetry`
+- MacOS: `~/Library/Preferences/pypoetry`
 
 You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
 
