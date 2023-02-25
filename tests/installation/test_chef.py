@@ -63,6 +63,7 @@ def test_get_cached_archive_for_link(
                 Tag("py3", "none", "any"),
             ],
         ),
+        Factory.create_pool(config),
     )
 
     mocker.patch.object(
@@ -87,6 +88,7 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
         MockEnv(
             marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"}
         ),
+        Factory.create_pool(config),
     )
 
     distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
@@ -110,6 +112,7 @@ def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
         MockEnv(
             marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"}
         ),
+        Factory.create_pool(config),
     )
 
     directory = chef.get_cache_directory_for_link(
@@ -125,7 +128,7 @@ def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
 
 
 def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
-    chef = Chef(config, EnvManager.get_system_env())
+    chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
 
     archive = (
         Path(__file__)
@@ -142,7 +145,7 @@ def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
 
 
 def test_prepare_directory(config: Config, config_cache_dir: Path):
-    chef = Chef(config, EnvManager.get_system_env())
+    chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
 
     archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
 
@@ -155,7 +158,7 @@ def test_prepare_directory_with_extensions(
     config: Config, config_cache_dir: Path
 ) -> None:
     env = EnvManager.get_system_env()
-    chef = Chef(config, env)
+    chef = Chef(config, env, Factory.create_pool(config))
 
     archive = (
         Path(__file__)
@@ -169,7 +172,7 @@ def test_prepare_directory_with_extensions(
 
 
 def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
-    chef = Chef(config, EnvManager.get_system_env())
+    chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
 
     archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
 

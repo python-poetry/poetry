@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from poetry.config.dict_config_source import DictConfigSource
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
 
 
 @pytest.fixture()
@@ -153,6 +154,44 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
     assert config.set_config_source.call_count == 1
+    assert tester.io.fetch_output() == expected
+
+
+def test_list_must_not_display_sources_from_pyproject_toml(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+    config: Config,
+    config_cache_dir: Path,
+):
+    source = fixture_dir("with_non_default_source")
+    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
+    poetry = project_factory("foo", pyproject_content=pyproject_content)
+    tester = command_tester_factory("config", poetry=poetry)
+
+    tester.execute("--list")
+
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
+experimental.new-installer = true
+experimental.system-git-client = false
+installer.max-workers = null
+installer.modern-installation = true
+installer.no-binary = null
+installer.parallel = true
+repositories.foo.url = "https://foo.bar/simple/"
+virtualenvs.create = true
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
+
     assert tester.io.fetch_output() == expected
 
 
