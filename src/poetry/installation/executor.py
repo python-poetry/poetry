@@ -79,7 +79,7 @@ class Executor:
         self._authenticator = Authenticator(
             config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
         )
-        self._chef = Chef(config, self._env)
+        self._chef = Chef(config, self._env, pool)
         self._chooser = Chooser(pool, self._env, config)
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
