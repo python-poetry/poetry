@@ -125,13 +125,14 @@ class Chef:
             error: Exception | None = None
             try:
                 with redirect_stdout(stdout):
+                    dist_format = "wheel" if not editable else "editable"
                     env.install(
                         builder.build_system_requires
-                        | builder.get_requires_for_build("wheel")
+                        | builder.get_requires_for_build(dist_format)
                     )
                     path = Path(
                         builder.build(
-                            "wheel" if not editable else "editable",
+                            dist_format,
                             destination.as_posix(),
                         )
                     )
