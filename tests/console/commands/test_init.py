@@ -606,6 +606,7 @@ def test_interactive_with_wrong_dependency_inputs(
         "MIT",  # License
         "^3.8",  # Python
         "",  # Interactive packages
+        "foo 1.19.2",
         "pendulum 2.0.0 foo",  # Package name and constraint (invalid)
         "pendulum 2.0.0",  # Package name and constraint (invalid)
         "pendulum 2.0.0",  # Package name and constraint (invalid)
@@ -633,6 +634,7 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+foo = "1.19.2"
 pendulum = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
