@@ -292,6 +292,11 @@ You can specify a package in the following forms:
             )
             question.set_validator(self._validate_package)
 
+            follow_up_question = self.create_question(
+                "\nAdd a package (leave blank to skip):"
+            )
+            follow_up_question.set_validator(self._validate_package)
+
             package = self.ask(question)
             while package:
                 constraint = self._parse_requirements([package])[0]
@@ -303,9 +308,7 @@ You can specify a package in the following forms:
                 ):
                     self.line(f"Adding <info>{package}</info>")
                     result.append(constraint)
-
-                    self.line("")
-                    package = self.ask(question)
+                    package = self.ask(follow_up_question)
                     continue
 
                 canonicalized_name = canonicalize_name(constraint["name"])
@@ -373,8 +376,7 @@ You can specify a package in the following forms:
                     result.append(constraint)
 
                 if self.io.is_interactive():
-                    self.line("")
-                    package = self.ask(question)
+                    package = self.ask(follow_up_question)
 
             return result
 
