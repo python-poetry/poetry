@@ -569,6 +569,8 @@ class Executor:
 
         assert package.source_url is not None
         archive = Path(package.source_url)
+        if package.source_subdirectory:
+            archive = archive / package.source_subdirectory
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
