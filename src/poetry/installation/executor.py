@@ -5,6 +5,7 @@ import csv
 import itertools
 import json
 import os
+import tempfile
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -514,6 +515,10 @@ class Executor:
         else:
             archive = self._download(operation)
 
+        tmp_path_prefix = str(Path(tempfile.gettempdir(), self._chef.tmp_dir_prefix))
+        if str(archive).startswith(tmp_path_prefix):
+            cleanup_archive = True
+
         operation_message = self.get_operation_message(operation)
         message = (
             f"  <fg=blue;options=bold>•</> {operation_message}:"
@@ -708,6 +713,8 @@ class Executor:
 
                 raise
 
+        self._populate_hashes_dict(archive, package)
+
         if archive.suffix != ".whl":
             message = (
                 f"  <fg=blue;options=bold>•</> {self.get_operation_message(operation)}:"
@@ -715,9 +722,7 @@ class Executor:
             )
             self._write(operation, message)
 
-            archive = self._chef.prepare(archive, output_dir=output_dir)
-
-        self._populate_hashes_dict(archive, package)
+            archive = self._chef.prepare(archive)
 
         return archive
 

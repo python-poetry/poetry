@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
@@ -140,7 +141,10 @@ def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
 
     wheel = chef.prepare(archive)
 
-    assert wheel.parent == destination
+    assert wheel.parent != destination
+
+    tmp_file_prefix = str(Path(tempfile.gettempdir(), chef.tmp_dir_prefix))
+    assert str(wheel.parent).startswith(tmp_file_prefix)
     assert wheel.name == "demo-0.1.0-py3-none-any.whl"
 
 

@@ -86,6 +86,8 @@ class IsolatedEnv(BaseIsolatedEnv):
 
 
 class Chef:
+    tmp_dir_prefix = "poetry-chef-"
+
     def __init__(self, config: Config, env: Env, pool: RepositoryPool) -> None:
         self._env = env
         self._pool = pool
@@ -93,18 +95,15 @@ class Chef:
             Path(config.get("cache-dir")).expanduser().joinpath("artifacts")
         )
 
-    def prepare(
-        self, archive: Path, output_dir: Path | None = None, *, editable: bool = False
-    ) -> Path:
+    def prepare(self, archive: Path, *, editable: bool = False) -> Path:
         if not self._should_prepare(archive):
             return archive
 
+        tmp_dir = tempfile.mkdtemp(prefix=self.tmp_dir_prefix)
         if archive.is_dir():
-            tmp_dir = tempfile.mkdtemp(prefix="poetry-chef-")
-
             return self._prepare(archive, Path(tmp_dir), editable=editable)
 
-        return self._prepare_sdist(archive, destination=output_dir)
+        return self._prepare_sdist(archive, destination=Path(tmp_dir))
 
     def _prepare(
         self, directory: Path, destination: Path, *, editable: bool = False
@@ -154,7 +153,7 @@ class Chef:
 
             return path
 
-    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
+    def _prepare_sdist(self, archive: Path, destination: Path) -> Path:
         from poetry.core.packages.utils.link import Link
 
         suffix = archive.suffix
@@ -180,9 +179,6 @@ class Chef:
                 sdist_dir = archive_dir / archive.name.rstrip(suffix)
                 if not sdist_dir.is_dir():
                     sdist_dir = archive_dir
-
-            if destination is None:
-                destination = self.get_cache_directory_for_link(Link(archive.as_uri()))
 
             destination.mkdir(parents=True, exist_ok=True)
 
