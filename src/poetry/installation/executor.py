@@ -697,7 +697,6 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        output_dir = self._chef.get_cache_directory_for_link(link)
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is None:
             # No cached distributions was found, so we download and prepare it

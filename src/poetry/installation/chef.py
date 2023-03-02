@@ -154,8 +154,6 @@ class Chef:
             return path
 
     def _prepare_sdist(self, archive: Path, destination: Path) -> Path:
-        from poetry.core.packages.utils.link import Link
-
         suffix = archive.suffix
         context: Callable[
             [str], AbstractContextManager[zipfile.ZipFile | tarfile.TarFile]
