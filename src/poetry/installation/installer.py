@@ -80,6 +80,7 @@ class Installer:
             installed = self._get_installed()
 
         self._installed_repository = installed
+        self._disable_cache = disable_cache
 
     @property
     def executor(self) -> Executor:
@@ -209,6 +210,7 @@ class Installer:
             locked_repository.packages,
             locked_repository.packages,
             self._io,
+            self._disable_cache,
         )
 
         # Always re-solve directory dependencies, otherwise we can't determine
@@ -255,6 +257,7 @@ class Installer:
                 self._installed_repository.packages,
                 locked_repository.packages,
                 self._io,
+                self._disable_cache,
             )
 
             with solver.provider.use_source_root(
@@ -327,6 +330,7 @@ class Installer:
             self._installed_repository.packages,
             locked_repository.packages,
             NullIO(),
+            self._disable_cache,
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)

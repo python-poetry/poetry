@@ -43,6 +43,7 @@ class Solver:
         installed: list[Package],
         locked: list[Package],
         io: IO,
+        disable_cache: bool = False,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -51,7 +52,12 @@ class Solver:
         self._io = io
 
         self._provider = Provider(
-            self._package, self._pool, self._io, installed=installed, locked=locked
+            self._package,
+            self._pool,
+            self._io,
+            installed=installed,
+            locked=locked,
+            disable_cache=disable_cache,
         )
         self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
 

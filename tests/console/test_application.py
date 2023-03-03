@@ -118,7 +118,7 @@ def test_application_verify_cache_flag_at_install(
 
     tester.execute(command)
 
-    assert spy.call_count == 2
+    assert spy.call_count == 3
     for call in spy.mock_calls:
         (name, args, kwargs) = call
         assert "disable_cache" in kwargs

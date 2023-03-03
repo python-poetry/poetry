@@ -126,7 +126,7 @@ def mock_clone(
     return MockDulwichRepo(dest)
 
 
-def mock_download(url: str, dest: Path) -> None:
+def mock_download(url: str, dest: Path, **kwargs: Any) -> None:
     parts = urllib.parse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"

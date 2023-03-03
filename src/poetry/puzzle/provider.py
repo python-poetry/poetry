@@ -33,6 +33,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
@@ -54,6 +55,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
+    from requests import Session
 
     from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
@@ -144,6 +146,7 @@ class Provider:
         *,
         installed: list[Package] | None = None,
         locked: list[Package] | None = None,
+        disable_cache: bool = False,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -159,6 +162,9 @@ class Provider:
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
+        self._url_authenticator = Authenticator(
+            cache_id="url", disable_cache=disable_cache
+        )
 
         for package in locked or []:
             self._locked[package.name].append(
@@ -439,7 +445,9 @@ class Provider:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url)
+        package = self.get_package_from_url(
+            dependency.url, session=self._url_authenticator
+        )
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -454,11 +462,13 @@ class Provider:
         return package
 
     @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
+    def get_package_from_url(
+        cls, url: str, session: Authenticator | Session | None = None
+    ) -> Package:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
         with tempfile.TemporaryDirectory() as temp_dir:
             dest = Path(temp_dir) / file_name
-            download_file(url, dest)
+            download_file(url, dest, session=session, chunk_size=1024 * 1024)
             package = cls.get_package_from_file(dest)
 
             package.files = [
