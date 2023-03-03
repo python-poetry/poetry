@@ -506,7 +506,7 @@ class Executor:
         elif package.source_type == "file":
             archive = self._prepare_archive(operation)
         elif package.source_type == "directory":
-            archive = self._prepare_directory_archive(operation)
+            archive = self._prepare_archive(operation)
             cleanup_archive = True
         elif package.source_type == "url":
             assert package.source_url is not None
@@ -578,27 +578,6 @@ class Executor:
 
         return self._chef.prepare(archive, editable=package.develop)
 
-    def _prepare_directory_archive(self, operation: Install | Update) -> Path:
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
-            " <info>Building...</info>"
-        )
-        self._write(operation, message)
-
-        assert package.source_url is not None
-        if package.root_dir:
-            req = package.root_dir / package.source_url
-        else:
-            req = Path(package.source_url).resolve(strict=False)
-
-        if package.source_subdirectory:
-            req /= package.source_subdirectory
-
-        return self._prepare_archive(operation)
-
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
         from poetry.vcs.git import Git
 
@@ -621,7 +600,7 @@ class Executor:
         original_url = package.source_url
         package._source_url = str(source.path)
 
-        archive = self._prepare_directory_archive(operation)
+        archive = self._prepare_archive(operation)
 
         package._source_url = original_url
 
