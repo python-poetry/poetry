@@ -776,6 +776,37 @@ def test_executor_should_write_pep610_url_references_for_git(
     )
 
 
+def test_executor_should_append_subdirectory_for_git(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    wheel: Path,
+) -> None:
+    package = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package)])
+
+    archive_arg = spy.call_args[0][0]
+    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
+
+
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
