@@ -63,7 +63,7 @@ class Chef(BaseChef):
 
         self._sdist_wheels = wheels
 
-    def _prepare_sdist(self, archive: Path, destination: Path) -> Path:
+    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
         if self._sdist_wheels is not None:
             wheel = self._sdist_wheels.pop(0)
             self._sdist_wheels.append(wheel)
@@ -139,9 +139,14 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
         )
 
         if not fixture.exists():
-            fixture = Path(__file__).parent.parent.joinpath(
-                "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
-            )
+            if name == "demo-0.1.0.tar.gz":
+                fixture = Path(__file__).parent.parent.joinpath(
+                    "fixtures/distributions/demo-0.1.0.tar.gz"
+                )
+            else:
+                fixture = Path(__file__).parent.parent.joinpath(
+                    "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+                )
 
         return [200, headers, fixture.read_bytes()]
 
@@ -611,7 +616,7 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     verify_installed_distribution(tmp_venv, package)
 
 
-def test_executor_should_write_pep610_url_references_for_files(
+def test_executor_should_write_pep610_url_references_for_wheel_files(
     tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
 ):
     url = (
@@ -637,6 +642,40 @@ def test_executor_should_write_pep610_url_references_for_files(
             "hashes": {
                 "sha256": (
                     "70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+                )
+            },
+        },
+        "url": url.as_uri(),
+    }
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_should_write_pep610_url_references_for_non_wheel_files(
+        tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+):
+    url = (
+        Path(__file__)
+        .parent.parent.joinpath(
+            "fixtures/distributions/demo-0.1.0.tar.gz"
+        )
+        .resolve()
+    )
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",  # noqa: E501
+        }
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference = {
+        "archive_info": {
+            "hashes": {
+                "sha256": (
+                    "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
                 )
             },
         },
@@ -703,7 +742,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     )
 
 
-def test_executor_should_write_pep610_url_references_for_urls(
+def test_executor_should_write_pep610_url_references_for_wheel_urls(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
@@ -731,6 +770,42 @@ def test_executor_should_write_pep610_url_references_for_urls(
             "hashes": {
                 "sha256": (
                     "70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+                )
+            },
+        },
+        "url": package.source_url,
+    }
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_should_not_write_pep610_url_references_for_non_wheel_urls(
+        tmp_venv: VirtualEnv,
+        pool: RepositoryPool,
+        config: Config,
+        io: BufferedIO,
+        mock_file_downloads: None,
+):
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_url="https://files.pythonhosted.org/demo-0.1.0.tar.gz",
+    )
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",  # noqa: E501
+        }
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference = {
+        "archive_info": {
+            "hashes": {
+                "sha256": (
+                    "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
                 )
             },
         },

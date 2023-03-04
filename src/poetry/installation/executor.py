@@ -697,6 +697,7 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
+        output_dir = self._chef.get_cache_directory_for_link(link)
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is None:
             # No cached distributions was found, so we download and prepare it
@@ -712,7 +713,10 @@ class Executor:
 
                 raise
 
-        self._populate_hashes_dict(archive, package)
+        # validate the original (downloaded or cached) archive only if we can. e.g. if
+        # we use the cached wheel or the actual downloaded archive
+        if package.files and link.filename == archive.name:
+            self._validate_archive_hash(archive, package)
 
         if archive.suffix != ".whl":
             message = (
@@ -721,21 +725,31 @@ class Executor:
             )
             self._write(operation, message)
 
-            archive = self._chef.prepare(archive)
+            archive = self._chef.prepare(archive, output_dir=output_dir)
+
+        elif link.is_wheel:
+            self._populate_hashes_dict(
+                archive, package, validate=False
+            )  # already validated
 
         return archive
 
-    def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
+    def _populate_hashes_dict(
+        self, archive: Path, package: Package, validate=True
+    ) -> None:
         if package.files and archive.name in {f["file"] for f in package.files}:
-            archive_hash = self._validate_archive_hash(archive, package)
+            if validate:
+                archive_hash = self._validate_archive_hash(archive, package)
+            else:
+                archive_hash: str = "sha256:" + get_file_hash(archive)
             self._hashes[package.name] = archive_hash
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
         archive_hash: str = "sha256:" + get_file_hash(archive)
-        known_hashes = {f["hash"] for f in package.files}
+        known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
 
-        if archive_hash not in known_hashes:
+        if known_hashes and archive_hash not in known_hashes:
             raise RuntimeError(
                 f"Hash for {package} from archive {archive.name} not found in"
                 f" known hashes (was: {archive_hash})"
