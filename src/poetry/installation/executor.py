@@ -716,7 +716,7 @@ class Executor:
         # validate the original (downloaded or cached) archive only if we can. e.g. if
         # we use the cached wheel or the actual downloaded archive
         if package.files and link.filename == archive.name:
-            self._validate_archive_hash(archive, package)
+            self._populate_hashes_dict(archive, package)
 
         if archive.suffix != ".whl":
             message = (
@@ -726,11 +726,6 @@ class Executor:
             self._write(operation, message)
 
             archive = self._chef.prepare(archive, output_dir=output_dir)
-
-        elif link.is_wheel:
-            self._populate_hashes_dict(
-                archive, package, validate=False
-            )  # already validated
 
         return archive
 
