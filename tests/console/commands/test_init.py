@@ -595,9 +595,6 @@ pytest = "^3.6.0"
 def test_interactive_with_wrong_dependency_inputs(
     tester: CommandTester, repo: TestRepository
 ):
-    repo.add_package(get_package("pendulum", "2.0.0"))
-    repo.add_package(get_package("pytest", "3.6.0"))
-
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -606,10 +603,8 @@ def test_interactive_with_wrong_dependency_inputs(
         "MIT",  # License
         "^3.8",  # Python
         "",  # Interactive packages
+        "foo 1.19.2",
         "pendulum 2.0.0 foo",  # Package name and constraint (invalid)
-        "pendulum 2.0.0",  # Package name and constraint (invalid)
-        "pendulum 2.0.0",  # Package name and constraint (invalid)
-        "pendulum 2.0.0",  # Package name and constraint (invalid)
         "pendulum@^2.0.0",  # Package name and constraint (valid)
         "",  # End package selection
         "",  # Interactive dev packages
@@ -633,6 +628,7 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+foo = "1.19.2"
 pendulum = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
