@@ -651,13 +651,11 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
 
 
 def test_executor_should_write_pep610_url_references_for_non_wheel_files(
-        tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
 ):
     url = (
         Path(__file__)
-        .parent.parent.joinpath(
-            "fixtures/distributions/demo-0.1.0.tar.gz"
-        )
+        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
         .resolve()
     )
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
@@ -779,11 +777,11 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
 
 
 def test_executor_should_not_write_pep610_url_references_for_non_wheel_urls(
-        tmp_venv: VirtualEnv,
-        pool: RepositoryPool,
-        config: Config,
-        io: BufferedIO,
-        mock_file_downloads: None,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
 ):
     package = Package(
         "demo",

@@ -729,14 +729,9 @@ class Executor:
 
         return archive
 
-    def _populate_hashes_dict(
-        self, archive: Path, package: Package, validate=True
-    ) -> None:
+    def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
         if package.files and archive.name in {f["file"] for f in package.files}:
-            if validate:
-                archive_hash = self._validate_archive_hash(archive, package)
-            else:
-                archive_hash: str = "sha256:" + get_file_hash(archive)
+            archive_hash = self._validate_archive_hash(archive, package)
             self._hashes[package.name] = archive_hash
 
     @staticmethod
