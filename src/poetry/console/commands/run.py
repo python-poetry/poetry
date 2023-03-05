@@ -86,25 +86,12 @@ class RunCommand(EnvCommand):
         return self.env.execute(*cmd)
 
     def _warning_not_installed_script(self, script: str) -> None:
-        self.line_error(
-            (
-                f"Warning: '{script}' is an entry point defined in pyproject.toml,"
-                " but it's not installed as a script."
-                " You may get improper `sys.argv[0]`."
-            ),
-            style="warning",
-        )
-        self.line_error("")
-        self.line_error(
-            (
-                "The support to run uninstalled scripts "
-                "will be removed in a future release."
-            ),
-            style="warning",
-        )
-        self.line_error("")
-        self.line_error(
-            "Run `poetry install` to resolve and get rid of this message.",
-            style="warning",
-        )
-        self.line_error("")
+        message = f"""\
+Warning: '{script}' is an entry point defined in pyproject.toml, but it's not \
+installed as a script. You may get improper `sys.argv[0]`.
+
+The support to run uninstalled scripts will be removed in a future release.
+
+Run `poetry install` to resolve and get rid of this message.
+"""
+        self.line_error(message, style="warning")
