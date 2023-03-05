@@ -171,12 +171,15 @@ def test_run_script_sys_argv0(
         environment=tmp_venv,
     )
     assert install_tester.execute() == 0
-    if not installed_script:
-        for path in tmp_venv.script_dirs[0].glob("check-argv0*"):
+
+    script = "check-argv0"
+    if installed_script:
+        script = tmp_venv.script_dirs[0] / script
+    else:
+        for path in tmp_venv.script_dirs[0].glob(script + "*"):
             path.unlink()
 
     tester = command_tester_factory(
         "run", poetry=poetry_with_scripts, environment=tmp_venv
     )
-    argv1 = "absolute" if installed_script else "relative"
-    assert tester.execute(f"check-argv0 {argv1}") == 0
+    assert tester.execute(f"check-argv0 {script}") == 0
