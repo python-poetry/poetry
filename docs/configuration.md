@@ -280,8 +280,8 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 Create a new virtual environment if one doesn't already exist.
 
 If set to `false`, Poetry will not create a new virtual environment. If it detects a virtual environment
-in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` it will install dependencies into them, otherwise it will install
-dependencies into the systems python environment.
+in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` or in `VIRTUAL_ENV` it will install dependencies
+into them, otherwise it will install dependencies into the systems python environment.
 
 {{% note %}}
 If Poetry detects it's running within an activated virtual environment, it will never create a new virtual environment,
