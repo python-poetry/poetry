@@ -698,11 +698,11 @@ class Executor:
         package = operation.package
 
         output_dir = self._chef.get_cache_directory_for_link(link)
-        archive = self._chef.get_cached_archive_for_link(link)
-        if archive is None:
+        original_archive = self._chef.get_cached_archive_for_link(link, strict=True)
+        if original_archive is None:
             # No cached distributions was found, so we download and prepare it
             try:
-                archive = self._download_archive(operation, link)
+                original_archive = self._download_archive(operation, link)
             except BaseException:
                 cache_directory = self._chef.get_cache_directory_for_link(link)
                 cached_file = cache_directory.joinpath(link.filename)
@@ -713,10 +713,8 @@ class Executor:
 
                 raise
 
-        # validate the original (downloaded or cached) archive only if we can. e.g. if
-        # we use the cached wheel or the actual downloaded archive
-        if package.files and link.filename == archive.name:
-            self._populate_hashes_dict(archive, package)
+        # get potential previously built and cached wheel
+        archive = self._chef.get_cached_archive_for_link(link, strict=False)
 
         if archive.suffix != ".whl":
             message = (
@@ -725,7 +723,9 @@ class Executor:
             )
             self._write(operation, message)
 
-            archive = self._chef.prepare(archive, output_dir=output_dir)
+            archive = self._chef.prepare(original_archive, output_dir=output_dir)
+
+        self._populate_hashes_dict(original_archive, package)
 
         return archive
 

@@ -538,7 +538,7 @@ def test_executor_should_delete_incomplete_downloads(
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cached_archive_for_link",
-        side_effect=lambda link: None,
+        side_effect=lambda link, strict: None,
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cache_directory_for_link",
@@ -740,13 +740,23 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     )
 
 
+@pytest.mark.parametrize("cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_wheel_urls(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    cached: bool,
 ):
+    if cached:
+        link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+        mocker.patch(
+            "poetry.installation.chef.Chef.get_cached_archive_for_link",
+            return_value=link_cached,
+        )
     package = Package(
         "demo",
         "0.1.0",
@@ -776,13 +786,23 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
-def test_executor_should_not_write_pep610_url_references_for_non_wheel_urls(
+@pytest.mark.parametrize("cached", [False, True])
+def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
     mock_file_downloads: None,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    cached: bool,
 ):
+    if cached:
+        link_cached = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+        mocker.patch(
+            "poetry.installation.chef.Chef.get_cached_archive_for_link",
+            return_value=link_cached,
+        )
     package = Package(
         "demo",
         "0.1.0",

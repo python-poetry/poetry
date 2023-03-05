@@ -199,13 +199,20 @@ class Chef:
     def _is_wheel(cls, archive: Path) -> bool:
         return archive.suffix == ".whl"
 
-    def get_cached_archive_for_link(self, link: Link) -> Path | None:
+    def get_cached_archive_for_link(self, link: Link, strict: bool) -> Path | None:
         archives = self.get_cached_archives_for_link(link)
         if not archives:
             return None
 
         candidates: list[tuple[float | None, Path]] = []
         for archive in archives:
+            if strict:
+                # in strict mode return the original cached archive instead of the
+                # prioritized archive type.
+                if link.filename == archive.name:
+                    return archive
+                else:
+                    continue
             if archive.suffix != ".whl":
                 candidates.append((float("inf"), archive))
                 continue

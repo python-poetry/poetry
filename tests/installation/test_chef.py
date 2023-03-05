@@ -38,20 +38,80 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
 
 
 @pytest.mark.parametrize(
-    ("link", "cached"),
+    ("link", "strict", "available_packages"),
+    [
+        (
+            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            True,
+            [
+                Path("/cache/demo-0.1.0-py2.py3-none-any"),
+                Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
+                Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
+            ],
+        ),
+        (
+            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            False,
+            [],
+        ),
+    ],
+)
+def test_get_not_found_cached_archive_for_link(
+    config: Config,
+    mocker: MockerFixture,
+    link: str,
+    strict: bool,
+    available_packages: list[Path],
+):
+    chef = Chef(
+        config,
+        MockEnv(
+            version_info=(3, 8, 3),
+            marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"},
+            supported_tags=[
+                Tag("cp38", "cp38", "macosx_10_15_x86_64"),
+                Tag("py3", "none", "any"),
+            ],
+        ),
+        Factory.create_pool(config),
+    )
+
+    mocker.patch.object(
+        chef, "get_cached_archives_for_link", return_value=available_packages
+    )
+
+    archive = chef.get_cached_archive_for_link(Link(link), strict=strict)
+
+    assert None is archive
+
+
+@pytest.mark.parametrize(
+    ("link", "cached", "strict"),
     [
         (
             "https://files.python-poetry.org/demo-0.1.0.tar.gz",
             "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            False,
         ),
         (
             "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
             "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            False,
+        ),
+        (
+            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "/cache/demo-0.1.0.tar.gz",
+            True,
+        ),
+        (
+            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            True,
         ),
     ],
 )
-def test_get_cached_archive_for_link(
-    config: Config, mocker: MockerFixture, link: str, cached: str
+def test_get_found_cached_archive_for_link(
+    config: Config, mocker: MockerFixture, link: str, cached: str, strict: bool
 ):
     chef = Chef(
         config,
@@ -77,7 +137,7 @@ def test_get_cached_archive_for_link(
         ],
     )
 
-    archive = chef.get_cached_archive_for_link(Link(link))
+    archive = chef.get_cached_archive_for_link(Link(link), strict=strict)
 
     assert Path(cached) == archive
 
