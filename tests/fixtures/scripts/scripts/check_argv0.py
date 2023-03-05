@@ -7,13 +7,14 @@ from pathlib import Path
 
 def main() -> int:
     path = Path(sys.argv[0])
-    if sys.argv[0] == sys.argv[1]:
-        if path.is_absolute() and not path.exists():
+    if sys.argv[1] == "absolute":
+        if not path.is_absolute():
+            raise RuntimeError(f"sys.argv[0] is not an absolute path: {path}")
+        if not path.exists():
             raise RuntimeError(f"sys.argv[0] does not exist: {path}")
     else:
-        raise RuntimeError(
-            f"unexpected sys.argv[0]: '{sys.argv[0]}', should be '{sys.argv[1]}'"
-        )
+        if path.is_absolute():
+            raise RuntimeError(f"sys.argv[0] is an absolute path: {path}")
 
     return 0
 
