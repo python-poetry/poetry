@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
     from httpretty.core import HTTPrettyRequest
     from pytest_mock import MockerFixture
-    from typing_extensions import Self
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
@@ -741,7 +740,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     )
 
 
-@pytest.mark.parametrize("cached", [False, True])
+@pytest.mark.parametrize("is_artifact_cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_wheel_urls(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
@@ -750,9 +749,9 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
-    cached: bool,
+    is_artifact_cached: bool,
 ):
-    if cached:
+    if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
         mocker.patch(
             "poetry.installation.chef.Chef.get_cached_archive_for_link",
@@ -787,7 +786,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
-@pytest.mark.parametrize("cached", [False, True])
+@pytest.mark.parametrize("is_artifact_cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
@@ -796,21 +795,21 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
-    cached: bool,
+    is_artifact_cached: bool,
 ):
-    if cached:
-        link_cached = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-        original_func = Chef.get_cached_archive_for_link
+    if is_artifact_cached:
+        cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+        cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
-        def mock_get_cached_archive_for_link(self: Self, link: Link, strict: bool):
-            if link.filename == "demo-0.1.0.tar.gz":
-                return link_cached
+        def mock_get_cached_archive_for_link(_: Link, strict: bool):
+            if strict:
+                return cached_sdist
             else:
-                return original_func(self, link, strict)
+                return cached_wheel
 
         mocker.patch(
             "poetry.installation.chef.Chef.get_cached_archive_for_link",
-            new=mock_get_cached_archive_for_link,
+            side_effect=mock_get_cached_archive_for_link,
         )
     package = Package(
         "demo",

@@ -199,7 +199,7 @@ class Chef:
     def _is_wheel(cls, archive: Path) -> bool:
         return archive.suffix == ".whl"
 
-    def get_cached_archive_for_link(self, link: Link, strict: bool) -> Path | None:
+    def get_cached_archive_for_link(self, link: Link, *, strict: bool) -> Path | None:
         archives = self.get_cached_archives_for_link(link)
         if not archives:
             return None
