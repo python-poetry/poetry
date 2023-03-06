@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import tempfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
@@ -213,6 +216,10 @@ def test_prepare_directory(config: Config, config_cache_dir: Path):
 
     assert wheel.name == "simple_project-1.2.3-py2.py3-none-any.whl"
 
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)
+
 
 def test_prepare_directory_with_extensions(
     config: Config, config_cache_dir: Path
@@ -228,7 +235,11 @@ def test_prepare_directory_with_extensions(
 
     wheel = chef.prepare(archive)
 
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
     assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
+
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)
 
 
 def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
@@ -238,7 +249,11 @@ def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
 
     wheel = chef.prepare(archive, editable=True)
 
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
     assert wheel.name == "simple_project-1.2.3-py2.py3-none-any.whl"
 
     with ZipFile(wheel) as z:
         assert "simple_project.pth" in z.namelist()
+
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)

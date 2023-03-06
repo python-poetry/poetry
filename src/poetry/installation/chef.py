@@ -86,8 +86,6 @@ class IsolatedEnv(BaseIsolatedEnv):
 
 
 class Chef:
-    tmp_dir_prefix = "poetry-chef-"
-
     def __init__(self, config: Config, env: Env, pool: RepositoryPool) -> None:
         self._env = env
         self._pool = pool
@@ -102,7 +100,7 @@ class Chef:
             return archive
 
         if archive.is_dir():
-            tmp_dir = tempfile.mkdtemp(prefix=self.tmp_dir_prefix)
+            tmp_dir = tempfile.mkdtemp(prefix="poetry-chef-")
             return self._prepare(archive, Path(tmp_dir), editable=editable)
 
         return self._prepare_sdist(archive, destination=output_dir)

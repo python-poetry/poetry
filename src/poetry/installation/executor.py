@@ -5,7 +5,6 @@ import csv
 import itertools
 import json
 import os
-import tempfile
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -514,10 +513,6 @@ class Executor:
             archive = self._download_link(operation, Link(package.source_url))
         else:
             archive = self._download(operation)
-
-        tmp_path_prefix = str(Path(tempfile.gettempdir(), self._chef.tmp_dir_prefix))
-        if str(archive).startswith(tmp_path_prefix):
-            cleanup_archive = True
 
         operation_message = self.get_operation_message(operation)
         message = (
