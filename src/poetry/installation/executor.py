@@ -740,7 +740,7 @@ class Executor:
         archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
 
-        if known_hashes and archive_hash not in known_hashes:
+        if archive_hash not in known_hashes:
             raise RuntimeError(
                 f"Hash for {package} from archive {archive.name} not found in"
                 f" known hashes (was: {archive_hash})"

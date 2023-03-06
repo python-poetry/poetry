@@ -606,6 +606,12 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     io: BufferedIO,
 ):
     link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
+        }
+    ]
 
     mocker.patch(
         "poetry.installation.executor.Executor._download", return_value=link_cached
@@ -757,6 +763,8 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
             "poetry.installation.chef.Chef.get_cached_archive_for_link",
             return_value=link_cached,
         )
+    download_spy = mocker.spy(Executor, "_download_archive")
+
     package = Package(
         "demo",
         "0.1.0",
@@ -772,7 +780,8 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     ]
 
     executor = Executor(tmp_venv, pool, config, io)
-    executor.execute([Install(package)])
+    operation = Install(package)
+    executor.execute([operation])
     expected_url_reference = {
         "archive_info": {
             "hashes": {
@@ -784,9 +793,28 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         "url": package.source_url,
     }
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
+    if is_artifact_cached:
+        download_spy.assert_not_called()
+    else:
+        download_spy.assert_called_once_with(
+            mocker.ANY, operation, Link(package.source_url)
+        )
 
 
-@pytest.mark.parametrize("is_artifact_cached", [False, True])
+@pytest.mark.parametrize(
+    (
+        "is_sdist_artifact_cached",
+        "is_wheel_cached",
+        "expect_artifact_building",
+        "expect_artifact_download",
+    ),
+    [
+        (True, False, True, False),
+        (True, True, False, False),
+        (False, False, True, True),
+        (False, True, False, True),
+    ],
+)
 def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
@@ -795,22 +823,41 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
-    is_artifact_cached: bool,
+    is_sdist_artifact_cached: bool,
+    is_wheel_cached: bool,
+    expect_artifact_building: bool,
+    expect_artifact_download: bool,
 ):
-    if is_artifact_cached:
+    built_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+    mock_prepare = mocker.patch(
+        "poetry.installation.chef.Chef._prepare",
+        return_value=built_wheel,
+    )
+    download_spy = mocker.spy(Executor, "_download_archive")
+
+    if is_sdist_artifact_cached | is_wheel_cached:
         cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
-        def mock_get_cached_archive_for_link(_: Link, strict: bool):
+        def mock_get_cached_archive_for_link_func(_: Link, strict: bool):
             if strict:
-                return cached_sdist
+                if is_sdist_artifact_cached:
+                    return cached_sdist
+                else:
+                    return None
             else:
-                return cached_wheel
+                if is_wheel_cached:
+                    return cached_wheel
+                elif is_sdist_artifact_cached:
+                    return cached_sdist
+                else:
+                    return None
 
         mocker.patch(
             "poetry.installation.chef.Chef.get_cached_archive_for_link",
-            side_effect=mock_get_cached_archive_for_link,
+            side_effect=mock_get_cached_archive_for_link_func,
         )
+
     package = Package(
         "demo",
         "0.1.0",
@@ -826,7 +873,8 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     ]
 
     executor = Executor(tmp_venv, pool, config, io)
-    executor.execute([Install(package)])
+    operation = Install(package)
+    executor.execute([operation])
     expected_url_reference = {
         "archive_info": {
             "hashes": {
@@ -838,6 +886,18 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         "url": package.source_url,
     }
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+    if expect_artifact_building:
+        mock_prepare.assert_called_once()
+    else:
+        mock_prepare.assert_not_called()
+
+    if expect_artifact_download:
+        download_spy.assert_called_once_with(
+            mocker.ANY, operation, Link(package.source_url)
+        )
+    else:
+        download_spy.assert_not_called()
 
 
 def test_executor_should_write_pep610_url_references_for_git(
@@ -945,38 +1005,6 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
             "subdirectory": package.source_subdirectory,
         },
     )
-
-
-def test_executor_should_use_cached_link_and_hash(
-    tmp_venv: VirtualEnv,
-    pool: RepositoryPool,
-    config: Config,
-    io: BufferedIO,
-    mocker: MockerFixture,
-    fixture_dir: FixtureDirGetter,
-):
-    link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-
-    mocker.patch(
-        "poetry.installation.chef.Chef.get_cached_archive_for_link",
-        return_value=link_cached,
-    )
-
-    package = Package("demo", "0.1.0")
-    # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
-        }
-    ]
-
-    executor = Executor(tmp_venv, pool, config, io)
-    archive = executor._download_link(
-        Install(package),
-        Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
-    )
-    assert archive == link_cached
 
 
 @pytest.mark.parametrize(
