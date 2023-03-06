@@ -799,9 +799,17 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
 ):
     if cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+        original_func = Chef.get_cached_archive_for_link
+
+        def mock_get_cached_archive_for_link(self, link: Link, strict: bool):
+            if link.filename == "demo-0.1.0.tar.gz":
+                return link_cached
+            else:
+                return original_func(self, link, strict)
+
         mocker.patch(
             "poetry.installation.chef.Chef.get_cached_archive_for_link",
-            return_value=link_cached,
+            new=mock_get_cached_archive_for_link,
         )
     package = Package(
         "demo",
@@ -829,6 +837,8 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         },
         "url": package.source_url,
     }
+    print(io.fetch_output())
+    print(io.fetch_error())
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
