@@ -30,7 +30,7 @@ class Transaction:
         self,
         with_uninstalls: bool = True,
         synchronize: bool = False,
-        skip_path: bool = False,
+        skip_directory: bool = False,
     ) -> list[Operation]:
         from poetry.installation.operations import Install
         from poetry.installation.operations import Uninstall
@@ -74,7 +74,7 @@ class Transaction:
                     break
 
             if not installed and (
-                not skip_path or result_package.source_type != "directory"
+                not skip_directory or result_package.source_type != "directory"
             ):
                 operations.append(Install(result_package, priority=priority))
 

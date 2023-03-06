@@ -1291,7 +1291,7 @@ def test_run_installs_with_local_poetry_directory_transitive_no_path(
     tmpdir: Path,
     fixture_dir: FixtureDirGetter,
 ):
-    """When we set Installer.skip_path(True) no path dependencies should
+    """When we set Installer.skip_directory(True) no path dependencies should
     be installed (including transitive dependencies)
     """
     root_dir = fixture_dir("directory")
@@ -1309,7 +1309,7 @@ def test_run_installs_with_local_poetry_directory_transitive_no_path(
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    installer.skip_path(True)
+    installer.skip_directory(True)
 
     installer.run()
 

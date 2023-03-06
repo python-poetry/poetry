@@ -179,10 +179,10 @@ This might look something like this:
 ```text
 FROM python
 COPY pyproject.toml poetry.lock .
-RUN pip install poetry && poetry install --no-root --no-path
+RUN pip install poetry && poetry install --no-root --no-directory
 COPY src/ ./src
 RUN poetry install --no-dev
 ```
 
-The two key options we are using here are `--no-root` (skips installing the project source) and `--no-path` (skips installing any local path dependencies, you can skip this if you don't have any).
+The two key options we are using here are `--no-root` (skips installing the project source) and `--no-directory` (skips installing any local directory path dependencies, you can skip this if you don't have any).
 [More information on the options available for `poetry install`]({{< relref "cli#install" >}}).
