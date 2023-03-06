@@ -22,6 +22,7 @@ from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
+from typing_extensions import Self
 
 from poetry.factory import Factory
 from poetry.installation.chef import Chef as BaseChef
@@ -801,7 +802,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         link_cached = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         original_func = Chef.get_cached_archive_for_link
 
-        def mock_get_cached_archive_for_link(self, link: Link, strict: bool):
+        def mock_get_cached_archive_for_link(self: Self, link: Link, strict: bool):
             if link.filename == "demo-0.1.0.tar.gz":
                 return link_cached
             else:
@@ -837,8 +838,6 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         },
         "url": package.source_url,
     }
-    print(io.fetch_output())
-    print(io.fetch_error())
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
