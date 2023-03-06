@@ -22,7 +22,6 @@ from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from typing_extensions import Self
 
 from poetry.factory import Factory
 from poetry.installation.chef import Chef as BaseChef
@@ -41,6 +40,7 @@ if TYPE_CHECKING:
 
     from httpretty.core import HTTPrettyRequest
     from pytest_mock import MockerFixture
+    from typing_extensions import Self
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
