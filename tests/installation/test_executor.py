@@ -840,18 +840,11 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
         def mock_get_cached_archive_for_link_func(_: Link, strict: bool):
-            if strict:
-                if is_sdist_artifact_cached:
-                    return cached_sdist
-                else:
-                    return None
-            else:
-                if is_wheel_cached:
-                    return cached_wheel
-                elif is_sdist_artifact_cached:
-                    return cached_sdist
-                else:
-                    return None
+            if is_wheel_cached and not strict:
+                return cached_wheel
+            if is_sdist_cached:
+                return cached_sdist
+            return None
 
         mocker.patch(
             "poetry.installation.chef.Chef.get_cached_archive_for_link",
