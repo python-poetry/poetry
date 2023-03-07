@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -9,13 +10,14 @@ from unittest.mock import Mock
 import pytest
 
 from cachy import CacheManager
+from poetry.core.packages.utils.link import Link
 
 from poetry.utils.cache import FileCache
+from poetry.utils.cache import get_cache_directory_for_link
+from poetry.utils.cache import get_cached_archives_for_link
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from _pytest.monkeypatch import MonkeyPatch
     from pytest import FixtureRequest
     from pytest_mock import MockerFixture
@@ -192,3 +194,30 @@ def test_cachy_compatibility(
 
     assert cachy_file_cache.get("key3") == test_str
     assert cachy_file_cache.get("key4") == test_obj
+
+
+def test_get_cached_archives_for_link(mocker: MockerFixture) -> None:
+    distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
+    mocker.patch(
+        "poetry.utils.cache.get_cache_directory_for_link",
+        return_value=distributions,
+    )
+    archives = get_cached_archives_for_link(
+        Path(), Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+    )
+
+    assert archives
+    assert set(archives) == set(distributions.glob("demo-0.1.*"))
+
+
+def test_get_cache_directory_for_link(tmp_path: Path) -> None:
+    directory = get_cache_directory_for_link(
+        tmp_path, Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+    )
+
+    expected = Path(
+        f"{tmp_path.as_posix()}/11/4f/a8/"
+        "1c89d75547e4967082d30a28360401c82c83b964ddacee292201bf85f2"
+    )
+
+    assert directory == expected

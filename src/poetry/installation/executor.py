@@ -20,6 +20,8 @@ from poetry.core.packages.utils.link import Link
 from poetry.installation.chef import Chef
 from poetry.installation.chef import ChefBuildError
 from poetry.installation.chooser import Chooser
+from poetry.installation.chooser import InvalidWheelName
+from poetry.installation.chooser import Wheel
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
@@ -27,6 +29,8 @@ from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.cache import get_cache_directory_for_link
+from poetry.utils.cache import get_cached_archives_for_link
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import get_file_hash
@@ -82,6 +86,7 @@ class Executor:
         )
         self._chef = Chef(config, self._env, pool)
         self._chooser = Chooser(pool, self._env, config)
+        self._artifacts_cache_dir = config.artifacts_cache_directory
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
         self._total_operations = 0
@@ -709,15 +714,19 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        output_dir = self._chef.get_cache_directory_for_link(link)
+        output_dir = get_cache_directory_for_link(self._artifacts_cache_dir, link)
         # Try to get cached original package for the link provided
-        original_archive = self._chef.get_cached_archive_for_link(link, strict=True)
+        original_archive = self._get_cached_archive_for_link(
+            self._env, self._artifacts_cache_dir, link, strict=True
+        )
         if original_archive is None:
             # No cached original distributions was found, so we download and prepare it
             try:
                 original_archive = self._download_archive(operation, link)
             except BaseException:
-                cache_directory = self._chef.get_cache_directory_for_link(link)
+                cache_directory = get_cache_directory_for_link(
+                    self._artifacts_cache_dir, link
+                )
                 cached_file = cache_directory.joinpath(link.filename)
                 # We can't use unlink(missing_ok=True) because it's not available
                 # prior to Python 3.8
@@ -728,7 +737,9 @@ class Executor:
 
         # Get potential higher prioritized cached archive, otherwise it will fall back
         # to the original archive.
-        archive = self._chef.get_cached_archive_for_link(link, strict=False)
+        archive = self._get_cached_archive_for_link(
+            self._env, self._artifacts_cache_dir, link, strict=False
+        )
         # 'archive' can at this point never be None. Since we previously downloaded
         # an archive, we now should have something cached that we can use here
         assert archive is not None
@@ -792,7 +803,10 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive = (
+            get_cache_directory_for_link(self._artifacts_cache_dir, link)
+            / link.filename
+        )
         archive.parent.mkdir(parents=True, exist_ok=True)
         with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
@@ -926,3 +940,40 @@ class Executor:
             archive_info["hashes"] = {algorithm: value}
 
         return archive_info
+
+    @staticmethod
+    def _get_cached_archive_for_link(
+        env: Env, cache_dir: Path, link: Link, *, strict: bool
+    ) -> Path | None:
+        archives = get_cached_archives_for_link(cache_dir, link)
+        if not archives:
+            return None
+
+        candidates: list[tuple[float | None, Path]] = []
+        for archive in archives:
+            if strict:
+                # in strict mode return the original cached archive instead of the
+                # prioritized archive type.
+                if link.filename == archive.name:
+                    return archive
+                continue
+            if archive.suffix != ".whl":
+                candidates.append((float("inf"), archive))
+                continue
+
+            try:
+                wheel = Wheel(archive.name)
+            except InvalidWheelName:
+                continue
+
+            if not wheel.is_supported_by_environment(env):
+                continue
+
+            candidates.append(
+                (wheel.get_minimum_supported_index(env.supported_tags), archive),
+            )
+
+        if not candidates:
+            return None
+
+        return min(candidates)[1]

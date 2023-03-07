@@ -213,6 +213,10 @@ class Config:
         return Path(self.get("cache-dir")) / "cache" / "repositories"
 
     @property
+    def artifacts_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")) / "artifacts"
+
+    @property
     def virtualenvs_path(self) -> Path:
         path = self.get("virtualenvs.path")
         if path is None:

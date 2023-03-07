@@ -8,10 +8,15 @@ import shutil
 import time
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import TypeVar
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages.utils.link import Link
 
 
 # Used by Cachy for items that do not expire.
@@ -196,3 +201,35 @@ class FileCache(Generic[T]):
         data = json.loads(data_str[10:])
         expires = int(data_str[:10])
         return CacheItem(data, expires)
+
+
+def get_cached_archives_for_link(cache_dir: Path, link: Link) -> list[Path]:
+    cache_dir = get_cache_directory_for_link(cache_dir, link)
+
+    archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
+    paths = []
+    for archive_type in archive_types:
+        for archive in cache_dir.glob(f"*.{archive_type}"):
+            paths.append(Path(archive))
+
+    return paths
+
+
+def get_cache_directory_for_link(cache_dir: Path, link: Link) -> Path:
+    key_parts = {"url": link.url_without_fragment}
+
+    if link.hash_name is not None and link.hash is not None:
+        key_parts[link.hash_name] = link.hash
+
+    if link.subdirectory_fragment:
+        key_parts["subdirectory"] = link.subdirectory_fragment
+
+    key = hashlib.sha256(
+        json.dumps(
+            key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+        ).encode("ascii")
+    ).hexdigest()
+
+    split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+
+    return cache_dir.joinpath(*split_key)
