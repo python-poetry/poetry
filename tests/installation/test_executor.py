@@ -202,7 +202,7 @@ def test_execute_executes_a_batch_of_operations(
     config.merge({"cache-dir": tmp_dir})
 
     prepare_spy = mocker.spy(Chef, "_prepare")
-    chef = Chef(config, env)
+    chef = Chef(config, env, Factory.create_pool(config))
     chef.set_directory_wheel([copy_wheel(), copy_wheel()])
     chef.set_sdist_wheel(copy_wheel())
 
@@ -661,7 +661,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
         "demo", "0.1.2", source_type="directory", source_url=url.as_posix()
     )
 
-    chef = Chef(config, tmp_venv)
+    chef = Chef(config, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -692,7 +692,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
         develop=True,
     )
 
-    chef = Chef(config, tmp_venv)
+    chef = Chef(config, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -756,7 +756,7 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_url="https://github.com/demo/demo.git",
     )
 
-    chef = Chef(config, tmp_venv)
+    chef = Chef(config, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -774,6 +774,37 @@ def test_executor_should_write_pep610_url_references_for_git(
             "url": package.source_url,
         },
     )
+
+
+def test_executor_should_append_subdirectory_for_git(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    wheel: Path,
+) -> None:
+    package = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package)])
+
+    archive_arg = spy.call_args[0][0]
+    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
 
 
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
@@ -794,7 +825,7 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
         source_subdirectory="two",
     )
 
-    chef = Chef(config, tmp_venv)
+    chef = Chef(config, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -950,8 +981,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     mock_file_downloads: None,
     env: MockEnv,
 ):
-    mocker.patch.object(Factory, "create_pool", return_value=pool)
-
     error = BuildBackendException(
         CalledProcessError(1, ["pip"], output=b"Error on stdout")
     )

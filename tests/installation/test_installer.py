@@ -197,8 +197,6 @@ def installer(
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor(True)
-
     return installer
 
 
@@ -1961,8 +1959,6 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor()
-
     installer.update(True)
     installer.whitelist(["D"])
     installer.run()
@@ -1996,7 +1992,6 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor()
 
     package.add_dependency(Factory.create_dependency("poetry", {"version": "^0.12.0"}))
 
@@ -2025,8 +2020,6 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor()
-
     installer.update(True)
     installer.whitelist(["pytest"])
     installer.run()
@@ -2057,8 +2050,6 @@ def test_installer_required_extras_should_be_installed(
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor()
-
     package.add_dependency(
         Factory.create_dependency(
             "cachecontrol", {"version": "^0.12.5", "extras": ["filecache"]}
@@ -2085,8 +2076,6 @@ def test_installer_required_extras_should_be_installed(
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor()
-
     installer.update(True)
     installer.run()
 
@@ -2200,8 +2189,6 @@ def test_installer_can_install_dependencies_from_forced_source(
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    installer.use_executor()
-
     installer.update(True)
     installer.run()
 
@@ -2267,7 +2254,6 @@ def test_run_installs_with_same_version_url_files(
             NullIO(),
         ),
     )
-    installer.use_executor(True)
     installer.run()
 
     expected = fixture("with-same-version-url-dependencies")
@@ -2332,8 +2318,6 @@ def test_installer_can_handle_old_lock_files(
         installed=installed,
         executor=Executor(MockEnv(), pool, config, NullIO()),
     )
-    installer.use_executor()
-
     installer.run()
 
     assert installer.executor.installations_count == 6
@@ -2353,8 +2337,6 @@ def test_installer_can_handle_old_lock_files(
             NullIO(),
         ),
     )
-    installer.use_executor()
-
     installer.run()
 
     # funcsigs will be added
@@ -2375,8 +2357,6 @@ def test_installer_can_handle_old_lock_files(
             NullIO(),
         ),
     )
-    installer.use_executor()
-
     installer.run()
 
     # colorama will be added
@@ -2640,7 +2620,6 @@ def test_installer_distinguishes_locked_packages_by_source(
             NullIO(),
         ),
     )
-    installer.use_executor(True)
     installer.run()
 
     # Results of installation are consistent with the platform requirements.

@@ -23,6 +23,7 @@ from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
     from cleo.io.io import IO
@@ -89,16 +90,14 @@ class Factory(BaseFactory):
             disable_cache,
         )
 
-        # Configuring sources
-        config.merge(
-            {
-                "sources": {
-                    source["name"]: source
-                    for source in poetry.local_config.get("source", [])
-                }
-            }
+        poetry.set_pool(
+            self.create_pool(
+                config,
+                poetry.local_config.get("source", []),
+                io,
+                disable_cache=disable_cache,
+            )
         )
-        poetry.set_pool(self.create_pool(config, io, disable_cache=disable_cache))
 
         plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
         plugin_manager.load_plugins()
@@ -114,7 +113,8 @@ class Factory(BaseFactory):
     @classmethod
     def create_pool(
         cls,
-        config: Config,
+        auth_config: Config,
+        sources: Iterable[dict[str, Any]] = (),
         io: IO | None = None,
         disable_cache: bool = False,
     ) -> RepositoryPool:
@@ -128,9 +128,9 @@ class Factory(BaseFactory):
 
         pool = RepositoryPool()
 
-        for source in config.get("sources", {}).values():
+        for source in sources:
             repository = cls.create_package_source(
-                source, config, disable_cache=disable_cache
+                source, auth_config, disable_cache=disable_cache
             )
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)

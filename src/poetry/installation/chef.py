@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.utils.link import Link
 
     from poetry.config.config import Config
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -42,9 +43,9 @@ class ChefBuildError(ChefError):
 
 
 class IsolatedEnv(BaseIsolatedEnv):
-    def __init__(self, env: Env, config: Config) -> None:
+    def __init__(self, env: Env, pool: RepositoryPool) -> None:
         self._env = env
-        self._config = config
+        self._pool = pool
 
     @property
     def executable(self) -> str:
@@ -60,7 +61,6 @@ class IsolatedEnv(BaseIsolatedEnv):
         from poetry.core.packages.project_package import ProjectPackage
 
         from poetry.config.config import Config
-        from poetry.factory import Factory
         from poetry.installation.installer import Installer
         from poetry.packages.locker import Locker
         from poetry.repositories.installed_repository import InstalledRepository
@@ -72,13 +72,12 @@ class IsolatedEnv(BaseIsolatedEnv):
             dependency = Dependency.create_from_pep_508(requirement)
             package.add_dependency(dependency)
 
-        pool = Factory.create_pool(self._config)
         installer = Installer(
             NullIO(),
             self._env,
             package,
             Locker(self._env.path.joinpath("poetry.lock"), {}),
-            pool,
+            self._pool,
             Config.create(),
             InstalledRepository.load(self._env),
         )
@@ -87,9 +86,9 @@ class IsolatedEnv(BaseIsolatedEnv):
 
 
 class Chef:
-    def __init__(self, config: Config, env: Env) -> None:
-        self._config = config
+    def __init__(self, config: Config, env: Env, pool: RepositoryPool) -> None:
         self._env = env
+        self._pool = pool
         self._cache_dir = (
             Path(config.get("cache-dir")).expanduser().joinpath("artifacts")
         )
@@ -113,7 +112,7 @@ class Chef:
         from subprocess import CalledProcessError
 
         with ephemeral_environment(self._env.python) as venv:
-            env = IsolatedEnv(venv, self._config)
+            env = IsolatedEnv(venv, self._pool)
             builder = ProjectBuilder(
                 directory,
                 python_executable=env.executable,
@@ -126,13 +125,14 @@ class Chef:
             error: Exception | None = None
             try:
                 with redirect_stdout(stdout):
+                    dist_format = "wheel" if not editable else "editable"
                     env.install(
                         builder.build_system_requires
-                        | builder.get_requires_for_build("wheel")
+                        | builder.get_requires_for_build(dist_format)
                     )
                     path = Path(
                         builder.build(
-                            "wheel" if not editable else "editable",
+                            dist_format,
                             destination.as_posix(),
                         )
                     )
