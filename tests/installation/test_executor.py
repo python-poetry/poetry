@@ -803,7 +803,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
 
 @pytest.mark.parametrize(
     (
-        "is_sdist_artifact_cached",
+        "is_sdist_cached",
         "is_wheel_cached",
         "expect_artifact_building",
         "expect_artifact_download",
@@ -823,7 +823,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
-    is_sdist_artifact_cached: bool,
+    is_sdist_cached: bool,
     is_wheel_cached: bool,
     expect_artifact_building: bool,
     expect_artifact_download: bool,
@@ -835,7 +835,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     )
     download_spy = mocker.spy(Executor, "_download_archive")
 
-    if is_sdist_artifact_cached | is_wheel_cached:
+    if is_sdist_cached | is_wheel_cached:
         cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 

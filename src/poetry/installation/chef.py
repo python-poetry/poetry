@@ -209,8 +209,7 @@ class Chef:
                 # prioritized archive type.
                 if link.filename == archive.name:
                     return archive
-                else:
-                    continue
+                continue
             if archive.suffix != ".whl":
                 candidates.append((float("inf"), archive))
                 continue
