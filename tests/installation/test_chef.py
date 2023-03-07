@@ -85,7 +85,7 @@ def test_get_not_found_cached_archive_for_link(
 
     archive = chef.get_cached_archive_for_link(Link(link), strict=strict)
 
-    assert None is archive
+    assert archive is None
 
 
 @pytest.mark.parametrize(
