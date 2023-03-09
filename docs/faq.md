@@ -22,10 +22,14 @@ and, as such, they are not available via the PyPI JSON API. At this point, Poetr
 but to download the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
-At the moment there is no way around it.
+At the moment there is no way around it. However, if you notice that Poetry
+is downloading many versions of a single package, you can lessen the workload
+by constraining that one package in your pyproject.toml more narrowly. That way
+Poetry does not have to sift through so many versions of it, which may speed up
+the locking process considerably in some cases.
 
 {{% note %}}
-Once Poetry has cached the releases' information, the dependency resolution process
+Once Poetry has cached the releases' information on your machine, the dependency resolution process
 will be much faster.
 {{% /note %}}
 
