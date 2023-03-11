@@ -4,7 +4,6 @@
 name = "missing"
 version = "1.2.3"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
