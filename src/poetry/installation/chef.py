@@ -17,15 +17,14 @@ from build.env import IsolatedEnv as BaseIsolatedEnv
 from poetry.core.utils.helpers import temporary_directory
 from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import]
 
-from poetry.utils.cache import get_cache_directory_for_link
 from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from poetry.config.config import Config
     from poetry.repositories import RepositoryPool
+    from poetry.utils.cache import ArtifactCache
     from poetry.utils.env import Env
 
 
@@ -81,10 +80,12 @@ class IsolatedEnv(BaseIsolatedEnv):
 
 
 class Chef:
-    def __init__(self, config: Config, env: Env, pool: RepositoryPool) -> None:
+    def __init__(
+        self, artifact_cache: ArtifactCache, env: Env, pool: RepositoryPool
+    ) -> None:
         self._env = env
         self._pool = pool
-        self._cache_dir = config.artifacts_cache_directory
+        self._artifact_cache = artifact_cache
 
     def prepare(
         self, archive: Path, output_dir: Path | None = None, *, editable: bool = False
@@ -174,8 +175,8 @@ class Chef:
                     sdist_dir = archive_dir
 
             if destination is None:
-                destination = get_cache_directory_for_link(
-                    self._cache_dir, Link(archive.as_uri())
+                destination = self._artifact_cache.get_cache_directory_for_link(
+                    Link(archive.as_uri())
                 )
 
             destination.mkdir(parents=True, exist_ok=True)

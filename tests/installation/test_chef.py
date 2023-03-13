@@ -14,7 +14,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.factory import Factory
 from poetry.installation.chef import Chef
 from poetry.repositories import RepositoryPool
-from poetry.utils.cache import get_cache_directory_for_link
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -39,8 +39,17 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
     mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
-def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
-    chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
+@pytest.fixture()
+def artifact_cache(config: Config) -> ArtifactCache:
+    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
+
+
+def test_prepare_sdist(
+    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+) -> None:
+    chef = Chef(
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
+    )
 
     archive = (
         Path(__file__)
@@ -48,7 +57,7 @@ def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
         .resolve()
     )
 
-    destination = get_cache_directory_for_link(chef._cache_dir, Link(archive.as_uri()))
+    destination = artifact_cache.get_cache_directory_for_link(Link(archive.as_uri()))
 
     wheel = chef.prepare(archive)
 
@@ -56,8 +65,12 @@ def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
     assert wheel.name == "demo-0.1.0-py3-none-any.whl"
 
 
-def test_prepare_directory(config: Config, config_cache_dir: Path):
-    chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
+def test_prepare_directory(
+    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+):
+    chef = Chef(
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
+    )
 
     archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
 
@@ -71,10 +84,10 @@ def test_prepare_directory(config: Config, config_cache_dir: Path):
 
 
 def test_prepare_directory_with_extensions(
-    config: Config, config_cache_dir: Path
+    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
 ) -> None:
     env = EnvManager.get_system_env()
-    chef = Chef(config, env, Factory.create_pool(config))
+    chef = Chef(artifact_cache, env, Factory.create_pool(config))
 
     archive = (
         Path(__file__)
@@ -91,8 +104,12 @@ def test_prepare_directory_with_extensions(
     os.unlink(wheel)
 
 
-def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
-    chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
+def test_prepare_directory_editable(
+    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+):
+    chef = Chef(
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
+    )
 
     archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
 

@@ -208,70 +208,81 @@ class FileCache(Generic[T]):
         return CacheItem(data, expires)
 
 
-def get_cached_archives_for_link(cache_dir: Path, link: Link) -> list[Path]:
-    cache_dir = get_cache_directory_for_link(cache_dir, link)
+class ArtifactCache:
+    def __init__(self, *, cache_dir: Path) -> None:
+        self._cache_dir = cache_dir
 
-    archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
-    paths = []
-    for archive_type in archive_types:
-        for archive in cache_dir.glob(f"*.{archive_type}"):
-            paths.append(Path(archive))
+    def _get_cached_archives_for_link(self, link: Link) -> list[Path]:
+        cache_dir = self.get_cache_directory_for_link(link)
 
-    return paths
+        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
+        paths = []
+        for archive_type in archive_types:
+            for archive in cache_dir.glob(f"*.{archive_type}"):
+                paths.append(Path(archive))
 
+        return paths
 
-def get_cached_archive_for_link(
-    env: Env, cache_dir: Path, link: Link, *, strict: bool
-) -> Path | None:
-    archives = get_cached_archives_for_link(cache_dir, link)
-    if not archives:
-        return None
+    def get_cached_archive_for_link(
+        self,
+        link: Link,
+        *,
+        strict: bool,
+        env: Env | None = None,
+    ) -> Path | None:
+        assert strict or env is not None
 
-    candidates: list[tuple[float | None, Path]] = []
-    for archive in archives:
-        if strict:
-            # in strict mode return the original cached archive instead of the
-            # prioritized archive type.
-            if link.filename == archive.name:
-                return archive
-            continue
-        if archive.suffix != ".whl":
-            candidates.append((float("inf"), archive))
-            continue
+        archives = self._get_cached_archives_for_link(link)
+        if not archives:
+            return None
 
-        try:
-            wheel = Wheel(archive.name)
-        except InvalidWheelName:
-            continue
+        candidates: list[tuple[float | None, Path]] = []
+        for archive in archives:
+            if strict:
+                # in strict mode return the original cached archive instead of the
+                # prioritized archive type.
+                if link.filename == archive.name:
+                    return archive
+                continue
 
-        if not wheel.is_supported_by_environment(env):
-            continue
+            assert env is not None
 
-        candidates.append(
-            (wheel.get_minimum_supported_index(env.supported_tags), archive),
-        )
+            if archive.suffix != ".whl":
+                candidates.append((float("inf"), archive))
+                continue
 
-    if not candidates:
-        return None
+            try:
+                wheel = Wheel(archive.name)
+            except InvalidWheelName:
+                continue
 
-    return min(candidates)[1]
+            if not wheel.is_supported_by_environment(env):
+                continue
 
+            candidates.append(
+                (wheel.get_minimum_supported_index(env.supported_tags), archive),
+            )
 
-def get_cache_directory_for_link(cache_dir: Path, link: Link) -> Path:
-    key_parts = {"url": link.url_without_fragment}
+        if not candidates:
+            return None
 
-    if link.hash_name is not None and link.hash is not None:
-        key_parts[link.hash_name] = link.hash
+        return min(candidates)[1]
 
-    if link.subdirectory_fragment:
-        key_parts["subdirectory"] = link.subdirectory_fragment
+    def get_cache_directory_for_link(self, link: Link) -> Path:
+        key_parts = {"url": link.url_without_fragment}
 
-    key = hashlib.sha256(
-        json.dumps(
-            key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-        ).encode("ascii")
-    ).hexdigest()
+        if link.hash_name is not None and link.hash is not None:
+            key_parts[link.hash_name] = link.hash
 
-    split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+        if link.subdirectory_fragment:
+            key_parts["subdirectory"] = link.subdirectory_fragment
 
-    return cache_dir.joinpath(*split_key)
+        key = hashlib.sha256(
+            json.dumps(
+                key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+            ).encode("ascii")
+        ).hexdigest()
+
+        split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+
+        return self._cache_dir.joinpath(*split_key)

@@ -13,10 +13,8 @@ from cachy import CacheManager
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
 
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.cache import FileCache
-from poetry.utils.cache import get_cache_directory_for_link
-from poetry.utils.cache import get_cached_archive_for_link
-from poetry.utils.cache import get_cached_archives_for_link
 from poetry.utils.env import MockEnv
 
 
@@ -201,12 +199,15 @@ def test_cachy_compatibility(
 
 def test_get_cached_archives_for_link(mocker: MockerFixture) -> None:
     distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
-    mocker.patch(
-        "poetry.utils.cache.get_cache_directory_for_link",
+    cache = ArtifactCache(cache_dir=Path())
+
+    mocker.patch.object(
+        cache,
+        "get_cache_directory_for_link",
         return_value=distributions,
     )
-    archives = get_cached_archives_for_link(
-        Path(), Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+    archives = cache._get_cached_archives_for_link(
+        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
     )
 
     assert archives
@@ -246,13 +247,15 @@ def test_get_not_found_cached_archive_for_link(
             Tag("py3", "none", "any"),
         ],
     )
+    cache = ArtifactCache(cache_dir=Path())
 
-    mocker.patch(
-        "poetry.utils.cache.get_cached_archives_for_link",
+    mocker.patch.object(
+        cache,
+        "_get_cached_archives_for_link",
         return_value=available_packages,
     )
 
-    archive = get_cached_archive_for_link(env, Path(), Link(link), strict=strict)
+    archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert archive is None
 
@@ -296,9 +299,11 @@ def test_get_found_cached_archive_for_link(
             Tag("py3", "none", "any"),
         ],
     )
+    cache = ArtifactCache(cache_dir=Path())
 
-    mocker.patch(
-        "poetry.utils.cache.get_cached_archives_for_link",
+    mocker.patch.object(
+        cache,
+        "_get_cached_archives_for_link",
         return_value=[
             Path("/cache/demo-0.1.0-py2.py3-none-any"),
             Path("/cache/demo-0.1.0.tar.gz"),
@@ -307,14 +312,15 @@ def test_get_found_cached_archive_for_link(
         ],
     )
 
-    archive = get_cached_archive_for_link(env, Path(), Link(link), strict=strict)
+    archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
 
 
 def test_get_cache_directory_for_link(tmp_path: Path) -> None:
-    directory = get_cache_directory_for_link(
-        tmp_path, Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+    cache = ArtifactCache(cache_dir=tmp_path)
+    directory = cache.get_cache_directory_for_link(
+        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
     )
 
     expected = Path(

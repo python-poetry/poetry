@@ -44,7 +44,6 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
-    from poetry.utils.env import Env
     from poetry.utils.env import VirtualEnv
     from tests.types import FixtureDirGetter
 
@@ -539,11 +538,11 @@ def test_executor_should_delete_incomplete_downloads(
         side_effect=Exception("Download error"),
     )
     mocker.patch(
-        "poetry.installation.executor.get_cached_archive_for_link",
+        "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
         return_value=None,
     )
     mocker.patch(
-        "poetry.installation.executor.get_cache_directory_for_link",
+        "poetry.installation.executor.ArtifactCache.get_cache_directory_for_link",
         return_value=Path(tmp_dir),
     )
 
@@ -762,7 +761,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
         mocker.patch(
-            "poetry.installation.executor.get_cached_archive_for_link",
+            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
             return_value=link_cached,
         )
     download_spy = mocker.spy(Executor, "_download_archive")
@@ -841,9 +840,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
-        def mock_get_cached_archive_for_link_func(
-            _: Env, __: Path, ___: Link, strict: bool
-        ):
+        def mock_get_cached_archive_for_link_func(_: Link, *, strict: bool, **__: Any):
             if is_wheel_cached and not strict:
                 return cached_wheel
             if is_sdist_cached:
@@ -851,7 +848,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
             return None
 
         mocker.patch(
-            "poetry.installation.executor.get_cached_archive_for_link",
+            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
             side_effect=mock_get_cached_archive_for_link_func,
         )
 
