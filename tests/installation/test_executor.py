@@ -20,7 +20,6 @@ from build import ProjectBuilder
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
-from packaging.tags import Tag
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import path_to_url
@@ -540,7 +539,7 @@ def test_executor_should_delete_incomplete_downloads(
         side_effect=Exception("Download error"),
     )
     mocker.patch(
-        "poetry.installation.executor.Executor._get_cached_archive_for_link",
+        "poetry.installation.executor.get_cached_archive_for_link",
         return_value=None,
     )
     mocker.patch(
@@ -763,7 +762,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
         mocker.patch(
-            "poetry.installation.executor.Executor._get_cached_archive_for_link",
+            "poetry.installation.executor.get_cached_archive_for_link",
             return_value=link_cached,
         )
     download_spy = mocker.spy(Executor, "_download_archive")
@@ -852,7 +851,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
             return None
 
         mocker.patch(
-            "poetry.installation.executor.Executor._get_cached_archive_for_link",
+            "poetry.installation.executor.get_cached_archive_for_link",
             side_effect=mock_get_cached_archive_for_link_func,
         )
 
@@ -1222,106 +1221,3 @@ Package operations: 1 install, 0 updates, 0 removals
     output = io.fetch_output().strip()
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
-
-
-@pytest.mark.parametrize(
-    ("link", "strict", "available_packages"),
-    [
-        (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
-            True,
-            [
-                Path("/cache/demo-0.1.0-py2.py3-none-any"),
-                Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
-                Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
-            ],
-        ),
-        (
-            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
-            False,
-            [],
-        ),
-    ],
-)
-def test_get_not_found_cached_archive_for_link(
-    mocker: MockerFixture,
-    link: str,
-    strict: bool,
-    available_packages: list[Path],
-) -> None:
-    env = MockEnv(
-        version_info=(3, 8, 3),
-        marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"},
-        supported_tags=[
-            Tag("cp38", "cp38", "macosx_10_15_x86_64"),
-            Tag("py3", "none", "any"),
-        ],
-    )
-
-    mocker.patch(
-        "poetry.installation.executor.get_cached_archives_for_link",
-        return_value=available_packages,
-    )
-
-    archive = Executor._get_cached_archive_for_link(
-        env, Path(), Link(link), strict=strict
-    )
-
-    assert archive is None
-
-
-@pytest.mark.parametrize(
-    ("link", "cached", "strict"),
-    [
-        (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
-            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
-            False,
-        ),
-        (
-            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
-            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
-            False,
-        ),
-        (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
-            "/cache/demo-0.1.0.tar.gz",
-            True,
-        ),
-        (
-            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
-            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
-            True,
-        ),
-    ],
-)
-def test_get_found_cached_archive_for_link(
-    mocker: MockerFixture,
-    link: str,
-    cached: str,
-    strict: bool,
-) -> None:
-    env = MockEnv(
-        version_info=(3, 8, 3),
-        marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"},
-        supported_tags=[
-            Tag("cp38", "cp38", "macosx_10_15_x86_64"),
-            Tag("py3", "none", "any"),
-        ],
-    )
-
-    mocker.patch(
-        "poetry.installation.executor.get_cached_archives_for_link",
-        return_value=[
-            Path("/cache/demo-0.1.0-py2.py3-none-any"),
-            Path("/cache/demo-0.1.0.tar.gz"),
-            Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
-            Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
-        ],
-    )
-
-    archive = Executor._get_cached_archive_for_link(
-        env, Path(), Link(link), strict=strict
-    )
-
-    assert Path(cached) == archive

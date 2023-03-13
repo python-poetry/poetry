@@ -20,8 +20,6 @@ from poetry.core.packages.utils.link import Link
 from poetry.installation.chef import Chef
 from poetry.installation.chef import ChefBuildError
 from poetry.installation.chooser import Chooser
-from poetry.installation.chooser import InvalidWheelName
-from poetry.installation.chooser import Wheel
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
@@ -30,7 +28,7 @@ from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.cache import get_cache_directory_for_link
-from poetry.utils.cache import get_cached_archives_for_link
+from poetry.utils.cache import get_cached_archive_for_link
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import get_file_hash
@@ -716,7 +714,7 @@ class Executor:
 
         output_dir = get_cache_directory_for_link(self._artifacts_cache_dir, link)
         # Try to get cached original package for the link provided
-        original_archive = self._get_cached_archive_for_link(
+        original_archive = get_cached_archive_for_link(
             self._env, self._artifacts_cache_dir, link, strict=True
         )
         if original_archive is None:
@@ -737,7 +735,7 @@ class Executor:
 
         # Get potential higher prioritized cached archive, otherwise it will fall back
         # to the original archive.
-        archive = self._get_cached_archive_for_link(
+        archive = get_cached_archive_for_link(
             self._env, self._artifacts_cache_dir, link, strict=False
         )
         # 'archive' can at this point never be None. Since we previously downloaded
@@ -940,40 +938,3 @@ class Executor:
             archive_info["hashes"] = {algorithm: value}
 
         return archive_info
-
-    @staticmethod
-    def _get_cached_archive_for_link(
-        env: Env, cache_dir: Path, link: Link, *, strict: bool
-    ) -> Path | None:
-        archives = get_cached_archives_for_link(cache_dir, link)
-        if not archives:
-            return None
-
-        candidates: list[tuple[float | None, Path]] = []
-        for archive in archives:
-            if strict:
-                # in strict mode return the original cached archive instead of the
-                # prioritized archive type.
-                if link.filename == archive.name:
-                    return archive
-                continue
-            if archive.suffix != ".whl":
-                candidates.append((float("inf"), archive))
-                continue
-
-            try:
-                wheel = Wheel(archive.name)
-            except InvalidWheelName:
-                continue
-
-            if not wheel.is_supported_by_environment(env):
-                continue
-
-            candidates.append(
-                (wheel.get_minimum_supported_index(env.supported_tags), archive),
-            )
-
-        if not candidates:
-            return None
-
-        return min(candidates)[1]

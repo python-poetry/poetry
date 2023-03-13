@@ -14,9 +14,14 @@ from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
+from poetry.utils.wheel import InvalidWheelName
+from poetry.utils.wheel import Wheel
+
 
 if TYPE_CHECKING:
     from poetry.core.packages.utils.link import Link
+
+    from poetry.utils.env import Env
 
 
 # Used by Cachy for items that do not expire.
@@ -213,6 +218,43 @@ def get_cached_archives_for_link(cache_dir: Path, link: Link) -> list[Path]:
             paths.append(Path(archive))
 
     return paths
+
+
+def get_cached_archive_for_link(
+    env: Env, cache_dir: Path, link: Link, *, strict: bool
+) -> Path | None:
+    archives = get_cached_archives_for_link(cache_dir, link)
+    if not archives:
+        return None
+
+    candidates: list[tuple[float | None, Path]] = []
+    for archive in archives:
+        if strict:
+            # in strict mode return the original cached archive instead of the
+            # prioritized archive type.
+            if link.filename == archive.name:
+                return archive
+            continue
+        if archive.suffix != ".whl":
+            candidates.append((float("inf"), archive))
+            continue
+
+        try:
+            wheel = Wheel(archive.name)
+        except InvalidWheelName:
+            continue
+
+        if not wheel.is_supported_by_environment(env):
+            continue
+
+        candidates.append(
+            (wheel.get_minimum_supported_index(env.supported_tags), archive),
+        )
+
+    if not candidates:
+        return None
+
+    return min(candidates)[1]
 
 
 def get_cache_directory_for_link(cache_dir: Path, link: Link) -> Path:
