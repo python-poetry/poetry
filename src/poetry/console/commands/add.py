@@ -30,7 +30,7 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dev",
             "D",
-            "Add as a development dependency. (<warning>Deprecated</warning>)",
+            "Add as a development dependency. (<warning>Deprecated</warning>) Use --group=dev instead.",
         ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
