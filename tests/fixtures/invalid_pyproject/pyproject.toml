@@ -8,7 +8,7 @@ license = "INVALID"
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Clowns",
-    "Natural Language :: Ukranian",
+    "Natural Language :: Ukrainian",
     "Topic :: Communications :: Chat :: AOL Instant Messenger",
 ]
 
