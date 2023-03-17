@@ -3,6 +3,7 @@
 [project]
 name = "demo"
 repository = "https://github.com/demo/demo"
+version = "0.1.0"
 
 [build-system]
 build-backend = "maturin"
