@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import ast
 
+from enum import Enum
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
 
+from poetry.core.toml.file import TOMLFile, TOMLDocument
 from poetry.core.constraints.version import Version
+
+
+class SupportedBackends(Enum):
+    UNSUPPORTED = 'UNSUPPORTED'
+    FLIT_CORE = 'flit_core.buildapi'
 
 
 class SetupReader:
@@ -22,7 +29,7 @@ class SetupReader:
         "python_requires": None,
     }
 
-    FILES = ["setup.py", "setup.cfg"]
+    FILES = ["setup.py", "setup.cfg", "pyproject.toml"]
 
     @classmethod
     def read_from_directory(cls, directory: str | Path) -> dict[str, Any]:
@@ -117,6 +124,26 @@ class SetupReader:
             "extras_require": extras_require,
             "python_requires": python_requires,
         }
+    
+    def read_pyproject_toml(self, filepath: str | Path) -> dict[str, Any]:
+        file = TOMLFile(filepath)
+        content = file.read()
+        result = self.DEFAULT.copy()
+        backend = self._which_backend(content)
+        if backend == SupportedBackends.FLIT_CORE:
+            project = content['project']
+            result['name'] = project['name']
+            result['version'] = project.get('version')
+            result['install_requires'] = project.get('dependencies')
+            result['python_requires'] = project.get('requires-python')
+        return result
+
+    def _which_backend(self, toml_content: TOMLDocument) -> SupportedBackends:
+        build_system = toml_content['build-system']
+        try:
+            return SupportedBackends(build_system['build-backend'])
+        except ValueError:
+            return SupportedBackends.UNSUPPORTED
 
     def _find_setup_call(
         self, elements: list[ast.stmt]
