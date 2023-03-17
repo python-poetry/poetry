@@ -27,6 +27,8 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
 
+from poetry.utils._compat import tomllib
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -498,6 +500,7 @@ class PackageInfo:
                     else:
                         info = get_pep517_metadata(path)
                 except PackageInfoError:
+                    info = cls.from_pyproject_toml(path)
                     if not info:
                         raise
 
@@ -563,6 +566,26 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
+
+    @classmethod
+    def from_pyproject_toml(self, filepath: str | Path) -> PackageInfo | None:
+        """
+        Gather package information from a pyproject.toml file.
+        
+        :param path: Path to package
+        """
+        pyproject_toml = filepath / 'pyproject.toml'
+        if not pyproject_toml.exists():
+            return None
+
+        content = tomllib.load(pyproject_toml.open('r'))
+        project = content["project"]
+        name = project["name"]
+        version = project["version"]
+        summary = content.get('description')
+        install_requires = project.get("dependencies")
+        python_requires = project.get("requires-python")
+        return PackageInfo(name=name, version=version, summary=summary, requires_dist=install_requires, requires_python=python_requires)
 
 
 @functools.lru_cache(maxsize=None)
