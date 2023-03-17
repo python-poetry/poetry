@@ -98,6 +98,7 @@ class WheelInstaller:
 
     def install(self, wheel: Path) -> None:
         with WheelFile.open(Path(wheel.as_posix())) as source:
+            source.validate_record()
             install(
                 source=source,
                 destination=self._destination.for_source(source),
