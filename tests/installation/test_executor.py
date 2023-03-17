@@ -22,6 +22,7 @@ from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import path_to_url
 
 from poetry.factory import Factory
 from poetry.installation.chef import Chef as BaseChef
@@ -1093,8 +1094,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 @pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
+@pytest.mark.parametrize("editable", [False, True])
 def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     failing_method: str,
+    editable: bool,
     mocker: MockerFixture,
     config: Config,
     pool: RepositoryPool,
@@ -1102,7 +1105,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
-):
+) -> None:
     error = BuildBackendException(
         CalledProcessError(1, ["pip"], output=b"Error on stdout")
     )
@@ -1121,7 +1124,10 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
         .parent.parent.joinpath("fixtures/simple_project")
         .resolve()
         .as_posix(),
+        develop=editable,
     )
+    # must not be included in the error message
+    directory_package.python_versions = ">=3.7"
 
     return_code = executor.execute(
         [
@@ -1145,14 +1151,70 @@ Package operations: 1 install, 0 updates, 0 removals
   Error on stdout
 """
 
-    requirement = directory_package.to_dependency().to_pep_508()
+    if editable:
+        pip_command = "pip wheel --use-pep517 --editable"
+        requirement = directory_package.source_url
+        assert Path(requirement).exists()
+    else:
+        pip_command = "pip wheel --use-pep517"
+        requirement = f"{package_name} @ {path_to_url(directory_package.source_url)}"
     expected_end = f"""
 Note: This error originates from the build backend, and is likely not a problem with \
 poetry but with {package_name} ({package_version} {package_url}) not supporting \
-PEP 517 builds. You can verify this by running 'pip wheel --use-pep517 "{requirement}"'.
+PEP 517 builds. You can verify this by running '{pip_command} "{requirement}"'.
 
 """
 
     output = io.fetch_output()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)
+
+
+def test_build_system_requires_not_available(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=fixture_dir("build_system_requires_not_available")
+        .resolve()
+        .as_posix(),
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+        ]
+    )
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""\
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing {package_name} ({package_version} {package_url})
+
+  SolveFailure
+
+  Because -root- depends on poetry-core (0.999) which doesn't match any versions,\
+ version solving failed.
+"""
+    expected_end = "Cannot resolve build-system.requires for simple-project."
+
+    output = io.fetch_output().strip()
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
