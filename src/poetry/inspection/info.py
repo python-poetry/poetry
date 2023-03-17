@@ -571,9 +571,12 @@ class PackageInfo:
     def from_pyproject_toml(self, filepath: str | Path) -> PackageInfo | None:
         """
         Gather package information from a pyproject.toml file.
-        
+
         :param path: Path to package
         """
+        if isinstance(filepath, str):
+            filepath = Path(filepath)
+
         pyproject_toml = filepath / 'pyproject.toml'
         if not pyproject_toml.exists():
             return None
