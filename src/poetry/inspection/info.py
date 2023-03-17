@@ -568,7 +568,7 @@ class PackageInfo:
             return cls.from_sdist(path=path)
 
     @classmethod
-    def from_pyproject_toml(self, filepath: str | Path) -> PackageInfo | None:
+    def from_pyproject_toml(cls, filepath: str | Path) -> PackageInfo | None:
         """
         Gather package information from a pyproject.toml file.
 
@@ -577,15 +577,15 @@ class PackageInfo:
         if isinstance(filepath, str):
             filepath = Path(filepath)
 
-        pyproject_toml = filepath / 'pyproject.toml'
+        pyproject_toml = filepath / "pyproject.toml"
         if not pyproject_toml.exists():
             return None
 
-        content = tomllib.load(pyproject_toml.open('rb'))
+        content = tomllib.load(pyproject_toml.open("rb"))
         project = content["project"]
         name = project["name"]
-        version = project["version"]
-        summary = content.get('description')
+        version = project.get("version")
+        summary = project.get("description")
         install_requires = project.get("dependencies")
         python_requires = project.get("requires-python")
         return PackageInfo(name=name, version=version, summary=summary, requires_dist=install_requires, requires_python=python_requires)
