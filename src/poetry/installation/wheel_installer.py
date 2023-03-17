@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from installer import install
 from installer.destinations import SchemeDictionaryDestination
 from installer.sources import WheelFile
+from packaging.utils import canonicalize_name
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
@@ -23,6 +24,37 @@ if TYPE_CHECKING:
     from installer.utils import Scheme
 
     from poetry.utils.env import Env
+
+
+class PatchedWheelFile(WheelFile):
+    # TODO: Patch from https://github.com/pypa/installer/issues/134
+    #       can be removed if new installer release is available
+    @property
+    def dist_info_dir(self) -> str:
+        """Name of the dist-info directory."""
+        if not hasattr(self, "_dist_info_dir"):
+            top_level_directories = {
+                path.split("/", 1)[0] for path in self._zipfile.namelist()
+            }
+            dist_infos = [
+                name for name in top_level_directories if name.endswith(".dist-info")
+            ]
+
+            assert (
+                len(dist_infos) == 1
+            ), "Wheel doesn't contain exactly one .dist-info directory"
+            dist_info_dir = dist_infos[0]
+
+            # NAME-VER.dist-info
+            di_dname = dist_info_dir.rsplit("-", 2)[0]
+            norm_di_dname = canonicalize_name(di_dname)
+            norm_file_dname = canonicalize_name(self.distribution)
+            assert (
+                norm_di_dname == norm_file_dname
+            ), "Wheel .dist-info directory doesn't match wheel filename"
+
+            self._dist_info_dir = dist_info_dir
+        return self._dist_info_dir
 
 
 class WheelDestination(SchemeDictionaryDestination):
@@ -97,7 +129,7 @@ class WheelInstaller:
         self._destination.bytecode_optimization_levels = (1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
-        with WheelFile.open(Path(wheel.as_posix())) as source:
+        with PatchedWheelFile.open(Path(wheel.as_posix())) as source:
             install(
                 source=source,
                 destination=self._destination.for_source(source),

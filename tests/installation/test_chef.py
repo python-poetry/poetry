@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 
 from pathlib import Path
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -145,7 +147,9 @@ def test_get_found_cached_archive_for_link(
     assert Path(cached) == archive
 
 
-def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
+def test_get_cached_archives_for_link(
+    config: Config, mocker: MockerFixture, fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
     chef = Chef(
         config,
         MockEnv(
@@ -154,11 +158,13 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
         Factory.create_pool(config),
     )
 
-    distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
+    for file in fixture_dir("distributions").glob("demo-0.1.*"):
+        shutil.copy(file, tmp_path)
+    (Path(tmp_path) / "no-distribution-by-suffix.txt").touch()
     mocker.patch.object(
         chef,
         "get_cache_directory_for_link",
-        return_value=distributions,
+        return_value=tmp_path,
     )
 
     archives = chef.get_cached_archives_for_link(
@@ -166,7 +172,7 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
     )
 
     assert archives
-    assert set(archives) == set(distributions.glob("demo-0.1.*"))
+    assert set(archives) == set(tmp_path.glob("demo-0.1.*"))
 
 
 def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
@@ -190,14 +196,12 @@ def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
     assert directory == expected
 
 
-def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
+def test_prepare_sdist(
+    config: Config, config_cache_dir: Path, fixture_dir: FixtureDirGetter
+) -> None:
     chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
 
-    archive = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
-        .resolve()
-    )
+    archive = fixture_dir("distributions/demo-0.1.0.tar.gz").resolve()
 
     destination = chef.get_cache_directory_for_link(Link(archive.as_uri()))
 
@@ -207,10 +211,12 @@ def test_prepare_sdist(config: Config, config_cache_dir: Path) -> None:
     assert wheel.name == "demo-0.1.0-py3-none-any.whl"
 
 
-def test_prepare_directory(config: Config, config_cache_dir: Path):
+def test_prepare_directory(
+    config: Config, config_cache_dir: Path, fixture_dir: FixtureDirGetter
+) -> None:
     chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
 
-    archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    archive = fixture_dir("simple_project").resolve()
 
     wheel = chef.prepare(archive)
 
@@ -222,16 +228,12 @@ def test_prepare_directory(config: Config, config_cache_dir: Path):
 
 
 def test_prepare_directory_with_extensions(
-    config: Config, config_cache_dir: Path
+    config: Config, config_cache_dir: Path, fixture_dir: FixtureDirGetter
 ) -> None:
     env = EnvManager.get_system_env()
     chef = Chef(config, env, Factory.create_pool(config))
 
-    archive = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/extended_with_no_setup")
-        .resolve()
-    )
+    archive = fixture_dir("extended_with_no_setup").resolve()
 
     wheel = chef.prepare(archive)
 
@@ -242,10 +244,12 @@ def test_prepare_directory_with_extensions(
     os.unlink(wheel)
 
 
-def test_prepare_directory_editable(config: Config, config_cache_dir: Path):
+def test_prepare_directory_editable(
+    config: Config, config_cache_dir: Path, fixture_dir: FixtureDirGetter
+) -> None:
     chef = Chef(config, EnvManager.get_system_env(), Factory.create_pool(config))
 
-    archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    archive = fixture_dir("simple_project").resolve()
 
     wheel = chef.prepare(archive, editable=True)
 

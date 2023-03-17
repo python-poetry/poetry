@@ -79,3 +79,20 @@ def test_enable_bytecode_compilation(
         assert list(cache_dir.glob("*.pyc"))
     else:
         assert not cache_dir.exists()
+
+
+def test_install_wheel_with_unnormalized_dist_info(
+    fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
+    wheel = fixture_dir("distributions/un_normalized_dist_info-0.1.0-py3-none-any.whl")
+    env = MockEnv(path=tmp_path)
+    installer = WheelInstaller(env)
+    installer.install(wheel)
+    dist_info_dir = (
+        Path(env.paths["purelib"]) / "Un.normalized_dist-info-0.1.0.dist-info"
+    )
+    assert dist_info_dir.exists()
+    assert (dist_info_dir / "INSTALLER").exists()
+    assert (dist_info_dir / "METADATA").exists()
+    assert (dist_info_dir / "RECORD").exists()
+    assert (dist_info_dir / "WHEEL").exists()
