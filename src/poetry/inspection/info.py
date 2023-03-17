@@ -578,7 +578,7 @@ class PackageInfo:
         if not pyproject_toml.exists():
             return None
 
-        content = tomllib.load(pyproject_toml.open('r'))
+        content = tomllib.load(pyproject_toml.open('rb'))
         project = content["project"]
         name = project["name"]
         version = project["version"]
