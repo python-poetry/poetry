@@ -94,7 +94,7 @@ class WheelInstaller:
         )
 
     def enable_bytecode_compilation(self, enable: bool = True) -> None:
-        self._destination.bytecode_optimization_levels = (1,) if enable else ()
+        self._destination.bytecode_optimization_levels = (-1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
         with WheelFile.open(wheel) as source:
