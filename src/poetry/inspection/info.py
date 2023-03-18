@@ -23,11 +23,10 @@ from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
 
+from poetry.utils._compat import tomllib
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
-
-from poetry.utils._compat import tomllib
 
 
 if TYPE_CHECKING:
