@@ -97,7 +97,8 @@ class WheelInstaller:
         self._destination.bytecode_optimization_levels = (1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
-        with WheelFile.open(Path(wheel.as_posix())) as source:
+        with WheelFile.open(wheel) as source:
+            source.validate_record()
             install(
                 source=source,
                 destination=self._destination.for_source(source),
