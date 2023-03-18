@@ -766,10 +766,7 @@ class Executor:
                     link
                 )
                 cached_file = cache_directory.joinpath(link.filename)
-                # We can't use unlink(missing_ok=True) because it's not available
-                # prior to Python 3.8
-                if cached_file.exists():
-                    cached_file.unlink()
+                cached_file.unlink(missing_ok=True)
 
                 raise
 
@@ -891,9 +888,7 @@ class Executor:
             ) in self._env.site_packages.find_distribution_direct_url_json_files(
                 distribution_name=package.name, writable_only=True
             ):
-                # We can't use unlink(missing_ok=True) because it's not always available
-                if direct_url_json.exists():
-                    direct_url_json.unlink()
+                direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Protocol
 
 import pytest
 
@@ -14,7 +15,6 @@ from poetry.plugins import ApplicationPlugin
 from poetry.plugins import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
-from tests.compat import Protocol
 from tests.helpers import mock_metadata_entry_points
 
 

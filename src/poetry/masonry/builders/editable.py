@@ -132,9 +132,7 @@ class EditableBuilder(Builder):
                 f"  - Removing existing <c2>{file.name}</c2> from <b>{file.parent}</b>"
                 f" for {self._poetry.file.path.parent}"
             )
-            # We can't use unlink(missing_ok=True) because it's not always available
-            if file.exists():
-                file.unlink()
+            file.unlink(missing_ok=True)
 
         try:
             pth_file = self._env.site_packages.write_text(

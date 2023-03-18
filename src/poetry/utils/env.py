@@ -338,10 +338,7 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 path = Path(distribution.locate_file(file))
-
-                # We can't use unlink(missing_ok=True) because it's not always available
-                if path.exists():
-                    path.unlink()
+                path.unlink(missing_ok=True)
 
             distribution_path: Path = distribution._path  # type: ignore[attr-defined]
             if distribution_path.exists():
@@ -544,7 +541,7 @@ class EnvManager:
             if executable:
                 python_patch = decode(
                     subprocess.check_output(
-                        [str(executable), "-c", GET_PYTHON_VERSION_ONELINER],
+                        [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                     ).strip()
                 )
 
@@ -579,7 +576,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    [str(python_path), "-c", GET_PYTHON_VERSION_ONELINER],
+                    [python_path, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -906,7 +903,7 @@ class EnvManager:
         if executable:
             python_patch = decode(
                 subprocess.check_output(
-                    [str(executable), "-c", GET_PYTHON_VERSION_ONELINER],
+                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                 ).strip()
             )
             python_minor = ".".join(python_patch.split(".")[:2])
@@ -954,7 +951,7 @@ class EnvManager:
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            [str(python), "-c", GET_PYTHON_VERSION_ONELINER],
+                            [python, "-c", GET_PYTHON_VERSION_ONELINER],
                             stderr=subprocess.STDOUT,
                         ).strip()
                     )
