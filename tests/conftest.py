@@ -295,10 +295,11 @@ def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
 @pytest.fixture
 def tmp_dir() -> Iterator[str]:
     dir_ = tempfile.mkdtemp(prefix="poetry_")
+    path = Path(dir_)
 
-    yield Path(dir_).resolve().as_posix()
+    yield path.resolve().as_posix()
 
-    remove_directory(dir_, force=True)
+    remove_directory(path, force=True)
 
 
 @pytest.fixture
