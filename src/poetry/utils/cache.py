@@ -212,16 +212,24 @@ class ArtifactCache:
     def __init__(self, *, cache_dir: Path) -> None:
         self._cache_dir = cache_dir
 
-    def _get_cached_archives_for_link(self, link: Link) -> list[Path]:
-        cache_dir = self.get_cache_directory_for_link(link)
+    def get_cache_directory_for_link(self, link: Link) -> Path:
+        key_parts = {"url": link.url_without_fragment}
 
-        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
-        paths = []
-        for archive_type in archive_types:
-            for archive in cache_dir.glob(f"*.{archive_type}"):
-                paths.append(Path(archive))
+        if link.hash_name is not None and link.hash is not None:
+            key_parts[link.hash_name] = link.hash
 
-        return paths
+        if link.subdirectory_fragment:
+            key_parts["subdirectory"] = link.subdirectory_fragment
+
+        key = hashlib.sha256(
+            json.dumps(
+                key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+            ).encode("ascii")
+        ).hexdigest()
+
+        split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+
+        return self._cache_dir.joinpath(*split_key)
 
     def get_cached_archive_for_link(
         self,
@@ -268,21 +276,13 @@ class ArtifactCache:
 
         return min(candidates)[1]
 
-    def get_cache_directory_for_link(self, link: Link) -> Path:
-        key_parts = {"url": link.url_without_fragment}
+    def _get_cached_archives_for_link(self, link: Link) -> list[Path]:
+        cache_dir = self.get_cache_directory_for_link(link)
 
-        if link.hash_name is not None and link.hash is not None:
-            key_parts[link.hash_name] = link.hash
+        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
+        paths = []
+        for archive_type in archive_types:
+            for archive in cache_dir.glob(f"*.{archive_type}"):
+                paths.append(Path(archive))
 
-        if link.subdirectory_fragment:
-            key_parts["subdirectory"] = link.subdirectory_fragment
-
-        key = hashlib.sha256(
-            json.dumps(
-                key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-            ).encode("ascii")
-        ).hexdigest()
-
-        split_key = [key[:2], key[2:4], key[4:6], key[6:]]
-
-        return self._cache_dir.joinpath(*split_key)
+        return paths

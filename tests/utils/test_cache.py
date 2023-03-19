@@ -197,6 +197,20 @@ def test_cachy_compatibility(
     assert cachy_file_cache.get("key4") == test_obj
 
 
+def test_get_cache_directory_for_link(tmp_path: Path) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    directory = cache.get_cache_directory_for_link(
+        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+    )
+
+    expected = Path(
+        f"{tmp_path.as_posix()}/11/4f/a8/"
+        "1c89d75547e4967082d30a28360401c82c83b964ddacee292201bf85f2"
+    )
+
+    assert directory == expected
+
+
 def test_get_cached_archives_for_link(mocker: MockerFixture) -> None:
     distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
     cache = ArtifactCache(cache_dir=Path())
@@ -315,17 +329,3 @@ def test_get_found_cached_archive_for_link(
     archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
-
-
-def test_get_cache_directory_for_link(tmp_path: Path) -> None:
-    cache = ArtifactCache(cache_dir=tmp_path)
-    directory = cache.get_cache_directory_for_link(
-        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
-    )
-
-    expected = Path(
-        f"{tmp_path.as_posix()}/11/4f/a8/"
-        "1c89d75547e4967082d30a28360401c82c83b964ddacee292201bf85f2"
-    )
-
-    assert directory == expected
