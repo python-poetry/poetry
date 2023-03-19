@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -9,18 +10,21 @@ from unittest.mock import Mock
 import pytest
 
 from cachy import CacheManager
+from packaging.tags import Tag
+from poetry.core.packages.utils.link import Link
 
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.cache import FileCache
+from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from _pytest.monkeypatch import MonkeyPatch
     from pytest import FixtureRequest
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 FILE_CACHE = Union[FileCache, CacheManager]
@@ -192,3 +196,139 @@ def test_cachy_compatibility(
 
     assert cachy_file_cache.get("key3") == test_str
     assert cachy_file_cache.get("key4") == test_obj
+
+
+def test_get_cache_directory_for_link(tmp_path: Path) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    directory = cache.get_cache_directory_for_link(
+        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+    )
+
+    expected = Path(
+        f"{tmp_path.as_posix()}/11/4f/a8/"
+        "1c89d75547e4967082d30a28360401c82c83b964ddacee292201bf85f2"
+    )
+
+    assert directory == expected
+
+
+def test_get_cached_archives_for_link(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    distributions = fixture_dir("distributions")
+    cache = ArtifactCache(cache_dir=Path())
+
+    mocker.patch.object(
+        cache,
+        "get_cache_directory_for_link",
+        return_value=distributions,
+    )
+    archives = cache._get_cached_archives_for_link(
+        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+    )
+
+    assert archives
+    assert set(archives) == set(distributions.glob("demo-0.1.*"))
+
+
+@pytest.mark.parametrize(
+    ("link", "strict", "available_packages"),
+    [
+        (
+            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            True,
+            [
+                Path("/cache/demo-0.1.0-py2.py3-none-any"),
+                Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
+                Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
+            ],
+        ),
+        (
+            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            False,
+            [],
+        ),
+    ],
+)
+def test_get_not_found_cached_archive_for_link(
+    mocker: MockerFixture,
+    link: str,
+    strict: bool,
+    available_packages: list[Path],
+) -> None:
+    env = MockEnv(
+        version_info=(3, 8, 3),
+        marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"},
+        supported_tags=[
+            Tag("cp38", "cp38", "macosx_10_15_x86_64"),
+            Tag("py3", "none", "any"),
+        ],
+    )
+    cache = ArtifactCache(cache_dir=Path())
+
+    mocker.patch.object(
+        cache,
+        "_get_cached_archives_for_link",
+        return_value=available_packages,
+    )
+
+    archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
+
+    assert archive is None
+
+
+@pytest.mark.parametrize(
+    ("link", "cached", "strict"),
+    [
+        (
+            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            False,
+        ),
+        (
+            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            False,
+        ),
+        (
+            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "/cache/demo-0.1.0.tar.gz",
+            True,
+        ),
+        (
+            "https://example.com/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+            True,
+        ),
+    ],
+)
+def test_get_found_cached_archive_for_link(
+    mocker: MockerFixture,
+    link: str,
+    cached: str,
+    strict: bool,
+) -> None:
+    env = MockEnv(
+        version_info=(3, 8, 3),
+        marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"},
+        supported_tags=[
+            Tag("cp38", "cp38", "macosx_10_15_x86_64"),
+            Tag("py3", "none", "any"),
+        ],
+    )
+    cache = ArtifactCache(cache_dir=Path())
+
+    mocker.patch.object(
+        cache,
+        "_get_cached_archives_for_link",
+        return_value=[
+            Path("/cache/demo-0.1.0-py2.py3-none-any"),
+            Path("/cache/demo-0.1.0.tar.gz"),
+            Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
+            Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
+        ],
+    )
+
+    archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
+
+    assert Path(cached) == archive

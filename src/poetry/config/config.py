@@ -210,7 +210,11 @@ class Config:
 
     @property
     def repository_cache_directory(self) -> Path:
-        return Path(self.get("cache-dir")) / "cache" / "repositories"
+        return Path(self.get("cache-dir")).expanduser() / "cache" / "repositories"
+
+    @property
+    def artifacts_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")).expanduser() / "artifacts"
 
     @property
     def virtualenvs_path(self) -> Path:
