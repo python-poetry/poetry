@@ -32,6 +32,7 @@ from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.repositories.repository_pool import RepositoryPool
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -93,7 +94,7 @@ def env(tmp_dir: str) -> MockEnv:
     return MockEnv(path=path, is_venv=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def io() -> BufferedIO:
     io = BufferedIO()
     io.output.formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
@@ -104,7 +105,7 @@ def io() -> BufferedIO:
     return io
 
 
-@pytest.fixture()
+@pytest.fixture
 def io_decorated() -> BufferedIO:
     io = BufferedIO(decorated=True)
     io.output.formatter.set_style("c1", Style("cyan"))
@@ -113,14 +114,14 @@ def io_decorated() -> BufferedIO:
     return io
 
 
-@pytest.fixture()
+@pytest.fixture
 def io_not_decorated() -> BufferedIO:
     io = BufferedIO(decorated=False)
 
     return io
 
 
-@pytest.fixture()
+@pytest.fixture
 def pool() -> RepositoryPool:
     pool = RepositoryPool()
     pool.add_repository(MockRepository())
@@ -128,7 +129,12 @@ def pool() -> RepositoryPool:
     return pool
 
 
-@pytest.fixture()
+@pytest.fixture
+def artifact_cache(config: Config) -> ArtifactCache:
+    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
+
+
+@pytest.fixture
 def mock_file_downloads(
     http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
 ) -> None:
@@ -158,7 +164,7 @@ def mock_file_downloads(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_wheel(tmp_dir: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
@@ -176,7 +182,7 @@ def copy_wheel(tmp_dir: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Pat
     return _copy_wheel
 
 
-@pytest.fixture()
+@pytest.fixture
 def wheel(copy_wheel: Callable[[], Path]) -> Path:
     archive = copy_wheel()
 
@@ -200,9 +206,10 @@ def test_execute_executes_a_batch_of_operations(
     wheel_install = mocker.patch.object(WheelInstaller, "install")
 
     config.merge({"cache-dir": tmp_dir})
+    artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
     prepare_spy = mocker.spy(Chef, "_prepare")
-    chef = Chef(config, env, Factory.create_pool(config))
+    chef = Chef(artifact_cache, env, Factory.create_pool(config))
     chef.set_directory_wheel([copy_wheel(), copy_wheel()])
     chef.set_sdist_wheel(copy_wheel())
 
@@ -678,6 +685,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
+    artifact_cache: ArtifactCache,
     io: BufferedIO,
     wheel: Path,
     fixture_dir: FixtureDirGetter,
@@ -687,7 +695,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
         "demo", "0.1.2", source_type="directory", source_url=url.as_posix()
     )
 
-    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -702,6 +710,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
+    artifact_cache: ArtifactCache,
     io: BufferedIO,
     wheel: Path,
     fixture_dir: FixtureDirGetter,
@@ -715,7 +724,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
         develop=True,
     )
 
-    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -877,6 +886,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
+    artifact_cache: ArtifactCache,
     io: BufferedIO,
     mock_file_downloads: None,
     wheel: Path,
@@ -890,7 +900,7 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_url="https://github.com/demo/demo.git",
     )
 
-    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)
@@ -915,6 +925,7 @@ def test_executor_should_append_subdirectory_for_git(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
+    artifact_cache: ArtifactCache,
     io: BufferedIO,
     mock_file_downloads: None,
     wheel: Path,
@@ -929,7 +940,7 @@ def test_executor_should_append_subdirectory_for_git(
         source_subdirectory="two",
     )
 
-    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
     spy = mocker.spy(chef, "prepare")
 
@@ -945,6 +956,7 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
+    artifact_cache: ArtifactCache,
     io: BufferedIO,
     mock_file_downloads: None,
     wheel: Path,
@@ -959,7 +971,7 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
         source_subdirectory="two",
     )
 
-    chef = Chef(config, tmp_venv, Factory.create_pool(config))
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
 
     executor = Executor(tmp_venv, pool, config, io)

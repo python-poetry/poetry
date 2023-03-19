@@ -40,7 +40,7 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
     mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
-@pytest.fixture()
+@pytest.fixture
 def artifact_cache(config: Config) -> ArtifactCache:
     return ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
