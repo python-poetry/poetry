@@ -1533,6 +1533,7 @@ class Env:
                     stderr=stderr,
                     input=encode(input_),
                     check=True,
+                    env=env,
                     **kwargs,
                 ).stdout
             elif call:

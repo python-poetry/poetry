@@ -24,6 +24,7 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.wheel_installer import WheelInstaller
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
@@ -301,7 +302,14 @@ class Executor:
                     trace.render(io)
                     if isinstance(e, ChefBuildError):
                         pkg = operation.package
-                        requirement = pkg.to_dependency().to_pep_508()
+                        pip_command = "pip wheel --use-pep517"
+                        if pkg.develop:
+                            requirement = pkg.source_url
+                            pip_command += " --editable"
+                        else:
+                            requirement = (
+                                pkg.to_dependency().to_pep_508().split(";")[0].strip()
+                            )
                         io.write_line("")
                         io.write_line(
                             "<info>"
@@ -309,8 +317,17 @@ class Executor:
                             " and is likely not a problem with poetry"
                             f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
                             " not supporting PEP 517 builds. You can verify this by"
-                            f" running 'pip wheel --use-pep517 \"{requirement}\"'."
+                            f" running '{pip_command} \"{requirement}\"'."
                             "</info>"
+                        )
+                    elif isinstance(e, SolverProblemError):
+                        pkg = operation.package
+                        io.write_line("")
+                        io.write_line(
+                            "<error>"
+                            "Cannot resolve build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
                         )
                     io.write_line("")
             finally:
