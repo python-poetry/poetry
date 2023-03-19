@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -45,18 +46,15 @@ def artifact_cache(config: Config) -> ArtifactCache:
 
 
 def test_prepare_sdist(
-    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-
-    archive = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
-        .resolve()
-    )
-
+    archive = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     destination = artifact_cache.get_cache_directory_for_link(Link(archive.as_uri()))
 
     wheel = chef.prepare(archive)
@@ -66,13 +64,15 @@ def test_prepare_sdist(
 
 
 def test_prepare_directory(
-    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
 ):
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-
-    archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    archive = fixture_dir("simple_project").resolve()
 
     wheel = chef.prepare(archive)
 
@@ -84,16 +84,14 @@ def test_prepare_directory(
 
 
 def test_prepare_directory_with_extensions(
-    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     env = EnvManager.get_system_env()
     chef = Chef(artifact_cache, env, Factory.create_pool(config))
-
-    archive = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/extended_with_no_setup")
-        .resolve()
-    )
+    archive = fixture_dir("extended_with_no_setup").resolve()
 
     wheel = chef.prepare(archive)
 
@@ -105,13 +103,15 @@ def test_prepare_directory_with_extensions(
 
 
 def test_prepare_directory_editable(
-    config: Config, config_cache_dir: Path, artifact_cache: ArtifactCache
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
 ):
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-
-    archive = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    archive = fixture_dir("simple_project").resolve()
 
     wheel = chef.prepare(archive, editable=True)
 

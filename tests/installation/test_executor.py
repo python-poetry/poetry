@@ -129,7 +129,9 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture()
-def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
+def mock_file_downloads(
+    http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
+) -> None:
     def callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | str]:
@@ -141,12 +143,10 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
 
         if not fixture.exists():
             if name == "demo-0.1.0.tar.gz":
-                fixture = Path(__file__).parent.parent.joinpath(
-                    "fixtures/distributions/demo-0.1.0.tar.gz"
-                )
+                fixture = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
             else:
-                fixture = Path(__file__).parent.parent.joinpath(
-                    "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+                fixture = (
+                    fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
                 )
 
         return [200, headers, fixture.read_bytes()]
@@ -159,26 +159,19 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
 
 
 @pytest.fixture()
-def copy_wheel(tmp_dir: Path) -> Callable[[], Path]:
+def copy_wheel(tmp_dir: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
         Path(tmp_dir).joinpath(tmp_name).mkdir()
 
         shutil.copyfile(
-            Path(__file__)
-            .parent.parent.joinpath(
-                "fixtures/distributions/demo-0.1.2-py2.py3-none-any.whl"
-            )
-            .as_posix(),
-            Path(tmp_dir)
-            .joinpath(tmp_name)
-            .joinpath("demo-0.1.2-py2.py3-none-any.whl")
-            .as_posix(),
+            (
+                fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
+            ).as_posix(),
+            (Path(tmp_dir) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl").as_posix(),
         )
 
-        return (
-            Path(tmp_dir).joinpath(tmp_name).joinpath("demo-0.1.2-py2.py3-none-any.whl")
-        )
+        return Path(tmp_dir) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl"
 
     return _copy_wheel
 
@@ -202,6 +195,7 @@ def test_execute_executes_a_batch_of_operations(
     mock_file_downloads: None,
     env: MockEnv,
     copy_wheel: Callable[[], Path],
+    fixture_dir: FixtureDirGetter,
 ):
     wheel_install = mocker.patch.object(WheelInstaller, "install")
 
@@ -221,10 +215,7 @@ def test_execute_executes_a_batch_of_operations(
         "demo",
         "0.1.0",
         source_type="file",
-        source_url=Path(__file__)
-        .parent.parent.joinpath(
-            "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
-        )
+        source_url=(fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl")
         .resolve()
         .as_posix(),
     )
@@ -233,10 +224,7 @@ def test_execute_executes_a_batch_of_operations(
         "simple-project",
         "1.2.3",
         source_type="directory",
-        source_url=Path(__file__)
-        .parent.parent.joinpath("fixtures/simple_project")
-        .resolve()
-        .as_posix(),
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
     git_package = Package(
@@ -527,10 +515,9 @@ def test_executor_should_delete_incomplete_downloads(
     pool: RepositoryPool,
     mock_file_downloads: None,
     env: MockEnv,
+    fixture_dir: FixtureDirGetter,
 ):
-    fixture = Path(__file__).parent.parent.joinpath(
-        "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
-    )
+    fixture = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
     destination_fixture = Path(tmp_dir) / "tomlkit-0.5.3-py2.py3-none-any.whl"
     shutil.copyfile(str(fixture), str(destination_fixture))
     mocker.patch(
@@ -624,15 +611,13 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
 
 
 def test_executor_should_write_pep610_url_references_for_wheel_files(
-    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
 ):
-    url = (
-        Path(__file__)
-        .parent.parent.joinpath(
-            "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
-        )
-        .resolve()
-    )
+    url = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
     package.files = [
@@ -658,13 +643,13 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
 
 
 def test_executor_should_write_pep610_url_references_for_non_wheel_files(
-    tmp_venv: VirtualEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
 ):
-    url = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
-        .resolve()
-    )
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
     package.files = [
@@ -695,12 +680,9 @@ def test_executor_should_write_pep610_url_references_for_directories(
     config: Config,
     io: BufferedIO,
     wheel: Path,
+    fixture_dir: FixtureDirGetter,
 ):
-    url = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/git/github.com/demo/demo")
-        .resolve()
-    )
+    url = (fixture_dir("git") / "github.com" / "demo" / "demo").resolve()
     package = Package(
         "demo", "0.1.2", source_type="directory", source_url=url.as_posix()
     )
@@ -722,12 +704,9 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     config: Config,
     io: BufferedIO,
     wheel: Path,
+    fixture_dir: FixtureDirGetter,
 ):
-    url = (
-        Path(__file__)
-        .parent.parent.joinpath("fixtures/git/github.com/demo/demo")
-        .resolve()
-    )
+    url = (fixture_dir("git") / "github.com" / "demo" / "demo").resolve()
     package = Package(
         "demo",
         "0.1.2",
@@ -1040,6 +1019,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
+    fixture_dir: FixtureDirGetter,
 ):
     mock_pip_install = mocker.patch("poetry.installation.executor.pip_install")
     mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
@@ -1063,10 +1043,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         "simple-project",
         "1.2.3",
         source_type="directory",
-        source_url=Path(__file__)
-        .parent.parent.joinpath("fixtures/simple_project")
-        .resolve()
-        .as_posix(),
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
     return_code = executor.execute(
@@ -1105,6 +1082,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     error = BuildBackendException(
         CalledProcessError(1, ["pip"], output=b"Error on stdout")
@@ -1120,10 +1098,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
         package_name,
         package_version,
         source_type="directory",
-        source_url=Path(__file__)
-        .parent.parent.joinpath("fixtures/simple_project")
-        .resolve()
-        .as_posix(),
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
         develop=editable,
     )
     # must not be included in the error message

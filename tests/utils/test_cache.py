@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 FILE_CACHE = Union[FileCache, CacheManager]
@@ -211,8 +212,10 @@ def test_get_cache_directory_for_link(tmp_path: Path) -> None:
     assert directory == expected
 
 
-def test_get_cached_archives_for_link(mocker: MockerFixture) -> None:
-    distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
+def test_get_cached_archives_for_link(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    distributions = fixture_dir("distributions")
     cache = ArtifactCache(cache_dir=Path())
 
     mocker.patch.object(
