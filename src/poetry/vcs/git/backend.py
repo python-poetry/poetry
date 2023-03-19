@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from urllib.parse import urljoin
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
@@ -331,15 +332,23 @@ class Git:
         repo_root = Path(repo.path)
         modules_config = repo_root.joinpath(".gitmodules")
 
+        # A relative URL by definition starts with ../ or ./
+        relative_submodule_regex = re.compile(r"^\.{1,2}/")
+
         if modules_config.exists():
             config = ConfigFile.from_path(str(modules_config))
 
             url: bytes
             path: bytes
             submodules = parse_submodules(config)
+
             for path, url, name in submodules:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
+
+                url_string = url.decode("utf-8")
+                if relative_submodule_regex.search(url_string):
+                    url_string = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
 
                 source_root = path_absolute.parent
                 source_root.mkdir(parents=True, exist_ok=True)
@@ -357,7 +366,7 @@ class Git:
                         continue
 
                 cls.clone(
-                    url=url.decode("utf-8"),
+                    url=url_string,
                     source_root=source_root,
                     name=path_relative.name,
                     revision=revision,

@@ -240,6 +240,30 @@ def test_git_clone_clones_submodules(source_url: str) -> None:
     assert len(list(submodule_package_directory.glob("*"))) > 1
 
 
+def test_git_clone_clones_submodules_with_relative_urls(source_url: str) -> None:
+    with Git.clone(url=source_url, branch="relative_submodule") as repo:
+        submodule_package_directory = (
+            Path(repo.path) / "submodules" / "relative-url-submodule"
+        )
+
+    assert submodule_package_directory.exists()
+    assert submodule_package_directory.joinpath("README.md").exists()
+    assert len(list(submodule_package_directory.glob("*"))) > 1
+
+
+def test_git_clone_clones_submodules_with_relative_urls_and_explicit_base(
+    source_url: str,
+) -> None:
+    with Git.clone(url=source_url, branch="relative_submodule") as repo:
+        submodule_package_directory = (
+            Path(repo.path) / "submodules" / "relative-url-submodule-with-base"
+        )
+
+    assert submodule_package_directory.exists()
+    assert submodule_package_directory.joinpath("README.md").exists()
+    assert len(list(submodule_package_directory.glob("*"))) > 1
+
+
 def test_system_git_fallback_on_http_401(
     mocker: MockerFixture,
     source_url: str,
