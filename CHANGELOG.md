@@ -1,6 +1,30 @@
 # Change Log
 
 
+## [1.4.1] - 2023-03-19
+
+### Fixed
+
+- Fix an issue where `poetry install` did not respect the requirements for building editable dependencies ([#7579](https://github.com/python-poetry/poetry/pull/7579)).
+- Fix an issue where `poetry init` crashed due to bad input when adding packages interactively ([#7569](https://github.com/python-poetry/poetry/pull/7569)).
+- Fix an issue where `poetry install` ignored the `subdirectory` argument of git dependencies ([#7580](https://github.com/python-poetry/poetry/pull/7580)).
+- Fix an issue where installing packages with `no-binary` could result in a false hash mismatch ([#7594](https://github.com/python-poetry/poetry/pull/7594)).
+- Fix an issue where the hash of sdists was neither validated nor written to the `direct_url.json` during installation ([#7594](https://github.com/python-poetry/poetry/pull/7594)).
+- Fix an issue where `poetry install --sync` attempted to remove itself ([#7626](https://github.com/python-poetry/poetry/pull/7626)).
+- Fix an issue where wheels with non-normalized `dist-info` directory names could not be installed ([#7671](https://github.com/python-poetry/poetry/pull/7671)).
+- Fix an issue where `poetry install --compile` compiled with optimization level 1 ([#7666](https://github.com/python-poetry/poetry/pull/7666)).
+
+### Docs
+
+- Clarify the behavior of the `--extras` option ([#7563](https://github.com/python-poetry/poetry/pull/7563)).
+- Expand the FAQ on reasons for slow dependency resolution ([#7620](https://github.com/python-poetry/poetry/pull/7620)).
+
+
+### poetry-core ([`1.5.2`](https://github.com/python-poetry/poetry-core/releases/tag/1.5.2))
+
+- Fix an issue where wheels built on Windows could contain duplicate entries in the RECORD file ([#555](https://github.com/python-poetry/poetry-core/pull/555)).
+
+
 ## [1.4.0] - 2023-02-27
 
 ### Added
@@ -1762,7 +1786,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.4.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.4.1...master
+[1.4.1]: https://github.com/python-poetry/poetry/releases/tag/1.4.1
 [1.4.0]: https://github.com/python-poetry/poetry/releases/tag/1.4.0
 [1.3.2]: https://github.com/python-poetry/poetry/releases/tag/1.3.2
 [1.3.1]: https://github.com/python-poetry/poetry/releases/tag/1.3.1
