@@ -1537,9 +1537,7 @@ class Env:
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(
-                    cmd, stderr=stderr, env=env, **kwargs
-                )
+                return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
             else:
                 output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
