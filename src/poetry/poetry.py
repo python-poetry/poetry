@@ -37,7 +37,15 @@ class Poetry(BasePoetry):
     ) -> None:
         from poetry.repositories.repository_pool import RepositoryPool
 
-        super().__init__(file, local_config, package, pyproject_type=PyProjectTOML)
+        try:
+            super().__init__(  # type: ignore[call-arg]
+                file, local_config, package, pyproject_type=PyProjectTOML
+            )
+        except TypeError:
+            # TODO: backward compatibility, can be simplified if poetry-core with
+            #       https://github.com/python-poetry/poetry-core/pull/483 is available
+            super().__init__(file, local_config, package)
+            self._pyproject = PyProjectTOML(file)
 
         self._locker = locker
         self._config = config

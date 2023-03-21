@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from poetry.console.commands.command import Command
 
 
@@ -62,8 +64,13 @@ class CheckCommand(Command):
         from poetry.pyproject.toml import PyProjectTOML
 
         # Load poetry config and display errors, if any
-        poetry_file = self.poetry.file
-        config = PyProjectTOML(poetry_file).poetry_config
+        if isinstance(self.poetry.file, Path):
+            toml_path = self.poetry.file
+        else:
+            # TODO: backward compatibility, can be simplified if poetry-core with
+            #       https://github.com/python-poetry/poetry-core/pull/483 is available
+            toml_path = self.poetry.file.path  # type: ignore[assignment]
+        config = PyProjectTOML(toml_path).poetry_config
         check_result = Factory.validate(config, strict=True)
 
         # Validate trove classifiers

@@ -4,6 +4,7 @@ import contextlib
 import logging
 import re
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -24,7 +25,6 @@ from poetry.toml.file import TOMLFile
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
 
     from cleo.io.io import IO
     from poetry.core.packages.package import Package
@@ -81,8 +81,15 @@ class Factory(BaseFactory):
 
         config.merge({"repositories": repositories})
 
+        if isinstance(base_poetry.file, Path):
+            toml_path = base_poetry.file
+        else:
+            # TODO: backward compatibility, can be simplified if poetry-core with
+            #       https://github.com/python-poetry/poetry-core/pull/483 is available
+            toml_path = base_poetry.file.path  # type: ignore[assignment]
+
         poetry = Poetry(
-            base_poetry.file,
+            toml_path,
             base_poetry.local_config,
             base_poetry.package,
             locker,
