@@ -157,9 +157,10 @@ class Executor:
         self._sections = {}
         self._yanked_warnings = []
 
-        # pip has to be installed first without parallelism if we install via pip
+        # pip/setuptools/wheel has to be installed first without parallelism
+        # if we install via pip
         for i, op in enumerate(operations):
-            if op.package.name == "pip":
+            if op.package.name in ("setuptools", "pip", "wheel"):
                 wait([self._executor.submit(self._execute_operation, op)])
                 del operations[i]
                 break
