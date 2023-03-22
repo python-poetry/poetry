@@ -4,7 +4,7 @@ import contextlib
 import functools
 import glob
 import logging
-import os
+import re
 import tarfile
 import zipfile
 
@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
+import build
 import pkginfo
 
 from poetry.core.factory import Factory
@@ -22,6 +23,7 @@ from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
+from pyproject_hooks import quiet_subprocess_runner
 
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
@@ -37,28 +39,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-PEP517_META_BUILD = """\
-import build
-import build.env
-import pyproject_hooks
-
-source = '{source}'
-dest = '{dest}'
-
-with build.env.IsolatedEnvBuilder() as env:
-    builder = build.ProjectBuilder(
-        srcdir=source,
-        scripts_dir=env.scripts_dir,
-        python_executable=env.executable,
-        runner=pyproject_hooks.quiet_subprocess_runner,
-    )
-    env.install(builder.build_system_requires)
-    env.install(builder.get_requires_for_build('wheel'))
-    builder.metadata_path(dest)
-"""
-
-PEP517_META_BUILD_DEPS = ["build==0.9.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
@@ -565,6 +545,65 @@ class PackageInfo:
             return cls.from_sdist(path=path)
 
 
+def _get_pep517_metadata_from_backend(path: Path) -> PackageInfo | None:
+    with ephemeral_environment(
+        flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
+    ) as venv:
+        # TODO: cache PEP 517 build environment corresponding to each project venv
+        dest_dir = venv.path.parent / "dist"
+        dest_dir.mkdir()
+
+        builder = build.ProjectBuilder(
+            path, venv.python, runner=quiet_subprocess_runner
+        )
+
+        # install build backend dependencies
+        try:
+            # install build system dependencies first
+            venv.run_pip_install(*builder.build_system_requires)
+            # then install extra dependencies needed to build a wheel
+            # (this needs to be done in a separate step because we need the
+            #  build system dependencies to run the backend)
+            venv.run_pip_install(*builder.get_requires_for_build("wheel"))
+        except EnvCommandError as e:
+            # if it's a legacy project (uses setuptools), the dependencies
+            # should already be met, as we set no-setuptools=False, so the pip
+            # install calls should never fail. if they do, it means there really
+            # is a missing build dependency, and pip wasn't able to install it.
+            # we should simply return an error in this case.
+            raise PackageInfoError(
+                path, "Failed to provision the build environment.", e
+            )
+
+        # try the prepare_metadata_for_build_wheel hook
+        metadata = builder.prepare("wheel", dest_dir)
+        if metadata:
+            logger.debug("got metadata from prepare_metadata_for_build_wheel")
+            return PackageInfo.from_metadata(dest_dir)
+
+        logger.debug("prepare_metadata_for_build_wheel failed or it's not supported")
+
+        # next, try setup.py egg_info if setup.py exists
+        setup_py = path / "setup.py"
+        if setup_py.is_file():
+            try:
+                venv.run("python", "setup.py", "egg_info")
+            except EnvCommandError as e:
+                logger.debug("setup.py egg_info failed: %s", e)
+            else:
+                return PackageInfo.from_metadata(Path(builder.metadata_path(path)))
+
+        # finally, try the build_wheel hook
+        wheel_name = builder.build("wheel", dest_dir)
+        if wheel_name:
+            logger.debug("got metadata from build_wheel")
+            return PackageInfo.from_wheel(dest_dir / wheel_name)
+
+        logger.debug("build_wheel failed")
+
+    return None
+
+
 @functools.lru_cache(maxsize=None)
 def get_pep517_metadata(path: Path) -> PackageInfo:
     """
@@ -579,58 +618,11 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
         if all([info.version, info.name, info.requires_dist]):
             return info
 
-    with ephemeral_environment(
-        flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
-    ) as venv:
-        # TODO: cache PEP 517 build environment corresponding to each project venv
-        dest_dir = venv.path.parent / "dist"
-        dest_dir.mkdir()
-
-        pep517_meta_build_script = PEP517_META_BUILD.format(
-            source=path.as_posix(), dest=dest_dir.as_posix()
-        )
-
-        try:
-            venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *PEP517_META_BUILD_DEPS,
-            )
-            venv.run(
-                "python",
-                "-",
-                input_=pep517_meta_build_script,
-            )
-            info = PackageInfo.from_metadata(dest_dir)
-        except EnvCommandError as e:
-            # something went wrong while attempting pep517 metadata build
-            # fallback to egg_info if setup.py available
-            logger.debug("PEP517 build failed: %s", e)
-            setup_py = path / "setup.py"
-            if not setup_py.exists():
-                raise PackageInfoError(
-                    path,
-                    e,
-                    "No fallback setup.py file was found to generate egg_info.",
-                )
-
-            cwd = Path.cwd()
-            os.chdir(path.as_posix())
-            try:
-                venv.run("python", "setup.py", "egg_info")
-                info = PackageInfo.from_metadata(path)
-            except EnvCommandError as fbe:
-                raise PackageInfoError(
-                    path, "Fallback egg_info generation failed.", fbe
-                )
-            finally:
-                os.chdir(cwd.as_posix())
+    # try fetching the metadata from the backend, but fall back to reading
+    # from the setup files (PackageInfo.from_setup_files) if we fail
+    info = _get_pep517_metadata_from_backend(path) or info
 
     if info:
-        logger.debug("Falling back to parsed setup.py file for %s", path)
         return info
 
-    # if we reach here, everything has failed and all hope is lost
     raise PackageInfoError(path, "Exhausted all core metadata sources.")

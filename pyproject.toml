@@ -181,6 +181,7 @@ module = [
     'cachecontrol.*',
     'lockfile.*',
     'pexpect.*',
+    'pyproject_hooks.*',
     'requests_toolbelt.*',
     'shellingham.*',
     'virtualenv.*',

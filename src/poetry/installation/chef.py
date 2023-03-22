@@ -15,7 +15,7 @@ from build import BuildBackendException
 from build import ProjectBuilder
 from build.env import IsolatedEnv as BaseIsolatedEnv
 from poetry.core.utils.helpers import temporary_directory
-from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import]
+from pyproject_hooks import quiet_subprocess_runner
 
 from poetry.utils.env import ephemeral_environment
 
