@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 from pathlib import Path
+from threading import Thread
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -1007,6 +1008,31 @@ def test_check_output_with_called_process_error(
     subprocess.check_output.assert_called_once()
     assert "some output" in str(error.value)
     assert "some error" in str(error.value)
+
+
+@pytest.mark.parametrize("out", ["sys.stdout", "sys.stderr"])
+def test_call_does_not_block_on_full_pipe(
+    tmp_path: Path, tmp_venv: VirtualEnv, out: str
+):
+    """see https://github.com/python-poetry/poetry/issues/7698"""
+    script = tmp_path / "script.py"
+    script.write_text(
+        f"""\
+import sys
+for i in range(10000):
+    print('just print a lot of text to fill the buffer', file={out})
+"""
+    )
+
+    def target(result: list[int]) -> None:
+        result.append(tmp_venv.run("python", str(script), call=True))
+
+    results = []
+    # use a separate thread, so that the test does not block in case of error
+    thread = Thread(target=target, args=(results,))
+    thread.start()
+    thread.join(1)  # must not block
+    assert results and results[0] == 0
 
 
 def test_run_python_script_called_process_error(

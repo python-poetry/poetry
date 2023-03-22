@@ -1537,6 +1537,7 @@ class Env:
                     **kwargs,
                 ).stdout
             elif call:
+                assert stderr != subprocess.PIPE
                 return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
             else:
                 output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
