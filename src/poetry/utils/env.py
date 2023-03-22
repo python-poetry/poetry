@@ -1516,6 +1516,15 @@ class Env:
             **kwargs,
         )
 
+    def run_pip_install(self, *packages: str) -> int | str:
+        return self.run_pip(
+            "install",
+            "--disable-pip-version-check",
+            "--ignore-installed",
+            "--no-input",
+            *packages,
+        )
+
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         """
         Run a command inside the Python environment.
