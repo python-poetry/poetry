@@ -29,9 +29,7 @@ def test_generate_system_pyproject_trailing_newline(
     example_system_pyproject: str,
 ):
     cmd = SelfCommand()
-    cmd.system_pyproject.write_text(
-        example_system_pyproject + "\n" * existing_newlines, newline=""
-    )  # do not translate newlines
+    cmd.system_pyproject.write_text(example_system_pyproject + "\n" * existing_newlines)
     cmd.generate_system_pyproject()
     generated = cmd.system_pyproject.read_text()
 
@@ -48,9 +46,7 @@ def test_generate_system_pyproject_carraige_returns(
     example_system_pyproject: str,
 ):
     cmd = SelfCommand()
-    cmd.system_pyproject.write_text(
-        example_system_pyproject + "\n"
-    )  # newlines will be translated
+    cmd.system_pyproject.write_text(example_system_pyproject + "\n")
     cmd.generate_system_pyproject()
 
     with open(cmd.system_pyproject, newline="") as f:  # do not translate newlines
