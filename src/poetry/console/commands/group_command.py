@@ -120,9 +120,7 @@ class GroupCommand(Command):
         invalid_options = defaultdict(set)
         for opt, groups in group_options.items():
             for group in groups:
-                try:
-                    self.poetry.package.dependency_group(group)
-                except ValueError:
+                if not self.poetry.package.has_dependency_group(group):
                     invalid_options[opt].add(group)
         if invalid_options:
             line_err = (
