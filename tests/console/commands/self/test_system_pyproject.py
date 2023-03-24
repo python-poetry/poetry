@@ -20,7 +20,7 @@ def example_system_pyproject():
         Dependency(plugin.name, "^1.2.3", groups=[SelfCommand.ADDITIONAL_PACKAGE_GROUP])
     )
     content = Factory.create_pyproject_from_package(package)
-    return content.as_string()[:-2]  # remove trailing newlines
+    return content.as_string().strip("\n")
 
 
 @pytest.mark.parametrize("existing_newlines", [0, 2])
@@ -37,9 +37,7 @@ def test_generate_system_pyproject_trailing_newline(
         if c != "\n":
             break
 
-    assert (existing_newlines < 2 and _i == 1) or (
-        existing_newlines > 1 and _i == existing_newlines
-    )
+    assert _i == existing_newlines
 
 
 def test_generate_system_pyproject_carraige_returns(

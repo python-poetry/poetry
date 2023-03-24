@@ -77,10 +77,8 @@ class SelfCommand(InstallerCommand):
         for key in preserved:
             content["tool"]["poetry"][key] = preserved[key]  # type: ignore[index]
 
-        text = content.as_string().replace("\r\n", "\n")  # remove carriage return
-        if text.endswith("\n\n"):
-            text = text[:-1]  # remove extra newline if trailing newline already present
-        self.system_pyproject.write_text(text, encoding="utf-8")
+        pyproject = PyProjectTOML(self.system_pyproject)
+        pyproject.file.write(content)
 
     def reset_poetry(self) -> None:
         with directory(self.system_pyproject.parent):

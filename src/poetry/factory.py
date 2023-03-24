@@ -290,7 +290,6 @@ class Factory(BaseFactory):
             content["extras"] = extras_section
 
         pyproject = cast("TOMLDocument", pyproject)
-        pyproject.add(tomlkit.nl())
 
         if path:
             path.joinpath("pyproject.toml").write_text(
