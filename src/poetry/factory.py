@@ -190,9 +190,7 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_pyproject_from_package(
-        cls, package: Package, path: Path | None = None
-    ) -> TOMLDocument:
+    def create_pyproject_from_package(cls, package: Package) -> TOMLDocument:
         import tomlkit
 
         from poetry.utils.dependency_specification import dependency_to_specification
@@ -290,11 +288,6 @@ class Factory(BaseFactory):
             content["extras"] = extras_section
 
         pyproject = cast("TOMLDocument", pyproject)
-
-        if path:
-            path.joinpath("pyproject.toml").write_text(
-                pyproject.as_string(), encoding="utf-8"
-            )
 
         return pyproject
 

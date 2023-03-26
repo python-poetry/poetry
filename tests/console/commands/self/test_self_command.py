@@ -20,7 +20,7 @@ def example_system_pyproject():
         Dependency(plugin.name, "^1.2.3", groups=[SelfCommand.ADDITIONAL_PACKAGE_GROUP])
     )
     content = Factory.create_pyproject_from_package(package)
-    return content.as_string().strip("\n")
+    return content.as_string().rstrip("\n")
 
 
 @pytest.mark.parametrize("existing_newlines", [0, 2])
@@ -33,14 +33,10 @@ def test_generate_system_pyproject_trailing_newline(
     cmd.generate_system_pyproject()
     generated = cmd.system_pyproject.read_text()
 
-    for _i, c in enumerate(generated[::-1]):
-        if c != "\n":
-            break
-
-    assert _i == existing_newlines
+    assert len(generated) - len(generated.rstrip("\n")) == existing_newlines
 
 
-def test_generate_system_pyproject_carraige_returns(
+def test_generate_system_pyproject_carriage_returns(
     example_system_pyproject: str,
 ):
     cmd = SelfCommand()
