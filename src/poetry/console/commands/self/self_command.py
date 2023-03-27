@@ -77,7 +77,8 @@ class SelfCommand(InstallerCommand):
         for key in preserved:
             content["tool"]["poetry"][key] = preserved[key]  # type: ignore[index]
 
-        self.system_pyproject.write_text(content.as_string(), encoding="utf-8")
+        pyproject = PyProjectTOML(self.system_pyproject)
+        pyproject.file.write(content)
 
     def reset_poetry(self) -> None:
         with directory(self.system_pyproject.parent):
