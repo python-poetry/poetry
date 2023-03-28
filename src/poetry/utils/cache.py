@@ -4,6 +4,7 @@ import contextlib
 import dataclasses
 import hashlib
 import json
+import logging
 import shutil
 import time
 
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
     from poetry.utils.env import Env
 
+logger = logging.getLogger(__name__)
 
 # Used by Cachy for items that do not expire.
 MAX_DATE = 9999999999
@@ -182,7 +184,17 @@ class FileCache(Generic[T]):
             return None
 
         with open(path, "rb") as f:
-            payload = self._deserialize(f.read())
+            try:
+                payload = self._deserialize(f.read())
+            except json.JSONDecodeError as exc:
+                logger.warning(
+                    "Invalid cache entry (%s) found in %s: %s",
+                    key,
+                    path,
+                    str(exc),
+                )
+                self.forget(key)
+                return None
 
         if payload.expired:
             self.forget(key)
