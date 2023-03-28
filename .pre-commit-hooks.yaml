@@ -3,24 +3,30 @@
   description: run poetry check to validate config
   entry: poetry check
   language: python
-  language_version: python3
   pass_filenames: false
-  files: ^pyproject.toml$
+  files: ^pyproject\.toml$
 
 - id: poetry-lock
   name: poetry-lock
   description: run poetry lock to update lock file
   entry: poetry lock
   language: python
-  language_version: python3
   pass_filenames: false
+  files: ^pyproject\.toml|poetry\.lock$
+
+- id: poetry-lock-check
+  name: poetry-lock-check
+  description: check that poetry lock file is consistent with pyproject.toml
+  entry: poetry lock --check
+  language: python
+  pass_filenames: false
+  files: ^pyproject\.toml|poetry\.lock$
 
 - id: poetry-export
   name: poetry-export
   description: run poetry export to sync lock file with requirements.txt
   entry: poetry export
   language: python
-  language_version: python3
   pass_filenames: false
-  files: ^poetry.lock$
+  files: ^poetry\.lock$
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
