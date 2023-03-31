@@ -4,6 +4,7 @@ import contextlib
 import dataclasses
 import hashlib
 import json
+import logging
 import shutil
 import time
 
@@ -27,6 +28,8 @@ if TYPE_CHECKING:
 # Used by Cachy for items that do not expire.
 MAX_DATE = 9999999999
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 def decode(string: bytes, encodings: list[str] | None = None) -> str:
@@ -182,7 +185,14 @@ class FileCache(Generic[T]):
             return None
 
         with open(path, "rb") as f:
-            payload = self._deserialize(f.read())
+            file_content = f.read()
+
+        try:
+            payload = self._deserialize(file_content)
+        except (json.JSONDecodeError, ValueError):
+            self.forget(key)
+            logger.warning("Corrupt cache file was detected and cleaned up.")
+            return None
 
         if payload.expired:
             self.forget(key)
