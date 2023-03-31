@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -200,6 +200,62 @@ def test_cachy_compatibility(
     assert cachy_file_cache.get("key4") == test_obj
 
 
+def test_missing_cache_file(poetry_file_cache: FileCache) -> None:
+    poetry_file_cache.put("key1", "value")
+
+    key1_path = (
+        poetry_file_cache.path
+        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
+    )
+    assert key1_path.exists()
+    key1_path.unlink()  # corrupt cache by removing a key file
+
+    assert poetry_file_cache.get("key1") is None
+
+
+def test_missing_cache_path(poetry_file_cache: FileCache) -> None:
+    poetry_file_cache.put("key1", "value")
+
+    key1_partial_path = poetry_file_cache.path / "81/74/09/96/87/a2/"
+    assert key1_partial_path.exists()
+    shutil.rmtree(
+        key1_partial_path
+    )  # corrupt cache by removing a subdirectory containing a key file
+
+    assert poetry_file_cache.get("key1") is None
+
+
+@pytest.mark.parametrize(
+    "corrupt_payload",
+    [
+        "",  # empty file
+        b"\x00",  # null
+        "99999999",  # truncated file
+        '999999a999"value"',  # corrupt lifetime
+        b'9999999999"va\xd8\x00"',  # invalid unicode
+        "fil3systemFa!led",  # garbage file
+    ],
+)
+def test_detect_corrupted_cache_key_file(
+    corrupt_payload: str | bytes, poetry_file_cache: FileCache
+) -> None:
+    poetry_file_cache.put("key1", "value")
+
+    key1_path = (
+        poetry_file_cache.path
+        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
+    )
+    assert key1_path.exists()
+
+    # original content: 9999999999"value"
+
+    write_modes = {str: "w", bytes: "wb"}
+    with open(key1_path, write_modes[type(corrupt_payload)]) as f:
+        f.write(corrupt_payload)  # write corrupt data
+
+    assert poetry_file_cache.get("key1") is None
+
+
 def test_get_cache_directory_for_link(tmp_path: Path) -> None:
     cache = ArtifactCache(cache_dir=tmp_path)
     directory = cache.get_cache_directory_for_link(
@@ -334,63 +390,3 @@ def test_get_found_cached_archive_for_link(
     archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
-
-
-def test_missing_cache_file(
-    poetry_file_cache: FileCache, mocker: MockerFixture
-) -> None:
-    poetry_file_cache.put("key1", "value")
-
-    key1_path = (
-        poetry_file_cache.path
-        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
-    )
-    assert key1_path.exists()
-    key1_path.unlink()  # corrupt cache by removing a key file
-
-    assert poetry_file_cache.get("key1") is None
-
-
-def test_missing_cache_path(
-    poetry_file_cache: FileCache, mocker: MockerFixture
-) -> None:
-    poetry_file_cache.put("key1", "value")
-
-    key1_partial_path = poetry_file_cache.path / "81/74/09/96/87/a2/"
-    assert key1_partial_path.exists()
-    shutil.rmtree(
-        key1_partial_path
-    )  # corrupt cache by removing a subdirectory containting a key file
-
-    assert poetry_file_cache.get("key1") is None
-
-
-@pytest.mark.parametrize(
-    "corrupt_payload",
-    [
-        "",  # empty file
-        b"\x00",  # null
-        "99999999",  # truncated file
-        '999999a999"value"',  # corrupt lifetime
-        b'9999999999"va\xd8\x00"',  # invalid unicode
-        "fil3systemFa!led",  # garbage file
-    ],
-)
-def test_detect_corrupted_cache_key_file(
-    corrupt_payload: str | bytes, poetry_file_cache: FileCache, mocker: MockerFixture
-) -> None:
-    poetry_file_cache.put("key1", "value")
-
-    key1_path = (
-        poetry_file_cache.path
-        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
-    )
-    assert key1_path.exists()
-
-    # original content: 9999999999"value"
-
-    write_modes = {str: "w", bytes: "wb"}
-    with open(key1_path, write_modes[type(corrupt_payload)]) as f:
-        f.write(corrupt_payload)  # write corrupt data
-
-    assert poetry_file_cache.get("key1") is None
