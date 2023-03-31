@@ -290,9 +290,8 @@ class ArtifactCache:
         cache_dir = self.get_cache_directory_for_link(link)
 
         archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
-        paths = []
+        paths: list[Path] = []
         for archive_type in archive_types:
-            for archive in cache_dir.glob(f"*.{archive_type}"):
-                paths.append(Path(archive))
+            paths += cache_dir.glob(f"*.{archive_type}")
 
         return paths

@@ -650,7 +650,7 @@ class Executor:
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
+        pyproject = PyProjectTOML(req / "pyproject.toml")
 
         package_poetry = None
         if pyproject.is_poetry_project():

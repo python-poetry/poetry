@@ -58,11 +58,11 @@ with build.env.IsolatedEnvBuilder() as env:
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build==0.9.0", "pyproject_hooks==1.0.0"]
+PEP517_META_BUILD_DEPS = ["build==0.10.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
-    def __init__(self, path: Path | str, *reasons: BaseException | str) -> None:
+    def __init__(self, path: Path, *reasons: BaseException | str) -> None:
         reasons = (f"Unable to determine package info for path: {path!s}",) + reasons
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
@@ -617,7 +617,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 )
 
             cwd = Path.cwd()
-            os.chdir(path.as_posix())
+            os.chdir(path)
             try:
                 venv.run("python", "setup.py", "egg_info")
                 info = PackageInfo.from_metadata(path)
@@ -626,7 +626,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                     path, "Fallback egg_info generation failed.", fbe
                 )
             finally:
-                os.chdir(cwd.as_posix())
+                os.chdir(cwd)
 
     if info:
         logger.debug("Falling back to parsed setup.py file for %s", path)

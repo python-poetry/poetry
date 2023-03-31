@@ -65,7 +65,7 @@ def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) ->
 
 
 def remove_directory(
-    path: Path | str, *args: Any, force: bool = False, **kwargs: Any
+    path: Path, *args: Any, force: bool = False, **kwargs: Any
 ) -> None:
     """
     Helper function handle safe removal, and optionally forces stubborn file removal.
@@ -74,8 +74,8 @@ def remove_directory(
 
     Internally, all arguments are passed to `shutil.rmtree`.
     """
-    if Path(path).is_symlink():
-        return os.unlink(str(path))
+    if path.is_symlink():
+        return os.unlink(path)
 
     kwargs["onerror"] = kwargs.pop("onerror", _on_rm_error if force else None)
     shutil.rmtree(path, *args, **kwargs)
@@ -239,7 +239,7 @@ def get_win_folder(csidl_name: str) -> Path:
     raise RuntimeError("Method can only be called on Windows.")
 
 
-def get_real_windows_path(path: str | Path) -> Path:
+def get_real_windows_path(path: Path) -> Path:
     program_files = get_win_folder("CSIDL_PROGRAM_FILES")
     local_appdata = get_win_folder("CSIDL_LOCAL_APPDATA")
 

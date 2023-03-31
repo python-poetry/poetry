@@ -31,7 +31,7 @@ class WheelDestination(SchemeDictionaryDestination):
     def write_to_fs(
         self,
         scheme: Scheme,
-        path: Path | str,
+        path: str,
         stream: BinaryIO,
         is_executable: bool,
     ) -> RecordEntry:
@@ -58,7 +58,7 @@ class WheelDestination(SchemeDictionaryDestination):
         if is_executable:
             make_file_executable(target_path)
 
-        return RecordEntry(str(path), Hash(self.hash_algorithm, hash_), size)
+        return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 
     def for_source(self, source: WheelFile) -> WheelDestination:
         scheme_dict = self.scheme_dict.copy()
@@ -90,7 +90,7 @@ class WheelInstaller:
         schemes["headers"] = schemes["include"]
 
         self._destination = WheelDestination(
-            schemes, interpreter=self._env.python, script_kind=script_kind
+            schemes, interpreter=str(self._env.python), script_kind=script_kind
         )
 
     def enable_bytecode_compilation(self, enable: bool = True) -> None:

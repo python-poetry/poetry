@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 def locker() -> Locker:
     with tempfile.NamedTemporaryFile() as f:
         f.close()
-        locker = Locker(f.name, {})
+        locker = Locker(Path(f.name), {})
 
         return locker
 
@@ -44,7 +44,7 @@ def root() -> ProjectPackage:
     return ProjectPackage("root", "1.2.3")
 
 
-def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
+def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
@@ -200,7 +200,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_locker_properly_loads_extras(locker: Locker):
+def test_locker_properly_loads_extras(locker: Locker) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -246,7 +246,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     assert lockfile_dep.name == "lockfile"
 
 
-def test_locker_properly_loads_nested_extras(locker: Locker):
+def test_locker_properly_loads_nested_extras(locker: Locker) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -327,7 +327,7 @@ content-hash = "123456789"
     assert len(packages) == 1
 
 
-def test_locker_properly_loads_extras_legacy(locker: Locker):
+def test_locker_properly_loads_extras_legacy(locker: Locker) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -530,7 +530,9 @@ demo = [
             package.files = []
 
 
-def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackage):
+def test_lock_packages_with_null_description(
+    locker: Locker, root: ProjectPackage
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.description = None
 
@@ -560,7 +562,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_lock_file_should_not_have_mixed_types(locker: Locker, root: ProjectPackage):
+def test_lock_file_should_not_have_mixed_types(
+    locker: Locker, root: ProjectPackage
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0.0"))
     package_a.add_dependency(
@@ -604,7 +608,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker: Locker):
+def test_reading_lock_file_should_raise_an_error_on_invalid_data(
+    locker: Locker,
+) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -639,7 +645,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locking_legacy_repository_package_should_include_source_section(
     root: ProjectPackage, locker: Locker
-):
+) -> None:
     package_a = Package(
         "A",
         "1.0.0",
@@ -682,7 +688,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
     locker: Locker, caplog: LogCaptureFixture
-):
+) -> None:
     version = ".".join(Version.parse(Locker._VERSION).next_minor().text.split(".")[:2])
     content = f"""\
 [metadata]
@@ -712,7 +718,7 @@ regenerate the lock file with the `poetry lock` command.\
 
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
     locker: Locker, caplog: LogCaptureFixture
-):
+) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -730,7 +736,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
         _ = locker.lock_data
 
 
-def test_root_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
+def test_root_extras_dependencies_are_ordered(
+    locker: Locker, root: ProjectPackage
+) -> None:
     root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
     Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
@@ -765,7 +773,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
+def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
@@ -805,7 +813,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
     locker: Locker, caplog: LogCaptureFixture
-):
+) -> None:
     older_version = "1.1"
     content = f"""\
 [metadata]
@@ -827,7 +835,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 def test_locker_dumps_dependency_information_correctly(
     locker: Locker, root: ProjectPackage
-):
+) -> None:
     root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
@@ -950,7 +958,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locker_dumps_dependency_extras_in_correct_order(
     locker: Locker, root: ProjectPackage
-):
+) -> None:
     root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     package_a = get_package("A", "1.0.0")
     Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
@@ -996,7 +1004,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locked_repository_uses_root_dir_of_package(
     locker: Locker, mocker: MockerFixture
-):
+) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -1084,7 +1092,7 @@ def test_content_hash_with_legacy_is_compatible(
     assert (content_hash == old_content_hash) or fresh
 
 
-def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
+def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage) -> None:
     """
     Create directories and file structure as follows:
 
@@ -1119,7 +1127,7 @@ def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
                     # Test is not possible in that case.
                     return
                 raise
-            locker = Locker(str(symlink_path) + os.sep + Path(lock_file.name).name, {})
+            locker = Locker(symlink_path / lock_file.name, {})
 
             package_local = Package(
                 "local-package",

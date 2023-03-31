@@ -137,11 +137,11 @@ class GitRefSpec:
 
 @dataclasses.dataclass
 class GitRepoLocalInfo:
-    repo: dataclasses.InitVar[Repo | Path | str]
+    repo: dataclasses.InitVar[Repo | Path]
     origin: str = dataclasses.field(init=False)
     revision: str = dataclasses.field(init=False)
 
-    def __post_init__(self, repo: Repo | Path | str) -> None:
+    def __post_init__(self, repo: Repo | Path) -> None:
         repo = Git.as_repo(repo=repo) if not isinstance(repo, Repo) else repo
         self.origin = Git.get_remote_url(repo=repo, remote="origin")
         self.revision = Git.get_revision(repo=repo)
@@ -149,7 +149,7 @@ class GitRepoLocalInfo:
 
 class Git:
     @staticmethod
-    def as_repo(repo: Path | str) -> Repo:
+    def as_repo(repo: Path) -> Repo:
         return Repo(str(repo))
 
     @staticmethod
@@ -171,7 +171,7 @@ class Git:
             return repo.head().decode("utf-8")
 
     @classmethod
-    def info(cls, repo: Repo | Path | str) -> GitRepoLocalInfo:
+    def info(cls, repo: Repo | Path) -> GitRepoLocalInfo:
         return GitRepoLocalInfo(repo=repo)
 
     @staticmethod
@@ -302,7 +302,7 @@ class Git:
                     ),
                     local.path,
                 )
-                remove_directory(local.path, force=True)
+                remove_directory(Path(local.path), force=True)
 
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise

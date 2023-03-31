@@ -53,8 +53,8 @@ class Locker:
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
 
-    def __init__(self, lock: str | Path, local_config: dict[str, Any]) -> None:
-        self._lock = lock if isinstance(lock, Path) else Path(lock)
+    def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
+        self._lock = lock
         self._local_config = local_config
         self._lock_data: dict[str, Any] | None = None
         self._content_hash = self._get_content_hash()
