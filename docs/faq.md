@@ -33,20 +33,31 @@ Once Poetry has cached the releases' information on your machine, the dependency
 will be much faster.
 {{% /note %}}
 
-### Why are unbound version constraints a bad idea?
+### Are unbound version constraints a bad idea?
 
 A version constraint without an upper bound such as `*` or `>=3.4` will allow updates to any future version of the dependency.
 This includes major versions breaking backward compatibility.
 
 Once a release of your package is published, you cannot tweak its dependencies anymore in case a dependency breaks BC
 – you have to do a new release but the previous one stays broken.
+(Users can still work around the broken dependency by restricting it by themselves.)
 
-The only good alternative is to define an upper bound on your constraints,
+To avoid such issues you can define an upper bound on your constraints,
 which you can increase in a new release after testing that your package is compatible
 with the new major version of your dependency.
 
-For example instead of using `>=3.4` you should use `^3.4` which allows all versions `<4.0`.
+For example instead of using `>=3.4` you can use `^3.4` which allows all versions `<4.0`.
 The `^` operator works very well with libraries following [semantic versioning](https://semver.org).
+
+However, when defining an upper bound, users of your package are not able to update
+a dependency beyond the upper bound even if it does not break anything
+and is fully compatible with your package.
+You have to release a new version of your package with an increased upper bound first.
+
+If your package will be used as a library in other packages, it might be better to avoid
+upper bounds and thus unnecessary dependency conflicts (unless you already know for sure
+that the next release of the dependency will break your package).
+If your package will be used as an application, it might be worth to define an upper bound.
 
 ### Is tox supported?
 
