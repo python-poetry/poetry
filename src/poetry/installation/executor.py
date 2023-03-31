@@ -205,6 +205,14 @@ class Executor:
 
         for warning in self._yanked_warnings:
             self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
+        for path, issues in self._wheel_installer.invalid_wheels.items():
+            formatted_issues = "\n".join(issues)
+            warning = (
+                f"Validation of the RECORD file of {path.name} failed."
+                " Please report to the maintainers of that package so they can fix"
+                f" their build process. Details:\n{formatted_issues}\n"
+            )
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
         return 1 if self._shutdown else 0
 

@@ -166,7 +166,9 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
     )
 
     assert archives
-    assert set(archives) == set(distributions.glob("demo-0.1.*"))
+    assert set(archives) == set(distributions.glob("*.whl")) | set(
+        distributions.glob("*.tar.gz")
+    )
 
 
 def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):

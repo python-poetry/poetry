@@ -129,7 +129,9 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture()
-def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
+def mock_file_downloads(
+    http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
+) -> None:
     def callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | str]:
@@ -140,11 +142,9 @@ def mock_file_downloads(http: type[httpretty.httpretty]) -> None:
         )
 
         if not fixture.exists():
-            if name == "demo-0.1.0.tar.gz":
-                fixture = Path(__file__).parent.parent.joinpath(
-                    "fixtures/distributions/demo-0.1.0.tar.gz"
-                )
-            else:
+            fixture = fixture_dir("distributions") / name
+
+            if not fixture.exists():
                 fixture = Path(__file__).parent.parent.joinpath(
                     "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
                 )
@@ -340,6 +340,66 @@ def test_execute_prints_warning_for_yanked_package(
     else:
         assert expected not in error
         assert error.count("yanked") == 0
+
+
+def test_execute_prints_warning_for_invalid_wheels(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
+):
+    config.merge({"cache-dir": tmp_dir})
+
+    executor = Executor(env, pool, config, io)
+
+    base_url = "https://files.pythonhosted.org/"
+    wheel1 = "demo_invalid_record-0.1.0-py2.py3-none-any.whl"
+    wheel2 = "demo_invalid_record2-0.1.0-py2.py3-none-any.whl"
+    return_code = executor.execute(
+        [
+            Install(
+                Package(
+                    "demo-invalid-record",
+                    "0.1.0",
+                    source_type="url",
+                    source_url=f"{base_url}/{wheel1}",
+                )
+            ),
+            Install(
+                Package(
+                    "demo-invalid-record2",
+                    "0.1.0",
+                    source_type="url",
+                    source_url=f"{base_url}/{wheel2}",
+                )
+            ),
+        ]
+    )
+
+    warning1 = f"""\
+<warning>Warning: Validation of the RECORD file of {wheel1} failed.\
+ Please report to the maintainers of that package so they can fix their build process.\
+ Details:
+In .*?{wheel1}, demo/__init__.py is not mentioned in RECORD
+In .*?{wheel1}, demo_invalid_record-0.1.0.dist-info/WHEEL is not mentioned in RECORD
+"""
+
+    warning2 = f"""\
+<warning>Warning: Validation of the RECORD file of {wheel2} failed.\
+ Please report to the maintainers of that package so they can fix their build process.\
+ Details:
+In .*?{wheel2}, hash / size of demo_invalid_record2-0.1.0.dist-info/METADATA didn't\
+ match RECORD
+"""
+
+    output = io.fetch_output()
+    error = io.fetch_error()
+    assert return_code == 0, f"\noutput: {output}\nerror: {error}\n"
+    assert re.match(f"{warning1}\n{warning2}", error) or re.match(
+        f"{warning2}\n{warning1}", error
+    ), error
 
 
 def test_execute_shows_skipped_operations_if_verbose(
