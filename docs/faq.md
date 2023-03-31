@@ -33,6 +33,28 @@ Once Poetry has cached the releases' information on your machine, the dependency
 will be much faster.
 {{% /note %}}
 
+### What kind of versioning scheme does Poetry use for itself?
+
+Poetry uses "major.minor.micro" version identifiers as mentioned in
+[PEP 440](https://peps.python.org/pep-0440/#final-releases).
+
+Version bumps are done similar to Python's versioning:
+* A major version bump (incrementing the first number) is only done for breaking changes
+  if a deprecation cycle is not possible and many users have to perform some manual steps
+  to migrate from one version to the next one.
+* A minor version bump (incrementing the second number) may include new features as well
+  as new deprecations and drop features deprecated in an earlier minor release.
+* A micro version bump (incrementing the third number) usually only includes bug fixes.
+  Deprecated features will not be dropped in a micro release.
+
+### Why does Poetry not adhere to semantic versioning?
+
+Because of its large user base, even small changes not considered relevant by most users
+can turn out to be a breaking change for some users in hindsight.
+Sticking to strict [semantic versioning](https://semver.org) and (almost) always bumping
+the major version instead of the minor version does not seem desirable
+since the minor version will not carry any meaning anymore.
+
 ### Are unbound version constraints a bad idea?
 
 A version constraint without an upper bound such as `*` or `>=3.4` will allow updates to any future version of the dependency.
