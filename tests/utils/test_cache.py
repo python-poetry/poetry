@@ -286,7 +286,9 @@ def test_get_cached_archives_for_link(
     )
 
     assert archives
-    assert set(archives) == set(distributions.glob("demo-0.1.*"))
+    assert set(archives) == set(distributions.glob("*.whl")) | set(
+        distributions.glob("*.tar.gz")
+    )
 
 
 @pytest.mark.parametrize(
