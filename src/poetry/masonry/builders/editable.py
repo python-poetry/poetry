@@ -174,7 +174,11 @@ class EditableBuilder(Builder):
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
             name, script = script.split(" = ")
-            module, callable_ = script.split(":")
+            try:
+                module, callable_ = script.split(":")
+            except ValueError as exc:
+                msg = f"{exc.args}  - Failed to parse script entry point '{script}'"
+                raise ValueError(msg) from exc
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)
