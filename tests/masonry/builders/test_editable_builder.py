@@ -123,7 +123,7 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert not DeepDiff(
         {
             "dir_info": {"editable": True},
-            "url": simple_poetry.file.parent.as_uri(),
+            "url": simple_poetry.file.path.parent.as_uri(),
         },
         json.loads(dist_info.joinpath("direct_url.json").read_text()),
     )

@@ -56,7 +56,7 @@ def test_remove_without_specific_group_removes_from_all_groups(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
 
     groups_content = tomlkit.parse(
         """\
@@ -68,7 +68,7 @@ baz = "^1.0.0"
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
     app.poetry.package.add_dependency(
@@ -80,7 +80,7 @@ baz = "^1.0.0"
 
     tester.execute("foo")
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
     assert "foo" not in content["dependencies"]
     assert "foo" not in content["group"]["bar"]["dependencies"]
     assert "baz" in content["group"]["bar"]["dependencies"]
@@ -113,7 +113,7 @@ def test_remove_without_specific_group_removes_from_specific_groups(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
 
     groups_content = tomlkit.parse(
         """\
@@ -125,7 +125,7 @@ baz = "^1.0.0"
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
     app.poetry.package.add_dependency(
@@ -137,7 +137,7 @@ baz = "^1.0.0"
 
     tester.execute("foo --group bar")
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
     assert "foo" in content["dependencies"]
     assert "foo" not in content["group"]["bar"]["dependencies"]
     assert "baz" in content["group"]["bar"]["dependencies"]
@@ -170,7 +170,7 @@ def test_remove_does_not_live_empty_groups(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
 
     groups_content = tomlkit.parse(
         """\
@@ -182,7 +182,7 @@ baz = "^1.0.0"
     )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
     app.poetry.package.add_dependency(
@@ -194,7 +194,7 @@ baz = "^1.0.0"
 
     tester.execute("foo baz --group bar")
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
     assert "foo" in content["dependencies"]
     assert "foo" not in content["group"]["bar"]["dependencies"]
     assert "baz" not in content["group"]["bar"]["dependencies"]
@@ -216,7 +216,7 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
     repo.add_package(Package("foo-bar", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
 
     groups_content = tomlkit.parse(
         """\
@@ -230,7 +230,7 @@ baz = "^1.0.0"
     content["tool"]["poetry"].value._insert_after(
         "dependencies", "group", groups_content["tool"]["poetry"]["group"]
     )
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^2.0.0"))
     app.poetry.package.add_dependency(
@@ -242,7 +242,7 @@ baz = "^1.0.0"
 
     tester.execute("Foo_Bar")
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
     assert "foo-bar" not in content["dependencies"]
     assert "foo-bar" not in content["group"]["bar"]["dependencies"]
     assert "baz" in content["group"]["bar"]["dependencies"]
@@ -274,11 +274,11 @@ def test_remove_command_should_not_write_changes_upon_installer_errors(
 
     mocker.patch("poetry.installation.installer.Installer.run", return_value=1)
 
-    original_content = app.poetry.toml_file.read().as_string()
+    original_content = app.poetry.file.read().as_string()
 
     tester.execute("foo")
 
-    assert app.poetry.toml_file.read().as_string() == original_content
+    assert app.poetry.file.read().as_string() == original_content
 
 
 def test_remove_with_dry_run_keep_files_intact(
@@ -288,16 +288,14 @@ def test_remove_with_dry_run_keep_files_intact(
 ):
     tester = command_tester_factory("remove", poetry=poetry_with_up_to_date_lockfile)
 
-    original_pyproject_content = poetry_with_up_to_date_lockfile.toml_file.read()
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute("docker --dry-run")
 
-    assert (
-        poetry_with_up_to_date_lockfile.toml_file.read() == original_pyproject_content
-    )
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )

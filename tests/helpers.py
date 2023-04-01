@@ -21,7 +21,6 @@ from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.toml.file import TOMLFile
 from poetry.utils._compat import metadata
 
 
@@ -178,7 +177,7 @@ class PoetryTestApplication(Application):
 
     def reset_poetry(self) -> None:
         poetry = self._poetry
-        self._poetry = Factory().create_poetry(self._poetry.file.parent)
+        self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
         self._poetry.set_locker(

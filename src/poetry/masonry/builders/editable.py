@@ -4,7 +4,6 @@ import csv
 import hashlib
 import json
 import os
-import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
@@ -44,6 +43,7 @@ WINDOWS_CMD_TEMPLATE = """\
 
 class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
+        self._poetry: Poetry
         super().__init__(poetry)
 
         self._env = env
@@ -105,19 +105,15 @@ class EditableBuilder(Builder):
                 pip_install(self._path, self._env, upgrade=True, editable=True)
             else:
                 # Temporarily rename pyproject.toml
-                shutil.move(
-                    str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
-                )
+                renamed_pyproject = self._poetry.file.with_suffix(".tmp")
+                self._poetry.file.path.rename(renamed_pyproject)
                 try:
                     pip_install(self._path, self._env, upgrade=True, editable=True)
                 finally:
-                    shutil.move(
-                        str(self._poetry.file.with_suffix(".tmp")),
-                        str(self._poetry.file),
-                    )
+                    renamed_pyproject.rename(self._poetry.file.path)
         finally:
             if not has_setup:
-                os.remove(str(setup))
+                os.remove(setup)
 
     def _add_pth(self) -> list[Path]:
         paths = {
@@ -249,7 +245,7 @@ class EditableBuilder(Builder):
             json.dumps(
                 {
                     "dir_info": {"editable": True},
-                    "url": self._poetry.file.parent.absolute().as_uri(),
+                    "url": self._poetry.file.path.parent.absolute().as_uri(),
                 }
             )
         )

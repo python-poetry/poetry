@@ -124,7 +124,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         # tomlkit types are awkward to work with, treat content as a mostly untyped
         # dictionary.
-        content: dict[str, Any] = self.poetry.toml_file.read()
+        content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
         if group == MAIN_GROUP:
@@ -266,7 +266,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         if status == 0 and not self.option("dry-run"):
             assert isinstance(content, TOMLDocument)
-            self.poetry.toml_file.write(content)
+            self.poetry.file.write(content)
 
         return status
 

@@ -4,7 +4,6 @@ import contextlib
 import logging
 import re
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -25,6 +24,7 @@ from poetry.toml.file import TOMLFile
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
 
     from cleo.io.io import IO
     from poetry.core.packages.package import Package
@@ -55,15 +55,19 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
-        locker = Locker(
-            base_poetry.file.parent / "poetry.lock", base_poetry.local_config
+        # TODO: backward compatibility, can be simplified if poetry-core with
+        #       https://github.com/python-poetry/poetry-core/pull/483 is available
+        poetry_file: Path = (
+            getattr(base_poetry, "pyproject_path", None) or base_poetry.file.path
         )
+
+        locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
 
         # Loading global configuration
         config = Config.create()
 
         # Loading local configuration
-        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
+        local_config_file = TOMLFile(poetry_file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(f"Loading configuration file {local_config_file.path}")
@@ -81,15 +85,8 @@ class Factory(BaseFactory):
 
         config.merge({"repositories": repositories})
 
-        if isinstance(base_poetry.file, Path):
-            toml_path = base_poetry.file
-        else:
-            # TODO: backward compatibility, can be simplified if poetry-core with
-            #       https://github.com/python-poetry/poetry-core/pull/483 is available
-            toml_path = base_poetry.file.path  # type: ignore[assignment]
-
         poetry = Poetry(
-            toml_path,
+            poetry_file,
             base_poetry.local_config,
             base_poetry.package,
             locker,

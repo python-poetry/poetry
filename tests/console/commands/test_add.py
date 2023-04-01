@@ -80,7 +80,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
@@ -109,7 +109,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
@@ -127,7 +127,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
     assert tester.io.fetch_output() == expected
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "0.1.0"
@@ -136,7 +136,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_no_constraint_editable_error(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -151,7 +151,7 @@ No changes were applied.
     assert tester.status_code == 1
     assert tester.io.fetch_error() == expected
     assert tester.command.installer.executor.installations_count == 0
-    assert content == app.poetry.toml_file.read()["tool"]["poetry"]
+    assert content == app.poetry.file.read()["tool"]["poetry"]
 
 
 def test_add_equal_constraint(
@@ -296,7 +296,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -367,7 +367,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 4
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -409,7 +409,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     constraint = {
         "git": "https://github.com/demo/subdirectories.git",
@@ -455,7 +455,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
 
@@ -502,7 +502,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
 
@@ -575,7 +575,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -611,7 +611,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -651,7 +651,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -692,7 +692,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -738,7 +738,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert output == expected
     assert tester.command.installer.executor.installations_count == 4
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -774,7 +774,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {"version": "0.2.0", "python": ">=2.7"}
@@ -812,7 +812,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -863,7 +863,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -925,7 +925,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["group"]["dev"]["dependencies"]
     assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
@@ -973,7 +973,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["group"]["dev"]["dependencies"]
     assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
@@ -1003,7 +1003,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "pyyaml" in content["dependencies"]
     assert content["dependencies"]["pyyaml"] == "^3.13"
@@ -1012,9 +1012,9 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     repo.add_package(get_package("foo", "1.1.2"))
     tester.execute("foo")
@@ -1036,9 +1036,9 @@ If you prefer to upgrade it to the latest available version,\
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     repo.add_package(get_package("foo-bar", "1.1.2"))
     tester.execute("Foo_Bar")
@@ -1079,7 +1079,7 @@ def test_add_latest_should_not_create_duplicate_keys(
     """
 
     poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
-    content = poetry.toml_file.read()
+    content = poetry.file.read()
 
     assert "Foo" in content["tool"]["poetry"]["dependencies"]
     assert content["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
@@ -1089,7 +1089,7 @@ def test_add_latest_should_not_create_duplicate_keys(
     repo.add_package(get_package("foo", "1.1.2"))
     tester.execute("foo@latest")
 
-    updated_content = poetry.toml_file.read()
+    updated_content = poetry.file.read()
     assert "Foo" in updated_content["tool"]["poetry"]["dependencies"]
     assert updated_content["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
     assert "foo" not in updated_content["tool"]["poetry"]["dependencies"]
@@ -1098,9 +1098,9 @@ def test_add_latest_should_not_create_duplicate_keys(
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ):
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     repo.add_package(get_package("foo", "1.1.2"))
 
@@ -1121,7 +1121,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert expected in tester.io.fetch_output()
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "foo" in content["dependencies"]
     assert content["dependencies"]["foo"] == "^1.1.2"
@@ -1223,7 +1223,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
@@ -1384,7 +1384,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -1453,7 +1453,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 4
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -1490,7 +1490,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -1532,7 +1532,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -1603,7 +1603,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -1641,7 +1641,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -1683,7 +1683,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -1726,7 +1726,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -1771,7 +1771,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 4
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -1811,7 +1811,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {"version": "0.2.0", "python": ">=2.7"}
@@ -1851,7 +1851,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -1904,7 +1904,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -1970,7 +1970,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["group"]["dev"]["dependencies"]
     assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
@@ -2004,7 +2004,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "pyyaml" in content["dependencies"]
     assert content["dependencies"]["pyyaml"] == "^3.13"
@@ -2016,9 +2016,9 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_ins
     installer: NoopInstaller,
     old_tester: CommandTester,
 ):
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     repo.add_package(get_package("foo", "1.1.2"))
 
@@ -2044,9 +2044,9 @@ def test_add_should_work_when_adding_existing_package_with_latest_constraint_old
     installer: NoopInstaller,
     old_tester: CommandTester,
 ):
-    content = app.poetry.toml_file.read()
+    content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    app.poetry.toml_file.write(content)
+    app.poetry.file.write(content)
 
     repo.add_package(get_package("foo", "1.1.2"))
 
@@ -2067,7 +2067,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert expected in old_tester.io.fetch_output()
 
-    content = app.poetry.toml_file.read()["tool"]["poetry"]
+    content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "foo" in content["dependencies"]
     assert content["dependencies"]["foo"] == "^1.1.2"
@@ -2159,7 +2159,7 @@ def test_add_keyboard_interrupt_restore_content(
     mocker.patch(
         "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
     )
-    original_pyproject_content = poetry_with_up_to_date_lockfile.toml_file.read()
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -2167,9 +2167,7 @@ def test_add_keyboard_interrupt_restore_content(
 
     tester.execute("cachy")
 
-    assert (
-        poetry_with_up_to_date_lockfile.toml_file.read() == original_pyproject_content
-    )
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )
@@ -2190,7 +2188,7 @@ def test_add_with_dry_run_keep_files_intact(
 ):
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
-    original_pyproject_content = poetry_with_up_to_date_lockfile.toml_file.read()
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -2198,9 +2196,7 @@ def test_add_with_dry_run_keep_files_intact(
 
     tester.execute(command)
 
-    assert (
-        poetry_with_up_to_date_lockfile.toml_file.read() == original_pyproject_content
-    )
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )

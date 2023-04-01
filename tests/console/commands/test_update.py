@@ -43,7 +43,7 @@ def test_update_with_dry_run_keep_files_intact(
 ):
     tester = command_tester_factory("update", poetry=poetry_with_up_to_date_lockfile)
 
-    original_pyproject_content = poetry_with_up_to_date_lockfile.toml_file.read()
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
     repo.add_package(get_package("docker", "4.3.0"))
@@ -51,9 +51,7 @@ def test_update_with_dry_run_keep_files_intact(
 
     tester.execute(command)
 
-    assert (
-        poetry_with_up_to_date_lockfile.toml_file.read() == original_pyproject_content
-    )
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )

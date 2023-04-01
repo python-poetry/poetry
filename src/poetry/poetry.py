@@ -59,7 +59,7 @@ class Poetry(BasePoetry):
         return cast("PyProjectTOML", pyproject)
 
     @property
-    def toml_file(self) -> TOMLFile:
+    def file(self) -> TOMLFile:  # type: ignore[override]
         return self.pyproject.toml_file
 
     @property
