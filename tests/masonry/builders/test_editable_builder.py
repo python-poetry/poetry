@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import csv
+import io
 import json
 import locale
 import os
@@ -84,6 +86,15 @@ def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> Iterator[VirtualEnv]:
     yield venv
 
     shutil.rmtree(str(venv.path))
+
+
+@pytest.fixture()
+def bad_scripts_poetry() -> Poetry:
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent / "fixtures" / "bad_scripts_project"
+    )
+
+    return poetry
 
 
 def test_builder_installs_proper_files_for_standard_packages(
@@ -340,3 +351,11 @@ def test_builder_should_execute_build_scripts(
     assert [
         ["python", str(extended_without_setup_poetry.file.path.parent / "build.py")]
     ] == env.executed
+
+
+def test_builder_catches_bad_scripts(
+    bad_scripts_poetry: Poetry, tmp_venv: VirtualEnv
+) -> None:
+    builder = EditableBuilder(bad_scripts_poetry, tmp_venv, NullIO())
+    with pytest.raises(ValueError, match="- Failed to parse script entry point"):
+        builder.build()

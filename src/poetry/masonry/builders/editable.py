@@ -160,7 +160,11 @@ class EditableBuilder(Builder):
         for script in scripts:
             name, script_with_extras = script.split(" = ")
             script_without_extras = script_with_extras.split("[")[0]
-            module, callable_ = script_without_extras.split(":")
+            try:
+                module, callable_ = script_without_extras.split(":")
+            except ValueError as exc:
+                msg = f"{exc.args}  - Failed to parse script entry point '{script}'"
+                raise ValueError(msg) from exc
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)
