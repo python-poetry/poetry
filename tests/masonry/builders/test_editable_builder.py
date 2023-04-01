@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import contextlib
 import csv
-import io
 import json
 import locale
 import os
