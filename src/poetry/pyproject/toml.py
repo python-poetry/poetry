@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 # The poetry-core class uses tomli to read the file, here we use tomlkit so as to
 # preserve comments and formatting when writing.
 class PyProjectTOML(BasePyProjectTOML):
-    def __init__(self, path: str | Path) -> None:
+    def __init__(self, path: Path) -> None:
         super().__init__(path)
         self._toml_file = TOMLFile(path=path)
         self._toml_document: TOMLDocument | None = None

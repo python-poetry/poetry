@@ -187,8 +187,8 @@ class PoetryTestApplication(Application):
 
 
 class TestLocker(Locker):
-    def __init__(self, lock: str | Path, local_config: dict) -> None:
-        self._lock = TOMLFile(lock)
+    def __init__(self, lock: Path, local_config: dict) -> None:
+        self._lock = lock
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()

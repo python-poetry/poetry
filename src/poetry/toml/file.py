@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -8,14 +7,14 @@ from tomlkit.toml_file import TOMLFile as BaseTOMLFile
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from tomlkit.toml_document import TOMLDocument
 
 
 class TOMLFile(BaseTOMLFile):
-    def __init__(self, path: str | Path) -> None:
-        if isinstance(path, str):
-            path = Path(path)
-        super().__init__(path.as_posix())
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
         self.__path = path
 
     @property
