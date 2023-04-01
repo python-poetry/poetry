@@ -433,7 +433,7 @@ You can specify a package in the following forms:
         from poetry.core.pyproject.exceptions import PyProjectException
 
         try:
-            cwd = self.poetry.file.parent
+            cwd = self.poetry.file.path.parent
             artifact_cache = self.poetry.pool.artifact_cache
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()

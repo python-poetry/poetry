@@ -571,12 +571,12 @@ class EnvManager:
 
     @property
     def in_project_venv(self) -> Path:
-        venv: Path = self._poetry.file.parent / ".venv"
+        venv: Path = self._poetry.file.path.parent / ".venv"
         return venv
 
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
 
@@ -665,7 +665,7 @@ class EnvManager:
     def deactivate(self) -> None:
         venv_path = self._poetry.config.virtualenvs_path
         name = self.generate_env_name(
-            self._poetry.package.name, str(self._poetry.file.parent)
+            self._poetry.package.name, str(self._poetry.file.path.parent)
         )
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
@@ -694,7 +694,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.virtualenvs_path
 
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         env = None
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
@@ -749,7 +749,7 @@ class EnvManager:
         if name is None:
             name = self._poetry.package.name
 
-        venv_name = self.generate_env_name(name, str(self._poetry.file.parent))
+        venv_name = self.generate_env_name(name, str(self._poetry.file.path.parent))
         venv_path = self._poetry.config.virtualenvs_path
         env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
 
@@ -770,7 +770,7 @@ class EnvManager:
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
 
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
@@ -883,7 +883,7 @@ class EnvManager:
         if self._env is not None and not force:
             return self._env
 
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
         env = self.get(reload=True)
 
         if not env.is_sane():

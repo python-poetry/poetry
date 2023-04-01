@@ -82,7 +82,7 @@ class FileConfigSource(ConfigSource):
             mode = 0o600
 
             if new_file:
-                self.file.touch(mode=mode)
+                self.file.path.touch(mode=mode)
 
             self.file.write(config)
         except Exception:

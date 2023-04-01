@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 def venv_name(app: PoetryTestApplication) -> str:
     return EnvManager.generate_env_name(
         app.poetry.package.name,
-        str(app.poetry.file.parent),
+        str(app.poetry.file.path.parent),
     )
 
 
@@ -58,7 +58,7 @@ def venvs_in_cache_dirs(
 @pytest.fixture
 def venvs_in_project_dir(app: PoetryTestApplication) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
-    venv_dir = app.poetry.file.parent.joinpath(".venv")
+    venv_dir = app.poetry.file.path.parent.joinpath(".venv")
     venv_dir.mkdir(exist_ok=True)
     app.poetry.config.merge({"virtualenvs": {"in-project": True}})
 
@@ -71,7 +71,7 @@ def venvs_in_project_dir(app: PoetryTestApplication) -> Iterator[Path]:
 @pytest.fixture
 def venvs_in_project_dir_none(app: PoetryTestApplication) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
-    venv_dir = app.poetry.file.parent.joinpath(".venv")
+    venv_dir = app.poetry.file.path.parent.joinpath(".venv")
     venv_dir.mkdir(exist_ok=True)
     app.poetry.config.merge({"virtualenvs": {"in-project": None}})
 
@@ -84,7 +84,7 @@ def venvs_in_project_dir_none(app: PoetryTestApplication) -> Iterator[Path]:
 @pytest.fixture
 def venvs_in_project_dir_false(app: PoetryTestApplication) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
-    venv_dir = app.poetry.file.parent.joinpath(".venv")
+    venv_dir = app.poetry.file.path.parent.joinpath(".venv")
     venv_dir.mkdir(exist_ok=True)
     app.poetry.config.merge({"virtualenvs": {"in-project": False}})
 
