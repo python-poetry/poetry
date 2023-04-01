@@ -874,6 +874,16 @@ def test_locker_dumps_dependency_information_correctly(
             },
         )
     )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "H", {"git": "https://github.com/python-poetry/poetry.git", "tag": "baz"}
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "I", {"git": "https://github.com/python-poetry/poetry.git", "rev": "spam"}
+        )
+    )
 
     packages = [package_a]
 
@@ -901,6 +911,8 @@ D = {{path = "distributions/demo-0.1.0.tar.gz"}}
 E = {{url = "https://python-poetry.org/poetry-1.2.0.tar.gz"}}
 F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
 G = {{git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar"}}
+H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
+I = {{git = "https://github.com/python-poetry/poetry.git", rev = "spam"}}
 
 [metadata]
 lock-version = "2.0"
