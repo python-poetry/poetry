@@ -1,6 +1,19 @@
 # Change Log
 
 
+## [1.4.2] - 2023-04-02
+
+### Changed
+
+- When trying to install wheels with invalid `RECORD` files, Poetry does not fail anymore but only prints a warning.
+  This mitigates an unintended change introduced in Poetry 1.4.1 ([#7694](https://github.com/python-poetry/poetry/pull/7694)).
+
+### Fixed
+
+- Fix an issue where relative git submodule urls were not parsed correctly ([#7017](https://github.com/python-poetry/poetry/pull/7017)).
+- Fix an issue where Poetry could freeze when building a project with a build script if it generated enough output to fill the OS pipe buffer ([#7699](https://github.com/python-poetry/poetry/pull/7699)).
+
+
 ## [1.4.1] - 2023-03-19
 
 ### Fixed
@@ -1786,7 +1799,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.4.1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.4.2...master
+[1.4.2]: https://github.com/python-poetry/poetry/releases/tag/1.4.2
 [1.4.1]: https://github.com/python-poetry/poetry/releases/tag/1.4.1
 [1.4.0]: https://github.com/python-poetry/poetry/releases/tag/1.4.0
 [1.3.2]: https://github.com/python-poetry/poetry/releases/tag/1.3.2
