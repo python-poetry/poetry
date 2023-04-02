@@ -126,6 +126,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
+        project_name = canonicalize_name(poetry_content["name"])
 
         if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
@@ -222,6 +223,14 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             assert isinstance(constraint_name, str)
 
             canonical_constraint_name = canonicalize_name(constraint_name)
+
+            if canonical_constraint_name == project_name:
+                self.line_error(
+                    f"<error>Cannot add dependency on <c1>{_constraint['name']}</c1> to"
+                    " project with the same name."
+                )
+                self.line_error("\nNo changes were applied.")
+                return 1
 
             for key in section:
                 if canonicalize_name(key) == canonical_constraint_name:

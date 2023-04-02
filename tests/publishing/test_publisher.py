@@ -9,9 +9,9 @@ import pytest
 
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 
 from poetry.factory import Factory
-from packaging.utils import canonicalize_name
 from poetry.publishing.publisher import Publisher
 
 
