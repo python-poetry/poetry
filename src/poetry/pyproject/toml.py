@@ -26,7 +26,7 @@ class PyProjectTOML(BasePyProjectTOML):
         self._toml_document: TOMLDocument | None = None
 
     @property
-    def toml_file(self) -> TOMLFile:
+    def file(self) -> TOMLFile:  # type: ignore[override]
         return self._toml_file
 
     @property
@@ -35,7 +35,7 @@ class PyProjectTOML(BasePyProjectTOML):
             if not self._file.exists():
                 self._toml_document = TOMLDocument()
             else:
-                self._toml_document = self.toml_file.read()
+                self._toml_document = self.file.read()
 
         return self._toml_document
 
@@ -52,7 +52,7 @@ class PyProjectTOML(BasePyProjectTOML):
             build_system["requires"] = self._build_system.requires
             build_system["build-backend"] = self._build_system.build_backend
 
-        self.toml_file.write(data=data)
+        self.file.write(data=data)
 
     def reload(self) -> None:
         self._toml_document = None

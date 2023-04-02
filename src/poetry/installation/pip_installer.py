@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.constraints.version import Version
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.base_installer import BaseInstaller
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils._compat import encode
 from poetry.utils.helpers import remove_directory
@@ -226,7 +226,7 @@ class PipInstaller(BaseInstaller):
         package_poetry = None
         if pyproject.is_poetry_project():
             with contextlib.suppress(RuntimeError):
-                package_poetry = Factory().create_poetry(pyproject.file.parent)
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
         if package_poetry is not None:
             # Even if there is a build system specified

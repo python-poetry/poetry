@@ -230,7 +230,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
 
     builder.build()
     pip_install.assert_called_once_with(
-        extended_poetry.pyproject.file.parent, env, upgrade=True, editable=True
+        extended_poetry.pyproject.file.path.parent, env, upgrade=True, editable=True
     )
     assert [] == env.executed
 

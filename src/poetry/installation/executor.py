@@ -636,9 +636,8 @@ class Executor:
     def _install_directory_without_wheel_installer(
         self, operation: Install | Update
     ) -> int:
-        from poetry.core.pyproject.toml import PyProjectTOML
-
         from poetry.factory import Factory
+        from poetry.pyproject.toml import PyProjectTOML
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
@@ -663,7 +662,7 @@ class Executor:
         package_poetry = None
         if pyproject.is_poetry_project():
             with contextlib.suppress(RuntimeError):
-                package_poetry = Factory().create_poetry(pyproject.file.parent)
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
         if package_poetry is not None:
             # Even if there is a build system specified

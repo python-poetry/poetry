@@ -2158,7 +2158,7 @@ def test_show_outdated_missing_directory_dependency(
     installed: Repository,
     repo: TestRepository,
 ):
-    with (poetry.pyproject.file.parent / "poetry.lock").open(mode="rb") as f:
+    with (poetry.pyproject.file.path.parent / "poetry.lock").open(mode="rb") as f:
         data = tomllib.load(f)
     poetry.locker.mock_lock_data(data)
 

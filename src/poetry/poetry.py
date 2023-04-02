@@ -60,7 +60,7 @@ class Poetry(BasePoetry):
 
     @property
     def file(self) -> TOMLFile:  # type: ignore[override]
-        return self.pyproject.toml_file
+        return self.pyproject.file
 
     @property
     def locker(self) -> Locker:
