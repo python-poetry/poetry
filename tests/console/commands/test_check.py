@@ -43,6 +43,7 @@ def test_check_invalid(
 
     expected = """\
 Error: 'description' is a required property
+Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.

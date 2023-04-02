@@ -9,6 +9,7 @@ from typing import Any
 from typing import cast
 
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
@@ -318,5 +319,19 @@ class Factory(BaseFactory):
         results = super().validate(config, strict)
 
         results["errors"].extend(validate_object(config))
+
+        # A project should not depend on itself.
+        dependencies = set(config.get("dependencies", {}).keys())
+        dependencies.update(config.get("dev-dependencies", {}).keys())
+        groups = config.get("group", {}).values()
+        for group in groups:
+            dependencies.update(group.get("dependencies", {}).keys())
+
+        dependencies = {canonicalize_name(d) for d in dependencies}
+
+        if canonicalize_name(config["name"]) in dependencies:
+            results["errors"].append(
+                f"Project name ({config['name']}) is same as one of its dependencies"
+            )
 
         return results
