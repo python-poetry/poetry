@@ -2159,7 +2159,8 @@ def test_add_keyboard_interrupt_restore_content(
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     mocker.patch(
-        "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
+        "poetry.installation.installer.Installer._execute",
+        side_effect=KeyboardInterrupt(),
     )
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
