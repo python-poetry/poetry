@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.command import Command
+from poetry.exceptions import GroupNotFound
 
 
 if TYPE_CHECKING:
@@ -79,7 +81,7 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
-        self.validate_groups(groups)
+        self.validate_group_options(groups)
 
         for opt, new, group in [
             ("no-dev", "only", MAIN_GROUP),
@@ -110,9 +112,9 @@ class GroupCommand(Command):
             list(self.activated_groups), only=True
         )
 
-    def validate_groups(self, group_options: dict[str, set[str]]) -> bool:
+    def validate_group_options(self, group_options: dict[str, set[str]]) -> bool:
         """
-        Currently issues a warning if it detects that a group is
+        Currently raises en error if it detects that a group is
         not part of pyproject.toml
 
         Can be overridden to adapt behavior.
@@ -124,7 +126,7 @@ class GroupCommand(Command):
                     invalid_options[opt].add(group)
         if invalid_options:
             line_err = (
-                "<warning>The <fg=yellow;options=bold>--with</>, "
+                "<error>The <fg=yellow;options=bold>--with</>, "
                 "<fg=yellow;options=bold>--without</>, "
                 "and <fg=yellow;options=bold>--only</> "
                 "options may only have valid groups."
@@ -132,8 +134,13 @@ class GroupCommand(Command):
             for opt, invalid_groups in invalid_options.items():
                 line_err += (
                     " <fg=red;options=bold>Invalid"
-                    f" {','.join(sorted(invalid_groups))} provided to --{opt}.</>"
+                    f" [{', '.join(sorted(invalid_groups))}] provided to --{opt}.</>"
                 )
-            line_err += "</warning>"
+            line_err += "</error>"
             self.line_error(line_err)
+        if len(invalid_options) != 0:
+            invalid_groups_str = ", ".join(
+                sorted(set(chain(*invalid_options.values())))
+            )
+            raise GroupNotFound(f"Group(s) [{invalid_groups_str}] were not found.")
         return len(invalid_options) == 0

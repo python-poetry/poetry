@@ -165,7 +165,7 @@ poetry install --only docs
 {{% warning %}}
 
 Groups provided to `--with`, `--without`, and `--only` should at least be declared in `pyproject.toml`.
-Poetry will display a **Warning** if a group that is not declared is used, letting the user know of a
+Poetry will raise an **Error** if a group that is not declared is used, letting the user know of a
 potential mistake.
 
 {{% /warning %}}

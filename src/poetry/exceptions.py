@@ -7,3 +7,7 @@ class PoetryException(Exception):
 
 class InvalidProjectFile(PoetryException):
     pass
+
+
+class GroupNotFound(PoetryException):
+    pass
