@@ -18,7 +18,6 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
@@ -28,6 +27,7 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
@@ -101,8 +101,8 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self, lock_path: str | Path) -> None:
-        self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
+    def __init__(self, lock_path: Path) -> None:
+        self._lock = lock_path / "poetry.lock"
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
@@ -111,8 +111,8 @@ class Locker(BaseLocker):
     def written_data(self) -> dict | None:
         return self._written_data
 
-    def set_lock_path(self, lock: str | Path) -> Locker:
-        self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
+    def set_lock_path(self, lock: Path) -> Locker:
+        self._lock = lock / "poetry.lock"
 
         return self
 

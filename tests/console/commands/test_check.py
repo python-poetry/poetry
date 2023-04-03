@@ -29,7 +29,7 @@ All set!
 
 
 def test_check_invalid(mocker: MockerFixture, tester: CommandTester):
-    from poetry.core.toml import TOMLFile
+    from poetry.toml import TOMLFile
 
     mocker.patch(
         "poetry.poetry.Poetry.file",
