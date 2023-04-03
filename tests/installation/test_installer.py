@@ -2429,7 +2429,8 @@ def test_installer_does_not_write_lock_file_when_installation_fails(
     locker.locked(False)
 
     mocker.patch("poetry.installation.installer.Installer._execute", return_value=1)
-    installer.run()
+    result = installer.run()
+    assert result == 1  # error
 
     assert locker._lock_data is None
 
