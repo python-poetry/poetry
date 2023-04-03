@@ -14,12 +14,15 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-# Enhanced version of poetry-core's PyProjectTOML which is capable of writing
-# pyproject.toml
-#
-# The poetry-core class uses tomli to read the file, here we use tomlkit so as to
-# preserve comments and formatting when writing.
 class PyProjectTOML(BasePyProjectTOML):
+    """
+    Enhanced version of poetry-core's PyProjectTOML
+    which is capable of writing pyproject.toml
+
+    The poetry-core class uses tomli to read the file,
+    here we use tomlkit to preserve comments and formatting when writing.
+    """
+
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self._toml_file = TOMLFile(path=path)
@@ -32,7 +35,7 @@ class PyProjectTOML(BasePyProjectTOML):
     @property
     def data(self) -> TOMLDocument:
         if self._toml_document is None:
-            if not self._file.exists():
+            if not self.file.exists():
                 self._toml_document = TOMLDocument()
             else:
                 self._toml_document = self.file.read()
