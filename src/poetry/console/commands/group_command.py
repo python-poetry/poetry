@@ -8,7 +8,7 @@ from cleo.helpers import option
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.command import Command
-from poetry.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFound
 
 
 if TYPE_CHECKING:
@@ -81,7 +81,7 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
-        self.validate_group_options(groups)
+        self._validate_group_options(groups)
 
         for opt, new, group in [
             ("no-dev", "only", MAIN_GROUP),
@@ -112,12 +112,9 @@ class GroupCommand(Command):
             list(self.activated_groups), only=True
         )
 
-    def validate_group_options(self, group_options: dict[str, set[str]]) -> bool:
+    def _validate_group_options(self, group_options: dict[str, set[str]]) -> bool:
         """
-        Currently raises en error if it detects that a group is
-        not part of pyproject.toml
-
-        Can be overridden to adapt behavior.
+        Raises en error if it detects that a group is not part of pyproject.toml
         """
         invalid_options = defaultdict(set)
         for opt, groups in group_options.items():
@@ -125,22 +122,21 @@ class GroupCommand(Command):
                 if not self.poetry.package.has_dependency_group(group):
                     invalid_options[opt].add(group)
         if invalid_options:
-            line_err = (
-                "<error>The <fg=yellow;options=bold>--with</>, "
+            error_details = (
+                "The <fg=yellow;options=bold>--with</>, "
                 "<fg=yellow;options=bold>--without</>, "
                 "and <fg=yellow;options=bold>--only</> "
                 "options may only have valid groups."
             )
             for opt, invalid_groups in invalid_options.items():
-                line_err += (
-                    " <fg=red;options=bold>Invalid"
-                    f" [{', '.join(sorted(invalid_groups))}] provided to --{opt}.</>"
+                error_details += (
+                    f" Invalid [{', '.join(sorted(invalid_groups))}] provided to"
+                    f" <fg=yellow;options=bold>--{opt}</>."
                 )
-            line_err += "</error>"
-            self.line_error(line_err)
-        if len(invalid_options) != 0:
-            invalid_groups_str = ", ".join(
+            all_invalid_groups_str = ", ".join(
                 sorted(set(chain(*invalid_options.values())))
             )
-            raise GroupNotFound(f"Group(s) [{invalid_groups_str}] were not found.")
+            raise GroupNotFound(
+                f"Group(s) [{all_invalid_groups_str}] were not found. {error_details}"
+            )
         return len(invalid_options) == 0

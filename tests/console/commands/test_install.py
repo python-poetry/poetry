@@ -7,7 +7,7 @@ import pytest
 from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
-from poetry.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFound
 
 
 if TYPE_CHECKING:
@@ -289,16 +289,20 @@ def test_invalid_groups_with_without_only(
         tester.execute(cmd_args)
         assert tester.status_code == 0
     else:
-        with pytest.raises(GroupNotFound, match=r"^Group\(s\) \[.*] were not found"):
+        with pytest.raises(
+            GroupNotFound, match=r"^Group\(s\) \[.*] were not found."
+        ) as e:
             tester.execute(cmd_args)
         assert tester.status_code is None
-
-    io_error = tester.io.fetch_error()
-    for opt, groups in options.items():
-        group_list = groups.split(",")
-        invalid_groups = ", ".join(sorted(set(group_list) - valid_groups))
-        if invalid_groups:
-            assert f"Invalid [{invalid_groups}] provided to {opt}." in io_error
+        for opt, groups in options.items():
+            group_list = groups.split(",")
+            invalid_groups = ", ".join(sorted(set(group_list) - valid_groups))
+            if invalid_groups:
+                assert (
+                    f"Invalid [{invalid_groups}] provided to"
+                    f" <fg=yellow;options=bold>{opt}</>."
+                    in str(e.value)
+                )
 
 
 def test_remove_untracked_outputs_deprecation_warning(

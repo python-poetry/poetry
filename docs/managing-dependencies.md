@@ -162,14 +162,6 @@ the `--only` option.
 poetry install --only docs
 ```
 
-{{% warning %}}
-
-Groups provided to `--with`, `--without`, and `--only` should at least be declared in `pyproject.toml`.
-Poetry will raise an **Error** if a group that is not declared is used, letting the user know of a
-potential mistake.
-
-{{% /warning %}}
-
 {{% note %}}
 If you only want to install the project's runtime dependencies, you can do so with the
 `--only main` notation:
