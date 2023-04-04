@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from itertools import chain
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
@@ -120,23 +119,16 @@ class GroupCommand(Command):
         for opt, groups in group_options.items():
             for group in groups:
                 if not self.poetry.package.has_dependency_group(group):
-                    invalid_options[opt].add(group)
+                    invalid_options[group].add(opt)
         if invalid_options:
-            error_details = (
-                "The <fg=yellow;options=bold>--with</>, "
-                "<fg=yellow;options=bold>--without</>, "
-                "and <fg=yellow;options=bold>--only</> "
-                "options may only have valid groups."
-            )
-            for opt, invalid_groups in invalid_options.items():
-                error_details += (
-                    f" Invalid [{', '.join(sorted(invalid_groups))}] provided to"
-                    f" <fg=yellow;options=bold>--{opt}</>."
+            invalid_groups = sorted(invalid_options.keys())
+            error_msg = "Group(s) not found:"
+            for group in invalid_groups:
+                opts = ", ".join(
+                    f"<fg=yellow;options=bold>--{opt}</>"
+                    for opt in sorted(invalid_options[group])
                 )
-            all_invalid_groups_str = ", ".join(
-                sorted(set(chain(*invalid_options.values())))
-            )
-            raise GroupNotFound(
-                f"Group(s) [{all_invalid_groups_str}] were not found. {error_details}"
-            )
+                error_msg += f" {group} (via {opts}),"
+            error_msg = error_msg.rstrip(",")
+            raise GroupNotFound(error_msg)
         return len(invalid_options) == 0

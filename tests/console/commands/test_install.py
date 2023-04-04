@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -289,19 +291,15 @@ def test_invalid_groups_with_without_only(
         tester.execute(cmd_args)
         assert tester.status_code == 0
     else:
-        with pytest.raises(
-            GroupNotFound, match=r"^Group\(s\) \[.*] were not found."
-        ) as e:
+        with pytest.raises(GroupNotFound, match=r"^Group\(s\) not found:") as e:
             tester.execute(cmd_args)
         assert tester.status_code is None
         for opt, groups in options.items():
             group_list = groups.split(",")
-            invalid_groups = ", ".join(sorted(set(group_list) - valid_groups))
-            if invalid_groups:
+            invalid_groups = sorted(set(group_list) - valid_groups)
+            for group in invalid_groups:
                 assert (
-                    f"Invalid [{invalid_groups}] provided to"
-                    f" <fg=yellow;options=bold>{opt}</>."
-                    in str(e.value)
+                    re.search(rf"{group} \(via .*{opt}.*\)", str(e.value)) is not None
                 )
 
 
