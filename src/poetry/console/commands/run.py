@@ -64,7 +64,7 @@ class RunCommand(EnvCommand):
                 args = [str(script_path), *args[1:]]
                 break
         else:
-            # If reach this point, the script is not installed
+            # If we reach this point, the script is not installed
             self._warning_not_installed_script(args[0])
 
         if isinstance(script, dict):
