@@ -231,6 +231,8 @@ Similar to `--no-root` you can use `--no-directory` to skip path dependencies:
 poetry install --no-directory
 ```
 
+This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}}) for more information on this option.
+
 By default `poetry` does not compile Python source files to bytecode during installation.
 This speeds up the installation process, but the first execution may take a little more
 time because Python then compiles source files to bytecode automatically.
