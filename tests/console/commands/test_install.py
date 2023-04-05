@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import re
+
 from typing import TYPE_CHECKING
 
 import pytest
 
 from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 from poetry.core.packages.dependency_group import MAIN_GROUP
+
+from poetry.console.exceptions import GroupNotFound
 
 
 if TYPE_CHECKING:
@@ -255,6 +259,48 @@ def test_only_root_conflicts_with_without_only(
         == "The `--with`, `--without` and `--only` options cannot be used with"
         " the `--only-root` option.\n"
     )
+
+
+@pytest.mark.parametrize(
+    ("options", "valid_groups", "should_raise"),
+    [
+        ({"--with": MAIN_GROUP}, {MAIN_GROUP}, False),
+        ({"--with": "spam"}, set(), True),
+        ({"--with": "spam,foo"}, {"foo"}, True),
+        ({"--without": "spam"}, set(), True),
+        ({"--without": "spam,bar"}, {"bar"}, True),
+        ({"--with": "eggs,ham", "--without": "spam"}, set(), True),
+        ({"--with": "eggs,ham", "--without": "spam,baz"}, {"baz"}, True),
+        ({"--only": "spam"}, set(), True),
+        ({"--only": "bim"}, {"bim"}, False),
+        ({"--only": MAIN_GROUP}, {MAIN_GROUP}, False),
+    ],
+)
+def test_invalid_groups_with_without_only(
+    tester: CommandTester,
+    mocker: MockerFixture,
+    options: dict[str, str],
+    valid_groups: set[str],
+    should_raise: bool,
+):
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    cmd_args = " ".join(f"{flag} {groups}" for (flag, groups) in options.items())
+
+    if not should_raise:
+        tester.execute(cmd_args)
+        assert tester.status_code == 0
+    else:
+        with pytest.raises(GroupNotFound, match=r"^Group\(s\) not found:") as e:
+            tester.execute(cmd_args)
+        assert tester.status_code is None
+        for opt, groups in options.items():
+            group_list = groups.split(",")
+            invalid_groups = sorted(set(group_list) - valid_groups)
+            for group in invalid_groups:
+                assert (
+                    re.search(rf"{group} \(via .*{opt}.*\)", str(e.value)) is not None
+                )
 
 
 def test_remove_untracked_outputs_deprecation_warning(
