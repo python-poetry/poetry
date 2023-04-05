@@ -1295,7 +1295,7 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
     if skip_directory:
         assert not directory_installs, directory_installs
     else:
-        assert len(directory_installs) == 4
+        assert len(directory_installs) == 4, directory_installs
 
 
 def test_run_installs_with_local_poetry_file_transitive(
