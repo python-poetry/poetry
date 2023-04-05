@@ -1315,13 +1315,22 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
     assert locker.written_data == expected
 
     directory_installs = [
-        p for p in executor.installations if p.source_type == "directory"
+        p.name for p in executor.installations if p.source_type == "directory"
     ]
 
     if skip_directory:
         assert not directory_installs, directory_installs
     else:
-        assert len(directory_installs) == 4, directory_installs
+        assert directory_installs == [
+            "inner-directory-project",
+            "project-with-extras",
+            "project-with-transitive-file-dependencies",
+            "project-with-transitive-directory-dependencies",
+            "inner-directory-project",
+            "project-with-extras",
+            "project-with-transitive-file-dependencies",
+            "project-with-transitive-directory-dependencies",
+        ]
 
 
 def test_run_installs_with_local_poetry_file_transitive(
