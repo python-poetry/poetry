@@ -225,7 +225,7 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Similar to `--no-root` you can use `--no-directory` to skip path dependencies:
+Similar to `--no-root` you can use `--no-directory` to skip directory path dependencies:
 
 ```bash
 poetry install --no-directory
