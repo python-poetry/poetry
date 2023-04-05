@@ -111,7 +111,7 @@ class GroupCommand(Command):
             list(self.activated_groups), only=True
         )
 
-    def _validate_group_options(self, group_options: dict[str, set[str]]) -> bool:
+    def _validate_group_options(self, group_options: dict[str, set[str]]) -> None:
         """
         Raises en error if it detects that a group is not part of pyproject.toml
         """
@@ -121,14 +121,12 @@ class GroupCommand(Command):
                 if not self.poetry.package.has_dependency_group(group):
                     invalid_options[group].add(opt)
         if invalid_options:
-            invalid_groups = sorted(invalid_options.keys())
-            error_msg = "Group(s) not found:"
-            for group in invalid_groups:
+            message_parts = []
+            for group in sorted(invalid_options):
                 opts = ", ".join(
                     f"<fg=yellow;options=bold>--{opt}</>"
                     for opt in sorted(invalid_options[group])
                 )
-                error_msg += f" {group} (via {opts}),"
-            error_msg = error_msg.rstrip(",")
-            raise GroupNotFound(error_msg)
+                message_parts.append(f"{group} (via {opts})")
+            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
         return len(invalid_options) == 0
