@@ -180,6 +180,24 @@ def test_compile_option_is_passed_to_the_installer(
     enable_bytecode_compilation_mock.assert_called_once_with(compile)
 
 
+@pytest.mark.parametrize("skip_directory_cli_value", [True, False])
+def test_no_directory_is_passed_to_installer(
+    tester: CommandTester, mocker: MockerFixture, skip_directory_cli_value: bool
+):
+    """
+    The --no-directory option is passed to the installer.
+    """
+
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    if skip_directory_cli_value is True:
+        tester.execute("--no-directory")
+    else:
+        tester.execute()
+
+    assert tester.command.installer._skip_directory is skip_directory_cli_value
+
+
 def test_no_all_extras_doesnt_populate_installer(
     tester: CommandTester, mocker: MockerFixture
 ):
@@ -347,17 +365,3 @@ def test_install_path_dependency_does_not_exist(
     else:
         with pytest.raises(ValueError, match="does not exist"):
             tester.execute(options)
-
-
-def test_no_directory_is_passed_to_installer(
-    tester: CommandTester, mocker: MockerFixture
-):
-    """
-    The --no-directory option is passed to the installer.
-    """
-
-    mocker.patch.object(tester.command.installer, "run", return_value=1)
-
-    tester.execute("--no-directory")
-
-    assert tester.command.installer._skip_directory is True
