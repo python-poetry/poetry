@@ -129,4 +129,3 @@ class GroupCommand(Command):
                 )
                 message_parts.append(f"{group} (via {opts})")
             raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
-        return len(invalid_options) == 0
