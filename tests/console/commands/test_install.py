@@ -351,7 +351,7 @@ def test_install_path_dependency_does_not_exist(
 
 def test_no_path_is_passed_to_installer(tester: CommandTester, mocker: MockerFixture):
     """
-    The --no-root options is passed to the installer.
+    The --no-directory option is passed to the installer.
     """
 
     mocker.patch.object(tester.command.installer, "run", return_value=1)

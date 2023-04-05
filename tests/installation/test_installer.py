@@ -1288,7 +1288,6 @@ def test_run_installs_with_local_poetry_directory_transitive_no_path(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: Path,
     fixture_dir: FixtureDirGetter,
 ):
     """When we set Installer.skip_directory(True) no path dependencies should

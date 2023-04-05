@@ -30,6 +30,7 @@ class Transaction:
         self,
         with_uninstalls: bool = True,
         synchronize: bool = False,
+        *,
         skip_directory: bool = False,
     ) -> list[Operation]:
         from poetry.installation.operations import Install
