@@ -190,8 +190,10 @@ def test_add_existing_plugin_warns_about_no_operation(
     repo: TestRepository,
     installed: TestRepository,
 ):
-    SelfCommand.get_default_system_pyproject_file().write_text(
-        f"""\
+    pyproject = SelfCommand.get_default_system_pyproject_file()
+    with open(pyproject, "w", encoding="utf-8", newline="") as f:
+        f.write(
+            f"""\
 [tool.poetry]
 name = "poetry-instance"
 version = "1.2.0"
@@ -203,9 +205,8 @@ python = "^3.6"
 
 [tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
-""",
-        encoding="utf-8",
-    )
+"""
+        )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
@@ -230,8 +231,10 @@ def test_add_existing_plugin_updates_if_requested(
     repo: TestRepository,
     installed: TestRepository,
 ):
-    SelfCommand.get_default_system_pyproject_file().write_text(
-        f"""\
+    pyproject = SelfCommand.get_default_system_pyproject_file()
+    with open(pyproject, "w", encoding="utf-8", newline="") as f:
+        f.write(
+            f"""\
 [tool.poetry]
 name = "poetry-instance"
 version = "1.2.0"
@@ -243,9 +246,8 @@ python = "^3.6"
 
 [tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
-""",
-        encoding="utf-8",
-    )
+"""
+        )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 

@@ -14,9 +14,9 @@ from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.repo import Repo
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.console.exceptions import PoetryConsoleError
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.authenticator import Authenticator
 from poetry.vcs.git import Git
 from poetry.vcs.git.backend import GitRefSpec

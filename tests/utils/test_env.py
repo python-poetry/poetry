@@ -13,10 +13,10 @@ import pytest
 import tomlkit
 
 from poetry.core.constraints.version import Version
-from poetry.core.toml.file import TOMLFile
 
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.toml.file import TOMLFile
 from poetry.utils._compat import WINDOWS
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import GET_PYTHON_VERSION_ONELINER

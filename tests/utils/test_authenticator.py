@@ -242,6 +242,33 @@ def test_authenticator_request_raises_exception_when_attempts_exhausted(
     assert sleep.call_count == 5
 
 
+def test_authenticator_request_respects_retry_header(
+    mocker: MockerFixture,
+    config: Config,
+    http: type[httpretty.httpretty],
+):
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
+    content = str(uuid.uuid4())
+    seen = []
+
+    def callback(
+        request: requests.Request, uri: str, response_headers: dict
+    ) -> list[int | dict | str]:
+        if not seen.count(uri):
+            seen.append(uri)
+            return [429, {"Retry-After": "42"}, "Retry later"]
+
+        return [200, response_headers, content]
+
+    http.register_uri(httpretty.GET, sdist_uri, body=callback)
+    authenticator = Authenticator(config, NullIO())
+
+    response = authenticator.request("get", sdist_uri)
+    assert sleep.call_args[0] == (42.0,)
+    assert response.text == content
+
+
 @pytest.mark.parametrize(
     ["status", "attempts"],
     [
@@ -249,7 +276,9 @@ def test_authenticator_request_raises_exception_when_attempts_exhausted(
         (401, 0),
         (403, 0),
         (404, 0),
-        (500, 0),
+        (429, 5),
+        (500, 5),
+        (501, 5),
         (502, 5),
         (503, 5),
         (504, 5),

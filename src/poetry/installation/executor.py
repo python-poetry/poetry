@@ -636,9 +636,8 @@ class Executor:
     def _install_directory_without_wheel_installer(
         self, operation: Install | Update
     ) -> int:
-        from poetry.core.pyproject.toml import PyProjectTOML
-
         from poetry.factory import Factory
+        from poetry.pyproject.toml import PyProjectTOML
 
         package = operation.package
         operation_message = self.get_operation_message(operation)

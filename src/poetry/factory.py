@@ -12,7 +12,6 @@ from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.toml.file import TOMLFile
 
 from poetry.config.config import Config
 from poetry.json import validate_object
@@ -20,6 +19,7 @@ from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
+from poetry.toml.file import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -55,15 +55,19 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
-        locker = Locker(
-            base_poetry.file.parent / "poetry.lock", base_poetry.local_config
+        # TODO: backward compatibility, can be simplified if poetry-core with
+        #       https://github.com/python-poetry/poetry-core/pull/483 is available
+        poetry_file: Path = (
+            getattr(base_poetry, "pyproject_path", None) or base_poetry.file.path
         )
+
+        locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
 
         # Loading global configuration
         config = Config.create()
 
         # Loading local configuration
-        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
+        local_config_file = TOMLFile(poetry_file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(f"Loading configuration file {local_config_file.path}")
@@ -82,7 +86,7 @@ class Factory(BaseFactory):
         config.merge({"repositories": repositories})
 
         poetry = Poetry(
-            base_poetry.file.path,
+            poetry_file,
             base_poetry.local_config,
             base_poetry.package,
             locker,

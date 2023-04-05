@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.__version__ import __version__
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.factory import Factory
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.helpers import directory

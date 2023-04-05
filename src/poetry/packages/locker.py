@@ -16,7 +16,6 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
@@ -26,6 +25,7 @@ from tomlkit import inline_table
 from tomlkit import table
 
 from poetry.__version__ import __version__
+from poetry.toml.file import TOMLFile
 from poetry.utils._compat import tomllib
 
 

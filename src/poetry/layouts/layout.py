@@ -5,12 +5,13 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from packaging.utils import canonicalize_name
-from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import module_name
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
 from tomlkit.toml_document import TOMLDocument
+
+from poetry.pyproject.toml import PyProjectTOML
 
 
 if TYPE_CHECKING:
