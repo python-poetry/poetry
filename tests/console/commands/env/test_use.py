@@ -9,8 +9,8 @@ import pytest
 import tomlkit
 
 from poetry.core.constraints.version import Version
-from poetry.core.toml.file import TOMLFile
 
+from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
@@ -55,7 +55,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
-):
+) -> None:
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -70,7 +70,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_py37 = venv_cache / f"{venv_name}-py3.7"
     mock_build_env.assert_called_with(
         venv_py37,
-        executable="/usr/bin/python3.7",
+        executable=Path("/usr/bin/python3.7"),
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -99,7 +99,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
-):
+) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
@@ -128,7 +128,7 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
-):
+) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])

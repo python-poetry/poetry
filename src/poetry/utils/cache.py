@@ -4,19 +4,32 @@ import contextlib
 import dataclasses
 import hashlib
 import json
+import logging
 import shutil
 import time
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
+from poetry.utils.wheel import InvalidWheelName
+from poetry.utils.wheel import Wheel
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages.utils.link import Link
+
+    from poetry.utils.env import Env
+
 
 # Used by Cachy for items that do not expire.
 MAX_DATE = 9999999999
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 def decode(string: bytes, encodings: list[str] | None = None) -> str:
@@ -172,7 +185,14 @@ class FileCache(Generic[T]):
             return None
 
         with open(path, "rb") as f:
-            payload = self._deserialize(f.read())
+            file_content = f.read()
+
+        try:
+            payload = self._deserialize(file_content)
+        except (json.JSONDecodeError, ValueError):
+            self.forget(key)
+            logger.warning("Corrupt cache file was detected and cleaned up.")
+            return None
 
         if payload.expired:
             self.forget(key)
@@ -196,3 +216,82 @@ class FileCache(Generic[T]):
         data = json.loads(data_str[10:])
         expires = int(data_str[:10])
         return CacheItem(data, expires)
+
+
+class ArtifactCache:
+    def __init__(self, *, cache_dir: Path) -> None:
+        self._cache_dir = cache_dir
+
+    def get_cache_directory_for_link(self, link: Link) -> Path:
+        key_parts = {"url": link.url_without_fragment}
+
+        if link.hash_name is not None and link.hash is not None:
+            key_parts[link.hash_name] = link.hash
+
+        if link.subdirectory_fragment:
+            key_parts["subdirectory"] = link.subdirectory_fragment
+
+        key = hashlib.sha256(
+            json.dumps(
+                key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+            ).encode("ascii")
+        ).hexdigest()
+
+        split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+
+        return self._cache_dir.joinpath(*split_key)
+
+    def get_cached_archive_for_link(
+        self,
+        link: Link,
+        *,
+        strict: bool,
+        env: Env | None = None,
+    ) -> Path | None:
+        assert strict or env is not None
+
+        archives = self._get_cached_archives_for_link(link)
+        if not archives:
+            return None
+
+        candidates: list[tuple[float | None, Path]] = []
+        for archive in archives:
+            if strict:
+                # in strict mode return the original cached archive instead of the
+                # prioritized archive type.
+                if link.filename == archive.name:
+                    return archive
+                continue
+
+            assert env is not None
+
+            if archive.suffix != ".whl":
+                candidates.append((float("inf"), archive))
+                continue
+
+            try:
+                wheel = Wheel(archive.name)
+            except InvalidWheelName:
+                continue
+
+            if not wheel.is_supported_by_environment(env):
+                continue
+
+            candidates.append(
+                (wheel.get_minimum_supported_index(env.supported_tags), archive),
+            )
+
+        if not candidates:
+            return None
+
+        return min(candidates)[1]
+
+    def _get_cached_archives_for_link(self, link: Link) -> list[Path]:
+        cache_dir = self.get_cache_directory_for_link(link)
+
+        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
+        paths: list[Path] = []
+        for archive_type in archive_types:
+            paths += cache_dir.glob(f"*.{archive_type}")
+
+        return paths

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from installer import install
 from installer.destinations import SchemeDictionaryDestination
 from installer.sources import WheelFile
+from installer.sources import _WheelFileValidationError
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
@@ -31,7 +32,7 @@ class WheelDestination(SchemeDictionaryDestination):
     def write_to_fs(
         self,
         scheme: Scheme,
-        path: Path | str,
+        path: str,
         stream: BinaryIO,
         is_executable: bool,
     ) -> RecordEntry:
@@ -58,7 +59,7 @@ class WheelDestination(SchemeDictionaryDestination):
         if is_executable:
             make_file_executable(target_path)
 
-        return RecordEntry(str(path), Hash(self.hash_algorithm, hash_), size)
+        return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 
     def for_source(self, source: WheelFile) -> WheelDestination:
         scheme_dict = self.scheme_dict.copy()
@@ -90,15 +91,20 @@ class WheelInstaller:
         schemes["headers"] = schemes["include"]
 
         self._destination = WheelDestination(
-            schemes, interpreter=self._env.python, script_kind=script_kind
+            schemes, interpreter=str(self._env.python), script_kind=script_kind
         )
+
+        self.invalid_wheels: dict[Path, list[str]] = {}
 
     def enable_bytecode_compilation(self, enable: bool = True) -> None:
         self._destination.bytecode_optimization_levels = (-1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
         with WheelFile.open(wheel) as source:
-            source.validate_record()
+            try:
+                source.validate_record()
+            except _WheelFileValidationError as e:
+                self.invalid_wheels[wheel] = e.issues
             install(
                 source=source,
                 destination=self._destination.for_source(source),

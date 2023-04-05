@@ -73,11 +73,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def handle(self) -> int:
         from pathlib import Path
 
-        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
 
         from poetry.config.config import Config
         from poetry.layouts import layout
+        from poetry.pyproject.toml import PyProjectTOML
         from poetry.utils.env import EnvManager
 
         project_path = Path.cwd()
