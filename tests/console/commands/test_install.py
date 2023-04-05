@@ -349,7 +349,9 @@ def test_install_path_dependency_does_not_exist(
             tester.execute(options)
 
 
-def test_no_path_is_passed_to_installer(tester: CommandTester, mocker: MockerFixture):
+def test_no_directory_is_passed_to_installer(
+    tester: CommandTester, mocker: MockerFixture
+):
     """
     The --no-directory option is passed to the installer.
     """
