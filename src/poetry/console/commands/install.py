@@ -34,8 +34,8 @@ class InstallCommand(InstallerCommand):
             "no-directory",
             None,
             (
-                "Do not install any directory path dependencies; useful to install dependencies without source'
-                " code, e.g. for caching of Docker layers)"
+                "Do not install any directory path dependencies; useful to install"
+                " dependencies without source code, e.g. for caching of Docker layers)"
             ),
             flag=True,
             multiple=False,
