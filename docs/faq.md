@@ -160,7 +160,7 @@ For example, if Poetry builds a distribution for a project that uses a version t
 
 ### Poetry busts my Docker cache because it requires me to COPY my source files in before installing 3rd party dependencies
 
-By default running `poetry install ...` requires you to have your source files present (both the "root" package and any `path` dependencies you might have).
+By default running `poetry install ...` requires you to have your source files present (both the "root" package and any directory path dependencies you might have).
 This interacts poorly with Docker's caching mechanisms because any change to the source file will make any layers (subsequent commands in your Dockerfile) re-run.
 For example, you might have a Dockerfile that looks something like this:
 
