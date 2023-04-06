@@ -27,6 +27,7 @@ from poetry.utils.env import IncorrectEnvError
 from poetry.utils.env import InvalidCurrentPythonVersionError
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NoCompatiblePythonVersionFound
+from poetry.utils.env import PythonVersionNotFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import build_environment
@@ -197,10 +198,12 @@ def check_output_wrapper(
         elif "sys.version_info[:2]" in python_cmd:
             return f"{version.major}.{version.minor}"
         elif "import sys; print(sys.executable)" in python_cmd:
-            return f"/usr/bin/{cmd[0]}"
+            executable = cmd[0]
+            basename = os.path.basename(executable)
+            return f"/usr/bin/{basename}"
         else:
             assert "import sys; print(sys.prefix)" in python_cmd
-            return str(Path("/prefix"))
+            return "/prefix"
 
     return check_output
 
@@ -218,6 +221,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -252,6 +256,30 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert env.base == Path("/prefix")
 
 
+def test_activate_fails_when_python_cannot_be_found(
+    tmp_dir: str,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    venv_name: str,
+) -> None:
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
+
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    mocker.patch("shutil.which", return_value=None)
+
+    with pytest.raises(PythonVersionNotFound) as e:
+        manager.activate("python3.7")
+
+    expected_message = "Could not find the python executable python3.7"
+    assert str(e.value) == expected_message
+
+
 def test_activate_activates_existing_virtualenv_no_envs_file(
     tmp_dir: str,
     manager: EnvManager,
@@ -267,6 +295,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -311,6 +340,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -354,6 +384,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
@@ -407,6 +438,7 @@ def test_activate_activates_recreates_for_different_patch(
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -474,6 +506,7 @@ def test_activate_does_not_recreate_when_switching_minor(
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
@@ -1070,6 +1103,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     poetry.package.python_versions = "^3.6"
 
     mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.5")),
@@ -1093,6 +1127,34 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     )
 
 
+def test_create_venv_finds_no_python_executable(
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+    venv_name: str,
+) -> None:
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.6"
+
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch("shutil.which", return_value=None)
+
+    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+        manager.create_venv()
+
+    expected_message = (
+        "Poetry was unable to find a compatible version. "
+        "If you have one, you can explicitly use it "
+        'via the "env use" command.'
+    )
+
+    assert str(e.value) == expected_message
+
+
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific_ones(
     manager: EnvManager,
     poetry: Poetry,
@@ -1107,8 +1169,10 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     poetry.package.python_versions = "^3.6"
 
     mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
-        "subprocess.check_output", side_effect=["3.5.3", "3.9.0", "/usr/bin/python3.9"]
+        "subprocess.check_output",
+        side_effect=["/usr/bin/python3", "3.5.3", "/usr/bin/python3.9", "3.9.0"],
     )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
@@ -1309,6 +1373,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
         }
     )
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -1546,13 +1611,15 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
 
     def mock_check_output(cmd: str, *args: Any, **kwargs: Any) -> str:
         if GET_PYTHON_VERSION_ONELINER in cmd:
-            if "python3.5" in cmd:
+            executable = cmd[0]
+            if "python3.5" in str(executable):
                 return "3.5.12"
             else:
                 return "3.7.1"
         else:
             return "/usr/bin/python3.5"
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     check_output = mocker.patch(
         "subprocess.check_output",
         side_effect=mock_check_output,
@@ -1662,6 +1729,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     venv_name = manager.generate_env_name("", str(poetry.file.parent))
 
     mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.5")),
