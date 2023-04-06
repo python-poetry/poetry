@@ -49,11 +49,11 @@ Using version ^0.1.0 for poetry-plugin
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing poetry-plugin (0.1.0)
+
+Writing lock file
 """
     assert_plugin_add_result(tester, expected, "^0.1.0")
 
@@ -71,11 +71,11 @@ def test_add_with_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing poetry-plugin (0.2.0)
+
+Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, "^0.2.0")
@@ -93,12 +93,12 @@ def test_add_with_git_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (2.0.5)
   • Installing poetry-plugin (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert_plugin_add_result(
@@ -119,13 +119,13 @@ def test_add_with_git_constraint_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 3 installs, 0 updates, 0 removals
 
   • Installing pendulum (2.0.5)
   • Installing tomlkit (0.7.0)
   • Installing poetry-plugin (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert_plugin_add_result(
@@ -162,12 +162,12 @@ def test_add_with_git_constraint_with_subdirectory(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (2.0.5)
   • Installing poetry-plugin (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     constraint = {
@@ -262,11 +262,11 @@ Using version ^2.3.4 for poetry-plugin
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 0 installs, 1 update, 0 removals
 
   • Updating poetry-plugin (1.2.3 -> 2.3.4)
+
+Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, "^2.3.4")
@@ -298,12 +298,12 @@ Using version ^1.2.3 for poetry-plugin
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 1 update, 0 removals
 
   • Updating tomlkit (0.7.1 -> 0.7.2)
   • Installing poetry-plugin (1.2.3)
+
+Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, "^1.2.3")

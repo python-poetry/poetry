@@ -291,12 +291,10 @@ class Installer:
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
 
-        if self._update:
+        if self._lock and self._update:
+            # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
-
-            if self._lock:
-                # If we are only in lock mode, no need to go any further
-                return 0
+            return 0
 
         if self._groups is not None:
             root = self._package.with_dependency_groups(list(self._groups), only=True)
@@ -362,7 +360,13 @@ class Installer:
         self._filter_operations(ops, lockfile_repo)
 
         # Execute operations
-        return self._execute(ops)
+        status = self._execute(ops)
+
+        if status == 0 and self._update:
+            # Only write lock file when installation is success
+            self._write_lock_file(lockfile_repo)
+
+        return status
 
     def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
         if self._write_lock and (force or self._update):
