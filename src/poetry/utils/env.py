@@ -1234,10 +1234,7 @@ class Env:
             path = get_real_windows_path(path)
             base = get_real_windows_path(base) if base else None
 
-        if not self._is_windows or self._is_mingw:
-            bin_dir = "bin"
-        else:
-            bin_dir = "Scripts"
+        bin_dir = "bin" if not self._is_windows or self._is_mingw else "Scripts"
         self._path = path
         self._bin_dir = self._path / bin_dir
 

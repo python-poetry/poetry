@@ -10,7 +10,6 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
@@ -21,6 +20,8 @@ from poetry.utils.wheel import Wheel
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.packages.utils.link import Link
 
     from poetry.utils.env import Env
@@ -108,7 +109,7 @@ class FileCache(Generic[T]):
         )
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "wb") as f:
+        with path.open("wb") as f:
             f.write(self._serialize(payload))
 
     def forget(self, key: str) -> None:
@@ -149,7 +150,7 @@ class FileCache(Generic[T]):
         if not path.exists():
             return None
 
-        with open(path, "rb") as f:
+        with path.open("rb") as f:
             file_content = f.read()
 
         try:

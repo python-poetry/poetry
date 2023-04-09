@@ -554,10 +554,7 @@ class Installer:
     def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
-            if isinstance(op, Update):
-                package = op.target_package
-            else:
-                package = op.package
+            package = op.target_package if isinstance(op, Update) else op.package
 
             if op.job_type == "uninstall":
                 continue

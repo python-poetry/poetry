@@ -8,8 +8,6 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Callable
-from typing import Collection
 
 from build import BuildBackendException
 from build import ProjectBuilder
@@ -22,6 +20,8 @@ from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Collection
     from contextlib import AbstractContextManager
 
     from poetry.repositories import RepositoryPool

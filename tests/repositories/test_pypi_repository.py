@@ -302,10 +302,8 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         ]
     }
 
-    for name in expected_extras.keys():
-        assert (
-            sorted(package.extras[name], key=lambda r: r.name) == expected_extras[name]
-        )
+    for name, expected_extra in expected_extras.items():
+        assert sorted(package.extras[name], key=lambda r: r.name) == expected_extra
 
 
 def test_invalid_versions_ignored() -> None:

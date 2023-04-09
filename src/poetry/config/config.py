@@ -199,7 +199,7 @@ class Config:
         repositories = {}
         pattern = re.compile(r"POETRY_REPOSITORIES_(?P<name>[A-Z_]+)_URL")
 
-        for env_key in os.environ.keys():
+        for env_key in os.environ:
             match = pattern.match(env_key)
             if match:
                 repositories[match.group("name").lower().replace("_", "-")] = {

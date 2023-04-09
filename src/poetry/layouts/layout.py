@@ -15,7 +15,7 @@ from poetry.pyproject.toml import PyProjectTOML
 
 
 if TYPE_CHECKING:
-    from typing import Mapping
+    from collections.abc import Mapping
 
     from tomlkit.items import InlineTable
 

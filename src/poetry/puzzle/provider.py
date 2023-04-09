@@ -12,7 +12,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -40,6 +39,7 @@ from poetry.vcs.git import Git
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
 

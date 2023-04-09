@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import platform
 import sys
 
@@ -51,9 +50,9 @@ class WheelDestination(SchemeDictionaryDestination):
         if not parent_folder.exists():
             # Due to the parallel installation it can happen
             # that two threads try to create the directory.
-            os.makedirs(parent_folder, exist_ok=True)
+            parent_folder.mkdir(parents=True, exist_ok=True)
 
-        with open(target_path, "wb") as f:
+        with target_path.open("wb") as f:
             hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
 
         if is_executable:
