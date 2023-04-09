@@ -1058,12 +1058,8 @@ def test_executor_should_write_pep610_url_references_for_editable_git(
         tmp_venv,
         package,
         {
-            "vcs_info": {
-                "vcs": "git",
-                "requested_revision": "master",
-                "commit_id": "123456",
-            },
-            "url": package.source_url,
+            "dir_info": {"editable": True},
+            "url": Path(package.source_url).as_uri(),
         },
     )
 

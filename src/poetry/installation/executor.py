@@ -653,7 +653,8 @@ class Executor:
             )
 
         archive = self._prepare_archive(operation, output_dir=output_dir)
-        package._source_url = original_url
+        if not package.develop:
+            package._source_url = original_url
 
         if output_dir is not None and output_dir.is_dir():
             # Mark directories with cached git packages, to distinguish from
@@ -893,12 +894,12 @@ class Executor:
 
         url_reference: dict[str, Any] | None = None
 
-        if package.source_type == "git":
+        if package.source_type == "git" and not package.develop:
             url_reference = self._create_git_url_reference(package)
+        elif package.source_type in ("directory", "git"):
+            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "url":
             url_reference = self._create_url_url_reference(package)
-        elif package.source_type == "directory":
-            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "file":
             url_reference = self._create_file_url_reference(package)
 
