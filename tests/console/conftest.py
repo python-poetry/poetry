@@ -40,8 +40,8 @@ def installer() -> NoopInstaller:
 
 
 @pytest.fixture
-def env(tmp_dir: str) -> MockEnv:
-    path = Path(tmp_dir) / ".venv"
+def env(tmp_path: Path) -> MockEnv:
+    path = Path(tmp_path) / ".venv"
     path.mkdir(parents=True)
     return MockEnv(path=path, is_venv=True)
 

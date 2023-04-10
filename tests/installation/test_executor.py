@@ -91,8 +91,8 @@ class Chef(BaseChef):
 
 
 @pytest.fixture
-def env(tmp_dir: str) -> MockEnv:
-    path = Path(tmp_dir) / ".venv"
+def env(tmp_path: Path) -> MockEnv:
+    path = Path(tmp_path) / ".venv"
     path.mkdir(parents=True)
 
     return MockEnv(path=path, is_venv=True)
@@ -169,19 +169,19 @@ def mock_file_downloads(
 
 
 @pytest.fixture
-def copy_wheel(tmp_dir: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
+def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
-        Path(tmp_dir).joinpath(tmp_name).mkdir()
+        Path(tmp_path).joinpath(tmp_name).mkdir()
 
         shutil.copyfile(
             (
                 fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
             ).as_posix(),
-            (Path(tmp_dir) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl").as_posix(),
+            (Path(tmp_path) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl").as_posix(),
         )
 
-        return Path(tmp_dir) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl"
+        return Path(tmp_path) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl"
 
     return _copy_wheel
 
@@ -201,7 +201,7 @@ def test_execute_executes_a_batch_of_operations(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     copy_wheel: Callable[[], Path],
@@ -209,7 +209,7 @@ def test_execute_executes_a_batch_of_operations(
 ):
     wheel_install = mocker.patch.object(WheelInstaller, "install")
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": tmp_path})
     artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
     prepare_spy = mocker.spy(Chef, "_prepare")
@@ -312,13 +312,13 @@ def test_execute_prints_warning_for_yanked_package(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     operations: list[Operation],
     has_warning: bool,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": tmp_path})
 
     executor = Executor(env, pool, config, io)
 
@@ -345,11 +345,11 @@ def test_execute_prints_warning_for_invalid_wheels(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
+    tmp_path: Path,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": tmp_path})
 
     executor = Executor(env, pool, config, io)
 
@@ -460,11 +460,11 @@ def test_execute_works_with_ansi_output(
     config: Config,
     pool: RepositoryPool,
     io_decorated: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": tmp_path})
 
     executor = Executor(env, pool, config, io_decorated)
 
@@ -497,11 +497,11 @@ def test_execute_works_with_no_ansi_output(
     config: Config,
     pool: RepositoryPool,
     io_not_decorated: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
 ):
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": tmp_path})
 
     executor = Executor(env, pool, config, io_not_decorated)
 
@@ -581,7 +581,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_executor_should_delete_incomplete_downloads(
     config: Config,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mocker: MockerFixture,
     pool: RepositoryPool,
     mock_file_downloads: None,
@@ -589,7 +589,7 @@ def test_executor_should_delete_incomplete_downloads(
     fixture_dir: FixtureDirGetter,
 ):
     fixture = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    destination_fixture = Path(tmp_dir) / "tomlkit-0.5.3-py2.py3-none-any.whl"
+    destination_fixture = Path(tmp_path) / "tomlkit-0.5.3-py2.py3-none-any.whl"
     shutil.copyfile(str(fixture), str(destination_fixture))
     mocker.patch(
         "poetry.installation.executor.Executor._download_archive",
@@ -601,10 +601,10 @@ def test_executor_should_delete_incomplete_downloads(
     )
     mocker.patch(
         "poetry.installation.executor.ArtifactCache.get_cache_directory_for_link",
-        return_value=Path(tmp_dir),
+        return_value=Path(tmp_path),
     )
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": tmp_path})
 
     executor = Executor(env, pool, config, io)
 
@@ -1177,7 +1177,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
@@ -1193,7 +1193,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
 
     config.merge(
         {
-            "cache-dir": tmp_dir,
+            "cache-dir": tmp_path,
             "installer": {"modern-installation": False},
         }
     )
@@ -1240,7 +1240,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
@@ -1310,7 +1310,7 @@ def test_build_system_requires_not_available(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,

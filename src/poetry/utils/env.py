@@ -1957,9 +1957,9 @@ def ephemeral_environment(
     executable: Path | None = None,
     flags: dict[str, bool] | None = None,
 ) -> Iterator[VirtualEnv]:
-    with temporary_directory() as tmp_dir:
+    with temporary_directory() as tmp_path:
         # TODO: cache PEP 517 build environment corresponding to each project venv
-        venv_dir = Path(tmp_dir) / ".venv"
+        venv_dir = Path(tmp_path) / ".venv"
         EnvManager.build_venv(
             path=venv_dir,
             executable=executable,

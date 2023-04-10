@@ -159,11 +159,11 @@ class Chef:
         else:
             context = tarfile.open
 
-        with temporary_directory() as tmp_dir:
+        with temporary_directory() as tmp_path:
             with context(archive.as_posix()) as archive_archive:
-                archive_archive.extractall(tmp_dir)
+                archive_archive.extractall(tmp_path)
 
-            archive_dir = Path(tmp_dir)
+            archive_dir = Path(tmp_path)
 
             elements = list(archive_dir.glob("*"))
 

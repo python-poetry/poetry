@@ -166,8 +166,8 @@ def with_chained_null_keyring(mocker: MockerFixture) -> None:
 
 
 @pytest.fixture
-def config_cache_dir(tmp_dir: str) -> Path:
-    path = Path(tmp_dir) / ".cache" / "pypoetry"
+def config_cache_dir(tmp_path: Path) -> Path:
+    path = Path(tmp_path) / ".cache" / "pypoetry"
     path.mkdir(parents=True)
     return path
 
@@ -216,8 +216,8 @@ def config(
 
 
 @pytest.fixture()
-def config_dir(tmp_dir: str) -> Path:
-    return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
+def config_dir(tmp_path: Path) -> Path:
+    return Path(tempfile.mkdtemp(prefix="poetry_config_", path=tmp_path))
 
 
 @pytest.fixture(autouse=True)
@@ -293,7 +293,7 @@ def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
 
 
 @pytest.fixture
-def tmp_dir() -> Iterator[str]:
+def tmp_path() -> Iterator[Path]:
     dir_ = tempfile.mkdtemp(prefix="poetry_")
     path = Path(dir_)
 
@@ -318,8 +318,8 @@ def mocked_open_files(mocker: MockerFixture) -> list:
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
-    venv_path = Path(tmp_dir) / "venv"
+def tmp_venv(tmp_path: Path) -> Iterator[VirtualEnv]:
+    venv_path = Path(tmp_path) / "venv"
 
     EnvManager.build_venv(str(venv_path))
 
@@ -360,14 +360,14 @@ def repo(http: type[httpretty.httpretty]) -> TestRepository:
 
 @pytest.fixture
 def project_factory(
-    tmp_dir: str,
+    tmp_path: Path,
     config: Config,
     repo: TestRepository,
     installed: Repository,
     default_python: str,
     load_required_fixtures: None,
 ) -> ProjectFactory:
-    workspace = Path(tmp_dir)
+    workspace = Path(tmp_path)
 
     def _factory(
         name: str | None = None,
@@ -454,10 +454,10 @@ def set_simple_log_formatter() -> None:
 
 
 @pytest.fixture
-def fixture_copier(fixture_base: Path, tmp_dir: str) -> FixtureCopier:
+def fixture_copier(fixture_base: Path, tmp_path: Path) -> FixtureCopier:
     def _copy(relative_path: str, target: Path | None = None) -> Path:
         path = fixture_base.joinpath(relative_path)
-        target = target or Path(tmp_dir, relative_path)
+        target = target or Path(tmp_path, relative_path)
         target.parent.mkdir(parents=True, exist_ok=True)
 
         if target.exists():

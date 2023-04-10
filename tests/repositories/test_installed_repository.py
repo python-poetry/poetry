@@ -101,9 +101,9 @@ def test_load_successful(repository: InstalledRepository):
 
 
 def test_load_successful_with_invalid_distribution(
-    caplog: LogCaptureFixture, mocker: MockerFixture, env: MockEnv, tmp_dir: str
+    caplog: LogCaptureFixture, mocker: MockerFixture, env: MockEnv, tmp_path: Path
 ) -> None:
-    invalid_dist_info = Path(tmp_dir) / "site-packages" / "invalid-0.1.0.dist-info"
+    invalid_dist_info = Path(tmp_path) / "site-packages" / "invalid-0.1.0.dist-info"
     invalid_dist_info.mkdir(parents=True)
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
