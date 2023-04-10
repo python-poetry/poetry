@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def test_no_version_matching_constraint(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "^1.0"))
 
     add_to_repo(repo, "foo", "2.0.0")
@@ -35,7 +35,7 @@ def test_no_version_matching_constraint(
 
 def test_no_version_that_matches_combined_constraints(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
 
@@ -58,7 +58,7 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
 
 def test_disjoint_constraints(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
 
@@ -80,7 +80,7 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
 
 def test_disjoint_root_constraints(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("foo", "2.0.0"))
 
@@ -95,7 +95,7 @@ Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving faile
 
 def test_disjoint_root_constraints_path_dependencies(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     provider.set_package_python_versions("^3.7")
     fixtures = Path(__file__).parent.parent.parent / "fixtures"
     project_dir = fixtures.joinpath("with_conditional_path_deps")
@@ -112,7 +112,9 @@ def test_disjoint_root_constraints_path_dependencies(
     check_solver_result(root, provider, error=error)
 
 
-def test_no_valid_solution(root: ProjectPackage, provider: Provider, repo: Repository):
+def test_no_valid_solution(
+    root: ProjectPackage, provider: Provider, repo: Repository
+) -> None:
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
 
@@ -135,7 +137,7 @@ So, because myapp depends on b (*), version solving failed."""
 
 def test_package_with_the_same_name_gives_clear_error_message(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     pkg_name = "a"
     root.add_dependency(Factory.create_dependency(pkg_name, "*"))
     add_to_repo(repo, pkg_name, "1.0.0", deps={pkg_name: "1.0.0"})

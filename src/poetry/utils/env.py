@@ -1265,8 +1265,9 @@ class Env:
         return self._base
 
     @property
-    def version_info(self) -> tuple[Any, ...]:
-        return tuple(self.marker_env["version_info"])
+    def version_info(self) -> tuple[int, int, int, str, int]:
+        version_info: tuple[int, int, int, str, int] = self.marker_env["version_info"]
+        return version_info
 
     @property
     def python_implementation(self) -> str:

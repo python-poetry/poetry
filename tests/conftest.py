@@ -11,7 +11,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TextIO
 
 import httpretty
 import pytest
@@ -41,6 +40,7 @@ from tests.helpers import mock_download
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
 
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
@@ -70,6 +70,9 @@ def pytest_configure(config: PyTestConfig) -> None:
 
 
 class Config(BaseConfig):
+    _config_source: DictConfigSource
+    _auth_config_source: DictConfigSource
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
@@ -91,7 +94,7 @@ class Config(BaseConfig):
 
 class DummyBackend(KeyringBackend):
     def __init__(self) -> None:
-        self._passwords = {}
+        self._passwords: dict[str, dict[str | None, str | None]] = {}
 
     @classmethod
     def priority(cls) -> int:
@@ -303,30 +306,15 @@ def tmp_dir() -> Iterator[str]:
 
 
 @pytest.fixture
-def mocked_open_files(mocker: MockerFixture) -> list:
-    files = []
-    original = Path.open
-
-    def mocked_open(self: Path, *args: Any, **kwargs: Any) -> TextIO:
-        if self.name in {"pyproject.toml"}:
-            return mocker.MagicMock()
-        return original(self, *args, **kwargs)
-
-    mocker.patch("pathlib.Path.open", mocked_open)
-
-    return files
-
-
-@pytest.fixture
 def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
     venv_path = Path(tmp_dir) / "venv"
 
-    EnvManager.build_venv(str(venv_path))
+    EnvManager.build_venv(venv_path)
 
     venv = VirtualEnv(venv_path)
     yield venv
 
-    shutil.rmtree(str(venv.path))
+    shutil.rmtree(venv.path)
 
 
 @pytest.fixture
@@ -371,8 +359,8 @@ def project_factory(
 
     def _factory(
         name: str | None = None,
-        dependencies: dict[str, str] | None = None,
-        dev_dependencies: dict[str, str] | None = None,
+        dependencies: Mapping[str, str] | None = None,
+        dev_dependencies: Mapping[str, str] | None = None,
         pyproject_content: str | None = None,
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
@@ -397,6 +385,7 @@ def project_factory(
                 ) as f:
                     f.write(pyproject_content)
         else:
+            assert name is not None
             layout("src")(
                 name,
                 "0.1.0",

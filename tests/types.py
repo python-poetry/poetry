@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from tests.compat import Protocol
 
@@ -46,6 +47,7 @@ class ProjectFactory(Protocol):
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
         source: Path | None = None,
+        locker_config: dict[str, Any] | None = None,
         use_test_locker: bool = True,
     ) -> Poetry:
         ...

@@ -22,7 +22,7 @@ def tester(
     return command_tester_factory("source show", poetry=poetry_with_source)
 
 
-def test_source_show_simple(tester: CommandTester):
+def test_source_show_simple(tester: CommandTester) -> None:
     tester.execute("")
 
     expected = """\
@@ -47,7 +47,7 @@ secondary  : no
     assert tester.status_code == 0
 
 
-def test_source_show_one(tester: CommandTester, source_one: Source):
+def test_source_show_one(tester: CommandTester, source_one: Source) -> None:
     tester.execute(f"{source_one.name}")
 
     expected = """\
@@ -62,7 +62,9 @@ secondary  : no
     assert tester.status_code == 0
 
 
-def test_source_show_two(tester: CommandTester, source_one: Source, source_two: Source):
+def test_source_show_two(
+    tester: CommandTester, source_one: Source, source_two: Source
+) -> None:
     tester.execute(f"{source_one.name} {source_two.name}")
 
     expected = """\
@@ -82,7 +84,7 @@ secondary  : no
     assert tester.status_code == 0
 
 
-def test_source_show_error(tester: CommandTester):
+def test_source_show_error(tester: CommandTester) -> None:
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "No source found with name(s): error"
     assert tester.status_code == 1

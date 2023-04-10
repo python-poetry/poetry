@@ -49,8 +49,8 @@ class Layout:
         author: str | None = None,
         license: str | None = None,
         python: str = "*",
-        dependencies: dict[str, str | Mapping[str, Any]] | None = None,
-        dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+        dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
