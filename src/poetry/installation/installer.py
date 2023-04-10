@@ -59,6 +59,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._groups: Iterable[str] | None = None
+        self._skip_directory = False
 
         self._execute_operations = True
         self._lock = False
@@ -147,6 +148,11 @@ class Installer:
 
     def update(self, update: bool = True) -> Installer:
         self._update = update
+
+        return self
+
+    def skip_directory(self, skip_directory: bool = False) -> Installer:
+        self._skip_directory = skip_directory
 
         return self
 
@@ -334,6 +340,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
+                skip_directory=self._skip_directory,
             )
 
         if not self._requires_synchronization:

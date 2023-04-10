@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import hashlib
 import json
@@ -15,6 +14,8 @@ from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
+from poetry.utils._compat import decode
+from poetry.utils._compat import encode
 from poetry.utils.wheel import InvalidWheelName
 from poetry.utils.wheel import Wheel
 
@@ -30,42 +31,6 @@ MAX_DATE = 9999999999
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
-
-
-def decode(string: bytes, encodings: list[str] | None = None) -> str:
-    """
-    Compatiblity decode function pulled from cachy.
-
-    :param string: The byte string to decode.
-    :param encodings: List of encodings to apply
-    :return: Decoded string
-    """
-    if encodings is None:
-        encodings = ["utf-8", "latin1", "ascii"]
-
-    for encoding in encodings:
-        with contextlib.suppress(UnicodeDecodeError):
-            return string.decode(encoding)
-
-    return string.decode(encodings[0], errors="ignore")
-
-
-def encode(string: str, encodings: list[str] | None = None) -> bytes:
-    """
-    Compatibility encode function from cachy.
-
-    :param string: The string to encode.
-    :param encodings: List of encodings to apply
-    :return: Encoded byte string
-    """
-    if encodings is None:
-        encodings = ["utf-8", "latin1", "ascii"]
-
-    for encoding in encodings:
-        with contextlib.suppress(UnicodeDecodeError):
-            return string.encode(encoding)
-
-    return string.encode(encodings[0], errors="ignore")
 
 
 def _expiration(minutes: int) -> int:
