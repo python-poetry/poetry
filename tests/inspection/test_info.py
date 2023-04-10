@@ -8,7 +8,6 @@ import pytest
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
-from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
 
@@ -44,12 +43,10 @@ def source_dir(tmp_path: Path) -> Path:
 def demo_setup(source_dir: Path) -> Path:
     setup_py = source_dir / "setup.py"
     setup_py.write_text(
-        decode(
-            "from setuptools import setup; "
-            'setup(name="demo", '
-            'version="0.1.0", '
-            'install_requires=["package"])'
-        )
+        "from setuptools import setup; "
+        'setup(name="demo", '
+        'version="0.1.0", '
+        'install_requires=["package"])'
     )
     return source_dir
 
@@ -58,16 +55,14 @@ def demo_setup(source_dir: Path) -> Path:
 def demo_setup_cfg(source_dir: Path) -> Path:
     setup_cfg = source_dir / "setup.cfg"
     setup_cfg.write_text(
-        decode(
-            "\n".join(
-                [
-                    "[metadata]",
-                    "name = demo",
-                    "version = 0.1.0",
-                    "[options]",
-                    "install_requires = package",
-                ]
-            )
+        "\n".join(
+            [
+                "[metadata]",
+                "name = demo",
+                "version = 0.1.0",
+                "[options]",
+                "install_requires = package",
+            ]
         )
     )
     return source_dir
@@ -77,12 +72,10 @@ def demo_setup_cfg(source_dir: Path) -> Path:
 def demo_setup_complex(source_dir: Path) -> Path:
     setup_py = source_dir / "setup.py"
     setup_py.write_text(
-        decode(
-            "from setuptools import setup; "
-            'setup(name="demo", '
-            'version="0.1.0", '
-            'install_requires=[i for i in ["package"]])'
-        )
+        "from setuptools import setup; "
+        'setup(name="demo", '
+        'version="0.1.0", '
+        'install_requires=[i for i in ["package"]])'
     )
     return source_dir
 
@@ -90,9 +83,7 @@ def demo_setup_complex(source_dir: Path) -> Path:
 @pytest.fixture
 def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
-    pyproject_toml.write_text(
-        decode('[build-system]\nrequires = ["setuptools", "wheel"]')
-    )
+    pyproject_toml.write_text('[build-system]\nrequires = ["setuptools", "wheel"]')
     return demo_setup_complex
 
 
@@ -247,7 +238,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup += ")"
 
     setup_py = source_dir / "setup.py"
-    setup_py.write_text(decode(setup))
+    setup_py.write_text(setup)
 
     spy = mocker.spy(VirtualEnv, "run")
     _ = PackageInfo.from_directory(source_dir)

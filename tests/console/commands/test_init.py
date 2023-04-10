@@ -16,7 +16,6 @@ from packaging.utils import canonicalize_name
 
 from poetry.console.commands.init import InitCommand
 from poetry.repositories import RepositoryPool
-from poetry.utils._compat import decode
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
@@ -896,7 +895,7 @@ def test_init_existing_pyproject_simple(
 [tool.black]
 line-length = 88
 """
-    pyproject_file.write_text(decode(existing_section))
+    pyproject_file.write_text(existing_section)
     tester.execute(inputs=init_basic_inputs)
     assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
@@ -936,7 +935,7 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
 [tool.black]
 line-length = 88
 """
-    pyproject_file.write_text(decode(existing_section))
+    pyproject_file.write_text(existing_section)
 
     repo.add_package(get_package("foo", "1.19.2"))
 
@@ -975,7 +974,7 @@ def test_init_existing_pyproject_with_build_system_fails(
 requires = ["setuptools >= 40.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 """
-    pyproject_file.write_text(decode(existing_section))
+    pyproject_file.write_text(existing_section)
     tester.execute(inputs=init_basic_inputs)
     assert (
         tester.io.fetch_error().strip()
