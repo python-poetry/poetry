@@ -1240,7 +1240,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
@@ -1265,11 +1264,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     # must not be included in the error message
     directory_package.python_versions = ">=3.7"
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([Install(directory_package)])
 
     assert return_code == 1
 
@@ -1304,6 +1299,47 @@ PEP 517 builds. You can verify this by running '{pip_command} "{requirement}"'.
     output = io.fetch_output()
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
+@pytest.mark.parametrize("stderr", [None, "Errör on stderr"])
+def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess_encoding(
+    encoding: str,
+    stderr: str | None,
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """Test that the output of the subprocess is decoded correctly."""
+    stdout = "Errör on stdout"
+    error = BuildBackendException(
+        CalledProcessError(
+            1,
+            ["pip"],
+            output=stdout.encode(encoding),
+            stderr=stderr.encode(encoding) if stderr else None,
+        )
+    )
+    mocker.patch.object(ProjectBuilder, "get_requires_for_build", side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    return_code = executor.execute([Install(directory_package)])
+
+    assert return_code == 1
+    assert (stderr or stdout) in io.fetch_output()
 
 
 def test_build_system_requires_not_available(
