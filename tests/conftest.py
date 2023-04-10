@@ -378,6 +378,7 @@ def project_factory(
         install_deps: bool = True,
         source: Path | None = None,
         locker_config: dict[str, Any] | None = None,
+        use_test_locker: bool = True,
     ) -> Poetry:
         project_dir = workspace / f"poetry-fixture-{name}"
         dependencies = dependencies or {}
@@ -412,12 +413,14 @@ def project_factory(
 
         poetry = Factory().create_poetry(project_dir)
 
-        locker = TestLocker(
-            poetry.locker.lock, locker_config or poetry.locker._local_config
-        )
-        locker.write()
+        if use_test_locker:
+            locker = TestLocker(
+                poetry.locker.lock, locker_config or poetry.locker._local_config
+            )
+            locker.write()
 
-        poetry.set_locker(locker)
+            poetry.set_locker(locker)
+
         poetry.set_config(config)
 
         pool = RepositoryPool()

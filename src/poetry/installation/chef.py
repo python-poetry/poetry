@@ -17,6 +17,7 @@ from build.env import IsolatedEnv as BaseIsolatedEnv
 from poetry.core.utils.helpers import temporary_directory
 from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import]
 
+from poetry.utils._compat import decode
 from poetry.utils.env import ephemeral_environment
 
 
@@ -94,8 +95,8 @@ class Chef:
             return archive
 
         if archive.is_dir():
-            tmp_dir = tempfile.mkdtemp(prefix="poetry-chef-")
-            return self._prepare(archive, Path(tmp_dir), editable=editable)
+            destination = output_dir or Path(tempfile.mkdtemp(prefix="poetry-chef-"))
+            return self._prepare(archive, destination=destination, editable=editable)
 
         return self._prepare_sdist(archive, destination=output_dir)
 
@@ -135,9 +136,9 @@ class Chef:
                     e.exception.stdout is not None or e.exception.stderr is not None
                 ):
                     message_parts.append(
-                        e.exception.stderr.decode()
+                        decode(e.exception.stderr)
                         if e.exception.stderr is not None
-                        else e.exception.stdout.decode()
+                        else decode(e.exception.stdout)
                     )
 
                 error = ChefBuildError("\n\n".join(message_parts))

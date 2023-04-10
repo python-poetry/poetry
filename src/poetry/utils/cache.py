@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import hashlib
 import json
@@ -15,6 +14,8 @@ from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
+from poetry.utils._compat import decode
+from poetry.utils._compat import encode
 from poetry.utils.wheel import InvalidWheelName
 from poetry.utils.wheel import Wheel
 
@@ -30,42 +31,6 @@ MAX_DATE = 9999999999
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
-
-
-def decode(string: bytes, encodings: list[str] | None = None) -> str:
-    """
-    Compatiblity decode function pulled from cachy.
-
-    :param string: The byte string to decode.
-    :param encodings: List of encodings to apply
-    :return: Decoded string
-    """
-    if encodings is None:
-        encodings = ["utf-8", "latin1", "ascii"]
-
-    for encoding in encodings:
-        with contextlib.suppress(UnicodeDecodeError):
-            return string.decode(encoding)
-
-    return string.decode(encodings[0], errors="ignore")
-
-
-def encode(string: str, encodings: list[str] | None = None) -> bytes:
-    """
-    Compatibility encode function from cachy.
-
-    :param string: The string to encode.
-    :param encodings: List of encodings to apply
-    :return: Encoded byte string
-    """
-    if encodings is None:
-        encodings = ["utf-8", "latin1", "ascii"]
-
-    for encoding in encodings:
-        with contextlib.suppress(UnicodeDecodeError):
-            return string.encode(encoding)
-
-    return string.encode(encodings[0], errors="ignore")
 
 
 def _expiration(minutes: int) -> int:
@@ -231,6 +196,9 @@ class ArtifactCache:
         if link.subdirectory_fragment:
             key_parts["subdirectory"] = link.subdirectory_fragment
 
+        return self._get_directory_from_hash(key_parts)
+
+    def _get_directory_from_hash(self, key_parts: object) -> Path:
         key = hashlib.sha256(
             json.dumps(
                 key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
@@ -238,8 +206,16 @@ class ArtifactCache:
         ).hexdigest()
 
         split_key = [key[:2], key[2:4], key[4:6], key[6:]]
-
         return self._cache_dir.joinpath(*split_key)
+
+    def get_cache_directory_for_git(
+        self, url: str, ref: str, subdirectory: str | None
+    ) -> Path:
+        key_parts = {"url": url, "ref": ref}
+        if subdirectory:
+            key_parts["subdirectory"] = subdirectory
+
+        return self._get_directory_from_hash(key_parts)
 
     def get_cached_archive_for_link(
         self,
@@ -248,18 +224,42 @@ class ArtifactCache:
         strict: bool,
         env: Env | None = None,
     ) -> Path | None:
-        assert strict or env is not None
+        cache_dir = self.get_cache_directory_for_link(link)
 
-        archives = self._get_cached_archives_for_link(link)
+        return self._get_cached_archive(
+            cache_dir, strict=strict, filename=link.filename, env=env
+        )
+
+    def get_cached_archive_for_git(
+        self, url: str, reference: str, subdirectory: str | None, env: Env
+    ) -> Path | None:
+        cache_dir = self.get_cache_directory_for_git(url, reference, subdirectory)
+
+        return self._get_cached_archive(cache_dir, strict=False, env=env)
+
+    def _get_cached_archive(
+        self,
+        cache_dir: Path,
+        *,
+        strict: bool,
+        filename: str | None = None,
+        env: Env | None = None,
+    ) -> Path | None:
+        assert strict or env is not None
+        # implication "strict -> filename should not be None"
+        assert not strict or filename is not None
+
+        archives = self._get_cached_archives(cache_dir)
         if not archives:
             return None
 
         candidates: list[tuple[float | None, Path]] = []
+
         for archive in archives:
             if strict:
                 # in strict mode return the original cached archive instead of the
                 # prioritized archive type.
-                if link.filename == archive.name:
+                if filename == archive.name:
                     return archive
                 continue
 
@@ -286,9 +286,7 @@ class ArtifactCache:
 
         return min(candidates)[1]
 
-    def _get_cached_archives_for_link(self, link: Link) -> list[Path]:
-        cache_dir = self.get_cache_directory_for_link(link)
-
+    def _get_cached_archives(self, cache_dir: Path) -> list[Path]:
         archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
         paths: list[Path] = []
         for archive_type in archive_types:

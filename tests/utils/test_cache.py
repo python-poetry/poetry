@@ -270,20 +270,32 @@ def test_get_cache_directory_for_link(tmp_path: Path) -> None:
     assert directory == expected
 
 
-def test_get_cached_archives_for_link(
-    fixture_dir: FixtureDirGetter, mocker: MockerFixture
-) -> None:
+@pytest.mark.parametrize("subdirectory", [None, "subdir"])
+def test_get_cache_directory_for_git(tmp_path: Path, subdirectory: str | None) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    directory = cache.get_cache_directory_for_git(
+        url="https://github.com/demo/demo.git", ref="123456", subdirectory=subdirectory
+    )
+
+    if subdirectory:
+        expected = Path(
+            f"{tmp_path.as_posix()}/53/08/33/"
+            "7851e5806669aa15ab0c555b13bd5523978057323c6a23a9cee18ec51c"
+        )
+    else:
+        expected = Path(
+            f"{tmp_path.as_posix()}/61/14/30/"
+            "7c57f8fd71e4eee40b18893b9b586cba45177f15e300f4fb8b14ccc933"
+        )
+
+    assert directory == expected
+
+
+def test_get_cached_archives(fixture_dir: FixtureDirGetter) -> None:
     distributions = fixture_dir("distributions")
     cache = ArtifactCache(cache_dir=Path())
 
-    mocker.patch.object(
-        cache,
-        "get_cache_directory_for_link",
-        return_value=distributions,
-    )
-    archives = cache._get_cached_archives_for_link(
-        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
-    )
+    archives = cache._get_cached_archives(distributions)
 
     assert archives
     assert set(archives) == set(distributions.glob("*.whl")) | set(
@@ -328,7 +340,7 @@ def test_get_not_found_cached_archive_for_link(
 
     mocker.patch.object(
         cache,
-        "_get_cached_archives_for_link",
+        "_get_cached_archives",
         return_value=available_packages,
     )
 
@@ -380,7 +392,7 @@ def test_get_found_cached_archive_for_link(
 
     mocker.patch.object(
         cache,
-        "_get_cached_archives_for_link",
+        "_get_cached_archives",
         return_value=[
             Path("/cache/demo-0.1.0-py2.py3-none-any"),
             Path("/cache/demo-0.1.0.tar.gz"),
@@ -392,3 +404,10 @@ def test_get_found_cached_archive_for_link(
     archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
+
+
+def test_get_cached_archive_for_git() -> None:
+    """Smoke test that checks that no assertion is raised."""
+    cache = ArtifactCache(cache_dir=Path())
+    archive = cache.get_cached_archive_for_git("url", "ref", "subdirectory", MockEnv())
+    assert archive is None

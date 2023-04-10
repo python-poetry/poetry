@@ -46,6 +46,7 @@ class ProjectFactory(Protocol):
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
         source: Path | None = None,
+        use_test_locker: bool = True,
     ) -> Poetry:
         ...
 
