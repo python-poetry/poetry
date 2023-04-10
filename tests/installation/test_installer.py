@@ -60,12 +60,12 @@ class Executor(BaseExecutor):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self._installs: list[DependencyPackage] = []
+        self._installs: list[Package] = []
         self._updates: list[DependencyPackage] = []
         self._uninstalls: list[DependencyPackage] = []
 
     @property
-    def installations(self) -> list[DependencyPackage]:
+    def installations(self) -> list[Package]:
         return self._installs
 
     @property
@@ -1276,14 +1276,18 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     assert installer.executor.installations_count == 2
 
 
-def test_run_installs_with_local_poetry_directory_transitive(
+@pytest.mark.parametrize("skip_directory", [True, False])
+def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: Path,
     fixture_dir: FixtureDirGetter,
+    skip_directory: bool,
 ):
+    """When we set Installer.skip_directory(True) no path dependencies should
+    be installed (including transitive dependencies).
+    """
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
@@ -1299,14 +1303,27 @@ def test_run_installs_with_local_poetry_directory_transitive(
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
+    installer.skip_directory(skip_directory)
+
     result = installer.run()
     assert result == 0
+
+    executor: Executor = installer.executor  # type: ignore
 
     expected = fixture("with-directory-dependency-poetry-transitive")
 
     assert locker.written_data == expected
 
-    assert installer.executor.installations_count == 6
+    directory_installs = [
+        p.name for p in executor.installations if p.source_type == "directory"
+    ]
+
+    if skip_directory:
+        assert not directory_installs, directory_installs
+        assert installer.executor.installations_count == 2
+    else:
+        assert directory_installs, directory_installs
+        assert installer.executor.installations_count == 6
 
 
 def test_run_installs_with_local_poetry_file_transitive(
