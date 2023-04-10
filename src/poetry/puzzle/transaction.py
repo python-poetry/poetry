@@ -74,8 +74,9 @@ class Transaction:
 
                     break
 
-            if not installed and (
-                not skip_directory or result_package.source_type != "directory"
+            if not (
+                installed
+                or (skip_directory and result_package.source_type == "directory")
             ):
                 operations.append(Install(result_package, priority=priority))
 

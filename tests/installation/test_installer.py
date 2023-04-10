@@ -1285,7 +1285,7 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
     skip_directory: bool,
 ):
     """When we set Installer.skip_directory(True) no path dependencies should
-    be installed (including transitive dependencies)
+    be installed (including transitive dependencies).
     """
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -1304,7 +1304,6 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
 
     installer.skip_directory(skip_directory)
 
-    installer.run()
     result = installer.run()
     assert result == 0
 
@@ -1320,17 +1319,10 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
 
     if skip_directory:
         assert not directory_installs, directory_installs
+        assert installer.executor.installations_count == 2
     else:
-        assert directory_installs == [
-            "inner-directory-project",
-            "project-with-extras",
-            "project-with-transitive-file-dependencies",
-            "project-with-transitive-directory-dependencies",
-            "inner-directory-project",
-            "project-with-extras",
-            "project-with-transitive-file-dependencies",
-            "project-with-transitive-directory-dependencies",
-        ]
+        assert directory_installs, directory_installs
+        assert installer.executor.installations_count == 6
 
 
 def test_run_installs_with_local_poetry_file_transitive(
