@@ -2255,12 +2255,12 @@ Resolving dependencies...
     assert tester.io.fetch_output() == expected
 
 
-# https://github.com/python-poetry/poetry/issues/7398
 def test_add_with_path_dependency_no_loopiness(
     poetry_with_path_dependency: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
+    """https://github.com/python-poetry/poetry/issues/7398"""
     tester = command_tester_factory("add", poetry=poetry_with_path_dependency)
 
     requests_old = get_package("requests", "2.25.1")
