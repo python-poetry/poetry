@@ -331,7 +331,9 @@ class VersionSolver:
             # .. _algorithm documentation:
             # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
             if difference is not None:
-                new_terms.append(difference.inverse)
+                inverse = difference.inverse
+                if inverse.dependency != most_recent_satisfier.dependency:
+                    new_terms.append(inverse)
 
             incompatibility = Incompatibility(
                 new_terms, ConflictCause(incompatibility, most_recent_satisfier.cause)
