@@ -250,12 +250,8 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup_py.write_text(decode(setup))
 
     spy = mocker.spy(VirtualEnv, "run")
-    try:
-        PackageInfo.from_directory(source_dir)
-    except PackageInfoError:
-        assert spy.call_count == 3
-    else:
-        assert spy.call_count == 1
+    _ = PackageInfo.from_directory(source_dir)
+    assert spy.call_count == 1
 
 
 def test_info_prefer_poetry_config_over_egg_info():
