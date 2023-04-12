@@ -621,7 +621,7 @@ class EnvManager:
         patch = python_version.text
 
         create = False
-        is_root_venv = self._poetry.config.get("virtualenvs.in-project")
+        is_root_venv = self.use_root_env()
         # If we are required to create the virtual environment in the root folder,
         # create or recreate it if needed
         if is_root_venv:
@@ -730,11 +730,7 @@ class EnvManager:
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if (
-                self._poetry.config.get("virtualenvs.in-project") is not False
-                and (cwd / ".venv").exists()
-                and (cwd / ".venv").is_dir()
-            ):
+            if self.use_root_env():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
@@ -773,11 +769,7 @@ class EnvManager:
         env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
 
         venv = self._poetry.file.parent / ".venv"
-        if (
-            self._poetry.config.get("virtualenvs.in-project") is not False
-            and venv.exists()
-            and venv.is_dir()
-        ):
+        if self.use_root_env():
             env_list.insert(0, VirtualEnv(venv))
         return env_list
 
@@ -891,6 +883,14 @@ class EnvManager:
 
         return VirtualEnv(venv_path, venv_path)
 
+    def use_root_env(self) -> bool:
+        in_project: bool | None = self._poetry.config.get("virtualenvs.in-project")
+        if in_project is not None:
+            return in_project
+
+        root_venv: Path = self._poetry.file.parent / ".venv"
+        return root_venv.exists() and root_venv.is_dir()
+
     def create_venv(
         self,
         name: str | None = None,
@@ -918,7 +918,7 @@ class EnvManager:
             return env
 
         create_venv = self._poetry.config.get("virtualenvs.create")
-        root_venv = self._poetry.config.get("virtualenvs.in-project")
+        root_venv = self.use_root_env()
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
