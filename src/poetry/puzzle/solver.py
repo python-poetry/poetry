@@ -5,7 +5,6 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
@@ -21,6 +20,7 @@ from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Iterator
 
     from cleo.io.io import IO

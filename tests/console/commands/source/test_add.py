@@ -43,7 +43,7 @@ def test_source_add_simple(
     source_existing: Source,
     source_one: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"{source_one.name} {source_one.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_one)
 
@@ -53,7 +53,7 @@ def test_source_add_default(
     source_existing: Source,
     source_default: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"--default {source_default.name} {source_default.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_default)
 
@@ -63,12 +63,12 @@ def test_source_add_secondary(
     source_existing: Source,
     source_secondary: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"--secondary {source_secondary.name} {source_secondary.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_secondary)
 
 
-def test_source_add_error_default_and_secondary(tester: CommandTester):
+def test_source_add_error_default_and_secondary(tester: CommandTester) -> None:
     tester.execute("--default --secondary error https://error.com")
     assert (
         tester.io.fetch_error().strip()
@@ -77,7 +77,7 @@ def test_source_add_error_default_and_secondary(tester: CommandTester):
     assert tester.status_code == 1
 
 
-def test_source_add_error_pypi(tester: CommandTester):
+def test_source_add_error_pypi(tester: CommandTester) -> None:
     tester.execute("pypi https://test.pypi.org/simple/")
     assert (
         tester.io.fetch_error().strip()
@@ -89,7 +89,7 @@ def test_source_add_error_pypi(tester: CommandTester):
 
 def test_source_add_existing(
     tester: CommandTester, source_existing: Source, poetry_with_source: Poetry
-):
+) -> None:
     tester.execute(f"--default {source_existing.name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()

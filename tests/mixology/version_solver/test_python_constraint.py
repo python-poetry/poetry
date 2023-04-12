@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def test_dependency_does_not_match_root_python_constraint(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     provider.set_package_python_versions("^3.6")
     root.add_dependency(Factory.create_dependency("foo", "*"))
 

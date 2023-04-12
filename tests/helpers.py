@@ -305,7 +305,7 @@ def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, A
         :return:  dict
         """
         if isinstance(obj, dict):
-            for key in obj.keys():
+            for key in obj:
                 for leaf in recurse_keys(obj[key]):
                     leaf_path, leaf_value = leaf
                     leaf_path.insert(0, key)

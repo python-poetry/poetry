@@ -17,7 +17,7 @@ from poetry.core.version.exceptions import InvalidVersion
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
-from poetry.utils._compat import to_str
+from poetry.utils._compat import decode
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
@@ -82,7 +82,7 @@ class PyPiRepository(HTTPRepository):
 
             try:
                 package = Package(name, version)
-                package.description = to_str(description.strip())
+                package.description = decode(description.strip())
                 results.append(package)
             except InvalidVersion:
                 self._log(
