@@ -613,6 +613,8 @@ according to the `$SHELL` environment variable,
 within the virtual environment.
 If one doesn't exist yet, it will be created.
 
+If `$POETRY_SHELL_CLEAR` is set, all previous terminal output will be cleared.
+
 ```bash
 poetry shell
 ```

@@ -10,6 +10,7 @@ import pytest
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
+    from pytest import Fixture
     from pytest_mock import MockerFixture
 
     from tests.types import CommandTesterFactory
@@ -30,6 +31,19 @@ def test_shell(tester: CommandTester, mocker: MockerFixture):
     shell_activate.assert_called_once_with(tester.command.env)
     assert tester.io.fetch_output() == expected_output
     assert tester.status_code == 0
+
+
+def test_shell_clear(tester: CommandTester, mocker: MockerFixture, capfd: Fixture):
+    os.environ["POETRY_SHELL_CLEAR"] = "1"
+    shell_activate = mocker.patch("poetry.utils.shell.Shell.activate")
+
+    tester.execute()
+    out, err = capfd.readouterr()
+
+    shell_activate.assert_called_once_with(tester.command.env)
+    assert tester.status_code == 0
+    assert out == ""
+    assert err == ""
 
 
 def test_shell_already_active(tester: CommandTester, mocker: MockerFixture):
