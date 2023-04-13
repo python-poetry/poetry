@@ -111,6 +111,9 @@ class Shell:
             c.sendline(
                 f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
             )
+        
+        if os.environ.get("POETRY_CLEAR_SHELL"):
+            c.sendline("clear")
 
         def resize(sig: Any, data: Any) -> None:
             terminal = shutil.get_terminal_size()
