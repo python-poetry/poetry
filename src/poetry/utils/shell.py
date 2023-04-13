@@ -112,7 +112,7 @@ class Shell:
                 f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
             )
 
-        if os.environ.get("POETRY_CLEAR_SHELL"):
+        if os.environ.get("POETRY_SHELL_CLEAR"):
             c.sendline("clear")
 
         def resize(sig: Any, data: Any) -> None:

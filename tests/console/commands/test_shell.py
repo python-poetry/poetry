@@ -38,12 +38,12 @@ def test_shell_clear(tester: CommandTester, mocker: MockerFixture, capfd: Fixtur
     shell_activate = mocker.patch("poetry.utils.shell.Shell.activate")
 
     tester.execute()
-    out, err = capfd.readouterr()
+
+    expected_output = f"Spawning shell within {tester.command.env.path}\n"
 
     shell_activate.assert_called_once_with(tester.command.env)
+    assert tester.io.fetch_output() == expected_output
     assert tester.status_code == 0
-    assert out == ""
-    assert err == ""
 
 
 def test_shell_already_active(tester: CommandTester, mocker: MockerFixture):
