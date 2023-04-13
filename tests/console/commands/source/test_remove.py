@@ -28,7 +28,7 @@ def test_source_remove_simple(
     source_existing: Source,
     source_one: Source,
     source_two: Source,
-):
+) -> None:
     tester.execute(f"{source_existing.name}")
     assert (
         tester.io.fetch_output().strip()
@@ -42,7 +42,7 @@ def test_source_remove_simple(
     assert tester.status_code == 0
 
 
-def test_source_remove_error(tester: CommandTester):
+def test_source_remove_error(tester: CommandTester) -> None:
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "Source with name error was not found."
     assert tester.status_code == 1

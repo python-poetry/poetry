@@ -180,3 +180,17 @@ def test_run_script_sys_argv0(
     )
     argv1 = "absolute" if installed_script else "relative"
     assert tester.execute(f"check-argv0 {argv1}") == 0
+
+    if installed_script:
+        expected_message = ""
+    else:
+        expected_message = """\
+Warning: 'check-argv0' is an entry point defined in pyproject.toml, but it's not \
+installed as a script. You may get improper `sys.argv[0]`.
+
+The support to run uninstalled scripts will be removed in a future release.
+
+Run `poetry install` to resolve and get rid of this message.
+
+"""
+    assert tester.io.fetch_error() == expected_message

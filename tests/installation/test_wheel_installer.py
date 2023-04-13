@@ -77,5 +77,7 @@ def test_enable_bytecode_compilation(
     if compile:
         assert cache_dir.exists()
         assert list(cache_dir.glob("*.pyc"))
+        assert not list(cache_dir.glob("*.opt-1.pyc"))
+        assert not list(cache_dir.glob("*.opt-2.pyc"))
     else:
         assert not cache_dir.exists()

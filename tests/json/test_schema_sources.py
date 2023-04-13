@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from poetry.core.toml import TOMLFile
-
 from poetry.factory import Factory
+from poetry.toml import TOMLFile
 
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "source"

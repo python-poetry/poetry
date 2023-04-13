@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import re
 import shutil
+import urllib.parse as urlparse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -20,11 +21,6 @@ from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 if TYPE_CHECKING:
     import httpretty

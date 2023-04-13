@@ -225,6 +225,14 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
+Similar to `--no-root` you can use `--no-directory` to skip directory path dependencies:
+
+```bash
+poetry install --no-directory
+```
+
+This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}}) for more information on this option.
+
 By default `poetry` does not compile Python source files to bytecode during installation.
 This speeds up the installation process, but the first execution may take a little more
 time because Python then compiles source files to bytecode automatically.
@@ -240,6 +248,7 @@ The `--compile` option has no effect if `installer.modern-installation`
 is set to `false` because the old installer always compiles source files to bytecode.
 {{% /note %}}
 
+
 ### Options
 
 * `--without`: The dependency groups to ignore.
@@ -248,6 +257,7 @@ is set to `false` because the old installer always compiles source files to byte
 * `--only-root`: Install only the root project, exclude all dependencies.
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
+* `--no-directory`: Skip all directory path dependencies (including transitive ones).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 import tomlkit
 
-from poetry.core.toml.file import TOMLFile
+from poetry.toml.file import TOMLFile
 
 
 if TYPE_CHECKING:

@@ -86,7 +86,7 @@ def env_manager(simple_poetry: Poetry) -> EnvManager:
 def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
     venv_path = Path(tmp_dir) / "venv"
 
-    env_manager.build_venv(str(venv_path))
+    env_manager.build_venv(venv_path)
 
     venv = VirtualEnv(venv_path)
     yield venv
@@ -96,20 +96,20 @@ def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
 
 def test_builder_installs_proper_files_for_standard_packages(
     simple_poetry: Poetry, tmp_venv: VirtualEnv
-):
+) -> None:
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
     builder.build()
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
-    pth_file = "simple_project.pth"
+    pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
         simple_poetry.file.parent.resolve().as_posix()
         == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
     )
 
-    dist_info = "simple_project-1.2.3.dist-info"
+    dist_info = Path("simple_project-1.2.3.dist-info")
     assert tmp_venv.site_packages.exists(dist_info)
 
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
@@ -176,7 +176,7 @@ My Package
 
     assert all(len(row) == 3 for row in records)
     record_entries = {row[0] for row in records}
-    pth_file = "simple_project.pth"
+    pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert str(tmp_venv.site_packages.find(pth_file)[0]) in record_entries
     assert str(tmp_venv._bin_dir.joinpath("foo")) in record_entries
@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     mocker: MockerFixture, extended_poetry: Poetry, tmp_dir: str
-):
+) -> None:
     pip_install = mocker.patch("poetry.masonry.builders.editable.pip_install")
     env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
@@ -273,11 +273,11 @@ def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
 
 def test_builder_installs_proper_files_when_packages_configured(
     project_with_include: Poetry, tmp_venv: VirtualEnv
-):
+) -> None:
     builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
     builder.build()
 
-    pth_file = "with_include.pth"
+    pth_file = Path("with_include.pth")
     assert tmp_venv.site_packages.exists(pth_file)
 
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
@@ -298,12 +298,12 @@ def test_builder_installs_proper_files_when_packages_configured(
 
 def test_builder_generates_proper_metadata_when_multiple_readme_files(
     with_multiple_readme_files: Poetry, tmp_venv: VirtualEnv
-):
+) -> None:
     builder = EditableBuilder(with_multiple_readme_files, tmp_venv, NullIO())
 
     builder.build()
 
-    dist_info = "my_package-0.1.dist-info"
+    dist_info = Path("my_package-0.1.dist-info")
     assert tmp_venv.site_packages.exists(dist_info)
 
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
@@ -336,7 +336,7 @@ Changelog
 
 def test_builder_should_execute_build_scripts(
     mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_path: Path
-):
+) -> None:
     env = MockEnv(path=tmp_path / "foo")
     mocker.patch(
         "poetry.masonry.builders.editable.build_environment"

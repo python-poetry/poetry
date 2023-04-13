@@ -5,7 +5,6 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from poetry.utils._compat import decode
 from poetry.utils.env import SitePackages
 
 
@@ -23,7 +22,7 @@ def test_env_site_simple(tmp_dir: str, mocker: MockerFixture):
     assert len(candidates) == 1
     assert candidates[0].as_posix() == hello.as_posix()
 
-    content = decode(str(uuid.uuid4()))
+    content = str(uuid.uuid4())
     site_packages.write_text(Path("hello.txt"), content, encoding="utf-8")
 
     assert hello.read_text(encoding="utf-8") == content
@@ -42,7 +41,7 @@ def test_env_site_select_first(tmp_dir: str):
     assert len(candidates) == 2
     assert len(site_packages.find(Path("hello.txt"))) == 0
 
-    content = decode(str(uuid.uuid4()))
+    content = str(uuid.uuid4())
     site_packages.write_text(Path("hello.txt"), content, encoding="utf-8")
 
     assert (site_packages.path / "hello.txt").exists()

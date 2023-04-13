@@ -56,16 +56,11 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
     return string.encode(encodings[0], errors="ignore")
 
 
-def to_str(string: str) -> str:
-    return decode(string)
-
-
 __all__ = [
     "WINDOWS",
     "cached_property",
     "decode",
     "encode",
     "metadata",
-    "to_str",
     "tomllib",
 ]

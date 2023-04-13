@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 
 from poetry.config.config import Config
@@ -187,8 +186,8 @@ class PoetryTestApplication(Application):
 
 
 class TestLocker(Locker):
-    def __init__(self, lock: str | Path, local_config: dict) -> None:
-        self._lock = TOMLFile(lock)
+    def __init__(self, lock: Path, local_config: dict) -> None:
+        self._lock = lock
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
@@ -306,7 +305,7 @@ def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, A
         :return:  dict
         """
         if isinstance(obj, dict):
-            for key in obj.keys():
+            for key in obj:
                 for leaf in recurse_keys(obj[key]):
                     leaf_path, leaf_value = leaf
                     leaf_path.insert(0, key)

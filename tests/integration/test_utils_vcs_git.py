@@ -14,9 +14,9 @@ from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.repo import Repo
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.console.exceptions import PoetryConsoleError
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.authenticator import Authenticator
 from poetry.vcs.git import Git
 from poetry.vcs.git.backend import GitRefSpec
@@ -233,6 +233,30 @@ def test_git_clone_clones_submodules(source_url: str) -> None:
     with Git.clone(url=source_url) as repo:
         submodule_package_directory = (
             Path(repo.path) / "submodules" / "sample-namespace-packages"
+        )
+
+    assert submodule_package_directory.exists()
+    assert submodule_package_directory.joinpath("README.md").exists()
+    assert len(list(submodule_package_directory.glob("*"))) > 1
+
+
+def test_git_clone_clones_submodules_with_relative_urls(source_url: str) -> None:
+    with Git.clone(url=source_url, branch="relative_submodule") as repo:
+        submodule_package_directory = (
+            Path(repo.path) / "submodules" / "relative-url-submodule"
+        )
+
+    assert submodule_package_directory.exists()
+    assert submodule_package_directory.joinpath("README.md").exists()
+    assert len(list(submodule_package_directory.glob("*"))) > 1
+
+
+def test_git_clone_clones_submodules_with_relative_urls_and_explicit_base(
+    source_url: str,
+) -> None:
+    with Git.clone(url=source_url, branch="relative_submodule") as repo:
+        submodule_package_directory = (
+            Path(repo.path) / "submodules" / "relative-url-submodule-with-base"
         )
 
     assert submodule_package_directory.exists()
