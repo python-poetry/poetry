@@ -23,7 +23,7 @@ from poetry.vcs.git.backend import GitRefSpec
 
 
 if TYPE_CHECKING:
-    from _pytest.tmpdir import TempdirFactory
+    from _pytest.tmpdir import TempPathFactory
     from dulwich.client import FetchPackResult
     from dulwich.client import GitClient
     from pytest_mock import MockerFixture
@@ -79,9 +79,9 @@ def source_directory_name(source_url: str) -> str:
 
 
 @pytest.fixture(scope="module")
-def local_repo(tmpdir_factory: TempdirFactory, source_directory_name: str) -> Repo:
+def local_repo(tmp_path_factory: TempPathFactory, source_directory_name: str) -> Repo:
     with Repo.init(
-        tmpdir_factory.mktemp("src") / source_directory_name, mkdir=True
+        tmp_path_factory.mktemp("src") / source_directory_name, mkdir=True
     ) as repo:
         yield repo
 

@@ -36,7 +36,9 @@ def demo_wheel() -> Path:
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
-    return Path(tmp_path.as_posix())
+    path = tmp_path / "source"
+    path.mkdir()
+    return path
 
 
 @pytest.fixture

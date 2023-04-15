@@ -47,7 +47,7 @@ class InvalidPlugin:
 
 
 @pytest.fixture()
-def poetry(tmp_dir: str, config: Config) -> Poetry:
+def poetry(tmp_path: Path, config: Config) -> Poetry:
     poetry = Poetry(
         CWD / "pyproject.toml",
         {},
