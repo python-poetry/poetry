@@ -27,12 +27,13 @@ class SourceShowCommand(Command):
     def handle(self) -> int:
         sources = self.poetry.get_sources()
         names = self.argument("source")
+        lower_names = [name.lower() for name in names]
 
         if not sources:
             self.line("No sources configured for this project.")
             return 0
 
-        if names and not any(s.name in names for s in sources):
+        if names and not any(s.name.lower() in lower_names for s in sources):
             self.line_error(
                 f"No source found with name(s): {', '.join(names)}",
                 style="error",
@@ -40,18 +41,14 @@ class SourceShowCommand(Command):
             return 1
 
         for source in sources:
-            if names and source.name not in names:
+            if names and source.name.lower() not in lower_names:
                 continue
 
             table = self.table(style="compact")
-            rows: Rows = [
-                ["<info>name</>", f" : <c1>{source.name}</>"],
-                ["<info>url</>", f" : {source.url}"],
-                [
-                    "<info>priority</>",
-                    f" : {source.priority.name.lower()}",
-                ],
-            ]
+            rows: Rows = [["<info>name</>", f" : <c1>{source.name}</>"]]
+            if source.url:
+                rows.append(["<info>url</>", f" : {source.url}"])
+            rows.append(["<info>priority</>", f" : {source.priority.name.lower()}"])
             table.add_rows(rows)
             table.render()
             self.line("")

@@ -21,15 +21,6 @@ def test_pyproject_toml_valid() -> None:
     assert Factory.validate(content) == {"errors": [], "warnings": []}
 
 
-def test_pyproject_toml_invalid_url() -> None:
-    toml = TOMLFile(FIXTURE_DIR / "complete_invalid_url.toml").read()
-    content = toml["tool"]["poetry"]
-    assert Factory.validate(content) == {
-        "errors": ["[source.0] 'url' is a required property"],
-        "warnings": [],
-    }
-
-
 def test_pyproject_toml_invalid_priority() -> None:
     toml = TOMLFile(FIXTURE_DIR / "complete_invalid_priority.toml").read()
     content = toml["tool"]["poetry"]

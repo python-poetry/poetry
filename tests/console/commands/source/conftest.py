@@ -58,6 +58,16 @@ def source_explicit() -> Source:
     )
 
 
+@pytest.fixture
+def source_pypi() -> Source:
+    return Source(name="PyPI")
+
+
+@pytest.fixture
+def source_pypi_explicit() -> Source:
+    return Source(name="PyPI", priority=Priority.EXPLICIT)
+
+
 _existing_source = Source(name="existing", url="https://existing.com")
 
 
@@ -88,6 +98,20 @@ url = "{_existing_source.url}"
 """
 
 
+PYPROJECT_WITH_PYPI = f"""{PYPROJECT_WITHOUT_SOURCES}
+
+[[tool.poetry.source]]
+name = "PyPI"
+"""
+
+
+PYPROJECT_WITH_PYPI_AND_OTHER = f"""{PYPROJECT_WITH_SOURCES}
+
+[[tool.poetry.source]]
+name = "PyPI"
+"""
+
+
 @pytest.fixture
 def poetry_without_source(project_factory: ProjectFactory) -> Poetry:
     return project_factory(pyproject_content=PYPROJECT_WITHOUT_SOURCES)
@@ -96,6 +120,16 @@ def poetry_without_source(project_factory: ProjectFactory) -> Poetry:
 @pytest.fixture
 def poetry_with_source(project_factory: ProjectFactory) -> Poetry:
     return project_factory(pyproject_content=PYPROJECT_WITH_SOURCES)
+
+
+@pytest.fixture
+def poetry_with_pypi(project_factory: ProjectFactory) -> Poetry:
+    return project_factory(pyproject_content=PYPROJECT_WITH_PYPI)
+
+
+@pytest.fixture
+def poetry_with_pypi_and_other(project_factory: ProjectFactory) -> Poetry:
+    return project_factory(pyproject_content=PYPROJECT_WITH_PYPI_AND_OTHER)
 
 
 @pytest.fixture

@@ -128,7 +128,7 @@ If `priority` is undefined, the source is considered a primary source that takes
 Package sources are considered in the following order:
 1. [default source](#default-package-source),
 2. primary sources,
-3. PyPI (unless disabled by another default source),
+3. implicit PyPI (unless disabled by another [default source](#default-package-source) or configured explicitly),
 4. [secondary sources](#secondary-package-sources),
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
@@ -137,19 +137,17 @@ Within each priority class, package sources are considered in order of appearanc
 
 {{% note %}}
 
-If you prefer to disable [PyPI](https://pypi.org) completely, you may choose to set one of your package sources to be the [default](#default-package-source).
+If you want to change the priority of [PyPI](https://pypi.org), you can set it explicitly, e.g.
 
-If you prefer to specify a package source for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
+```bash
+poetry source add --priority=primary PyPI
+```
+
+If you prefer to disable PyPI completely,
+you may choose to set one of your package sources to be the [default](#default-package-source)
+or configure PyPI as [explicit source](#explicit-package-sources).
 
 {{% /note %}}
-
-
-{{% warning %}}
-
-If you do not want any of the custom sources to take precedence over [PyPI](https://pypi.org),
-you must declare **all** package sources to be [secondary](#secondary-package-sources).
-
-{{% /warning %}}
 
 
 #### Default Package Source
@@ -161,6 +159,21 @@ package sources by adding a **single** source with `priority = "default"`.
 ```bash
 poetry source add --priority=default foo https://foo.bar/simple/
 ```
+
+{{% warning %}}
+
+In a future version of Poetry, PyPI will be disabled automatically
+if there is at least one custom source configured with another priority than `explicit`.
+If you are using custom sources in addition to PyPI, you should configure PyPI explicitly
+with a certain priority, e.g.
+
+```bash
+poetry source add --priority=primary PyPI
+```
+
+This way, the priority of PyPI can be set in a fine-granular way.
+
+{{% /warning %}}
 
 {{% warning %}}
 

@@ -9,8 +9,10 @@ from deepdiff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import parse_constraint
 
+from poetry.exceptions import PoetryException
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
+from poetry.repositories.exceptions import InvalidSourceError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.repositories.repository_pool import Priority
@@ -22,6 +24,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
 
@@ -231,6 +234,31 @@ def test_poetry_with_default_source(
     assert io.fetch_error() == ""
 
 
+def test_poetry_with_default_source_and_pypi(
+    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+) -> None:
+    io = BufferedIO()
+    poetry = Factory().create_poetry(fixture_dir("with_default_source_and_pypi"), io=io)
+
+    assert len(poetry.pool.repositories) == 2
+    assert poetry.pool.has_repository("PyPI")
+    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
+    assert "Warning: Found deprecated key" not in io.fetch_error()
+
+
+def test_poetry_with_default_source_pypi(
+    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+) -> None:
+    io = BufferedIO()
+    poetry = Factory().create_poetry(fixture_dir("with_default_source_pypi"), io=io)
+
+    assert len(poetry.pool.repositories) == 1
+    assert poetry.pool.has_repository("PyPI")
+    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
+    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+
+
 @pytest.mark.parametrize(
     "project",
     ("with_non_default_source_implicit", "with_non_default_source_explicit"),
@@ -238,7 +266,8 @@ def test_poetry_with_default_source(
 def test_poetry_with_non_default_source(
     project: str, fixture_dir: FixtureDirGetter, with_simple_keyring: None
 ) -> None:
-    poetry = Factory().create_poetry(fixture_dir(project))
+    io = BufferedIO()
+    poetry = Factory().create_poetry(fixture_dir(project), io=io)
 
     assert not poetry.pool.has_default()
     assert poetry.pool.has_repository("PyPI")
@@ -248,6 +277,8 @@ def test_poetry_with_non_default_source(
     assert poetry.pool.get_priority("foo") is Priority.PRIMARY
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "foo"}
+    error = io.fetch_error()
+    assert "Warning: In a future version of Poetry, PyPI will be disabled" in error
 
 
 def test_poetry_with_non_default_secondary_source_legacy(
@@ -347,6 +378,26 @@ def test_poetry_with_non_default_multiple_sources(
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "bar", "foo"}
 
 
+def test_poetry_with_non_default_multiple_sources_pypi(
+    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+) -> None:
+    io = BufferedIO()
+    poetry = Factory().create_poetry(
+        fixture_dir("with_non_default_multiple_sources_pypi"), io=io
+    )
+
+    assert len(poetry.pool.repositories) == 4
+    assert not poetry.pool.has_default()
+    assert poetry.pool.has_repository("PyPI")
+    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
+    # PyPI must be between bar and baz!
+    expected = ["bar", "PyPI", "baz", "foo"]
+    assert [repo.name for repo in poetry.pool.repositories] == expected
+    error = io.fetch_error()
+    assert error == ""
+
+
 def test_poetry_with_no_default_source(fixture_dir: FixtureDirGetter) -> None:
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
 
@@ -369,6 +420,29 @@ def test_poetry_with_explicit_source(
     assert poetry.pool.has_repository("explicit")
     assert isinstance(poetry.pool.repository("explicit"), LegacyRepository)
     assert [repo.name for repo in poetry.pool.repositories] == ["PyPI"]
+
+
+def test_poetry_with_explicit_pypi_and_other(
+    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+) -> None:
+    io = BufferedIO()
+    poetry = Factory().create_poetry(fixture_dir("with_explicit_pypi_and_other"), io=io)
+
+    assert len(poetry.pool.repositories) == 1
+    assert len(poetry.pool.all_repositories) == 2
+    error = io.fetch_error()
+    assert error == ""
+
+
+@pytest.mark.parametrize(
+    "project", ["with_explicit_pypi_no_other", "with_explicit_pypi_and_other_explicit"]
+)
+def test_poetry_with_pypi_explicit_only(
+    project: str, fixture_dir: FixtureDirGetter, with_simple_keyring: None
+) -> None:
+    with pytest.raises(PoetryException) as e:
+        Factory().create_poetry(fixture_dir(project))
+    assert str(e.value) == "At least one source must not be configured as 'explicit'."
 
 
 def test_poetry_with_two_default_sources_legacy(
@@ -442,3 +516,27 @@ def test_create_poetry_with_plugins(
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
 
     assert poetry.package.readmes == ("README.md",)
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ({}, "Missing [name] in source."),
+        ({"name": "foo"}, "Missing [url] in source 'foo'."),
+        (
+            {"name": "PyPI", "url": "https://example.com"},
+            "The PyPI repository cannot be configured with a custom url.",
+        ),
+    ],
+)
+def test_create_package_source_invalid(
+    source: dict[str, str],
+    expected: str,
+    config: Config,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    with pytest.raises(InvalidSourceError) as e:
+        Factory.create_package_source(source, auth_config=config)
+        Factory().create_poetry(fixture_dir("with_source_pypi_url"))
+
+    assert str(e.value) == expected

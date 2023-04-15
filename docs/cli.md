@@ -779,9 +779,12 @@ For example, to add the `pypi-test` source, you can run:
 poetry source add pypi-test https://test.pypi.org/simple/
 ```
 
-{{% note %}}
-You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
-{{% /note %}}
+You cannot use the name `pypi` for a custom repository as it is reserved for use by
+the default PyPI source. However, you can set the priority of PyPI:
+
+```bash
+poetry source add --priority=explicit pypi
+```
 
 #### Options
 
@@ -808,7 +811,8 @@ poetry source show pypi-test
 ```
 
 {{% note %}}
-This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+This command will only show sources configured via the `pyproject.toml`
+and does not include the implicit default PyPI.
 {{% /note %}}
 
 ### source remove
