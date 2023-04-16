@@ -3410,7 +3410,7 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
 
 def test_solver_should_use_the_python_constraint_from_the_environment_if_available(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
 

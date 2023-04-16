@@ -38,7 +38,7 @@ def assert_plugin_add_result(
 def test_add_no_constraint(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
     tester.execute("poetry-plugin")
@@ -61,7 +61,7 @@ Writing lock file
 def test_add_with_constraint(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
 
@@ -84,7 +84,7 @@ Writing lock file
 def test_add_with_git_constraint(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git")
@@ -109,7 +109,7 @@ Writing lock file
 def test_add_with_git_constraint_with_extras(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
 
@@ -153,7 +153,7 @@ def test_add_with_git_constraint_with_subdirectory(
     rev: str | None,
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute(url)
@@ -189,7 +189,7 @@ def test_add_existing_plugin_warns_about_no_operation(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
+) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
     with open(pyproject, "w", encoding="utf-8", newline="") as f:
         f.write(
@@ -230,7 +230,7 @@ def test_add_existing_plugin_updates_if_requested(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
+) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
     with open(pyproject, "w", encoding="utf-8", newline="") as f:
         f.write(
@@ -276,7 +276,7 @@ def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
+) -> None:
     poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))
 

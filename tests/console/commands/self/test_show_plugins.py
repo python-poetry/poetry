@@ -153,7 +153,7 @@ def mock_metadata_entry_points(
 def test_show_displays_installed_plugins(
     app: PoetryTestApplication,
     tester: CommandTester,
-):
+) -> None:
     tester.execute("")
 
     expected = """
@@ -179,7 +179,7 @@ def test_show_displays_installed_plugins(
 def test_show_displays_installed_plugins_with_multiple_plugins(
     app: PoetryTestApplication,
     tester: CommandTester,
-):
+) -> None:
     tester.execute("")
 
     expected = """
@@ -205,7 +205,7 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
 def test_show_displays_installed_plugins_with_dependencies(
     app: PoetryTestApplication,
     tester: CommandTester,
-):
+) -> None:
     tester.execute("")
 
     expected = """

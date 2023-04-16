@@ -66,7 +66,7 @@ def install_plugin(installed: Repository) -> None:
     installed.add_package(plugin)
 
 
-def test_remove_installed_package(tester: CommandTester):
+def test_remove_installed_package(tester: CommandTester) -> None:
     tester.execute("poetry-plugin")
 
     expected = """\
@@ -87,7 +87,7 @@ Writing lock file
     assert not dependencies
 
 
-def test_remove_installed_package_dry_run(tester: CommandTester):
+def test_remove_installed_package_dry_run(tester: CommandTester) -> None:
     tester.execute("poetry-plugin --dry-run")
 
     expected = f"""\

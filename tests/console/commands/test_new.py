@@ -156,7 +156,7 @@ def test_command_new(
     include_from: str | None,
     tester: CommandTester,
     tmp_path: Path,
-):
+) -> None:
     path = tmp_path / directory
     options.append(str(path))
     tester.execute(" ".join(options))
@@ -166,7 +166,7 @@ def test_command_new(
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
 def test_command_new_with_readme(
     fmt: str | None, tester: CommandTester, tmp_path: Path
-):
+) -> None:
     package = "package"
     path = tmp_path / package
     options = [path.as_posix()]
@@ -194,7 +194,7 @@ def test_respect_prefer_active_on_new(
     mocker: MockerFixture,
     tester: CommandTester,
     tmp_path: Path,
-):
+) -> None:
     from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 
     orig_check_output = subprocess.check_output

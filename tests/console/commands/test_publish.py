@@ -23,7 +23,7 @@ def test_publish_returns_non_zero_code_for_upload_errors(
     app: PoetryTestApplication,
     app_tester: ApplicationTester,
     http: type[httpretty.httpretty],
-):
+) -> None:
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
     )
@@ -48,7 +48,7 @@ def test_publish_returns_non_zero_code_for_connection_errors(
     app: PoetryTestApplication,
     app_tester: ApplicationTester,
     http: type[httpretty.httpretty],
-):
+) -> None:
     def request_callback(*_: Any, **__: Any) -> None:
         raise requests.ConnectionError()
 
@@ -65,7 +65,9 @@ def test_publish_returns_non_zero_code_for_connection_errors(
     assert expected in app_tester.io.fetch_error()
 
 
-def test_publish_with_cert(app_tester: ApplicationTester, mocker: MockerFixture):
+def test_publish_with_cert(
+    app_tester: ApplicationTester, mocker: MockerFixture
+) -> None:
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --cert path/to/ca.pem")
@@ -75,7 +77,9 @@ def test_publish_with_cert(app_tester: ApplicationTester, mocker: MockerFixture)
     ] == publisher_publish.call_args
 
 
-def test_publish_with_client_cert(app_tester: ApplicationTester, mocker: MockerFixture):
+def test_publish_with_client_cert(
+    app_tester: ApplicationTester, mocker: MockerFixture
+) -> None:
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --client-cert path/to/client.pem")
@@ -94,7 +98,7 @@ def test_publish_with_client_cert(app_tester: ApplicationTester, mocker: MockerF
 )
 def test_publish_dry_run_skip_existing(
     app_tester: ApplicationTester, http: type[httpretty.httpretty], options: str
-):
+) -> None:
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
     )
@@ -113,7 +117,7 @@ def test_publish_dry_run_skip_existing(
 
 def test_skip_existing_output(
     app_tester: ApplicationTester, http: type[httpretty.httpretty]
-):
+) -> None:
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
     )

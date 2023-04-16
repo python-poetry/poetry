@@ -5,6 +5,7 @@ import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-def get_options_based_on_normalizer(normalizer: Callable) -> str:
+def get_options_based_on_normalizer(normalizer: Callable[[str], Any]) -> str:
     flattened_config = flatten_dict(obj=Config.default_config, delimiter=".")
 
     for k in flattened_config:
@@ -30,13 +31,13 @@ def get_options_based_on_normalizer(normalizer: Callable) -> str:
 @pytest.mark.parametrize(
     ("name", "value"), [("installer.parallel", True), ("virtualenvs.create", True)]
 )
-def test_config_get_default_value(config: Config, name: str, value: bool):
+def test_config_get_default_value(config: Config, name: str, value: bool) -> None:
     assert config.get(name) is value
 
 
 def test_config_get_processes_depended_on_values(
     config: Config, config_cache_dir: Path
-):
+) -> None:
     assert str(config_cache_dir / "virtualenvs") == config.get("virtualenvs.path")
 
 
@@ -62,7 +63,7 @@ def test_config_get_from_environment_variable(
     env_var: str,
     env_value: str,
     value: bool,
-):
+) -> None:
     os.environ[env_var] = env_value
     assert config.get(name) is value
 
@@ -73,6 +74,6 @@ def test_config_get_from_environment_variable(
 )
 def test_config_expands_tilde_for_virtualenvs_path(
     config: Config, path_config: str, expected: Path
-):
+) -> None:
     config.merge({"virtualenvs": {"path": path_config}})
     assert config.virtualenvs_path == expected

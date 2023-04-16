@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -35,7 +36,7 @@ SOME_URL = "https://example.com/path.tar.gz"
 
 
 class MockEnv(BaseMockEnv):
-    def run(self, bin: str, *args: str) -> None:
+    def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
 
 

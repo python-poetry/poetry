@@ -160,6 +160,11 @@ enable_error_code = [
     "redundant-expr",
     "truthy-bool",
 ]
+exclude = [
+  "tests/fixtures",
+  "tests/masonry/builders/fixtures",
+  "tests/utils/fixtures"
+]
 
 # use of importlib-metadata backport at python3.7 makes it impossible to
 # satisfy mypy without some ignores: but we get a different set of ignores at
@@ -178,6 +183,10 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = [
     'cachecontrol.*',
+    'cachy.*',
+    'deepdiff.*',
+    'httpretty.*',
+    'keyring.*',
     'lockfile.*',
     'pexpect.*',
     'requests_toolbelt.*',

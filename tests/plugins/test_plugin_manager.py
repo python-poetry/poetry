@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,6 +18,7 @@ from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
@@ -29,9 +31,9 @@ class ManagerFactory(Protocol):
 
 
 class MyPlugin(Plugin):
-    def activate(self, poetry: Poetry, io: BufferedIO) -> None:
+    def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Setting readmes")
-        poetry.package.readmes = ("README.md",)
+        poetry.package.readmes = (Path("README.md"),)
 
 
 class MyCommandPlugin(ApplicationPlugin):
@@ -39,7 +41,7 @@ class MyCommandPlugin(ApplicationPlugin):
 
 
 class InvalidPlugin:
-    def activate(self, poetry: Poetry, io: BufferedIO) -> None:
+    def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Updating version")
         poetry.package.version = "9.9.9"
 
@@ -59,7 +61,7 @@ def poetry(fixture_dir: FixtureDirGetter, config: Config) -> Poetry:
 
 
 @pytest.fixture()
-def io() -> BufferedIO:
+def io() -> IO:
     return BufferedIO()
 
 
@@ -86,7 +88,7 @@ def test_load_plugins_and_activate(
     manager.load_plugins()
     manager.activate(poetry, io)
 
-    assert poetry.package.readmes == ("README.md",)
+    assert poetry.package.readmes == (Path("README.md"),)
     assert io.fetch_output() == "Setting readmes\n"
 
 

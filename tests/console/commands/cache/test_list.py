@@ -20,7 +20,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 def test_cache_list(
     tester: CommandTester, mock_caches: None, repository_one: str, repository_two: str
-):
+) -> None:
     tester.execute()
 
     expected = f"""\
@@ -31,7 +31,7 @@ def test_cache_list(
     assert tester.io.fetch_output() == expected
 
 
-def test_cache_list_empty(tester: CommandTester, repository_cache_dir: Path):
+def test_cache_list_empty(tester: CommandTester, repository_cache_dir: Path) -> None:
     tester.execute()
 
     expected = """\
