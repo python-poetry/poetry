@@ -28,51 +28,40 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
-def simple_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
-    )
+def simple_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("simple_project"))
 
     return poetry
 
 
 @pytest.fixture()
-def project_with_include() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "with-include"
-    )
+def project_with_include(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("with-include"))
 
     return poetry
 
 
 @pytest.fixture()
-def extended_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
-    )
+def extended_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("extended_project"))
 
     return poetry
 
 
 @pytest.fixture()
-def extended_without_setup_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent
-        / "fixtures"
-        / "extended_project_without_setup"
-    )
+def extended_without_setup_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("extended_project_without_setup"))
 
     return poetry
 
 
 @pytest.fixture
-def with_multiple_readme_files() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "with_multiple_readme_files"
-    )
+def with_multiple_readme_files(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("with_multiple_readme_files"))
 
     return poetry
 
@@ -235,9 +224,11 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     assert [] == env.executed
 
 
-def test_builder_setup_generation_runs_with_pip_editable(tmp_path: Path) -> None:
+def test_builder_setup_generation_runs_with_pip_editable(
+    fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
     # create an isolated copy of the project
-    fixture = Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
+    fixture = fixture_dir("extended_project")
     extended_project = tmp_path / "extended_project"
 
     shutil.copytree(fixture, extended_project)
