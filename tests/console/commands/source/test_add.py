@@ -87,7 +87,7 @@ def test_source_add_secondary_legacy(
     source_existing: Source,
     source_secondary: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"--secondary {source_secondary.name} {source_secondary.url}")
     assert_source_added_legacy(
         tester, poetry_with_source, source_existing, source_secondary
@@ -99,7 +99,7 @@ def test_source_add_default(
     source_existing: Source,
     source_default: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"--priority=default {source_default.name} {source_default.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_default)
 
@@ -109,7 +109,7 @@ def test_source_add_second_default_fails(
     source_existing: Source,
     source_default: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"--priority=default {source_default.name} {source_default.url}")
     assert_source_added(tester, poetry_with_source, source_existing, source_default)
     poetry_with_source.pyproject.reload()
@@ -155,7 +155,7 @@ def test_source_add_error_default_and_secondary_legacy(tester: CommandTester) ->
     assert tester.status_code == 1
 
 
-def test_source_add_error_priority_and_deprecated_legacy(tester: CommandTester):
+def test_source_add_error_priority_and_deprecated_legacy(tester: CommandTester) -> None:
     tester.execute("--priority secondary --secondary error https://error.com")
     assert (
         tester.io.fetch_error().strip()
@@ -204,7 +204,7 @@ def test_source_add_existing_legacy(
 
 def test_source_add_existing_no_change(
     tester: CommandTester, source_existing: Source, poetry_with_source: Poetry
-):
+) -> None:
     tester.execute(f"--priority=primary {source_existing.name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()
@@ -220,7 +220,7 @@ def test_source_add_existing_no_change(
 
 def test_source_add_existing_updating(
     tester: CommandTester, source_existing: Source, poetry_with_source: Poetry
-):
+) -> None:
     tester.execute(f"--priority=default {source_existing.name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()
@@ -243,7 +243,7 @@ def test_source_add_existing_fails_due_to_other_default(
     source_existing: Source,
     source_default: Source,
     poetry_with_source: Poetry,
-):
+) -> None:
     tester.execute(f"--priority=default {source_default.name} {source_default.url}")
     tester.io.fetch_output()
 

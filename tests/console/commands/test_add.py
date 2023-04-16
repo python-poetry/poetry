@@ -4,12 +4,14 @@ import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import cast
 
 import pytest
 
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 
+from poetry.console.commands.installer_command import InstallerCommand
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
+    from tomlkit import TOMLDocument
 
     from poetry.poetry import Poetry
     from poetry.utils.env import MockEnv
@@ -86,9 +89,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
@@ -115,9 +120,11 @@ Package operations: 1 install, 0 updates, 0 removals
 Writing lock file
 """
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
@@ -135,7 +142,8 @@ Writing lock file
 """
     assert tester.io.fetch_output() == expected
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject2: dict[str, Any] = app.poetry.file.read()
+    content = pyproject2["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "0.1.0"
@@ -144,7 +152,8 @@ Writing lock file
 def test_add_no_constraint_editable_error(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -158,8 +167,11 @@ No changes were applied.
 """
     assert tester.status_code == 1
     assert tester.io.fetch_error() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 0
-    assert content == app.poetry.file.read()["tool"]["poetry"]
+
+    pyproject2: dict[str, Any] = app.poetry.file.read()
+    assert content == pyproject2["tool"]["poetry"]
 
 
 def test_add_equal_constraint(
@@ -183,6 +195,7 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
 
@@ -207,6 +220,7 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
 
@@ -242,6 +256,7 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -272,6 +287,7 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -281,6 +297,7 @@ def test_add_git_constraint(
     tester: CommandTester,
     tmp_venv: VirtualEnv,
 ) -> None:
+    assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -304,7 +321,8 @@ Writing lock file
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -318,6 +336,7 @@ def test_add_git_constraint_with_poetry(
     tester: CommandTester,
     tmp_venv: VirtualEnv,
 ) -> None:
+    assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -349,6 +368,7 @@ def test_add_git_constraint_with_extras(
     tmp_venv: VirtualEnv,
     extra_name: str,
 ) -> None:
+    assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -375,7 +395,8 @@ Writing lock file
     assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 4
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -415,9 +436,11 @@ Package operations: 1 install, 0 updates, 0 removals
 Writing lock file
 """
     assert tester.io.fetch_output().strip() == expected.strip()
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     constraint = {
         "git": "https://github.com/demo/subdirectories.git",
@@ -439,6 +462,7 @@ def test_add_git_ssh_constraint(
     tester: CommandTester,
     tmp_venv: VirtualEnv,
 ) -> None:
+    assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -463,7 +487,8 @@ Writing lock file
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
 
@@ -508,9 +533,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
 
@@ -549,6 +576,7 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
 
@@ -581,9 +609,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -617,9 +647,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {"path": path}
@@ -657,9 +689,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -698,9 +732,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -744,9 +780,11 @@ Writing lock file
     expected = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
     assert output == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 4
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
@@ -780,9 +818,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {"version": "0.2.0", "python": ">=2.7"}
@@ -817,9 +857,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -868,9 +910,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == {
@@ -930,9 +974,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["group"]["dev"]["dependencies"]
     assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
@@ -978,9 +1024,11 @@ Writing lock file
 
     assert tester.io.fetch_error() == warning
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["group"]["dev"]["dependencies"]
     assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
@@ -1008,9 +1056,11 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "pyyaml" in content["dependencies"]
     assert content["dependencies"]["pyyaml"] == "^3.13"
@@ -1019,9 +1069,10 @@ Writing lock file
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:
-    content = app.poetry.file.read()
-    content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    app.poetry.file.write(content)
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
 
     repo.add_package(get_package("foo", "1.1.2"))
     tester.execute("foo")
@@ -1043,9 +1094,10 @@ If you prefer to upgrade it to the latest available version,\
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:
-    content = app.poetry.file.read()
-    content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
-    app.poetry.file.write(content)
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
 
     repo.add_package(get_package("foo-bar", "1.1.2"))
     tester.execute("Foo_Bar")
@@ -1098,28 +1150,29 @@ def test_add_latest_should_not_create_duplicate_keys(
     """
 
     poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
-    content = poetry.file.read()
+    pyproject: dict[str, Any] = poetry.file.read()
 
-    assert "Foo" in content["tool"]["poetry"]["dependencies"]
-    assert content["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
-    assert "foo" not in content["tool"]["poetry"]["dependencies"]
+    assert "Foo" in pyproject["tool"]["poetry"]["dependencies"]
+    assert pyproject["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
+    assert "foo" not in pyproject["tool"]["poetry"]["dependencies"]
 
     tester = command_tester_factory("add", poetry=poetry)
     repo.add_package(get_package("foo", "1.1.2"))
     tester.execute("foo@latest")
 
-    updated_content = poetry.file.read()
-    assert "Foo" in updated_content["tool"]["poetry"]["dependencies"]
-    assert updated_content["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
-    assert "foo" not in updated_content["tool"]["poetry"]["dependencies"]
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+    assert "Foo" in updated_pyproject["tool"]["poetry"]["dependencies"]
+    assert updated_pyproject["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
+    assert "foo" not in updated_pyproject["tool"]["poetry"]["dependencies"]
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:
-    content = app.poetry.file.read()
-    content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    app.poetry.file.write(content)
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
 
     repo.add_package(get_package("foo", "1.1.2"))
 
@@ -1140,7 +1193,8 @@ Writing lock file
 
     assert expected in tester.io.fetch_output()
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject2: dict[str, Any] = app.poetry.file.read()
+    content = pyproject2["tool"]["poetry"]
 
     assert "foo" in content["dependencies"]
     assert content["dependencies"]["foo"] == "^1.1.2"
@@ -1239,36 +1293,14 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
 
+    assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    content = app.poetry.file.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["group"]["dev"]["dependencies"]
     assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
-
-
-def test_add_preferes_stable_releases(
-    app: PoetryTestApplication,
-    repo: TestRepository,
-    tester: CommandTester,
-) -> None:
-    repo.add_package(get_package("foo", "1.2.3"))
-    repo.add_package(get_package("foo", "1.2.4b1"))
-
-    tester.execute("foo")
-
-    expected = """\
-Using version ^1.2.3 for foo
-
-Updating dependencies
-Resolving dependencies...
-
-Package operations: 1 install, 0 updates, 0 removals
-
-  • Installing foo (1.2.3)
-"""
-
-    assert expected in tester.io.fetch_output()
 
 
 def test_add_keyboard_interrupt_restore_content(

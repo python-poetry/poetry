@@ -200,7 +200,7 @@ def test_cachy_compatibility(
     assert cachy_file_cache.get("key4") == test_obj
 
 
-def test_missing_cache_file(poetry_file_cache: FileCache) -> None:
+def test_missing_cache_file(poetry_file_cache: FileCache[T]) -> None:
     poetry_file_cache.put("key1", "value")
 
     key1_path = (
@@ -213,7 +213,7 @@ def test_missing_cache_file(poetry_file_cache: FileCache) -> None:
     assert poetry_file_cache.get("key1") is None
 
 
-def test_missing_cache_path(poetry_file_cache: FileCache) -> None:
+def test_missing_cache_path(poetry_file_cache: FileCache[T]) -> None:
     poetry_file_cache.put("key1", "value")
 
     key1_partial_path = poetry_file_cache.path / "81/74/09/96/87/a2/"
@@ -237,7 +237,7 @@ def test_missing_cache_path(poetry_file_cache: FileCache) -> None:
     ],
 )
 def test_detect_corrupted_cache_key_file(
-    corrupt_payload: str | bytes, poetry_file_cache: FileCache
+    corrupt_payload: str | bytes, poetry_file_cache: FileCache[T]
 ) -> None:
     poetry_file_cache.put("key1", "value")
 

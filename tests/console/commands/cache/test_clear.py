@@ -28,7 +28,7 @@ def test_cache_clear_all(
     repository_one: str,
     repository_cache_dir: Path,
     cache: CacheManager,
-):
+) -> None:
     exit_code = tester.execute(f"cache clear {repository_one} --all", inputs="yes")
     repository_one_dir = repository_cache_dir / repository_one
 
@@ -45,7 +45,7 @@ def test_cache_clear_all_no(
     repository_one: str,
     repository_cache_dir: Path,
     cache: CacheManager,
-):
+) -> None:
     exit_code = tester.execute(f"cache clear {repository_one} --all", inputs="no")
 
     assert exit_code == 0
@@ -62,7 +62,7 @@ def test_cache_clear_pkg(
     repository_one: str,
     cache: CacheManager,
     package_name: str,
-):
+) -> None:
     exit_code = tester.execute(
         f"cache clear {repository_one}:{package_name}:0.1", inputs="yes"
     )
@@ -77,7 +77,7 @@ def test_cache_clear_pkg_no(
     tester: ApplicationTester,
     repository_one: str,
     cache: CacheManager,
-):
+) -> None:
     exit_code = tester.execute(f"cache clear {repository_one}:cachy:0.1", inputs="no")
 
     assert exit_code == 0
