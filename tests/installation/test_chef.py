@@ -68,7 +68,7 @@ def test_prepare_directory(
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
@@ -107,7 +107,7 @@ def test_prepare_directory_editable(
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )

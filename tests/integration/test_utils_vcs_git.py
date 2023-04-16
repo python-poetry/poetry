@@ -112,7 +112,7 @@ def remote_default_branch(remote_default_ref: bytes) -> str:
 
 
 # Regression test for https://github.com/python-poetry/poetry/issues/6722
-def test_use_system_git_client_from_environment_variables():
+def test_use_system_git_client_from_environment_variables() -> None:
     os.environ["POETRY_EXPERIMENTAL_SYSTEM_GIT_CLIENT"] = "true"
 
     assert Git.is_using_legacy_client()
@@ -132,7 +132,7 @@ def test_git_clone_default_branch_head(
     remote_refs: FetchPackResult,
     remote_default_ref: bytes,
     mocker: MockerFixture,
-):
+) -> None:
     spy = mocker.spy(Git, "_clone")
     spy_legacy = mocker.spy(Git, "_clone_legacy")
 
@@ -143,7 +143,7 @@ def test_git_clone_default_branch_head(
     spy.assert_called()
 
 
-def test_git_clone_fails_for_non_existent_branch(source_url: str):
+def test_git_clone_fails_for_non_existent_branch(source_url: str) -> None:
     branch = uuid.uuid4().hex
 
     with pytest.raises(PoetryConsoleError) as e:
@@ -152,7 +152,7 @@ def test_git_clone_fails_for_non_existent_branch(source_url: str):
     assert f"Failed to clone {source_url} at '{branch}'" in str(e.value)
 
 
-def test_git_clone_fails_for_non_existent_revision(source_url: str):
+def test_git_clone_fails_for_non_existent_revision(source_url: str) -> None:
     revision = sha1(uuid.uuid4().bytes).hexdigest()
 
     with pytest.raises(PoetryConsoleError) as e:

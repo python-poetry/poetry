@@ -29,7 +29,7 @@ def test_remove_by_python_version(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     check_output = mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
@@ -49,7 +49,7 @@ def test_remove_by_name(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = ""
 
     for name in venvs_in_cache_dirs:
@@ -67,7 +67,7 @@ def test_remove_all(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = {""}
     tester.execute("--all")
     for name in venvs_in_cache_dirs:
@@ -81,7 +81,7 @@ def test_remove_all_and_version(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = {""}
     tester.execute(f"--all {venvs_in_cache_dirs[0]}")
     for name in venvs_in_cache_dirs:
@@ -95,7 +95,7 @@ def test_remove_multiple(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = {""}
     removed_envs = venvs_in_cache_dirs[0:2]
     remaining_envs = venvs_in_cache_dirs[2:]
