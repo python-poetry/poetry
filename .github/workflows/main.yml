@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12-dev"]
         include:
           - os: Ubuntu
             image: ubuntu-22.04
@@ -117,7 +117,8 @@ jobs:
           ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
       - name: Run pytest (poetry-plugin-export)
-        run: poetry run pytest -v poetry-plugin-export/tests/
+        working-directory: ./poetry-plugin-export
+        run: poetry run -C .. pytest -v
 
       - name: Check for clean working tree
         run: |

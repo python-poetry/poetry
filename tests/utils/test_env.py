@@ -1513,6 +1513,14 @@ def test_env_no_pip(
         if package.name != "sqlite3"
     }
 
+    # For python >= 3.12, virtualenv defaults to "--no-setuptools" and "--no-wheel"
+    # behaviour, so setting these values to False becomes meaningless.
+    if sys.version_info >= (3, 12):
+        if not flags.get("no-setuptools", True):
+            packages.discard("setuptools")
+        if not flags.get("no-wheel", True):
+            packages.discard("wheel")
+
     assert installed_packages == packages
 
 
