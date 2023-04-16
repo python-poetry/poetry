@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
 MINIMAL_SCRIPT = """\
@@ -77,9 +78,8 @@ class MockVirtualEnv(VirtualEnv):
 
 
 @pytest.fixture()
-def poetry(project_factory: ProjectFactory) -> Poetry:
-    fixture = Path(__file__).parent.parent / "fixtures" / "simple_project"
-    return project_factory("simple", source=fixture)
+def poetry(project_factory: ProjectFactory, fixture_dir: FixtureDirGetter) -> Poetry:
+    return project_factory("simple", source=fixture_dir("simple_project"))
 
 
 @pytest.fixture()
@@ -100,7 +100,7 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
-def test_venv_backup_exclusion(tmp_path: Path, manager: EnvManager):
+def test_venv_backup_exclusion(tmp_path: Path, manager: EnvManager) -> None:
     import xattr
 
     venv_path = tmp_path / "Virtual Env"
@@ -1042,7 +1042,7 @@ def test_check_output_with_called_process_error(
 @pytest.mark.parametrize("out", ["sys.stdout", "sys.stderr"])
 def test_call_does_not_block_on_full_pipe(
     tmp_path: Path, tmp_venv: VirtualEnv, out: str
-):
+) -> None:
     """see https://github.com/python-poetry/poetry/issues/7698"""
     script = tmp_path / "script.py"
     script.write_text(
@@ -1664,10 +1664,8 @@ def test_generate_env_name_uses_real_path(
 
 
 @pytest.fixture()
-def extended_without_setup_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / "extended_project_without_setup"
-    )
+def extended_without_setup_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("extended_project_without_setup"))
 
     return poetry
 
@@ -1713,6 +1711,7 @@ def test_build_environment_not_called_without_build_script_specified(
 
 
 def test_create_venv_project_name_empty_sets_correct_prompt(
+    fixture_dir: FixtureDirGetter,
     project_factory: ProjectFactory,
     config: Config,
     mocker: MockerFixture,
@@ -1721,8 +1720,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    fixture = Path(__file__).parent.parent / "fixtures" / "no_name_project"
-    poetry = project_factory("no", source=fixture)
+    poetry = project_factory("no", source=fixture_dir("no_name_project"))
     manager = EnvManager(poetry)
 
     poetry.package.python_versions = "^3.7"

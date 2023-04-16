@@ -282,6 +282,11 @@ def http() -> Iterator[type[httpretty.httpretty]]:
         yield httpretty
 
 
+@pytest.fixture
+def project_root() -> Path:
+    return Path(__file__).parent.parent
+
+
 @pytest.fixture(scope="session")
 def fixture_base() -> Path:
     return Path(__file__).parent / "fixtures"
@@ -415,11 +420,6 @@ def project_factory(
         return poetry
 
     return _factory
-
-
-@pytest.fixture
-def project_root() -> Path:
-    return Path(__file__).parent.parent
 
 
 @pytest.fixture(autouse=True)

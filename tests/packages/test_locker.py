@@ -737,14 +737,13 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 
 def test_root_extras_dependencies_are_ordered(
-    locker: Locker, root: ProjectPackage
+    locker: Locker, root: ProjectPackage, fixture_base: Path
 ) -> None:
-    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
-    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
-    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
-    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
-    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
-    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("B", "1.0.0", root_dir=fixture_base)
+    Factory.create_dependency("C", "1.0.0", root_dir=fixture_base)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=fixture_base)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=fixture_base)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=fixture_base)
 
     root.extras = {
         "C": [package_third, package_second, package_first],
@@ -834,25 +833,24 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 
 def test_locker_dumps_dependency_information_correctly(
-    locker: Locker, root: ProjectPackage
+    locker: Locker, root: ProjectPackage, fixture_base: Path
 ) -> None:
-    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
-            "B", {"path": "project_with_extras", "develop": True}, root_dir=root_dir
+            "B", {"path": "project_with_extras", "develop": True}, root_dir=fixture_base
         )
     )
     package_a.add_dependency(
         Factory.create_dependency(
             "C",
             {"path": "directory/project_with_transitive_directory_dependencies"},
-            root_dir=root_dir,
+            root_dir=fixture_base,
         )
     )
     package_a.add_dependency(
         Factory.create_dependency(
-            "D", {"path": "distributions/demo-0.1.0.tar.gz"}, root_dir=root_dir
+            "D", {"path": "distributions/demo-0.1.0.tar.gz"}, root_dir=fixture_base
         )
     )
     package_a.add_dependency(
@@ -969,15 +967,14 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 
 def test_locker_dumps_dependency_extras_in_correct_order(
-    locker: Locker, root: ProjectPackage
+    locker: Locker, root: ProjectPackage, fixture_base: Path
 ) -> None:
-    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     package_a = get_package("A", "1.0.0")
-    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
-    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
-    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
-    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
-    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("B", "1.0.0", root_dir=fixture_base)
+    Factory.create_dependency("C", "1.0.0", root_dir=fixture_base)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=fixture_base)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=fixture_base)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=fixture_base)
 
     package_a.extras = {
         "C": [package_third, package_second, package_first],
