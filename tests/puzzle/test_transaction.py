@@ -121,6 +121,31 @@ def test_it_should_remove_installed_packages_if_required():
     )
 
 
+def test_it_should_not_remove_installed_packages_that_are_in_result():
+    transaction = Transaction(
+        [],
+        [
+            (Package("a", "1.0.0"), 1),
+            (Package("b", "2.0.0"), 2),
+            (Package("c", "3.0.0"), 0),
+        ],
+        installed_packages=[
+            Package("a", "1.0.0"),
+            Package("b", "2.0.0"),
+            Package("c", "3.0.0"),
+        ],
+    )
+
+    check_operations(
+        transaction.calculate_operations(synchronize=True),
+        [
+            {"job": "install", "package": Package("a", "1.0.0"), "skipped": True},
+            {"job": "install", "package": Package("b", "2.0.0"), "skipped": True},
+            {"job": "install", "package": Package("c", "3.0.0"), "skipped": True},
+        ],
+    )
+
+
 def test_it_should_update_installed_packages_if_sources_are_different():
     transaction = Transaction(
         [Package("a", "1.0.0")],

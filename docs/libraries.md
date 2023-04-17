@@ -19,10 +19,11 @@ This chapter will tell you how to make your library installable through Poetry.
 
 Poetry requires [PEP 440](https://peps.python.org/pep-0440)-compliant versions for all projects.
 
-While Poetry does not enforce any release convention, it does encourage the use of
+While Poetry does not enforce any release convention, it used to encourage the use of
 [semantic versioning](https://semver.org/) within the scope of
-[PEP 440](https://peps.python.org/pep-0440/#semantic-versioning). This has many advantages for the end users
-and allows them to set appropriate [version constraints]({{< relref "dependency-specification#version-constraints" >}}).
+[PEP 440](https://peps.python.org/pep-0440/#semantic-versioning) and supports
+[version constraints]({{< relref "dependency-specification/#caret-requirements" >}})
+that are especially suitable for semver.
 
 {{% note %}}
 

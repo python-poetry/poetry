@@ -4,7 +4,7 @@
   entry: poetry check
   language: python
   pass_filenames: false
-  files: ^pyproject.toml$
+  files: ^(.*/)?pyproject.toml$
 
 - id: poetry-lock
   name: poetry-lock

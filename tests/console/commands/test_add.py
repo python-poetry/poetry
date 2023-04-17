@@ -10,12 +10,15 @@ import pytest
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
@@ -43,6 +46,20 @@ def poetry_with_up_to_date_lockfile(
     )
 
 
+@pytest.fixture
+def poetry_with_path_dependency(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("with_path_dependency")
+
+    poetry = project_factory(
+        name="foobar",
+        source=source,
+        use_test_locker=False,
+    )
+    return poetry
+
+
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("add")
@@ -50,14 +67,14 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 @pytest.fixture()
 def old_tester(tester: CommandTester) -> CommandTester:
-    tester.command.installer.use_executor(False)
+    tester.command.installer._use_executor = False
 
     return tester
 
 
 def test_add_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -69,11 +86,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -87,7 +104,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_replace_by_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -99,11 +116,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 1
@@ -118,11 +135,11 @@ Package operations: 1 install, 0 updates, 0 removals
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.1.0)
+
+Writing lock file
 """
     assert tester.io.fetch_output() == expected
 
@@ -134,7 +151,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_no_constraint_editable_error(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()["tool"]["poetry"]
 
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -155,7 +172,7 @@ No changes were applied.
 
 def test_add_equal_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -166,11 +183,11 @@ def test_add_equal_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -179,7 +196,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_greater_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -190,11 +207,11 @@ def test_add_greater_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -207,7 +224,7 @@ def test_add_constraint_with_extras(
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -224,12 +241,12 @@ def test_add_constraint_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing msgpack-python (0.5.3)
   • Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -238,7 +255,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 def test_add_constraint_dependencies(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     cachy2.add_dependency(msgpack_dep)
@@ -254,12 +271,12 @@ def test_add_constraint_dependencies(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing msgpack-python (0.5.3)
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -271,7 +288,7 @@ def test_add_git_constraint(
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -284,12 +301,12 @@ def test_add_git_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -308,7 +325,7 @@ def test_add_git_constraint_with_poetry(
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -320,12 +337,12 @@ def test_add_git_constraint_with_poetry(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -339,7 +356,7 @@ def test_add_git_constraint_with_extras(
     tester: CommandTester,
     tmp_venv: VirtualEnv,
     extra_name: str,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -353,14 +370,14 @@ def test_add_git_constraint_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   • Installing cleo (0.6.5)
   • Installing pendulum (1.4.4)
   • Installing tomlkit (0.5.5)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output().strip() == expected.strip()
@@ -392,18 +409,18 @@ def test_add_git_constraint_with_subdirectory(
     repo: TestRepository,
     tester: CommandTester,
     env: MockEnv,
-):
+) -> None:
     tester.execute(url)
 
     expected = """\
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing two (2.0.0 9cf87a2)
+
+Writing lock file
 """
     assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 1
@@ -429,7 +446,7 @@ def test_add_git_ssh_constraint(
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -443,12 +460,12 @@ def test_add_git_ssh_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -478,7 +495,7 @@ def test_add_directory_constraint(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -490,12 +507,12 @@ def test_add_directory_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -520,7 +537,7 @@ def test_add_directory_with_poetry(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
@@ -531,12 +548,12 @@ def test_add_directory_with_poetry(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -552,7 +569,7 @@ def test_add_file_constraint_wheel(
     repo: TestRepository,
     tester: CommandTester,
     poetry: Poetry,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -563,12 +580,12 @@ def test_add_file_constraint_wheel(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -588,7 +605,7 @@ def test_add_file_constraint_sdist(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
@@ -599,12 +616,12 @@ def test_add_file_constraint_sdist(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -622,7 +639,7 @@ def test_add_constraint_with_extras_option(
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -639,12 +656,12 @@ def test_add_constraint_with_extras_option(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing msgpack-python (0.5.3)
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -664,7 +681,7 @@ def test_add_url_constraint_wheel(
     repo: TestRepository,
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
@@ -679,13 +696,13 @@ def test_add_url_constraint_wheel(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
   • Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -706,7 +723,7 @@ def test_add_url_constraint_wheel_with_extras(
     tester: CommandTester,
     extra_name: str,
     mocker: MockerFixture,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
@@ -721,8 +738,6 @@ def test_add_url_constraint_wheel_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   • Installing cleo (0.6.5)
@@ -730,6 +745,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing tomlkit (0.5.5)
   • Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
     # Order might be different, split into lines and compare the overall output.
     expected = set(expected.splitlines())
@@ -750,7 +767,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 
 def test_add_constraint_with_python(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
 
     repo.add_package(get_package("cachy", "0.1.0"))
@@ -763,11 +780,11 @@ def test_add_constraint_with_python(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -784,9 +801,10 @@ def test_add_constraint_with_platform(
     repo: TestRepository,
     tester: CommandTester,
     env: MockEnv,
-):
+) -> None:
     platform = sys.platform
     env._platform = platform
+    env._marker_env = None
 
     cachy2 = get_package("cachy", "0.2.0")
 
@@ -800,11 +818,11 @@ def test_add_constraint_with_platform(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -824,7 +842,7 @@ def test_add_constraint_with_source(
     poetry: Poetry,
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
     mocker.patch.object(
@@ -851,11 +869,11 @@ def test_add_constraint_with_source(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -872,7 +890,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_constraint_with_source_that_does_not_exist(
     app: PoetryTestApplication, tester: CommandTester
-):
+) -> None:
     with pytest.raises(IndexError) as e:
         tester.execute("foo --source i-dont-exist")
 
@@ -884,7 +902,7 @@ def test_add_constraint_not_found_with_source(
     poetry: Poetry,
     mocker: MockerFixture,
     tester: CommandTester,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
 
@@ -901,7 +919,7 @@ def test_add_constraint_not_found_with_source(
 
 def test_add_to_section_that_does_not_exist_yet(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -913,11 +931,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -944,7 +962,7 @@ cachy = "^0.2.0"
 
 def test_add_to_dev_section_deprecated(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -960,11 +978,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert tester.io.fetch_error() == warning
@@ -979,7 +997,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_should_not_select_prereleases(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
 
@@ -991,11 +1009,11 @@ Using version ^3.13 for pyyaml
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing pyyaml (3.13)
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
@@ -1009,7 +1027,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -1033,7 +1051,7 @@ If you prefer to upgrade it to the latest available version,\
 
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
     app.poetry.file.write(content)
@@ -1059,7 +1077,7 @@ def test_add_latest_should_not_create_duplicate_keys(
     project_factory: ProjectFactory,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     pyproject_content = """\
     [tool.poetry]
     name = "simple-project"
@@ -1095,7 +1113,7 @@ def test_add_latest_should_not_create_duplicate_keys(
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -1110,11 +1128,11 @@ Using version ^1.1.2 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.1.2)
+
+Writing lock file
 """
 
     assert expected in tester.io.fetch_output()
@@ -1127,7 +1145,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
 
@@ -1139,18 +1157,18 @@ Using version ^1.2.3b1 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3b1)
+
+Writing lock file
 """
     assert expected in tester.io.fetch_output()
 
 
 def test_add_prefers_stable_releases(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
 
@@ -1162,11 +1180,11 @@ Using version ^1.2.3 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing foo (1.2.3)
+
+Writing lock file
 """
 
     assert expected in tester.io.fetch_output()
@@ -1174,7 +1192,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_with_lock(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content_hash = app.poetry.locker._get_content_hash()
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1198,7 +1216,7 @@ def test_add_no_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1210,11 +1228,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1232,7 +1250,7 @@ def test_add_equal_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1243,11 +1261,11 @@ def test_add_equal_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1260,7 +1278,7 @@ def test_add_greater_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1271,11 +1289,11 @@ def test_add_greater_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1290,7 +1308,7 @@ def test_add_constraint_with_extras_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -1307,12 +1325,12 @@ def test_add_constraint_with_extras_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.1.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1325,7 +1343,7 @@ def test_add_constraint_dependencies_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     cachy2.add_dependency(msgpack_dep)
@@ -1341,12 +1359,12 @@ def test_add_constraint_dependencies_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1359,7 +1377,7 @@ def test_add_git_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1370,12 +1388,12 @@ def test_add_git_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1395,7 +1413,7 @@ def test_add_git_constraint_with_poetry_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     old_tester.execute("git+https://github.com/demo/pyproject-demo.git")
@@ -1405,12 +1423,12 @@ def test_add_git_constraint_with_poetry_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1425,7 +1443,7 @@ def test_add_git_constraint_with_extras_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
@@ -1437,14 +1455,14 @@ def test_add_git_constraint_with_extras_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   - Installing cleo (0.6.5)
   - Installing pendulum (1.4.4)
   - Installing tomlkit (0.5.5)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1465,7 +1483,7 @@ def test_add_git_ssh_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1476,12 +1494,12 @@ def test_add_git_ssh_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1506,7 +1524,7 @@ def test_add_directory_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1518,12 +1536,12 @@ def test_add_directory_constraint_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1545,7 +1563,7 @@ def test_add_directory_with_poetry_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
@@ -1556,12 +1574,12 @@ def test_add_directory_with_poetry_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1578,7 +1596,7 @@ def test_add_file_constraint_wheel_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -1589,12 +1607,12 @@ def test_add_file_constraint_wheel_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1616,7 +1634,7 @@ def test_add_file_constraint_sdist_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
@@ -1627,12 +1645,12 @@ def test_add_file_constraint_sdist_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1652,7 +1670,7 @@ def test_add_constraint_with_extras_option_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -1669,12 +1687,12 @@ def test_add_constraint_with_extras_option_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1696,7 +1714,7 @@ def test_add_url_constraint_wheel_old_installer(
     installer: NoopInstaller,
     mocker: MockerFixture,
     old_tester: CommandTester,
-):
+) -> None:
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
@@ -1711,13 +1729,13 @@ def test_add_url_constraint_wheel_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1739,7 +1757,7 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
@@ -1754,8 +1772,6 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 4 installs, 0 updates, 0 removals
 
   - Installing cleo (0.6.5)
@@ -1763,6 +1779,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing tomlkit (0.5.5)
   - Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1785,7 +1803,7 @@ def test_add_constraint_with_python_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
 
     repo.add_package(get_package("cachy", "0.1.0"))
@@ -1798,11 +1816,11 @@ def test_add_constraint_with_python_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1821,9 +1839,10 @@ def test_add_constraint_with_platform_old_installer(
     installer: NoopInstaller,
     env: MockEnv,
     old_tester: CommandTester,
-):
+) -> None:
     platform = sys.platform
     env._platform = platform
+    env._marker_env = None
 
     cachy2 = get_package("cachy", "0.2.0")
 
@@ -1837,11 +1856,11 @@ def test_add_constraint_with_platform_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1863,7 +1882,7 @@ def test_add_constraint_with_source_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
     mocker.patch.object(
@@ -1890,11 +1909,11 @@ def test_add_constraint_with_source_old_installer(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1912,7 +1931,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 def test_add_constraint_with_source_that_does_not_exist_old_installer(
     app: PoetryTestApplication, old_tester: CommandTester
-):
+) -> None:
     with pytest.raises(IndexError) as e:
         old_tester.execute("foo --source i-dont-exist")
 
@@ -1924,7 +1943,7 @@ def test_add_constraint_not_found_with_source_old_installer(
     poetry: Poetry,
     mocker: MockerFixture,
     old_tester: CommandTester,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
 
@@ -1944,7 +1963,7 @@ def test_add_to_section_that_does_no_exist_yet_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1956,11 +1975,11 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -1978,7 +1997,7 @@ def test_add_should_not_select_prereleases_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
 
@@ -1990,11 +2009,11 @@ Using version ^3.13 for pyyaml
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing pyyaml (3.13)
+
+Writing lock file
 """
 
     assert old_tester.io.fetch_output() == expected
@@ -2012,7 +2031,7 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_ins
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -2040,7 +2059,7 @@ def test_add_should_work_when_adding_existing_package_with_latest_constraint_old
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -2055,11 +2074,11 @@ Using version ^1.1.2 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.1.2)
+
+Writing lock file
 """
 
     assert expected in old_tester.io.fetch_output()
@@ -2075,7 +2094,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
 
@@ -2087,11 +2106,11 @@ Using version ^1.2.3b1 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
+
+Writing lock file
 """
     assert expected in old_tester.io.fetch_output()
 
@@ -2101,7 +2120,7 @@ def test_add_preferes_stable_releases_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
 
@@ -2113,11 +2132,11 @@ Using version ^1.2.3 for foo
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3)
+
+Writing lock file
 """
 
     assert expected in old_tester.io.fetch_output()
@@ -2128,7 +2147,7 @@ def test_add_with_lock_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.2.0"))
 
     old_tester.execute("cachy --lock")
@@ -2150,11 +2169,12 @@ def test_add_keyboard_interrupt_restore_content(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
-):
+) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     mocker.patch(
-        "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
+        "poetry.installation.installer.Installer._execute",
+        side_effect=KeyboardInterrupt(),
     )
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
@@ -2182,7 +2202,7 @@ def test_add_with_dry_run_keep_files_intact(
     poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
@@ -2197,3 +2217,57 @@ def test_add_with_dry_run_keep_files_intact(
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )
+
+
+def test_add_should_not_change_lock_file_when_dependency_installation_fail(
+    poetry_with_up_to_date_lockfile: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+) -> None:
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+
+    repo.add_package(get_package("docker", "4.3.1"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
+    original_lockfile_content = poetry_with_up_to_date_lockfile.locker.lock_data
+
+    def error(_: Any) -> int:
+        tester.io.write("\n  BuildError\n\n")
+        return 1
+
+    mocker.patch("poetry.installation.installer.Installer._execute", side_effect=error)
+    tester.execute("cachy")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+  BuildError
+
+"""
+
+    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
+    assert poetry_with_up_to_date_lockfile.locker.lock_data == original_lockfile_content
+    assert tester.io.fetch_output() == expected
+
+
+def test_add_with_path_dependency_no_loopiness(
+    poetry_with_path_dependency: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/7398"""
+    tester = command_tester_factory("add", poetry=poetry_with_path_dependency)
+
+    requests_old = get_package("requests", "2.25.1")
+    requests_new = get_package("requests", "2.28.2")
+
+    repo.add_package(requests_old)
+    repo.add_package(requests_new)
+
+    with pytest.raises(SolverProblemError):
+        tester.execute("requests")

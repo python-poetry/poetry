@@ -12,7 +12,7 @@ menu:
 # Configuration
 
 Poetry can be configured via the `config` command ([see more about its usage here]({{< relref "cli#config" >}} "config command documentation"))
-or directly in the `config.toml` file that will be automatically be created when you first run that command.
+or directly in the `config.toml` file that will be automatically created when you first run that command.
 This file can typically be found in one of the following directories:
 
 - macOS:   `~/Library/Preferences/pypoetry`
@@ -138,7 +138,7 @@ You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 ### Cache Directory
 
 - Linux: `$XDG_CACHE_HOME/pypoetry` or `~/.cache/pypoetry`
-- Windows: `%APPDATA%\pypoetry\Cache`
+- Windows: `%LOCALAPPDATA%\pypoetry`
 - MacOS: `~/Library/Caches/pypoetry`
 
 You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
@@ -189,6 +189,19 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 {{% note %}}
 This configuration is ignored when `installer.parallel` is set to `false`.
 {{% /note %}}
+
+### `installer.modern-installation`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+*Introduced in 1.4.0*
+
+Use a more modern and faster method for package installation.
+
+If this causes issues, you can disable it by setting it to `false` and report the problems
+you encounter on the [issue tracker](https://github.com/python-poetry/poetry/issues).
 
 ### `installer.no-binary`
 
@@ -355,6 +368,10 @@ Applies on virtualenv creation.
 **Default**: `{cache-dir}/virtualenvs`
 
 Directory where virtual environments will be created.
+
+{{% note %}}
+This setting controls the global virtual environment storage path. It most likely will not be useful at the local level. To store virtual environments in the project root, see `virtualenvs.in-project`.
+{{% /note %}}
 
 ### `virtualenvs.prefer-active-python` (experimental)
 

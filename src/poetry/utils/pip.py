@@ -55,4 +55,4 @@ def pip_install(
     try:
         return environment.run_pip(*args)
     except EnvCommandError as e:
-        raise PoetryException(f"Failed to install {path.as_posix()}") from e
+        raise PoetryException(f"Failed to install {path}") from e
