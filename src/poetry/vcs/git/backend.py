@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from urllib.parse import urljoin
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
@@ -17,7 +18,7 @@ from dulwich.errors import NotGitRepository
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
-from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.console.exceptions import PoetryConsoleError
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.helpers import remove_directory
 
@@ -136,11 +137,11 @@ class GitRefSpec:
 
 @dataclasses.dataclass
 class GitRepoLocalInfo:
-    repo: dataclasses.InitVar[Repo | Path | str]
+    repo: dataclasses.InitVar[Repo | Path]
     origin: str = dataclasses.field(init=False)
     revision: str = dataclasses.field(init=False)
 
-    def __post_init__(self, repo: Repo | Path | str) -> None:
+    def __post_init__(self, repo: Repo | Path) -> None:
         repo = Git.as_repo(repo=repo) if not isinstance(repo, Repo) else repo
         self.origin = Git.get_remote_url(repo=repo, remote="origin")
         self.revision = Git.get_revision(repo=repo)
@@ -148,7 +149,7 @@ class GitRepoLocalInfo:
 
 class Git:
     @staticmethod
-    def as_repo(repo: Path | str) -> Repo:
+    def as_repo(repo: Path) -> Repo:
         return Repo(str(repo))
 
     @staticmethod
@@ -170,7 +171,7 @@ class Git:
             return repo.head().decode("utf-8")
 
     @classmethod
-    def info(cls, repo: Repo | Path | str) -> GitRepoLocalInfo:
+    def info(cls, repo: Repo | Path) -> GitRepoLocalInfo:
         return GitRepoLocalInfo(repo=repo)
 
     @staticmethod
@@ -223,7 +224,7 @@ class Git:
         try:
             SystemGit.clone(url, target)
         except CalledProcessError:
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url}, check your git configuration and permissions"
                 " for this repository."
             )
@@ -235,9 +236,7 @@ class Git:
         try:
             SystemGit.checkout(revision, target)
         except CalledProcessError:
-            raise PoetrySimpleConsoleException(
-                f"Failed to checkout {url} at '{revision}'"
-            )
+            raise PoetryConsoleError(f"Failed to checkout {url} at '{revision}'")
 
         repo = Repo(str(target))
         return repo
@@ -264,7 +263,7 @@ class Git:
         try:
             refspec.resolve(remote_refs=remote_refs)
         except KeyError:  # branch / ref does not exist
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
                 " remote."
             )
@@ -297,23 +296,28 @@ class Git:
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
                 logger.debug(
-                    "Removing local clone (<c1>%s</>) of repository as it is in a"
-                    " broken state.",
+                    (
+                        "Removing local clone (<c1>%s</>) of repository as it is in a"
+                        " broken state."
+                    ),
                     local.path,
                 )
-                remove_directory(local.path, force=True)
+                remove_directory(Path(local.path), force=True)
 
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
             logger.debug(
-                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and cannot"
-                " be used. The following error was raised:\n\n\t<warning>%s</>",
+                (
+                    "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                    " cannot be used. The following error was"
+                    " raised:\n\n\t<warning>%s</>"
+                ),
                 refspec.key,
                 e,
             )
 
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
                 " remote."
             )
@@ -328,15 +332,23 @@ class Git:
         repo_root = Path(repo.path)
         modules_config = repo_root.joinpath(".gitmodules")
 
+        # A relative URL by definition starts with ../ or ./
+        relative_submodule_regex = re.compile(r"^\.{1,2}/")
+
         if modules_config.exists():
             config = ConfigFile.from_path(str(modules_config))
 
             url: bytes
             path: bytes
             submodules = parse_submodules(config)
+
             for path, url, name in submodules:
                 path_relative = Path(path.decode("utf-8"))
                 path_absolute = repo_root.joinpath(path_relative)
+
+                url_string = url.decode("utf-8")
+                if relative_submodule_regex.search(url_string):
+                    url_string = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
 
                 source_root = path_absolute.parent
                 source_root.mkdir(parents=True, exist_ok=True)
@@ -354,7 +366,7 @@ class Git:
                         continue
 
                 cls.clone(
-                    url=url.decode("utf-8"),
+                    url=url_string,
                     source_root=source_root,
                     name=path_relative.name,
                     revision=revision,
@@ -435,8 +447,10 @@ class Git:
             # without additional configuration or changes for existing projects that
             # use http basic auth credentials.
             logger.debug(
-                "Unable to fetch from private repository '%s', falling back to"
-                " system git",
+                (
+                    "Unable to fetch from private repository '%s', falling back to"
+                    " system git"
+                ),
                 url,
             )
 

@@ -5,7 +5,6 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
@@ -21,6 +20,7 @@ from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Iterator
 
     from cleo.io.io import IO
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
     from poetry.packages import DependencyPackage
     from poetry.puzzle.transaction import Transaction
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -39,7 +39,7 @@ class Solver:
     def __init__(
         self,
         package: ProjectPackage,
-        pool: Pool,
+        pool: RepositoryPool,
         installed: list[Package],
         locked: list[Package],
         io: IO,
@@ -181,8 +181,16 @@ class Solver:
                             if _package.name == dep.name:
                                 continue
 
-                            if dep not in _package.requires:
+                            try:
+                                index = _package.requires.index(dep)
+                            except ValueError:
                                 _package.add_dependency(dep)
+                            else:
+                                _dep = _package.requires[index]
+                                if _dep.marker != dep.marker:
+                                    # marker of feature package is more accurate
+                                    # because it includes relevant extras
+                                    _dep.marker = dep.marker
             else:
                 final_packages.append(package)
                 depths.append(results[package])

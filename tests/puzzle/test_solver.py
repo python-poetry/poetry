@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
+import re
+
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -19,8 +20,10 @@ from poetry.factory import Factory
 from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
-from poetry.repositories.pool import Pool
+from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import Priority
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
@@ -39,6 +42,7 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.puzzle.provider import Provider
     from poetry.puzzle.transaction import Transaction
+    from tests.types import FixtureDirGetter
 
 DEFAULT_SOURCE_REF = (
     VCSDependency("poetry", "git", "git@github.com:python-poetry/poetry.git").branch
@@ -67,12 +71,12 @@ def repo() -> Repository:
 
 
 @pytest.fixture()
-def pool(repo: Repository) -> Pool:
-    return Pool([repo])
+def pool(repo: Repository) -> RepositoryPool:
+    return RepositoryPool([repo])
 
 
 @pytest.fixture()
-def solver(package: ProjectPackage, pool: Pool, io: NullIO) -> Solver:
+def solver(package: ProjectPackage, pool: RepositoryPool, io: NullIO) -> Solver:
     return Solver(package, pool, [], [], io)
 
 
@@ -111,7 +115,7 @@ def check_solver_result(
 
 def test_solver_install_single(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -123,8 +127,8 @@ def test_solver_install_single(
 
 
 def test_solver_remove_if_no_longer_locked(
-    package: ProjectPackage, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, pool: RepositoryPool, io: NullIO
+) -> None:
     package_a = get_package("A", "1.0")
 
     solver = Solver(package, pool, [package_a], [package_a], io)
@@ -134,8 +138,8 @@ def test_solver_remove_if_no_longer_locked(
 
 
 def test_remove_non_installed(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package_a = get_package("A", "1.0")
     repo.add_package(package_a)
 
@@ -147,7 +151,7 @@ def test_remove_non_installed(
 
 def test_install_non_existing_package_fail(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("B", "1"))
 
     package_a = get_package("A", "1.0")
@@ -158,8 +162,8 @@ def test_install_non_existing_package_fail(
 
 
 def test_install_unpublished_package_does_not_fail(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package.add_dependency(Factory.create_dependency("B", "1"))
 
     package_a = get_package("A", "1.0")
@@ -184,7 +188,9 @@ def test_install_unpublished_package_does_not_fail(
     )
 
 
-def test_solver_with_deps(solver: Solver, repo: Repository, package: ProjectPackage):
+def test_solver_with_deps(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -210,7 +216,7 @@ def test_solver_with_deps(solver: Solver, repo: Repository, package: ProjectPack
 
 def test_install_honours_not_equal(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -240,7 +246,7 @@ def test_install_honours_not_equal(
 
 def test_install_with_deps_in_order(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(Factory.create_dependency("C", "*"))
@@ -270,8 +276,8 @@ def test_install_with_deps_in_order(
 
 
 def test_install_installed(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -286,8 +292,8 @@ def test_install_installed(
 
 
 def test_update_installed(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -304,8 +310,8 @@ def test_update_installed(
 
 
 def test_update_with_use_latest(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -333,7 +339,9 @@ def test_update_with_use_latest(
     )
 
 
-def test_solver_sets_groups(solver: Solver, repo: Repository, package: ProjectPackage):
+def test_solver_sets_groups(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*", groups=["dev"]))
 
@@ -364,7 +372,7 @@ def test_solver_sets_groups(solver: Solver, repo: Repository, package: ProjectPa
 
 def test_solver_respects_root_package_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~3.4")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
@@ -397,7 +405,7 @@ def test_solver_respects_root_package_python_versions(
 
 def test_solver_fails_if_mismatch_root_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "^3.4")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
@@ -419,7 +427,7 @@ def test_solver_fails_if_mismatch_root_python_versions(
 
 def test_solver_ignores_python_restricted_if_mismatch_root_package_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~3.8")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "1.0", "python": "<3.8"})
@@ -443,7 +451,7 @@ def test_solver_ignores_python_restricted_if_mismatch_root_package_python_versio
 
 def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~3.4")
     package.extras["foo"] = [get_dependency("B")]
     package.add_dependency(
@@ -478,7 +486,7 @@ def test_solver_solves_optional_and_compatible_packages(
 
 def test_solver_does_not_return_extras_if_not_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -505,7 +513,7 @@ def test_solver_does_not_return_extras_if_not_requested(
 
 def test_solver_returns_extras_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(
         Factory.create_dependency("B", {"version": "*", "extras": ["foo"]})
@@ -545,7 +553,7 @@ def test_solver_returns_extras_only_requested(
     repo: Repository,
     package: ProjectPackage,
     enabled_extra: bool | None,
-):
+) -> None:
     extras = [enabled_extra] if enabled_extra is not None else []
 
     package.add_dependency(Factory.create_dependency("A", "*"))
@@ -607,7 +615,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     repo: Repository,
     package: ProjectPackage,
     enabled_extra: bool | None,
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -656,7 +664,7 @@ def test_solver_returns_extras_only_requested_nested(
     repo: Repository,
     package: ProjectPackage,
     enabled_extra: bool | None,
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -711,7 +719,7 @@ def test_solver_returns_extras_only_requested_nested(
 
 def test_solver_finds_extras_next_to_non_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     # Root depends on A[foo]
     package.add_dependency(
         Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
@@ -757,8 +765,8 @@ def test_solver_finds_extras_next_to_non_extras(
 
 
 def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
-    solver: Solver, repo: Repository, pool: Pool, package: ProjectPackage
-):
+    solver: Solver, repo: Repository, pool: RepositoryPool, package: ProjectPackage
+) -> None:
     package.add_dependency(
         Factory.create_dependency("A", {"version": "*", "source": "legacy"})
     )
@@ -788,9 +796,48 @@ def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
     assert len(ops[0].package.requires) == 0, "a should not require itself"
 
 
+def test_solver_returns_extras_if_excluded_by_markers_without_extras(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+
+    # mandatory dependency with marker
+    dep = get_dependency("B", "^1.0")
+    dep.marker = parse_marker("sys_platform != 'linux'")
+    package_a.add_dependency(dep)
+
+    # optional dependency with same constraint and no marker except for extra
+    dep = get_dependency("B", "^1.0", optional=True)
+    dep.marker = parse_marker("extra == 'foo'")
+    package_a.extras = {"foo": [dep]}
+    package_a.add_dependency(dep)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+    assert (
+        str(ops[1].package.requires[0].marker)
+        == 'sys_platform != "linux" or extra == "foo"'
+    )
+
+
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(
@@ -821,7 +868,7 @@ def test_solver_returns_prereleases_if_requested(
 
 def test_solver_does_not_return_prereleases_if_not_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(Factory.create_dependency("C", "*"))
@@ -850,7 +897,7 @@ def test_solver_does_not_return_prereleases_if_not_requested(
 
 def test_solver_sub_dependencies_with_requirements(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -888,7 +935,7 @@ def test_solver_sub_dependencies_with_requirements(
 
 def test_solver_sub_dependencies_with_requirements_complex(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "<5.0"})
     )
@@ -947,7 +994,7 @@ def test_solver_sub_dependencies_with_requirements_complex(
 
 def test_solver_sub_dependencies_with_not_supported_python_version(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -969,7 +1016,7 @@ def test_solver_sub_dependencies_with_not_supported_python_version(
 
 def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "^3.4")
 
     package.add_dependency(
@@ -1013,7 +1060,7 @@ def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
 
 def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(
@@ -1066,7 +1113,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
 
 def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(  # noqa: E501
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("E", "*"))
     package.add_dependency(
@@ -1126,7 +1173,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
 
 def test_solver_with_dependency_and_prerelease_sub_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1153,7 +1200,7 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies(
 
 def test_solver_circular_dependency(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1185,7 +1232,7 @@ def test_solver_circular_dependency(
 
 def test_solver_circular_dependency_chain(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1222,7 +1269,7 @@ def test_solver_circular_dependency_chain(
 
 def test_solver_dense_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     # The root package depends on packages A0...An-1,
     # And package Ai depends  on packages A0...Ai-1
     # This graph is a transitive tournament
@@ -1245,7 +1292,7 @@ def test_solver_dense_dependencies(
 
 def test_solver_duplicate_dependencies_same_constraint(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1274,7 +1321,7 @@ def test_solver_duplicate_dependencies_same_constraint(
 
 def test_solver_duplicate_dependencies_different_constraints(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1306,7 +1353,7 @@ def test_solver_duplicate_dependencies_different_constraints(
 
 def test_solver_duplicate_dependencies_different_constraints_same_requirements(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1333,7 +1380,7 @@ So, because no versions of a match !=1.0
 
 def test_solver_duplicate_dependencies_different_constraints_merge_by_marker(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1371,7 +1418,7 @@ def test_solver_duplicate_dependencies_different_constraints_merge_by_marker(
 @pytest.mark.parametrize("git_first", [False, True])
 def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
     solver: Solver, repo: Repository, package: ProjectPackage, git_first: bool
-):
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
     repo.add_package(get_package("cleo", "1.0.0"))
@@ -1439,7 +1486,7 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
 
 def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "1.0"))
 
@@ -1480,9 +1527,167 @@ def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
     )
 
 
+def test_solver_duplicate_dependencies_different_constraints_conflict(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    package.add_dependency(Factory.create_dependency("A", ">=1.1"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.1", "python": "3.10"})
+    )
+
+    repo.add_package(get_package("A", "1.0"))
+    repo.add_package(get_package("A", "1.1"))
+    repo.add_package(get_package("A", "1.2"))
+
+    expectation = (
+        "Incompatible constraints in requirements of root (1.0):\n"
+        'A (<1.1) ; python_version == "3.10"\n'
+        "A (>=1.1)"
+    )
+    with pytest.raises(IncompatibleConstraintsError, match=re.escape(expectation)):
+        solver.solve()
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers1(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python >= 3.10
+        A (<1.1) ; python < 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; <empty>
+        A (>=1.0,<1.2) ; python >= 3.10
+        A (>=1.0,<1.1) ; python < 3.10
+
+    The dependency with an empty marker has to be ignored.
+    """
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": ">=3.10"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.1", "python": "<3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            # only a10 and a11, not a12
+            {"job": "install", "package": package_a10},
+            {"job": "install", "package": package_a11},
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers2(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python == 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; python != 3.10
+        A (>=1.0,<1.2) ; python == 3.10
+
+    The first dependency has to be ignored
+    because it is not compatible with the project's python constraint.
+    """
+    set_package_python_versions(solver.provider, "~3.10")
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": "3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a11},  # only a11, not a12
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_duplicate_dependencies_different_constraints_discard_no_markers3(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Initial dependencies:
+        A (>=1.0)
+        A (<1.2) ; python == 3.10
+
+    Merged dependencies:
+        A (>=1.0) ; python != 3.10
+        A (>=1.0,<1.2) ; python == 3.10
+
+    The first dependency has to be ignored
+    because it is not compatible with the current environment.
+    """
+    package.add_dependency(Factory.create_dependency("A", ">=1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "<1.2", "python": "3.10"})
+    )
+    package.add_dependency(Factory.create_dependency("B", "*"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a11 = get_package("A", "1.1")
+    package_a12 = get_package("A", "1.2")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_b)
+
+    with solver.use_environment(MockEnv((3, 10, 0))):
+        transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a11},  # only a11, not a12
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_intersection(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     """
     Distinct requirements per marker:
     * Python 2.7: A (which requires B) and B
@@ -1553,7 +1758,7 @@ def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_inters
 
 def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_intersection2(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     """
     Empty intersection between top level dependency and transient dependency.
     """
@@ -1596,7 +1801,7 @@ def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_inters
 
 def test_solver_duplicate_dependencies_sub_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1635,10 +1840,11 @@ def test_solver_duplicate_dependencies_sub_dependencies(
     )
 
 
-def test_duplicate_path_dependencies(solver: Solver, package: ProjectPackage) -> None:
+def test_duplicate_path_dependencies(
+    solver: Solver, package: ProjectPackage, fixture_dir: FixtureDirGetter
+) -> None:
     set_package_python_versions(solver.provider, "^3.7")
-    fixtures = Path(__file__).parent.parent / "fixtures"
-    project_dir = fixtures / "with_conditional_path_deps"
+    project_dir = fixture_dir("with_conditional_path_deps")
 
     path1 = (project_dir / "demo_one").as_posix()
     demo1 = Package("demo", "1.2.3", source_type="directory", source_url=path1)
@@ -1668,11 +1874,10 @@ def test_duplicate_path_dependencies(solver: Solver, package: ProjectPackage) ->
 
 
 def test_duplicate_path_dependencies_same_path(
-    solver: Solver, package: ProjectPackage
+    solver: Solver, package: ProjectPackage, fixture_dir: FixtureDirGetter
 ) -> None:
     set_package_python_versions(solver.provider, "^3.7")
-    fixtures = Path(__file__).parent.parent / "fixtures"
-    project_dir = fixtures / "with_conditional_path_deps"
+    project_dir = fixture_dir("with_conditional_path_deps")
 
     path1 = (project_dir / "demo_one").as_posix()
     demo1 = Package("demo", "1.2.3", source_type="directory", source_url=path1)
@@ -1694,7 +1899,7 @@ def test_duplicate_path_dependencies_same_path(
 
 def test_solver_fails_if_dependency_name_does_not_match_package(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(
         Factory.create_dependency(
             "my-demo", {"git": "https://github.com/demo/demo.git"}
@@ -1707,7 +1912,7 @@ def test_solver_fails_if_dependency_name_does_not_match_package(
 
 def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package_a = get_package("A", "1.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_b = get_package("B", "1.0")
@@ -1735,7 +1940,7 @@ def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
 
 def test_solver_can_resolve_git_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1770,7 +1975,7 @@ def test_solver_can_resolve_git_dependencies(
 
 def test_solver_can_resolve_git_dependencies_with_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1810,7 +2015,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(
 )
 def test_solver_can_resolve_git_dependencies_with_ref(
     solver: Solver, repo: Repository, package: ProjectPackage, ref: dict[str, str]
-):
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1845,7 +2050,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(  # noqa: E501
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.6"})
@@ -1863,7 +2068,7 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(  # noqa: E501
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.6"})
@@ -1895,7 +2100,7 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 
 def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.5"})
@@ -1912,7 +2117,7 @@ def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_wit
 
 def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(  # noqa: E501
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.5"})
@@ -1934,7 +2139,7 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
 
 def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(  # noqa: E501
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     dep1 = Dependency.create_from_pep_508('B (>=1.0); extra == "foo"')
     dep1.activate()
     dep2 = Dependency.create_from_pep_508('B (>=2.0); extra == "bar"')
@@ -1972,7 +2177,7 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
 
 def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.4")
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "^3.6"})
@@ -2004,7 +2209,7 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
 
 def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_package(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(Factory.create_dependency("C", "*"))
@@ -2043,7 +2248,7 @@ def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_pack
 
 def test_solver_should_not_resolve_prerelease_version_if_not_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("A", "~1.8.0"))
     package.add_dependency(Factory.create_dependency("B", "^0.5.0"))
 
@@ -2062,7 +2267,7 @@ def test_solver_should_not_resolve_prerelease_version_if_not_requested(
 
 def test_solver_ignores_dependencies_with_incompatible_python_full_version_marker(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "^3.6")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
     package.add_dependency(Factory.create_dependency("B", "^2.0"))
@@ -2094,8 +2299,8 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
 
 
 def test_solver_git_dependencies_update(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -2143,8 +2348,8 @@ def test_solver_git_dependencies_update(
 
 
 def test_solver_git_dependencies_update_skipped(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -2176,8 +2381,8 @@ def test_solver_git_dependencies_update_skipped(
 
 
 def test_solver_git_dependencies_short_hash_update_skipped(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -2222,19 +2427,15 @@ def test_solver_git_dependencies_short_hash_update_skipped(
 
 
 def test_solver_can_resolve_directory_dependencies(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo"
-    ).as_posix()
+    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
@@ -2257,10 +2458,11 @@ def test_solver_can_resolve_directory_dependencies(
 
 def test_solver_can_resolve_directory_dependencies_nested_editable(
     repo: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
-):
-    base = Path(__file__).parent.parent / "fixtures" / "project_with_nested_local"
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    base = fixture_dir("project_with_nested_local")
     poetry = Factory().create_poetry(cwd=base)
     package = poetry.package
 
@@ -2310,21 +2512,17 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
 
 
 def test_solver_can_resolve_directory_dependencies_with_extras(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo"
-    ).as_posix()
+    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
 
     package.add_dependency(
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
@@ -2352,17 +2550,15 @@ def test_solver_can_resolve_directory_dependencies_with_extras(
 
 
 def test_solver_can_resolve_sdist_dependencies(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0.tar.gz"
-    ).as_posix()
+    path = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
@@ -2384,19 +2580,17 @@ def test_solver_can_resolve_sdist_dependencies(
 
 
 def test_solver_can_resolve_sdist_dependencies_with_extras(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0.tar.gz"
-    ).as_posix()
+    path = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").as_posix()
 
     package.add_dependency(
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
@@ -2424,17 +2618,15 @@ def test_solver_can_resolve_sdist_dependencies_with_extras(
 
 
 def test_solver_can_resolve_wheel_dependencies(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl"
-    ).as_posix()
+    path = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
@@ -2456,19 +2648,17 @@ def test_solver_can_resolve_wheel_dependencies(
 
 
 def test_solver_can_resolve_wheel_dependencies_with_extras(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl"
-    ).as_posix()
+    path = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").as_posix()
 
     package.add_dependency(
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
@@ -2497,9 +2687,9 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(
 
 def test_solver_can_solve_with_legacy_repository_using_proper_dists(
     package: ProjectPackage, io: NullIO
-):
+) -> None:
     repo = MockLegacyRepository()
-    pool = Pool([repo])
+    pool = RepositoryPool([repo])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -2540,11 +2730,11 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
 def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_dists(
     package: ProjectPackage,
     io: NullIO,
-):
+) -> None:
     package.python_versions = "^3.7"
 
     repo = MockLegacyRepository()
-    pool = Pool([repo])
+    pool = RepositoryPool([repo])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -2569,11 +2759,11 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
     )
 
 
-def test_solver_skips_invalid_versions(package: ProjectPackage, io: NullIO):
+def test_solver_skips_invalid_versions(package: ProjectPackage, io: NullIO) -> None:
     package.python_versions = "^3.7"
 
     repo = MockPyPIRepository()
-    pool = Pool([repo])
+    pool = RepositoryPool([repo])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -2588,7 +2778,7 @@ def test_solver_skips_invalid_versions(package: ProjectPackage, io: NullIO):
 
 def test_multiple_constraints_on_root(
     package: ProjectPackage, solver: Solver, repo: Repository
-):
+) -> None:
     package.add_dependency(
         Factory.create_dependency("foo", {"version": "^1.0", "python": "^2.7"})
     )
@@ -2612,12 +2802,12 @@ def test_multiple_constraints_on_root(
 
 def test_solver_chooses_most_recent_version_amongst_repositories(
     package: ProjectPackage, io: NullIO
-):
+) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("tomlkit", {"version": "^0.5"}))
 
     repo = MockLegacyRepository()
-    pool = Pool([repo, MockPyPIRepository()])
+    pool = RepositoryPool([repo, MockPyPIRepository()])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -2633,14 +2823,14 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
 
 def test_solver_chooses_from_correct_repository_if_forced(
     package: ProjectPackage, io: NullIO
-):
+) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
         Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
     )
 
     repo = MockLegacyRepository()
-    pool = Pool([repo, MockPyPIRepository()])
+    pool = RepositoryPool([repo, MockPyPIRepository()])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -2668,7 +2858,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
     package: ProjectPackage,
     io: NullIO,
-):
+) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("foo", "^1.0"))
     package.add_dependency(
@@ -2679,7 +2869,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
     foo = get_package("foo", "1.0.0")
     foo.add_dependency(Factory.create_dependency("tomlkit", "^0.5.0"))
     repo.add_package(foo)
-    pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
+    pool = RepositoryPool([MockLegacyRepository(), repo, MockPyPIRepository()])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -2710,12 +2900,12 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
 
 def test_solver_does_not_choose_from_secondary_repository_by_default(
     package: ProjectPackage, io: NullIO
-):
+) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("clikit", {"version": "^0.2.0"}))
 
-    pool = Pool()
-    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.SECONDARY)
     pool.add_repository(MockLegacyRepository())
 
     solver = Solver(package, pool, [], [], io)
@@ -2758,14 +2948,14 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
 def test_solver_chooses_from_secondary_if_explicit(
     package: ProjectPackage,
     io: NullIO,
-):
+) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
         Factory.create_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
     )
 
-    pool = Pool()
-    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.SECONDARY)
     pool.add_repository(MockLegacyRepository())
 
     solver = Solver(package, pool, [], [], io)
@@ -2797,12 +2987,77 @@ def test_solver_chooses_from_secondary_if_explicit(
     assert ops[2].package.source_url is None
 
 
+def test_solver_does_not_choose_from_explicit_repository(
+    package: ProjectPackage, io: NullIO
+) -> None:
+    package.python_versions = "^3.7"
+    package.add_dependency(Factory.create_dependency("attrs", {"version": "^17.4.0"}))
+
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, [], [], io)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
+    package: ProjectPackage,
+    io: NullIO,
+) -> None:
+    package.python_versions = "^3.7"
+    package.add_dependency(
+        Factory.create_dependency("pylev", {"version": "^1.2.0", "source": "PyPI"})
+    )
+
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, [], [], io)
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": get_package("pylev", "1.3.0")},
+        ],
+    )
+
+    assert ops[0].package.source_type is None
+    assert ops[0].package.source_url is None
+
+
+def test_solver_ignores_explicit_repo_for_transient_dependencies(
+    package: ProjectPackage,
+    io: NullIO,
+) -> None:
+    # clikit depends on pylev, which is in MockPyPIRepository (explicit) but not in
+    # MockLegacyRepository
+    package.python_versions = "^3.7"
+    package.add_dependency(
+        Factory.create_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
+    )
+
+    pool = RepositoryPool()
+    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, [], [], io)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
 def test_solver_discards_packages_with_empty_markers(
     package: ProjectPackage,
     repo: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
-):
+) -> None:
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
         Factory.create_dependency(
@@ -2838,7 +3093,7 @@ def test_solver_discards_packages_with_empty_markers(
 
 def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(
         Factory.create_dependency(
@@ -2870,7 +3125,7 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
 
 def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(
         Factory.create_dependency(
@@ -2902,9 +3157,9 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
 def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
     package: ProjectPackage,
     repo: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
-):
+) -> None:
     package.add_dependency(
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
@@ -2939,7 +3194,7 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
 
 def test_ignore_python_constraint_no_overlap_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     pytest = get_package("demo", "1.0.0")
     pytest.add_dependency(
         Factory.create_dependency(
@@ -2964,7 +3219,7 @@ def test_ignore_python_constraint_no_overlap_dependencies(
 
 def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
 
@@ -2995,7 +3250,9 @@ def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     )
 
 
-def test_solver_synchronize_single(package: ProjectPackage, pool: Pool, io: NullIO):
+def test_solver_synchronize_single(
+    package: ProjectPackage, pool: RepositoryPool, io: NullIO
+) -> None:
     package_a = get_package("a", "1.0")
 
     solver = Solver(package, pool, [package_a], [], io)
@@ -3009,9 +3266,9 @@ def test_solver_synchronize_single(package: ProjectPackage, pool: Pool, io: Null
 @pytest.mark.skip(reason="Poetry no longer has critical package requirements")
 def test_solver_with_synchronization_keeps_critical_package(
     package: ProjectPackage,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
-):
+) -> None:
     package_pip = get_package("setuptools", "1.0")
 
     solver = Solver(package, pool, [package_pip], [], io)
@@ -3021,8 +3278,11 @@ def test_solver_with_synchronization_keeps_critical_package(
 
 
 def test_solver_cannot_choose_another_version_for_directory_dependencies(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.1.0")
     foo = get_package("foo", "1.2.3")
@@ -3031,14 +3291,7 @@ def test_solver_cannot_choose_another_version_for_directory_dependencies(
     repo.add_package(demo)
     repo.add_package(pendulum)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo"
-    ).as_posix()
+    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
     package.add_dependency(Factory.create_dependency("foo", "^1.2.3"))
@@ -3050,8 +3303,11 @@ def test_solver_cannot_choose_another_version_for_directory_dependencies(
 
 
 def test_solver_cannot_choose_another_version_for_file_dependencies(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
     foo = get_package("foo", "1.2.3")
@@ -3060,12 +3316,7 @@ def test_solver_cannot_choose_another_version_for_file_dependencies(
     repo.add_package(demo)
     repo.add_package(pendulum)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl"
-    ).as_posix()
+    path = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
     package.add_dependency(Factory.create_dependency("foo", "^1.2.3"))
@@ -3078,7 +3329,7 @@ def test_solver_cannot_choose_another_version_for_file_dependencies(
 
 def test_solver_cannot_choose_another_version_for_git_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
     foo = get_package("foo", "1.2.3")
@@ -3103,13 +3354,9 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     repo: Repository,
     package: ProjectPackage,
     http: type[httpretty.httpretty],
-):
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl"
-    )
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    path = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
     http.register_uri(
         "GET",
@@ -3140,8 +3387,8 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
 
 
 def test_solver_should_not_update_same_version_packages_if_installed_has_no_source_type(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package.add_dependency(Factory.create_dependency("foo", "1.0.0"))
 
     foo = Package(
@@ -3163,7 +3410,7 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
 
 def test_solver_should_use_the_python_constraint_from_the_environment_if_available(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
 
@@ -3190,7 +3437,7 @@ def test_solver_should_use_the_python_constraint_from_the_environment_if_availab
 
 def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.python_versions = "~2.7 || ^3.5"
     package.add_dependency(
         Factory.create_dependency(
@@ -3238,7 +3485,7 @@ def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
 
 def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.python_versions = "^3.6"
     set_package_python_versions(solver.provider, "^3.6")
     package.add_dependency(
@@ -3256,7 +3503,7 @@ def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
 
 def test_solver_can_resolve_transitive_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(Factory.create_dependency("requests", "^2.24.0"))
     package.add_dependency(Factory.create_dependency("PyOTA", "^2.1.0"))
 
@@ -3294,7 +3541,7 @@ def test_solver_can_resolve_transitive_extras(
 
 def test_solver_can_resolve_for_packages_with_missing_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.add_dependency(
         Factory.create_dependency(
             "django-anymail", {"version": "^6.0", "extras": ["postmark"]}
@@ -3330,8 +3577,8 @@ def test_solver_can_resolve_for_packages_with_missing_extras(
 
 
 def test_solver_can_resolve_python_restricted_package_dependencies(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     package.add_dependency(
         Factory.create_dependency("futures", {"version": "^3.3.0", "python": "~2.7"})
     )
@@ -3362,7 +3609,7 @@ def test_solver_can_resolve_python_restricted_package_dependencies(
 
 def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     package.python_versions = "~2.7 || ^3.5"
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("virtualenv", "^20.4.3"))
@@ -3414,10 +3661,10 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
 def test_solver_keeps_multiple_locked_dependencies_for_same_package(
     package: ProjectPackage,
     repo: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
     is_locked: bool,
-):
+) -> None:
     package.add_dependency(
         Factory.create_dependency("A", {"version": "~1.1", "python": "<3.7"})
     )
@@ -3468,10 +3715,10 @@ def test_solver_keeps_multiple_locked_dependencies_for_same_package(
 def test_solver_does_not_update_ref_of_locked_vcs_package(
     package: ProjectPackage,
     repo: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
     is_locked: bool,
-):
+) -> None:
     locked_ref = "123456"
     latest_ref = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
     demo_locked = Package(
@@ -3524,10 +3771,10 @@ def test_solver_does_not_update_ref_of_locked_vcs_package(
 def test_solver_does_not_fetch_locked_vcs_package_with_ref(
     package: ProjectPackage,
     repo: Repository,
-    pool: Pool,
+    pool: RepositoryPool,
     io: NullIO,
     mocker: MockerFixture,
-):
+) -> None:
     locked_ref = "123456"
     demo_locked = Package(
         "demo",
@@ -3556,8 +3803,11 @@ def test_solver_does_not_fetch_locked_vcs_package_with_ref(
 
 
 def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
-    solver: Solver, repo: Repository, package: ProjectPackage
-):
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     """
     Another package requires the same dependency with extras that is required
     by the project as direct origin dependency without any extras.
@@ -3572,14 +3822,7 @@ def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo"
-    ).as_posix()
+    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
 
     # project requires path dependency of demo while demo-foo requires demo[foo]
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
@@ -3609,7 +3852,7 @@ def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
 
 def test_solver_incompatible_dependency_with_and_without_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
-):
+) -> None:
     """
     The solver first encounters a requirement for google-auth and then later an
     incompatible requirement for google-auth[aiohttp].
@@ -3660,8 +3903,8 @@ def test_solver_incompatible_dependency_with_and_without_extras(
 
 
 def test_update_with_prerelease_and_no_solution(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO
-):
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
     # Locked and installed: cleo which depends on an old version of crashtest.
     cleo = get_package("cleo", "1.0.0a5")
     crashtest = get_package("crashtest", "0.3.0")
@@ -3689,7 +3932,7 @@ def test_update_with_prerelease_and_no_solution(
 
 def test_solver_yanked_warning(
     package: ProjectPackage,
-    pool: Pool,
+    pool: RepositoryPool,
     repo: Repository,
 ) -> None:
     package.add_dependency(Factory.create_dependency("foo", "==1"))
@@ -3728,8 +3971,12 @@ def test_solver_yanked_warning(
 
 @pytest.mark.parametrize("is_locked", [False, True])
 def test_update_with_use_latest_vs_lock(
-    package: ProjectPackage, repo: Repository, pool: Pool, io: NullIO, is_locked: bool
-):
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    is_locked: bool,
+) -> None:
     """
     A1 depends on B2, A2 and A3 depend on B1. Same for C.
     B1 depends on A2/C2, B2 depends on A1/C1.

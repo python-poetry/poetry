@@ -20,15 +20,6 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-_VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
-
-
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = OSError
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -266,26 +257,22 @@ class InstalledRepository(Repository):
                 if path in skipped:
                     continue
 
-                try:
-                    name = canonicalize_name(distribution.metadata["name"])
-                except TypeError:
+                name = distribution.metadata.get("name")  # type: ignore[attr-defined]
+                if name is None:
                     logger.warning(
-                        "Project environment contains an invalid distribution"
-                        " (<c1>%s</>). Consider removing it manually or recreate the"
-                        " environment.",
+                        (
+                            "Project environment contains an invalid distribution"
+                            " (<c1>%s</>). Consider removing it manually or recreate"
+                            " the environment."
+                        ),
                         path,
                     )
                     skipped.add(path)
                     continue
 
-                if name in seen:
-                    continue
+                name = canonicalize_name(name)
 
-                try:
-                    path.relative_to(_VENDORS)
-                except ValueError:
-                    pass
-                else:
+                if name in seen:
                     continue
 
                 package = cls.create_package_from_distribution(distribution, env)

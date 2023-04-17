@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.constraints.version import Version
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.base_installer import BaseInstaller
-from poetry.repositories.http import HTTPRepository
+from poetry.pyproject.toml import PyProjectTOML
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils._compat import encode
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -25,12 +25,12 @@ if TYPE_CHECKING:
     from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
+    def __init__(self, env: Env, io: IO, pool: RepositoryPool) -> None:
         self._env = env
         self._io = io
         self._pool = pool
@@ -46,7 +46,7 @@ class PipInstaller(BaseInstaller):
 
             return
 
-        args = ["install", "--no-deps"]
+        args = ["install", "--no-deps", "--no-input"]
 
         if not package.is_direct_origin() and package.source_url:
             assert package.source_reference is not None
@@ -221,7 +221,7 @@ class PipInstaller(BaseInstaller):
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
+        pyproject = PyProjectTOML(req / "pyproject.toml")
 
         package_poetry = None
         if pyproject.is_poetry_project():

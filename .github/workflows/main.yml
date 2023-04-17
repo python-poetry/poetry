@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         include:
           - os: Ubuntu
             image: ubuntu-22.04
@@ -50,11 +50,11 @@ jobs:
 
       - name: Get full Python version
         id: full-python-version
-        run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
+        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
 
       - name: Bootstrap poetry
         run: |
-          curl -sL https://install.python-poetry.org | python - -y
+          curl -sSL https://install.python-poetry.org | python - -y
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
@@ -63,6 +63,12 @@ jobs:
       - name: Update Path for Windows
         if: ${{ matrix.os == 'Windows' }}
         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
+
+      - name: Enable long paths for git on Windows
+        if: ${{ matrix.os == 'Windows' }}
+        # Enable handling long path names (+260 char) on the Windows platform
+        # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+        run: git config --system core.longpaths true
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -83,10 +89,8 @@ jobs:
           # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
           timeout 10s poetry run pip --version || rm -rf .venv
 
-      # XXX: https://github.com/pypa/pip/issues/11352 causes random failures -- remove once fixed in a release.
-      - name: Upgrade pip on Python 3.11
-        if: ${{ matrix.python-version == '3.11-dev' }}
-        run: poetry run pip install git+https://github.com/pypa/pip.git@f8a25921e5c443b07483017b0ffdeb08b9ba2fdf
+      - name: Check lock file
+        run: poetry lock --check
 
       - name: Install dependencies
         run: poetry install --with github-actions
@@ -103,8 +107,7 @@ jobs:
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
         run: |
-          echo ::set-output name=version::$(\
-            poetry show poetry-plugin-export  | grep version | cut -d : -f 2 | xargs)
+          echo version=$(poetry show poetry-plugin-export | grep version | cut -d : -f 2 | xargs) >> $GITHUB_OUTPUT
 
       - name: Checkout Plugin Source (poetry-plugin-export)
         uses: actions/checkout@v3

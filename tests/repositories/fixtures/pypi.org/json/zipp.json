@@ -1,0 +1,27 @@
+{
+  "name": "zipp",
+  "files": [
+    {
+      "hashes": {
+        "md5": "0ec47fbf522751f6c5fa904cb33f1f59",
+        "sha256": "957cfda87797e389580cb8b9e3870841ca991e2125350677b2ca83a0e99390a3"
+      },
+      "filename": "zipp-3.5.0-py3-none-any.whl",
+      "requires_python": ">=3.6",
+      "url": "https://files.pythonhosted.org/packages/92/d9/89f433969fb8dc5b9cbdd4b4deb587720ec1aeb59a020cf15002b9593eef/zipp-3.5.0-py3-none-any.whl"
+    },
+    {
+      "hashes": {
+        "md5": "617efbf3edb707c57008ec00f408972f",
+        "sha256": "f5812b1e007e48cff63449a5e9f4e7ebea716b4111f9c4f9a645f91d579bf0c4"
+      },
+      "filename": "zipp-3.5.0.tar.gz",
+      "requires_python": ">=3.6",
+      "url": "https://files.pythonhosted.org/packages/3a/9f/1d4b62cbe8d222539a84089eeab603d8e45ee1f897803a0ae0860400d6e7/zipp-3.5.0.tar.gz"
+    }
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3879671
+  }
+}

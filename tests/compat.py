@@ -8,6 +8,8 @@ if sys.version_info < (3, 8):
 
     from typing_extensions import Protocol  # nopycln: import
 else:
-    import zipfile  # noqa: F401
+    import zipfile
 
-    from typing import Protocol  # noqa: F401
+    from typing import Protocol
+
+__all__ = ["zipfile", "Protocol"]

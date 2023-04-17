@@ -59,19 +59,24 @@ use [extras]({{< relref "pyproject#extras" >}}) instead. Extras can be installed
 {{% /note %}}
 
 {{% note %}}
-**A note about the `dev-dependencies` section**
+**A note about defining a `dev` dependencies group**
 
-Any dependency declared in the `dev-dependencies` section will automatically be added to a `dev` group.
-So the two following notations are equivalent:
+The proper way to define a `dev` dependencies group since Poetry 1.2.0 is the following:
 
 ```toml
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
 
+This group notation is preferred since Poetry 1.2.0 and not usable in earlier versions.
+For backwards compatibility with older versions of Poetry,
+any dependency declared in the `dev-dependencies` section will automatically be added to the `dev` group.
+So the above and following notations are equivalent:
+
 ```toml
-[tool.poetry.group.dev.dependencies]
+# Poetry pre-1.2.x style, understood by Poetry 1.0–1.2
+[tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
@@ -158,7 +163,7 @@ poetry install --only docs
 ```
 
 {{% note %}}
-If you only want to install the project's runtime dependencies, you can do so  with the
+If you only want to install the project's runtime dependencies, you can do so with the
 `--only main` notation:
 
 ```bash

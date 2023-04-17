@@ -15,9 +15,9 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersion
 
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.http import HTTPRepository
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
-from poetry.utils._compat import to_str
+from poetry.utils._compat import decode
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
@@ -82,12 +82,14 @@ class PyPiRepository(HTTPRepository):
 
             try:
                 package = Package(name, version)
-                package.description = to_str(description.strip())
+                package.description = decode(description.strip())
                 results.append(package)
             except InvalidVersion:
                 self._log(
-                    f'Unable to parse version "{version}" for the {name} package,'
-                    " skipping",
+                    (
+                        f'Unable to parse version "{version}" for the {name} package,'
+                        " skipping"
+                    ),
                     level="debug",
                 )
 
@@ -109,19 +111,10 @@ class PyPiRepository(HTTPRepository):
         Find packages on the remote server.
         """
         try:
-            json_page = self.get_json_page(name)
+            json_page = self.get_page(name)
         except PackageNotFound:
-            self._log(
-                f"No packages found for {name}",
-                level="debug",
-            )
+            self._log(f"No packages found for {name}", level="debug")
             return []
-
-        versions: list[tuple[Version, str | bool]]
-
-        key: str = name
-        if not constraint.is_any():
-            key = f"{key}:{constraint!s}"
 
         versions = [
             (version, json_page.yanked(name, version))
@@ -129,12 +122,7 @@ class PyPiRepository(HTTPRepository):
             if constraint.allows(version)
         ]
 
-        pretty_name = json_page.content["name"]
-        packages = [
-            Package(pretty_name, version, yanked=yanked) for version, yanked in versions
-        ]
-
-        return packages
+        return [Package(name, version, yanked=yanked) for version, yanked in versions]
 
     def _get_package_info(self, name: str) -> dict[str, Any]:
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
@@ -174,7 +162,6 @@ class PyPiRepository(HTTPRepository):
             name=info["name"],
             version=info["version"],
             summary=info["summary"],
-            platform=info["platform"],
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
             files=info.get("files", []),
@@ -224,7 +211,7 @@ class PyPiRepository(HTTPRepository):
 
         return data.asdict()
 
-    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+    def _get_page(self, name: NormalizedName) -> SimpleJsonPage:
         source = self._base_url + f"simple/{name}/"
         info = self.get_package_info(name)
         return SimpleJsonPage(source, info)

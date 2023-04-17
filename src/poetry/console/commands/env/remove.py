@@ -13,8 +13,10 @@ class EnvRemoveCommand(Command):
     arguments = [
         argument(
             "python",
-            "The python executables associated with, or names of the virtual"
-            " environments which are to be removed.",
+            (
+                "The python executables associated with, or names of the virtual"
+                " environments which are to be removed."
+            ),
             optional=True,
             multiple=True,
         )
