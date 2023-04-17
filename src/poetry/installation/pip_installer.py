@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import tempfile
 import urllib.parse
@@ -9,11 +10,11 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 
-from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from poetry.installation.base_installer import BaseInstaller
-from poetry.repositories.http import HTTPRepository
+from poetry.pyproject.toml import PyProjectTOML
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils._compat import encode
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -24,12 +25,12 @@ if TYPE_CHECKING:
     from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
+    def __init__(self, env: Env, io: IO, pool: RepositoryPool) -> None:
         self._env = env
         self._io = io
         self._pool = pool
@@ -45,12 +46,9 @@ class PipInstaller(BaseInstaller):
 
             return
 
-        args = ["install", "--no-deps"]
+        args = ["install", "--no-deps", "--no-input"]
 
-        if (
-            package.source_type not in {"git", "directory", "file", "url"}
-            and package.source_url
-        ):
+        if not package.is_direct_origin() and package.source_url:
             assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
             parsed = urllib.parse.urlparse(package.source_url)
@@ -223,15 +221,19 @@ class PipInstaller(BaseInstaller):
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
+        pyproject = PyProjectTOML(req / "pyproject.toml")
 
+        package_poetry = None
         if pyproject.is_poetry_project():
+            with contextlib.suppress(RuntimeError):
+                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
+
+        if package_poetry is not None:
             # Even if there is a build system specified
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
             legacy_pip = self._env.pip_version < Version.from_parts(19, 0, 0)
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
@@ -254,22 +256,16 @@ class PipInstaller(BaseInstaller):
                 builder = SdistBuilder(package_poetry)
 
                 with builder.setup_py():
-                    if package.develop:
-                        return pip_install(
-                            path=req,
-                            environment=self._env,
-                            upgrade=True,
-                            editable=True,
-                        )
                     return pip_install(
-                        path=req, environment=self._env, deps=False, upgrade=True
+                        path=req,
+                        environment=self._env,
+                        upgrade=True,
+                        editable=package.develop,
                     )
 
-        if package.develop:
-            return pip_install(
-                path=req, environment=self._env, upgrade=True, editable=True
-            )
-        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
+        return pip_install(
+            path=req, environment=self._env, upgrade=True, editable=package.develop
+        )
 
     def install_git(self, package: Package) -> None:
         from poetry.core.packages.package import Package

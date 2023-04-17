@@ -208,7 +208,7 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific [build](#build) format you can specify
+If you want to restrict a package to a specific build format you can specify
 it by using `format`:
 
 ```toml
@@ -369,7 +369,7 @@ mandatory = "^1.0"
 
 # A list of all of the optional dependencies, some of which are included in the
 # below `extras`. They can be opted into by apps.
-psycopg2 = { version = "^2.7", optional = true }
+psycopg2 = { version = "^2.9", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
 
 [tool.poetry.extras]
@@ -385,11 +385,23 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-Or, you can install all extras with the `--all-extras` option:
+Any extras you don't specify will be removed. Note this behavior is different from
+[optional dependency groups]({{< relref "managing-dependencies#optional-groups" >}}) not
+selected for install, e.g. those not specified via `install --with`.
+
+You can install all extras with the `--all-extras` option:
 
 ```bash
 poetry install --all-extras
 ```
+
+{{% note %}}
+Note that `install --extras` and the variations mentioned above (`--all-extras`, `--extras foo`, etc.) only work on dependencies defined in the current project. If you want to install extras defined by dependencies, you'll have to express that in the dependency itself:
+```toml
+[tool.poetry.group.dev.dependencies]
+fastapi = {version="^0.92.0", extras=["all"]}
+```
+{{% /note %}}
 
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
@@ -410,15 +422,27 @@ Dependencies listed in [dependency groups]({{< relref "managing-dependencies#dep
 
 ## `plugins`
 
-Poetry supports arbitrary plugins which work similarly to
-[setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
-To match the example in the setuptools documentation, you would use the following:
+Poetry supports arbitrary plugins, which are exposed as the ecosystem-standard [entry points](https://packaging.python.org/en/latest/specifications/entry-points/) and discoverable using `importlib.metadata`. This is similar to (and compatible with) the entry points feature of `setuptools`.
+The syntax for registering a plugin is:
 
 ```toml
 [tool.poetry.plugins] # Optional super table
 
-[tool.poetry.plugins."blogtool.parsers"]
-".rst" = "some_module:SomeClass"
+[tool.poetry.plugins."A"]
+"B" = "C:D"
+```
+Which are:
+
+- `A` - type of the plugin, for example `poetry.plugin` or `flake8.extension`
+- `B` - name of the plugin
+- `C` - python module import path
+- `D` - the entry point of the plugin (a function or class)
+
+Example (from [`poetry-plugin-export`](http://github.com/python-poetry/poetry-plugin-export)):
+
+```toml
+[tool.poetry.plugins."poetry.application.plugin"]
+export = "poetry_plugin_export.plugins:ExportApplicationPlugin"
 ```
 
 ## `urls`

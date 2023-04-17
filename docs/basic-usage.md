@@ -55,10 +55,16 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 ```
 
-Poetry assumes your package contains a package with the same name as `tool.poetry.name`.
-If this is not the case, populate `tool.poetry.packages` to specify your package or packages.
+Poetry assumes your package contains a package with the same name as `tool.poetry.name` located in the root of your
+project. If this is not the case, populate [`tool.poetry.packages`]({{< relref "pyproject#packages" >}}) to specify
+your packages and their locations.
 
-See [Packages]({{< relref "pyproject#packages" >}}) for more information.
+Similarly, the traditional `MANIFEST.in` file is replaced by the `tool.poetry.readme`, `tool.poetry.include`, and
+`tool.poetry.exclude` sections. `tool.poetry.exclude` is additionally implicitly populated by your `.gitignore`. For
+full documentation on the project format, see the [pyproject section]({{< relref "pyproject" >}}) of the documentation.
+
+Poetry will require you to explicitly specify what versions of Python you intend to support, and its universal locking
+will guarantee that your project is installable (and all dependencies claim support for) all supported Python versions.
 
 ### Initialising a pre-existing project
 
@@ -92,17 +98,30 @@ $ poetry add pendulum
 
 It will automatically find a suitable version constraint **and install** the package and sub-dependencies.
 
+Poetry supports a rich [dependency specification]({{< relref "dependency-specification" >}}) syntax, including caret,
+tilde, wildcard, inequality and
+[multiple constraints]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}) requirements.
 
 ## Using your virtual environment
 
-By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
-You can change the [`cache-dir`]({{< relref "configuration#cache-dir" >}} "cache-dir configuration documentation") value by editing the poetry config.
-Additionally, you can use the [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}} "#virtualenvs.in-project configuration documentation") configuration variable
-to create virtual environment within your project directory.
-
+By default, Poetry creates a virtual environment in `{cache-dir}/virtualenvs`.
+You can change the [`cache-dir`]({{< relref "configuration#cache-dir" >}} "cache-dir configuration documentation") value
+by editing the Poetry configuration.
+Additionally, you can use the
+[`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}}) configuration variable to create
+virtual environments within your project directory.
 
 There are several ways to run commands within this virtual environment.
 
+{{% note %}}
+**External virtual environment management**
+
+Poetry will detect and respect an existing virtual environment that has been externally activated. This is a powerful
+mechanism that is intended to be an alternative to Poetry's built-in, simplified environment management.
+
+To take advantage of this, simply activate a virtual environment using your preferred method or tooling, before running
+any Poetry commands that expect to manipulate an environment.
+{{% /note %}}
 
 ### Using `poetry run`
 
@@ -111,15 +130,16 @@ Likewise if you have command line tools such as `pytest` or `black` you can run 
 
 ### Activating the virtual environment
 
-The easiest way to activate the virtual environment is to create a new shell with `poetry shell`.
+The easiest way to activate the virtual environment is to create a nested shell with `poetry shell`.
+
 To deactivate the virtual environment and exit this new shell type `exit`.
 To deactivate the virtual environment without leaving the shell use `deactivate`.
 
 {{% note %}}
-**Why a new shell?**
+**Why a nested shell?**
 
 Child processes inherit their environment from their parents, but do not share
-them. As such, any modifications made by a child process, is not persisted after
+them. As such, any modifications made by a child process is not persisted after
 the child process exits. A Python application (Poetry), being a child process,
 cannot modify the environment of the shell that it has been called from such
 that an activated virtual environment remains active after the Poetry command
@@ -129,28 +149,28 @@ Therefore, Poetry has to create a sub-shell with the virtual environment activat
 in order for the subsequent commands to run from within the virtual environment.
 {{% /note %}}
 
-
 Alternatively, to avoid creating a new shell, you can manually activate the
-virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` on Windows PowerShell).
+virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` in PowerShell).
 To get the path to your virtual environment run `poetry env info --path`.
-You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
+You can also combine these into a one-liner, such as `source $(poetry env info --path)/bin/activate`
+(`& ((poetry env info --path) + "\Scripts\activate.ps1")` in Powershell).
+
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                     | Windows (PowerShell)                  | Exit/Deactivate |
-| ----------------- | ----------------------------------------------- | ------------------------------------- | --------------- |
-| New Shell         | `poetry shell`                                  | `poetry shell`                        | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1` | `deactivate`    |
-| One-liner         | `source $(poetry env info --path)/bin/activate` |                                       | `deactivate`    |
+|                   | POSIX Shell                                     | Windows (PowerShell)                                     | Exit/Deactivate |
+|-------------------| ----------------------------------------------- |----------------------------------------------------------| --------------- |
+| Sub-shell         | `poetry shell`                                  | `poetry shell`                                           | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1`                    | `deactivate`    |
+| One-liner         | `source $(poetry env info --path)/bin/activate` | `& ((poetry env info --path) + "\Scripts\activate.ps1")` | `deactivate`    |
 
-
-### Version constraints
+## Version constraints
 
 In our example, we are requesting the `pendulum` package with the version constraint `^2.1`.
 This means any version greater or equal to 2.1.0 and less than 3.0.0 (`>=2.1.0 <3.0.0`).
 
-Please read [Dependency specification]({{< relref "dependency-specification" >}} "Dependency specification documentation") for more in-depth information on versions,
-how versions relate to each other, and on the different ways you can specify dependencies.
-
+Please read [Dependency specification]({{< relref "dependency-specification" >}} "Dependency specification documentation")
+for more in-depth information on versions, how versions relate to each other, and on the different ways you can specify
+dependencies.
 
 {{% note %}}
 **How does Poetry download the right files?**
@@ -158,12 +178,11 @@ how versions relate to each other, and on the different ways you can specify dep
 When you specify a dependency in `pyproject.toml`, Poetry first takes the name of the package
 that you have requested and searches for it in any repository you have registered using the `repositories` key.
 If you have not registered any extra repositories, or it does not find a package with that name in the
-repositories you have specified, it falls back on PyPI.
+repositories you have specified, it falls back to PyPI.
 
-When Poetry finds the right package, it then attempts to find the best match
-for the version constraint you have specified.
+When Poetry finds the right package, it then attempts to find the best match for the version constraint you have
+specified.
 {{% /note %}}
-
 
 ## Installing dependencies
 
@@ -183,7 +202,6 @@ Poetry simply resolves all dependencies listed in your `pyproject.toml` file and
 When Poetry has finished installing, it writes all the packages and their exact versions that it downloaded to the `poetry.lock` file,
 locking the project to those specific versions.
 You should commit the `poetry.lock` file to your project repo so that all people working on the project are locked to the same versions of dependencies (more below).
-
 
 ### Installing with `poetry.lock`
 

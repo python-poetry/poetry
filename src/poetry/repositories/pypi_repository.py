@@ -12,12 +12,12 @@ from cachecontrol.controller import logger as cache_control_logger
 from html5lib.html5parser import parse
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver.version import Version
 from poetry.core.version.exceptions import InvalidVersion
 
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.http import HTTPRepository
-from poetry.utils._compat import to_str
+from poetry.repositories.http_repository import HTTPRepository
+from poetry.repositories.link_sources.json import SimpleJsonPage
+from poetry.utils._compat import decode
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
@@ -25,9 +25,12 @@ cache_control_logger.setLevel(logging.ERROR)
 
 logger = logging.getLogger(__name__)
 
-
 if TYPE_CHECKING:
-    from poetry.core.semver.version_constraint import VersionConstraint
+    from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
+
+SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
 class PyPiRepository(HTTPRepository):
@@ -79,78 +82,55 @@ class PyPiRepository(HTTPRepository):
 
             try:
                 package = Package(name, version)
-                package.description = to_str(description.strip())
+                package.description = decode(description.strip())
                 results.append(package)
             except InvalidVersion:
                 self._log(
-                    f'Unable to parse version "{version}" for the {name} package,'
-                    " skipping",
+                    (
+                        f'Unable to parse version "{version}" for the {name} package,'
+                        " skipping"
+                    ),
                     level="debug",
                 )
 
         return results
 
-    def get_package_info(self, name: str) -> dict[str, Any]:
+    def get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         """
         Return the package information given its name.
 
         The information is returned from the cache if it exists
         or retrieved from the remote server.
         """
-        if self._disable_cache:
-            return self._get_package_info(name)
+        return self._get_package_info(name)
 
-        package_info: dict[str, Any] = self._cache.store("packages").remember_forever(
-            name, lambda: self._get_package_info(name)
-        )
-        return package_info
-
-    def _find_packages(self, name: str, constraint: VersionConstraint) -> list[Package]:
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
         """
         Find packages on the remote server.
         """
         try:
-            info = self.get_package_info(name)
+            json_page = self.get_page(name)
         except PackageNotFound:
-            self._log(
-                f"No packages found for {name} {constraint!s}",
-                level="debug",
-            )
+            self._log(f"No packages found for {name}", level="debug")
             return []
 
-        packages = []
+        versions = [
+            (version, json_page.yanked(name, version))
+            for version in json_page.versions(name)
+            if constraint.allows(version)
+        ]
 
-        for version_string, release in info["releases"].items():
-            if not release:
-                # Bad release
-                self._log(
-                    f"No release information found for {name}-{version_string},"
-                    " skipping",
-                    level="debug",
-                )
-                continue
-
-            try:
-                version = Version.parse(version_string)
-            except InvalidVersion:
-                self._log(
-                    f'Unable to parse version "{version_string}" for the'
-                    f" {name} package, skipping",
-                    level="debug",
-                )
-                continue
-
-            if constraint.allows(version):
-                packages.append(Package(info["info"]["name"], version))
-
-        return packages
+        return [Package(name, version, yanked=yanked) for version, yanked in versions]
 
     def _get_package_info(self, name: str) -> dict[str, Any]:
-        data = self._get(f"pypi/{name}/json")
-        if data is None:
+        headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
+        info = self._get(f"simple/{name}/", headers=headers)
+        if info is None:
             raise PackageNotFound(f"Package [{name}] not found.")
 
-        return data
+        return info
 
     def find_links_for_package(self, package: Package) -> list[Link]:
         json_data = self._get(f"pypi/{package.name}/{package.version}/json")
@@ -159,13 +139,14 @@ class PyPiRepository(HTTPRepository):
 
         links = []
         for url in json_data["urls"]:
-            h = f"sha256={url['digests']['sha256']}"
-            links.append(Link(url["url"] + "#" + h))
+            if url["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                h = f"sha256={url['digests']['sha256']}"
+                links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
 
         return links
 
     def _get_release_info(
-        self, name: str, version: str
+        self, name: NormalizedName, version: Version
     ) -> dict[str, str | list[str] | None]:
         from poetry.inspection.info import PackageInfo
 
@@ -181,10 +162,10 @@ class PyPiRepository(HTTPRepository):
             name=info["name"],
             version=info["version"],
             summary=info["summary"],
-            platform=info["platform"],
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
             files=info.get("files", []),
+            yanked=self._get_yanked(info),
             cache_version=str(self.CACHE_VERSION),
         )
 
@@ -194,12 +175,13 @@ class PyPiRepository(HTTPRepository):
             version_info = []
 
         for file_info in version_info:
-            data.files.append(
-                {
-                    "file": file_info["filename"],
-                    "hash": "sha256:" + file_info["digests"]["sha256"],
-                }
-            )
+            if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
+                data.files.append(
+                    {
+                        "file": file_info["filename"],
+                        "hash": "sha256:" + file_info["digests"]["sha256"],
+                    }
+                )
 
         if self._fallback and data.requires_dist is None:
             self._log("No dependencies found, downloading archives", level="debug")
@@ -212,7 +194,7 @@ class PyPiRepository(HTTPRepository):
             for url in json_data["urls"]:
                 # Only get sdist and wheels if they exist
                 dist_type = url["packagetype"]
-                if dist_type not in ["sdist", "bdist_wheel"]:
+                if dist_type not in SUPPORTED_PACKAGE_TYPES:
                     continue
 
                 urls[dist_type].append(url["url"])
@@ -229,12 +211,20 @@ class PyPiRepository(HTTPRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint: str) -> dict[str, Any] | None:
+    def _get_page(self, name: NormalizedName) -> SimpleJsonPage:
+        source = self._base_url + f"simple/{name}/"
+        info = self.get_package_info(name)
+        return SimpleJsonPage(source, info)
+
+    def _get(
+        self, endpoint: str, headers: dict[str, str] | None = None
+    ) -> dict[str, Any] | None:
         try:
             json_response = self.session.get(
                 self._base_url + endpoint,
                 raise_for_status=False,
                 timeout=REQUESTS_TIMEOUT,
+                headers=headers,
             )
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
@@ -244,6 +234,7 @@ class PyPiRepository(HTTPRepository):
                 self._base_url + endpoint,
                 raise_for_status=False,
                 timeout=REQUESTS_TIMEOUT,
+                headers=headers,
             )
 
         if json_response.status_code != 200:
@@ -251,3 +242,9 @@ class PyPiRepository(HTTPRepository):
 
         json: dict[str, Any] = json_response.json()
         return json
+
+    @staticmethod
+    def _get_yanked(json_data: dict[str, Any]) -> str | bool:
+        if json_data.get("yanked", False):
+            return json_data.get("yanked_reason") or True  # noqa: SIM222
+        return False

@@ -22,27 +22,64 @@ and, as such, they are not available via the PyPI JSON API. At this point, Poetr
 but to download the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
-At the moment there is no way around it.
+At the moment there is no way around it. However, if you notice that Poetry
+is downloading many versions of a single package, you can lessen the workload
+by constraining that one package in your pyproject.toml more narrowly. That way
+Poetry does not have to sift through so many versions of it, which may speed up
+the locking process considerably in some cases.
 
 {{% note %}}
-Once Poetry has cached the releases' information, the dependency resolution process
+Once Poetry has cached the releases' information on your machine, the dependency resolution process
 will be much faster.
 {{% /note %}}
 
-### Why are unbound version constraints a bad idea?
+### What kind of versioning scheme does Poetry use for itself?
+
+Poetry uses "major.minor.micro" version identifiers as mentioned in
+[PEP 440](https://peps.python.org/pep-0440/#final-releases).
+
+Version bumps are done similar to Python's versioning:
+* A major version bump (incrementing the first number) is only done for breaking changes
+  if a deprecation cycle is not possible and many users have to perform some manual steps
+  to migrate from one version to the next one.
+* A minor version bump (incrementing the second number) may include new features as well
+  as new deprecations and drop features deprecated in an earlier minor release.
+* A micro version bump (incrementing the third number) usually only includes bug fixes.
+  Deprecated features will not be dropped in a micro release.
+
+### Why does Poetry not adhere to semantic versioning?
+
+Because of its large user base, even small changes not considered relevant by most users
+can turn out to be a breaking change for some users in hindsight.
+Sticking to strict [semantic versioning](https://semver.org) and (almost) always bumping
+the major version instead of the minor version does not seem desirable
+since the minor version will not carry any meaning anymore.
+
+### Are unbound version constraints a bad idea?
 
 A version constraint without an upper bound such as `*` or `>=3.4` will allow updates to any future version of the dependency.
 This includes major versions breaking backward compatibility.
 
 Once a release of your package is published, you cannot tweak its dependencies anymore in case a dependency breaks BC
 – you have to do a new release but the previous one stays broken.
+(Users can still work around the broken dependency by restricting it by themselves.)
 
-The only good alternative is to define an upper bound on your constraints,
+To avoid such issues you can define an upper bound on your constraints,
 which you can increase in a new release after testing that your package is compatible
 with the new major version of your dependency.
 
-For example instead of using `>=3.4` you should use `^3.4` which allows all versions `<4.0`.
+For example instead of using `>=3.4` you can use `^3.4` which allows all versions `<4.0`.
 The `^` operator works very well with libraries following [semantic versioning](https://semver.org).
+
+However, when defining an upper bound, users of your package are not able to update
+a dependency beyond the upper bound even if it does not break anything
+and is fully compatible with your package.
+You have to release a new version of your package with an increased upper bound first.
+
+If your package will be used as a library in other packages, it might be better to avoid
+upper bounds and thus unnecessary dependency conflicts (unless you already know for sure
+that the next release of the dependency will break your package).
+If your package will be used as an application, it might be worth to define an upper bound.
 
 ### Is tox supported?
 
@@ -81,7 +118,7 @@ Thus, dependencies are resolved by `pip`.
 isolated_build = true
 
 [testenv]
-whitelist_externals = poetry
+allowlist_externals = poetry
 commands_pre =
     poetry install --no-root --sync
 commands =
@@ -99,7 +136,7 @@ isolated_build = true
 
 [testenv]
 skip_install = true
-whitelist_externals = poetry
+allowlist_externals = poetry
 commands_pre =
     poetry install
 commands =
@@ -107,7 +144,7 @@ commands =
 ```
 
 `tox` will not do any install. Poetry installs all the dependencies and the current package an editable mode.
-Thus, tests are running against the local files and not the builded and installed package.
+Thus, tests are running against the local files and not the built and installed package.
 
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
@@ -152,3 +189,37 @@ This is done so to be compliant with the broader Python ecosystem.
 
 For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
+
+
+### Poetry busts my Docker cache because it requires me to COPY my source files in before installing 3rd party dependencies
+
+By default running `poetry install ...` requires you to have your source files present (both the "root" package and any directory path dependencies you might have).
+This interacts poorly with Docker's caching mechanisms because any change to a source file will make any layers (subsequent commands in your Dockerfile) re-run.
+For example, you might have a Dockerfile that looks something like this:
+
+```text
+FROM python
+COPY pyproject.toml poetry.lock .
+COPY src/ ./src
+RUN pip install poetry && poetry install --no-dev
+```
+
+As soon as *any* source file changes, the cache for the `RUN` layer will be invalidated, which forces all 3rd party dependencies (likely the slowest step out of these) to be installed again if you changed any files in `src/`.
+
+To avoid this cache busting you can split this into two steps:
+
+1. Install 3rd party dependencies.
+2. Copy over your source code and install just the source code.
+
+This might look something like this:
+
+```text
+FROM python
+COPY pyproject.toml poetry.lock .
+RUN pip install poetry && poetry install --no-root --no-directory
+COPY src/ ./src
+RUN poetry install --no-dev
+```
+
+The two key options we are using here are `--no-root` (skips installing the project source) and `--no-directory` (skips installing any local directory path dependencies, you can omit this if you don't have any).
+[More information on the options available for `poetry install`]({{< relref "cli#install" >}}).

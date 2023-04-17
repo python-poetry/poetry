@@ -5,6 +5,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [[package]]
 name = "B"
@@ -13,15 +14,12 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 A = "^1.0"
 
 [metadata]
 python-versions = "*"
-lock-version = "1.1"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-"A" = []
-"B" = []

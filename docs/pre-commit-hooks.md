@@ -24,7 +24,6 @@ the defaults are overwritten. You must fully specify all arguments for
 your hook if you make use of `args:`.
 {{% /note %}}
 
-
 ## poetry-check
 
 The `poetry-check` hook calls the `poetry check` command
@@ -35,6 +34,9 @@ to make sure the poetry configuration does not get committed in a broken state.
 The hook takes the same arguments as the poetry command.
 For more information see the [check command]({{< relref "cli#check" >}}).
 
+{{% note %}}
+If the `pyproject.toml` file is not in the root directory, you can specify `args: ["-C", "./subdirectory"]`.
+{{% /note %}}
 
 ## poetry-lock
 
@@ -99,3 +101,24 @@ repos:
       - id: poetry-export
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 ```
+
+## FAQ
+
+### Why does `pre-commit autoupdate` not update to the latest version?
+
+`pre-commit autoupdate` updates the `rev` for each repository defined in your `.pre-commit-config.yaml`
+to the latest available tag in the default branch.
+
+Poetry follows a branching strategy, where the default branch is the active development branch
+and fixes gets back ported to stable branches. New tags are assigned in these stable branches.
+
+`pre-commit` does not support such a branching strategy and has decided to not implement
+an option, either on the [user side](https://github.com/pre-commit/pre-commit/issues/2512)
+or [hook author side](https://github.com/pre-commit/pre-commit/issues/2508), to define a branch for lookup the latest
+available tag.
+
+Thus, `pre-commit autoupdate` is not usable for the hooks described here.
+
+You can avoid changing the `rev` to an unexpected value, by using the `--repo` parameter (may be specified multiple
+times), to explicit list repositories that should be updated. An option to explicit exclude
+repositories [will not be implemented](https://github.com/pre-commit/pre-commit/issues/1959) into `pre-commit`.

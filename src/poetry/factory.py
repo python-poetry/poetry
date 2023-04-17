@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
-import warnings
 
 from typing import TYPE_CHECKING
 from typing import Any
@@ -13,7 +12,6 @@ from cleo.io.null_io import NullIO
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.toml.file import TOMLFile
 
 from poetry.config.config import Config
 from poetry.json import validate_object
@@ -21,18 +19,20 @@ from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
+from poetry.toml.file import TOMLFile
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
     from cleo.io.io import IO
     from poetry.core.packages.package import Package
     from tomlkit.toml_document import TOMLDocument
 
+    from poetry.repositories import RepositoryPool
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.utils.dependency_specification import DependencySpec
-
 
 logger = logging.getLogger(__name__)
 
@@ -55,20 +55,19 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
-        locker = Locker(
-            base_poetry.file.parent / "poetry.lock", base_poetry.local_config
+        # TODO: backward compatibility, can be simplified if poetry-core with
+        #       https://github.com/python-poetry/poetry-core/pull/483 is available
+        poetry_file: Path = (
+            getattr(base_poetry, "pyproject_path", None) or base_poetry.file.path
         )
 
+        locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
+
         # Loading global configuration
-        with warnings.catch_warnings():
-            # this is preserved to ensure export plugin tests pass in ci,
-            # once poetry-plugin-export version is updated to use one that do not
-            # use Factory.create_config(), this can be safely removed.
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            config = self.create_config()
+        config = Config.create()
 
         # Loading local configuration
-        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
+        local_config_file = TOMLFile(poetry_file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(f"Loading configuration file {local_config_file.path}")
@@ -87,20 +86,21 @@ class Factory(BaseFactory):
         config.merge({"repositories": repositories})
 
         poetry = Poetry(
-            base_poetry.file.path,
+            poetry_file,
             base_poetry.local_config,
             base_poetry.package,
             locker,
             config,
+            disable_cache,
         )
 
-        # Configuring sources
-        self.configure_sources(
-            poetry,
-            poetry.local_config.get("source", []),
-            config,
-            io,
-            disable_cache=disable_cache,
+        poetry.set_pool(
+            self.create_pool(
+                config,
+                poetry.local_config.get("source", []),
+                io,
+                disable_cache=disable_cache,
+            )
         )
 
         plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
@@ -112,60 +112,74 @@ class Factory(BaseFactory):
 
     @classmethod
     def get_package(cls, name: str, version: str) -> ProjectPackage:
-        return ProjectPackage(name, version, version)
+        return ProjectPackage(name, version)
 
     @classmethod
-    def create_config(cls, io: IO | None = None) -> Config:
-        if io is not None:
-            logger.debug("Ignoring provided io when creating config.")
-        warnings.warn(
-            "Use of Factory.create_config() is deprecated, use Config.create() instead",
-            DeprecationWarning,
-        )
-        return Config.create()
-
-    @classmethod
-    def configure_sources(
+    def create_pool(
         cls,
-        poetry: Poetry,
-        sources: list[dict[str, str]],
-        config: Config,
-        io: IO,
+        auth_config: Config,
+        sources: Iterable[dict[str, Any]] = (),
+        io: IO | None = None,
         disable_cache: bool = False,
-    ) -> None:
+    ) -> RepositoryPool:
+        from poetry.repositories import RepositoryPool
+        from poetry.repositories.repository_pool import Priority
+
+        if io is None:
+            io = NullIO()
+
         if disable_cache:
             logger.debug("Disabling source caches")
 
+        pool = RepositoryPool()
+
         for source in sources:
             repository = cls.create_package_source(
-                source, config, disable_cache=disable_cache
+                source, auth_config, disable_cache=disable_cache
             )
-            is_default = bool(source.get("default", False))
-            is_secondary = bool(source.get("secondary", False))
+            priority = Priority[source.get("priority", Priority.PRIMARY.name).upper()]
+            if "default" in source or "secondary" in source:
+                warning = (
+                    "Found deprecated key 'default' or 'secondary' in"
+                    " pyproject.toml configuration for source"
+                    f" {source.get('name')}. Please provide the key 'priority'"
+                    " instead. Accepted values are:"
+                    f" {', '.join(repr(p.name.lower()) for p in Priority)}."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
+                if source.get("default"):
+                    priority = Priority.DEFAULT
+                elif source.get("secondary"):
+                    priority = Priority.SECONDARY
+
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
-                if is_default:
+                if priority is Priority.DEFAULT:
                     message += " and setting it as the default one"
-                elif is_secondary:
-                    message += " and setting it as secondary"
+                else:
+                    message += f" and setting it as {priority.name.lower()}"
 
                 io.write_line(message)
 
-            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+            pool.add_repository(repository, priority=priority)
 
-        # Put PyPI last to prefer private repositories
-        # unless we have no default source AND no primary sources
-        # (default = false, secondary = false)
-        if poetry.pool.has_default():
+        # Only add PyPI if no default repository is configured
+        if pool.has_default():
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
         else:
             from poetry.repositories.pypi_repository import PyPiRepository
 
-            default = not poetry.pool.has_primary_repositories()
-            poetry.pool.add_repository(
-                PyPiRepository(disable_cache=disable_cache), default, not default
+            if pool.has_primary_repositories():
+                pypi_priority = Priority.SECONDARY
+            else:
+                pypi_priority = Priority.DEFAULT
+
+            pool.add_repository(
+                PyPiRepository(disable_cache=disable_cache), priority=pypi_priority
             )
+
+        return pool
 
     @classmethod
     def create_package_source(
@@ -196,9 +210,7 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_pyproject_from_package(
-        cls, package: Package, path: Path | None = None
-    ) -> TOMLDocument:
+    def create_pyproject_from_package(cls, package: Package) -> TOMLDocument:
         import tomlkit
 
         from poetry.utils.dependency_specification import dependency_to_specification
@@ -272,7 +284,8 @@ class Factory(BaseFactory):
                     constraint["optional"] = True
 
                 if len(constraint) == 1 and "version" in constraint:
-                    constraint = cast(str, constraint["version"])
+                    assert isinstance(constraint["version"], str)
+                    constraint = constraint["version"]
                 elif not constraint:
                     constraint = "*"
 
@@ -295,12 +308,6 @@ class Factory(BaseFactory):
             content["extras"] = extras_section
 
         pyproject = cast("TOMLDocument", pyproject)
-        pyproject.add(tomlkit.nl())
-
-        if path:
-            path.joinpath("pyproject.toml").write_text(
-                pyproject.as_string(), encoding="utf-8"
-            )
 
         return pyproject
 

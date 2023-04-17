@@ -27,7 +27,14 @@ class AddCommand(InstallerCommand, InitCommand):
             flag=False,
             default=MAIN_GROUP,
         ),
-        option("dev", "D", "Add as a development dependency."),
+        option(
+            "dev",
+            "D",
+            (
+                "Add as a development dependency. (<warning>Deprecated</warning>) Use"
+                " --group=dev instead."
+            ),
+        ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
             "extras",
@@ -59,8 +66,10 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables"
-            " --verbose).",
+            (
+                "Output the operations but do not execute anything (implicitly enables"
+                " --verbose)."
+            ),
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
@@ -91,7 +100,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
         from tomlkit import inline_table
         from tomlkit import parse as parse_toml
         from tomlkit import table
@@ -180,10 +189,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             if self.option("extras"):
                 extras = []
                 for extra in self.option("extras"):
-                    if " " in extra:
-                        extras += [e.strip() for e in extra.split(" ")]
-                    else:
-                        extras.append(extra)
+                    extras += extra.split()
 
                 constraint["extras"] = self.option("extras")
 
@@ -214,7 +220,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             constraint_name = _constraint["name"]
             assert isinstance(constraint_name, str)
-            section[constraint_name] = constraint
+
+            canonical_constraint_name = canonicalize_name(constraint_name)
+
+            for key in section:
+                if canonicalize_name(key) == canonical_constraint_name:
+                    section[key] = constraint
+                    break
+            else:
+                section[constraint_name] = constraint
 
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(
@@ -232,23 +246,23 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         # Refresh the locker
         self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
+            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
         )
-        self._installer.set_locker(self.poetry.locker)
+        self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
         self.line("")
 
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self.io.is_verbose())
-        self._installer.update(True)
+        self.installer.set_package(self.poetry.package)
+        self.installer.dry_run(self.option("dry-run"))
+        self.installer.verbose(self.io.is_verbose())
+        self.installer.update(True)
         if self.option("lock"):
-            self._installer.lock()
+            self.installer.lock()
 
-        self._installer.whitelist([r["name"] for r in requirements])
+        self.installer.whitelist([r["name"] for r in requirements])
 
-        status = self._installer.run()
+        status = self.installer.run()
 
         if status == 0 and not self.option("dry-run"):
             assert isinstance(content, TOMLDocument)

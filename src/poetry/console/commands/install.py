@@ -14,29 +14,47 @@ class InstallCommand(InstallerCommand):
         option(
             "no-dev",
             None,
-            "Do not install the development dependencies."
-            " (<warning>Deprecated</warning>)",
+            (
+                "Do not install the development dependencies."
+                " (<warning>Deprecated</warning>)"
+            ),
         ),
         option(
             "sync",
             None,
-            "Synchronize the environment with the locked packages and the specified"
-            " groups.",
+            (
+                "Synchronize the environment with the locked packages and the specified"
+                " groups."
+            ),
         ),
         option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
+            "no-directory",
+            None,
+            (
+                "Do not install any directory path dependencies; useful to install"
+                " dependencies without source code, e.g. for caching of Docker layers)"
+            ),
+            flag=True,
+            multiple=False,
+        ),
+        option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything "
-            "(implicitly enables --verbose).",
+            (
+                "Output the operations but do not execute anything "
+                "(implicitly enables --verbose)."
+            ),
         ),
         option(
             "remove-untracked",
             None,
-            "Removes packages not present in the lock file."
-            " (<warning>Deprecated</warning>)",
+            (
+                "Removes packages not present in the lock file."
+                " (<warning>Deprecated</warning>)"
+            ),
         ),
         option(
             "extras",
@@ -46,12 +64,15 @@ class InstallCommand(InstallerCommand):
             multiple=True,
         ),
         option("all-extras", None, "Install all extra dependencies."),
+        option("only-root", None, "Exclude all dependencies."),
         option(
-            "only-root",
+            "compile",
             None,
-            "Exclude all dependencies.",
-            flag=True,
-            multiple=False,
+            (
+                "Compile Python source files to bytecode."
+                " (This option has no effect if modern-installation is disabled"
+                " because the old installer always compiles.)"
+            ),
         ),
     ]
 
@@ -84,9 +105,10 @@ dependencies and not including the current project, run the command with the
 
         from poetry.masonry.builders.editable import EditableBuilder
 
-        self._installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
+        use_executor = self.poetry.config.get("experimental.new-installer", False)
+        if not use_executor:
+            # only set if false because the method is deprecated
+            self.installer.use_executor(False)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
@@ -115,17 +137,15 @@ dependencies and not including the current project, run the command with the
             )
             return 1
 
+        extras: list[str]
         if self.option("all-extras"):
             extras = list(self.poetry.package.extras.keys())
         else:
             extras = []
             for extra in self.option("extras", []):
-                if " " in extra:
-                    extras += [e.strip() for e in extra.split(" ")]
-                else:
-                    extras.append(extra)
+                extras += extra.split()
 
-        self._installer.extras(extras)
+        self.installer.extras(extras)
 
         with_synchronization = self.option("sync")
         if self.option("remove-untracked"):
@@ -137,12 +157,14 @@ dependencies and not including the current project, run the command with the
 
             with_synchronization = True
 
-        self._installer.only_groups(self.activated_groups)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.requires_synchronization(with_synchronization)
-        self._installer.verbose(self.io.is_verbose())
+        self.installer.only_groups(self.activated_groups)
+        self.installer.skip_directory(self.option("no-directory"))
+        self.installer.dry_run(self.option("dry-run"))
+        self.installer.requires_synchronization(with_synchronization)
+        self.installer.executor.enable_bytecode_compilation(self.option("compile"))
+        self.installer.verbose(self.io.is_verbose())
 
-        return_code = self._installer.run()
+        return_code = self.installer.run()
 
         if return_code != 0:
             return return_code
@@ -151,7 +173,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, self.io)
+            builder = EditableBuilder(self.poetry, self.env, self.io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry

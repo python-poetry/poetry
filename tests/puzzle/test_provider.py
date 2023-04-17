@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -19,8 +19,8 @@ from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import Provider
-from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.helpers import get_dependency
@@ -29,12 +29,14 @@ from tests.helpers import get_dependency
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from tests.types import FixtureDirGetter
+
 
 SOME_URL = "https://example.com/path.tar.gz"
 
 
 class MockEnv(BaseMockEnv):
-    def run(self, bin: str, *args: str) -> None:
+    def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
 
 
@@ -49,15 +51,15 @@ def repository() -> Repository:
 
 
 @pytest.fixture
-def pool(repository: Repository) -> Pool:
-    pool = Pool()
+def pool(repository: Repository) -> RepositoryPool:
+    pool = RepositoryPool()
     pool.add_repository(repository)
 
     return pool
 
 
 @pytest.fixture
-def provider(root: ProjectPackage, pool: Pool) -> Provider:
+def provider(root: ProjectPackage, pool: RepositoryPool) -> Provider:
     return Provider(root, pool, NullIO())
 
 
@@ -67,15 +69,7 @@ def provider(root: ProjectPackage, pool: Pool) -> Provider:
         (Dependency("foo", "<2"), [Package("foo", "1")]),
         (Dependency("foo", "<2", extras=["bar"]), [Package("foo", "1")]),
         (Dependency("foo", ">=1"), [Package("foo", "2"), Package("foo", "1")]),
-        (
-            Dependency("foo", ">=1a"),
-            [
-                Package("foo", "3a"),
-                Package("foo", "2"),
-                Package("foo", "2a"),
-                Package("foo", "1"),
-            ],
-        ),
+        (Dependency("foo", ">=1a"), [Package("foo", "2"), Package("foo", "1")]),
         (
             Dependency("foo", ">=1", allows_prereleases=True),
             [
@@ -101,6 +95,7 @@ def test_search_for(
     repository.add_package(foo2a)
     repository.add_package(foo2)
     repository.add_package(foo3a)
+
     assert provider.search_for(dependency) == expected
 
 
@@ -164,7 +159,7 @@ def test_search_for_direct_origin_and_extras(
 
 
 @pytest.mark.parametrize("value", [True, False])
-def test_search_for_vcs_retains_develop_flag(provider: Provider, value: bool):
+def test_search_for_vcs_retains_develop_flag(provider: Provider, value: bool) -> None:
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", develop=value
     )
@@ -172,7 +167,7 @@ def test_search_for_vcs_retains_develop_flag(provider: Provider, value: bool):
     assert package.develop == value
 
 
-def test_search_for_vcs_setup_egg_info(provider: Provider):
+def test_search_for_vcs_setup_egg_info(provider: Provider) -> None:
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -190,7 +185,7 @@ def test_search_for_vcs_setup_egg_info(provider: Provider):
     }
 
 
-def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider):
+def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider) -> None:
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
     )
@@ -210,7 +205,7 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider):
     }
 
 
-def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture):
+def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
@@ -232,7 +227,7 @@ def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture):
 
 def test_search_for_vcs_read_setup_with_extras(
     provider: Provider, mocker: MockerFixture
-):
+) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency(
@@ -252,7 +247,7 @@ def test_search_for_vcs_read_setup_with_extras(
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(
     provider: Provider, mocker: MockerFixture
-):
+) -> None:
     mocker.patch(
         "poetry.inspection.info.get_pep517_metadata",
         return_value=PackageInfo(name="demo", version=None),
@@ -265,15 +260,12 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
-def test_search_for_directory_setup_egg_info(provider: Provider, directory: str):
+def test_search_for_directory_setup_egg_info(
+    provider: Provider, directory: str, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = DirectoryDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / directory,
+        fixture_dir("git") / "github.com" / "demo" / directory,
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -291,15 +283,12 @@ def test_search_for_directory_setup_egg_info(provider: Provider, directory: str)
     }
 
 
-def test_search_for_directory_setup_egg_info_with_extras(provider: Provider):
+def test_search_for_directory_setup_egg_info_with_extras(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = DirectoryDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo",
+        fixture_dir("git") / "github.com" / "demo" / "demo",
         extras=["foo"],
     )
 
@@ -319,21 +308,13 @@ def test_search_for_directory_setup_egg_info_with_extras(provider: Provider):
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
-def test_search_for_directory_setup_with_base(provider: Provider, directory: str):
+def test_search_for_directory_setup_with_base(
+    provider: Provider, directory: str, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = DirectoryDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / directory,
-        base=Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / directory,
+        fixture_dir("git") / "github.com" / "demo" / directory,
+        base=fixture_dir("git") / "github.com" / "demo" / directory,
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -349,29 +330,17 @@ def test_search_for_directory_setup_with_base(provider: Provider, directory: str
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
-    assert package.root_dir == (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / directory
-    )
+    assert package.root_dir == (fixture_dir("git") / "github.com" / "demo" / directory)
 
 
 def test_search_for_directory_setup_read_setup(
-    provider: Provider, mocker: MockerFixture
-):
+    provider: Provider, mocker: MockerFixture, fixture_dir: FixtureDirGetter
+) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo",
+        fixture_dir("git") / "github.com" / "demo" / "demo",
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -390,18 +359,13 @@ def test_search_for_directory_setup_read_setup(
 
 
 def test_search_for_directory_setup_read_setup_with_extras(
-    provider: Provider, mocker: MockerFixture
-):
+    provider: Provider, mocker: MockerFixture, fixture_dir: FixtureDirGetter
+) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo",
+        fixture_dir("git") / "github.com" / "demo" / "demo",
         extras=["foo"],
     )
 
@@ -420,15 +384,12 @@ def test_search_for_directory_setup_read_setup_with_extras(
     }
 
 
-def test_search_for_directory_setup_read_setup_with_no_dependencies(provider: Provider):
+def test_search_for_directory_setup_read_setup_with_no_dependencies(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = DirectoryDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "no-dependencies",
+        fixture_dir("git") / "github.com" / "demo" / "no-dependencies",
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -439,10 +400,12 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(provider: Pr
     assert package.extras == {}
 
 
-def test_search_for_directory_poetry(provider: Provider):
+def test_search_for_directory_poetry(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = DirectoryDependency(
         "project-with-extras",
-        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
+        fixture_dir("project_with_extras"),
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -462,15 +425,17 @@ def test_search_for_directory_poetry(provider: Provider):
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras_a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras_b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
+        "extras-b": [get_dependency("cachy", ">=0.2.0")],
     }
 
 
-def test_search_for_directory_poetry_with_extras(provider: Provider):
+def test_search_for_directory_poetry_with_extras(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = DirectoryDependency(
         "project-with-extras",
-        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
+        fixture_dir("project_with_extras"),
         extras=["extras_a"],
     )
 
@@ -491,18 +456,17 @@ def test_search_for_directory_poetry_with_extras(provider: Provider):
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras_a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras_b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
+        "extras-b": [get_dependency("cachy", ">=0.2.0")],
     }
 
 
-def test_search_for_file_sdist(provider: Provider):
+def test_search_for_file_sdist(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = FileDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0.tar.gz",
+        fixture_dir("distributions") / "demo-0.1.0.tar.gz",
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -527,13 +491,12 @@ def test_search_for_file_sdist(provider: Provider):
     }
 
 
-def test_search_for_file_sdist_with_extras(provider: Provider):
+def test_search_for_file_sdist_with_extras(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = FileDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0.tar.gz",
+        fixture_dir("distributions") / "demo-0.1.0.tar.gz",
         extras=["foo"],
     )
 
@@ -559,13 +522,12 @@ def test_search_for_file_sdist_with_extras(provider: Provider):
     }
 
 
-def test_search_for_file_wheel(provider: Provider):
+def test_search_for_file_wheel(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = FileDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl",
+        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl",
     )
 
     package = provider.search_for_direct_origin_dependency(dependency)
@@ -590,13 +552,12 @@ def test_search_for_file_wheel(provider: Provider):
     }
 
 
-def test_search_for_file_wheel_with_extras(provider: Provider):
+def test_search_for_file_wheel_with_extras(
+    provider: Provider, fixture_dir: FixtureDirGetter
+) -> None:
     dependency = FileDependency(
         "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl",
+        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl",
         extras=["foo"],
     )
 
@@ -619,14 +580,36 @@ def test_search_for_file_wheel_with_extras(provider: Provider):
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
+    }
+
+
+def test_complete_package_does_not_merge_different_source_names(
+    provider: Provider, root: ProjectPackage
+) -> None:
+    foo_source_1 = get_dependency("foo")
+    foo_source_1.source_name = "source_1"
+    foo_source_2 = get_dependency("foo")
+    foo_source_2.source_name = "source_2"
+
+    root.add_dependency(foo_source_1)
+    root.add_dependency(foo_source_2)
+
+    complete_package = provider.complete_package(
+        DependencyPackage(root.to_dependency(), root)
+    )
+
+    requires = complete_package.package.all_requires
+    assert len(requires) == 2
+    assert {requires[0].source_name, requires[1].source_name} == {
+        "source_1",
+        "source_2",
     }
 
 
 def test_complete_package_preserves_source_type(
-    provider: Provider, root: ProjectPackage
+    provider: Provider, root: ProjectPackage, fixture_dir: FixtureDirGetter
 ) -> None:
-    fixtures = Path(__file__).parent.parent / "fixtures"
-    project_dir = fixtures.joinpath("with_conditional_path_deps")
+    project_dir = fixture_dir("with_conditional_path_deps")
     for folder in ["demo_one", "demo_two"]:
         path = (project_dir / folder).as_posix()
         root.add_dependency(Factory.create_dependency("demo", {"path": path}))
@@ -688,3 +671,53 @@ def test_complete_package_preserves_source_type_with_subdirectories(
         dependency_one_copy.to_pep_508(),
         dependency_two.to_pep_508(),
     }
+
+
+@pytest.mark.parametrize("source_name", [None, "repo"])
+def test_complete_package_with_extras_preserves_source_name(
+    provider: Provider, repository: Repository, source_name: str | None
+) -> None:
+    package_a = Package("A", "1.0")
+    package_b = Package("B", "1.0")
+    dep = get_dependency("B", "^1.0", optional=True)
+    package_a.add_dependency(dep)
+    package_a.extras = {"foo": [dep]}
+    repository.add_package(package_a)
+    repository.add_package(package_b)
+
+    dependency = Dependency("A", "1.0", extras=["foo"])
+    if source_name:
+        dependency.source_name = source_name
+
+    complete_package = provider.complete_package(
+        DependencyPackage(dependency, package_a)
+    )
+
+    requires = complete_package.package.all_requires
+    assert len(requires) == 2
+    assert requires[0].name == "a"
+    assert requires[0].source_name == source_name
+    assert requires[1].name == "b"
+    assert requires[1].source_name is None
+
+
+@pytest.mark.parametrize("with_extra", [False, True])
+def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
+    provider: Provider, repository: Repository, mocker: MockerFixture, with_extra: bool
+) -> None:
+    optional_vcs_dependency = Factory.create_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git", "optional": True}
+    )
+    package = Package("A", "1.0", features=["foo"] if with_extra else [])
+    package.add_dependency(optional_vcs_dependency)
+    package.extras["foo"] = [optional_vcs_dependency]
+    repository.add_package(package)
+
+    spy = mocker.spy(provider, "_search_for_vcs")
+
+    provider.complete_package(DependencyPackage(package.to_dependency(), package))
+
+    if with_extra:
+        spy.assert_called()
+    else:
+        spy.assert_not_called()

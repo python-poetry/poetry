@@ -17,11 +17,12 @@ import pkginfo
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
+from poetry.core.version.requirements import InvalidRequirement
 
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 PEP517_META_BUILD = """\
 import build
 import build.env
-import pep517
+import pyproject_hooks
 
 source = '{source}'
 dest = '{dest}'
@@ -50,18 +51,18 @@ with build.env.IsolatedEnvBuilder() as env:
         srcdir=source,
         scripts_dir=env.scripts_dir,
         python_executable=env.executable,
-        runner=pep517.quiet_subprocess_runner,
+        runner=pyproject_hooks.quiet_subprocess_runner,
     )
     env.install(builder.build_system_requires)
     env.install(builder.get_requires_for_build('wheel'))
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build===0.7.0", "pep517==0.12.0"]
+PEP517_META_BUILD_DEPS = ["build==0.10.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
-    def __init__(self, path: Path | str, *reasons: BaseException | str) -> None:
+    def __init__(self, path: Path, *reasons: BaseException | str) -> None:
         reasons = (f"Unable to determine package info for path: {path!s}",) + reasons
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
@@ -69,22 +70,23 @@ class PackageInfoError(ValueError):
 class PackageInfo:
     def __init__(
         self,
+        *,
         name: str | None = None,
         version: str | None = None,
         summary: str | None = None,
-        platform: str | None = None,
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
+        yanked: str | bool = False,
         cache_version: str | None = None,
     ) -> None:
         self.name = name
         self.version = version
         self.summary = summary
-        self.platform = platform
         self.requires_dist = requires_dist
         self.requires_python = requires_python
         self.files = files or []
+        self.yanked = yanked
         self._cache_version = cache_version
         self._source_type: str | None = None
         self._source_url: str | None = None
@@ -98,7 +100,6 @@ class PackageInfo:
         self.name = other.name or self.name
         self.version = other.version or self.version
         self.summary = other.summary or self.summary
-        self.platform = other.platform or self.platform
         self.requires_dist = other.requires_dist or self.requires_dist
         self.requires_python = other.requires_python or self.requires_python
         self.files = other.files or self.files
@@ -113,10 +114,10 @@ class PackageInfo:
             "name": self.name,
             "version": self.version,
             "summary": self.summary,
-            "platform": self.platform,
             "requires_dist": self.requires_dist,
             "requires_python": self.requires_python,
             "files": self.files,
+            "yanked": self.yanked,
             "_cache_version": self._cache_version,
         }
 
@@ -163,6 +164,7 @@ class PackageInfo:
             source_type=self._source_type,
             source_url=self._source_url,
             source_reference=self._source_reference,
+            yanked=self.yanked,
         )
         if self.summary is not None:
             package.description = self.summary
@@ -196,13 +198,21 @@ class PackageInfo:
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except InvalidMarker:
                 # Invalid marker, We strip the markers hoping for the best
+                logger.warning(
+                    "Stripping invalid marker (%s) found in %s-%s dependencies",
+                    req,
+                    package.name,
+                    package.version,
+                )
                 req = req.split(";")[0]
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except ValueError:
-                # Likely unable to parse constraint so we skip it
-                logger.debug(
-                    f"Invalid constraint ({req}) found in"
-                    f" {package.name}-{package.version} dependencies, skipping",
+            except InvalidRequirement:
+                # Unable to parse requirement so we skip it
+                logger.warning(
+                    "Invalid requirement (%s) found in %s-%s dependencies, skipping",
+                    req,
+                    package.name,
+                    package.version,
                 )
                 continue
 
@@ -248,7 +258,6 @@ class PackageInfo:
             name=dist.name,
             version=dist.version,
             summary=dist.summary,
-            platform=dist.supported_platforms,
             requires_dist=requirements,
             requires_python=dist.requires_python,
         )
@@ -409,6 +418,7 @@ class PackageInfo:
         else:
             directories = list(cls._find_dist_info(path=path))
 
+        dist: pkginfo.BDist | pkginfo.SDist | pkginfo.Wheel
         for directory in directories:
             try:
                 if directory.suffix == ".egg-info":
@@ -446,10 +456,10 @@ class PackageInfo:
             name=package.name,
             version=str(package.version),
             summary=package.description,
-            platform=package.platform,
             requires_dist=list(requires),
             requires_python=package.python_versions,
             files=package.files,
+            yanked=package.yanked_reason if package.yanked else False,
         )
 
     @staticmethod
@@ -457,7 +467,9 @@ class PackageInfo:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
-            return Factory().create_poetry(path).package
+            with contextlib.suppress(RuntimeError):
+                return Factory().create_poetry(path).package
+
         return None
 
     @classmethod
@@ -583,6 +595,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
+                "--no-input",
                 *PEP517_META_BUILD_DEPS,
             )
             venv.run(
@@ -604,16 +617,16 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 )
 
             cwd = Path.cwd()
-            os.chdir(path.as_posix())
+            os.chdir(path)
             try:
                 venv.run("python", "setup.py", "egg_info")
                 info = PackageInfo.from_metadata(path)
             except EnvCommandError as fbe:
                 raise PackageInfoError(
-                    path, "Fallback egg_info generation failed.", fbe
+                    path, e, "Fallback egg_info generation failed.", fbe
                 )
             finally:
-                os.chdir(cwd.as_posix())
+                os.chdir(cwd)
 
     if info:
         logger.debug("Falling back to parsed setup.py file for %s", path)

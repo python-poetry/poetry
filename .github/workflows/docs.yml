@@ -21,7 +21,7 @@ jobs:
     name: Build & Deploy
     runs-on: ubuntu-latest
     if: |
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'Documentation'))
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
       || (github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - name: Checkout Website Source
@@ -36,14 +36,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.10"
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: "14"
+          node-version: "18"
 
       - name: Build Assets
         run: npm ci && npm run prod
@@ -51,7 +51,7 @@ jobs:
       - name: Fetch Documentation
         run: |
           python -m pip install poetry
-          poetry install --no-dev
+          poetry install --only main
           poetry run python bin/website build --local ./poetry
 
       - name: Install Hugo
@@ -63,7 +63,7 @@ jobs:
         run: hugo -v --minify
 
       - name: Deploy
-        uses: amondnet/vercel-action@v20
+        uses: amondnet/vercel-action@v25
         id: vercel-action
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}

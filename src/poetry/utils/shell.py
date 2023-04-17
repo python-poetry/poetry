@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -11,7 +12,6 @@ from typing import Any
 
 import pexpect
 
-from cleo.terminal import Terminal
 from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
@@ -76,31 +76,45 @@ class Shell:
         # mypy requires using sys.platform instead of WINDOWS constant
         # in if statements to properly type check on Windows
         if sys.platform == "win32":
+            args = None
             if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
-            else:
+            elif self._name == "cmd":
                 # /K will execute the bat file and
                 # keep the cmd process from terminating
                 args = ["/K", str(activate_path)]
-            completed_proc = subprocess.run([self.path, *args])
-            return completed_proc.returncode
+
+            if args:
+                completed_proc = subprocess.run([self.path, *args])
+                return completed_proc.returncode
+            else:
+                # If no args are set, execute the shell within the venv
+                # This activates it, but there could be some features missing:
+                # deactivate command might not work
+                # shell prompt will not be modified.
+                return env.execute(self._path)
 
         import shlex
 
-        terminal = Terminal()
+        terminal = shutil.get_terminal_size()
         with env.temp_environ():
             c = pexpect.spawn(
-                self._path, ["-i"], dimensions=(terminal.height, terminal.width)
+                self._path, ["-i"], dimensions=(terminal.lines, terminal.columns)
             )
 
         if self._name in ["zsh", "nu"]:
             c.setecho(False)
-
-        c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
+            if self._name == "zsh":
+                # Under ZSH the source command should be invoked in zsh's bash emulator
+                c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
+        else:
+            c.sendline(
+                f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+            )
 
         def resize(sig: Any, data: Any) -> None:
-            terminal = Terminal()
-            c.setwinsize(terminal.height, terminal.width)
+            terminal = shutil.get_terminal_size()
+            c.setwinsize(terminal.lines, terminal.columns)
 
         signal.signal(signal.SIGWINCH, resize)
 

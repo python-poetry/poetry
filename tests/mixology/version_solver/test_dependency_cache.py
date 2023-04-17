@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
 from poetry.mixology.version_solver import DependencyCache
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.mixology.helpers import add_to_repo
 
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
 def test_solver_dependency_cache_respects_source_type(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     dependency_pypi = Factory.create_dependency("demo", ">=0.1.0")
     dependency_git = Factory.create_dependency(
         "demo", {"git": "https://github.com/demo/demo.git"}, groups=["dev"]
@@ -56,15 +57,12 @@ def test_solver_dependency_cache_respects_source_type(
     assert package_git.package.version.text == "0.1.2"
     assert package_git.package.source_type == dependency_git.source_type
     assert package_git.package.source_url == dependency_git.source_url
-    assert (
-        package_git.package.source_resolved_reference
-        == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-    )
+    assert package_git.package.source_resolved_reference == MOCK_DEFAULT_GIT_REVISION
 
 
 def test_solver_dependency_cache_respects_subdirectories(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     dependency_one = Factory.create_dependency(
         "one",
         {
@@ -114,7 +112,7 @@ def test_solver_dependency_cache_respects_subdirectories(
     assert (
         package_one.package.source_resolved_reference
         == package_one_copy.package.source_resolved_reference
-        == "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+        == MOCK_DEFAULT_GIT_REVISION
     )
     assert (
         package_one.package.source_subdirectory

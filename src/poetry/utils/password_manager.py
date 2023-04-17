@@ -109,8 +109,8 @@ class PoetryKeyring:
     def _check(self) -> None:
         try:
             import keyring
-        except Exception as e:
-            logger.debug(f"An error occurred while importing keyring: {e!s}")
+        except ImportError as e:
+            logger.debug("An error occurred while importing keyring: %s", e)
             self._is_available = False
 
             return
@@ -134,7 +134,7 @@ class PoetryKeyring:
                     and "plaintext" not in b.name.lower()
                     for b in backends
                 )
-            except Exception:
+            except ImportError:
                 self._is_available = False
 
         if not self._is_available:
@@ -170,12 +170,21 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str | None:
-        if not self.keyring.is_available():
-            token: str | None = self._config.get(f"pypi-token.{name}")
+    def get_pypi_token(self, repo_name: str) -> str | None:
+        """Get PyPi token.
+
+        First checks the environment variables for a token,
+        then the configured username/password and the
+        available keyring.
+
+        :param repo_name:  Name of repository.
+        :return: Returns a token as a string if found, otherwise None.
+        """
+        token: str | None = self._config.get(f"pypi-token.{repo_name}")
+        if token:
             return token
 
-        return self.keyring.get_password(name, "__token__")
+        return self.keyring.get_password(repo_name, "__token__")
 
     def delete_pypi_token(self, name: str) -> None:
         if not self.keyring.is_available():

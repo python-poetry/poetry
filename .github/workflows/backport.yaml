@@ -1,0 +1,36 @@
+name: Backport
+
+on:
+  pull_request_target:
+    types:
+      - closed
+      - labeled
+
+jobs:
+  backport:
+    name: Backport
+    runs-on: ubuntu-latest
+    # Only react to merged PRs for security reasons.
+    # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target.
+    if: >
+      github.event.pull_request.merged
+      && (
+        github.event.action == 'closed'
+        || (
+          github.event.action == 'labeled'
+          && contains(github.event.label.name, 'backport')
+        )
+      )
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.POETRY_TOKEN_APP_ID }}
+          private_key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
+      - name: Generate backport
+        uses: tibdex/backport@v2
+        with:
+          github_token: ${{ steps.generate_token.outputs.token }}
+          title_template: "[<%= base %>] <%= title %>"
+          label_pattern: "^backport/(?<base>([^ ]+))$"

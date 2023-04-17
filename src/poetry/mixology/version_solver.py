@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import time
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
@@ -12,18 +11,17 @@ from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import NoVersionsCause
-from poetry.mixology.incompatibility_cause import PackageNotFoundCause
 from poetry.mixology.incompatibility_cause import RootCause
 from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
 from poetry.mixology.term import Term
-from poetry.packages import DependencyPackage
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
+    from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider
 
 
@@ -82,23 +80,10 @@ class VersionSolver:
     on how this solver works.
     """
 
-    def __init__(
-        self,
-        root: ProjectPackage,
-        provider: Provider,
-        locked: dict[str, list[DependencyPackage]] | None = None,
-        use_latest: list[str] | None = None,
-    ) -> None:
+    def __init__(self, root: ProjectPackage, provider: Provider) -> None:
         self._root = root
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)
-        self._locked = locked or {}
-
-        if use_latest is None:
-            use_latest = []
-
-        self._use_latest = use_latest
-
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
         self._contradicted_incompatibilities: set[Incompatibility] = set()
         self._solution = PartialSolution()
@@ -335,8 +320,8 @@ class VersionSolver:
             # The most_recent_satisfier may not satisfy most_recent_term on its own
             # if there are a collection of constraints on most_recent_term that
             # only satisfy it together. For example, if most_recent_term is
-            # `foo ^1.0.0` and _solution contains `[foo >=1.0.0,
-            # foo <2.0.0]`, then most_recent_satisfier will be `foo <2.0.0` even
+            # `foo ^1.0.0` and _solution contains `[foo >=1.0.0,
+            # foo <2.0.0]`, then most_recent_satisfier will be `foo <2.0.0` even
             # though it doesn't totally satisfy `foo ^1.0.0`.
             #
             # In this case, we add `not (most_recent_satisfier \ most_recent_term)` to
@@ -346,7 +331,9 @@ class VersionSolver:
             # .. _algorithm documentation:
             # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
             if difference is not None:
-                new_terms.append(difference.inverse)
+                inverse = difference.inverse
+                if inverse.dependency != most_recent_satisfier.dependency:
+                    new_terms.append(inverse)
 
             incompatibility = Incompatibility(
                 new_terms, ConflictCause(incompatibility, most_recent_satisfier.cause)
@@ -375,66 +362,58 @@ class VersionSolver:
         if not unsatisfied:
             return None
 
+        class Preference:
+            """
+            Preference is one of the criteria for choosing which dependency to solve
+            first. A higher value means that there are "more options" to satisfy
+            a dependency. A lower value takes precedence.
+            """
+
+            DIRECT_ORIGIN = 0
+            NO_CHOICE = 1
+            USE_LATEST = 2
+            LOCKED = 3
+            DEFAULT = 4
+
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency: Dependency) -> tuple[bool, int]:
+        # In order to provide results that are as deterministic as possible
+        # and consistent between `poetry lock` and `poetry update`, the return value
+        # of two different dependencies should not be equal if possible.
+        def _get_min(dependency: Dependency) -> tuple[bool, int, int]:
             # Direct origin dependencies must be handled first: we don't want to resolve
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, -1
+                return False, Preference.DIRECT_ORIGIN, 1
 
-            if dependency.name in self._use_latest:
-                # If we're forced to use the latest version of a package, it effectively
-                # only has one version to choose from.
-                return not dependency.marker.is_any(), 1
+            is_specific_marker = not dependency.marker.is_any()
 
-            locked = self._get_locked(dependency)
-            if locked:
-                return not dependency.marker.is_any(), 1
+            use_latest = dependency.name in self._provider.use_latest
+            if not use_latest:
+                locked = self._provider.get_locked(dependency)
+                if locked:
+                    return is_specific_marker, Preference.LOCKED, 1
 
-            try:
-                return (
-                    not dependency.marker.is_any(),
-                    len(self._dependency_cache.search_for(dependency)),
-                )
-            except ValueError:
-                return not dependency.marker.is_any(), 0
+            num_packages = len(self._dependency_cache.search_for(dependency))
+
+            if num_packages < 2:
+                preference = Preference.NO_CHOICE
+            elif use_latest:
+                preference = Preference.USE_LATEST
+            else:
+                preference = Preference.DEFAULT
+            return is_specific_marker, preference, num_packages
 
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]
         else:
             dependency = min(*unsatisfied, key=_get_min)
 
-        locked = self._get_locked(dependency)
+        locked = self._provider.get_locked(dependency)
         if locked is None:
-            try:
-                packages = self._dependency_cache.search_for(dependency)
-            except ValueError as e:
-                self._add_incompatibility(
-                    Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
-                )
-                complete_name: str = dependency.complete_name
-                return complete_name
-
-            package = None
-            if dependency.name not in self._use_latest:
-                # prefer locked version of compatible (not exact same) dependency;
-                # required in order to not unnecessarily update dependencies with
-                # extras, e.g. "coverage" vs. "coverage[toml]"
-                locked = self._get_locked(dependency, allow_similar=True)
-            if locked is not None:
-                package = next(
-                    (
-                        p
-                        for p in packages
-                        if p.package.version == locked.package.version
-                    ),
-                    None,
-                )
-            if package is None:
-                with suppress(IndexError):
-                    package = packages[0]
+            packages = self._dependency_cache.search_for(dependency)
+            package = next(iter(packages), None)
 
             if package is None:
                 # If there are no versions that satisfy the constraint,
@@ -503,23 +482,6 @@ class VersionSolver:
             self._incompatibilities[term.dependency.complete_name].append(
                 incompatibility
             )
-
-    def _get_locked(
-        self, dependency: Dependency, *, allow_similar: bool = False
-    ) -> DependencyPackage | None:
-        if dependency.name in self._use_latest:
-            return None
-
-        locked = self._locked.get(dependency.name, [])
-        for dependency_package in locked:
-            package = dependency_package.package
-            if (allow_similar or dependency.is_same_package_as(package)) and (
-                dependency.constraint.allows(package.version)
-                or package.is_prerelease()
-                and dependency.constraint.allows(package.version.next_patch())
-            ):
-                return DependencyPackage(dependency, package)
-        return None
 
     def _log(self, text: str) -> None:
         self._provider.debug(text, self._solution.attempted_solutions)

@@ -23,12 +23,12 @@ concurrency:
 
 jobs:
   tests:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }} ${{ matrix.suffix }}
+    name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         include:
           - os: Ubuntu
             image: ubuntu-22.04
@@ -41,20 +41,20 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Get full Python version
         id: full-python-version
-        run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
+        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
 
       - name: Bootstrap poetry
         run: |
-          curl -sL https://install.python-poetry.org | python - -y ${{ matrix.bootstrap-args }}
+          curl -sSL https://install.python-poetry.org | python - -y
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
@@ -64,11 +64,17 @@ jobs:
         if: ${{ matrix.os == 'Windows' }}
         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
+      - name: Enable long paths for git on Windows
+        if: ${{ matrix.os == 'Windows' }}
+        # Enable handling long path names (+260 char) on the Windows platform
+        # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+        run: git config --system core.longpaths true
+
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
 
       - name: Set up cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache
         with:
           path: .venv
@@ -76,41 +82,42 @@ jobs:
 
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
-        run: timeout 10s poetry run pip --version || rm -rf .venv
+        run: |
+          # `timeout` is not available on macOS, so we define a custom function.
+          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+
+          # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
+          timeout 10s poetry run pip --version || rm -rf .venv
+
+      - name: Check lock file
+        run: poetry lock --check
 
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --with github-actions
 
       - name: Run mypy
         run: poetry run mypy
 
-      - name: Install pytest plugin
-        run: poetry run pip install pytest-github-actions-annotate-failures
-
       - name: Run pytest
-        run: poetry run python -m pytest -n auto -p no:sugar -q tests/
-
-      - name: Run pytest (integration suite)
         env:
           POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
           POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: poetry run python -m pytest -n auto -p no:sugar -q --integration tests/integration
+        run: poetry run pytest --integration -v
 
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
         run: |
-          echo ::set-output name=version::$(\
-            poetry show poetry-plugin-export  | grep version | cut -d : -f 2 | xargs)
+          echo version=$(poetry show poetry-plugin-export | grep version | cut -d : -f 2 | xargs) >> $GITHUB_OUTPUT
 
       - name: Checkout Plugin Source (poetry-plugin-export)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
           ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
       - name: Run pytest (poetry-plugin-export)
-        run: poetry run python -m pytest -p no:sugar -q poetry-plugin-export/tests/
+        run: poetry run pytest -v poetry-plugin-export/tests/
 
       - name: Check for clean working tree
         run: |

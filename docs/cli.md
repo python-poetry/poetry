@@ -29,6 +29,7 @@ then `--help` combined with any of those can give you more information.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
 * `--no-cache`: Disables Poetry source caches.
+* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory).
 
 
 ## new
@@ -126,7 +127,7 @@ poetry init
 * `--author`: Author of the package.
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-* `--dev-dependency`: Development requirements, see `--require`.
+* `--dev-dependency`: Development requirements, see `--dependency`.
 
 
 ## install
@@ -144,7 +145,7 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-If you want to exclude one or more dependency group for the installation, you can use
+If you want to exclude one or more dependency groups for the installation, you can use
 the `--without` option.
 
 ```bash
@@ -201,6 +202,12 @@ poetry install -E mysql -E pgsql
 poetry install --all-extras
 ```
 
+Extras are not sensitive to `--sync`.  Any extras not specified will always be removed.
+
+```bash
+poetry install --extras "A B"  # C is removed
+```
+
 By default `poetry` will install your project's package every time you run `install`:
 
 ```bash
@@ -218,8 +225,29 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--only`
-option is used.
+Similar to `--no-root` you can use `--no-directory` to skip directory path dependencies:
+
+```bash
+poetry install --no-directory
+```
+
+This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}}) for more information on this option.
+
+By default `poetry` does not compile Python source files to bytecode during installation.
+This speeds up the installation process, but the first execution may take a little more
+time because Python then compiles source files to bytecode automatically.
+If you want to compile source files to bytecode during installation,
+you can use the `--compile` option:
+
+```bash
+poetry install --compile
+```
+
+{{% note %}}
+The `--compile` option has no effect if `installer.modern-installation`
+is set to `false` because the old installer always compiles source files to bytecode.
+{{% /note %}}
+
 
 ### Options
 
@@ -227,14 +255,15 @@ option is used.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
+* `--no-directory`: Skip all directory path dependencies (including transitive ones).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
-* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
-* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
+* `--compile`: Compile Python source files to bytecode.
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
+* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -268,9 +297,8 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--no-dev` : Do not update the development dependencies. (**Deprecated**)
+* `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--lock` : Do not perform install (only update the lockfile).
 
 {{% note %}}
@@ -350,7 +378,13 @@ poetry add git+ssh://github.com/sdispater/pendulum.git#develop
 poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
-or make them point to a local directory or file:
+or reference a subdirectory:
+
+```bash
+poetry add git+https://github.com/myorg/mypackage_with_subdirs.git@main#subdirectory=subdir
+```
+
+You can also add a local directory or file:
 
 ```bash
 poetry add ./my-package/
@@ -402,7 +436,7 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to add the dependency to.
-* `--dev (-D)`: Add package as development dependency. (**Deprecated**)
+* `--dev (-D)`: Add package as development dependency. (**Deprecated**, use `-G dev` instead)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
@@ -435,13 +469,13 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to remove the dependency from.
-* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
+* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
 ## show
 
-To list all of the available packages, you can use the `show` command.
+To list all the available packages, you can use the `show` command.
 
 ```bash
 poetry show
@@ -471,8 +505,7 @@ required by
 * `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
-* `--no-dev`: Do not list the dev dependencies. (**Deprecated**)
+* `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
@@ -508,6 +541,10 @@ poetry publish
 ```
 
 It can also build the package if you pass it the `--build` option.
+
+{{% note %}}
+See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to configure and use publishable repositories.
+{{% /note %}}
 
 ### Options
 
@@ -680,15 +717,14 @@ group defined in `tool.poetry.dependencies` when used without specifying any opt
 ### Options
 
 * `--format (-f)`: The format to export to (default: `requirements.txt`).
-  Currently, only `requirements.txt` is supported.
+  Currently, only `constraints.txt` and `requirements.txt` are supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
-* `--dev`: Include development dependencies. (**Deprecated**)
+* `--dev`: Include development dependencies. (**Deprecated**, use `--with dev` instead)
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--default`: Only include the main dependencies. (**Deprecated**)
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
@@ -748,11 +784,12 @@ You cannot use the name `pypi` as it is reserved for use by the default PyPI sou
 
 #### Options
 
-* `--default`: Set this source as the [default]({{< relref "repositories#disabling-the-pypi-repository" >}}) (disable PyPI).
-* `--secondary`: Set this source as a [secondary]({{< relref "repositories#install-dependencies-from-a-private-repository" >}}) source.
+* `--default`: Set this source as the [default]({{< relref "repositories#default-package-source" >}}) (disable PyPI). Deprecated in favor of `--priority`.
+* `--secondary`: Set this source as a [secondary]({{< relref "repositories#secondary-package-sources" >}}) source. Deprecated in favor of `--priority`.
+* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 {{% note %}}
-You cannot set a source as both `default` and `secondary`.
+At most one of the options above can be provided. See [package sources]({{< relref "repositories#package-sources" >}}) for more information.
 {{% /note %}}
 
 ### source show

@@ -13,8 +13,8 @@ from poetry.core.packages.package import Package
 
 from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.pool import Pool
 from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 
 
@@ -58,7 +58,7 @@ def mock_pypi(http: type[httpretty.httpretty]) -> None:
             fixture = JSON_FIXTURES / (name + ".json")
 
         if not fixture.exists():
-            return
+            return None
 
         with fixture.open(encoding="utf-8") as f:
             return [200, headers, f.read()]
@@ -91,12 +91,35 @@ def mock_legacy(http: type[httpretty.httpretty]) -> None:
 
 
 @pytest.fixture()
-def pool() -> Pool:
-    pool = Pool()
+def mock_legacy_partial_yank(http: type[httpretty.httpretty]) -> None:
+    def callback(
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> list[int | dict[str, Any] | str]:
+        parts = uri.rsplit("/")
+        name = parts[-2]
+
+        fixture = LEGACY_FIXTURES / (name + "-partial-yank" + ".html")
+
+        with fixture.open(encoding="utf-8") as f:
+            return [200, headers, f.read()]
+
+    http.register_uri(
+        http.GET,
+        re.compile("^https://foo2.bar/simple/(.+?)$"),
+        body=callback,
+    )
+
+
+@pytest.fixture()
+def pool() -> RepositoryPool:
+    pool = RepositoryPool()
 
     pool.add_repository(PyPiRepository(disable_cache=True))
     pool.add_repository(
         LegacyRepository("foo", "https://foo.bar/simple/", disable_cache=True)
+    )
+    pool.add_repository(
+        LegacyRepository("foo2", "https://foo2.bar/simple/", disable_cache=True)
     )
 
     return pool
@@ -104,8 +127,12 @@ def pool() -> Pool:
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_universal_wheel_link_if_available(
-    env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
-):
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("pytest", "3.5.0")
@@ -139,11 +166,11 @@ def test_chooser_no_binary_policy(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
+    pool: RepositoryPool,
     policy: str,
     filename: str,
     config: Config,
-):
+) -> None:
     config.merge({"installer": {"no-binary": policy.split(",")}})
 
     chooser = Chooser(pool, env, config)
@@ -165,8 +192,12 @@ def test_chooser_no_binary_policy(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
-    env: MockEnv, mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
-):
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
@@ -186,8 +217,8 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_system_specific_wheel_link_if_available(
-    mock_pypi: None, mock_legacy: None, source_type: str, pool: Pool
-):
+    mock_pypi: None, mock_legacy: None, source_type: str, pool: RepositoryPool
+) -> None:
     env = MockEnv(
         supported_tags=[Tag("cp37", "cp37m", "win32"), Tag("py3", "none", "any")]
     )
@@ -214,8 +245,8 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
-):
+    pool: RepositoryPool,
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("pyyaml", "3.13.0")
@@ -239,8 +270,8 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     mock_pypi: None,
     mock_legacy: None,
     source_type: str,
-    pool: Pool,
-):
+    pool: RepositoryPool,
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
@@ -267,13 +298,90 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_chooses_yanked_if_no_others(
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
+) -> None:
+    chooser = Chooser(pool, env)
+
+    package = Package("black", "21.11b0")
+    files = [
+        {
+            "filename": "black-21.11b0-py3-none-any.whl",
+            "hash": "sha256:0b1f66cbfadcd332ceeaeecf6373d9991d451868d2e2219ad0ac1213fb701117",  # noqa: E501
+        }
+    ]
+    if source_type == "legacy":
+        package = Package(
+            package.name,
+            package.version.text,
+            source_type="legacy",
+            source_reference="foo",
+            source_url="https://foo.bar/simple/",
+        )
+
+    package.files = files
+
+    link = chooser.choose_for(package)
+
+    assert link.filename == "black-21.11b0-py3-none-any.whl"
+    assert link.yanked
+
+
+def test_chooser_does_not_choose_yanked_if_others(
+    mock_legacy: None,
+    mock_legacy_partial_yank: None,
+    pool: RepositoryPool,
+) -> None:
+    chooser = Chooser(pool, MockEnv(supported_tags=[Tag("py2", "none", "any")]))
+
+    package = Package("futures", "3.2.0")
+    files = [
+        {
+            "filename": "futures-3.2.0-py2-none-any.whl",
+            "hash": "sha256:ec0a6cb848cc212002b9828c3e34c675e0c9ff6741dc445cab6fdd4e1085d1f1",  # noqa: E501
+        },
+        {
+            "filename": "futures-3.2.0.tar.gz",
+            "hash": "sha256:9ec02aa7d674acb8618afb127e27fde7fc68994c0437ad759fa094a574adb265",  # noqa: E501
+        },
+    ]
+    package = Package(
+        package.name,
+        package.version.text,
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://foo.bar/simple/",
+    )
+    package_partial_yank = Package(
+        package.name,
+        package.version.text,
+        source_type="legacy",
+        source_reference="foo2",
+        source_url="https://foo2.bar/simple/",
+    )
+
+    package.files = files
+    package_partial_yank.files = files
+
+    link = chooser.choose_for(package)
+    link_partial_yank = chooser.choose_for(package_partial_yank)
+
+    assert link.filename == "futures-3.2.0-py2-none-any.whl"
+    assert link_partial_yank.filename == "futures-3.2.0.tar.gz"
+
+
+@pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     env: MockEnv,
     mock_pypi: None,
     mock_legacy: None,
     source_type: None,
-    pool: Pool,
-):
+    pool: RepositoryPool,
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")

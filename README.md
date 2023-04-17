@@ -1,34 +1,18 @@
-# Poetry: Dependency Management for Python
+# Poetry: Python packaging and dependency management made easy
 
-[![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
-[![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)](https://pypi.org/project/poetry/)
-[![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=pre-release&include_prereleases&sort=semver)](https://pypi.org/project/poetry/#history)
-[![Downloads](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
-[![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)](https://discord.com/invite/awxPgve)
+[![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)][PyPI Releases]
+[![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=pre-release&include_prereleases&sort=semver)][PyPI Releases]
+[![Python Versions](https://img.shields.io/pypi/pyversions/poetry)][PyPI]
+[![Download Stats](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
+[![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)][Discord]
 
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
-It requires Python 3.7+ to run.
-
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-## Documentation
-
-The [complete documentation](https://python-poetry.org/docs/) is available on the [official website](https://python-poetry.org).
-
-## Installation
-
-Instructions on how to install `poetry` can be found [here](https://python-poetry.org/docs/master/#installation).
-You can also refer [here](https://python-poetry.org/docs/master/#enable-tab-completion-for-bash-fish-or-zsh) for
-information on how to enable tab completion in your environment.
-
-## Introduction
-
-`poetry` is a tool to handle dependency installation as well as building and packaging of Python packages.
-It only needs one file to do all of that: the new, [standardized](https://www.python.org/dev/peps/pep-0518/) `pyproject.toml`.
-
-In other words, poetry uses `pyproject.toml` to replace `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile`.
+Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile` with a simple `pyproject.toml`
+based project format.
 
 ```toml
 [tool.poetry]
@@ -42,64 +26,89 @@ authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 
-readme = "README.md"
-
 repository = "https://github.com/python-poetry/poetry"
 homepage = "https://python-poetry.org"
 
+# README file(s) are used as the package description
+readme = ["README.md", "LICENSE"]
+
+# Keywords (translated to tags on the package index)
 keywords = ["packaging", "poetry"]
 
 [tool.poetry.dependencies]
-python = "^3.8"  # Compatible python versions must be declared here
+# Compatible Python versions
+python = ">=3.8"
+# Standard dependency with semver constraints
 aiohttp = "^3.8.1"
-# Dependencies with extras
-requests = { version = "^2.28", extras = [ "security" ] }
-# Python specific dependencies with prereleases allowed
+# Dependency with extras
+requests = { version = "^2.28", extras = ["security"] }
+# Version-specific dependencies with prereleases allowed
 tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
 # Git dependencies
 cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "master" }
-
-# Optional dependencies (extras)
+# Optional dependencies (installed by extras)
 pendulum = { version = "^2.1.2", optional = true }
 
-[tool.poetry.dev-dependencies]
+# Dependency groups are supported for organizing your dependencies
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
 pytest-cov = "^3.0"
 
+# ...and can be installed only when explicitly requested
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^5.1.1"
+
+# Python-style entrypoints and scripts are easily expressed
 [tool.poetry.scripts]
 my-script = "my_package:main"
 ```
 
-There are some things we can notice here:
+## Installation
 
-* It will try to enforce [semantic versioning](<http://semver.org>) as the best practice in version naming.
-* You can specify the readme, included and excluded files: no more `MANIFEST.in`.
-`poetry` will also use VCS ignore files (like `.gitignore`) to populate the `exclude` section.
-* Keywords can be specified and will act as tags on the packaging site.
-* The dependencies sections support caret, tilde, wildcard, inequality and multiple requirements.
-* You must specify the python versions for which your package is compatible.
+Poetry supports multiple installation methods, including a simple script found at [install.python-poetry.org]. For full
+installation instructions, including advanced usage of the script, alternate install methods, and CI best practices, see
+the full [installation documentation].
 
-`poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
-So, `poetry` can be installed globally and used everywhere.
+## Documentation
 
-`poetry` also comes with a full fledged dependency resolution library.
+[Documentation] for the current version of Poetry (as well as the development branch and recently out of support
+versions) is available from the [official website].
 
-## Why?
+## Contribute
 
-Packaging systems and dependency management in Python are rather convoluted and hard to understand for newcomers.
-Even for seasoned developers it might be cumbersome at times to create all files needed in a Python project: `setup.py`,
-`requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile`.
-
-So I wanted a tool that would limit everything to a single configuration file to do:
-dependency management, packaging and publishing.
-
-It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
-
-And, finally, I started `poetry` to bring another exhaustive dependency resolver to the Python community apart from
-[Conda's](https://conda.io).
+Poetry is a large, complex project always in need of contributors. For those new to the project, a list of
+[suggested issues] to work on in Poetry and poetry-core is available. The full [contributing documentation] also
+provides helpful guidance.
 
 ## Resources
 
-* [Official Website](https://python-poetry.org)
-* [Issue Tracker](https://github.com/python-poetry/poetry/issues)
-* [Discord](https://discord.com/invite/awxPgve)
+* [Releases][PyPI Releases]
+* [Official Website]
+* [Documentation]
+* [Issue Tracker]
+* [Discord]
+
+  [PyPI]: https://pypi.org/project/poetry/
+  [PyPI Releases]: https://pypi.org/project/poetry/#history
+  [Official Website]: https://python-poetry.org
+  [Documentation]: https://python-poetry.org/docs/
+  [Issue Tracker]: https://github.com/python-poetry/poetry/issues
+  [Suggested Issues]: https://github.com/python-poetry/poetry/contribute
+  [Contributing Documentation]: https://python-poetry.org/docs/contributing
+  [Discord]: https://discord.com/invite/awxPgve
+  [install.python-poetry.org]: https://install.python-poetry.org
+  [Installation Documentation]: https://python-poetry.org/docs/#installation
+
+## Related Projects
+
+* [poetry-core](https://github.com/python-poetry/poetry-core): PEP 517 build-system for Poetry projects, and
+dependency-free core functionality of the Poetry frontend
+* [poetry-plugin-export](https://github.com/python-poetry/poetry-plugin-export): Export Poetry projects/lock files to
+foreign formats like requirements.txt
+* [poetry-plugin-bundle](https://github.com/python-poetry/poetry-plugin-bundle): Install Poetry projects/lock files to
+external formats like virtual environments
+* [install.python-poetry.org](https://github.com/python-poetry/install.python-poetry.org): The official Poetry
+installation script
+* [website](https://github.com/python-poetry/website): The official Poetry website and blog

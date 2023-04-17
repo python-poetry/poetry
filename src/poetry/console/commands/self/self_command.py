@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.__version__ import __version__
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.factory import Factory
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.helpers import directory
@@ -46,6 +46,7 @@ class SelfCommand(InstallerCommand):
     def env(self) -> Env:
         if not isinstance(self._env, SystemEnv):
             self.reset_env()
+        assert self._env is not None
         return self._env
 
     @property
@@ -74,9 +75,10 @@ class SelfCommand(InstallerCommand):
         content = Factory.create_pyproject_from_package(package=package)
 
         for key in preserved:
-            content[key] = preserved[key]
+            content["tool"]["poetry"][key] = preserved[key]  # type: ignore[index]
 
-        self.system_pyproject.write_text(content.as_string(), encoding="utf-8")
+        pyproject = PyProjectTOML(self.system_pyproject)
+        pyproject.file.write(content)
 
     def reset_poetry(self) -> None:
         with directory(self.system_pyproject.parent):
