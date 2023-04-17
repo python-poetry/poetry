@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
 
 
-def test_parse_requires():
+def test_parse_requires() -> None:
     requires = """\
 jsonschema>=2.6.0.0,<3.0.0.0
 lockfile>=0.12.0.0,<0.13.0.0
@@ -71,10 +70,8 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
 
 
 def test_default_hash(fixture_dir: FixtureDirGetter) -> None:
-    root_dir = Path(__file__).parent.parent.parent
-    file_path = root_dir / fixture_dir("distributions/demo-0.1.0.tar.gz")
     sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
-    assert get_file_hash(file_path) == sha_256
+    assert get_file_hash(fixture_dir("distributions") / "demo-0.1.0.tar.gz") == sha_256
 
 
 try:
@@ -130,6 +127,5 @@ except ImportError:
 def test_guaranteed_hash(
     hash_name: str, expected: str, fixture_dir: FixtureDirGetter
 ) -> None:
-    root_dir = Path(__file__).parent.parent.parent
-    file_path = root_dir / fixture_dir("distributions/demo-0.1.0.tar.gz")
+    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     assert get_file_hash(file_path, hash_name) == expected

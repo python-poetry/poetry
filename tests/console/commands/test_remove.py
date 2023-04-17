@@ -48,7 +48,7 @@ def test_remove_without_specific_group_removes_from_all_groups(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     installed: Repository,
-):
+) -> None:
     """
     Removing without specifying a group removes packages from all groups.
     """
@@ -105,7 +105,7 @@ def test_remove_without_specific_group_removes_from_specific_groups(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     installed: Repository,
-):
+) -> None:
     """
     Removing with a specific group given removes packages only from this group.
     """
@@ -162,7 +162,7 @@ def test_remove_does_not_live_empty_groups(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     installed: Repository,
-):
+) -> None:
     """
     Empty groups are automatically discarded after package removal.
     """
@@ -208,7 +208,7 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     installed: Repository,
-):
+) -> None:
     """
     Removing a dependency using a canonicalized named removes the dependency.
     """
@@ -267,7 +267,7 @@ def test_remove_command_should_not_write_changes_upon_installer_errors(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
-):
+) -> None:
     repo.add_package(Package("foo", "2.0.0"))
 
     command_tester_factory("add").execute("foo")
@@ -285,7 +285,7 @@ def test_remove_with_dry_run_keep_files_intact(
     poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     tester = command_tester_factory("remove", poetry=poetry_with_up_to_date_lockfile)
 
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()

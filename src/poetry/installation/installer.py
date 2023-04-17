@@ -59,6 +59,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._groups: Iterable[str] | None = None
+        self._skip_directory = False
 
         self._execute_operations = True
         self._lock = False
@@ -147,6 +148,11 @@ class Installer:
 
     def update(self, update: bool = True) -> Installer:
         self._update = update
+
+        return self
+
+    def skip_directory(self, skip_directory: bool = False) -> Installer:
+        self._skip_directory = skip_directory
 
         return self
 
@@ -291,12 +297,10 @@ class Installer:
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
 
-        if self._update:
+        if self._lock and self._update:
+            # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
-
-            if self._lock:
-                # If we are only in lock mode, no need to go any further
-                return 0
+            return 0
 
         if self._groups is not None:
             root = self._package.with_dependency_groups(list(self._groups), only=True)
@@ -336,6 +340,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
+                skip_directory=self._skip_directory,
             )
 
         if not self._requires_synchronization:
@@ -362,7 +367,13 @@ class Installer:
         self._filter_operations(ops, lockfile_repo)
 
         # Execute operations
-        return self._execute(ops)
+        status = self._execute(ops)
+
+        if status == 0 and self._update:
+            # Only write lock file when installation is success
+            self._write_lock_file(lockfile_repo)
+
+        return status
 
     def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
         if self._write_lock and (force or self._update):
@@ -543,10 +554,7 @@ class Installer:
     def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
-            if isinstance(op, Update):
-                package = op.target_package
-            else:
-                package = op.package
+            package = op.target_package if isinstance(op, Update) else op.package
 
             if op.job_type == "uninstall":
                 continue
