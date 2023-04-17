@@ -41,9 +41,10 @@ class UpdateCommand(InstallerCommand):
     def handle(self) -> int:
         packages = self.argument("packages")
 
-        self.installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
+        use_executor = self.poetry.config.get("experimental.new-installer", False)
+        if not use_executor:
+            # only set if false because the method is deprecated
+            self.installer.use_executor(False)
 
         if packages:
             self.installer.whitelist({name: "*" for name in packages})

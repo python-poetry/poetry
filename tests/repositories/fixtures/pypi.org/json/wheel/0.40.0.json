@@ -1,0 +1,98 @@
+{
+  "info": {
+    "author": "",
+    "author_email": "Daniel Holth <dholth@fastmail.fm>",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: System :: Archiving :: Packaging"
+    ],
+    "description": "wheel\n=====\n\nThis library is the reference implementation of the Python wheel packaging\nstandard, as defined in `PEP 427`_.\n\nIt has two different roles:\n\n#. A setuptools_ extension for building wheels that provides the\n   ``bdist_wheel`` setuptools command\n#. A command line tool for working with wheel files\n\nIt should be noted that wheel is **not** intended to be used as a library, and\nas such there is no stable, public API.\n\n.. _PEP 427: https://www.python.org/dev/peps/pep-0427/\n.. _setuptools: https://pypi.org/project/setuptools/\n\nDocumentation\n-------------\n\nThe documentation_ can be found on Read The Docs.\n\n.. _documentation: https://wheel.readthedocs.io/\n\nCode of Conduct\n---------------\n\nEveryone interacting in the wheel project's codebases, issue trackers, chat\nrooms, and mailing lists is expected to follow the `PSF Code of Conduct`_.\n\n.. _PSF Code of Conduct: https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md\n\n",
+    "description_content_type": "text/x-rst",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "",
+    "keywords": "wheel,packaging",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "Alex Grönholm <alex.gronholm@nextday.fi>",
+    "name": "wheel",
+    "package_url": "https://pypi.org/project/wheel/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/wheel/",
+    "project_urls": {
+      "Changelog": "https://wheel.readthedocs.io/en/stable/news.html",
+      "Documentation": "https://wheel.readthedocs.io/",
+      "Issue Tracker": "https://github.com/pypa/wheel/issues"
+    },
+    "release_url": "https://pypi.org/project/wheel/0.40.0/",
+    "requires_dist": [
+      "pytest >= 6.0.0 ; extra == \"test\""
+    ],
+    "requires_python": ">=3.7",
+    "summary": "A built-package format for Python",
+    "version": "0.40.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 17289142,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "6186cc8d1ff2ca31a312a25a708c891cf9facbad4eae493b3872638db6785eb5",
+        "md5": "517d39f133bd7b1ff17caf09784b7543",
+        "sha256": "d236b20e7cb522daf2390fa84c55eea81c5c30190f90f29ae2ca1ad8355bf247"
+      },
+      "downloads": -1,
+      "filename": "wheel-0.40.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "517d39f133bd7b1ff17caf09784b7543",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.7",
+      "size": 64545,
+      "upload_time": "2023-03-14T15:10:00",
+      "upload_time_iso_8601": "2023-03-14T15:10:00.828550Z",
+      "url": "https://files.pythonhosted.org/packages/61/86/cc8d1ff2ca31a312a25a708c891cf9facbad4eae493b3872638db6785eb5/wheel-0.40.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "fcef0335f7217dd1e8096a9e8383e1d472aa14717878ffe07c4772e68b6e8735",
+        "md5": "ec5004c46d1905da98bb5bc1a10ddd21",
+        "sha256": "cd1196f3faee2b31968d626e1731c94f99cbdb67cf5a46e4f5656cbee7738873"
+      },
+      "downloads": -1,
+      "filename": "wheel-0.40.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "ec5004c46d1905da98bb5bc1a10ddd21",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7",
+      "size": 96226,
+      "upload_time": "2023-03-14T15:10:02",
+      "upload_time_iso_8601": "2023-03-14T15:10:02.873691Z",
+      "url": "https://files.pythonhosted.org/packages/fc/ef/0335f7217dd1e8096a9e8383e1d472aa14717878ffe07c4772e68b6e8735/wheel-0.40.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

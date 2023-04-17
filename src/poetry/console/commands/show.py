@@ -157,10 +157,7 @@ lists all packages available."""
                 packages = [pkg]
                 if required_by:
                     packages = [
-                        p
-                        for p in locked_packages
-                        for r in required_by.keys()
-                        if p.name == r
+                        p for p in locked_packages for r in required_by if p.name == r
                     ]
                 else:
                     # if no rev-deps exist we'll make this clear as it can otherwise

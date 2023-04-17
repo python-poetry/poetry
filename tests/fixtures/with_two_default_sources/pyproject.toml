@@ -58,9 +58,9 @@ my-script = "my_package:main"
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-default = true
+priority = "default"
 
 [[tool.poetry.source]]
 name = "bar"
 url = "https://bar.foo/simple/"
-default = true
+priority = "default"
