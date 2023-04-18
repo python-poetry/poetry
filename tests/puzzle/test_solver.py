@@ -356,7 +356,7 @@ def test_solver_sets_groups(
 
     transaction = solver.solve()
 
-    ops = check_solver_result(
+    _ = check_solver_result(
         transaction,
         [
             {"job": "install", "package": package_c},
@@ -364,10 +364,6 @@ def test_solver_sets_groups(
             {"job": "install", "package": package_b},
         ],
     )
-
-    assert ops[0].package.category == "dev"
-    assert ops[2].package.category == "dev"
-    assert ops[1].package.category == "main"
 
 
 def test_solver_respects_root_package_python_versions(
@@ -1090,7 +1086,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
 
     transaction = solver.solve()
 
-    ops = check_solver_result(
+    _ = check_solver_result(
         transaction,
         [
             {"job": "install", "package": package_d},
@@ -1099,16 +1095,6 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
             {"job": "install", "package": package_a},
         ],
     )
-
-    d = ops[0].package
-    b = ops[1].package
-    c = ops[2].package
-    a = ops[3].package
-
-    assert d.category == "dev"
-    assert b.category == "main"
-    assert c.category == "dev"
-    assert a.category == "main"
 
 
 def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(  # noqa: E501
@@ -1147,7 +1133,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
 
     transaction = solver.solve()
 
-    ops = check_solver_result(
+    _ = check_solver_result(
         transaction,
         [
             {"job": "install", "package": package_b},
@@ -1157,18 +1143,6 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
             {"job": "install", "package": package_e},
         ],
     )
-
-    b = ops[0].package
-    d = ops[1].package
-    a = ops[2].package
-    c = ops[3].package
-    e = ops[4].package
-
-    assert b.category == "main"
-    assert d.category == "dev"
-    assert a.category == "main"
-    assert c.category == "dev"
-    assert e.category == "main"
 
 
 def test_solver_with_dependency_and_prerelease_sub_dependencies(
@@ -1218,7 +1192,7 @@ def test_solver_circular_dependency(
 
     transaction = solver.solve()
 
-    ops = check_solver_result(
+    _ = check_solver_result(
         transaction,
         [
             {"job": "install", "package": package_c},
@@ -1226,8 +1200,6 @@ def test_solver_circular_dependency(
             {"job": "install", "package": package_a},
         ],
     )
-
-    assert ops[0].package.category == "main"
 
 
 def test_solver_circular_dependency_chain(
@@ -1254,7 +1226,7 @@ def test_solver_circular_dependency_chain(
 
     transaction = solver.solve()
 
-    ops = check_solver_result(
+    _ = check_solver_result(
         transaction,
         [
             {"job": "install", "package": package_d},
@@ -1263,8 +1235,6 @@ def test_solver_circular_dependency_chain(
             {"job": "install", "package": package_a},
         ],
     )
-
-    assert ops[0].package.category == "main"
 
 
 def test_solver_dense_dependencies(

@@ -2,7 +2,6 @@
 name = "A"
 version = "1.0.0"
 description = ""
-category = "main"
 optional = false
 python-versions = ">=3.5"
 files = []
@@ -14,7 +13,6 @@ python = ">=3.5,<4.0"
 name = "A"
 version = "1.0.1"
 description = ""
-category = "main"
 optional = false
 python-versions = ">=3.6"
 files = []

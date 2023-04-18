@@ -126,7 +126,6 @@ class Locker:
                 source_subdirectory=source.get("subdirectory"),
             )
             package.description = info.get("description", "")
-            package.category = info.get("category", "main")
             package.optional = info["optional"]
             metadata = cast("dict[str, Any]", lock_data["metadata"])
 
@@ -425,7 +424,6 @@ class Locker:
             "name": package.pretty_name,
             "version": package.pretty_version,
             "description": package.description or "",
-            "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
             "files": sorted(

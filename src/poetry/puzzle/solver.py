@@ -9,8 +9,6 @@ from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
 
-from poetry.core.packages.dependency_group import MAIN_GROUP
-
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.puzzle.exceptions import OverrideNeeded
@@ -273,11 +271,9 @@ class PackageNode(DFSNode):
         self.depth = -1
 
         if not previous:
-            self.category = "dev"
             self.groups: frozenset[str] = frozenset()
             self.optional = True
         elif dep:
-            self.category = "main" if MAIN_GROUP in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
         else:
@@ -327,14 +323,11 @@ def aggregate_package_nodes(nodes: list[PackageNode]) -> tuple[Package, int]:
     for node in nodes:
         groups.extend(node.groups)
 
-    category = "main" if any(MAIN_GROUP in node.groups for node in nodes) else "dev"
     optional = all(node.optional for node in nodes)
     for node in nodes:
         node.depth = depth
-        node.category = category
         node.optional = optional
 
-    package.category = category
     package.optional = optional
 
     return package, depth
