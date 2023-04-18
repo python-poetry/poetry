@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 
 from pathlib import Path
 from typing import Any
@@ -11,7 +10,7 @@ import jsonschema
 from poetry.core.json import SCHEMA_DIR as CORE_SCHEMA_DIR
 
 
-SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
+SCHEMA_DIR = Path(__file__).parent / "schemas"
 
 
 class ValidationError(ValueError):
@@ -39,16 +38,12 @@ def validate_object(obj: dict[str, Any]) -> list[str]:
         errors.append(message)
 
     core_schema = json.loads(
-        Path(CORE_SCHEMA_DIR, "poetry-schema.json").read_text(encoding="utf-8")
+        (CORE_SCHEMA_DIR / "poetry-schema.json").read_text(encoding="utf-8")
     )
 
-    if core_schema["additionalProperties"]:
-        # TODO: make this un-conditional once core update to >1.1.0b2
-        properties = {*schema["properties"].keys(), *core_schema["properties"].keys()}
-        additional_properties = set(obj.keys()) - properties
-        for key in additional_properties:
-            errors.append(
-                f"Additional properties are not allowed ('{key}' was unexpected)"
-            )
+    properties = {*schema["properties"].keys(), *core_schema["properties"].keys()}
+    additional_properties = set(obj.keys()) - properties
+    for key in additional_properties:
+        errors.append(f"Additional properties are not allowed ('{key}' was unexpected)")
 
     return errors

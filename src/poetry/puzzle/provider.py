@@ -12,7 +12,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -20,6 +19,7 @@ from poetry.core.constraints.version import EmptyConstraint
 from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import EmptyMarker
 from poetry.core.version.markers import MarkerUnion
 
 from poetry.inspection.info import PackageInfo
@@ -33,11 +33,13 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
 
@@ -48,6 +50,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
@@ -388,6 +391,7 @@ class Provider:
         )
 
     def _search_for_file(self, dependency: FileDependency) -> Package:
+        dependency.validate(raise_error=True)
         package = self.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -396,7 +400,10 @@ class Provider:
             package.root_dir = dependency.base
 
         package.files = [
-            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
         ]
 
         return package
@@ -415,6 +422,7 @@ class Provider:
         return package
 
     def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
+        dependency.validate(raise_error=True)
         package = self.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -452,6 +460,10 @@ class Provider:
             dest = Path(temp_dir) / file_name
             download_file(url, dest)
             package = cls.get_package_from_file(dest)
+
+            package.files = [
+                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
+            ]
 
         package._source_type = "url"
         package._source_url = url
@@ -643,6 +655,11 @@ class Provider:
                     if locked is not None and locked.package.is_same_package_as(dep):
                         continue
                     self.search_for_direct_origin_dependency(dep)
+        else:
+            for dep in _dependencies:
+                if dep.is_file() or dep.is_directory():
+                    dep = cast("PathDependency", dep)
+                    dep.validate(raise_error=True)
 
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package
@@ -938,20 +955,13 @@ class Provider:
         for dep in dependencies:
             by_constraint[dep.constraint].append(dep)
         for constraint, _deps in by_constraint.items():
-            new_markers = []
-            for dep in _deps:
-                marker = dep.marker.without_extras()
-                if marker.is_any():
-                    # No marker or only extras
-                    continue
-
-                new_markers.append(marker)
-
-            if not new_markers:
-                continue
+            new_markers = [dep.marker for dep in _deps]
 
             dep = _deps[0]
-            dep.marker = dep.marker.union(MarkerUnion(*new_markers))
+
+            # Union with EmptyMarker is to make sure we get the benefit of marker
+            # simplifications.
+            dep.marker = MarkerUnion(*new_markers).union(EmptyMarker())
             by_constraint[constraint] = [dep]
 
         return [value[0] for value in by_constraint.values()]

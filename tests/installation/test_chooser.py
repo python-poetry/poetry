@@ -58,7 +58,7 @@ def mock_pypi(http: type[httpretty.httpretty]) -> None:
             fixture = JSON_FIXTURES / (name + ".json")
 
         if not fixture.exists():
-            return
+            return None
 
         with fixture.open(encoding="utf-8") as f:
             return [200, headers, f.read()]
@@ -98,7 +98,7 @@ def mock_legacy_partial_yank(http: type[httpretty.httpretty]) -> None:
         parts = uri.rsplit("/")
         name = parts[-2]
 
-        fixture = LEGACY_FIXTURES / (name + "_partial_yank" + ".html")
+        fixture = LEGACY_FIXTURES / (name + "-partial-yank" + ".html")
 
         with fixture.open(encoding="utf-8") as f:
             return [200, headers, f.read()]
@@ -132,7 +132,7 @@ def test_chooser_chooses_universal_wheel_link_if_available(
     mock_legacy: None,
     source_type: str,
     pool: RepositoryPool,
-):
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("pytest", "3.5.0")
@@ -170,7 +170,7 @@ def test_chooser_no_binary_policy(
     policy: str,
     filename: str,
     config: Config,
-):
+) -> None:
     config.merge({"installer": {"no-binary": policy.split(",")}})
 
     chooser = Chooser(pool, env, config)
@@ -197,7 +197,7 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
     mock_legacy: None,
     source_type: str,
     pool: RepositoryPool,
-):
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
@@ -218,7 +218,7 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_system_specific_wheel_link_if_available(
     mock_pypi: None, mock_legacy: None, source_type: str, pool: RepositoryPool
-):
+) -> None:
     env = MockEnv(
         supported_tags=[Tag("cp37", "cp37m", "win32"), Tag("py3", "none", "any")]
     )
@@ -246,7 +246,7 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
     mock_legacy: None,
     source_type: str,
     pool: RepositoryPool,
-):
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("pyyaml", "3.13.0")
@@ -271,7 +271,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     mock_legacy: None,
     source_type: str,
     pool: RepositoryPool,
-):
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
@@ -381,7 +381,7 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     mock_legacy: None,
     source_type: None,
     pool: RepositoryPool,
-):
+) -> None:
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")

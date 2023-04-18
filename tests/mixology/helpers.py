@@ -10,11 +10,13 @@ from poetry.mixology.version_solver import VersionSolver
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from packaging.utils import NormalizedName
     from poetry.core.factory import DependencyConstraint
     from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.mixology import SolverResult
+    from poetry.mixology.result import SolverResult
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
 
@@ -23,7 +25,7 @@ def add_to_repo(
     repository: Repository,
     name: str,
     version: str,
-    deps: dict[str, DependencyConstraint] | None = None,
+    deps: Mapping[str, DependencyConstraint] | None = None,
     python: str | None = None,
     yanked: bool = False,
 ) -> None:
@@ -62,7 +64,7 @@ def check_solver_result(
         except AssertionError as e:
             if error:
                 assert str(e) == error
-                return
+                return None
             raise
 
     packages = {}
