@@ -2149,7 +2149,9 @@ def test_url_dependency_is_not_outdated_by_repository_package(
     assert tester.io.fetch_output() == ""
 
 
-def test_show_top_level(tester: CommandTester, poetry: Poetry, installed: Repository):
+def test_show_top_level(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
 
     cachy2 = get_package("cachy", "0.2.0")
@@ -2200,7 +2202,7 @@ def test_show_top_level(tester: CommandTester, poetry: Poetry, installed: Reposi
 
 def test_show_top_level_with_explicitly_defined_depenancy(
     tester: CommandTester, poetry: Poetry, installed: Repository
-):
+) -> None:
     poetry.package.add_dependency(Factory.create_dependency("a", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("b", "^0.2.0"))
 
@@ -2250,6 +2252,22 @@ def test_show_top_level_with_explicitly_defined_depenancy(
     expected = """a 0.1.0 \nb 0.2.0 \n"""
 
     assert tester.io.fetch_output() == expected
+
+
+def test_show_error_top_level_with_tree(
+    tester: CommandTester,
+) -> None:
+    expected = "Error: Cannot use --tree and --top-level at the same time.\n"
+    tester.execute("--top-level --tree")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
+
+
+def test_show_error_top_level_with_single_package(tester: CommandTester) -> None:
+    expected = "Error: Cannot use --top-level when displaying a single package.\n"
+    tester.execute("--top-level some_package_name")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
 
 
 @pytest.mark.parametrize(
