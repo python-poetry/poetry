@@ -39,7 +39,7 @@ def with_add_command_plugin(mocker: MockerFixture) -> None:
     mock_metadata_entry_points(mocker, AddCommandPlugin)
 
 
-def test_application_with_plugins(with_add_command_plugin: None):
+def test_application_with_plugins(with_add_command_plugin: None) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -49,7 +49,7 @@ def test_application_with_plugins(with_add_command_plugin: None):
     assert tester.status_code == 0
 
 
-def test_application_with_plugins_disabled(with_add_command_plugin: None):
+def test_application_with_plugins_disabled(with_add_command_plugin: None) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -59,7 +59,7 @@ def test_application_with_plugins_disabled(with_add_command_plugin: None):
     assert tester.status_code == 0
 
 
-def test_application_execute_plugin_command(with_add_command_plugin: None):
+def test_application_execute_plugin_command(with_add_command_plugin: None) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -71,7 +71,7 @@ def test_application_execute_plugin_command(with_add_command_plugin: None):
 
 def test_application_execute_plugin_command_with_plugins_disabled(
     with_add_command_plugin: None,
-):
+) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -83,7 +83,7 @@ def test_application_execute_plugin_command_with_plugins_disabled(
 
 
 @pytest.mark.parametrize("disable_cache", [True, False])
-def test_application_verify_source_cache_flag(disable_cache: bool):
+def test_application_verify_source_cache_flag(disable_cache: bool) -> None:
     app = Application()
 
     tester = ApplicationTester(app)

@@ -40,7 +40,7 @@ def test_update_with_dry_run_keep_files_intact(
     poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     tester = command_tester_factory("update", poetry=poetry_with_up_to_date_lockfile)
 
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()

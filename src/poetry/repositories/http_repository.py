@@ -30,8 +30,11 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
+
     from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
+    from poetry.repositories.link_sources.base import LinkSource
     from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
@@ -293,8 +296,8 @@ class HTTPRepository(CachedRepository):
             )
         return response
 
-    def _get_page(self, endpoint: str) -> HTMLPage | None:
-        response = self._get_response(endpoint)
+    def _get_page(self, name: NormalizedName) -> LinkSource:
+        response = self._get_response(f"/{name}/")
         if not response:
-            return None
+            raise PackageNotFound(f"Package [{name}] not found.")
         return HTMLPage(response.url, response.text)

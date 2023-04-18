@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterable
-    from typing import Mapping
+    from collections.abc import Mapping
 
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package

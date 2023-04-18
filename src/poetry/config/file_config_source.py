@@ -13,8 +13,9 @@ from poetry.config.config_source import ConfigSource
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from poetry.core.toml.file import TOMLFile
     from tomlkit.toml_document import TOMLDocument
+
+    from poetry.toml.file import TOMLFile
 
 
 class FileConfigSource(ConfigSource):
