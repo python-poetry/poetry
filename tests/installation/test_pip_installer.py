@@ -13,6 +13,7 @@ from poetry.core.packages.package import Package
 
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.env import NullEnv
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
     from poetry.utils.env import VirtualEnv
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture
@@ -67,7 +69,7 @@ def installer(pool: RepositoryPool, env: NullEnv) -> PipInstaller:
     return PipInstaller(env, NullIO(), pool)
 
 
-def test_requirement(installer: PipInstaller):
+def test_requirement(installer: PipInstaller) -> None:
     package = Package("ipython", "7.5.0")
     package.files = [
         {"file": "foo-0.1.0.tar.gz", "hash": "md5:dbdc53e3918f28fa335a173432402a00"},
@@ -88,7 +90,7 @@ def test_requirement(installer: PipInstaller):
     assert result == expected
 
 
-def test_requirement_source_type_url(env: NullEnv):
+def test_requirement_source_type_url(env: NullEnv) -> None:
     installer = PipInstaller(env, NullIO(), RepositoryPool())
 
     foo = Package(
@@ -121,7 +123,9 @@ def test_requirement_git_subdirectory(
     assert Path(cmd[-1]).parts[-3:] == ("demo", "subdirectories", "two")
 
 
-def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):
+def test_requirement_git_develop_false(
+    installer: PipInstaller, package_git: Package
+) -> None:
     package_git.develop = False
     result = installer.requirement(package_git)
     expected = "git+git@github.com:demo/demo.git@master#egg=demo"
@@ -131,11 +135,11 @@ def test_requirement_git_develop_false(installer: PipInstaller, package_git: Pac
 
 def test_install_with_non_pypi_default_repository(
     pool: RepositoryPool, installer: PipInstaller
-):
+) -> None:
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
 
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
     pool.add_repository(another)
 
     foo = Package(
@@ -164,7 +168,9 @@ def test_install_with_non_pypi_default_repository(
         ("cert", "cert"),
     ],
 )
-def test_install_with_certs(mocker: MockerFixture, key: str, option: str, env: NullEnv):
+def test_install_with_certs(
+    mocker: MockerFixture, key: str, option: str, env: NullEnv
+) -> None:
     client_path = "path/to/client.pem"
     mocker.patch(
         "poetry.utils.authenticator.Authenticator.get_certs_for_url",
@@ -173,7 +179,7 @@ def test_install_with_certs(mocker: MockerFixture, key: str, option: str, env: N
 
     default = LegacyRepository("default", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     installer = PipInstaller(env, NullIO(), pool)
 
@@ -195,7 +201,9 @@ def test_install_with_certs(mocker: MockerFixture, key: str, option: str, env: N
     assert cmd[cert_index + 1] == str(Path(client_path))
 
 
-def test_requirement_git_develop_true(installer: PipInstaller, package_git: Package):
+def test_requirement_git_develop_true(
+    installer: PipInstaller, package_git: Package
+) -> None:
     package_git.develop = True
     result = installer.requirement(package_git)
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
@@ -205,7 +213,7 @@ def test_requirement_git_develop_true(installer: PipInstaller, package_git: Pack
 
 def test_uninstall_git_package_nspkg_pth_cleanup(
     mocker: MockerFixture, tmp_venv: VirtualEnv, pool: RepositoryPool
-):
+) -> None:
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
@@ -236,7 +244,7 @@ def test_uninstall_git_package_nspkg_pth_cleanup(
     installer.install(package)
     installer.remove(package)
 
-    pth_file = f"{package.name}-nspkg.pth"
+    pth_file = Path(f"{package.name}-nspkg.pth")
     assert not tmp_venv.site_packages.exists(pth_file)
 
     # any command in the virtual environment should trigger the error message
@@ -244,12 +252,12 @@ def test_uninstall_git_package_nspkg_pth_cleanup(
     assert not re.match(rf"Error processing line 1 of .*{pth_file}", output)
 
 
-def test_install_with_trusted_host(config: Config, env: NullEnv):
+def test_install_with_trusted_host(config: Config, env: NullEnv) -> None:
     config.merge({"certificates": {"default": {"cert": False}}})
 
     default = LegacyRepository("default", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     installer = PipInstaller(env, NullIO(), pool)
 
@@ -271,8 +279,11 @@ def test_install_with_trusted_host(config: Config, env: NullEnv):
 
 
 def test_install_directory_fallback_on_poetry_create_error(
-    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: RepositoryPool
-):
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     mock_create_poetry = mocker.patch(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
@@ -286,9 +297,7 @@ def test_install_directory_fallback_on_poetry_create_error(
         "demo",
         "1.0.0",
         source_type="directory",
-        source_url=str(
-            Path(__file__).parent.parent / "fixtures/inspection/demo_poetry_package"
-        ),
+        source_url=str(fixture_dir("inspection") / "demo_poetry_package"),
     )
 
     installer = PipInstaller(tmp_venv, NullIO(), pool)

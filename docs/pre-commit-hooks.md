@@ -34,6 +34,9 @@ to make sure the poetry configuration does not get committed in a broken state.
 The hook takes the same arguments as the poetry command.
 For more information see the [check command]({{< relref "cli#check" >}}).
 
+{{% note %}}
+If the `pyproject.toml` file is not in the root directory, you can specify `args: ["-C", "./subdirectory"]`.
+{{% /note %}}
 
 ## poetry-lock
 

@@ -73,11 +73,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def handle(self) -> int:
         from pathlib import Path
 
-        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
 
         from poetry.config.config import Config
         from poetry.layouts import layout
+        from poetry.pyproject.toml import PyProjectTOML
         from poetry.utils.env import EnvManager
 
         project_path = Path.cwd()
@@ -149,10 +149,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question.set_validator(lambda v: self._validate_author(v, author))
         author = self.ask(question)
 
-        if not author:
-            authors = []
-        else:
-            authors = [author]
+        authors = [author] if author else []
 
         license = self.option("license")
         if not license:
@@ -292,6 +289,11 @@ You can specify a package in the following forms:
             )
             question.set_validator(self._validate_package)
 
+            follow_up_question = self.create_question(
+                "\nAdd a package (leave blank to skip):"
+            )
+            follow_up_question.set_validator(self._validate_package)
+
             package = self.ask(question)
             while package:
                 constraint = self._parse_requirements([package])[0]
@@ -303,7 +305,7 @@ You can specify a package in the following forms:
                 ):
                     self.line(f"Adding <info>{package}</info>")
                     result.append(constraint)
-                    package = self.ask("\nAdd a package (leave blank to skip):")
+                    package = self.ask(follow_up_question)
                     continue
 
                 canonicalized_name = canonicalize_name(constraint["name"])
@@ -371,7 +373,7 @@ You can specify a package in the following forms:
                     result.append(constraint)
 
                 if self.io.is_interactive():
-                    package = self.ask("\nAdd a package (leave blank to skip):")
+                    package = self.ask(follow_up_question)
 
             return result
 

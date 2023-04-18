@@ -24,6 +24,8 @@ from filelock import FileLock
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.constants import RETRY_AFTER_HEADER
+from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 
@@ -271,6 +273,7 @@ class Authenticator:
         send_kwargs.update(settings)
 
         attempt = 0
+        resp = None
 
         while True:
             is_last_attempt = attempt >= 5
@@ -280,20 +283,28 @@ class Authenticator:
                 if is_last_attempt:
                     raise e
             else:
-                if resp.status_code not in [502, 503, 504] or is_last_attempt:
+                if resp.status_code not in STATUS_FORCELIST or is_last_attempt:
                     if raise_for_status:
                         resp.raise_for_status()
                     return resp
 
             if not is_last_attempt:
                 attempt += 1
-                delay = 0.5 * attempt
+                delay = self._get_backoff(resp, attempt)
                 logger.debug("Retrying HTTP request in %s seconds.", delay)
                 time.sleep(delay)
                 continue
 
         # this should never really be hit under any sane circumstance
         raise PoetryException("Failed HTTP {} request", method.upper())
+
+    def _get_backoff(self, response: requests.Response | None, attempt: int) -> float:
+        if response is not None:
+            retry_after = response.headers.get(RETRY_AFTER_HEADER, "")
+            if retry_after:
+                return float(retry_after)
+
+        return 0.5 * attempt
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         return self.request("get", url, **kwargs)

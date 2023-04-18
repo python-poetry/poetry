@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 def test_with_compatible_locked_dependencies(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -44,7 +44,7 @@ def test_with_compatible_locked_dependencies(
 
 def test_with_incompatible_locked_dependencies(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", ">1.0.1"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -66,7 +66,7 @@ def test_with_incompatible_locked_dependencies(
 
 def test_with_unrelated_locked_dependencies(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -89,7 +89,7 @@ def test_with_unrelated_locked_dependencies(
 
 def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_satisfied(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("newdep", "2.0.0"))
 
@@ -126,7 +126,7 @@ def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_sa
 
 def test_with_compatible_locked_dependencies_use_latest(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("baz", "*"))
 
@@ -156,7 +156,7 @@ def test_with_compatible_locked_dependencies_use_latest(
 
 def test_with_compatible_locked_dependencies_with_extras(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "^1.0"))
 
     package_foo_0 = get_package("foo", "1.0.0")
@@ -190,7 +190,7 @@ def test_with_compatible_locked_dependencies_with_extras(
 
 def test_with_yanked_package_in_lock(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1")
@@ -205,6 +205,7 @@ def test_with_yanked_package_in_lock(
         provider,
         result={"foo": "2"},
     )
+    assert result is not None
     foo = result.packages[0]
     assert foo.yanked
 
@@ -219,7 +220,7 @@ def test_with_yanked_package_in_lock(
 
 def test_no_update_is_respected_for_legacy_repository(
     root: ProjectPackage, repo: Repository, pool: RepositoryPool
-):
+) -> None:
     root.add_dependency(Factory.create_dependency("foo", "^1.0"))
 
     foo_100 = Package(

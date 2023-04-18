@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from poetry.config.dict_config_source import DictConfigSource
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
 
 
 @pytest.fixture()
@@ -33,7 +34,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 def test_show_config_with_local_config_file_empty(
     tester: CommandTester, mocker: MockerFixture
-):
+) -> None:
     mocker.patch(
         "poetry.factory.Factory.create_poetry",
         side_effect=PyProjectException("[tool.poetry] section not found"),
@@ -45,7 +46,7 @@ def test_show_config_with_local_config_file_empty(
 
 def test_list_displays_default_value_if_not_set(
     tester: CommandTester, config: Config, config_cache_dir: Path
-):
+) -> None:
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
@@ -73,7 +74,7 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 
 def test_list_displays_set_get_setting(
     tester: CommandTester, config: Config, config_cache_dir: Path
-):
+) -> None:
     tester.execute("virtualenvs.create false")
 
     tester.execute("--list")
@@ -102,7 +103,7 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
-def test_display_single_setting(tester: CommandTester, config: Config):
+def test_display_single_setting(tester: CommandTester, config: Config) -> None:
     tester.execute("virtualenvs.create")
 
     expected = """true
@@ -113,7 +114,7 @@ def test_display_single_setting(tester: CommandTester, config: Config):
 
 def test_display_single_local_setting(
     command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
-):
+) -> None:
     tester = command_tester_factory(
         "config", poetry=Factory().create_poetry(fixture_dir("with_local_config"))
     )
@@ -127,7 +128,7 @@ def test_display_single_local_setting(
 
 def test_list_displays_set_get_local_setting(
     tester: CommandTester, config: Config, config_cache_dir: Path
-):
+) -> None:
     tester.execute("virtualenvs.create false --local")
 
     tester.execute("--list")
@@ -156,7 +157,47 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
-def test_set_pypi_token(tester: CommandTester, auth_config_source: DictConfigSource):
+def test_list_must_not_display_sources_from_pyproject_toml(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+    config: Config,
+    config_cache_dir: Path,
+) -> None:
+    source = fixture_dir("with_non_default_source_implicit")
+    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
+    poetry = project_factory("foo", pyproject_content=pyproject_content)
+    tester = command_tester_factory("config", poetry=poetry)
+
+    tester.execute("--list")
+
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
+experimental.new-installer = true
+experimental.system-git-client = false
+installer.max-workers = null
+installer.modern-installation = true
+installer.no-binary = null
+installer.parallel = true
+repositories.foo.url = "https://foo.bar/simple/"
+virtualenvs.create = true
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_set_pypi_token(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
     tester.execute("pypi-token.pypi mytoken")
     tester.execute("--list")
 
@@ -167,7 +208,7 @@ def test_set_client_cert(
     tester: CommandTester,
     auth_config_source: DictConfigSource,
     mocker: MockerFixture,
-):
+) -> None:
     mocker.spy(ConfigSource, "__init__")
 
     tester.execute("certificates.foo.client-cert path/to/cert.pem")
@@ -192,7 +233,7 @@ def test_set_cert(
     mocker: MockerFixture,
     value: str,
     result: str | bool,
-):
+) -> None:
     mocker.spy(ConfigSource, "__init__")
 
     tester.execute(f"certificates.foo.cert {value}")
@@ -202,7 +243,7 @@ def test_set_cert(
 
 def test_config_installer_parallel(
     tester: CommandTester, command_tester_factory: CommandTesterFactory
-):
+) -> None:
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"
 

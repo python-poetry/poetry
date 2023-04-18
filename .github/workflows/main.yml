@@ -64,6 +64,12 @@ jobs:
         if: ${{ matrix.os == 'Windows' }}
         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
+      - name: Enable long paths for git on Windows
+        if: ${{ matrix.os == 'Windows' }}
+        # Enable handling long path names (+260 char) on the Windows platform
+        # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+        run: git config --system core.longpaths true
+
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
 

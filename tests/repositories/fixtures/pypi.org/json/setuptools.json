@@ -16,10 +16,36 @@
         "md5": "dd4e3fa83a21bf7bf9c51026dc8a4e59",
         "sha256": "f7cddbb5f5c640311eb00eab6e849f7701fa70bf6a183fc8a2c33dd1d1672fb2"
       }
+    },
+    {
+      "filename": "setuptools-67.6.1-py3-none-any.whl",
+      "hashes": {
+        "sha256": "e728ca814a823bf7bf60162daf9db95b93d532948c4c0bea762ce62f60189078"
+      },
+      "requires-python": ">=3.7",
+      "size": 1089263,
+      "upload-time": "2023-03-28T13:45:43.525946Z",
+      "url": "https://files.pythonhosted.org/packages/0b/fc/8781442def77b0aa22f63f266d4dadd486ebc0c5371d6290caf4320da4b7/setuptools-67.6.1-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "filename": "setuptools-67.6.1.tar.gz",
+      "hashes": {
+        "sha256": "257de92a9d50a60b8e22abfcbb771571fde0dbf3ec234463212027a4eeecbe9a"
+      },
+      "requires-python": ">=3.7",
+      "size": 2486256,
+      "upload-time": "2023-03-28T13:45:45.967259Z",
+      "url": "https://files.pythonhosted.org/packages/cb/46/22ec35f286a77e6b94adf81b4f0d59f402ed981d4251df0ba7b992299146/setuptools-67.6.1.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
     "api-version": "1.0",
     "_last-serial": 3879671
-  }
+  },
+  "versions": [
+    "39.2.0",
+    "67.6.1"
+  ]
 }

@@ -24,6 +24,7 @@ class RemoveCommand(InstallerCommand):
             (
                 "Remove a package from the development dependencies."
                 " (<warning>Deprecated</warning>)"
+                " Use --group=dev instead."
             ),
         ),
         option(

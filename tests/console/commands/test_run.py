@@ -45,14 +45,14 @@ def poetry_with_scripts(
     )
 
 
-def test_run_passes_all_args(app_tester: ApplicationTester, env: MockEnv):
+def test_run_passes_all_args(app_tester: ApplicationTester, env: MockEnv) -> None:
     app_tester.execute("run python -V")
     assert [["python", "-V"]] == env.executed
 
 
 def test_run_keeps_options_passed_before_command(
     app_tester: ApplicationTester, env: MockEnv
-):
+) -> None:
     app_tester.execute("-V --no-ansi run python", decorated=True)
 
     assert not app_tester.io.is_decorated()
@@ -64,7 +64,7 @@ def test_run_keeps_options_passed_before_command(
 
 def test_run_has_helpful_error_when_command_not_found(
     app_tester: ApplicationTester, env: MockEnv, capfd: pytest.CaptureFixture[str]
-):
+) -> None:
     nonexistent_command = "nonexistent-command"
     env._execute = True
     app_tester.execute(f"run {nonexistent_command}")
@@ -94,7 +94,7 @@ def test_run_has_helpful_error_when_command_not_found(
 def test_run_console_scripts_of_editable_dependencies_on_windows(
     tmp_venv: VirtualEnv,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     """
     On Windows, Poetry installs console scripts of editable dependencies by creating
     in the environment's `Scripts/` directory both:
@@ -180,3 +180,17 @@ def test_run_script_sys_argv0(
     )
     argv1 = "absolute" if installed_script else "relative"
     assert tester.execute(f"check-argv0 {argv1}") == 0
+
+    if installed_script:
+        expected_message = ""
+    else:
+        expected_message = """\
+Warning: 'check-argv0' is an entry point defined in pyproject.toml, but it's not \
+installed as a script. You may get improper `sys.argv[0]`.
+
+The support to run uninstalled scripts will be removed in a future release.
+
+Run `poetry install` to resolve and get rid of this message.
+
+"""
+    assert tester.io.fetch_error() == expected_message

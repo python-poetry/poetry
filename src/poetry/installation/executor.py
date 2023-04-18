@@ -24,8 +24,10 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.wheel_installer import WheelInstaller
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import get_file_hash
@@ -76,10 +78,11 @@ class Executor:
         else:
             self._max_workers = 1
 
+        self._artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
         self._authenticator = Authenticator(
             config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
         )
-        self._chef = Chef(config, self._env)
+        self._chef = Chef(self._artifact_cache, self._env, pool)
         self._chooser = Chooser(pool, self._env, config)
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
@@ -204,6 +207,14 @@ class Executor:
 
         for warning in self._yanked_warnings:
             self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
+        for path, issues in self._wheel_installer.invalid_wheels.items():
+            formatted_issues = "\n".join(issues)
+            warning = (
+                f"Validation of the RECORD file of {path.name} failed."
+                " Please report to the maintainers of that package so they can fix"
+                f" their build process. Details:\n{formatted_issues}\n"
+            )
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
         return 1 if self._shutdown else 0
 
@@ -301,7 +312,14 @@ class Executor:
                     trace.render(io)
                     if isinstance(e, ChefBuildError):
                         pkg = operation.package
-                        requirement = pkg.to_dependency().to_pep_508()
+                        pip_command = "pip wheel --use-pep517"
+                        if pkg.develop:
+                            requirement = pkg.source_url
+                            pip_command += " --editable"
+                        else:
+                            requirement = (
+                                pkg.to_dependency().to_pep_508().split(";")[0].strip()
+                            )
                         io.write_line("")
                         io.write_line(
                             "<info>"
@@ -309,8 +327,17 @@ class Executor:
                             " and is likely not a problem with poetry"
                             f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
                             " not supporting PEP 517 builds. You can verify this by"
-                            f" running 'pip wheel --use-pep517 \"{requirement}\"'."
+                            f" running '{pip_command} \"{requirement}\"'."
                             "</info>"
+                        )
+                    elif isinstance(e, SolverProblemError):
+                        pkg = operation.package
+                        io.write_line("")
+                        io.write_line(
+                            "<error>"
+                            "Cannot resolve build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
                         )
                     io.write_line("")
             finally:
@@ -502,11 +529,11 @@ class Executor:
         cleanup_archive: bool = False
         if package.source_type == "git":
             archive = self._prepare_git_archive(operation)
-            cleanup_archive = True
+            cleanup_archive = operation.package.develop
         elif package.source_type == "file":
             archive = self._prepare_archive(operation)
         elif package.source_type == "directory":
-            archive = self._prepare_directory_archive(operation)
+            archive = self._prepare_archive(operation)
             cleanup_archive = True
         elif package.source_type == "url":
             assert package.source_url is not None
@@ -557,7 +584,9 @@ class Executor:
 
             raise
 
-    def _prepare_archive(self, operation: Install | Update) -> Path:
+    def _prepare_archive(
+        self, operation: Install | Update, *, output_dir: Path | None = None
+    ) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -569,38 +598,35 @@ class Executor:
 
         assert package.source_url is not None
         archive = Path(package.source_url)
+        if package.source_subdirectory:
+            archive = archive / package.source_subdirectory
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
         self._populate_hashes_dict(archive, package)
 
-        return self._chef.prepare(archive, editable=package.develop)
-
-    def _prepare_directory_archive(self, operation: Install | Update) -> Path:
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
-            " <info>Building...</info>"
+        return self._chef.prepare(
+            archive, editable=package.develop, output_dir=output_dir
         )
-        self._write(operation, message)
-
-        assert package.source_url is not None
-        if package.root_dir:
-            req = package.root_dir / package.source_url
-        else:
-            req = Path(package.source_url).resolve(strict=False)
-
-        if package.source_subdirectory:
-            req /= package.source_subdirectory
-
-        return self._prepare_archive(operation)
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
         from poetry.vcs.git import Git
 
         package = operation.package
+        assert package.source_url is not None
+
+        if package.source_resolved_reference and not package.develop:
+            # Only cache git archives when we know precise reference hash,
+            # otherwise we might get stale archives
+            cached_archive = self._artifact_cache.get_cached_archive_for_git(
+                package.source_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+                env=self._env,
+            )
+            if cached_archive is not None:
+                return cached_archive
+
         operation_message = self.get_operation_message(operation)
 
         message = (
@@ -608,7 +634,6 @@ class Executor:
         )
         self._write(operation, message)
 
-        assert package.source_url is not None
         source = Git.clone(
             url=package.source_url,
             source_root=self._env.path / "src",
@@ -619,18 +644,30 @@ class Executor:
         original_url = package.source_url
         package._source_url = str(source.path)
 
-        archive = self._prepare_directory_archive(operation)
+        output_dir = None
+        if package.source_resolved_reference and not package.develop:
+            output_dir = self._artifact_cache.get_cache_directory_for_git(
+                original_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+            )
 
-        package._source_url = original_url
+        archive = self._prepare_archive(operation, output_dir=output_dir)
+        if not package.develop:
+            package._source_url = original_url
+
+        if output_dir is not None and output_dir.is_dir():
+            # Mark directories with cached git packages, to distinguish from
+            # "normal" cache
+            (output_dir / ".created_from_git_dependency").touch()
 
         return archive
 
     def _install_directory_without_wheel_installer(
         self, operation: Install | Update
     ) -> int:
-        from poetry.core.pyproject.toml import PyProjectTOML
-
         from poetry.factory import Factory
+        from poetry.pyproject.toml import PyProjectTOML
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
@@ -650,7 +687,7 @@ class Executor:
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
+        pyproject = PyProjectTOML(req / "pyproject.toml")
 
         package_poetry = None
         if pyproject.is_poetry_project():
@@ -711,14 +748,19 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        output_dir = self._chef.get_cache_directory_for_link(link)
-        archive = self._chef.get_cached_archive_for_link(link)
-        if archive is None:
-            # No cached distributions was found, so we download and prepare it
+        output_dir = self._artifact_cache.get_cache_directory_for_link(link)
+        # Try to get cached original package for the link provided
+        original_archive = self._artifact_cache.get_cached_archive_for_link(
+            link, strict=True
+        )
+        if original_archive is None:
+            # No cached original distributions was found, so we download and prepare it
             try:
-                archive = self._download_archive(operation, link)
+                original_archive = self._download_archive(operation, link)
             except BaseException:
-                cache_directory = self._chef.get_cache_directory_for_link(link)
+                cache_directory = self._artifact_cache.get_cache_directory_for_link(
+                    link
+                )
                 cached_file = cache_directory.joinpath(link.filename)
                 # We can't use unlink(missing_ok=True) because it's not available
                 # prior to Python 3.8
@@ -726,6 +768,17 @@ class Executor:
                     cached_file.unlink()
 
                 raise
+
+        # Get potential higher prioritized cached archive, otherwise it will fall back
+        # to the original archive.
+        archive = self._artifact_cache.get_cached_archive_for_link(
+            link,
+            strict=False,
+            env=self._env,
+        )
+        # 'archive' can at this point never be None. Since we previously downloaded
+        # an archive, we now should have something cached that we can use here
+        assert archive is not None
 
         if archive.suffix != ".whl":
             message = (
@@ -736,7 +789,8 @@ class Executor:
 
             archive = self._chef.prepare(archive, output_dir=output_dir)
 
-        self._populate_hashes_dict(archive, package)
+        # Use the original archive to provide the correct hash.
+        self._populate_hashes_dict(original_archive, package)
 
         return archive
 
@@ -748,7 +802,7 @@ class Executor:
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
         archive_hash: str = "sha256:" + get_file_hash(archive)
-        known_hashes = {f["hash"] for f in package.files}
+        known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
@@ -785,7 +839,9 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive = (
+            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
+        )
         archive.parent.mkdir(parents=True, exist_ok=True)
         with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
@@ -838,12 +894,12 @@ class Executor:
 
         url_reference: dict[str, Any] | None = None
 
-        if package.source_type == "git":
+        if package.source_type == "git" and not package.develop:
             url_reference = self._create_git_url_reference(package)
+        elif package.source_type in ("directory", "git"):
+            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "url":
             url_reference = self._create_url_url_reference(package)
-        elif package.source_type == "directory":
-            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "file":
             url_reference = self._create_file_url_reference(package)
 

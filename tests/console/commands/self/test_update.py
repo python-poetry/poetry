@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -20,12 +19,11 @@ if TYPE_CHECKING:
 
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
 
-FIXTURES = Path(__file__).parent.joinpath("fixtures")
 
-
-@pytest.fixture()
-def setup(mocker: MockerFixture, fixture_dir: Path):
+@pytest.fixture
+def setup(mocker: MockerFixture, fixture_dir: FixtureDirGetter) -> None:
     mocker.patch.object(
         Executor,
         "_download",
@@ -46,7 +44,7 @@ def test_self_update_can_update_from_recommended_installation(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
+) -> None:
     new_version = Version.parse(__version__).next_minor().text
 
     old_poetry = Package("poetry", __version__)
@@ -71,12 +69,12 @@ Using version ^{new_version} for poetry
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 0 installs, 2 updates, 0 removals
 
   • Updating cleo (0.8.2 -> 1.0.0)
   • Updating poetry ({__version__} -> {new_version})
+
+Writing lock file
 """
 
     assert tester.io.fetch_output() == expected_output
