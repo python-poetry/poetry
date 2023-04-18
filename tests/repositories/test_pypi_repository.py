@@ -16,11 +16,13 @@ from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
 from poetry.factory import Factory
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import encode
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
 
@@ -35,6 +37,14 @@ class MockRepository(PyPiRepository):
 
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
+
+    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+        fixture = self.JSON_FIXTURES / (name + ".json")
+
+        if not fixture.exists():
+            raise PackageNotFound(f"Package [{name}] not found.")
+
+        return SimpleJsonPage("", json.loads(fixture.read_text()))
 
     def _get(
         self, url: str, headers: dict[str, str] | None = None
@@ -291,10 +301,8 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         ]
     }
 
-    for name in expected_extras.keys():
-        assert (
-            sorted(package.extras[name], key=lambda r: r.name) == expected_extras[name]
-        )
+    for name, expected_extra in expected_extras.items():
+        assert sorted(package.extras[name], key=lambda r: r.name) == expected_extra
 
 
 def test_invalid_versions_ignored() -> None:
@@ -314,7 +322,7 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(
     response = Response()
     response.status_code = 200
     response.encoding = "utf-8"
-    response.raw = BytesIO(encode('{"foo": "bar"}'))
+    response.raw = BytesIO(b'{"foo": "bar"}')
     mocker.patch(
         "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],

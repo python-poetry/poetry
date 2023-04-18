@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.command import Command
+from poetry.console.exceptions import GroupNotFound
 
 
 if TYPE_CHECKING:
@@ -78,6 +80,7 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
+        self._validate_group_options(groups)
 
         for opt, new, group in [
             ("no-dev", "only", MAIN_GROUP),
@@ -107,3 +110,22 @@ class GroupCommand(Command):
         return self.poetry.package.with_dependency_groups(
             list(self.activated_groups), only=True
         )
+
+    def _validate_group_options(self, group_options: dict[str, set[str]]) -> None:
+        """
+        Raises en error if it detects that a group is not part of pyproject.toml
+        """
+        invalid_options = defaultdict(set)
+        for opt, groups in group_options.items():
+            for group in groups:
+                if not self.poetry.package.has_dependency_group(group):
+                    invalid_options[group].add(opt)
+        if invalid_options:
+            message_parts = []
+            for group in sorted(invalid_options):
+                opts = ", ".join(
+                    f"<fg=yellow;options=bold>--{opt}</>"
+                    for opt in sorted(invalid_options[group])
+                )
+                message_parts.append(f"{group} (via {opts})")
+            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
