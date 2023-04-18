@@ -8,18 +8,18 @@ import stat
 import sys
 import tempfile
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
-from typing import Mapping
 
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
     from io import BufferedWriter
 
     from poetry.core.packages.package import Package
@@ -65,7 +65,7 @@ def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) ->
 
 
 def remove_directory(
-    path: Path | str, *args: Any, force: bool = False, **kwargs: Any
+    path: Path, *args: Any, force: bool = False, **kwargs: Any
 ) -> None:
     """
     Helper function handle safe removal, and optionally forces stubborn file removal.
@@ -74,15 +74,15 @@ def remove_directory(
 
     Internally, all arguments are passed to `shutil.rmtree`.
     """
-    if Path(path).is_symlink():
-        return os.unlink(str(path))
+    if path.is_symlink():
+        return os.unlink(path)
 
     kwargs["onerror"] = kwargs.pop("onerror", _on_rm_error if force else None)
     shutil.rmtree(path, *args, **kwargs)
 
 
 def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
-    for k in d2.keys():
+    for k in d2:
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
         else:
@@ -121,7 +121,7 @@ def download_file(
             # but skip the updating
             set_indicator = total_size > 1024 * 1024
 
-        with open(dest, "wb") as f:
+        with dest.open("wb") as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
@@ -239,7 +239,7 @@ def get_win_folder(csidl_name: str) -> Path:
     raise RuntimeError("Method can only be called on Windows.")
 
 
-def get_real_windows_path(path: str | Path) -> Path:
+def get_real_windows_path(path: Path) -> Path:
     program_files = get_win_folder("CSIDL_PROGRAM_FILES")
     local_appdata = get_win_folder("CSIDL_LOCAL_APPDATA")
 

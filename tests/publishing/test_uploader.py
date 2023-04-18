@@ -26,7 +26,7 @@ def uploader(fixture_dir: FixtureDirGetter) -> Uploader:
 
 def test_uploader_properly_handles_400_errors(
     http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
 
     with pytest.raises(UploadError) as e:
@@ -37,7 +37,7 @@ def test_uploader_properly_handles_400_errors(
 
 def test_uploader_properly_handles_403_errors(
     http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
 
     with pytest.raises(UploadError) as e:
@@ -48,7 +48,7 @@ def test_uploader_properly_handles_403_errors(
 
 def test_uploader_properly_handles_nonstandard_errors(
     http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     # content based off a true story.
     # Message changed to protect the ~~innocent~~ guilty.
     content = (
@@ -62,7 +62,7 @@ def test_uploader_properly_handles_nonstandard_errors(
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
 
-    assert str(e.value) == f"HTTP Error 400: Bad Request | {content}"
+    assert str(e.value) == f"HTTP Error 400: Bad Request | {content!r}"
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,7 @@ def test_uploader_properly_handles_nonstandard_errors(
 )
 def test_uploader_properly_handles_redirects(
     http: type[httpretty.httpretty], uploader: Uploader, status: int, body: str
-):
+) -> None:
     http.register_uri(http.POST, "https://foo.com", status=status, body=body)
 
     with pytest.raises(UploadError) as e:
@@ -93,7 +93,7 @@ def test_uploader_properly_handles_redirects(
 
 def test_uploader_properly_handles_301_redirects(
     http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     http.register_uri(http.POST, "https://foo.com", status=301, body="Redirect")
 
     with pytest.raises(UploadError) as e:
@@ -107,7 +107,7 @@ def test_uploader_properly_handles_301_redirects(
 
 def test_uploader_registers_for_appropriate_400_errors(
     mocker: MockerFixture, http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     register = mocker.patch("poetry.publishing.uploader.Uploader._register")
     http.register_uri(
         http.POST, "https://foo.com", status=400, body="No package was ever registered"
@@ -131,7 +131,7 @@ def test_uploader_registers_for_appropriate_400_errors(
 )
 def test_uploader_skips_existing(
     http: type[httpretty.httpretty], uploader: Uploader, status: int, body: str
-):
+) -> None:
     http.register_uri(http.POST, "https://foo.com", status=status, body=body)
 
     # should not raise
@@ -140,7 +140,7 @@ def test_uploader_skips_existing(
 
 def test_uploader_skip_existing_bubbles_unskippable_errors(
     http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
 
     with pytest.raises(UploadError):
@@ -149,7 +149,7 @@ def test_uploader_skip_existing_bubbles_unskippable_errors(
 
 def test_uploader_properly_handles_file_not_existing(
     mocker: MockerFixture, http: type[httpretty.httpretty], uploader: Uploader
-):
+) -> None:
     mocker.patch("pathlib.Path.is_file", return_value=False)
 
     with pytest.raises(UploadError) as e:

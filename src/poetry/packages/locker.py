@@ -16,7 +16,6 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
@@ -26,6 +25,7 @@ from tomlkit import inline_table
 from tomlkit import table
 
 from poetry.__version__ import __version__
+from poetry.toml.file import TOMLFile
 from poetry.utils._compat import tomllib
 
 
@@ -53,8 +53,8 @@ class Locker:
     _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
     _relevant_keys = [*_legacy_keys, "group"]
 
-    def __init__(self, lock: str | Path, local_config: dict[str, Any]) -> None:
-        self._lock = lock if isinstance(lock, Path) else Path(lock)
+    def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
+        self._lock = lock
         self._local_config = local_config
         self._lock_data: dict[str, Any] | None = None
         self._content_hash = self._get_content_hash()
@@ -224,6 +224,18 @@ class Locker:
         return repository
 
     def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
+        """Store lock data and eventually persist to the lock file"""
+        lock = self._compute_lock_data(root, packages)
+
+        if self._should_write(lock):
+            self._write_lock_data(lock)
+            return True
+
+        return False
+
+    def _compute_lock_data(
+        self, root: Package, packages: list[Package]
+    ) -> TOMLDocument:
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
@@ -254,6 +266,10 @@ class Locker:
             "content-hash": self._content_hash,
         }
 
+        return lock
+
+    def _should_write(self, lock: TOMLDocument) -> bool:
+        # if lock file exists: compare with existing lock data
         do_write = True
         if self.is_locked():
             try:
@@ -263,8 +279,6 @@ class Locker:
                 pass
             else:
                 do_write = lock != lock_data
-        if do_write:
-            self._write_lock_data(lock)
         return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:

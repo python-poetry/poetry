@@ -35,9 +35,10 @@ file.
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
-        self.installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
+        use_executor = self.poetry.config.get("experimental.new-installer", False)
+        if not use_executor:
+            # only set if false because the method is deprecated
+            self.installer.use_executor(False)
 
         if self.option("check"):
             if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
