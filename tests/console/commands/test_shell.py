@@ -20,7 +20,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("shell")
 
 
-def test_shell(tester: CommandTester, mocker: MockerFixture):
+def test_shell(tester: CommandTester, mocker: MockerFixture) -> None:
     shell_activate = mocker.patch("poetry.utils.shell.Shell.activate")
 
     tester.execute()
@@ -32,7 +32,7 @@ def test_shell(tester: CommandTester, mocker: MockerFixture):
     assert tester.status_code == 0
 
 
-def test_shell_already_active(tester: CommandTester, mocker: MockerFixture):
+def test_shell_already_active(tester: CommandTester, mocker: MockerFixture) -> None:
     os.environ["POETRY_ACTIVE"] = "1"
     shell_activate = mocker.patch("poetry.utils.shell.Shell.activate")
 
@@ -71,7 +71,7 @@ def test__is_venv_activated(
     real_prefix: str | None,
     prefix: str,
     expected: bool,
-):
+) -> None:
     mocker.patch.object(tester.command.env, "_path", Path("foobar"))
     mocker.patch("sys.prefix", prefix)
 

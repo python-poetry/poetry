@@ -16,11 +16,13 @@ from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
 from poetry.factory import Factory
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import encode
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
 
@@ -35,6 +37,14 @@ class MockRepository(PyPiRepository):
 
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
+
+    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+        fixture = self.JSON_FIXTURES / (name + ".json")
+
+        if not fixture.exists():
+            raise PackageNotFound(f"Package [{name}] not found.")
+
+        return SimpleJsonPage("", json.loads(fixture.read_text()))
 
     def _get(
         self, url: str, headers: dict[str, str] | None = None
@@ -87,7 +97,7 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
 
 
 @pytest.mark.parametrize(
-    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+    ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
 def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     repo = MockRepository()
@@ -139,11 +149,18 @@ def test_package() -> None:
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
-    assert (
-        str(win_inet.marker)
-        == 'sys_platform == "win32" and (python_version == "2.7"'
-        ' or python_version == "2.6") and extra == "socks"'
+
+    # Different versions of poetry-core simplify the following marker differently,
+    # either is fine.
+    marker1 = (
+        'sys_platform == "win32" and (python_version == "2.7" or python_version =='
+        ' "2.6") and extra == "socks"'
     )
+    marker2 = (
+        'sys_platform == "win32" and python_version == "2.7" and extra == "socks" or'
+        ' sys_platform == "win32" and python_version == "2.6" and extra == "socks"'
+    )
+    assert str(win_inet.marker) in {marker1, marker2}
 
 
 @pytest.mark.parametrize(
@@ -284,10 +301,8 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         ]
     }
 
-    for name in expected_extras.keys():
-        assert (
-            sorted(package.extras[name], key=lambda r: r.name) == expected_extras[name]
-        )
+    for name, expected_extra in expected_extras.items():
+        assert sorted(package.extras[name], key=lambda r: r.name) == expected_extra
 
 
 def test_invalid_versions_ignored() -> None:
@@ -307,7 +322,7 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(
     response = Response()
     response.status_code = 200
     response.encoding = "utf-8"
-    response.raw = BytesIO(encode('{"foo": "bar"}'))
+    response.raw = BytesIO(b'{"foo": "bar"}')
     mocker.patch(
         "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],
@@ -323,14 +338,6 @@ def test_urls() -> None:
 
     assert repository.url == "https://pypi.org/simple/"
     assert repository.authenticated_url == "https://pypi.org/simple/"
-
-
-def test_use_pypi_pretty_name() -> None:
-    repo = MockRepository(fallback=True)
-
-    package = repo.find_packages(Factory.create_dependency("twisted", "*"))
-    assert len(package) == 1
-    assert package[0].pretty_name == "Twisted"
 
 
 def test_find_links_for_package_of_supported_types():

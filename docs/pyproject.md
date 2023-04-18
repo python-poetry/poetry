@@ -208,7 +208,7 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific [build](#build) format you can specify
+If you want to restrict a package to a specific build format you can specify
 it by using `format`:
 
 ```toml
@@ -394,6 +394,14 @@ You can install all extras with the `--all-extras` option:
 ```bash
 poetry install --all-extras
 ```
+
+{{% note %}}
+Note that `install --extras` and the variations mentioned above (`--all-extras`, `--extras foo`, etc.) only work on dependencies defined in the current project. If you want to install extras defined by dependencies, you'll have to express that in the dependency itself:
+```toml
+[tool.poetry.group.dev.dependencies]
+fastapi = {version="^0.92.0", extras=["all"]}
+```
+{{% /note %}}
 
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).

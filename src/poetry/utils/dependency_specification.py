@@ -114,7 +114,7 @@ def _parse_dependency_specification_simple(
     require: DependencySpec = {}
 
     if " " in pair:
-        name, version = pair.split(" ", 2)
+        name, version = pair.split(" ", 1)
         extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
         if extras_m:
             extras = [e.strip() for e in extras_m.group(1).split(",")]

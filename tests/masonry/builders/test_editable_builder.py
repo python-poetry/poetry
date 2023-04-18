@@ -28,42 +28,40 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
-def simple_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "simple_project"
-    )
+def simple_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("simple_project"))
 
     return poetry
 
 
 @pytest.fixture()
-def project_with_include() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "with-include"
-    )
+def project_with_include(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("with-include"))
 
     return poetry
 
 
 @pytest.fixture()
-def extended_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
-    )
+def extended_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("extended_project"))
 
     return poetry
 
 
 @pytest.fixture()
-def extended_without_setup_poetry() -> Poetry:
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent
-        / "fixtures"
-        / "extended_project_without_setup"
-    )
+def extended_without_setup_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("extended_project_without_setup"))
+
+    return poetry
+
+
+@pytest.fixture
+def with_multiple_readme_files(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("with_multiple_readme_files"))
 
     return poetry
 
@@ -74,10 +72,10 @@ def env_manager(simple_poetry: Poetry) -> EnvManager:
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
-    venv_path = Path(tmp_dir) / "venv"
+def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> VirtualEnv:
+    venv_path = tmp_path / "venv"
 
-    env_manager.build_venv(str(venv_path))
+    env_manager.build_venv(venv_path)
 
     venv = VirtualEnv(venv_path)
     yield venv
@@ -87,20 +85,20 @@ def tmp_venv(tmp_dir: str, env_manager: EnvManager) -> VirtualEnv:
 
 def test_builder_installs_proper_files_for_standard_packages(
     simple_poetry: Poetry, tmp_venv: VirtualEnv
-):
+) -> None:
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
     builder.build()
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
-    pth_file = "simple_project.pth"
+    pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
         simple_poetry.file.parent.resolve().as_posix()
         == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
     )
 
-    dist_info = "simple_project-1.2.3.dist-info"
+    dist_info = Path("simple_project-1.2.3.dist-info")
     assert tmp_venv.site_packages.exists(dist_info)
 
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
@@ -167,7 +165,7 @@ My Package
 
     assert all(len(row) == 3 for row in records)
     record_entries = {row[0] for row in records}
-    pth_file = "simple_project.pth"
+    pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert str(tmp_venv.site_packages.find(pth_file)[0]) in record_entries
     assert str(tmp_venv._bin_dir.joinpath("foo")) in record_entries
@@ -213,10 +211,10 @@ if __name__ == '__main__':
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    mocker: MockerFixture, extended_poetry: Poetry, tmp_dir: str
-):
+    mocker: MockerFixture, extended_poetry: Poetry, tmp_path: Path
+) -> None:
     pip_install = mocker.patch("poetry.masonry.builders.editable.pip_install")
-    env = MockEnv(path=Path(tmp_dir) / "foo")
+    env = MockEnv(path=tmp_path / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
@@ -226,10 +224,12 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     assert [] == env.executed
 
 
-def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
+def test_builder_setup_generation_runs_with_pip_editable(
+    fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
     # create an isolated copy of the project
-    fixture = Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
-    extended_project = Path(tmp_dir) / "extended_project"
+    fixture = fixture_dir("extended_project")
+    extended_project = tmp_path / "extended_project"
 
     shutil.copytree(fixture, extended_project)
     assert extended_project.exists()
@@ -264,11 +264,11 @@ def test_builder_setup_generation_runs_with_pip_editable(tmp_dir: str) -> None:
 
 def test_builder_installs_proper_files_when_packages_configured(
     project_with_include: Poetry, tmp_venv: VirtualEnv
-):
+) -> None:
     builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
     builder.build()
 
-    pth_file = "with_include.pth"
+    pth_file = Path("with_include.pth")
     assert tmp_venv.site_packages.exists(pth_file)
 
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
@@ -287,20 +287,48 @@ def test_builder_installs_proper_files_when_packages_configured(
     assert len(paths) == len(expected)
 
 
+def test_builder_generates_proper_metadata_when_multiple_readme_files(
+    with_multiple_readme_files: Poetry, tmp_venv: VirtualEnv
+) -> None:
+    builder = EditableBuilder(with_multiple_readme_files, tmp_venv, NullIO())
+
+    builder.build()
+
+    dist_info = Path("my_package-0.1.dist-info")
+    assert tmp_venv.site_packages.exists(dist_info)
+
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
+    assert dist_info.joinpath("METADATA").exists()
+
+    metadata = """\
+Metadata-Version: 2.1
+Name: my-package
+Version: 0.1
+Summary: Some description.
+Home-page: https://python-poetry.org
+License: MIT
+Author: Your Name
+Author-email: you@example.com
+Requires-Python: >=2.7,<3.0
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Description-Content-Type: text/x-rst
+
+Single Python
+=============
+
+Changelog
+=========
+
+"""
+    assert dist_info.joinpath("METADATA").read_text(encoding="utf-8") == metadata
+
+
 def test_builder_should_execute_build_scripts(
     mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_path: Path
-):
+) -> None:
     env = MockEnv(path=tmp_path / "foo")
-    site_packages_dir = tmp_path / "site-packages"
-    site_packages_dir.mkdir(parents=True, exist_ok=True)
-    mocker.patch.object(
-        env,
-        "get_paths",
-        return_value={
-            "purelib": str(site_packages_dir),
-            "platlib": str(site_packages_dir),
-        },
-    )
     mocker.patch(
         "poetry.masonry.builders.editable.build_environment"
     ).return_value.__enter__.return_value = env

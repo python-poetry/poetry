@@ -1,0 +1,90 @@
+{
+  "info": {
+    "author": "Sébastien Eustace",
+    "author_email": "sebastien@eustace.io",
+    "bugtrack_url": null,
+    "classifiers": [
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9"
+    ],
+    "description": "",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/python-poetry/cleo",
+    "keywords": "cli,commands",
+    "license": "MIT",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "cleo",
+    "package_url": "https://pypi.org/project/cleo/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/cleo/",
+    "project_urls": {
+      "Homepage": "https://github.com/python-poetry/cleo"
+    },
+    "release_url": "https://pypi.org/project/cleo/1.0.0a5/",
+    "requires_dist": [
+      "crashtest (>=0.3.1,<0.4.0)",
+      "pylev (>=1.3.0,<2.0.0)"
+    ],
+    "requires_python": ">=3.7,<4.0",
+    "summary": "Cleo allows you to create beautiful and testable command-line interfaces.",
+    "version": "1.0.0a5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 14027784,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "4c78006d13e68c0c0796b954b1df0a3f",
+        "sha256": "ff53056589300976e960f75afb792dfbfc9c78dcbb5a448e207a17b643826360"
+      },
+      "downloads": -1,
+      "filename": "cleo-1.0.0a5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "4c78006d13e68c0c0796b954b1df0a3f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.7,<4.0",
+      "size": 78701,
+      "upload_time": "2022-06-03T20:16:19",
+      "upload_time_iso_8601": "2022-06-03T20:16:19.386916Z",
+      "url": "https://files.pythonhosted.org/packages/45/0c/3825603bf62f360829b1eea29a43dadce30829067e288170b3bf738aafd0/cleo-1.0.0a5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "90e60b2ad117d3534f92a4ce37f9f462",
+        "sha256": "097c9d0e0332fd53cc89fc11eb0a6ba0309e6a3933c08f7b38558555486925d3"
+      },
+      "downloads": -1,
+      "filename": "cleo-1.0.0a5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "90e60b2ad117d3534f92a4ce37f9f462",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.7,<4.0",
+      "size": 61431,
+      "upload_time": "2022-06-03T20:16:21",
+      "upload_time_iso_8601": "2022-06-03T20:16:21.133890Z",
+      "url": "https://files.pythonhosted.org/packages/2f/16/1c1902b225756745f9860451a44a2e2a3c26ee91c72295e83c63df605ed1/cleo-1.0.0a5.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}
