@@ -226,7 +226,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             if canonical_constraint_name == project_name:
                 self.line_error(
-                    f"<error>Cannot add dependency on <c1>{_constraint['name']}</c1> to"
+                    f"<error>Cannot add dependency on <c1>{constraint_name}</c1> to"
                     " project with the same name."
                 )
                 self.line_error("\nNo changes were applied.")
