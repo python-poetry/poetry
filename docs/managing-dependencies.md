@@ -163,7 +163,7 @@ poetry install --only docs
 ```
 
 {{% note %}}
-If you only want to install the project's runtime dependencies, you can do so  with the
+If you only want to install the project's runtime dependencies, you can do so with the
 `--only main` notation:
 
 ```bash

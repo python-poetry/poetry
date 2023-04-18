@@ -15,7 +15,12 @@ class EnvInfoCommand(Command):
     name = "env info"
     description = "Displays information about the current environment."
 
-    options = [option("path", "p", "Only display the environment's path.")]
+    options = [
+        option("path", "p", "Only display the environment's path."),
+        option(
+            "executable", "e", "Only display the environment's python executable path."
+        ),
+    ]
 
     def handle(self) -> int:
         from poetry.utils.env import EnvManager
@@ -27,6 +32,14 @@ class EnvInfoCommand(Command):
                 return 1
 
             self.line(str(env.path))
+
+            return 0
+
+        if self.option("executable"):
+            if not env.is_venv():
+                return 1
+
+            self.line(str(env.python))
 
             return 0
 

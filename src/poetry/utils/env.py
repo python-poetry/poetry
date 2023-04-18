@@ -9,6 +9,7 @@ import os
 import platform
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -20,7 +21,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 import packaging.tags
 import tomlkit
@@ -34,14 +34,13 @@ from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
-from poetry.core.toml.file import TOMLFile
 from poetry.core.utils.helpers import temporary_directory
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
+from poetry.toml.file import TOMLFile
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
-from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import get_real_windows_path
 from poetry.utils.helpers import is_dir_writable
@@ -59,7 +58,6 @@ if TYPE_CHECKING:
     from virtualenv.seed.wheels.util import Wheel
 
     from poetry.poetry import Poetry
-
 
 GET_SYS_TAGS = f"""
 import importlib.util
@@ -84,7 +82,6 @@ print(
     json.dumps([(t.interpreter, t.abi, t.platform) for t in packaging_tags.sys_tags()])
 )
 """
-
 
 GET_ENVIRONMENT_INFO = """\
 import json
@@ -156,7 +153,6 @@ env = {
 print(json.dumps(env))
 """
 
-
 GET_BASE_PREFIX = """\
 import sys
 
@@ -175,9 +171,9 @@ print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
 
 GET_PYTHON_VERSION_ONELINER = (
-    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\""
+    "import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))"
 )
-GET_ENV_PATH_ONELINER = '"import sys; print(sys.prefix)"'
+GET_ENV_PATH_ONELINER = "import sys; print(sys.prefix)"
 
 GET_SYS_PATH = """\
 import json
@@ -385,7 +381,7 @@ class SitePackages:
 
             distribution_path: Path = distribution._path  # type: ignore[attr-defined]
             if distribution_path.exists():
-                remove_directory(str(distribution_path), force=True)
+                remove_directory(distribution_path, force=True)
 
             paths.append(distribution_path)
 
@@ -393,16 +389,13 @@ class SitePackages:
 
     def _path_method_wrapper(
         self,
-        path: str | Path,
+        path: Path,
         method: str,
         *args: Any,
         return_first: bool = True,
         writable_only: bool = False,
         **kwargs: Any,
     ) -> tuple[Path, Any] | list[tuple[Path, Any]]:
-        if isinstance(path, str):
-            path = Path(path)
-
         candidates = self.make_candidates(
             path, writable_only=writable_only, strict=True
         )
@@ -424,17 +417,17 @@ class SitePackages:
 
         raise OSError(f"Unable to access any of {paths_csv(candidates)}")
 
-    def write_text(self, path: str | Path, *args: Any, **kwargs: Any) -> Path:
+    def write_text(self, path: Path, *args: Any, **kwargs: Any) -> Path:
         paths = self._path_method_wrapper(path, "write_text", *args, **kwargs)
         assert isinstance(paths, tuple)
         return paths[0]
 
-    def mkdir(self, path: str | Path, *args: Any, **kwargs: Any) -> Path:
+    def mkdir(self, path: Path, *args: Any, **kwargs: Any) -> Path:
         paths = self._path_method_wrapper(path, "mkdir", *args, **kwargs)
         assert isinstance(paths, tuple)
         return paths[0]
 
-    def exists(self, path: str | Path) -> bool:
+    def exists(self, path: Path) -> bool:
         return any(
             value[-1]
             for value in self._path_method_wrapper(path, "exists", return_first=False)
@@ -442,7 +435,7 @@ class SitePackages:
 
     def find(
         self,
-        path: str | Path,
+        path: Path,
         writable_only: bool = False,
     ) -> list[Path]:
         return [
@@ -468,13 +461,21 @@ class EnvCommandError(EnvError):
     def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
         self.e = e
 
-        message = (
-            f"Command {e.cmd} errored with the following return code {e.returncode},"
-            f" and output: \n{decode(e.output)}"
-        )
+        message_parts = [
+            f"Command {e.cmd} errored with the following return code {e.returncode}"
+        ]
+        if e.output:
+            message_parts.append(f"Output:\n{decode(e.output)}")
+        if e.stderr:
+            message_parts.append(f"Error output:\n{decode(e.stderr)}")
         if input:
-            message += f"input was : {input}"
-        super().__init__(message)
+            message_parts.append(f"Input:\n{input}")
+        super().__init__("\n\n".join(message_parts))
+
+
+class PythonVersionNotFound(EnvError):
+    def __init__(self, expected: str) -> None:
+        super().__init__(f"Could not find the python executable {expected}")
 
 
 class NoCompatiblePythonVersionFound(EnvError):
@@ -521,61 +522,71 @@ class EnvManager:
         self._poetry = poetry
         self._io = io or NullIO()
 
-    def _full_python_path(self, python: str) -> str:
+    @staticmethod
+    def _full_python_path(python: str) -> Path | None:
+        # eg first find pythonXY.bat on windows.
+        path_python = shutil.which(python)
+        if path_python is None:
+            return None
+
         try:
             executable = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [python, "-c", '"import sys; print(sys.executable)"']
-                    ),
-                    shell=True,
+                    [path_python, "-c", "import sys; print(sys.executable)"],
                 ).strip()
             )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
+            return Path(executable)
 
-        return executable
-
-    def _detect_active_python(self) -> str | None:
-        executable = None
-
-        try:
-            self._io.write_error_line(
-                "Trying to detect current active python executable as specified in the"
-                " config.",
-                verbosity=Verbosity.VERBOSE,
-            )
-            executable = self._full_python_path("python")
-            self._io.write_error_line(
-                f"Found: {executable}", verbosity=Verbosity.VERBOSE
-            )
         except CalledProcessError:
-            self._io.write_error_line(
-                "Unable to detect the current active python executable. Falling back to"
-                " default.",
+            return None
+
+    @staticmethod
+    def _detect_active_python(io: None | IO = None) -> Path | None:
+        io = io or NullIO()
+        io.write_error_line(
+            (
+                "Trying to detect current active python executable as specified in"
+                " the config."
+            ),
+            verbosity=Verbosity.VERBOSE,
+        )
+
+        executable = EnvManager._full_python_path("python")
+
+        if executable is not None:
+            io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
+        else:
+            io.write_error_line(
+                (
+                    "Unable to detect the current active python executable. Falling"
+                    " back to default."
+                ),
                 verbosity=Verbosity.VERBOSE,
             )
+
         return executable
 
-    def _get_python_version(self) -> tuple[int, int, int]:
-        version_info = tuple(sys.version_info[:3])
+    @staticmethod
+    def get_python_version(
+        precision: int = 3,
+        prefer_active_python: bool = False,
+        io: None | IO = None,
+    ) -> Version:
+        version = ".".join(str(v) for v in sys.version_info[:precision])
 
-        if self._poetry.config.get("virtualenvs.prefer-active-python"):
-            executable = self._detect_active_python()
+        if prefer_active_python:
+            executable = EnvManager._detect_active_python(io)
 
             if executable:
                 python_patch = decode(
                     subprocess.check_output(
-                        list_to_shell_command(
-                            [executable, "-c", GET_PYTHON_VERSION_ONELINER]
-                        ),
-                        shell=True,
+                        [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                     ).strip()
                 )
 
-                version_info = tuple(int(v) for v in python_patch.split(".")[:3])
+                version = ".".join(str(v) for v in python_patch.split(".")[:precision])
 
-        return cast("tuple[int, int, int]", version_info)
+        return Version.parse(version)
 
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
@@ -592,13 +603,14 @@ class EnvManager:
             # Executable in PATH or full executable path
             pass
 
-        python = self._full_python_path(python)
+        python_path = self._full_python_path(python)
+        if python_path is None:
+            raise PythonVersionNotFound(python)
 
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
-                    shell=True,
+                    [python_path, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -623,7 +635,7 @@ class EnvManager:
                 if patch != current_patch:
                     create = True
 
-            self.create_venv(executable=python, force=create)
+            self.create_venv(executable=python_path, force=create)
 
             return self.get(reload=True)
 
@@ -657,7 +669,7 @@ class EnvManager:
                 if patch != current_patch:
                     create = True
 
-            self.create_venv(executable=python, force=create)
+            self.create_venv(executable=python_path, force=create)
 
         # Activate
         envs[base_env_name] = {"minor": minor, "patch": patch}
@@ -688,7 +700,12 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in self._get_python_version()[:2]])
+        prefer_active_python = self._poetry.config.get(
+            "virtualenvs.prefer-active-python"
+        )
+        python_minor = self.get_python_version(
+            precision=2, prefer_active_python=prefer_active_python, io=self._io
+        ).to_string()
 
         venv_path = self._poetry.config.virtualenvs_path
 
@@ -753,9 +770,7 @@ class EnvManager:
 
         venv_name = self.generate_env_name(name, str(self._poetry.file.parent))
         venv_path = self._poetry.config.virtualenvs_path
-        env_list = [
-            VirtualEnv(Path(p)) for p in sorted(venv_path.glob(f"{venv_name}-py*"))
-        ]
+        env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
 
         venv = self._poetry.file.parent / ".venv"
         if (
@@ -788,8 +803,7 @@ class EnvManager:
             try:
                 env_dir = decode(
                     subprocess.check_output(
-                        list_to_shell_command([python, "-c", GET_ENV_PATH_ONELINER]),
-                        shell=True,
+                        [python, "-c", GET_ENV_PATH_ONELINER],
                     )
                 ).strip("\n")
                 env_name = Path(env_dir).name
@@ -832,7 +846,7 @@ class EnvManager:
         else:
             venv_path = self._poetry.config.virtualenvs_path
             # Get all the poetry envs, even for other projects
-            env_names = [Path(p).name for p in sorted(venv_path.glob("*-*-py*"))]
+            env_names = [p.name for p in sorted(venv_path.glob("*-*-py*"))]
             if python in env_names:
                 raise IncorrectEnvError(python)
 
@@ -848,8 +862,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    list_to_shell_command([python, "-c", GET_PYTHON_VERSION_ONELINER]),
-                    shell=True,
+                    [python, "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -881,7 +894,7 @@ class EnvManager:
     def create_venv(
         self,
         name: str | None = None,
-        executable: str | None = None,
+        executable: Path | None = None,
         force: bool = False,
     ) -> Env:
         if self._env is not None and not force:
@@ -914,7 +927,9 @@ class EnvManager:
         if not executable and prefer_active_python:
             executable = self._detect_active_python()
 
-        venv_path = cwd / ".venv" if root_venv else self._poetry.config.virtualenvs_path
+        venv_path: Path = (
+            cwd / ".venv" if root_venv else self._poetry.config.virtualenvs_path
+        )
         if not name:
             name = self._poetry.package.name
         assert name is not None
@@ -924,10 +939,7 @@ class EnvManager:
         if executable:
             python_patch = decode(
                 subprocess.check_output(
-                    list_to_shell_command(
-                        [executable, "-c", GET_PYTHON_VERSION_ONELINER]
-                    ),
-                    shell=True,
+                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
                 ).strip()
             )
             python_minor = ".".join(python_patch.split(".")[:2])
@@ -951,45 +963,40 @@ class EnvManager:
                 "Trying to find and use a compatible version.</warning> "
             )
 
-            for python_to_try in sorted(
+            for suffix in sorted(
                 self._poetry.package.AVAILABLE_PYTHONS,
                 key=lambda v: (v.startswith("3"), -len(v), v),
                 reverse=True,
             ):
-                if len(python_to_try) == 1:
-                    if not parse_constraint(f"^{python_to_try}.0").allows_any(
+                if len(suffix) == 1:
+                    if not parse_constraint(f"^{suffix}.0").allows_any(
                         supported_python
                     ):
                         continue
-                elif not supported_python.allows_any(
-                    parse_constraint(python_to_try + ".*")
-                ):
+                elif not supported_python.allows_any(parse_constraint(suffix + ".*")):
                     continue
 
-                python = "python" + python_to_try
-
+                python_name = f"python{suffix}"
                 if self._io.is_debug():
-                    self._io.write_error_line(f"<debug>Trying {python}</debug>")
+                    self._io.write_error_line(f"<debug>Trying {python_name}</debug>")
+
+                python = self._full_python_path(python_name)
+                if python is None:
+                    continue
 
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            list_to_shell_command(
-                                [python, "-c", GET_PYTHON_VERSION_ONELINER]
-                            ),
+                            [python, "-c", GET_PYTHON_VERSION_ONELINER],
                             stderr=subprocess.STDOUT,
-                            shell=True,
                         ).strip()
                     )
                 except CalledProcessError:
                     continue
 
-                if not python_patch:
-                    continue
-
                 if supported_python.allows(Version.parse(python_patch)):
                     self._io.write_error_line(
-                        f"Using <c1>{python}</c1> ({python_patch})"
+                        f"Using <c1>{python_name}</c1> ({python_patch})"
                     )
                     executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
@@ -1073,8 +1080,8 @@ class EnvManager:
     @classmethod
     def build_venv(
         cls,
-        path: Path | str,
-        executable: str | Path | None = None,
+        path: Path,
+        executable: Path | None = None,
         flags: dict[str, bool] | None = None,
         with_pip: bool | None = None,
         with_wheel: bool | None = None,
@@ -1105,14 +1112,13 @@ class EnvManager:
             else flags.pop("no-wheel", flags["no-pip"])
         )
 
-        if isinstance(executable, Path):
-            executable = executable.resolve().as_posix()
+        executable_str = None if executable is None else executable.resolve().as_posix()
 
         args = [
             "--no-download",
             "--no-periodic-update",
             "--python",
-            executable or sys.executable,
+            executable_str or sys.executable,
         ]
 
         if prompt is not None:
@@ -1140,9 +1146,7 @@ class EnvManager:
         return cli_result
 
     @classmethod
-    def remove_venv(cls, path: Path | str) -> None:
-        if isinstance(path, str):
-            path = Path(path)
+    def remove_venv(cls, path: Path) -> None:
         assert path.is_dir()
         try:
             remove_directory(path)
@@ -1230,10 +1234,7 @@ class Env:
             path = get_real_windows_path(path)
             base = get_real_windows_path(base) if base else None
 
-        if not self._is_windows or self._is_mingw:
-            bin_dir = "bin"
-        else:
-            bin_dir = "Scripts"
+        bin_dir = "bin" if not self._is_windows or self._is_mingw else "Scripts"
         self._path = path
         self._bin_dir = self._path / bin_dir
 
@@ -1253,7 +1254,7 @@ class Env:
         self._platlib: Path | None = None
         self._script_dirs: list[Path] | None = None
 
-        self._embedded_pip_path: str | None = None
+        self._embedded_pip_path: Path | None = None
 
     @property
     def path(self) -> Path:
@@ -1264,8 +1265,9 @@ class Env:
         return self._base
 
     @property
-    def version_info(self) -> tuple[Any, ...]:
-        return tuple(self.marker_env["version_info"])
+    def version_info(self) -> tuple[int, int, int, str, int]:
+        version_info: tuple[int, int, int, str, int] = self.marker_env["version_info"]
+        return version_info
 
     @property
     def python_implementation(self) -> str:
@@ -1273,7 +1275,7 @@ class Env:
         return implementation
 
     @property
-    def python(self) -> str:
+    def python(self) -> Path:
         """
         Path to current python executable
         """
@@ -1333,21 +1335,21 @@ class Env:
         return path
 
     @property
-    def pip_embedded(self) -> str:
+    def pip_embedded(self) -> Path:
         if self._embedded_pip_path is None:
-            self._embedded_pip_path = str(self.get_embedded_wheel("pip") / "pip")
+            self._embedded_pip_path = self.get_embedded_wheel("pip") / "pip"
         return self._embedded_pip_path
 
     @property
-    def pip(self) -> str:
+    def pip(self) -> Path:
         """
         Path to current pip executable
         """
         # we do not use as_posix() here due to issues with windows pathlib2
         # implementation
         path = self._bin(self._pip_executable)
-        if not Path(path).exists():
-            return str(self.pip_embedded)
+        if not path.exists():
+            return self.pip_embedded
         return path
 
     @property
@@ -1424,6 +1426,16 @@ class Env:
         if self._paths is None:
             self._paths = self.get_paths()
 
+            if self.is_venv():
+                # We copy pip's logic here for the `include` path
+                self._paths["include"] = str(
+                    self.path.joinpath(
+                        "include",
+                        "site",
+                        f"python{self.version_info[0]}.{self.version_info[1]}",
+                    )
+                )
+
         return self._paths
 
     @property
@@ -1455,10 +1467,10 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
-        if embedded or not Path(self._bin(self._pip_executable)).exists():
-            return [self.python, self.pip_embedded]
+        if embedded or not self._bin(self._pip_executable).exists():
+            return [str(self.python), str(self.pip_embedded)]
         # run as module so that pip can update itself on Windows
-        return [self.python, "-m", "pip"]
+        return [str(self.python), "-m", "pip"]
 
     def get_supported_tags(self) -> list[Tag]:
         raise NotImplementedError()
@@ -1485,7 +1497,7 @@ class Env:
             # embedded pip when pip is not available in the environment
             return self.get_pip_command()
 
-        return [self._bin(bin)]
+        return [str(self._bin(bin))]
 
     def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
         cmd = self.get_command_from_bin(bin) + list(args)
@@ -1498,7 +1510,14 @@ class Env:
 
     def run_python_script(self, content: str, **kwargs: Any) -> int | str:
         return self.run(
-            self._executable, "-I", "-W", "ignore", "-", input_=content, **kwargs
+            self._executable,
+            "-I",
+            "-W",
+            "ignore",
+            "-",
+            input_=content,
+            stderr=subprocess.PIPE,
+            **kwargs,
         )
 
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
@@ -1508,34 +1527,24 @@ class Env:
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
         env = kwargs.pop("env", dict(os.environ))
+        stderr = kwargs.pop("stderr", subprocess.STDOUT)
 
         try:
-            if self._is_windows:
-                kwargs["shell"] = True
-
-            command: str | list[str]
-            if kwargs.get("shell", False):
-                command = list_to_shell_command(cmd)
-            else:
-                command = cmd
-
             if input_:
                 output = subprocess.run(
-                    command,
+                    cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    stderr=stderr,
                     input=encode(input_),
                     check=True,
+                    env=env,
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
+                assert stderr != subprocess.PIPE
+                return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
             else:
-                output = subprocess.check_output(
-                    command, stderr=subprocess.STDOUT, env=env, **kwargs
-                )
+                output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
 
@@ -1549,7 +1558,7 @@ class Env:
             return os.execvpe(command[0], command, env=env)
 
         kwargs["shell"] = True
-        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
         return exe.returncode
 
@@ -1567,7 +1576,7 @@ class Env:
                 self._script_dirs.append(self.userbase / self._script_dirs[0].name)
         return self._script_dirs
 
-    def _bin(self, bin: str) -> str:
+    def _bin(self, bin: str) -> Path:
         """
         Return path to the given executable.
         """
@@ -1588,11 +1597,11 @@ class Env:
                     bin_path = self._path / bin
 
                 if bin_path.exists():
-                    return str(bin_path)
+                    return bin_path
 
-            return bin
+            return Path(bin)
 
-        return str(bin_path)
+        return bin_path
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Env):
@@ -1610,8 +1619,8 @@ class SystemEnv(Env):
     """
 
     @property
-    def python(self) -> str:
-        return sys.executable
+    def python(self) -> Path:
+        return Path(sys.executable)
 
     @property
     def sys_path(self) -> list[str]:
@@ -1888,7 +1897,7 @@ class GenericEnv(VirtualEnv):
         if not self._is_windows:
             return os.execvpe(command[0], command, env=env)
 
-        exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+        exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
 
         return exe.returncode
@@ -1912,6 +1921,17 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed: list[list[str]] = []
 
+    @property
+    def paths(self) -> dict[str, str]:
+        if self._paths is None:
+            self._paths = self.get_paths()
+            self._paths["platlib"] = str(self._path / "platlib")
+            self._paths["purelib"] = str(self._path / "purelib")
+            self._paths["scripts"] = str(self._path / "scripts")
+            self._paths["data"] = str(self._path / "data")
+
+        return self._paths
+
     def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
         self.executed.append(cmd)
 
@@ -1926,20 +1946,20 @@ class NullEnv(SystemEnv):
             return super().execute(bin, *args, **kwargs)
         return 0
 
-    def _bin(self, bin: str) -> str:
-        return bin
+    def _bin(self, bin: str) -> Path:
+        return Path(bin)
 
 
 @contextmanager
 def ephemeral_environment(
-    executable: str | Path | None = None,
+    executable: Path | None = None,
     flags: dict[str, bool] | None = None,
 ) -> Iterator[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"
         EnvManager.build_venv(
-            path=venv_dir.as_posix(),
+            path=venv_dir,
             executable=executable,
             flags=flags,
         )

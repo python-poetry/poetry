@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import re
 import shutil
+import urllib.parse as urlparse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,15 +22,11 @@ from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-
 if TYPE_CHECKING:
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
+    from packaging.utils import NormalizedName
 
     from poetry.config.config import Config
 
@@ -45,16 +42,13 @@ class MockRepository(LegacyRepository):
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
-    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
-        parts = endpoint.split("/")
-        name = parts[1]
-
+    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
         fixture = self.FIXTURES / (name + ".html")
         if not fixture.exists():
-            return None
+            raise PackageNotFound(f"Package [{name}] not found.")
 
         with fixture.open(encoding="utf-8") as f:
-            return SimpleRepositoryPage(self._url + endpoint, f.read())
+            return SimpleRepositoryPage(self._url + f"/{name}/", f.read())
 
     def _download(self, url: str, dest: Path) -> None:
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -73,7 +67,7 @@ def test_packages_property_returns_empty_list() -> None:
 def test_page_relative_links_path_are_correct() -> None:
     repo = MockRepository()
 
-    page = repo.get_page("/relative")
+    page = repo.get_page("relative")
     assert page is not None
 
     for link in page.links:
@@ -84,7 +78,7 @@ def test_page_relative_links_path_are_correct() -> None:
 def test_page_absolute_links_path_are_correct() -> None:
     repo = MockRepository()
 
-    page = repo.get_page("/absolute")
+    page = repo.get_page("absolute")
     assert page is not None
 
     for link in page.links:
@@ -95,7 +89,7 @@ def test_page_absolute_links_path_are_correct() -> None:
 def test_page_clean_link() -> None:
     repo = MockRepository()
 
-    page = repo.get_page("/relative")
+    page = repo.get_page("relative")
     assert page is not None
 
     cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
@@ -105,7 +99,7 @@ def test_page_clean_link() -> None:
 def test_page_invalid_version_link() -> None:
     repo = MockRepository()
 
-    page = repo.get_page("/invalid-version")
+    page = repo.get_page("invalid-version")
     assert page is not None
 
     links = list(page.links)
@@ -123,7 +117,7 @@ def test_page_invalid_version_link() -> None:
 
 def test_sdist_format_support() -> None:
     repo = MockRepository()
-    page = repo.get_page("/relative")
+    page = repo.get_page("relative")
     assert page is not None
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
@@ -213,7 +207,7 @@ def test_find_packages_no_prereleases() -> None:
 
 
 @pytest.mark.parametrize(
-    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+    ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
 def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     repo = MockRepository()
@@ -226,13 +220,6 @@ def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
             assert package.source_type == "legacy"
             assert package.source_reference == repo.name
             assert package.source_url == repo.url
-
-
-def test_find_packages_only_prereleases_empty_when_not_any() -> None:
-    repo = MockRepository()
-    packages = repo.find_packages(Factory.create_dependency("black", ">=1"))
-
-    assert len(packages) == 0
 
 
 @pytest.mark.parametrize(
@@ -441,8 +428,8 @@ def test_package_yanked(
 
 def test_package_partial_yank():
     class SpecialMockRepository(MockRepository):
-        def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
-            return super()._get_page(f"/{endpoint.strip('/')}_partial_yank/")
+        def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+            return super()._get_page(canonicalize_name(f"{name}-partial-yank"))
 
     repo = MockRepository()
     package = repo.package("futures", Version.parse("3.2.0"))
@@ -488,31 +475,32 @@ class MockHttpRepository(LegacyRepository):
 
 
 def test_get_200_returns_page(http: type[httpretty.httpretty]) -> None:
-    repo = MockHttpRepository({"/foo": 200}, http)
+    repo = MockHttpRepository({"/foo/": 200}, http)
 
-    assert repo.get_page("/foo")
+    assert repo.get_page("foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
 def test_get_40x_and_returns_none(
     http: type[httpretty.httpretty], status_code: int
 ) -> None:
-    repo = MockHttpRepository({"/foo": status_code}, http)
+    repo = MockHttpRepository({"/foo/": status_code}, http)
 
-    assert repo.get_page("/foo") is None
+    with pytest.raises(PackageNotFound):
+        repo.get_page("foo")
 
 
 def test_get_5xx_raises(http: type[httpretty.httpretty]) -> None:
-    repo = MockHttpRepository({"/foo": 500}, http)
+    repo = MockHttpRepository({"/foo/": 500}, http)
 
     with pytest.raises(RepositoryError):
-        repo.get_page("/foo")
+        repo.get_page("foo")
 
 
 def test_get_redirected_response_url(
     http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
 ) -> None:
-    repo = MockHttpRepository({"/foo": 200}, http)
+    repo = MockHttpRepository({"/foo/": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
     def get_mock(
@@ -524,7 +512,7 @@ def test_get_redirected_response_url(
         return response
 
     monkeypatch.setattr(repo.session, "get", get_mock)
-    page = repo.get_page("/foo")
+    page = repo.get_page("foo")
     assert page is not None
     assert page._url == "http://legacy.redirect.bar/foo/"
 

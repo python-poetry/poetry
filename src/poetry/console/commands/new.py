@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from contextlib import suppress
 
 from cleo.helpers import argument
@@ -31,8 +29,9 @@ class NewCommand(Command):
 
         from poetry.core.vcs.git import GitConfig
 
+        from poetry.config.config import Config
         from poetry.layouts import layout
-        from poetry.utils.env import SystemEnv
+        from poetry.utils.env import EnvManager
 
         if self.io.input.option("directory"):
             self.line_error(
@@ -40,10 +39,7 @@ class NewCommand(Command):
                 " be ignored. You should consider the option --path instead.</warning>"
             )
 
-        if self.option("src"):
-            layout_cls = layout("src")
-        else:
-            layout_cls = layout("standard")
+        layout_cls = layout("src") if self.option("src") else layout("standard")
 
         path = Path(self.argument("path"))
         if not path.is_absolute():
@@ -71,8 +67,17 @@ class NewCommand(Command):
             if author_email:
                 author += f" <{author_email}>"
 
-        current_env = SystemEnv(Path(sys.executable))
-        default_python = "^" + ".".join(str(v) for v in current_env.version_info[:2])
+        poetry_config = Config.create()
+        default_python = (
+            "^"
+            + EnvManager.get_python_version(
+                precision=2,
+                prefer_active_python=poetry_config.get(
+                    "virtualenvs.prefer-active-python"
+                ),
+                io=self.io,
+            ).to_string()
+        )
 
         layout_ = layout_cls(
             name,

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class CachedRepository(Repository, ABC):
-    CACHE_VERSION = parse_constraint("1.1.0")
+    CACHE_VERSION = parse_constraint("2.0.0")
 
     def __init__(
         self, name: str, disable_cache: bool = False, config: Config | None = None
