@@ -37,7 +37,7 @@ def test_create_poetry(fixture_dir: FixtureDirGetter) -> None:
 
     package = poetry.package
 
-    assert package.name == "my-package"
+    assert package.name == "sample-project"
     assert package.version.text == "1.2.3"
     assert package.description == "Some description."
     assert package.authors == ["Sébastien Eustace <sebastien@eustace.io>"]
@@ -418,6 +418,7 @@ def test_create_poetry_fails_on_invalid_configuration(
     expected = """\
 The Poetry configuration is invalid:
   - 'description' is a required property
+  - Project name (invalid) is same as one of its dependencies
 """
     assert str(e.value) == expected
 
