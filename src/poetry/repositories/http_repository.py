@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import urllib
@@ -18,7 +19,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
-from poetry.repositories.cached import CachedRepository
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
@@ -29,8 +30,11 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
+
     from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
+    from poetry.repositories.link_sources.base import LinkSource
     from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
@@ -50,6 +54,7 @@ class HTTPRepository(CachedRepository):
             disable_cache=disable_cache,
         )
         self._authenticator.add_repository(name, url)
+        self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
 
     @property
     def session(self) -> Authenticator:
@@ -291,8 +296,8 @@ class HTTPRepository(CachedRepository):
             )
         return response
 
-    def _get_page(self, endpoint: str) -> HTMLPage | None:
-        response = self._get_response(endpoint)
+    def _get_page(self, name: NormalizedName) -> LinkSource:
+        response = self._get_response(f"/{name}/")
         if not response:
-            return None
+            raise PackageNotFound(f"Package [{name}] not found.")
         return HTMLPage(response.url, response.text)

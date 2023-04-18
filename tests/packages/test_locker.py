@@ -12,12 +12,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
 
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 
+from poetry.__version__ import __version__
 from poetry.factory import Factory
 from poetry.packages.locker import GENERATED_COMMENT
 from poetry.packages.locker import Locker
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 def locker() -> Locker:
     with tempfile.NamedTemporaryFile() as f:
         f.close()
-        locker = Locker(f.name, {})
+        locker = Locker(Path(f.name), {})
 
         return locker
 
@@ -44,7 +44,7 @@ def root() -> ProjectPackage:
     return ProjectPackage("root", "1.2.3")
 
 
-def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
+def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
@@ -200,7 +200,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_locker_properly_loads_extras(locker: Locker):
+def test_locker_properly_loads_extras(locker: Locker) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -231,7 +231,8 @@ python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     packages = locker.locked_repository().packages
 
@@ -245,7 +246,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     assert lockfile_dep.name == "lockfile"
 
 
-def test_locker_properly_loads_nested_extras(locker: Locker):
+def test_locker_properly_loads_nested_extras(locker: Locker) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -294,7 +295,8 @@ lock-version = "2.0"
 content-hash = "123456789"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 3
@@ -325,7 +327,7 @@ content-hash = "123456789"
     assert len(packages) == 1
 
 
-def test_locker_properly_loads_extras_legacy(locker: Locker):
+def test_locker_properly_loads_extras_legacy(locker: Locker) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -359,7 +361,8 @@ lock-version = "2.0"
 content-hash = "123456789"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 2
@@ -399,7 +402,8 @@ lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 1
@@ -495,7 +499,8 @@ demo = [
     {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
 ]
 """
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 5
@@ -525,7 +530,9 @@ demo = [
             package.files = []
 
 
-def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackage):
+def test_lock_packages_with_null_description(
+    locker: Locker, root: ProjectPackage
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.description = None
 
@@ -555,7 +562,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_lock_file_should_not_have_mixed_types(locker: Locker, root: ProjectPackage):
+def test_lock_file_should_not_have_mixed_types(
+    locker: Locker, root: ProjectPackage
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0.0"))
     package_a.add_dependency(
@@ -599,7 +608,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker: Locker):
+def test_reading_lock_file_should_raise_an_error_on_invalid_data(
+    locker: Locker,
+) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -634,7 +645,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locking_legacy_repository_package_should_include_source_section(
     root: ProjectPackage, locker: Locker
-):
+) -> None:
     package_a = Package(
         "A",
         "1.0.0",
@@ -677,7 +688,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
     locker: Locker, caplog: LogCaptureFixture
-):
+) -> None:
     version = ".".join(Version.parse(Locker._VERSION).next_minor().text.split(".")[:2])
     content = f"""\
 [metadata]
@@ -687,7 +698,8 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     _ = locker.lock_data
 
@@ -706,7 +718,7 @@ regenerate the lock file with the `poetry lock` command.\
 
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
     locker: Locker, caplog: LogCaptureFixture
-):
+) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -717,13 +729,50 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """  # noqa: E800
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
         _ = locker.lock_data
 
 
-def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
+def test_root_extras_dependencies_are_ordered(
+    locker: Locker, root: ProjectPackage, fixture_base: Path
+) -> None:
+    Factory.create_dependency("B", "1.0.0", root_dir=fixture_base)
+    Factory.create_dependency("C", "1.0.0", root_dir=fixture_base)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=fixture_base)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=fixture_base)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=fixture_base)
+
+    root.extras = {
+        "C": [package_third, package_second, package_first],
+        "B": [package_first, package_second, package_third],
+    }
+    locker.set_lock_data(root, [])
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+package = []
+
+[extras]
+B = ["first", "second", "third"]
+C = ["first", "second", "third"]
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""  # noqa: E800
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    print(content)
+    assert content == expected
+
+
+def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
@@ -763,7 +812,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
     locker: Locker, caplog: LogCaptureFixture
-):
+) -> None:
     older_version = "1.1"
     content = f"""\
 [metadata]
@@ -775,7 +824,8 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
     _ = locker.lock_data
 
@@ -783,25 +833,24 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 
 def test_locker_dumps_dependency_information_correctly(
-    locker: Locker, root: ProjectPackage
-):
-    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    locker: Locker, root: ProjectPackage, fixture_base: Path
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
-            "B", {"path": "project_with_extras", "develop": True}, root_dir=root_dir
+            "B", {"path": "project_with_extras", "develop": True}, root_dir=fixture_base
         )
     )
     package_a.add_dependency(
         Factory.create_dependency(
             "C",
             {"path": "directory/project_with_transitive_directory_dependencies"},
-            root_dir=root_dir,
+            root_dir=fixture_base,
         )
     )
     package_a.add_dependency(
         Factory.create_dependency(
-            "D", {"path": "distributions/demo-0.1.0.tar.gz"}, root_dir=root_dir
+            "D", {"path": "distributions/demo-0.1.0.tar.gz"}, root_dir=fixture_base
         )
     )
     package_a.add_dependency(
@@ -812,6 +861,25 @@ def test_locker_dumps_dependency_information_correctly(
     package_a.add_dependency(
         Factory.create_dependency(
             "F", {"git": "https://github.com/python-poetry/poetry.git", "branch": "foo"}
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "G",
+            {
+                "git": "https://github.com/python-poetry/poetry.git",
+                "subdirectory": "bar",
+            },
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "H", {"git": "https://github.com/python-poetry/poetry.git", "tag": "baz"}
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "I", {"git": "https://github.com/python-poetry/poetry.git", "rev": "spam"}
         )
     )
 
@@ -840,6 +908,9 @@ C = {{path = "directory/project_with_transitive_directory_dependencies"}}
 D = {{path = "distributions/demo-0.1.0.tar.gz"}}
 E = {{url = "https://python-poetry.org/poetry-1.2.0.tar.gz"}}
 F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
+G = {{git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar"}}
+H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
+I = {{git = "https://github.com/python-poetry/poetry.git", rev = "spam"}}
 
 [metadata]
 lock-version = "2.0"
@@ -896,15 +967,14 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 
 def test_locker_dumps_dependency_extras_in_correct_order(
-    locker: Locker, root: ProjectPackage
-):
-    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    locker: Locker, root: ProjectPackage, fixture_base: Path
+) -> None:
     package_a = get_package("A", "1.0.0")
-    Factory.create_dependency("B", "1.0.0", root_dir=root_dir)
-    Factory.create_dependency("C", "1.0.0", root_dir=root_dir)
-    package_first = Factory.create_dependency("first", "1.0.0", root_dir=root_dir)
-    package_second = Factory.create_dependency("second", "1.0.0", root_dir=root_dir)
-    package_third = Factory.create_dependency("third", "1.0.0", root_dir=root_dir)
+    Factory.create_dependency("B", "1.0.0", root_dir=fixture_base)
+    Factory.create_dependency("C", "1.0.0", root_dir=fixture_base)
+    package_first = Factory.create_dependency("first", "1.0.0", root_dir=fixture_base)
+    package_second = Factory.create_dependency("second", "1.0.0", root_dir=fixture_base)
+    package_third = Factory.create_dependency("third", "1.0.0", root_dir=fixture_base)
 
     package_a.extras = {
         "C": [package_third, package_second, package_first],
@@ -943,7 +1013,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 def test_locked_repository_uses_root_dir_of_package(
     locker: Locker, mocker: MockerFixture
-):
+) -> None:
     content = f"""\
 # {GENERATED_COMMENT}
 
@@ -970,7 +1040,9 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """  # noqa: E800
 
-    locker.lock.write(tomlkit.parse(content))
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
+
     create_dependency_patch = mocker.patch(
         "poetry.factory.Factory.create_dependency", autospec=True
     )
@@ -983,7 +1055,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     root_dir = call_kwargs["root_dir"]
     assert root_dir.match("*/lib/libA")
     # relative_to raises an exception if not relative - is_relative_to comes in py3.9
-    assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None
+    assert root_dir.relative_to(locker.lock.parent.resolve()) is not None
 
 
 @pytest.mark.parametrize(
@@ -1017,7 +1089,7 @@ def test_content_hash_with_legacy_is_compatible(
         relevant_content[key] = local_config.get(key)
 
     locker = locker.__class__(
-        lock=locker.lock.path,
+        lock=locker.lock,
         local_config=local_config,
     )
 
@@ -1029,7 +1101,7 @@ def test_content_hash_with_legacy_is_compatible(
     assert (content_hash == old_content_hash) or fresh
 
 
-def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
+def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage) -> None:
     """
     Create directories and file structure as follows:
 
@@ -1064,7 +1136,7 @@ def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage):
                     # Test is not possible in that case.
                     return
                 raise
-            locker = Locker(str(symlink_path) + os.sep + Path(lock_file.name).name, {})
+            locker = Locker(symlink_path / lock_file.name, {})
 
             package_local = Package(
                 "local-package",
@@ -1115,3 +1187,29 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 """  # noqa: E800
 
             assert content == expected
+
+
+def test_lockfile_is_not_rewritten_if_only_poetry_version_changed(
+    locker: Locker, root: ProjectPackage
+) -> None:
+    generated_comment_old_version = GENERATED_COMMENT.replace(__version__, "1.3.2")
+    assert generated_comment_old_version != GENERATED_COMMENT
+    old_content = f"""\
+# {generated_comment_old_version}
+package = []
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""  # noqa: E800
+
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(old_content)
+
+    assert not locker.set_lock_data(root, [])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == old_content

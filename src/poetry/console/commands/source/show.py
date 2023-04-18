@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from cleo.helpers import argument
 
 from poetry.console.commands.command import Command
+
+
+if TYPE_CHECKING:
+    from cleo.ui.table import Rows
 
 
 class SourceShowCommand(Command):
@@ -27,29 +33,23 @@ class SourceShowCommand(Command):
             return 0
 
         if names and not any(s.name in names for s in sources):
-            self.line_error(f"No source found with name(s): {', '.join(names)}")
+            self.line_error(
+                f"No source found with name(s): {', '.join(names)}",
+                style="error",
+            )
             return 1
-
-        bool_string = {
-            True: "yes",
-            False: "no",
-        }
 
         for source in sources:
             if names and source.name not in names:
                 continue
 
             table = self.table(style="compact")
-            rows = [
+            rows: Rows = [
                 ["<info>name</>", f" : <c1>{source.name}</>"],
                 ["<info>url</>", f" : {source.url}"],
                 [
-                    "<info>default</>",
-                    f" : {bool_string.get(source.default, False)}",
-                ],
-                [
-                    "<info>secondary</>",
-                    f" : {bool_string.get(source.secondary, False)}",
+                    "<info>priority</>",
+                    f" : {source.priority.name.lower()}",
                 ],
             ]
             table.add_rows(rows)

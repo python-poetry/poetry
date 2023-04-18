@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 from typing import TYPE_CHECKING
 
 from cleo.io.null_io import NullIO
@@ -10,8 +12,8 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.pip_installer import PipInstaller
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
 from poetry.utils.extras import get_extra_package_names
@@ -39,7 +41,7 @@ class Installer:
         env: Env,
         package: ProjectPackage,
         locker: Locker,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         installed: Repository | None = None,
         executor: Executor | None = None,
@@ -57,6 +59,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._groups: Iterable[str] | None = None
+        self._skip_directory = False
 
         self._execute_operations = True
         self._lock = False
@@ -71,7 +74,7 @@ class Installer:
             )
 
         self._executor = executor
-        self._use_executor = False
+        self._use_executor = True
 
         self._installer = self._get_installer()
         if installed is None:
@@ -148,6 +151,11 @@ class Installer:
 
         return self
 
+    def skip_directory(self, skip_directory: bool = False) -> Installer:
+        self._skip_directory = skip_directory
+
+        return self
+
     def lock(self, update: bool = True) -> Installer:
         """
         Prepare the installer for locking only.
@@ -180,6 +188,14 @@ class Installer:
         return self
 
     def use_executor(self, use_executor: bool = True) -> Installer:
+        warnings.warn(
+            (
+                "Calling use_executor() is deprecated since it's true by default now"
+                " and deactivating it will be removed in a future release."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._use_executor = use_executor
 
         return self
@@ -201,10 +217,16 @@ class Installer:
             self._io,
         )
 
+        # Always re-solve directory dependencies, otherwise we can't determine
+        # if anything has changed (and the lock file contains an invalid version).
+        use_latest = [
+            p.name for p in locked_repository.packages if p.source_type == "directory"
+        ]
+
         with solver.provider.use_source_root(
             source_root=self._env.path.joinpath("src")
         ):
-            ops = solver.solve(use_latest=[]).calculate_operations()
+            ops = solver.solve(use_latest=use_latest).calculate_operations()
 
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
@@ -275,12 +297,10 @@ class Installer:
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
 
-        if self._update:
+        if self._lock and self._update:
+            # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
-
-            if self._lock:
-                # If we are only in lock mode, no need to go any further
-                return 0
+            return 0
 
         if self._groups is not None:
             root = self._package.with_dependency_groups(list(self._groups), only=True)
@@ -294,7 +314,7 @@ class Installer:
             )
 
         # We resolve again by only using the lock file
-        pool = Pool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True)
 
         # Making a new repo containing the packages
         # newly resolved and the ones from the current lock file
@@ -320,6 +340,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
+                skip_directory=self._skip_directory,
             )
 
         if not self._requires_synchronization:
@@ -346,7 +367,13 @@ class Installer:
         self._filter_operations(ops, lockfile_repo)
 
         # Execute operations
-        return self._execute(ops)
+        status = self._execute(ops)
+
+        if status == 0 and self._update:
+            # Only write lock file when installation is success
+            self._write_lock_file(lockfile_repo)
+
+        return status
 
     def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
         if self._write_lock and (force or self._update):
@@ -359,6 +386,14 @@ class Installer:
     def _execute(self, operations: list[Operation]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
+
+        self._io.write_error(
+            "<warning>"
+            "Setting `experimental.new-installer` to false is deprecated and"
+            " slated for removal in an upcoming minor release.\n"
+            "(Despite of the setting's name the new installer is not experimental!)"
+            "</warning>"
+        )
 
         if not operations and (self._execute_operations or self._dry_run):
             self._io.write_line("No dependencies to install or update")
@@ -519,10 +554,7 @@ class Installer:
     def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
-            if isinstance(op, Update):
-                package = op.target_package
-            else:
-                package = op.package
+            package = op.target_package if isinstance(op, Update) else op.package
 
             if op.job_type == "uninstall":
                 continue

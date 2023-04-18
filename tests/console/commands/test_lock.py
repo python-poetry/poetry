@@ -43,6 +43,7 @@ def _project_factory(
         name="foobar",
         pyproject_content=pyproject_content,
         poetry_lock_content=poetry_lock_content,
+        source=source,
     )
 
 
@@ -68,6 +69,13 @@ def poetry_with_old_lockfile(
 
 
 @pytest.fixture
+def poetry_with_nested_path_deps_old_lockfile(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    return _project_factory("old_lock_path_dependency", project_factory, fixture_dir)
+
+
+@pytest.fixture
 def poetry_with_incompatible_lockfile(
     project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
 ) -> Poetry:
@@ -85,7 +93,7 @@ def test_lock_check_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
     http: type[httpretty.httpretty],
-):
+) -> None:
     http.disable()
 
     locker = Locker(
@@ -111,7 +119,7 @@ def test_lock_check_up_to_date(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
     http: type[httpretty.httpretty],
-):
+) -> None:
     http.disable()
 
     locker = Locker(
@@ -133,7 +141,7 @@ def test_lock_no_update(
     command_tester_factory: CommandTesterFactory,
     poetry_with_old_lockfile: Poetry,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(get_package("sampleproject", "1.3.1"))
     repo.add_package(get_package("sampleproject", "2.0.0"))
 
@@ -164,6 +172,93 @@ def test_lock_no_update(
 
     for package in packages:
         assert locked_repository.find_packages(package.to_dependency())
+
+
+def test_lock_no_update_path_dependencies(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_nested_path_deps_old_lockfile: Poetry,
+    repo: TestRepository,
+) -> None:
+    """
+    The lock file contains a variant of the directory dependency "quix" that does
+    not depend on "sampleproject". Although the version of "quix" has not been changed,
+    it should be re-solved because there is always only one valid version
+    of a directory dependency at any time.
+    """
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+
+    locker = Locker(
+        lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.path.parent
+        / "poetry.lock",
+        local_config=poetry_with_nested_path_deps_old_lockfile.locker._local_config,
+    )
+    poetry_with_nested_path_deps_old_lockfile.set_locker(locker)
+
+    tester = command_tester_factory(
+        "lock", poetry=poetry_with_nested_path_deps_old_lockfile
+    )
+    tester.execute("--no-update")
+
+    packages = locker.locked_repository().packages
+
+    assert {p.name for p in packages} == {"quix", "sampleproject"}
+
+
+@pytest.mark.parametrize("update", [True, False])
+@pytest.mark.parametrize(
+    "project", ["missing_directory_dependency", "missing_file_dependency"]
+)
+def test_lock_path_dependency_does_not_exist(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    project: str,
+    update: bool,
+) -> None:
+    poetry = _project_factory(project, project_factory, fixture_dir)
+    locker = Locker(
+        lock=poetry.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry.locker._local_config,
+    )
+    poetry.set_locker(locker)
+    options = "" if update else "--no-update"
+
+    tester = command_tester_factory("lock", poetry=poetry)
+    if update or "directory" in project:
+        # directory dependencies are always updated
+        with pytest.raises(ValueError, match="does not exist"):
+            tester.execute(options)
+    else:
+        tester.execute(options)
+
+
+@pytest.mark.parametrize("update", [True, False])
+@pytest.mark.parametrize(
+    "project", ["deleted_directory_dependency", "deleted_file_dependency"]
+)
+def test_lock_path_dependency_deleted_from_pyproject(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    project: str,
+    update: bool,
+) -> None:
+    poetry = _project_factory(project, project_factory, fixture_dir)
+    locker = Locker(
+        lock=poetry.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry.locker._local_config,
+    )
+    poetry.set_locker(locker)
+
+    tester = command_tester_factory("lock", poetry=poetry)
+    if update:
+        tester.execute("")
+    else:
+        tester.execute("--no-update")
+
+    packages = locker.locked_repository().packages
+
+    assert {p.name for p in packages} == set()
 
 
 @pytest.mark.parametrize("is_no_update", [False, True])

@@ -5,6 +5,7 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.version.exceptions import InvalidVersion
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.command import Command
@@ -95,7 +96,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
         try:
             parsed = Version.parse(version)
-        except ValueError:
+        except InvalidVersion:
             raise ValueError("The project's version doesn't seem to follow semver")
 
         if rule in {"major", "premajor"}:

@@ -493,9 +493,11 @@ class Installer:
             self._write(
                 colorize(
                     "warning",
-                    f"You are installing {version}. When using the current installer,"
-                    " this version does not support updating using the 'self update'"
-                    " command. Please use 1.1.7 or later.",
+                    (
+                        f"You are installing {version}. When using the current"
+                        " installer, this version does not support updating using the"
+                        " 'self update' command. Please use 1.1.7 or later."
+                    ),
                 )
             )
             if not self._accept_all:
@@ -900,9 +902,11 @@ if __name__ == "__main__":
     sys.stdout.write(
         colorize(
             "warning",
-            "The canonical source for Poetry's installation script is now"
-            " https://install.python-poetry.org. Please update your usage to reflect"
-            " this.\n",
+            (
+                "The canonical source for Poetry's installation script is now"
+                " https://install.python-poetry.org. Please update your usage to"
+                " reflect this.\n"
+            ),
         )
     )
     sys.exit(main())

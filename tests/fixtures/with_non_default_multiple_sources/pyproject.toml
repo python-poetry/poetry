@@ -16,7 +16,7 @@ python = "~2.7 || ^3.6"
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "secondary"
 
 [[tool.poetry.source]]
 name = "bar"

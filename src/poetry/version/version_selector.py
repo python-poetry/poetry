@@ -2,17 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.core.constraints.version import Version
-
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
 
 
 class VersionSelector:
-    def __init__(self, pool: Pool) -> None:
+    def __init__(self, pool: RepositoryPool) -> None:
         self._pool = pool
 
     def find_best_candidate(
@@ -56,14 +54,3 @@ class VersionSelector:
                 package = candidate
 
         return package
-
-    def find_recommended_require_version(self, package: Package) -> str:
-        version = package.version
-
-        return self._transform_version(version.text, package.pretty_version)
-
-    def _transform_version(self, version: str, pretty_version: str) -> str:
-        try:
-            return f"^{Version.parse(version).to_string()}"
-        except ValueError:
-            return pretty_version
