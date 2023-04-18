@@ -1,0 +1,142 @@
+{
+  "info": {
+    "author": "Jason R. Coombs",
+    "author_email": "jaraco@jaraco.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only"
+    ],
+    "description": "",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/jaraco/zipp",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "zipp",
+    "package_url": "https://pypi.org/project/zipp/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/zipp/",
+    "project_urls": {
+      "Homepage": "https://github.com/jaraco/zipp"
+    },
+    "release_url": "https://pypi.org/project/zipp/3.5.0/",
+    "requires_dist": [
+      "sphinx ; extra == 'docs'",
+      "jaraco.packaging (>=8.2) ; extra == 'docs'",
+      "rst.linker (>=1.9) ; extra == 'docs'",
+      "pytest (>=4.6) ; extra == 'testing'",
+      "pytest-checkdocs (>=2.4) ; extra == 'testing'",
+      "pytest-flake8 ; extra == 'testing'",
+      "pytest-cov ; extra == 'testing'",
+      "pytest-enabler (>=1.0.1) ; extra == 'testing'",
+      "jaraco.itertools ; extra == 'testing'",
+      "func-timeout ; extra == 'testing'",
+      "pytest-black (>=0.3.7) ; (platform_python_implementation != \"PyPy\" and python_version < \"3.10\") and extra == 'testing'",
+      "pytest-mypy ; (platform_python_implementation != \"PyPy\" and python_version < \"3.10\") and extra == 'testing'"
+    ],
+    "requires_python": ">=3.6",
+    "summary": "Backport of pathlib-compatible object wrapper for zip files",
+    "version": "3.5.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 10811847,
+  "releases": {
+    "3.5.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0ec47fbf522751f6c5fa904cb33f1f59",
+          "sha256": "957cfda87797e389580cb8b9e3870841ca991e2125350677b2ca83a0e99390a3"
+        },
+        "downloads": -1,
+        "filename": "zipp-3.5.0-py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "0ec47fbf522751f6c5fa904cb33f1f59",
+        "packagetype": "bdist_wheel",
+        "python_version": "py3",
+        "requires_python": ">=3.6",
+        "size": 5700,
+        "upload_time": "2021-07-02T23:51:45",
+        "upload_time_iso_8601": "2021-07-02T23:51:45.759726Z",
+        "url": "https://files.pythonhosted.org/packages/92/d9/89f433969fb8dc5b9cbdd4b4deb587720ec1aeb59a020cf15002b9593eef/zipp-3.5.0-py3-none-any.whl",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "617efbf3edb707c57008ec00f408972f",
+          "sha256": "f5812b1e007e48cff63449a5e9f4e7ebea716b4111f9c4f9a645f91d579bf0c4"
+        },
+        "downloads": -1,
+        "filename": "zipp-3.5.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "617efbf3edb707c57008ec00f408972f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=3.6",
+        "size": 13270,
+        "upload_time": "2021-07-02T23:51:47",
+        "upload_time_iso_8601": "2021-07-02T23:51:47.004396Z",
+        "url": "https://files.pythonhosted.org/packages/3a/9f/1d4b62cbe8d222539a84089eeab603d8e45ee1f897803a0ae0860400d6e7/zipp-3.5.0.tar.gz",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "0ec47fbf522751f6c5fa904cb33f1f59",
+        "sha256": "957cfda87797e389580cb8b9e3870841ca991e2125350677b2ca83a0e99390a3"
+      },
+      "downloads": -1,
+      "filename": "zipp-3.5.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "0ec47fbf522751f6c5fa904cb33f1f59",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.6",
+      "size": 5700,
+      "upload_time": "2021-07-02T23:51:45",
+      "upload_time_iso_8601": "2021-07-02T23:51:45.759726Z",
+      "url": "https://files.pythonhosted.org/packages/92/d9/89f433969fb8dc5b9cbdd4b4deb587720ec1aeb59a020cf15002b9593eef/zipp-3.5.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "617efbf3edb707c57008ec00f408972f",
+        "sha256": "f5812b1e007e48cff63449a5e9f4e7ebea716b4111f9c4f9a645f91d579bf0c4"
+      },
+      "downloads": -1,
+      "filename": "zipp-3.5.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "617efbf3edb707c57008ec00f408972f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.6",
+      "size": 13270,
+      "upload_time": "2021-07-02T23:51:47",
+      "upload_time_iso_8601": "2021-07-02T23:51:47.004396Z",
+      "url": "https://files.pythonhosted.org/packages/3a/9f/1d4b62cbe8d222539a84089eeab603d8e45ee1f897803a0ae0860400d6e7/zipp-3.5.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ]
+}

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import NoVersionsCause
-from poetry.mixology.incompatibility_cause import PackageNotFoundCause
 from poetry.mixology.incompatibility_cause import PlatformCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.incompatibility_cause import RootCause
@@ -146,11 +145,6 @@ class Incompatibility:
                 f"no versions of {self._terms[0].dependency.name} match"
                 f" {self._terms[0].constraint}"
             )
-        elif isinstance(self._cause, PackageNotFoundCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
-
-            return f"{self._terms[0].dependency.name} doesn't exist"
         elif isinstance(self._cause, RootCause):
             assert len(self._terms) == 1
             assert not self._terms[0].is_positive()
@@ -420,8 +414,6 @@ class Incompatibility:
             buffer.append(f"which requires Python {cause.python_version}")
         elif isinstance(latter.cause, NoVersionsCause):
             buffer.append("which doesn't match any versions")
-        elif isinstance(latter.cause, PackageNotFoundCause):
-            buffer.append("which doesn't exist")
         else:
             buffer.append("which is forbidden")
 

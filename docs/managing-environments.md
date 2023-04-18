@@ -39,6 +39,7 @@ pyenv install 3.9.8
 pyenv local 3.9.8  # Activate Python 3.9 for the current project
 poetry install
 ```
+
 {{% /note %}}
 
 {{% note %}}
@@ -106,6 +107,13 @@ to `env info`:
 poetry env info --path
 ```
 
+If you only want to know the path to the python executable (useful for running mypy from a global environment without installing it in the virtual environment), you can pass the `--executable` option
+to `env info`:
+
+```bash
+poetry env info --executable
+```
+
 ## Listing the environments associated with the project
 
 You can also list all the virtual environments associated with the current project
@@ -140,10 +148,13 @@ poetry env remove test-O3eWbxRl-py3.7
 ```
 
 You can delete more than one environment at a time.
+
 ```bash
 poetry env remove python3.6 python3.7 python3.8
 ```
+
 Use the `--all` option to delete all virtual environments at once.
+
 ```bash
 poetry env remove --all
 ```

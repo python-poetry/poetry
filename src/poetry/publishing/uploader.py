@@ -21,6 +21,7 @@ from urllib3 import util
 
 from poetry.__version__ import __version__
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -68,7 +69,8 @@ class Uploader:
             connect=5,
             total=10,
             allowed_methods=["GET"],
-            status_forcelist=[500, 501, 502, 503],
+            respect_retry_after_header=True,
+            status_forcelist=STATUS_FORCELIST,
         )
 
         return adapters.HTTPAdapter(max_retries=retry)
@@ -266,7 +268,7 @@ class Uploader:
                         f" - Uploading <c1>{file.name}</c1> <fg=green>%percent%%</>"
                     )
                     bar.finish()
-                elif resp.status_code == 301:
+                elif 300 <= resp.status_code < 400:
                     if self._io.output.is_decorated():
                         self._io.overwrite(
                             f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"

@@ -1,0 +1,27 @@
+{
+  "name": "importlib-metadata",
+  "files": [
+    {
+      "hashes": {
+        "md5": "8ae1f31228e29443c08e07501a99d1b8",
+        "sha256": "dc15b2969b4ce36305c51eebe62d418ac7791e9a157911d58bfb1f9ccd8e2070"
+      },
+      "filename": "importlib_metadata-1.7.0-py2.py3-none-any.whl",
+      "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
+      "url": "https://files.pythonhosted.org/packages/8e/58/cdea07eb51fc2b906db0968a94700866fc46249bdc75cac23f9d13168929/importlib_metadata-1.7.0-py2.py3-none-any.whl"
+    },
+    {
+      "hashes": {
+        "md5": "4505ea85600cca1e693a4f8f5dd27ba8",
+        "sha256": "90bb658cdbbf6d1735b6341ce708fc7024a3e14e99ffdc5783edea9f9b077f83"
+      },
+      "filename": "importlib_metadata-1.7.0.tar.gz",
+      "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
+      "url": "https://files.pythonhosted.org/packages/e2/ae/0b037584024c1557e537d25482c306cf6327b5a09b6c4b893579292c1c38/importlib_metadata-1.7.0.tar.gz"
+    }
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3879671
+  }
+}
