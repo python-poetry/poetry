@@ -15,3 +15,4 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "*"
 pendulum = {"version" = "^2.0.5", allows-prereleases = true}
+invalid = "1.0"

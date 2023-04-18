@@ -250,7 +250,6 @@ def test_run_update_after_removing_dependencies(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -259,7 +258,6 @@ def test_run_update_after_removing_dependencies(
                 {
                     "name": "B",
                     "version": "1.1",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -268,7 +266,6 @@ def test_run_update_after_removing_dependencies(
                 {
                     "name": "C",
                     "version": "1.2",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -327,7 +324,6 @@ def _configure_run_install_dev(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -336,7 +332,6 @@ def _configure_run_install_dev(
                 {
                     "name": "B",
                     "version": "1.1",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -345,7 +340,6 @@ def _configure_run_install_dev(
                 {
                     "name": "C",
                     "version": "1.2",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -457,7 +451,6 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
                 {
                     "name": package_a.name,
                     "version": package_a.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -466,7 +459,6 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
                 {
                     "name": package_b.name,
                     "version": package_b.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -475,7 +467,6 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
                 {
                     "name": package_c.name,
                     "version": package_c.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -528,7 +519,6 @@ def test_run_install_removes_locked_packages_if_installed_and_synchronization_is
                 {
                     "name": package_a.name,
                     "version": package_a.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -537,7 +527,6 @@ def test_run_install_removes_locked_packages_if_installed_and_synchronization_is
                 {
                     "name": package_b.name,
                     "version": package_b.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -546,7 +535,6 @@ def test_run_install_removes_locked_packages_if_installed_and_synchronization_is
                 {
                     "name": package_c.name,
                     "version": package_c.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -599,7 +587,6 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
                 {
                     "name": package_a.name,
                     "version": package_a.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -608,7 +595,6 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
                 {
                     "name": package_b.name,
                     "version": package_b.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -617,7 +603,6 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
                 {
                     "name": package_c.name,
                     "version": package_c.version.text,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -695,7 +680,6 @@ def test_run_install_with_synchronization(
                 {
                     "name": pkg.name,
                     "version": pkg.version,
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -739,7 +723,6 @@ def test_run_whitelist_add(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -788,7 +771,6 @@ def test_run_whitelist_remove(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -797,7 +779,6 @@ def test_run_whitelist_remove(
                 {
                     "name": "B",
                     "version": "1.1",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1406,7 +1387,6 @@ def test_run_with_prereleases(
                 {
                     "name": "A",
                     "version": "1.0a2",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1441,53 +1421,6 @@ def test_run_with_prereleases(
     assert locker.written_data == expected
 
 
-def test_run_changes_category_if_needed(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
-):
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "category": "dev",
-                    "optional": True,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                }
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": []},
-            },
-        }
-    )
-    package_a = get_package("A", "1.0")
-    package_b = get_package("B", "1.1")
-    package_b.add_dependency(Factory.create_dependency("A", "^1.0"))
-    repo.add_package(package_a)
-    repo.add_package(package_b)
-
-    package.add_dependency(
-        Factory.create_dependency(
-            "A", {"version": "^1.0", "optional": True}, groups=["dev"]
-        )
-    )
-    package.add_dependency(Factory.create_dependency("B", "^1.1"))
-
-    installer.update(True)
-    installer.whitelist(["B"])
-
-    installer.run()
-    expected = fixture("with-category-change")
-
-    assert locker.written_data == expected
-
-
 def test_run_update_all_with_lock(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
@@ -1498,7 +1431,6 @@ def test_run_update_all_with_lock(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "dev",
                     "optional": True,
                     "platform": "*",
                     "python-versions": "*",
@@ -1538,7 +1470,6 @@ def test_run_update_with_locked_extras(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1548,7 +1479,6 @@ def test_run_update_with_locked_extras(
                 {
                     "name": "B",
                     "version": "1.0",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1557,7 +1487,6 @@ def test_run_update_with_locked_extras(
                 {
                     "name": "C",
                     "version": "1.1",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1656,7 +1585,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1671,7 +1599,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
                 {
                     "name": "B",
                     "version": "1.0",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1682,7 +1609,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
                 {
                     "name": "B",
                     "version": "2.0",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1693,7 +1619,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
                 {
                     "name": "C",
                     "version": "1.2",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1702,7 +1627,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
                 {
                     "name": "C",
                     "version": "1.5",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1768,7 +1692,6 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1778,7 +1701,6 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
                 {
                     "name": "B",
                     "version": "1.0",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1831,7 +1753,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1846,7 +1767,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                 {
                     "name": "B",
                     "version": "1.0",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1857,7 +1777,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                 {
                     "name": "B",
                     "version": "2.0",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1868,7 +1787,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                 {
                     "name": "C",
                     "version": "1.2",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -1877,7 +1795,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                 {
                     "name": "C",
                     "version": "1.5",
-                    "category": "dev",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -2156,7 +2073,6 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
                 {
                     "name": "A",
                     "version": "1.0",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -2166,7 +2082,6 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
                 {
                     "name": "B",
                     "version": "1.0.1",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
@@ -2501,7 +2416,6 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
                 {
                     "name": "demo",
                     "version": "0.1.1",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -2517,7 +2431,6 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
                 {
                     "name": "pendulum",
                     "version": "1.4.4",
-                    "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
@@ -2679,7 +2592,6 @@ def test_installer_distinguishes_locked_packages_by_source(
                 {
                     "name": "torch",
                     "version": "1.11.0",
-                    "category": "main",
                     "optional": False,
                     "files": [],
                     "python-versions": "*",
@@ -2687,7 +2599,6 @@ def test_installer_distinguishes_locked_packages_by_source(
                 {
                     "name": "torch",
                     "version": "1.11.0+cpu",
-                    "category": "main",
                     "optional": False,
                     "files": [],
                     "python-versions": "*",

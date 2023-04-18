@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "my-package"
+name = "with-default-source"
 version = "1.2.3"
 description = "Some description."
 authors = [
@@ -48,7 +48,7 @@ pytest = "~3.4"
 
 
 [tool.poetry.scripts]
-my-script = "my_package:main"
+my-script = "with_default_source:main"
 
 
 [tool.poetry.plugins."blogtool.parsers"]

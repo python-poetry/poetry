@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "my-package"
+name = "with-explicit-source"
 version = "1.2.3"
 description = "Some description."
 authors = [
