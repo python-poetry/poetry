@@ -8,18 +8,18 @@ import stat
 import sys
 import tempfile
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
-from typing import Mapping
 
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
     from io import BufferedWriter
 
     from poetry.core.packages.package import Package
@@ -82,7 +82,7 @@ def remove_directory(
 
 
 def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
-    for k in d2.keys():
+    for k in d2:
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
         else:
@@ -121,7 +121,7 @@ def download_file(
             # but skip the updating
             set_indicator = total_size > 1024 * 1024
 
-        with open(dest, "wb") as f:
+        with dest.open("wb") as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)

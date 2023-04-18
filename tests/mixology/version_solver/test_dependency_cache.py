@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 def test_solver_dependency_cache_respects_source_type(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     dependency_pypi = Factory.create_dependency("demo", ">=0.1.0")
     dependency_git = Factory.create_dependency(
         "demo", {"git": "https://github.com/demo/demo.git"}, groups=["dev"]
@@ -62,7 +62,7 @@ def test_solver_dependency_cache_respects_source_type(
 
 def test_solver_dependency_cache_respects_subdirectories(
     root: ProjectPackage, provider: Provider, repo: Repository
-):
+) -> None:
     dependency_one = Factory.create_dependency(
         "one",
         {

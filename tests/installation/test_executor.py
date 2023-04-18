@@ -34,6 +34,7 @@ from poetry.installation.wheel_installer import WheelInstaller
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import MockEnv
+from poetry.vcs.git.backend import Git
 from tests.repositories.test_pypi_repository import MockRepository
 
 
@@ -81,14 +82,17 @@ class Chef(BaseChef):
             wheel = self._directory_wheels.pop(0)
             self._directory_wheels.append(wheel)
 
-            return wheel
+            destination.mkdir(parents=True, exist_ok=True)
+            dst_wheel = destination / wheel.name
+            shutil.copyfile(wheel, dst_wheel)
+            return dst_wheel
 
         return super()._prepare(directory, destination, editable=editable)
 
 
 @pytest.fixture
-def env(tmp_dir: str) -> MockEnv:
-    path = Path(tmp_dir) / ".venv"
+def env(tmp_path: Path) -> MockEnv:
+    path = tmp_path / ".venv"
     path.mkdir(parents=True)
 
     return MockEnv(path=path, is_venv=True)
@@ -165,19 +169,16 @@ def mock_file_downloads(
 
 
 @pytest.fixture
-def copy_wheel(tmp_dir: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
+def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
-        Path(tmp_dir).joinpath(tmp_name).mkdir()
+        (tmp_path / tmp_name).mkdir()
 
         shutil.copyfile(
-            (
-                fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
-            ).as_posix(),
-            (Path(tmp_dir) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl").as_posix(),
+            fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl",
+            tmp_path / tmp_name / "demo-0.1.2-py2.py3-none-any.whl",
         )
-
-        return Path(tmp_dir) / tmp_name / "demo-0.1.2-py2.py3-none-any.whl"
+        return tmp_path / tmp_name / "demo-0.1.2-py2.py3-none-any.whl"
 
     return _copy_wheel
 
@@ -197,15 +198,15 @@ def test_execute_executes_a_batch_of_operations(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     copy_wheel: Callable[[], Path],
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     wheel_install = mocker.patch.object(WheelInstaller, "install")
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
     artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
     prepare_spy = mocker.spy(Chef, "_prepare")
@@ -276,8 +277,8 @@ Package operations: 4 installs, 1 update, 1 removal
 
     assert prepare_spy.call_count == 2
     assert prepare_spy.call_args_list == [
-        mocker.call(chef, mocker.ANY, mocker.ANY, editable=False),
-        mocker.call(chef, mocker.ANY, mocker.ANY, editable=True),
+        mocker.call(chef, mocker.ANY, destination=mocker.ANY, editable=False),
+        mocker.call(chef, mocker.ANY, destination=mocker.ANY, editable=True),
     ]
 
 
@@ -308,13 +309,13 @@ def test_execute_prints_warning_for_yanked_package(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     operations: list[Operation],
     has_warning: bool,
-):
-    config.merge({"cache-dir": tmp_dir})
+) -> None:
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
@@ -341,11 +342,11 @@ def test_execute_prints_warning_for_invalid_wheels(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
-):
-    config.merge({"cache-dir": tmp_dir})
+) -> None:
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
@@ -403,7 +404,7 @@ def test_execute_shows_skipped_operations_if_verbose(
     io: BufferedIO,
     config_cache_dir: Path,
     env: MockEnv,
-):
+) -> None:
     config.merge({"cache-dir": config_cache_dir.as_posix()})
 
     executor = Executor(env, pool, config, io)
@@ -431,7 +432,7 @@ def test_execute_should_show_errors(
     mocker: MockerFixture,
     io: BufferedIO,
     env: MockEnv,
-):
+) -> None:
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -456,11 +457,11 @@ def test_execute_works_with_ansi_output(
     config: Config,
     pool: RepositoryPool,
     io_decorated: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
-):
-    config.merge({"cache-dir": tmp_dir})
+) -> None:
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io_decorated)
 
@@ -493,11 +494,11 @@ def test_execute_works_with_no_ansi_output(
     config: Config,
     pool: RepositoryPool,
     io_not_decorated: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
-):
-    config.merge({"cache-dir": tmp_dir})
+) -> None:
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io_not_decorated)
 
@@ -524,7 +525,7 @@ def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_inter
     mocker: MockerFixture,
     io: BufferedIO,
     env: MockEnv,
-):
+) -> None:
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -549,7 +550,7 @@ def test_execute_should_gracefully_handle_io_error(
     mocker: MockerFixture,
     io: BufferedIO,
     env: MockEnv,
-):
+) -> None:
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -577,15 +578,15 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_executor_should_delete_incomplete_downloads(
     config: Config,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mocker: MockerFixture,
     pool: RepositoryPool,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     fixture = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    destination_fixture = Path(tmp_dir) / "tomlkit-0.5.3-py2.py3-none-any.whl"
+    destination_fixture = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
     shutil.copyfile(str(fixture), str(destination_fixture))
     mocker.patch(
         "poetry.installation.executor.Executor._download_archive",
@@ -597,10 +598,10 @@ def test_executor_should_delete_incomplete_downloads(
     )
     mocker.patch(
         "poetry.installation.executor.ArtifactCache.get_cache_directory_for_link",
-        return_value=Path(tmp_dir),
+        return_value=tmp_path,
     )
 
-    config.merge({"cache-dir": tmp_dir})
+    config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
@@ -612,7 +613,7 @@ def test_executor_should_delete_incomplete_downloads(
 
 def verify_installed_distribution(
     venv: VirtualEnv, package: Package, url_reference: dict[str, Any] | None = None
-):
+) -> None:
     distributions = list(venv.site_packages.distributions(name=package.name))
     assert len(distributions) == 1
 
@@ -659,7 +660,7 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
-):
+) -> None:
     link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
     package.files = [
         {
@@ -675,6 +676,7 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
     verify_installed_distribution(tmp_venv, package)
+    assert link_cached.exists(), "cached file should not be deleted"
 
 
 def test_executor_should_write_pep610_url_references_for_wheel_files(
@@ -683,7 +685,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     url = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
@@ -707,6 +709,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
         "url": url.as_uri(),
     }
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
+    assert url.exists(), "source file should not be deleted"
 
 
 def test_executor_should_write_pep610_url_references_for_non_wheel_files(
@@ -715,7 +718,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_files(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
@@ -739,6 +742,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_files(
         "url": url.as_uri(),
     }
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
+    assert url.exists(), "source file should not be deleted"
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
@@ -749,7 +753,8 @@ def test_executor_should_write_pep610_url_references_for_directories(
     io: BufferedIO,
     wheel: Path,
     fixture_dir: FixtureDirGetter,
-):
+    mocker: MockerFixture,
+) -> None:
     url = (fixture_dir("git") / "github.com" / "demo" / "demo").resolve()
     package = Package(
         "demo", "0.1.2", source_type="directory", source_url=url.as_posix()
@@ -757,6 +762,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
@@ -764,6 +770,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
     verify_installed_distribution(
         tmp_venv, package, {"dir_info": {}, "url": url.as_uri()}
     )
+    assert not prepare_spy.spy_return.exists(), "archive not cleaned up"
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
@@ -774,7 +781,8 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     io: BufferedIO,
     wheel: Path,
     fixture_dir: FixtureDirGetter,
-):
+    mocker: MockerFixture,
+) -> None:
     url = (fixture_dir("git") / "github.com" / "demo" / "demo").resolve()
     package = Package(
         "demo",
@@ -786,6 +794,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
@@ -793,6 +802,7 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     verify_installed_distribution(
         tmp_venv, package, {"dir_info": {"editable": True}, "url": url.as_uri()}
     )
+    assert not prepare_spy.spy_return.exists(), "archive not cleaned up"
 
 
 @pytest.mark.parametrize("is_artifact_cached", [False, True])
@@ -805,7 +815,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
     is_artifact_cached: bool,
-):
+) -> None:
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
         mocker.patch(
@@ -848,6 +858,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         download_spy.assert_called_once_with(
             mocker.ANY, operation, Link(package.source_url)
         )
+        assert download_spy.spy_return.exists(), "cached file should not be deleted"
 
 
 @pytest.mark.parametrize(
@@ -876,7 +887,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     is_wheel_cached: bool,
     expect_artifact_building: bool,
     expect_artifact_download: bool,
-):
+) -> None:
     built_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
     mock_prepare = mocker.patch(
         "poetry.installation.chef.Chef._prepare",
@@ -888,7 +899,9 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
-        def mock_get_cached_archive_for_link_func(_: Link, *, strict: bool, **__: Any):
+        def mock_get_cached_archive_for_link_func(
+            _: Link, *, strict: bool, **__: Any
+        ) -> None:
             if is_wheel_cached and not strict:
                 return cached_wheel
             if is_sdist_cached:
@@ -938,10 +951,12 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         download_spy.assert_called_once_with(
             mocker.ANY, operation, Link(package.source_url)
         )
+        assert download_spy.spy_return.exists(), "cached file should not be deleted"
     else:
         download_spy.assert_not_called()
 
 
+@pytest.mark.parametrize("is_artifact_cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_git(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
@@ -950,18 +965,33 @@ def test_executor_should_write_pep610_url_references_for_git(
     io: BufferedIO,
     mock_file_downloads: None,
     wheel: Path,
-):
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    is_artifact_cached: bool,
+) -> None:
+    if is_artifact_cached:
+        link_cached = fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
+        mocker.patch(
+            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_git",
+            return_value=link_cached,
+        )
+    clone_spy = mocker.spy(Git, "clone")
+
+    source_resolved_reference = "123456"
+    source_url = "https://github.com/demo/demo.git"
+
     package = Package(
         "demo",
         "0.1.2",
         source_type="git",
         source_reference="master",
-        source_resolved_reference="123456",
-        source_url="https://github.com/demo/demo.git",
+        source_resolved_reference=source_resolved_reference,
+        source_url=source_url,
     )
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
@@ -978,6 +1008,64 @@ def test_executor_should_write_pep610_url_references_for_git(
             "url": package.source_url,
         },
     )
+
+    if is_artifact_cached:
+        clone_spy.assert_not_called()
+        prepare_spy.assert_not_called()
+    else:
+        clone_spy.assert_called_once_with(
+            url=source_url, source_root=mocker.ANY, revision=source_resolved_reference
+        )
+        prepare_spy.assert_called_once()
+        assert prepare_spy.spy_return.exists(), "cached file should not be deleted"
+        assert (prepare_spy.spy_return.parent / ".created_from_git_dependency").exists()
+
+
+def test_executor_should_write_pep610_url_references_for_editable_git(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    wheel: Path,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    source_resolved_reference = "123456"
+    source_url = "https://github.com/demo/demo.git"
+
+    package = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference=source_resolved_reference,
+        source_url=source_url,
+        develop=True,
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
+    cache_spy = mocker.spy(artifact_cache, "get_cached_archive_for_git")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package)])
+    verify_installed_distribution(
+        tmp_venv,
+        package,
+        {
+            "dir_info": {"editable": True},
+            "url": Path(package.source_url).as_uri(),
+        },
+    )
+
+    cache_spy.assert_not_called()
+    prepare_spy.assert_called_once()
+    assert not prepare_spy.spy_return.exists(), "editable git should not be cached"
+    assert not (prepare_spy.spy_return.parent / ".created_from_git_dependency").exists()
 
 
 def test_executor_should_append_subdirectory_for_git(
@@ -1020,7 +1108,7 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
     io: BufferedIO,
     mock_file_downloads: None,
     wheel: Path,
-):
+) -> None:
     package = Package(
         "demo",
         "0.1.2",
@@ -1073,7 +1161,7 @@ def test_executor_should_be_initialized_with_correct_workers(
     cpu_count: int | None,
     side_effect: Exception | None,
     expected_workers: int,
-):
+) -> None:
     config.merge({"installer": {"max-workers": max_workers}})
 
     mocker.patch("os.cpu_count", return_value=cpu_count, side_effect=side_effect)
@@ -1088,11 +1176,11 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
+    tmp_path: Path,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
-):
+) -> None:
     mock_pip_install = mocker.patch("poetry.installation.executor.pip_install")
     mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
     mock_editable_builder = mocker.patch(
@@ -1104,7 +1192,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
 
     config.merge(
         {
-            "cache-dir": tmp_dir,
+            "cache-dir": str(tmp_path),
             "installer": {"modern-installation": False},
         }
     )
@@ -1151,7 +1239,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
@@ -1176,11 +1263,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     # must not be included in the error message
     directory_package.python_versions = ">=3.7"
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([Install(directory_package)])
 
     assert return_code == 1
 
@@ -1217,11 +1300,51 @@ PEP 517 builds. You can verify this by running '{pip_command} "{requirement}"'.
     assert output.endswith(expected_end)
 
 
+@pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
+@pytest.mark.parametrize("stderr", [None, "Errör on stderr"])
+def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess_encoding(
+    encoding: str,
+    stderr: str | None,
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """Test that the output of the subprocess is decoded correctly."""
+    stdout = "Errör on stdout"
+    error = BuildBackendException(
+        CalledProcessError(
+            1,
+            ["pip"],
+            output=stdout.encode(encoding),
+            stderr=stderr.encode(encoding) if stderr else None,
+        )
+    )
+    mocker.patch.object(ProjectBuilder, "get_requires_for_build", side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    return_code = executor.execute([Install(directory_package)])
+
+    assert return_code == 1
+    assert (stderr or stdout) in io.fetch_output()
+
+
 def test_build_system_requires_not_available(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    tmp_dir: str,
     mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,

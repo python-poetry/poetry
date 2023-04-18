@@ -623,7 +623,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 info = PackageInfo.from_metadata(path)
             except EnvCommandError as fbe:
                 raise PackageInfoError(
-                    path, "Fallback egg_info generation failed.", fbe
+                    path, e, "Fallback egg_info generation failed.", fbe
                 )
             finally:
                 os.chdir(cwd)

@@ -23,7 +23,7 @@ from poetry.vcs.git.backend import GitRefSpec
 
 
 if TYPE_CHECKING:
-    from _pytest.tmpdir import TempdirFactory
+    from _pytest.tmpdir import TempPathFactory
     from dulwich.client import FetchPackResult
     from dulwich.client import GitClient
     from pytest_mock import MockerFixture
@@ -79,9 +79,9 @@ def source_directory_name(source_url: str) -> str:
 
 
 @pytest.fixture(scope="module")
-def local_repo(tmpdir_factory: TempdirFactory, source_directory_name: str) -> Repo:
+def local_repo(tmp_path_factory: TempPathFactory, source_directory_name: str) -> Repo:
     with Repo.init(
-        tmpdir_factory.mktemp("src") / source_directory_name, mkdir=True
+        tmp_path_factory.mktemp("src") / source_directory_name, mkdir=True
     ) as repo:
         yield repo
 
@@ -112,7 +112,7 @@ def remote_default_branch(remote_default_ref: bytes) -> str:
 
 
 # Regression test for https://github.com/python-poetry/poetry/issues/6722
-def test_use_system_git_client_from_environment_variables():
+def test_use_system_git_client_from_environment_variables() -> None:
     os.environ["POETRY_EXPERIMENTAL_SYSTEM_GIT_CLIENT"] = "true"
 
     assert Git.is_using_legacy_client()
@@ -132,7 +132,7 @@ def test_git_clone_default_branch_head(
     remote_refs: FetchPackResult,
     remote_default_ref: bytes,
     mocker: MockerFixture,
-):
+) -> None:
     spy = mocker.spy(Git, "_clone")
     spy_legacy = mocker.spy(Git, "_clone_legacy")
 
@@ -143,7 +143,7 @@ def test_git_clone_default_branch_head(
     spy.assert_called()
 
 
-def test_git_clone_fails_for_non_existent_branch(source_url: str):
+def test_git_clone_fails_for_non_existent_branch(source_url: str) -> None:
     branch = uuid.uuid4().hex
 
     with pytest.raises(PoetryConsoleError) as e:
@@ -152,7 +152,7 @@ def test_git_clone_fails_for_non_existent_branch(source_url: str):
     assert f"Failed to clone {source_url} at '{branch}'" in str(e.value)
 
 
-def test_git_clone_fails_for_non_existent_revision(source_url: str):
+def test_git_clone_fails_for_non_existent_revision(source_url: str) -> None:
     revision = sha1(uuid.uuid4().bytes).hexdigest()
 
     with pytest.raises(PoetryConsoleError) as e:

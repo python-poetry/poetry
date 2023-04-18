@@ -36,10 +36,10 @@ def test_none_activated(
     venvs_in_cache_dirs: list[str],
     mocker: MockerFixture,
     env: MockEnv,
-):
+) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
     tester.execute()
-    expected = "\n".join(venvs_in_cache_dirs).strip()
+    expected = "\n".join(venvs_in_cache_dirs)
     assert tester.io.fetch_output().strip() == expected
 
 
@@ -48,15 +48,15 @@ def test_activated(
     venvs_in_cache_dirs: list[str],
     venv_cache: Path,
     venv_activate_37: None,
-):
+) -> None:
     tester.execute()
-    expected = (
-        "\n".join(venvs_in_cache_dirs).strip().replace("py3.7", "py3.7 (Activated)")
-    )
+    expected = "\n".join(venvs_in_cache_dirs).replace("py3.7", "py3.7 (Activated)")
     assert tester.io.fetch_output().strip() == expected
 
 
-def test_in_project_venv(tester: CommandTester, venvs_in_project_dir: list[str]):
+def test_in_project_venv(
+    tester: CommandTester, venvs_in_project_dir: list[str]
+) -> None:
     tester.execute()
     expected = ".venv (Activated)\n"
     assert tester.io.fetch_output() == expected
@@ -64,7 +64,7 @@ def test_in_project_venv(tester: CommandTester, venvs_in_project_dir: list[str])
 
 def test_in_project_venv_no_explicit_config(
     tester: CommandTester, venvs_in_project_dir_none: list[str]
-):
+) -> None:
     tester.execute()
     expected = ".venv (Activated)\n"
     assert tester.io.fetch_output() == expected
@@ -72,7 +72,7 @@ def test_in_project_venv_no_explicit_config(
 
 def test_in_project_venv_is_false(
     tester: CommandTester, venvs_in_project_dir_false: list[str]
-):
+) -> None:
     tester.execute()
     expected = ""
     assert tester.io.fetch_output() == expected

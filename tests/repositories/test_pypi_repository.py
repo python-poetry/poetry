@@ -19,7 +19,6 @@ from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import encode
 
 
 if TYPE_CHECKING:
@@ -302,10 +301,8 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         ]
     }
 
-    for name in expected_extras.keys():
-        assert (
-            sorted(package.extras[name], key=lambda r: r.name) == expected_extras[name]
-        )
+    for name, expected_extra in expected_extras.items():
+        assert sorted(package.extras[name], key=lambda r: r.name) == expected_extra
 
 
 def test_invalid_versions_ignored() -> None:
@@ -325,7 +322,7 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(
     response = Response()
     response.status_code = 200
     response.encoding = "utf-8"
-    response.raw = BytesIO(encode('{"foo": "bar"}'))
+    response.raw = BytesIO(b'{"foo": "bar"}')
     mocker.patch(
         "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],

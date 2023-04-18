@@ -51,31 +51,31 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 )
 def test_increment_version(
     version: str, rule: str, expected: str, command: VersionCommand
-):
+) -> None:
     assert command.increment_version(version, rule).text == expected
 
 
-def test_version_show(tester: CommandTester):
+def test_version_show(tester: CommandTester) -> None:
     tester.execute()
     assert tester.io.fetch_output() == "simple-project 1.2.3\n"
 
 
-def test_short_version_show(tester: CommandTester):
+def test_short_version_show(tester: CommandTester) -> None:
     tester.execute("--short")
     assert tester.io.fetch_output() == "1.2.3\n"
 
 
-def test_version_update(tester: CommandTester):
+def test_version_update(tester: CommandTester) -> None:
     tester.execute("2.0.0")
     assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
 
 
-def test_short_version_update(tester: CommandTester):
+def test_short_version_update(tester: CommandTester) -> None:
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"
 
 
-def test_dry_run(tester: CommandTester):
+def test_dry_run(tester: CommandTester) -> None:
     old_pyproject = tester.command.poetry.file.path.read_text()
     tester.execute("--dry-run major")
 

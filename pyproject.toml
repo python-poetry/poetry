@@ -48,7 +48,7 @@ generate-setup-file = false
 python = "^3.7"
 
 poetry-core = "1.5.2"
-poetry-plugin-export = "^1.3.0"
+poetry-plugin-export = "^1.3.1"
 "backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
 build = "^0.10.0"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
@@ -160,6 +160,11 @@ enable_error_code = [
     "redundant-expr",
     "truthy-bool",
 ]
+exclude = [
+  "tests/fixtures",
+  "tests/masonry/builders/fixtures",
+  "tests/utils/fixtures"
+]
 
 # use of importlib-metadata backport at python3.7 makes it impossible to
 # satisfy mypy without some ignores: but we get a different set of ignores at
@@ -169,7 +174,6 @@ enable_error_code = [
 # warning.
 [[tool.mypy.overrides]]
 module = [
-    'poetry.console.commands.self.show.plugins',
     'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
     'poetry.utils.env',
@@ -179,6 +183,10 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = [
     'cachecontrol.*',
+    'cachy.*',
+    'deepdiff.*',
+    'httpretty.*',
+    'keyring.*',
     'lockfile.*',
     'pexpect.*',
     'requests_toolbelt.*',

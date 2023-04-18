@@ -119,7 +119,7 @@ def test_group_options_are_passed_to_the_installer(
     with_root: bool,
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     """
     Group options are passed properly to the installer.
     """
@@ -155,7 +155,7 @@ def test_group_options_are_passed_to_the_installer(
 
 def test_sync_option_is_passed_to_the_installer(
     tester: CommandTester, mocker: MockerFixture
-):
+) -> None:
     """
     The --sync option is passed properly to the installer.
     """
@@ -169,7 +169,7 @@ def test_sync_option_is_passed_to_the_installer(
 @pytest.mark.parametrize("compile", [False, True])
 def test_compile_option_is_passed_to_the_installer(
     tester: CommandTester, mocker: MockerFixture, compile: bool
-):
+) -> None:
     """
     The --compile option is passed properly to the installer.
     """
@@ -184,9 +184,27 @@ def test_compile_option_is_passed_to_the_installer(
     enable_bytecode_compilation_mock.assert_called_once_with(compile)
 
 
+@pytest.mark.parametrize("skip_directory_cli_value", [True, False])
+def test_no_directory_is_passed_to_installer(
+    tester: CommandTester, mocker: MockerFixture, skip_directory_cli_value: bool
+) -> None:
+    """
+    The --no-directory option is passed to the installer.
+    """
+
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    if skip_directory_cli_value is True:
+        tester.execute("--no-directory")
+    else:
+        tester.execute()
+
+    assert tester.command.installer._skip_directory is skip_directory_cli_value
+
+
 def test_no_all_extras_doesnt_populate_installer(
     tester: CommandTester, mocker: MockerFixture
-):
+) -> None:
     """
     Not passing --all-extras means the installer doesn't see any extras.
     """
@@ -197,7 +215,9 @@ def test_no_all_extras_doesnt_populate_installer(
     assert not tester.command.installer._extras
 
 
-def test_all_extras_populates_installer(tester: CommandTester, mocker: MockerFixture):
+def test_all_extras_populates_installer(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
     """
     The --all-extras option results in extras passed to the installer.
     """
@@ -211,7 +231,7 @@ def test_all_extras_populates_installer(tester: CommandTester, mocker: MockerFix
 def test_extras_are_parsed_and_populate_installer(
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
     tester.execute('--extras "first second third"')
@@ -219,7 +239,9 @@ def test_extras_are_parsed_and_populate_installer(
     assert tester.command.installer._extras == ["first", "second", "third"]
 
 
-def test_extras_conflicts_all_extras(tester: CommandTester, mocker: MockerFixture):
+def test_extras_conflicts_all_extras(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
     """
     The --extras doesn't make sense with --all-extras.
     """
@@ -248,7 +270,7 @@ def test_only_root_conflicts_with_without_only(
     options: str,
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
     tester.execute(f"{options} --only-root")
@@ -282,7 +304,7 @@ def test_invalid_groups_with_without_only(
     options: dict[str, str],
     valid_groups: set[str],
     should_raise: bool,
-):
+) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
     cmd_args = " ".join(f"{flag} {groups}" for (flag, groups) in options.items())
@@ -306,7 +328,7 @@ def test_invalid_groups_with_without_only(
 def test_remove_untracked_outputs_deprecation_warning(
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
     tester.execute("--remove-untracked")
@@ -319,7 +341,9 @@ def test_remove_untracked_outputs_deprecation_warning(
     )
 
 
-def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixture):
+def test_dry_run_populates_installer(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
     """
     The --dry-run option results in extras passed to the installer.
     """
@@ -331,7 +355,7 @@ def test_dry_run_populates_installer(tester: CommandTester, mocker: MockerFixtur
     assert tester.command.installer._dry_run is True
 
 
-def test_dry_run_does_not_build(tester: CommandTester, mocker: MockerFixture):
+def test_dry_run_does_not_build(tester: CommandTester, mocker: MockerFixture) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     mocked_editable_builder = mocker.patch(
         "poetry.masonry.builders.editable.EditableBuilder"
@@ -342,7 +366,7 @@ def test_dry_run_does_not_build(tester: CommandTester, mocker: MockerFixture):
     assert mocked_editable_builder.return_value.build.call_count == 0
 
 
-def test_install_logs_output(tester: CommandTester, mocker: MockerFixture):
+def test_install_logs_output(tester: CommandTester, mocker: MockerFixture) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     mocker.patch("poetry.masonry.builders.editable.EditableBuilder")
 
@@ -355,7 +379,9 @@ def test_install_logs_output(tester: CommandTester, mocker: MockerFixture):
     )
 
 
-def test_install_logs_output_decorated(tester: CommandTester, mocker: MockerFixture):
+def test_install_logs_output_decorated(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     mocker.patch("poetry.masonry.builders.editable.EditableBuilder")
 
@@ -384,7 +410,7 @@ def test_install_path_dependency_does_not_exist(
     fixture_dir: FixtureDirGetter,
     project: str,
     options: str,
-):
+) -> None:
     poetry = _project_factory(project, project_factory, fixture_dir)
     poetry.locker.locked(True)
     tester = command_tester_factory("install", poetry=poetry)

@@ -66,18 +66,18 @@ def install_plugin(installed: Repository) -> None:
     installed.add_package(plugin)
 
 
-def test_remove_installed_package(tester: CommandTester):
+def test_remove_installed_package(tester: CommandTester) -> None:
     tester.execute("poetry-plugin")
 
     expected = """\
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 0 installs, 0 updates, 1 removal
 
   • Removing poetry-plugin (1.2.3)
+
+Writing lock file
 """
     assert tester.io.fetch_output() == expected
 
@@ -87,7 +87,7 @@ Package operations: 0 installs, 0 updates, 1 removal
     assert not dependencies
 
 
-def test_remove_installed_package_dry_run(tester: CommandTester):
+def test_remove_installed_package_dry_run(tester: CommandTester) -> None:
     tester.execute("poetry-plugin --dry-run")
 
     expected = f"""\

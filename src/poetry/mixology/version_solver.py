@@ -320,8 +320,8 @@ class VersionSolver:
             # The most_recent_satisfier may not satisfy most_recent_term on its own
             # if there are a collection of constraints on most_recent_term that
             # only satisfy it together. For example, if most_recent_term is
-            # `foo ^1.0.0` and _solution contains `[foo >=1.0.0,
-            # foo <2.0.0]`, then most_recent_satisfier will be `foo <2.0.0` even
+            # `foo ^1.0.0` and _solution contains `[foo >=1.0.0,
+            # foo <2.0.0]`, then most_recent_satisfier will be `foo <2.0.0` even
             # though it doesn't totally satisfy `foo ^1.0.0`.
             #
             # In this case, we add `not (most_recent_satisfier \ most_recent_term)` to
@@ -331,7 +331,9 @@ class VersionSolver:
             # .. _algorithm documentation:
             # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
             if difference is not None:
-                new_terms.append(difference.inverse)
+                inverse = difference.inverse
+                if inverse.dependency != most_recent_satisfier.dependency:
+                    new_terms.append(inverse)
 
             incompatibility = Incompatibility(
                 new_terms, ConflictCause(incompatibility, most_recent_satisfier.cause)

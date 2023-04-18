@@ -68,13 +68,6 @@ def get_dependency(
     return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
-def fixture(path: str | None = None) -> Path:
-    if path:
-        return FIXTURE_PATH / path
-    else:
-        return FIXTURE_PATH
-
-
 def copy_or_symlink(source: Path, dest: Path) -> None:
     if dest.is_symlink() or dest.is_file():
         dest.unlink()  # missing_ok is only available in Python >= 3.8
@@ -113,7 +106,7 @@ def mock_clone(
     parsed = ParsedUrl.parse(url)
     path = re.sub(r"(.git)?$", "", parsed.pathname.lstrip("/"))
 
-    folder = Path(__file__).parent / "fixtures" / "git" / parsed.resource / path
+    folder = FIXTURE_PATH / "git" / parsed.resource / path
 
     if not source_root:
         source_root = Path(Config.create().get("cache-dir")) / "src"
@@ -128,8 +121,7 @@ def mock_clone(
 def mock_download(url: str, dest: Path) -> None:
     parts = urllib.parse.urlparse(url)
 
-    fixtures = Path(__file__).parent / "fixtures"
-    fixture = fixtures / parts.path.lstrip("/")
+    fixture = FIXTURE_PATH / parts.path.lstrip("/")
 
     copy_or_symlink(fixture, dest)
 
@@ -305,7 +297,7 @@ def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, A
         :return:  dict
         """
         if isinstance(obj, dict):
-            for key in obj.keys():
+            for key in obj:
                 for leaf in recurse_keys(obj[key]):
                     leaf_path, leaf_value = leaf
                     leaf_path.insert(0, key)

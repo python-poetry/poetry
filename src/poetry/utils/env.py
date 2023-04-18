@@ -9,6 +9,7 @@ import os
 import platform
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -472,6 +473,11 @@ class EnvCommandError(EnvError):
         super().__init__("\n\n".join(message_parts))
 
 
+class PythonVersionNotFound(EnvError):
+    def __init__(self, expected: str) -> None:
+        super().__init__(f"Could not find the python executable {expected}")
+
+
 class NoCompatiblePythonVersionFound(EnvError):
     def __init__(self, expected: str, given: str | None = None) -> None:
         if given:
@@ -517,34 +523,39 @@ class EnvManager:
         self._io = io or NullIO()
 
     @staticmethod
-    def _full_python_path(python: str) -> Path:
+    def _full_python_path(python: str) -> Path | None:
+        # eg first find pythonXY.bat on windows.
+        path_python = shutil.which(python)
+        if path_python is None:
+            return None
+
         try:
             executable = decode(
                 subprocess.check_output(
-                    [python, "-c", "import sys; print(sys.executable)"],
+                    [path_python, "-c", "import sys; print(sys.executable)"],
                 ).strip()
             )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
+            return Path(executable)
 
-        return Path(executable)
+        except CalledProcessError:
+            return None
 
     @staticmethod
     def _detect_active_python(io: None | IO = None) -> Path | None:
         io = io or NullIO()
-        executable = None
+        io.write_error_line(
+            (
+                "Trying to detect current active python executable as specified in"
+                " the config."
+            ),
+            verbosity=Verbosity.VERBOSE,
+        )
 
-        try:
-            io.write_error_line(
-                (
-                    "Trying to detect current active python executable as specified in"
-                    " the config."
-                ),
-                verbosity=Verbosity.VERBOSE,
-            )
-            executable = EnvManager._full_python_path("python")
+        executable = EnvManager._full_python_path("python")
+
+        if executable is not None:
             io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
-        except EnvCommandError:
+        else:
             io.write_error_line(
                 (
                     "Unable to detect the current active python executable. Falling"
@@ -552,6 +563,7 @@ class EnvManager:
                 ),
                 verbosity=Verbosity.VERBOSE,
             )
+
         return executable
 
     @staticmethod
@@ -592,6 +604,8 @@ class EnvManager:
             pass
 
         python_path = self._full_python_path(python)
+        if python_path is None:
+            raise PythonVersionNotFound(python)
 
         try:
             python_version_string = decode(
@@ -949,25 +963,26 @@ class EnvManager:
                 "Trying to find and use a compatible version.</warning> "
             )
 
-            for python_to_try in sorted(
+            for suffix in sorted(
                 self._poetry.package.AVAILABLE_PYTHONS,
                 key=lambda v: (v.startswith("3"), -len(v), v),
                 reverse=True,
             ):
-                if len(python_to_try) == 1:
-                    if not parse_constraint(f"^{python_to_try}.0").allows_any(
+                if len(suffix) == 1:
+                    if not parse_constraint(f"^{suffix}.0").allows_any(
                         supported_python
                     ):
                         continue
-                elif not supported_python.allows_any(
-                    parse_constraint(python_to_try + ".*")
-                ):
+                elif not supported_python.allows_any(parse_constraint(suffix + ".*")):
                     continue
 
-                python = "python" + python_to_try
-
+                python_name = f"python{suffix}"
                 if self._io.is_debug():
-                    self._io.write_error_line(f"<debug>Trying {python}</debug>")
+                    self._io.write_error_line(f"<debug>Trying {python_name}</debug>")
+
+                python = self._full_python_path(python_name)
+                if python is None:
+                    continue
 
                 try:
                     python_patch = decode(
@@ -979,14 +994,11 @@ class EnvManager:
                 except CalledProcessError:
                     continue
 
-                if not python_patch:
-                    continue
-
                 if supported_python.allows(Version.parse(python_patch)):
                     self._io.write_error_line(
-                        f"Using <c1>{python}</c1> ({python_patch})"
+                        f"Using <c1>{python_name}</c1> ({python_patch})"
                     )
-                    executable = self._full_python_path(python)
+                    executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
 
@@ -1222,10 +1234,7 @@ class Env:
             path = get_real_windows_path(path)
             base = get_real_windows_path(base) if base else None
 
-        if not self._is_windows or self._is_mingw:
-            bin_dir = "bin"
-        else:
-            bin_dir = "Scripts"
+        bin_dir = "bin" if not self._is_windows or self._is_mingw else "Scripts"
         self._path = path
         self._bin_dir = self._path / bin_dir
 
@@ -1256,8 +1265,9 @@ class Env:
         return self._base
 
     @property
-    def version_info(self) -> tuple[Any, ...]:
-        return tuple(self.marker_env["version_info"])
+    def version_info(self) -> tuple[int, int, int, str, int]:
+        version_info: tuple[int, int, int, str, int] = self.marker_env["version_info"]
+        return version_info
 
     @property
     def python_implementation(self) -> str:

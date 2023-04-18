@@ -56,6 +56,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name: str,
     venvs_in_cache_config: None,
 ) -> None:
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -94,6 +95,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
+    mocker: MockerFixture,
     tester: CommandTester,
     current_python: tuple[int, int, int],
     venv_cache: Path,
@@ -111,6 +113,8 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     doc = tomlkit.document()
     doc[venv_name] = {"minor": python_minor, "patch": python_patch}
     envs_file.write(doc)
+
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
 
     tester.execute(python_minor)
 
@@ -134,6 +138,7 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     python_minor = ".".join(str(v) for v in current_python[:2])
     venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "poetry.utils.env.EnvManager._env",
         new_callable=mocker.PropertyMock,

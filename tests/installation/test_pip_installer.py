@@ -13,6 +13,7 @@ from poetry.core.packages.package import Package
 
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.env import NullEnv
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
     from poetry.utils.env import VirtualEnv
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture
@@ -137,7 +139,7 @@ def test_install_with_non_pypi_default_repository(
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
 
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
     pool.add_repository(another)
 
     foo = Package(
@@ -177,7 +179,7 @@ def test_install_with_certs(
 
     default = LegacyRepository("default", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     installer = PipInstaller(env, NullIO(), pool)
 
@@ -255,7 +257,7 @@ def test_install_with_trusted_host(config: Config, env: NullEnv) -> None:
 
     default = LegacyRepository("default", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     installer = PipInstaller(env, NullIO(), pool)
 
@@ -277,7 +279,10 @@ def test_install_with_trusted_host(config: Config, env: NullEnv) -> None:
 
 
 def test_install_directory_fallback_on_poetry_create_error(
-    mocker: MockerFixture, tmp_venv: VirtualEnv, pool: RepositoryPool
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     mock_create_poetry = mocker.patch(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
@@ -292,9 +297,7 @@ def test_install_directory_fallback_on_poetry_create_error(
         "demo",
         "1.0.0",
         source_type="directory",
-        source_url=str(
-            Path(__file__).parent.parent / "fixtures/inspection/demo_poetry_package"
-        ),
+        source_url=str(fixture_dir("inspection") / "demo_poetry_package"),
     )
 
     installer = PipInstaller(tmp_venv, NullIO(), pool)
