@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
@@ -13,10 +12,11 @@ from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from pytest_mock import MockerFixture
 
-FIXTURE_DIR_BASE = Path(__file__).parent.parent / "fixtures"
-FIXTURE_DIR_INSPECTIONS = FIXTURE_DIR_BASE / "inspection"
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture(autouse=True)
@@ -25,18 +25,20 @@ def pep517_metadata_mock() -> None:
 
 
 @pytest.fixture
-def demo_sdist() -> Path:
-    return FIXTURE_DIR_BASE / "distributions" / "demo-0.1.0.tar.gz"
+def demo_sdist(fixture_dir: FixtureDirGetter) -> Path:
+    return fixture_dir("distributions") / "demo-0.1.0.tar.gz"
 
 
 @pytest.fixture
-def demo_wheel() -> Path:
-    return FIXTURE_DIR_BASE / "distributions" / "demo-0.1.0-py2.py3-none-any.whl"
+def demo_wheel(fixture_dir: FixtureDirGetter) -> Path:
+    return fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
-    return Path(tmp_path.as_posix())
+    path = tmp_path / "source"
+    path.mkdir()
+    return path
 
 
 @pytest.fixture
@@ -126,15 +128,15 @@ def test_info_from_bdist(demo_wheel: Path) -> None:
     demo_check_info(info)
 
 
-def test_info_from_poetry_directory() -> None:
+def test_info_from_poetry_directory(fixture_dir: FixtureDirGetter) -> None:
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo", disable_build=True
+        fixture_dir("inspection") / "demo", disable_build=True
     )
     demo_check_info(info)
 
 
 def test_info_from_poetry_directory_fallback_on_poetry_create_error(
-    mocker: MockerFixture,
+    mocker: MockerFixture, fixture_dir: FixtureDirGetter
 ) -> None:
     mock_create_poetry = mocker.patch(
         "poetry.inspection.info.Factory.create_poetry", side_effect=RuntimeError
@@ -144,16 +146,16 @@ def test_info_from_poetry_directory_fallback_on_poetry_create_error(
         "poetry.inspection.info.get_pep517_metadata"
     )
 
-    PackageInfo.from_directory(FIXTURE_DIR_INSPECTIONS / "demo_poetry_package")
+    PackageInfo.from_directory(fixture_dir("inspection") / "demo_poetry_package")
 
     assert mock_create_poetry.call_count == 1
     assert mock_get_poetry_package.call_count == 1
     assert mock_get_pep517_metadata.call_count == 1
 
 
-def test_info_from_requires_txt() -> None:
+def test_info_from_requires_txt(fixture_dir: FixtureDirGetter) -> None:
     info = PackageInfo.from_metadata(
-        FIXTURE_DIR_INSPECTIONS / "demo_only_requires_txt.egg-info"
+        fixture_dir("inspection") / "demo_only_requires_txt.egg-info"
     )
     assert info is not None
     demo_check_info(info)
@@ -169,9 +171,9 @@ def test_info_from_setup_cfg(demo_setup_cfg: Path) -> None:
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_no_setup_pkg_info_no_deps() -> None:
+def test_info_no_setup_pkg_info_no_deps(fixture_dir: FixtureDirGetter) -> None:
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo_no_setup_pkg_info_no_deps",
+        fixture_dir("inspection") / "demo_no_setup_pkg_info_no_deps",
         disable_build=True,
     )
     assert info.name == "demo"
@@ -248,8 +250,8 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     assert spy.call_count == 1
 
 
-def test_info_prefer_poetry_config_over_egg_info() -> None:
+def test_info_prefer_poetry_config_over_egg_info(fixture_dir: FixtureDirGetter) -> None:
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo_with_obsolete_egg_info"
+        fixture_dir("inspection") / "demo_with_obsolete_egg_info"
     )
     demo_check_info(info)

@@ -155,18 +155,20 @@ def test_command_new(
     package_path: str,
     include_from: str | None,
     tester: CommandTester,
-    tmp_dir: str,
-):
-    path = Path(tmp_dir) / directory
-    options.append(path.as_posix())
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / directory
+    options.append(str(path))
     tester.execute(" ".join(options))
     verify_project_directory(path, package_name, package_path, include_from)
 
 
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
-def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir: str):
+def test_command_new_with_readme(
+    fmt: str | None, tester: CommandTester, tmp_path: Path
+) -> None:
     package = "package"
-    path = Path(tmp_dir) / package
+    path = tmp_path / package
     options = [path.as_posix()]
 
     if fmt:
@@ -191,8 +193,8 @@ def test_respect_prefer_active_on_new(
     config: Config,
     mocker: MockerFixture,
     tester: CommandTester,
-    tmp_dir: str,
-):
+    tmp_path: Path,
+) -> None:
     from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 
     orig_check_output = subprocess.check_output
@@ -208,8 +210,8 @@ def test_respect_prefer_active_on_new(
     config.config["virtualenvs"]["prefer-active-python"] = prefer_active
 
     package = "package"
-    path = Path(tmp_dir) / package
-    options = [path.as_posix()]
+    path = tmp_path / package
+    options = [str(path)]
     tester.execute(" ".join(options))
 
     pyproject_file = path / "pyproject.toml"

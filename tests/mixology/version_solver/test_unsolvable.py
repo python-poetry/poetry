@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -13,6 +12,7 @@ if TYPE_CHECKING:
 
     from poetry.repositories import Repository
     from tests.mixology.version_solver.conftest import Provider
+    from tests.types import FixtureDirGetter
 
 
 def test_no_version_matching_constraint(
@@ -94,11 +94,13 @@ Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving faile
 
 
 def test_disjoint_root_constraints_path_dependencies(
-    root: ProjectPackage, provider: Provider, repo: Repository
+    root: ProjectPackage,
+    provider: Provider,
+    repo: Repository,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     provider.set_package_python_versions("^3.7")
-    fixtures = Path(__file__).parent.parent.parent / "fixtures"
-    project_dir = fixtures.joinpath("with_conditional_path_deps")
+    project_dir = fixture_dir("with_conditional_path_deps")
     dependency1 = Factory.create_dependency("demo", {"path": project_dir / "demo_one"})
     root.add_dependency(dependency1)
     dependency2 = Factory.create_dependency("demo", {"path": project_dir / "demo_two"})

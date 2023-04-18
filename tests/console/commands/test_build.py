@@ -3,23 +3,26 @@ from __future__ import annotations
 import shutil
 import tarfile
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.utils.env import VirtualEnv
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
 
 
 def test_build_with_multiple_readme_files(
-    tmp_path: Path, tmp_venv: VirtualEnv, command_tester_factory: CommandTesterFactory
-):
-    source_dir = (
-        Path(__file__).parent.parent.parent / "fixtures" / "with_multiple_readme_files"
-    )
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    tmp_venv: VirtualEnv,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    source_dir = fixture_dir("with_multiple_readme_files")
     target_dir = tmp_path / "project"
     shutil.copytree(str(source_dir), str(target_dir))
 

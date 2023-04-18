@@ -74,7 +74,7 @@ def old_tester(tester: CommandTester) -> CommandTester:
 
 def test_add_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -104,7 +104,7 @@ Writing lock file
 
 def test_add_replace_by_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -151,7 +151,7 @@ Writing lock file
 
 def test_add_no_constraint_editable_error(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()["tool"]["poetry"]
 
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -172,7 +172,7 @@ No changes were applied.
 
 def test_add_equal_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -196,7 +196,7 @@ Writing lock file
 
 def test_add_greater_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -224,7 +224,7 @@ def test_add_constraint_with_extras(
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -255,7 +255,7 @@ Writing lock file
 
 def test_add_constraint_dependencies(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     cachy2.add_dependency(msgpack_dep)
@@ -288,7 +288,7 @@ def test_add_git_constraint(
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -325,7 +325,7 @@ def test_add_git_constraint_with_poetry(
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -356,7 +356,7 @@ def test_add_git_constraint_with_extras(
     tester: CommandTester,
     tmp_venv: VirtualEnv,
     extra_name: str,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -409,7 +409,7 @@ def test_add_git_constraint_with_subdirectory(
     repo: TestRepository,
     tester: CommandTester,
     env: MockEnv,
-):
+) -> None:
     tester.execute(url)
 
     expected = """\
@@ -446,7 +446,7 @@ def test_add_git_ssh_constraint(
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
-):
+) -> None:
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -495,7 +495,7 @@ def test_add_directory_constraint(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -537,7 +537,7 @@ def test_add_directory_with_poetry(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
@@ -569,7 +569,7 @@ def test_add_file_constraint_wheel(
     repo: TestRepository,
     tester: CommandTester,
     poetry: Poetry,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -605,7 +605,7 @@ def test_add_file_constraint_sdist(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
@@ -639,7 +639,7 @@ def test_add_constraint_with_extras_option(
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -681,7 +681,7 @@ def test_add_url_constraint_wheel(
     repo: TestRepository,
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
@@ -723,7 +723,7 @@ def test_add_url_constraint_wheel_with_extras(
     tester: CommandTester,
     extra_name: str,
     mocker: MockerFixture,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
@@ -767,7 +767,7 @@ Writing lock file
 
 def test_add_constraint_with_python(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
 
     repo.add_package(get_package("cachy", "0.1.0"))
@@ -801,7 +801,7 @@ def test_add_constraint_with_platform(
     repo: TestRepository,
     tester: CommandTester,
     env: MockEnv,
-):
+) -> None:
     platform = sys.platform
     env._platform = platform
     env._marker_env = None
@@ -842,7 +842,7 @@ def test_add_constraint_with_source(
     poetry: Poetry,
     tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
     mocker.patch.object(
@@ -890,7 +890,7 @@ Writing lock file
 
 def test_add_constraint_with_source_that_does_not_exist(
     app: PoetryTestApplication, tester: CommandTester
-):
+) -> None:
     with pytest.raises(IndexError) as e:
         tester.execute("foo --source i-dont-exist")
 
@@ -902,7 +902,7 @@ def test_add_constraint_not_found_with_source(
     poetry: Poetry,
     mocker: MockerFixture,
     tester: CommandTester,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
 
@@ -919,7 +919,7 @@ def test_add_constraint_not_found_with_source(
 
 def test_add_to_section_that_does_not_exist_yet(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -962,7 +962,7 @@ cachy = "^0.2.0"
 
 def test_add_to_dev_section_deprecated(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -997,7 +997,7 @@ Writing lock file
 
 def test_add_should_not_select_prereleases(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
 
@@ -1027,7 +1027,7 @@ Writing lock file
 
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -1051,7 +1051,7 @@ If you prefer to upgrade it to the latest available version,\
 
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
     app.poetry.file.write(content)
@@ -1077,7 +1077,7 @@ def test_add_latest_should_not_create_duplicate_keys(
     project_factory: ProjectFactory,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     pyproject_content = """\
     [tool.poetry]
     name = "simple-project"
@@ -1113,7 +1113,7 @@ def test_add_latest_should_not_create_duplicate_keys(
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -1145,7 +1145,7 @@ Writing lock file
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
 
@@ -1168,7 +1168,7 @@ Writing lock file
 
 def test_add_prefers_stable_releases(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
 
@@ -1192,7 +1192,7 @@ Writing lock file
 
 def test_add_with_lock(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-):
+) -> None:
     content_hash = app.poetry.locker._get_content_hash()
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1216,7 +1216,7 @@ def test_add_no_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1250,7 +1250,7 @@ def test_add_equal_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1278,7 +1278,7 @@ def test_add_greater_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1308,7 +1308,7 @@ def test_add_constraint_with_extras_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -1343,7 +1343,7 @@ def test_add_constraint_dependencies_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     cachy2.add_dependency(msgpack_dep)
@@ -1377,7 +1377,7 @@ def test_add_git_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1413,7 +1413,7 @@ def test_add_git_constraint_with_poetry_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     old_tester.execute("git+https://github.com/demo/pyproject-demo.git")
@@ -1443,7 +1443,7 @@ def test_add_git_constraint_with_extras_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
@@ -1483,7 +1483,7 @@ def test_add_git_ssh_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1524,7 +1524,7 @@ def test_add_directory_constraint_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
@@ -1563,7 +1563,7 @@ def test_add_directory_with_poetry_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
@@ -1596,7 +1596,7 @@ def test_add_file_constraint_wheel_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -1634,7 +1634,7 @@ def test_add_file_constraint_sdist_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
@@ -1670,7 +1670,7 @@ def test_add_constraint_with_extras_option_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -1714,7 +1714,7 @@ def test_add_url_constraint_wheel_old_installer(
     installer: NoopInstaller,
     mocker: MockerFixture,
     old_tester: CommandTester,
-):
+) -> None:
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
@@ -1757,7 +1757,7 @@ def test_add_url_constraint_wheel_with_extras_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     extra_name: str,
-):
+) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
     repo.add_package(get_package("tomlkit", "0.5.5"))
@@ -1803,7 +1803,7 @@ def test_add_constraint_with_python_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     cachy2 = get_package("cachy", "0.2.0")
 
     repo.add_package(get_package("cachy", "0.1.0"))
@@ -1839,7 +1839,7 @@ def test_add_constraint_with_platform_old_installer(
     installer: NoopInstaller,
     env: MockEnv,
     old_tester: CommandTester,
-):
+) -> None:
     platform = sys.platform
     env._platform = platform
     env._marker_env = None
@@ -1882,7 +1882,7 @@ def test_add_constraint_with_source_old_installer(
     installer: NoopInstaller,
     old_tester: CommandTester,
     mocker: MockerFixture,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
     mocker.patch.object(
@@ -1931,7 +1931,7 @@ Writing lock file
 
 def test_add_constraint_with_source_that_does_not_exist_old_installer(
     app: PoetryTestApplication, old_tester: CommandTester
-):
+) -> None:
     with pytest.raises(IndexError) as e:
         old_tester.execute("foo --source i-dont-exist")
 
@@ -1943,7 +1943,7 @@ def test_add_constraint_not_found_with_source_old_installer(
     poetry: Poetry,
     mocker: MockerFixture,
     old_tester: CommandTester,
-):
+) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
 
@@ -1963,7 +1963,7 @@ def test_add_to_section_that_does_no_exist_yet_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -1997,7 +1997,7 @@ def test_add_should_not_select_prereleases_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
 
@@ -2031,7 +2031,7 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_ins
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -2059,7 +2059,7 @@ def test_add_should_work_when_adding_existing_package_with_latest_constraint_old
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     app.poetry.file.write(content)
@@ -2094,7 +2094,7 @@ def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
 
@@ -2120,7 +2120,7 @@ def test_add_preferes_stable_releases_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
 
@@ -2147,7 +2147,7 @@ def test_add_with_lock_old_installer(
     repo: TestRepository,
     installer: NoopInstaller,
     old_tester: CommandTester,
-):
+) -> None:
     repo.add_package(get_package("cachy", "0.2.0"))
 
     old_tester.execute("cachy --lock")
@@ -2169,7 +2169,7 @@ def test_add_keyboard_interrupt_restore_content(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
-):
+) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     mocker.patch(
@@ -2202,7 +2202,7 @@ def test_add_with_dry_run_keep_files_intact(
     poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
+) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
@@ -2224,7 +2224,7 @@ def test_add_should_not_change_lock_file_when_dependency_installation_fail(
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
-):
+) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     repo.add_package(get_package("docker", "4.3.1"))

@@ -22,24 +22,38 @@ def tester(
     return command_tester_factory("source show", poetry=poetry_with_source)
 
 
+@pytest.fixture
+def tester_no_sources(
+    command_tester_factory: CommandTesterFactory,
+    poetry_without_source: Poetry,
+) -> CommandTester:
+    return command_tester_factory("source show", poetry=poetry_without_source)
+
+
+@pytest.fixture
+def tester_all_types(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_source: Poetry,
+    add_all_source_types: None,
+) -> CommandTester:
+    return command_tester_factory("source show", poetry=poetry_with_source)
+
+
 def test_source_show_simple(tester: CommandTester) -> None:
     tester.execute("")
 
     expected = """\
-name       : existing
-url        : https://existing.com
-default    : no
-secondary  : no
+name      : existing
+url       : https://existing.com
+priority  : primary
 
-name       : one
-url        : https://one.com
-default    : no
-secondary  : no
+name      : one
+url       : https://one.com
+priority  : primary
 
-name       : two
-url        : https://two.com
-default    : no
-secondary  : no
+name      : two
+url       : https://two.com
+priority  : primary
 """.splitlines()
     assert [
         line.strip() for line in tester.io.fetch_output().strip().splitlines()
@@ -51,10 +65,9 @@ def test_source_show_one(tester: CommandTester, source_one: Source) -> None:
     tester.execute(f"{source_one.name}")
 
     expected = """\
-name       : one
-url        : https://one.com
-default    : no
-secondary  : no
+name      : one
+url       : https://one.com
+priority  : primary
 """.splitlines()
     assert [
         line.strip() for line in tester.io.fetch_output().strip().splitlines()
@@ -68,20 +81,53 @@ def test_source_show_two(
     tester.execute(f"{source_one.name} {source_two.name}")
 
     expected = """\
-name       : one
-url        : https://one.com
-default    : no
-secondary  : no
+name      : one
+url       : https://one.com
+priority  : primary
 
-name       : two
-url        : https://two.com
-default    : no
-secondary  : no
+name      : two
+url       : https://two.com
+priority  : primary
 """.splitlines()
     assert [
         line.strip() for line in tester.io.fetch_output().strip().splitlines()
     ] == expected
     assert tester.status_code == 0
+
+
+@pytest.mark.parametrize(
+    "source_str",
+    (
+        "source_primary",
+        "source_default",
+        "source_secondary",
+        "source_explicit",
+    ),
+)
+def test_source_show_given_priority(
+    tester_all_types: CommandTester, source_str: Source, request: pytest.FixtureRequest
+) -> None:
+    source = request.getfixturevalue(source_str)
+    tester_all_types.execute(f"{source.name}")
+
+    expected = f"""\
+name      : {source.name}
+url       : {source.url}
+priority  : {source.name}
+""".splitlines()
+    assert [
+        line.strip() for line in tester_all_types.io.fetch_output().strip().splitlines()
+    ] == expected
+    assert tester_all_types.status_code == 0
+
+
+def test_source_show_no_sources(tester_no_sources: CommandTester) -> None:
+    tester_no_sources.execute("error")
+    assert (
+        tester_no_sources.io.fetch_output().strip()
+        == "No sources configured for this project."
+    )
+    assert tester_no_sources.status_code == 0
 
 
 def test_source_show_error(tester: CommandTester) -> None:

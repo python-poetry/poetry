@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,6 +10,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -18,7 +18,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("check")
 
 
-def test_check_valid(tester: CommandTester):
+def test_check_valid(tester: CommandTester) -> None:
     tester.execute()
 
     expected = """\
@@ -28,17 +28,14 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
-def test_check_invalid(mocker: MockerFixture, tester: CommandTester):
+def test_check_invalid(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
+) -> None:
     from poetry.toml import TOMLFile
 
     mocker.patch(
         "poetry.poetry.Poetry.file",
-        return_value=TOMLFile(
-            Path(__file__).parent.parent.parent
-            / "fixtures"
-            / "invalid_pyproject"
-            / "pyproject.toml"
-        ),
+        return_value=TOMLFile(fixture_dir("invalid_pyproject") / "pyproject.toml"),
         new_callable=mocker.PropertyMock,
     )
 
@@ -62,13 +59,12 @@ Warning: Deprecated classifier\
     assert tester.io.fetch_error() == expected
 
 
-def test_check_private(mocker: MockerFixture, tester: CommandTester):
+def test_check_private(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
+) -> None:
     mocker.patch(
         "poetry.factory.Factory.locate",
-        return_value=Path(__file__).parent.parent.parent
-        / "fixtures"
-        / "private_pyproject"
-        / "pyproject.toml",
+        return_value=fixture_dir("private_pyproject") / "pyproject.toml",
     )
 
     tester.execute()
