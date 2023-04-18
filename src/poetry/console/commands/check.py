@@ -58,9 +58,8 @@ class CheckCommand(Command):
         return errors, warnings
 
     def handle(self) -> int:
-        from poetry.core.pyproject.toml import PyProjectTOML
-
         from poetry.factory import Factory
+        from poetry.pyproject.toml import PyProjectTOML
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path

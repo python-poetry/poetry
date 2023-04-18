@@ -12,7 +12,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -40,6 +39,7 @@ from poetry.vcs.git import Git
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
 
@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
@@ -390,6 +391,7 @@ class Provider:
         )
 
     def _search_for_file(self, dependency: FileDependency) -> Package:
+        dependency.validate(raise_error=True)
         package = self.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -420,6 +422,7 @@ class Provider:
         return package
 
     def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
+        dependency.validate(raise_error=True)
         package = self.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
@@ -652,6 +655,11 @@ class Provider:
                     if locked is not None and locked.package.is_same_package_as(dep):
                         continue
                     self.search_for_direct_origin_dependency(dep)
+        else:
+            for dep in _dependencies:
+                if dep.is_file() or dep.is_directory():
+                    dep = cast("PathDependency", dep)
+                    dep.validate(raise_error=True)
 
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package

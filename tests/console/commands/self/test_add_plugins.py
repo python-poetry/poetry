@@ -38,7 +38,7 @@ def assert_plugin_add_result(
 def test_add_no_constraint(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
     tester.execute("poetry-plugin")
@@ -49,11 +49,11 @@ Using version ^0.1.0 for poetry-plugin
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing poetry-plugin (0.1.0)
+
+Writing lock file
 """
     assert_plugin_add_result(tester, expected, "^0.1.0")
 
@@ -61,7 +61,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_with_constraint(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
 
@@ -71,11 +71,11 @@ def test_add_with_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 0 updates, 0 removals
 
   • Installing poetry-plugin (0.2.0)
+
+Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, "^0.2.0")
@@ -84,7 +84,7 @@ Package operations: 1 install, 0 updates, 0 removals
 def test_add_with_git_constraint(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git")
@@ -93,12 +93,12 @@ def test_add_with_git_constraint(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (2.0.5)
   • Installing poetry-plugin (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert_plugin_add_result(
@@ -109,7 +109,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_with_git_constraint_with_extras(
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
 
@@ -119,13 +119,13 @@ def test_add_with_git_constraint_with_extras(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 3 installs, 0 updates, 0 removals
 
   • Installing pendulum (2.0.5)
   • Installing tomlkit (0.7.0)
   • Installing poetry-plugin (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     assert_plugin_add_result(
@@ -153,7 +153,7 @@ def test_add_with_git_constraint_with_subdirectory(
     rev: str | None,
     tester: CommandTester,
     repo: TestRepository,
-):
+) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute(url)
@@ -162,12 +162,12 @@ def test_add_with_git_constraint_with_subdirectory(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (2.0.5)
   • Installing poetry-plugin (0.1.2 9cf87a2)
+
+Writing lock file
 """
 
     constraint = {
@@ -189,9 +189,11 @@ def test_add_existing_plugin_warns_about_no_operation(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
-    SelfCommand.get_default_system_pyproject_file().write_text(
-        f"""\
+) -> None:
+    pyproject = SelfCommand.get_default_system_pyproject_file()
+    with open(pyproject, "w", encoding="utf-8", newline="") as f:
+        f.write(
+            f"""\
 [tool.poetry]
 name = "poetry-instance"
 version = "1.2.0"
@@ -203,9 +205,8 @@ python = "^3.6"
 
 [tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
-""",
-        encoding="utf-8",
-    )
+"""
+        )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
@@ -229,9 +230,11 @@ def test_add_existing_plugin_updates_if_requested(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
-    SelfCommand.get_default_system_pyproject_file().write_text(
-        f"""\
+) -> None:
+    pyproject = SelfCommand.get_default_system_pyproject_file()
+    with open(pyproject, "w", encoding="utf-8", newline="") as f:
+        f.write(
+            f"""\
 [tool.poetry]
 name = "poetry-instance"
 version = "1.2.0"
@@ -243,9 +246,8 @@ python = "^3.6"
 
 [tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
-""",
-        encoding="utf-8",
-    )
+"""
+        )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
@@ -260,11 +262,11 @@ Using version ^2.3.4 for poetry-plugin
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 0 installs, 1 update, 0 removals
 
   • Updating poetry-plugin (1.2.3 -> 2.3.4)
+
+Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, "^2.3.4")
@@ -274,7 +276,7 @@ def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
-):
+) -> None:
     poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))
 
@@ -296,12 +298,12 @@ Using version ^1.2.3 for poetry-plugin
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 1 install, 1 update, 0 removals
 
   • Updating tomlkit (0.7.1 -> 0.7.2)
   • Installing poetry-plugin (1.2.3)
+
+Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, "^1.2.3")

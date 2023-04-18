@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.constraints.version import Version
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.base_installer import BaseInstaller
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils._compat import encode
 from poetry.utils.helpers import remove_directory
@@ -221,7 +221,7 @@ class PipInstaller(BaseInstaller):
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
+        pyproject = PyProjectTOML(req / "pyproject.toml")
 
         package_poetry = None
         if pyproject.is_poetry_project():

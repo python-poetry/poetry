@@ -70,6 +70,7 @@ To remove a repository (repo is a short alias for repositories):
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
             "experimental.new-installer": (boolean_validator, boolean_normalizer),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
+            "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
             "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
             "virtualenvs.prompt": (str, lambda val: str(val)),
@@ -85,11 +86,11 @@ To remove a repository (repo is a short alias for repositories):
         from pathlib import Path
 
         from poetry.core.pyproject.exceptions import PyProjectException
-        from poetry.core.toml.file import TOMLFile
 
         from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
+        from poetry.toml.file import TOMLFile
 
         config = Config.create()
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
@@ -210,6 +211,7 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     # Only username, so we prompt for password
                     password = self.secret("Password:")
+                    assert isinstance(password, str)
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "
