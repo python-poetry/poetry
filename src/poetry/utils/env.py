@@ -1499,16 +1499,16 @@ class Env:
 
         return [str(self._bin(bin))]
 
-    def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
+    def run(self, bin: str, *args: str, **kwargs: Any) -> str:
         cmd = self.get_command_from_bin(bin) + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_pip(self, *args: str, **kwargs: Any) -> int | str:
+    def run_pip(self, *args: str, **kwargs: Any) -> str:
         pip = self.get_pip_command()
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_python_script(self, content: str, **kwargs: Any) -> int | str:
+    def run_python_script(self, content: str, **kwargs: Any) -> str:
         return self.run(
             self._executable,
             "-I",
@@ -1520,7 +1520,7 @@ class Env:
             **kwargs,
         )
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         """
         Run a command inside the Python environment.
         """
@@ -1542,7 +1542,8 @@ class Env:
                 ).stdout
             elif call:
                 assert stderr != subprocess.PIPE
-                return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
+                subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
+                output = ""
             else:
                 output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
@@ -1723,19 +1724,16 @@ class VirtualEnv(Env):
         # from inside the virtualenv.
         if base is None:
             output = self.run_python_script(GET_BASE_PREFIX)
-            assert isinstance(output, str)
             self._base = Path(output.strip())
 
     @property
     def sys_path(self) -> list[str]:
         output = self.run_python_script(GET_SYS_PATH)
-        assert isinstance(output, str)
         paths: list[str] = json.loads(output)
         return paths
 
     def get_version_info(self) -> tuple[Any, ...]:
         output = self.run_python_script(GET_PYTHON_VERSION)
-        assert isinstance(output, str)
 
         return tuple(int(s) for s in output.strip().split("."))
 
@@ -1745,20 +1743,17 @@ class VirtualEnv(Env):
 
     def get_supported_tags(self) -> list[Tag]:
         output = self.run_python_script(GET_SYS_TAGS)
-        assert isinstance(output, str)
 
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
-        assert isinstance(output, str)
 
         env: dict[str, Any] = json.loads(output)
         return env
 
     def get_pip_version(self) -> Version:
         output = self.run_pip("--version")
-        assert isinstance(output, str)
         output = output.strip()
 
         m = re.match("pip (.+?)(?: from .+)?$", output)
@@ -1769,7 +1764,6 @@ class VirtualEnv(Env):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS)
-        assert isinstance(output, str)
         paths: dict[str, str] = json.loads(output)
         return paths
 
@@ -1780,7 +1774,7 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if "python" exists.
         return os.path.exists(self.python)
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super()._run(cmd, **kwargs)
 
@@ -1885,7 +1879,6 @@ class GenericEnv(VirtualEnv):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
-        assert isinstance(output, str)
 
         paths: dict[str, str] = json.loads(output)
         return paths
@@ -1902,7 +1895,7 @@ class GenericEnv(VirtualEnv):
 
         return exe.returncode
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
@@ -1932,12 +1925,12 @@ class NullEnv(SystemEnv):
 
         return self._paths
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         self.executed.append(cmd)
 
         if self._execute:
             return super()._run(cmd, **kwargs)
-        return 0
+        return ""
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         self.executed.append([bin] + list(args))
