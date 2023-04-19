@@ -47,6 +47,7 @@ class Installer:
         self._package = package
         self._locker = locker
         self._pool = pool
+        self._config = config
 
         self._dry_run = False
         self._requires_synchronization = False
@@ -290,7 +291,7 @@ class Installer:
             )
 
         # We resolve again by only using the lock file
-        pool = RepositoryPool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True, config=self._config)
 
         # Making a new repo containing the packages
         # newly resolved and the ones from the current lock file

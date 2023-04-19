@@ -49,7 +49,7 @@ class Poetry(BasePoetry):
 
         self._locker = locker
         self._config = config
-        self._pool = RepositoryPool()
+        self._pool = RepositoryPool(config=config)
         self._plugin_manager: PluginManager | None = None
         self._disable_cache = disable_cache
 

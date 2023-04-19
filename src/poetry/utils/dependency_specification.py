@@ -22,6 +22,7 @@ from poetry.packages.direct_origin import DirectOrigin
 if TYPE_CHECKING:
     from poetry.core.packages.vcs_dependency import VCSDependency
 
+    from poetry.utils.cache import ArtifactCache
     from poetry.utils.env import Env
 
 
@@ -57,7 +58,14 @@ def dependency_to_specification(
 
 
 class RequirementsParser:
-    def __init__(self, env: Env | None = None, cwd: Path | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        artifact_cache: ArtifactCache,
+        env: Env | None = None,
+        cwd: Path | None = None,
+    ) -> None:
+        self._direct_origin = DirectOrigin(artifact_cache)
         self._env = env
         self._cwd = cwd or Path.cwd()
 
@@ -120,7 +128,7 @@ class RequirementsParser:
             pair["subdirectory"] = parsed.subdirectory
 
         source_root = self._env.path.joinpath("src") if self._env else None
-        package = DirectOrigin.get_package_from_vcs(
+        package = self._direct_origin.get_package_from_vcs(
             "git",
             url=url.url,
             rev=pair.get("rev"),
@@ -139,7 +147,7 @@ class RequirementsParser:
             return self._parse_git_url(requirement)
 
         if url_parsed.scheme in ["http", "https"]:
-            package = DirectOrigin.get_package_from_url(requirement)
+            package = self._direct_origin.get_package_from_url(requirement)
             assert package.source_url is not None
             return {"name": package.name, "url": package.source_url}
 
@@ -158,9 +166,9 @@ class RequirementsParser:
                 path = self._cwd.joinpath(requirement)
 
             if path.is_file():
-                package = DirectOrigin.get_package_from_file(path.resolve())
+                package = self._direct_origin.get_package_from_file(path.resolve())
             else:
-                package = DirectOrigin.get_package_from_directory(path.resolve())
+                package = self._direct_origin.get_package_from_directory(path.resolve())
 
             return {
                 "name": package.name,

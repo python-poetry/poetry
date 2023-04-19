@@ -119,7 +119,7 @@ class Factory(BaseFactory):
     @classmethod
     def create_pool(
         cls,
-        auth_config: Config,
+        config: Config,
         sources: Iterable[dict[str, Any]] = (),
         io: IO | None = None,
         disable_cache: bool = False,
@@ -133,12 +133,12 @@ class Factory(BaseFactory):
         if disable_cache:
             logger.debug("Disabling source caches")
 
-        pool = RepositoryPool()
+        pool = RepositoryPool(config=config)
 
         explicit_pypi = False
         for source in sources:
             repository = cls.create_package_source(
-                source, auth_config, disable_cache=disable_cache
+                source, config, disable_cache=disable_cache
             )
             priority = Priority[source.get("priority", Priority.PRIMARY.name).upper()]
             if "default" in source or "secondary" in source:
@@ -207,7 +207,7 @@ class Factory(BaseFactory):
 
     @classmethod
     def create_package_source(
-        cls, source: dict[str, str], auth_config: Config, disable_cache: bool = False
+        cls, source: dict[str, str], config: Config, disable_cache: bool = False
     ) -> HTTPRepository:
         from poetry.repositories.exceptions import InvalidSourceError
         from poetry.repositories.legacy_repository import LegacyRepository
@@ -239,7 +239,7 @@ class Factory(BaseFactory):
         return repository_class(
             name,
             url,
-            config=auth_config,
+            config=config,
             disable_cache=disable_cache,
         )
 

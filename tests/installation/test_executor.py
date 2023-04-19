@@ -136,11 +136,6 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture
-def artifact_cache(config: Config) -> ArtifactCache:
-    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
-
-
-@pytest.fixture
 def mock_file_downloads(
     http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
 ) -> None:

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import functools
 import os
-import tempfile
 import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from poetry.core.packages.utils.link import Link
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
@@ -17,6 +18,8 @@ from poetry.vcs.git import Git
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
+
+    from poetry.utils.cache import ArtifactCache
 
 
 @functools.lru_cache(maxsize=None)
@@ -53,6 +56,9 @@ def _get_package_from_git(
 
 
 class DirectOrigin:
+    def __init__(self, artifact_cache: ArtifactCache) -> None:
+        self._artifact_cache = artifact_cache
+
     @classmethod
     def get_package_from_file(cls, file_path: Path) -> Package:
         try:
@@ -70,17 +76,22 @@ class DirectOrigin:
     def get_package_from_directory(cls, directory: Path) -> Package:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
-    @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
+    def get_package_from_url(self, url: str) -> Package:
         file_name = os.path.basename(urllib.parse.urlparse(url).path)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dest = Path(temp_dir) / file_name
-            download_file(url, dest)
-            package = cls.get_package_from_file(dest)
+        link = Link(url)
+        artifact = self._artifact_cache.get_cached_archive_for_link(link, strict=True)
 
-            package.files = [
-                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
-            ]
+        if not artifact:
+            artifact = (
+                self._artifact_cache.get_cache_directory_for_link(link) / file_name
+            )
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+            download_file(url, artifact)
+
+        package = self.get_package_from_file(artifact)
+        package.files = [
+            {"file": file_name, "hash": "sha256:" + get_file_hash(artifact)}
+        ]
 
         package._source_type = "url"
         package._source_url = url

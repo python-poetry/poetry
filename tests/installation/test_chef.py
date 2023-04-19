@@ -14,7 +14,6 @@ from poetry.core.packages.utils.link import Link
 from poetry.factory import Factory
 from poetry.installation.chef import Chef
 from poetry.repositories import RepositoryPool
-from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -22,6 +21,7 @@ from tests.repositories.test_pypi_repository import MockRepository
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from poetry.utils.cache import ArtifactCache
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
@@ -38,11 +38,6 @@ def pool() -> RepositoryPool:
 @pytest.fixture(autouse=True)
 def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
     mocker.patch.object(Factory, "create_pool", return_value=pool)
-
-
-@pytest.fixture
-def artifact_cache(config: Config) -> ArtifactCache:
-    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
 
 def test_prepare_sdist(
