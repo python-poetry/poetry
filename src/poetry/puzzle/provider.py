@@ -107,6 +107,7 @@ class Provider:
     ) -> None:
         self._package = package
         self._pool = pool
+        self._direct_origin = DirectOrigin(self._pool.artifact_cache)
         self._io = io
         self._env: Env | None = None
         self._python_constraint = package.python_constraint
@@ -311,7 +312,7 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        package = DirectOrigin.get_package_from_vcs(
+        package = self._direct_origin.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
             branch=dependency.branch,
@@ -330,7 +331,7 @@ class Provider:
 
     def _search_for_file(self, dependency: FileDependency) -> Package:
         dependency.validate(raise_error=True)
-        package = DirectOrigin.get_package_from_file(dependency.full_path)
+        package = self._direct_origin.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -348,7 +349,7 @@ class Provider:
 
     def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
         dependency.validate(raise_error=True)
-        package = DirectOrigin.get_package_from_directory(dependency.full_path)
+        package = self._direct_origin.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -360,7 +361,7 @@ class Provider:
         return package
 
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = DirectOrigin.get_package_from_url(dependency.url)
+        package = self._direct_origin.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 

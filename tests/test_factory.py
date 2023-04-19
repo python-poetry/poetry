@@ -543,7 +543,7 @@ def test_create_package_source_invalid(
     fixture_dir: FixtureDirGetter,
 ) -> None:
     with pytest.raises(InvalidSourceError) as e:
-        Factory.create_package_source(source, auth_config=config)
+        Factory.create_package_source(source, config=config)
         Factory().create_poetry(fixture_dir("with_source_pypi_url"))
 
     assert str(e.value) == expected

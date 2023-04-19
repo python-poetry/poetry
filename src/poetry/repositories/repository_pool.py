@@ -8,8 +8,10 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+from poetry.config.config import Config
 from poetry.repositories.abstract_repository import AbstractRepository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.utils.cache import ArtifactCache
 
 
 if TYPE_CHECKING:
@@ -40,6 +42,8 @@ class RepositoryPool(AbstractRepository):
         self,
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
+        *,
+        config: Config | None = None,
     ) -> None:
         super().__init__("poetry-repository-pool")
         self._repositories: OrderedDict[str, PrioritizedRepository] = OrderedDict()
@@ -49,6 +53,10 @@ class RepositoryPool(AbstractRepository):
             repositories = []
         for repository in repositories:
             self.add_repository(repository)
+
+        self._artifact_cache = ArtifactCache(
+            cache_dir=(config or Config.create()).artifacts_cache_directory
+        )
 
     @property
     def repositories(self) -> list[Repository]:
@@ -76,6 +84,10 @@ class RepositoryPool(AbstractRepository):
         return sorted(
             self._repositories.values(), key=lambda prio_repo: prio_repo.priority
         )
+
+    @property
+    def artifact_cache(self) -> ArtifactCache:
+        return self._artifact_cache
 
     def has_default(self) -> bool:
         return self._contains_priority(Priority.DEFAULT)

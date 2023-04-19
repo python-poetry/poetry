@@ -13,6 +13,7 @@ from poetry.utils.dependency_specification import RequirementsParser
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from poetry.utils.cache import ArtifactCache
     from poetry.utils.dependency_specification import DependencySpec
 
 
@@ -104,7 +105,10 @@ if TYPE_CHECKING:
     ],
 )
 def test_parse_dependency_specification(
-    requirement: str, specification: DependencySpec, mocker: MockerFixture
+    requirement: str,
+    specification: DependencySpec,
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
 ) -> None:
     original = Path.exists
 
@@ -116,5 +120,7 @@ def test_parse_dependency_specification(
     mocker.patch("pathlib.Path.exists", _mock)
 
     assert not DeepDiff(
-        RequirementsParser().parse(requirement), specification, ignore_order=True
+        RequirementsParser(artifact_cache=artifact_cache).parse(requirement),
+        specification,
+        ignore_order=True,
     )

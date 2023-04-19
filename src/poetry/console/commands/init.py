@@ -434,11 +434,15 @@ You can specify a package in the following forms:
 
         try:
             cwd = self.poetry.file.parent
+            artifact_cache = self.poetry.pool.artifact_cache
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
+            artifact_cache = self._get_pool().artifact_cache
 
         parser = RequirementsParser(
-            self.env if isinstance(self, EnvCommand) else None, cwd
+            artifact_cache=artifact_cache,
+            env=self.env if isinstance(self, EnvCommand) else None,
+            cwd=cwd,
         )
         return [parser.parse(requirement) for requirement in requirements]
 

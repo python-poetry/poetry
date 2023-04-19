@@ -24,6 +24,7 @@ from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -220,6 +221,11 @@ def config(
     mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
+
+
+@pytest.fixture
+def artifact_cache(config: Config) -> ArtifactCache:
+    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
 
 @pytest.fixture()
