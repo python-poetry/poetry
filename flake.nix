@@ -12,6 +12,7 @@
     {
       packages.x86_64-linux.default = pkgs.mkShell {
         packages = [
+          pkgs.python310Full
           pkgs.toml2json
           pkgs.jq
         ];
