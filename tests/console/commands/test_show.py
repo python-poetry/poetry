@@ -2187,9 +2187,7 @@ def test_show_top_level_with_explicitly_defined_depenancy(
     assert tester.io.fetch_output() == expected
 
 
-def test_show_error_top_level_with_tree(
-    tester: CommandTester,
-) -> None:
+def test_show_error_top_level_with_tree(tester: CommandTester) -> None:
     expected = "Error: Cannot use --tree and --top-level at the same time.\n"
     tester.execute("--top-level --tree")
     assert tester.io.fetch_error() == expected
