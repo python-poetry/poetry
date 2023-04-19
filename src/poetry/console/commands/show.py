@@ -230,6 +230,7 @@ lists all packages available."""
 
         show_latest = self.option("latest")
         show_all = self.option("all")
+        show_top_level = self.option("top-level")
         width = shutil.get_terminal_size().columns
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
@@ -311,13 +312,15 @@ lists all packages available."""
         write_why = self.option("why") and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
 
+        requires = root.all_requires
+
         for locked in locked_packages:
             color = "cyan"
             name = locked.pretty_name
             install_marker = ""
 
-            if self.option("top-level") and not any(
-                locked.is_same_package_as(r) for r in root.all_requires
+            if show_top_level and not any(
+                locked.is_same_package_as(r) for r in requires
             ):
                 continue
 
