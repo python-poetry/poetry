@@ -2082,6 +2082,125 @@ def test_url_dependency_is_not_outdated_by_repository_package(
     assert tester.io.fetch_output() == ""
 
 
+def test_show_top_level(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+
+    installed.add_package(cachy2)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "msgpack-python": []},
+            },
+        }
+    )
+
+    tester.execute("--top-level")
+
+    expected = """cachy              0.2.0 \n"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_show_top_level_with_explicitly_defined_depenancy(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("a", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("b", "^0.2.0"))
+
+    a = get_package("a", "0.1.0")
+    a.add_dependency(Factory.create_dependency("b", "0.2.0"))
+    b = get_package("b", "0.2.0")
+
+    installed.add_package(a)
+    installed.add_package(b)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.1.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"b": "0.2.0"},
+                },
+                {
+                    "name": "b",
+                    "version": "0.2.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"a": [], "b": []},
+            },
+        }
+    )
+
+    tester.execute("--top-level")
+
+    expected = """a 0.1.0 \nb 0.2.0 \n"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_show_error_top_level_with_tree(tester: CommandTester) -> None:
+    expected = "Error: Cannot use --tree and --top-level at the same time.\n"
+    tester.execute("--top-level --tree")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
+
+
+def test_show_error_top_level_with_single_package(tester: CommandTester) -> None:
+    expected = "Error: Cannot use --top-level when displaying a single package.\n"
+    tester.execute("--top-level some_package_name")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
+
+
 @pytest.mark.parametrize(
     ("project_directory", "required_fixtures"),
     [

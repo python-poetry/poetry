@@ -510,6 +510,7 @@ required by
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 * `--all (-a)`: Show all packages (even those not compatible with current system).
+* `--top-level (-T)`: Only show explicitly defined packages.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
