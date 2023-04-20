@@ -209,3 +209,19 @@ exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:"
 ]
+
+[tool.ruff]
+select = [
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "B904",  # use 'raise ... from err'
+    "B905",  # use explicit 'strict=' parameter with 'zip()'
+]
+extend-exclude = [
+    # Frozen and not subject to change in this repo:
+    "get-poetry.py",
+    "install-poetry.py",
+    # External to the project's coding standards:
+    "tests/**/fixtures/*",
+]
