@@ -209,3 +209,8 @@ exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:"
 ]
+
+[tool.ruff]
+select = [
+    "C4",  # flake8-comprehensions
+]
