@@ -36,6 +36,7 @@ from poetry.utils import patterns
 )
 def test_wheel_file_re(filename: str, expected: dict[str, str | None]) -> None:
     match = patterns.wheel_file_re.match(filename)
+    assert match is not None
     groups = match.groupdict()
 
     assert groups == expected

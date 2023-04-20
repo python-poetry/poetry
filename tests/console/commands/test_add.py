@@ -8,6 +8,7 @@ from typing import cast
 
 import pytest
 
+from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 
@@ -232,7 +233,7 @@ def test_add_constraint_with_extras(
     extra_name: str,
 ) -> None:
     cachy1 = get_package("cachy", "0.1.0")
-    cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
+    cachy1.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
     cachy1.add_dependency(msgpack_dep)
 
@@ -492,14 +493,14 @@ Writing lock file
 
     assert "demo" in content["dependencies"]
 
-    expected = {
+    expected_content: dict[str, Any] = {
         "git": "ssh://git@github.com/demo/demo.git",
         "rev": "develop",
     }
     if editable:
-        expected["develop"] = True
+        expected_content["develop"] = True
 
-    assert content["dependencies"]["demo"] == expected
+    assert content["dependencies"]["demo"] == expected_content
 
 
 @pytest.mark.parametrize(
@@ -519,6 +520,7 @@ def test_add_directory_constraint(
     path = "../git/github.com/demo/demo"
     tester.execute(f"{path}" if not editable else f"-e {path}")
 
+    demo_path = app.poetry.file.path.parent.joinpath(path).resolve().as_posix()
     expected = f"""\
 
 Updating dependencies
@@ -527,7 +529,7 @@ Resolving dependencies...
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+  • Installing demo (0.1.2 {demo_path})
 
 Writing lock file
 """
@@ -541,11 +543,11 @@ Writing lock file
 
     assert "demo" in content["dependencies"]
 
-    expected = {"path": path}
+    expected_content: dict[str, Any] = {"path": path}
     if editable:
-        expected["develop"] = True
+        expected_content["develop"] = True
 
-    assert content["dependencies"]["demo"] == expected
+    assert content["dependencies"]["demo"] == expected_content
 
 
 @pytest.mark.parametrize(
@@ -562,6 +564,7 @@ def test_add_directory_with_poetry(
     path = "../git/github.com/demo/pyproject-demo"
     tester.execute(f"{path}")
 
+    demo_path = app.poetry.file.path.parent.joinpath(path).resolve().as_posix()
     expected = f"""\
 
 Updating dependencies
@@ -570,7 +573,7 @@ Resolving dependencies...
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+  • Installing demo (0.1.2 {demo_path})
 
 Writing lock file
 """
@@ -595,6 +598,7 @@ def test_add_file_constraint_wheel(
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     tester.execute(f"{path}")
 
+    demo_path = app.poetry.file.path.parent.joinpath(path).resolve().as_posix()
     expected = f"""\
 
 Updating dependencies
@@ -603,7 +607,7 @@ Resolving dependencies...
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+  • Installing demo (0.1.0 {demo_path})
 
 Writing lock file
 """
@@ -633,6 +637,7 @@ def test_add_file_constraint_sdist(
     path = "../distributions/demo-0.1.0.tar.gz"
     tester.execute(f"{path}")
 
+    demo_path = app.poetry.file.path.parent.joinpath(path).resolve().as_posix()
     expected = f"""\
 
 Updating dependencies
@@ -641,7 +646,7 @@ Resolving dependencies...
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 {app.poetry.file.parent.joinpath(path).resolve().as_posix()})
+  • Installing demo (0.1.0 {demo_path})
 
 Writing lock file
 """
@@ -665,7 +670,7 @@ def test_add_constraint_with_extras_option(
     extra_name: str,
 ) -> None:
     cachy2 = get_package("cachy", "0.2.0")
-    cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
+    cachy2.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
     cachy2.add_dependency(msgpack_dep)
 
@@ -777,9 +782,9 @@ Package operations: 4 installs, 0 updates, 0 removals
 Writing lock file
 """
     # Order might be different, split into lines and compare the overall output.
-    expected = set(expected.splitlines())
+    expected_lines = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
-    assert output == expected
+    assert output == expected_lines
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 4
 

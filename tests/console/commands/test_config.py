@@ -11,6 +11,7 @@ from deepdiff import DeepDiff
 from poetry.core.pyproject.exceptions import PyProjectException
 
 from poetry.config.config_source import ConfigSource
+from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from tests.conftest import Config
 
@@ -243,9 +244,9 @@ def test_config_installer_parallel(
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"
 
-    workers = command_tester_factory(
-        "install"
-    )._command._installer._executor._max_workers
+    command = command_tester_factory("install")._command
+    assert isinstance(command, InstallCommand)
+    workers = command.installer._executor._max_workers
     assert workers > 1
 
     tester.io.clear_output()
@@ -253,9 +254,9 @@ def test_config_installer_parallel(
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "false"
 
-    workers = command_tester_factory(
-        "install"
-    )._command._installer._executor._max_workers
+    command = command_tester_factory("install")._command
+    assert isinstance(command, InstallCommand)
+    workers = command.installer._executor._max_workers
     assert workers == 1
 
 

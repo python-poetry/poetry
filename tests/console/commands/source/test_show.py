@@ -125,7 +125,7 @@ priority  : primary
     ),
 )
 def test_source_show_given_priority(
-    tester_all_types: CommandTester, source_str: Source, request: pytest.FixtureRequest
+    tester_all_types: CommandTester, source_str: str, request: pytest.FixtureRequest
 ) -> None:
     source = request.getfixturevalue(source_str)
     tester_all_types.execute(f"{source.name}")

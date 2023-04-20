@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.directory_dependency import DirectoryDependency
 from poetry.core.packages.file_dependency import FileDependency
@@ -681,7 +682,7 @@ def test_complete_package_with_extras_preserves_source_name(
     package_b = Package("B", "1.0")
     dep = get_dependency("B", "^1.0", optional=True)
     package_a.add_dependency(dep)
-    package_a.extras = {"foo": [dep]}
+    package_a.extras = {canonicalize_name("foo"): [dep]}
     repository.add_package(package_a)
     repository.add_package(package_b)
 
@@ -710,7 +711,7 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
     )
     package = Package("A", "1.0", features=["foo"] if with_extra else [])
     package.add_dependency(optional_vcs_dependency)
-    package.extras["foo"] = [optional_vcs_dependency]
+    package.extras[canonicalize_name("foo")] = [optional_vcs_dependency]
     repository.add_package(package)
 
     spy = mocker.spy(provider, "_search_for_vcs")

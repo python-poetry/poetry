@@ -7,6 +7,7 @@ import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 import pytest
 
@@ -72,7 +73,7 @@ def env_manager(simple_poetry: Poetry) -> EnvManager:
 
 
 @pytest.fixture
-def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> VirtualEnv:
+def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> Iterator[VirtualEnv]:
     venv_path = tmp_path / "venv"
 
     env_manager.build_venv(venv_path)

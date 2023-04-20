@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
 from poetry.core.packages.package import Package
 
+from poetry.console.commands.add import AddCommand
 from poetry.console.commands.self.self_command import SelfCommand
 from poetry.factory import Factory
 from tests.console.commands.self.utils import get_self_command_dependencies
@@ -29,7 +31,7 @@ def assert_plugin_add_result(
     constraint: str | dict[str, str],
 ) -> None:
     assert tester.io.fetch_output() == expected
-    dependencies = get_self_command_dependencies()
+    dependencies: dict[str, Any] = get_self_command_dependencies()
 
     assert "poetry-plugin" in dependencies
     assert dependencies["poetry-plugin"] == constraint
@@ -128,14 +130,11 @@ Package operations: 3 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(
-        tester,
-        expected,
-        {
-            "git": "https://github.com/demo/poetry-plugin.git",
-            "extras": ["foo"],
-        },
-    )
+    constraint: dict[str, Any] = {
+        "git": "https://github.com/demo/poetry-plugin.git",
+        "extras": ["foo"],
+    }
+    assert_plugin_add_result(tester, expected, constraint)
 
 
 @pytest.mark.parametrize(
@@ -212,6 +211,7 @@ poetry-plugin = "^1.2.3"
 
     tester.execute("poetry-plugin")
 
+    assert isinstance(tester.command, AddCommand)
     expected = f"""\
 The following packages are already present in the pyproject.toml and will be\
  skipped:

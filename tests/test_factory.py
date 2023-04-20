@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -8,6 +10,7 @@ from cleo.io.buffered_io import BufferedIO
 from deepdiff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import parse_constraint
+from poetry.core.packages.vcs_dependency import VCSDependency
 
 from poetry.exceptions import PoetryException
 from poetry.factory import Factory
@@ -32,7 +35,7 @@ if TYPE_CHECKING:
 class MyPlugin(Plugin):
     def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Setting readmes")
-        poetry.package.readmes = ("README.md",)
+        poetry.package.readmes = (Path("README.md"),)
 
 
 def test_create_poetry(fixture_dir: FixtureDirGetter) -> None:
@@ -44,6 +47,7 @@ def test_create_poetry(fixture_dir: FixtureDirGetter) -> None:
     assert package.version.text == "1.2.3"
     assert package.description == "Some description."
     assert package.authors == ["Sébastien Eustace <sebastien@eustace.io>"]
+    assert package.license is not None
     assert package.license.id == "MIT"
 
     for readme in package.readmes:
@@ -62,51 +66,52 @@ def test_create_poetry(fixture_dir: FixtureDirGetter) -> None:
     for dep in package.requires:
         dependencies[dep.name] = dep
 
-    cleo = dependencies["cleo"]
+    cleo = dependencies[canonicalize_name("cleo")]
     assert cleo.pretty_constraint == "^0.6"
     assert not cleo.is_optional()
 
-    pendulum = dependencies["pendulum"]
+    pendulum = dependencies[canonicalize_name("pendulum")]
     assert pendulum.pretty_constraint == "branch 2.0"
     assert pendulum.is_vcs()
+    assert isinstance(pendulum, VCSDependency)
     assert pendulum.vcs == "git"
     assert pendulum.branch == "2.0"
     assert pendulum.source == "https://github.com/sdispater/pendulum.git"
     assert pendulum.allows_prereleases()
 
-    requests = dependencies["requests"]
+    requests = dependencies[canonicalize_name("requests")]
     assert requests.pretty_constraint == "^2.18"
     assert not requests.is_vcs()
     assert not requests.allows_prereleases()
     assert requests.is_optional()
     assert requests.extras == frozenset(["security"])
 
-    pathlib2 = dependencies["pathlib2"]
+    pathlib2 = dependencies[canonicalize_name("pathlib2")]
     assert pathlib2.pretty_constraint == "^2.2"
     assert parse_constraint(pathlib2.python_versions) == parse_constraint("~2.7")
     assert not pathlib2.is_optional()
 
-    demo = dependencies["demo"]
+    demo = dependencies[canonicalize_name("demo")]
     assert demo.is_file()
     assert not demo.is_vcs()
     assert demo.name == "demo"
     assert demo.pretty_constraint == "*"
 
-    demo = dependencies["my-package"]
+    demo = dependencies[canonicalize_name("my-package")]
     assert not demo.is_file()
     assert demo.is_directory()
     assert not demo.is_vcs()
     assert demo.name == "my-package"
     assert demo.pretty_constraint == "*"
 
-    simple_project = dependencies["simple-project"]
+    simple_project = dependencies[canonicalize_name("simple-project")]
     assert not simple_project.is_file()
     assert simple_project.is_directory()
     assert not simple_project.is_vcs()
     assert simple_project.name == "simple-project"
     assert simple_project.pretty_constraint == "*"
 
-    functools32 = dependencies["functools32"]
+    functools32 = dependencies[canonicalize_name("functools32")]
     assert functools32.name == "functools32"
     assert functools32.pretty_constraint == "^3.2.3"
     assert (
@@ -153,7 +158,7 @@ def test_create_pyproject_from_package(
     poetry = Factory().create_poetry(fixture_dir(project))
     package = poetry.package
 
-    pyproject = Factory.create_pyproject_from_package(package)
+    pyproject: dict[str, Any] = Factory.create_pyproject_from_package(package)
 
     result = pyproject["tool"]["poetry"]
     expected = poetry.pyproject.poetry_config
@@ -465,14 +470,16 @@ def test_poetry_with_two_default_sources(
 
 def test_validate(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
-    content = complete.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = complete.read()
+    content = pyproject["tool"]["poetry"]
 
     assert Factory.validate(content) == {"errors": [], "warnings": []}
 
 
 def test_validate_fails(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
-    content = complete.read()["tool"]["poetry"]
+    pyproject: dict[str, Any] = complete.read()
+    content = pyproject["tool"]["poetry"]
     content["this key is not in the schema"] = ""
 
     expected = (
@@ -515,7 +522,7 @@ def test_create_poetry_with_plugins(
 
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
 
-    assert poetry.package.readmes == ("README.md",)
+    assert poetry.package.readmes == (Path("README.md"),)
 
 
 @pytest.mark.parametrize(

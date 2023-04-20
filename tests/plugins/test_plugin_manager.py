@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
+from poetry.core.constraints.version import Version
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.packages.locker import Locker
@@ -43,7 +44,7 @@ class MyCommandPlugin(ApplicationPlugin):
 class InvalidPlugin:
     def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Updating version")
-        poetry.package.version = "9.9.9"
+        poetry.package.version = Version.parse("9.9.9")
 
 
 @pytest.fixture

@@ -144,7 +144,7 @@ def mock_file_downloads(
 ) -> None:
     def callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> list[int | dict[str, Any] | str]:
+    ) -> list[int | dict[str, Any] | bytes]:
         name = Path(urlparse(uri).path).name
 
         fixture = Path(__file__).parent.parent.joinpath(
@@ -622,10 +622,14 @@ def verify_installed_distribution(
     assert metadata["Name"] == package.name
     assert metadata["Version"] == package.version.text
 
-    direct_url_file = distribution._path.joinpath("direct_url.json")
+    direct_url_file = distribution._path.joinpath(  # type: ignore[attr-defined]
+        "direct_url.json"
+    )
 
     if url_reference is not None:
-        record_file = distribution._path.joinpath("RECORD")
+        record_file = distribution._path.joinpath(  # type: ignore[attr-defined]
+            "RECORD"
+        )
         with open(record_file, encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             rows = list(reader)
@@ -855,6 +859,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     if is_artifact_cached:
         download_spy.assert_not_called()
     else:
+        assert package.source_url is not None
         download_spy.assert_called_once_with(
             mocker.ANY, operation, Link(package.source_url)
         )
@@ -948,6 +953,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         mock_prepare.assert_not_called()
 
     if expect_artifact_download:
+        assert package.source_url is not None
         download_spy.assert_called_once_with(
             mocker.ANY, operation, Link(package.source_url)
         )
@@ -1053,6 +1059,7 @@ def test_executor_should_write_pep610_url_references_for_editable_git(
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
     executor.execute([Install(package)])
+    assert package.source_url is not None
     verify_installed_distribution(
         tmp_venv,
         package,
@@ -1281,6 +1288,7 @@ Package operations: 1 install, 0 updates, 0 removals
   Error on stdout
 """
 
+    assert directory_package.source_url is not None
     if editable:
         pip_command = "pip wheel --use-pep517 --editable"
         requirement = directory_package.source_url
