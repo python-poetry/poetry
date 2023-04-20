@@ -75,7 +75,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 tomlkit = ">=0.11.4,<1.0.0"
 # trove-classifiers uses calver, so version is unclamped
 trove-classifiers = ">=2022.5.19"
-virtualenv = "^20.19.0"
+virtualenv = "^20.22.0"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 
