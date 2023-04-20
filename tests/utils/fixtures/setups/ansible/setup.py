@@ -193,7 +193,7 @@ def substitute_crypto_to_req(req):
 
 def read_extras():
     """Specify any extra requirements for installation."""
-    extras = {}
+    extras = dict()
     extra_requirements_dir = "packaging/requirements"
     for extra_requirements_filename in os.listdir(extra_requirements_dir):
         filename_match = re.search(
@@ -225,23 +225,23 @@ def get_dynamic_setup_params():
     }
 
 
-static_setup_params = {
+static_setup_params = dict(
     # Use the distutils SDist so that symlinks are not expanded
     # Use a custom Build for the same reason
-    "cmdclass": {
+    cmdclass={
         "build_py": BuildPyCommand,
         "build_scripts": BuildScriptsCommand,
         "install_lib": InstallLibCommand,
         "install_scripts": InstallScriptsCommand,
         "sdist": SDistCommand,
     },
-    "name": "ansible",
-    "version": __version__,
-    "description": "Radically simple IT automation",
-    "author": __author__,
-    "author_email": "info@ansible.com",
-    "url": "https://ansible.com/",
-    "project_urls": {
+    name="ansible",
+    version=__version__,
+    description="Radically simple IT automation",
+    author=__author__,
+    author_email="info@ansible.com",
+    url="https://ansible.com/",
+    project_urls={
         "Bug Tracker": "https://github.com/ansible/ansible/issues",
         "CI: Shippable": "https://app.shippable.com/github/ansible/ansible",
         "Code of Conduct": "https://docs.ansible.com/ansible/latest/community/code_of_conduct.html",
@@ -249,13 +249,13 @@ static_setup_params = {
         "Mailing lists": "https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information",
         "Source Code": "https://github.com/ansible/ansible",
     },
-    "license": "GPLv3+",
+    license="GPLv3+",
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
-    "python_requires": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
-    "package_dir": {"": "lib"},
-    "packages": find_packages("lib"),
-    "package_data": {
+    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
+    package_dir={"": "lib"},
+    packages=find_packages("lib"),
+    package_data={
         "": [
             "module_utils/powershell/*.psm1",
             "module_utils/powershell/*/*.psm1",
@@ -269,7 +269,7 @@ static_setup_params = {
             "config/module_defaults.yml",
         ]
     },
-    "classifiers": [
+    classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
@@ -288,7 +288,7 @@ static_setup_params = {
         "Topic :: System :: Systems Administration",
         "Topic :: Utilities",
     ],
-    "scripts": [
+    scripts=[
         "bin/ansible",
         "bin/ansible-playbook",
         "bin/ansible-pull",
@@ -300,10 +300,10 @@ static_setup_params = {
         "bin/ansible-config",
         "bin/ansible-inventory",
     ],
-    "data_files": [],
+    data_files=[],
     # Installing as zip files would break due to references to __file__
-    "zip_safe": False,
-}
+    zip_safe=False,
+)
 
 
 def main():
