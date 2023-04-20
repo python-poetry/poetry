@@ -13,18 +13,18 @@ def read_version():
                 return ast.literal_eval(line[len("__version__ = ") :].strip())
 
 
-kwargs = dict(
-    name="demo",
-    license="MIT",
-    version=read_version(),
-    description="Demo project.",
-    author="Sébastien Eustace",
-    author_email="sebastien@eustace.io",
-    url="https://github.com/demo/demo",
-    packages=["demo"],
-    install_requires=["pendulum>=1.4.4"],
-    extras_require={"foo": ["cleo"]},
-)
+kwargs = {
+    "name": "demo",
+    "license": "MIT",
+    "version": read_version(),
+    "description": "Demo project.",
+    "author": "Sébastien Eustace",
+    "author_email": "sebastien@eustace.io",
+    "url": "https://github.com/demo/demo",
+    "packages": ["demo"],
+    "install_requires": ["pendulum>=1.4.4"],
+    "extras_require": {"foo": ["cleo"]},
+}
 
 
 setup(**kwargs)
