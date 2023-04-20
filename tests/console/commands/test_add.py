@@ -1064,6 +1064,18 @@ If you prefer to upgrade it to the latest available version,\
     assert expected in tester.io.fetch_output()
 
 
+def test_add_should_fail_circular_dependency(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+) -> None:
+    repo.add_package(get_package("simple-project", "1.1.2"))
+    result = tester.execute("simple-project")
+
+    assert result == 1
+
+    expected = "Cannot add dependency on simple-project to project with the same name."
+    assert expected in tester.io.fetch_error()
+
+
 def test_add_latest_should_not_create_duplicate_keys(
     project_factory: ProjectFactory,
     repo: TestRepository,
