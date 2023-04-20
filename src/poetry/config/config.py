@@ -124,7 +124,6 @@ class Config:
             "prompt": "{project_name}-py{python_version}",
         },
         "experimental": {
-            "new-installer": True,
             "system-git-client": False,
         },
         "installer": {
@@ -276,7 +275,6 @@ class Config:
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
-            "experimental.new-installer",
             "experimental.system-git-client",
             "installer.modern-installation",
             "installer.parallel",

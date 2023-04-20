@@ -20,9 +20,8 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.factory import Factory
-from poetry.installation import Installer as BaseInstaller
+from poetry.installation import Installer
 from poetry.installation.executor import Executor as BaseExecutor
-from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
@@ -49,11 +48,6 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
 
 RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
-
-
-class Installer(BaseInstaller):
-    def _get_installer(self) -> NoopInstaller:
-        return NoopInstaller()
 
 
 class Executor(BaseExecutor):
@@ -190,7 +184,7 @@ def installer(
     installed: CustomInstalledRepository,
     config: Config,
 ) -> Installer:
-    installer = Installer(
+    return Installer(
         NullIO(),
         env,
         package,
@@ -200,7 +194,6 @@ def installer(
         installed=installed,
         executor=Executor(env, pool, config, NullIO()),
     )
-    return installer
 
 
 def fixture(name: str) -> dict[str, Any]:
@@ -2264,7 +2257,6 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     result = installer.run()
     assert result == 0
 
-    del installer.installer.installs[:]
     locker.locked(True)
     locker.mock_lock_data(locker.written_data)
 
