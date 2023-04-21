@@ -64,6 +64,7 @@ virtualenvs.options.no-pip = false
 virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-environment = false
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
@@ -93,6 +94,7 @@ virtualenvs.options.no-pip = false
 virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-environment = false
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
@@ -146,6 +148,7 @@ virtualenvs.options.no-pip = false
 virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-environment = false
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
@@ -184,6 +187,7 @@ virtualenvs.options.no-pip = false
 virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-environment = false
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """

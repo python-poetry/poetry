@@ -728,7 +728,11 @@ class EnvManager:
         # most users have it activated all the time.
         in_venv = env_prefix is not None and conda_env_name != "base"
 
-        if not in_venv or env is not None:
+        prefer_active_environment = self._poetry.config.get(
+            "virtualenvs.prefer-active-environment"
+        )
+
+        if not in_venv or (env is not None and not prefer_active_environment):
             # Checking if a local virtualenv exists
             if (
                 self._poetry.config.get("virtualenvs.in-project") is not False

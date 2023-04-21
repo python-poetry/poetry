@@ -121,6 +121,7 @@ class Config:
                 "no-setuptools": False,
             },
             "prefer-active-python": False,
+            "prefer-active-environment": False,
             "prompt": "{project_name}-py{python_version}",
         },
         "experimental": {
@@ -275,6 +276,7 @@ class Config:
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
+            "virtualenvs.options.prefer-active-environment",
             "experimental.system-git-client",
             "installer.modern-installation",
             "installer.parallel",
