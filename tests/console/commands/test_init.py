@@ -1049,10 +1049,7 @@ def test_package_include(
         ),
     )
 
-    if include is None:
-        packages = ""
-    else:
-        packages = f'packages = [{{include = "{include}"}}]\n'
+    packages = "" if include is None else f'packages = [{{include = "{include}"}}]\n'
 
     expected = (
         f"[tool.poetry]\n"

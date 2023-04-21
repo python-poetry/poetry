@@ -26,5 +26,5 @@ class IOHandler(logging.Handler):
                 self._io.write_error_line(msg)
             else:
                 self._io.write_line(msg)
-        except Exception:  # noqa: PIE786
+        except Exception:
             self.handleError(record)

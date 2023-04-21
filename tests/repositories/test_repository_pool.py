@@ -81,7 +81,7 @@ def test_repository_from_single_repo_pool_legacy(
     assert pool.get_priority("foo") == expected_priority
 
 
-def test_repository_with_normal_default_secondary_and_explicit_repositories():
+def test_repository_with_normal_default_secondary_and_explicit_repositories() -> None:
     secondary = LegacyRepository("secondary", "https://secondary.com")
     default = LegacyRepository("default", "https://default.com")
     repo1 = LegacyRepository("foo", "https://foo.bar")

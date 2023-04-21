@@ -38,7 +38,7 @@ class MockSinglePageRepository(SinglePageRepository):
         raise RuntimeError("Tests are not configured for downloads")
 
 
-def test_single_page_repository_get_page():
+def test_single_page_repository_get_page() -> None:
     repo = MockSinglePageRepository("jax_releases")
 
     page = repo.get_page("/ignored")
@@ -52,7 +52,7 @@ def test_single_page_repository_get_page():
         assert link.path.startswith("/jax-releases/")
 
 
-def test_single_page_repository_find_packages():
+def test_single_page_repository_find_packages() -> None:
     repo = MockSinglePageRepository("jax_releases")
 
     dep = Dependency("jaxlib", "0.3.7")

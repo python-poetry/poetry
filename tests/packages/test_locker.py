@@ -188,7 +188,7 @@ url = "https://example.org/url-package-1.0-cp39-win_amd64.whl"
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     assert content == expected
 
@@ -221,7 +221,7 @@ redis = ["redis (>=2.10.5)"]
 lock-version = "2.0"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-"""  # noqa: E800
+"""
 
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(content)
@@ -282,7 +282,7 @@ files = []
 python-versions = "*"
 lock-version = "2.0"
 content-hash = "123456789"
-"""  # noqa: E800
+"""
 
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(content)
@@ -346,7 +346,7 @@ files = []
 python-versions = "*"
 lock-version = "2.0"
 content-hash = "123456789"
-"""  # noqa: E800
+"""
 
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(content)
@@ -537,7 +537,7 @@ files = []
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     assert content == expected
 
@@ -579,7 +579,7 @@ foo = ["B (>=1.0.0)"]
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -611,7 +611,7 @@ foo = ["bar"]
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
     with locker.lock.open("w", encoding="utf-8") as f:
         f.write(content)
 
@@ -658,7 +658,7 @@ reference = "legacy"
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     assert content == expected
 
@@ -703,7 +703,7 @@ def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
 lock-version = "3.0"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-"""  # noqa: E800
+"""
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     with open(locker.lock, "w", encoding="utf-8") as f:
@@ -740,7 +740,7 @@ C = ["first", "second", "third"]
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -778,7 +778,7 @@ B = {{version = "^1.0.0", extras = ["a", "b", "c"], optional = true}}
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -891,7 +891,7 @@ I = {{git = "https://github.com/python-poetry/poetry.git", rev = "spam"}}
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     assert content == expected
 
@@ -935,7 +935,7 @@ subdirectory = "subdir"
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     assert content == expected
 
@@ -979,7 +979,7 @@ C = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     assert content == expected
 
@@ -1010,7 +1010,7 @@ url = "lib/libA"
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(content)
@@ -1155,7 +1155,7 @@ resolved_reference = "123456"
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
             assert content == expected
 
@@ -1173,7 +1173,7 @@ package = []
 lock-version = "2.0"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-"""  # noqa: E800
+"""
 
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(old_content)

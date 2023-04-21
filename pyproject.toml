@@ -122,6 +122,41 @@ requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.core.masonry.api"
 
 
+[tool.ruff]
+fix = true
+unfixable = [
+    "ERA",  # do not autoremove commented out code
+]
+target-version = "py37"
+line-length = 88
+extend-select = [
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "ERA",  # flake8-eradicate/eradicate
+    "PIE",  # flake8-pie
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "TCH",  # flake8-type-checking
+    "N",  # pep8-naming
+    "RUF",  # ruff checks
+]
+ignore = [
+    "B904",  # use 'raise ... from err'
+    "B905",  # use explicit 'strict=' parameter with 'zip()'
+    "N818"  #  Exception name should be named with an Error suffix
+]
+extend-exclude = [
+    "docs/*",
+    # Frozen and not subject to change in this repo
+    "install-poetry.py",
+    # External to the project's coding standards
+    "tests/**/fixtures/*",
+]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+
 [tool.isort]
 py_version = 37
 profile = "black"

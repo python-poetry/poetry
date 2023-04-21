@@ -1944,7 +1944,7 @@ class NullEnv(SystemEnv):
         return ""
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        self.executed.append([bin] + list(args))
+        self.executed.append([bin, *list(args)])
 
         if self._execute:
             return super().execute(bin, *args, **kwargs)

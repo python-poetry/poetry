@@ -202,7 +202,7 @@ class Application(BaseApplication):
             from poetry.console.io.inputs.run_argv_input import RunArgvInput
 
             input = cast("ArgvInput", io.input)
-            run_input = RunArgvInput([self._name or ""] + input._tokens)
+            run_input = RunArgvInput([self._name or "", *input._tokens])
             # For the run command reset the definition
             # with only the set options (i.e. the options given before the command)
             for option_name, value in input.options.items():

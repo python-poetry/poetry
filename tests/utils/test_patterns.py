@@ -34,7 +34,7 @@ from poetry.utils import patterns
         ),
     ],
 )
-def test_wheel_file_re(filename: str, expected: dict[str, str | None]):
+def test_wheel_file_re(filename: str, expected: dict[str, str | None]) -> None:
     match = patterns.wheel_file_re.match(filename)
     groups = match.groupdict()
 

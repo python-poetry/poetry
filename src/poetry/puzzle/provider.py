@@ -671,18 +671,18 @@ class Provider:
         # the requirements will be merged.
         #
         # For instance:
-        #   - enum34; python_version=="2.7"
-        #   - enum34; python_version=="3.3"
+        #   • enum34; python_version=="2.7"
+        #   • enum34; python_version=="3.3"
         #
         # will become:
-        #   - enum34; python_version=="2.7" or python_version=="3.3"
+        #   • enum34; python_version=="2.7" or python_version=="3.3"
         #
         # If the duplicate dependencies have different constraints
         # we have to split the dependency graph.
         #
         # An example of this is:
-        #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
-        #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
+        #   • pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
+        #   • pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates: dict[str, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
             duplicates[dep.complete_name].append(dep)
@@ -702,19 +702,19 @@ class Provider:
             for group in dep_groups:
                 # In order to reduce the number of overrides we merge duplicate
                 # dependencies by constraint. For instance, if we have:
-                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   - foo (>=2.0) ; python_version >= "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.7"
                 # we can avoid two overrides by merging them to:
-                #   - foo (>=2.0) ; python_version >= "3.6"
+                #   • foo (>=2.0) ; python_version >= "3.6"
                 # However, if we want to merge dependencies by constraint we have to
                 # merge dependencies by markers first in order to avoid unnecessary
                 # solver failures. For instance, if we have:
-                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   - foo (>=2.0) ; python_version >= "3.7"
-                #   - foo (<2.1) ; python_version >= "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.7"
+                #   • foo (<2.1) ; python_version >= "3.7"
                 # we must not merge the first two constraints but the last two:
-                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   - foo (>=2.0,<2.1) ; python_version >= "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   • foo (>=2.0,<2.1) ; python_version >= "3.7"
                 deps += self._merge_dependencies_by_constraint(
                     self._merge_dependencies_by_marker(group)
                 )
@@ -748,13 +748,13 @@ class Provider:
             # tell the solver to make new resolutions with specific overrides.
             #
             # For instance, if the foo (1.2.3) package has the following dependencies:
-            #   - bar (>=2.0) ; python_version >= "3.6"
-            #   - bar (<2.0) ; python_version < "3.6"
+            #   • bar (>=2.0) ; python_version >= "3.6"
+            #   • bar (<2.0) ; python_version < "3.6"
             #
             # then the solver will need to make two new resolutions
             # with the following overrides:
-            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
-            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
+            #   • {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
+            #   • {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
 
             def fmt_warning(d: Dependency) -> str:
                 dependency_marker = d.marker if not d.marker.is_any() else "*"
@@ -1005,16 +1005,16 @@ class Provider:
         environment markers to the inverse of the union of the
         other dependencies markers.
         For instance, if we have the following dependencies:
-          - ipython
-          - ipython (1.2.4) ; implementation_name == "pypy"
+          • ipython
+          • ipython (1.2.4) ; implementation_name == "pypy"
 
         the marker for `ipython` will become `implementation_name != "pypy"`.
 
         Further, we have to merge the constraints of the requirements
         without markers into the constraints of the requirements with markers.
         for instance, if we have the following dependencies:
-          - foo (>= 1.2)
-          - foo (!= 1.2.1) ; python == 3.10
+          • foo (>= 1.2)
+          • foo (!= 1.2.1) ; python == 3.10
 
         the constraint for the second entry will become (!= 1.2.1, >= 1.2).
         """
@@ -1052,10 +1052,10 @@ class Provider:
                 # and the inverted marker is not empty,
                 # a dependency with the inverted union of all markers is required
                 # in order to not miss other dependencies later, for instance:
-                #   - foo (1.0) ; python == 3.7
-                #   - foo (2.0) ; python == 3.8
-                #   - bar (2.0) ; python == 3.8
-                #   - bar (3.0) ; python == 3.9
+                #   • foo (1.0) ; python == 3.7
+                #   • foo (2.0) ; python == 3.8
+                #   • bar (2.0) ; python == 3.8
+                #   • bar (3.0) ; python == 3.9
                 #
                 # the last dependency would be missed without this,
                 # because the intersection with both foo dependencies is empty.
