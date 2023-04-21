@@ -67,8 +67,9 @@ list of installed packages
             ]
 
             for group_name, section in [
-                (MAIN_GROUP, poetry_content["dependencies"])
-            ] + group_sections:
+                (MAIN_GROUP, poetry_content["dependencies"]),
+                *group_sections,
+            ]:
                 removed += self._remove_packages(packages, section, group_name)
                 if group_name != MAIN_GROUP:
                     if not section:

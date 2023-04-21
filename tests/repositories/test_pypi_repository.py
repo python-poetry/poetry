@@ -51,10 +51,7 @@ class MockRepository(PyPiRepository):
     ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]
-        if len(parts) == 3:
-            version = parts[1]
-        else:
-            version = None
+        version = parts[1] if len(parts) == 3 else None
 
         if not version:
             fixture = self.JSON_FIXTURES / (name + ".json")
@@ -340,7 +337,7 @@ def test_urls() -> None:
     assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
-def test_find_links_for_package_of_supported_types():
+def test_find_links_for_package_of_supported_types() -> None:
     repo = MockRepository()
     package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))
 
@@ -353,7 +350,7 @@ def test_find_links_for_package_of_supported_types():
     assert links[0].show_url == "hbmqtt-0.9.6.tar.gz"
 
 
-def test_get_release_info_includes_only_supported_types():
+def test_get_release_info_includes_only_supported_types() -> None:
     repo = MockRepository()
 
     release_info = repo._get_release_info(name="hbmqtt", version="0.9.6")

@@ -155,7 +155,7 @@ class Chef:
         context: Callable[
             [str], AbstractContextManager[zipfile.ZipFile | tarfile.TarFile]
         ]
-        if suffix == ".zip":
+        if suffix == ".zip":  # noqa: SIM108
             context = zipfile.ZipFile
         else:
             context = tarfile.open

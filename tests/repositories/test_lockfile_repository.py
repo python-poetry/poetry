@@ -7,7 +7,7 @@ from poetry.core.packages.package import Package
 from poetry.repositories.lockfile_repository import LockfileRepository
 
 
-def test_has_package():
+def test_has_package() -> None:
     repo = LockfileRepository()
 
     url_package = Package(
@@ -32,7 +32,7 @@ def test_has_package():
     assert repo.has_package(deepcopy(url_package_2))
 
 
-def test_remove_package():
+def test_remove_package() -> None:
     url_package = Package(
         "a", "1.0", source_type="url", source_url="https://example.org/a.whl"
     )

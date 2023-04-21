@@ -291,7 +291,7 @@ class Executor:
             # error to be picked up by the error handler.
             if result == -2:
                 raise KeyboardInterrupt
-        except Exception as e:  # noqa: PIE786
+        except Exception as e:
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 

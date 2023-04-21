@@ -107,7 +107,7 @@ def test_load_successful_with_invalid_distribution(
     invalid_dist_info.mkdir(parents=True)
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
-        return_value=INSTALLED_RESULTS + [metadata.PathDistribution(invalid_dist_info)],
+        return_value=[*INSTALLED_RESULTS, metadata.PathDistribution(invalid_dist_info)],
     )
     repository_with_invalid_distribution = InstalledRepository.load(env)
 

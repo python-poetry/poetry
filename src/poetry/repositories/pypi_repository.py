@@ -246,5 +246,5 @@ class PyPiRepository(HTTPRepository):
     @staticmethod
     def _get_yanked(json_data: dict[str, Any]) -> str | bool:
         if json_data.get("yanked", False):
-            return json_data.get("yanked_reason") or True  # noqa: SIM222
+            return json_data.get("yanked_reason") or True
         return False

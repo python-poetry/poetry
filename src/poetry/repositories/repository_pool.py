@@ -130,10 +130,7 @@ class RepositoryPool(AbstractRepository):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            if default:
-                priority = Priority.DEFAULT
-            else:
-                priority = Priority.SECONDARY
+            priority = Priority.DEFAULT if default else Priority.SECONDARY
 
         if priority is Priority.DEFAULT and self.has_default():
             raise ValueError("Only one repository can be the default.")
