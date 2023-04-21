@@ -327,15 +327,6 @@ class SitePackages:
                         distribution.locate_file(file),  # type: ignore[no-untyped-call]
                     )
 
-    def find_distribution_nspkg_pth_files(
-        self, distribution_name: str, writable_only: bool = False
-    ) -> Iterable[Path]:
-        return self.find_distribution_files_with_suffix(
-            distribution_name=distribution_name,
-            suffix="-nspkg.pth",
-            writable_only=writable_only,
-        )
-
     def find_distribution_direct_url_json_files(
         self, distribution_name: str, writable_only: bool = False
     ) -> Iterable[Path]:
