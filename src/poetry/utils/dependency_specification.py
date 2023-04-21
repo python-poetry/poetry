@@ -96,9 +96,9 @@ def _parse_dependency_specification_path(
 
         return {
             "name": package.name,
-            "path": path.relative_to(cwd).as_posix()
-            if not is_absolute
-            else path.as_posix(),
+            "path": (
+                path.relative_to(cwd).as_posix() if not is_absolute else path.as_posix()
+            ),
         }
 
     return None

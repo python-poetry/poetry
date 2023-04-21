@@ -58,14 +58,12 @@ def test_remove_without_specific_group_removes_from_all_groups(
 
     content = app.poetry.file.read()
 
-    groups_content = tomlkit.parse(
-        """\
+    groups_content = tomlkit.parse("""\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
 baz = "^1.0.0"
 
-"""
-    )
+""")
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
@@ -115,14 +113,12 @@ def test_remove_without_specific_group_removes_from_specific_groups(
 
     content = app.poetry.file.read()
 
-    groups_content = tomlkit.parse(
-        """\
+    groups_content = tomlkit.parse("""\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
 baz = "^1.0.0"
 
-"""
-    )
+""")
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
@@ -172,14 +168,12 @@ def test_remove_does_not_live_empty_groups(
 
     content = app.poetry.file.read()
 
-    groups_content = tomlkit.parse(
-        """\
+    groups_content = tomlkit.parse("""\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
 baz = "^1.0.0"
 
-"""
-    )
+""")
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(content)
@@ -218,14 +212,12 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
 
     content = app.poetry.file.read()
 
-    groups_content = tomlkit.parse(
-        """\
+    groups_content = tomlkit.parse("""\
 [tool.poetry.group.bar.dependencies]
 foo-bar = "^2.0.0"
 baz = "^1.0.0"
 
-"""
-    )
+""")
     content["tool"]["poetry"]["dependencies"]["foo-bar"] = "^2.0.0"
     content["tool"]["poetry"].value._insert_after(
         "dependencies", "group", groups_content["tool"]["poetry"]["group"]

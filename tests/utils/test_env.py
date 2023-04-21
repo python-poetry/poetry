@@ -1091,13 +1091,11 @@ def test_call_does_not_block_on_full_pipe(
 ) -> None:
     """see https://github.com/python-poetry/poetry/issues/7698"""
     script = tmp_path / "script.py"
-    script.write_text(
-        f"""\
+    script.write_text(f"""\
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-"""
-    )
+""")
 
     def target(result: list[int]) -> None:
         tmp_venv.run("python", str(script), call=True)
