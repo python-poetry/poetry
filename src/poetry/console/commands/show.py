@@ -257,9 +257,9 @@ lists all packages available."""
                     latest = locked
 
                 latest_packages[locked.pretty_name] = latest
-                update_status = latest_statuses[
-                    locked.pretty_name
-                ] = self.get_update_status(latest, locked)
+                update_status = latest_statuses[locked.pretty_name] = (
+                    self.get_update_status(latest, locked)
+                )
 
                 if not self.option("outdated") or update_status != "up-to-date":
                     name_length = max(name_length, current_length)
