@@ -901,7 +901,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
 
         def mock_get_cached_archive_for_link_func(
             _: Link, *, strict: bool, **__: Any
-        ) -> None:
+        ) -> Path | None:
             if is_wheel_cached and not strict:
                 return cached_wheel
             if is_sdist_cached:

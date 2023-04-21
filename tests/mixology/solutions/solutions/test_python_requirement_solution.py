@@ -10,7 +10,7 @@ from poetry.mixology.term import Term
 from poetry.puzzle.exceptions import SolverProblemError
 
 
-def test_it_provides_the_correct_solution():
+def test_it_provides_the_correct_solution() -> None:
     from poetry.mixology.solutions.solutions import PythonRequirementSolution
 
     incompatibility = Incompatibility(

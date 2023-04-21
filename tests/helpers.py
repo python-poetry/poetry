@@ -178,6 +178,9 @@ class PoetryTestApplication(Application):
 
 
 class TestLocker(Locker):
+    # class name begins 'Test': tell pytest that it does not contain testcases.
+    __test__ = False
+
     def __init__(self, lock: Path, local_config: dict) -> None:
         self._lock = lock
         self._local_config = local_config

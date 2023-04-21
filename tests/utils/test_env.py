@@ -248,7 +248,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -312,7 +312,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -356,7 +356,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     m.assert_not_called()
 
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -410,7 +410,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     )
 
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
@@ -476,7 +476,7 @@ def test_activate_activates_recreates_for_different_patch(
     remove_venv_m.assert_called_with(tmp_path / f"{venv_name}-py3.7")
 
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -528,7 +528,7 @@ def test_activate_does_not_recreate_when_switching_minor(
     remove_venv_m.assert_not_called()
 
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
@@ -901,8 +901,8 @@ def test_remove_keeps_dir_if_not_deleteable(
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    def err_on_rm_venv_only(path: Path | str, *args: Any, **kwargs: Any) -> None:
-        if str(path) == str(venv_path):
+    def err_on_rm_venv_only(path: Path, *args: Any, **kwargs: Any) -> None:
+        if path.resolve() == venv_path.resolve():
             raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
         else:
             remove_directory(path)
@@ -1259,6 +1259,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         str(c) for c in sys.version_info[:3]
     )
 
+    assert version.patch is not None
     mocker.patch("sys.version_info", (version.major, version.minor, version.patch + 1))
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -1296,6 +1297,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         del os.environ["VIRTUAL_ENV"]
 
     version = Version.from_parts(*sys.version_info[:3])
+    assert version.minor is not None
     poetry.package.python_versions = f"~{version.major}.{version.minor - 1}.0"
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
@@ -1334,6 +1336,7 @@ def test_create_venv_fails_if_current_python_version_is_not_supported(
     manager.create_venv()
 
     current_version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    assert current_version.minor is not None
     next_version = ".".join(
         str(c) for c in (current_version.major, current_version.minor + 1, 0)
     )
