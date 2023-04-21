@@ -236,8 +236,8 @@ def test_builder_setup_generation_runs_with_pip_editable(
 
     poetry = Factory().create_poetry(extended_project)
 
-    # we need a venv with setuptools since we are verifying setup.py builds
-    with ephemeral_environment(flags={"no-setuptools": False}) as venv:
+    # we need a venv with pip and setuptools since we are verifying setup.py builds
+    with ephemeral_environment(flags={"no-setuptools": False, "no-pip": False}) as venv:
         builder = EditableBuilder(poetry, venv, NullIO())
         builder.build()
 
