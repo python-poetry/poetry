@@ -891,9 +891,7 @@ class EnvManager:
         in_project: bool | None = self._poetry.config.get("virtualenvs.in-project")
         if in_project is not None:
             return in_project
-
-        venv: Path = self._poetry.file.parent / ".venv"
-        return venv.is_dir()
+        return self.in_project_venv.is_dir()
 
     def create_venv(
         self,
