@@ -626,10 +626,9 @@ class EnvManager:
         patch = python_version.text
 
         create = False
-        is_root_venv = self.use_in_project_venv()
-        # If we are required to create the virtual environment in the root folder,
+        # If we are required to create the virtual environment in the project directory,
         # create or recreate it if needed
-        if is_root_venv:
+        if self.use_in_project_venv():
             create = False
             venv = self.in_project_venv
             if venv.exists():
@@ -893,8 +892,8 @@ class EnvManager:
         if in_project is not None:
             return in_project
 
-        root_venv: Path = self._poetry.file.parent / ".venv"
-        return root_venv.is_dir()
+        venv: Path = self._poetry.file.parent / ".venv"
+        return venv.is_dir()
 
     def create_venv(
         self,
@@ -923,7 +922,7 @@ class EnvManager:
             return env
 
         create_venv = self._poetry.config.get("virtualenvs.create")
-        root_venv = self.use_in_project_venv()
+        in_project_venv = self.use_in_project_venv()
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
@@ -933,7 +932,9 @@ class EnvManager:
             executable = self._detect_active_python()
 
         venv_path = (
-            self.in_project_venv if root_venv else self._poetry.config.virtualenvs_path
+            self.in_project_venv
+            if in_project_venv
+            else self._poetry.config.virtualenvs_path
         )
         if not name:
             name = self._poetry.package.name
@@ -1011,7 +1012,7 @@ class EnvManager:
                     self._poetry.package.python_versions
                 )
 
-        if root_venv:
+        if in_project_venv:
             venv = venv_path
         else:
             name = self.generate_env_name(name, str(cwd))
