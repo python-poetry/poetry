@@ -208,6 +208,52 @@ def check_output_wrapper(
     return check_output
 
 
+def test_activate_in_project_venv_no_explicit_config(
+    tmp_path: Path,
+    manager: EnvManager,
+    poetry: Poetry,
+    mocker: MockerFixture,
+    venv_name: str,
+    in_project_venv_dir: Path,
+) -> None:
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch(
+        "subprocess.Popen.communicate",
+        side_effect=[
+            ("/prefix", None),
+            ('{"version_info": [3, 7, 0]}', None),
+            ("/prefix", None),
+            ("/prefix", None),
+            ("/prefix", None),
+        ],
+    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
+
+    env = manager.activate("python3.7")
+
+    assert env.path == tmp_path / "poetry-fixture-simple" / ".venv"
+    assert env.base == Path("/prefix")
+
+    m.assert_called_with(
+        tmp_path / "poetry-fixture-simple" / ".venv",
+        executable=Path("/usr/bin/python3.7"),
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+        },
+        prompt="simple-project-py3.7",
+    )
+
+    envs_file = TOMLFile(tmp_path / "envs.toml")
+    assert not envs_file.exists()
+
+
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tmp_path: Path,
     manager: EnvManager,
@@ -1382,7 +1428,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     )
     mocker.patch(
         "subprocess.Popen.communicate",
-        side_effect=[("/prefix", None), ("/prefix", None)],
+        side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
 
