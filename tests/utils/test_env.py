@@ -966,11 +966,11 @@ def test_call_with_input_and_keyboard_interrupt(
 def test_call_no_input_with_keyboard_interrupt(
     tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
-    mocker.patch("subprocess.call", side_effect=KeyboardInterrupt())
+    mocker.patch("subprocess.check_call", side_effect=KeyboardInterrupt())
     kwargs = {"call": True}
     with pytest.raises(KeyboardInterrupt):
         tmp_venv.run("python", "-", **kwargs)
-    subprocess.call.assert_called_once()
+    subprocess.check_call.assert_called_once()
 
 
 def test_run_with_called_process_error(
@@ -1010,7 +1010,7 @@ def test_call_no_input_with_called_process_error(
     tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch(
-        "subprocess.call",
+        "subprocess.check_call",
         side_effect=subprocess.CalledProcessError(
             42, "some_command", "some output", "some error"
         ),
@@ -1018,7 +1018,7 @@ def test_call_no_input_with_called_process_error(
     kwargs = {"call": True}
     with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", **kwargs)
-    subprocess.call.assert_called_once()
+    subprocess.check_call.assert_called_once()
     assert "some output" in str(error.value)
     assert "some error" in str(error.value)
 
@@ -1054,9 +1054,10 @@ for i in range(10000):
     )
 
     def target(result: list[int]) -> None:
-        result.append(tmp_venv.run("python", str(script), call=True))
+        tmp_venv.run("python", str(script), call=True)
+        result.append(0)
 
-    results = []
+    results: list[int] = []
     # use a separate thread, so that the test does not block in case of error
     thread = Thread(target=target, args=(results,))
     thread.start()
