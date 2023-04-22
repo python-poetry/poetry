@@ -7,7 +7,7 @@ import pytest
 
 from deepdiff import DeepDiff
 
-from poetry.utils.dependency_specification import parse_dependency_specification
+from poetry.utils.dependency_specification import RequirementsParser
 
 
 if TYPE_CHECKING:
@@ -116,5 +116,5 @@ def test_parse_dependency_specification(
     mocker.patch("pathlib.Path.exists", _mock)
 
     assert not DeepDiff(
-        parse_dependency_specification(requirement), specification, ignore_order=True
+        RequirementsParser().parse(requirement), specification, ignore_order=True
     )
