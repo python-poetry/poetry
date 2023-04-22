@@ -16,7 +16,7 @@ from typing import cast
 from poetry.core.packages.dependency import Dependency
 from tomlkit.items import InlineTable
 
-from poetry.puzzle.provider import Provider
+from poetry.packages.direct_origin import DirectOrigin
 
 
 if TYPE_CHECKING:
@@ -120,7 +120,7 @@ class RequirementsParser:
             pair["subdirectory"] = parsed.subdirectory
 
         source_root = self._env.path.joinpath("src") if self._env else None
-        package = Provider.get_package_from_vcs(
+        package = DirectOrigin.get_package_from_vcs(
             "git",
             url=url.url,
             rev=pair.get("rev"),
@@ -139,7 +139,7 @@ class RequirementsParser:
             return self._parse_git_url(requirement)
 
         if url_parsed.scheme in ["http", "https"]:
-            package = Provider.get_package_from_url(requirement)
+            package = DirectOrigin.get_package_from_url(requirement)
             assert package.source_url is not None
             return {"name": package.name, "url": package.source_url}
 
@@ -158,9 +158,9 @@ class RequirementsParser:
                 path = self._cwd.joinpath(requirement)
 
             if path.is_file():
-                package = Provider.get_package_from_file(path.resolve())
+                package = DirectOrigin.get_package_from_file(path.resolve())
             else:
-                package = Provider.get_package_from_directory(path.resolve())
+                package = DirectOrigin.get_package_from_directory(path.resolve())
 
             return {
                 "name": package.name,
