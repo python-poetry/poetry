@@ -289,10 +289,7 @@ class SitePackages:
             )
         )
 
-        yield from metadata.PathDistribution.discover(  # type: ignore[no-untyped-call]
-            name=name,
-            path=path,
-        )
+        yield from metadata.PathDistribution.discover(name=name, path=path)
 
     def find_distribution(
         self, name: str, writable_only: bool = False
@@ -310,9 +307,7 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 if file.name.endswith(suffix):
-                    yield Path(
-                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
-                    )
+                    yield Path(distribution.locate_file(file))
 
     def find_distribution_files_with_name(
         self, distribution_name: str, name: str, writable_only: bool = False
@@ -323,9 +318,7 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 if file.name == name:
-                    yield Path(
-                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
-                    )
+                    yield Path(distribution.locate_file(file))
 
     def find_distribution_direct_url_json_files(
         self, distribution_name: str, writable_only: bool = False
@@ -344,9 +337,8 @@ class SitePackages:
         ):
             files = [] if distribution.files is None else distribution.files
             for file in files:
-                path = Path(
-                    distribution.locate_file(file),  # type: ignore[no-untyped-call]
-                )
+                path = Path(distribution.locate_file(file))
+
                 # We can't use unlink(missing_ok=True) because it's not always available
                 if path.exists():
                     path.unlink()
