@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-import functools
 import logging
-import os
 import re
-import tempfile
 import time
-import urllib.parse
 
 from collections import defaultdict
 from contextlib import contextmanager
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -22,19 +17,16 @@ from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import EmptyMarker
 from poetry.core.version.markers import MarkerUnion
 
-from poetry.inspection.info import PackageInfo
-from poetry.inspection.info import PackageInfoError
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
+from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
-from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
@@ -42,6 +34,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
+    from pathlib import Path
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
@@ -98,39 +91,6 @@ class Indicator(ProgressIndicator):
         elapsed = time.time() - self._start_time
 
         return f"{elapsed:.1f}s"
-
-
-@functools.lru_cache(maxsize=None)
-def _get_package_from_git(
-    url: str,
-    branch: str | None = None,
-    tag: str | None = None,
-    rev: str | None = None,
-    subdirectory: str | None = None,
-    source_root: Path | None = None,
-) -> Package:
-    source = Git.clone(
-        url=url,
-        source_root=source_root,
-        branch=branch,
-        tag=tag,
-        revision=rev,
-        clean=False,
-    )
-    revision = Git.get_revision(source)
-
-    path = Path(source.path)
-    if subdirectory:
-        path = path.joinpath(subdirectory)
-
-    package = Provider.get_package_from_directory(path)
-    package._source_type = "git"
-    package._source_url = url
-    package._source_reference = rev or tag or branch or "HEAD"
-    package._source_resolved_reference = revision
-    package._source_subdirectory = subdirectory
-
-    return package
 
 
 class Provider:
@@ -351,7 +311,7 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        package = self.get_package_from_vcs(
+        package = DirectOrigin.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
             branch=dependency.branch,
@@ -368,31 +328,9 @@ class Provider:
 
         return package
 
-    @staticmethod
-    def get_package_from_vcs(
-        vcs: str,
-        url: str,
-        branch: str | None = None,
-        tag: str | None = None,
-        rev: str | None = None,
-        subdirectory: str | None = None,
-        source_root: Path | None = None,
-    ) -> Package:
-        if vcs != "git":
-            raise ValueError(f"Unsupported VCS dependency {vcs}")
-
-        return _get_package_from_git(
-            url=url,
-            branch=branch,
-            tag=tag,
-            rev=rev,
-            subdirectory=subdirectory,
-            source_root=source_root,
-        )
-
     def _search_for_file(self, dependency: FileDependency) -> Package:
         dependency.validate(raise_error=True)
-        package = self.get_package_from_file(dependency.full_path)
+        package = DirectOrigin.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -408,22 +346,9 @@ class Provider:
 
         return package
 
-    @classmethod
-    def get_package_from_file(cls, file_path: Path) -> Package:
-        try:
-            package = PackageInfo.from_path(path=file_path).to_package(
-                root_dir=file_path
-            )
-        except PackageInfoError:
-            raise RuntimeError(
-                f"Unable to determine package info from path: {file_path}"
-            )
-
-        return package
-
     def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
         dependency.validate(raise_error=True)
-        package = self.get_package_from_directory(dependency.full_path)
+        package = DirectOrigin.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -434,12 +359,8 @@ class Provider:
 
         return package
 
-    @classmethod
-    def get_package_from_directory(cls, directory: Path) -> Package:
-        return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
-
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url)
+        package = DirectOrigin.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -450,23 +371,6 @@ class Provider:
 
                 for extra_dep in package.extras[extra]:
                     package.add_dependency(extra_dep)
-
-        return package
-
-    @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
-        file_name = os.path.basename(urllib.parse.urlparse(url).path)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dest = Path(temp_dir) / file_name
-            download_file(url, dest)
-            package = cls.get_package_from_file(dest)
-
-            package.files = [
-                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
-            ]
-
-        package._source_type = "url"
-        package._source_url = url
 
         return package
 
