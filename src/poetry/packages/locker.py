@@ -145,7 +145,7 @@ class Locker:
                 package.files = [{"name": h, "hash": h} for h in hashes[name]]
             elif source_type in {"git", "directory", "url"}:
                 package.files = []
-            else:
+            elif "files" in metadata:
                 files = metadata["files"][name]
                 if source_type == "file":
                     filename = Path(url).name
