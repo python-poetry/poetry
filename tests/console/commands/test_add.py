@@ -1415,3 +1415,55 @@ def test_add_with_path_dependency_no_loopiness(
 
     with pytest.raises(SolverProblemError):
         tester.execute("requests")
+
+
+def test_add_extras_are_parsed_and_included(
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+) -> None:
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    redis_dep = get_dependency("redis", ">=3.3.6 <4.0.0", optional=True)
+
+    cachy = get_package("cachy", "0.2.0")
+    cachy.add_dependency(msgpack_dep)
+    cachy.add_dependency(redis_dep)
+    cachy.extras = {
+        canonicalize_name("redis"): [redis_dep],
+        canonicalize_name("msgpack"): [msgpack_dep],
+    }
+    repo.add_package(cachy)
+
+    msgpack = get_package("msgpack-python", "0.5.1")
+    repo.add_package(msgpack)
+
+    redis = get_package("redis", "3.4.0")
+    repo.add_package(redis)
+
+    tester.execute('cachy --extras "redis msgpack"')
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 3 installs, 0 updates, 0 removals
+
+  • Installing msgpack-python (0.5.1)
+  • Installing redis (3.4.0)
+  • Installing cachy (0.2.0)
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {
+        "version": "^0.2.0",
+        "extras": ["redis", "msgpack"],
+    }
