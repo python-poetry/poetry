@@ -14,11 +14,10 @@ python = "^3.6"
 [tool.poetry.dev-dependencies]
 
 [[tool.poetry.source]]
-name = "foo"
-url = "https://foo.bar/simple/"
-priority = "secondary"
+name = "explicit"
+url = "https://explicit.com/simple/"
+priority = "explicit"
 
 [[tool.poetry.source]]
-name = "bar"
-url = "https://bar.baz/simple/"
-priority = "secondary"
+name = "PyPI"
+priority = "explicit"

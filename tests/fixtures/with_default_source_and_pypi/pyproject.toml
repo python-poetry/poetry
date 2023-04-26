@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "default-source-legacy"
+name = "with-default-source-and-pypi"
 version = "1.2.3"
 description = "Some description."
 authors = [
@@ -48,7 +48,7 @@ pytest = "~3.4"
 
 
 [tool.poetry.scripts]
-my-script = "default_source_legacy:main"
+my-script = "my_package:main"
 
 
 [tool.poetry.plugins."blogtool.parsers"]
@@ -58,4 +58,8 @@ my-script = "default_source_legacy:main"
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-default = true
+priority = "default"
+
+
+[[tool.poetry.source]]
+name = "PyPI"

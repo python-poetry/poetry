@@ -15,6 +15,7 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.config.config import Config
+from poetry.exceptions import PoetryException
 from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories import RepositoryPool
-    from poetry.repositories.legacy_repository import LegacyRepository
+    from poetry.repositories.http_repository import HTTPRepository
     from poetry.utils.dependency_specification import DependencySpec
 
 logger = logging.getLogger(__name__)
@@ -134,6 +135,7 @@ class Factory(BaseFactory):
 
         pool = RepositoryPool()
 
+        explicit_pypi = False
         for source in sources:
             repository = cls.create_package_source(
                 source, auth_config, disable_cache=disable_cache
@@ -163,21 +165,42 @@ class Factory(BaseFactory):
                 io.write_line(message)
 
             pool.add_repository(repository, priority=priority)
+            if repository.name.lower() == "pypi":
+                explicit_pypi = True
 
         # Only add PyPI if no default repository is configured
-        if pool.has_default():
-            if io.is_debug():
-                io.write_line("Deactivating the PyPI repository")
-        else:
-            from poetry.repositories.pypi_repository import PyPiRepository
-
-            if pool.has_primary_repositories():
-                pypi_priority = Priority.SECONDARY
+        if not explicit_pypi:
+            if pool.has_default():
+                if io.is_debug():
+                    io.write_line("Deactivating the PyPI repository")
             else:
-                pypi_priority = Priority.DEFAULT
+                from poetry.repositories.pypi_repository import PyPiRepository
 
-            pool.add_repository(
-                PyPiRepository(disable_cache=disable_cache), priority=pypi_priority
+                if pool.repositories:
+                    io.write_error_line(
+                        "<warning>"
+                        "Warning: In a future version of Poetry, PyPI will be disabled"
+                        " automatically if at least one custom source is configured"
+                        " with another priority than 'explicit'. In order to avoid"
+                        " a breaking change and make your pyproject.toml forward"
+                        " compatible, add PyPI explicitly via 'poetry source add pypi'."
+                        " By the way, this has the advantage that you can set the"
+                        " priority of PyPI as with any other source."
+                        "</warning>"
+                    )
+
+                if pool.has_primary_repositories():
+                    pypi_priority = Priority.SECONDARY
+                else:
+                    pypi_priority = Priority.DEFAULT
+
+                pool.add_repository(
+                    PyPiRepository(disable_cache=disable_cache), priority=pypi_priority
+                )
+
+        if not pool.repositories:
+            raise PoetryException(
+                "At least one source must not be configured as 'explicit'."
             )
 
         return pool
@@ -185,18 +208,28 @@ class Factory(BaseFactory):
     @classmethod
     def create_package_source(
         cls, source: dict[str, str], auth_config: Config, disable_cache: bool = False
-    ) -> LegacyRepository:
+    ) -> HTTPRepository:
+        from poetry.repositories.exceptions import InvalidSourceError
         from poetry.repositories.legacy_repository import LegacyRepository
+        from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.repositories.single_page_repository import SinglePageRepository
 
-        if "url" not in source:
-            raise RuntimeError("Unsupported source specified")
+        try:
+            name = source["name"]
+        except KeyError:
+            raise InvalidSourceError("Missing [name] in source.")
 
-        # PyPI-like repository
-        if "name" not in source:
-            raise RuntimeError("Missing [name] in source.")
-        name = source["name"]
-        url = source["url"]
+        if name.lower() == "pypi":
+            if "url" in source:
+                raise InvalidSourceError(
+                    "The PyPI repository cannot be configured with a custom url."
+                )
+            return PyPiRepository(disable_cache=disable_cache)
+
+        try:
+            url = source["url"]
+        except KeyError:
+            raise InvalidSourceError(f"Missing [url] in source {name!r}.")
 
         repository_class = LegacyRepository
 

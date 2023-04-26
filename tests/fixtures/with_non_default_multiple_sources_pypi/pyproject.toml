@@ -21,4 +21,10 @@ priority = "secondary"
 [[tool.poetry.source]]
 name = "bar"
 url = "https://bar.baz/simple/"
-priority = "secondary"
+
+[[tool.poetry.source]]
+name = "PyPI"
+
+[[tool.poetry.source]]
+name = "baz"
+url = "https://baz.bar/simple/"

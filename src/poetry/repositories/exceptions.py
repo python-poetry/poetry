@@ -7,3 +7,7 @@ class RepositoryError(Exception):
 
 class PackageNotFound(Exception):
     pass
+
+
+class InvalidSourceError(Exception):
+    pass
