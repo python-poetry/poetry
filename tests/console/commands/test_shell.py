@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.console.commands.shell import ShellCommand
+
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
@@ -25,6 +27,7 @@ def test_shell(tester: CommandTester, mocker: MockerFixture) -> None:
 
     tester.execute()
 
+    assert isinstance(tester.command, ShellCommand)
     expected_output = f"Spawning shell within {tester.command.env.path}\n"
 
     shell_activate.assert_called_once_with(tester.command.env)
@@ -38,6 +41,7 @@ def test_shell_already_active(tester: CommandTester, mocker: MockerFixture) -> N
 
     tester.execute()
 
+    assert isinstance(tester.command, ShellCommand)
     expected_output = (
         f"Virtual environment already activated: {tester.command.env.path}\n"
     )
@@ -72,6 +76,7 @@ def test__is_venv_activated(
     prefix: str,
     expected: bool,
 ) -> None:
+    assert isinstance(tester.command, ShellCommand)
     mocker.patch.object(tester.command.env, "_path", Path("foobar"))
     mocker.patch("sys.prefix", prefix)
 

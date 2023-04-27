@@ -10,6 +10,7 @@ from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.factory import Factory
 from poetry.utils._compat import tomllib
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
+from tests.helpers import TestLocker
 from tests.helpers import get_package
 
 
@@ -49,6 +50,7 @@ def test_show_basic_with_installed_packages(
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -125,6 +127,7 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -267,6 +270,7 @@ def test_show_basic_with_installed_packages_single(
 
     installed.add_package(cachy_010)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -308,6 +312,7 @@ def test_show_basic_with_installed_packages_single_canonicalized(
 
     installed.add_package(foo_bar)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -352,6 +357,8 @@ def test_show_basic_with_not_installed_packages_non_decorated(
     pendulum_200.description = "Pendulum package"
 
     installed.add_package(cachy_010)
+
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -406,6 +413,8 @@ def test_show_basic_with_not_installed_packages_decorated(
     pendulum_200.description = "Pendulum package"
 
     installed.add_package(cachy_010)
+
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -474,6 +483,7 @@ def test_show_latest_non_decorated(
     repo.add_package(pendulum_200)
     repo.add_package(pendulum_201)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -542,6 +552,7 @@ def test_show_latest_decorated(
     repo.add_package(pendulum_200)
     repo.add_package(pendulum_201)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -609,6 +620,7 @@ def test_show_outdated(
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -661,6 +673,7 @@ def test_show_outdated_with_only_up_to_date_packages(
     installed.add_package(cachy_020)
     repo.add_package(cachy_020)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -719,6 +732,7 @@ def test_show_outdated_has_prerelease_but_not_allowed(
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -792,6 +806,7 @@ def test_show_outdated_has_prerelease_and_allowed(
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -859,6 +874,7 @@ def test_show_outdated_formatting(
     repo.add_package(pendulum_200)
     repo.add_package(pendulum_201)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -940,6 +956,7 @@ def test_show_outdated_local_dependencies(
     repo.add_package(cachy_030)
     repo.add_package(pendulum_200)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1051,6 +1068,7 @@ def test_show_outdated_git_dev_dependency(
     repo.add_package(pendulum_200)
     repo.add_package(pytest)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1147,6 +1165,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
     repo.add_package(pendulum_200)
     repo.add_package(pytest)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1229,6 +1248,7 @@ def test_show_hides_incompatible_package(
 
     installed.add_package(pendulum_200)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1283,6 +1303,7 @@ def test_show_all_shows_incompatible_package(
 
     installed.add_package(pendulum_200)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1338,6 +1359,7 @@ def test_show_hides_incompatible_package_with_duplicate(
         Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
     )
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1386,6 +1408,7 @@ def test_show_all_shows_all_duplicates(
         Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
     )
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1444,6 +1467,7 @@ def test_show_non_dev_with_basic_installed_packages(
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1516,6 +1540,7 @@ def test_show_with_group_only(
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1587,6 +1612,7 @@ def test_show_with_optional_group(
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1657,6 +1683,7 @@ def test_show_tree(
 
     installed.add_package(cachy2)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1714,6 +1741,7 @@ def test_show_tree_no_dev(
     pytest = get_package("pytest", "6.1.1")
     installed.add_package(pytest)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1781,6 +1809,7 @@ def test_show_tree_why_package(
     c = get_package("c", "0.0.1")
     installed.add_package(c)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1840,6 +1869,7 @@ def test_show_tree_why(
     c = get_package("c", "0.0.1")
     installed.add_package(c)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1897,6 +1927,7 @@ def test_show_required_by_deps(
     installed.add_package(cachy2)
     installed.add_package(pendulum)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1990,6 +2021,7 @@ def test_show_dependency_installed_from_git_in_dev(
     repo.add_package(pendulum_200)
 
     # The git package is the one that gets into the lockfile.
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2050,6 +2082,7 @@ def test_url_dependency_is_not_outdated_by_repository_package(
     demo_100 = get_package("demo", "1.0.0")
     repo.add_package(demo_100)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2092,6 +2125,7 @@ def test_show_top_level(
 
     installed.add_package(cachy2)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2146,6 +2180,7 @@ def test_show_top_level_with_explicitly_defined_depenancy(
     installed.add_package(a)
     installed.add_package(b)
 
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2218,6 +2253,8 @@ def test_show_outdated_missing_directory_dependency(
 ) -> None:
     with (poetry.pyproject.file.path.parent / "poetry.lock").open(mode="rb") as f:
         data = tomllib.load(f)
+
+    assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data(data)
 
     poetry.package.add_dependency(

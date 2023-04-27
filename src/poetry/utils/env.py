@@ -1727,13 +1727,11 @@ class VirtualEnv(Env):
         # from inside the virtualenv.
         if base is None:
             output = self.run_python_script(GET_BASE_PREFIX)
-            assert isinstance(output, str)
             self._base = Path(output.strip())
 
     @property
     def sys_path(self) -> list[str]:
         output = self.run_python_script(GET_SYS_PATH)
-        assert isinstance(output, str)
         paths: list[str] = json.loads(output)
         return paths
 
@@ -1749,20 +1747,17 @@ class VirtualEnv(Env):
 
     def get_supported_tags(self) -> list[Tag]:
         output = self.run_python_script(GET_SYS_TAGS)
-        assert isinstance(output, str)
 
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
-        assert isinstance(output, str)
 
         env: dict[str, Any] = json.loads(output)
         return env
 
     def get_pip_version(self) -> Version:
         output = self.run_pip("--version")
-        assert isinstance(output, str)
         output = output.strip()
 
         m = re.match("pip (.+?)(?: from .+)?$", output)
@@ -1773,7 +1768,6 @@ class VirtualEnv(Env):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS)
-        assert isinstance(output, str)
         paths: dict[str, str] = json.loads(output)
         return paths
 
@@ -1889,7 +1883,6 @@ class GenericEnv(VirtualEnv):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
-        assert isinstance(output, str)
 
         paths: dict[str, str] = json.loads(output)
         return paths

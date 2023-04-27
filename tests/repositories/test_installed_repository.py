@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import NamedTuple
 
 import pytest
 
@@ -26,7 +26,10 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "cleo-0.7.6.dist-info"),
     metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
     metadata.PathDistribution(
-        zipfile.Path(str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
+        zipfile.Path(  # type: ignore[arg-type]
+            str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"),
+            "EGG-INFO",
+        )
     ),
     metadata.PathDistribution(SITE_PURELIB / "standard-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-2.3.4.dist-info"),
@@ -69,9 +72,13 @@ def env() -> MockEnv:
 
 @pytest.fixture(autouse=True)
 def mock_git_info(mocker: MockerFixture) -> None:
+    class GitRepoLocalInfo(NamedTuple):
+        origin: str
+        revision: str
+
     mocker.patch(
         "poetry.vcs.git.Git.info",
-        return_value=namedtuple("GitRepoLocalInfo", "origin revision")(
+        return_value=GitRepoLocalInfo(
             origin="https://github.com/sdispater/pendulum.git",
             revision="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
         ),

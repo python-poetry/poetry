@@ -80,10 +80,10 @@ def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribut
                 )
             return None
 
-        def locate_file(self, path: PathLike[str]) -> PathLike[str]:
+        def locate_file(self, path: str | PathLike[str]) -> Path:
             return tmp_path / path
 
-    return MockDistribution()
+    return MockDistribution()  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -101,10 +101,14 @@ def entry_points(
     entry_point_name: str,
     entry_point_values_by_group: dict[str, list[str]],
     plugin_distro: metadata.Distribution,
-) -> Callable[[...], list[metadata.EntryPoint]]:
+) -> Callable[..., list[metadata.EntryPoint]]:
     by_group = {
         key: [
-            EntryPoint(name=entry_point_name, group=key, value=value)._for(
+            EntryPoint(  # type: ignore[no-untyped-call]
+                name=entry_point_name,
+                group=key,
+                value=value,
+            )._for(  # type: ignore[attr-defined]
                 plugin_distro
             )
             for value in values
@@ -118,7 +122,9 @@ def entry_points(
         if group not in by_group:
             return []
 
-        return by_group.get(group)
+        eps: list[metadata.EntryPoint] = by_group[group]
+
+        return eps
 
     return _entry_points
 
@@ -130,7 +136,7 @@ def mock_metadata_entry_points(
     installed: Repository,
     mocker: MockerFixture,
     tmp_venv: Env,
-    entry_points: Callable[[...], metadata.EntryPoint],
+    entry_points: Callable[..., metadata.EntryPoint],
 ) -> None:
     installed.add_package(plugin_package)
 

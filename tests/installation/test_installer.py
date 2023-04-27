@@ -711,6 +711,7 @@ def test_run_install_with_synchronization(
         *managed_reserved_package_names,
     }
 
+    assert isinstance(installer.executor, Executor)
     assert {r.name for r in installer.executor.removals} == expected_removals
 
 
@@ -906,6 +907,7 @@ def test_run_with_optional_and_python_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since python version is not compatible
     # with B's python constraint and A is optional
+    assert isinstance(installer.executor, Executor)
     assert installer.executor.installations_count == 2
     assert installer.executor.installations[0].name == "d"
     assert installer.executor.installations[1].name == "c"
@@ -953,6 +955,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since the mocked python version is not compatible
     # with B's python constraint and A is optional
+    assert isinstance(installer.executor, Executor)
     assert installer.executor.installations_count == 2
     assert installer.executor.installations[0].name == "d"
     assert installer.executor.installations[1].name == "c"
@@ -1297,6 +1300,7 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
 
     assert locker.written_data == expected
 
+    assert isinstance(installer.executor, Executor)
     directory_installs = [
         p.name for p in installer.executor.installations if p.source_type == "directory"
     ]
@@ -1564,6 +1568,7 @@ def test_run_install_duplicate_dependencies_different_constraints(
 
     assert locker.written_data == expected
 
+    assert isinstance(installer.executor, Executor)
     installs = installer.executor.installations
     assert installer.executor.installations_count == 3
     assert installs[0] == package_c12
@@ -1982,6 +1987,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     locker.locked(True)
     locker.mock_lock_data(locker.written_data)
 
+    assert isinstance(installer.executor, Executor)
     for pkg in installer.executor.installations:
         installed.add_package(pkg)
 
@@ -2240,6 +2246,7 @@ def test_run_installs_with_same_version_url_files(
 
     expected = fixture("with-same-version-url-dependencies")
     assert locker.written_data == expected
+    assert isinstance(installer.executor, Executor)
     assert installer.executor.installations_count == 2
     demo_package = next(p for p in installer.executor.installations if p.name == "demo")
     assert demo_package.source_url == urls[env_platform]
@@ -2456,6 +2463,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
     result = installer.run()
     assert result == 0
 
+    assert isinstance(installer.executor, Executor)
     assert installer.executor.installations[-1] == Package(
         "demo",
         "0.1.1",
@@ -2498,6 +2506,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_with_extras
     result = installer.run()
     assert result == 0
 
+    assert isinstance(installer.executor, Executor)
     assert len(installer.executor.installations) == 3
     assert installer.executor.installations[-1] == Package(
         "demo",
@@ -2537,6 +2546,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
     result = installer.run()
     assert result == 0
 
+    assert isinstance(installer.executor, Executor)
     assert len(installer.executor.installations) == 2
     assert installer.executor.installations[-1] == Package(
         "demo",
@@ -2640,6 +2650,7 @@ def test_installer_distinguishes_locked_packages_by_source(
     )
     source_reference = None if env_platform == "darwin" else "pytorch"
 
+    assert isinstance(installer.executor, Executor)
     assert len(installer.executor.installations) == 1
     assert installer.executor.installations[0] == Package(
         "torch",

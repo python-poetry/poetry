@@ -37,4 +37,4 @@ def test_pip_install_with_keyboard_interrupt(
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     with pytest.raises(KeyboardInterrupt):
         pip_install(file_path, tmp_venv)
-    subprocess.run.assert_called_once()
+    subprocess.run.assert_called_once()  # type: ignore[attr-defined]

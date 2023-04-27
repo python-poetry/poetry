@@ -996,7 +996,7 @@ def test_run_with_keyboard_interrupt(
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     with pytest.raises(KeyboardInterrupt):
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
-    subprocess.run.assert_called_once()
+    subprocess.run.assert_called_once()  # type: ignore[attr-defined]
 
 
 def test_call_with_input_and_keyboard_interrupt(
@@ -1006,7 +1006,7 @@ def test_call_with_input_and_keyboard_interrupt(
     kwargs = {"call": True}
     with pytest.raises(KeyboardInterrupt):
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
-    subprocess.run.assert_called_once()
+    subprocess.run.assert_called_once()  # type: ignore[attr-defined]
 
 
 def test_call_no_input_with_keyboard_interrupt(
@@ -1016,7 +1016,7 @@ def test_call_no_input_with_keyboard_interrupt(
     kwargs = {"call": True}
     with pytest.raises(KeyboardInterrupt):
         tmp_venv.run("python", "-", **kwargs)
-    subprocess.check_call.assert_called_once()
+    subprocess.check_call.assert_called_once()  # type: ignore[attr-defined]
 
 
 def test_run_with_called_process_error(
@@ -1030,7 +1030,7 @@ def test_run_with_called_process_error(
     )
     with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
-    subprocess.run.assert_called_once()
+    subprocess.run.assert_called_once()  # type: ignore[attr-defined]
     assert "some output" in str(error.value)
     assert "some error" in str(error.value)
 
@@ -1047,7 +1047,7 @@ def test_call_with_input_and_called_process_error(
     kwargs = {"call": True}
     with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
-    subprocess.run.assert_called_once()
+    subprocess.run.assert_called_once()  # type: ignore[attr-defined]
     assert "some output" in str(error.value)
     assert "some error" in str(error.value)
 
@@ -1064,7 +1064,7 @@ def test_call_no_input_with_called_process_error(
     kwargs = {"call": True}
     with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-", **kwargs)
-    subprocess.check_call.assert_called_once()
+    subprocess.check_call.assert_called_once()  # type: ignore[attr-defined]
     assert "some output" in str(error.value)
     assert "some error" in str(error.value)
 
@@ -1080,7 +1080,7 @@ def test_check_output_with_called_process_error(
     )
     with pytest.raises(EnvCommandError) as error:
         tmp_venv.run("python", "-")
-    subprocess.check_output.assert_called_once()
+    subprocess.check_output.assert_called_once()  # type: ignore[attr-defined]
     assert "some output" in str(error.value)
     assert "some error" in str(error.value)
 
@@ -1730,7 +1730,7 @@ def test_build_environment_called_build_script_specified(
 
     with build_environment(extended_without_setup_poetry, project_env) as env:
         assert env == ephemeral_env
-        assert env.executed == [
+        assert env.executed == [  # type: ignore[attr-defined]
             [
                 str(sys.executable),
                 str(env.pip_embedded),
@@ -1755,7 +1755,7 @@ def test_build_environment_not_called_without_build_script_specified(
 
     with build_environment(poetry, project_env) as env:
         assert env == project_env
-        assert not env.executed
+        assert not env.executed  # type: ignore[attr-defined]
 
 
 def test_create_venv_project_name_empty_sets_correct_prompt(

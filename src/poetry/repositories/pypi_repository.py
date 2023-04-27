@@ -147,7 +147,7 @@ class PyPiRepository(HTTPRepository):
 
     def _get_release_info(
         self, name: NormalizedName, version: Version
-    ) -> dict[str, str | list[str] | None]:
+    ) -> dict[str, Any]:
         from poetry.inspection.info import PackageInfo
 
         self._log(f"Getting info for {name} ({version}) from PyPI", "debug")
