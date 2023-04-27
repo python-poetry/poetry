@@ -98,7 +98,7 @@ virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
-    assert config.set_config_source.call_count == 0
+    assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
 
 
@@ -151,7 +151,7 @@ virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
-    assert config.set_config_source.call_count == 1
+    assert config.set_config_source.call_count == 1  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
 
 

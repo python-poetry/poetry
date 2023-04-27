@@ -90,7 +90,7 @@ def test_setup_reader_read_sub_level_setup_call_with_direct_types(
 
     expected_name = "SQLAlchemy"
     expected_version = None
-    expected_install_requires = []
+    expected_install_requires: list[str] = []
     expected_extras_require = {
         "mysql": ["mysqlclient"],
         "pymysql": ["pymysql"],
@@ -154,8 +154,8 @@ def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], Path]) -> N
 
     expected_name = "PyYAML"
     expected_version = "3.13"
-    expected_install_requires = []
-    expected_extras_require = {}
+    expected_install_requires: list[str] = []
+    expected_extras_require: dict[str, list[str]] = {}
     expected_python_requires = None
 
     assert result["name"] == expected_name
@@ -172,7 +172,7 @@ def test_setup_reader_read_extras_require_with_variables(
 
     expected_name = "extras_require_with_vars"
     expected_version = "0.0.1"
-    expected_install_requires = []
+    expected_install_requires: list[str] = []
     expected_extras_require = {"test": ["pytest"]}
     expected_python_requires = None
 

@@ -121,7 +121,7 @@ def dummy_keyring() -> DummyBackend:
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
     import keyring
 
-    keyring.set_keyring(dummy_keyring)
+    keyring.set_keyring(dummy_keyring)  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -130,7 +130,7 @@ def with_fail_keyring() -> None:
 
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -139,31 +139,37 @@ def with_null_keyring() -> None:
 
     from keyring.backends.null import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_null_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.null import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -203,7 +209,7 @@ def config(
 
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
     c = Config()
     c.merge(config_source.config)

@@ -83,7 +83,7 @@ def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribut
         def locate_file(self, path: str | PathLike[str]) -> Path:
             return tmp_path / path
 
-    return MockDistribution()
+    return MockDistribution()  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def entry_points(
 ) -> Callable[..., list[metadata.EntryPoint]]:
     by_group = {
         key: [
-            EntryPoint(
+            EntryPoint(  # type: ignore[no-untyped-call]
                 name=entry_point_name,
                 group=key,
                 value=value,

@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 import pytest
 
 from poetry.core.packages.package import Package
@@ -28,7 +32,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def assert_plugin_add_result(
     tester: CommandTester,
     expected: str,
-    constraint: str | dict[str, str],
+    constraint: str | Mapping[str, str | list[str]],
 ) -> None:
     assert tester.io.fetch_output() == expected
     dependencies: dict[str, Any] = get_self_command_dependencies()
@@ -130,7 +134,7 @@ Package operations: 3 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    constraint: dict[str, Any] = {
+    constraint: dict[str, str | list[str]] = {
         "git": "https://github.com/demo/poetry-plugin.git",
         "extras": ["foo"],
     }

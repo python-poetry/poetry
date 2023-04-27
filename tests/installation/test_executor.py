@@ -39,6 +39,8 @@ from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import httpretty
 
     from httpretty.core import HTTPrettyRequest
@@ -184,7 +186,7 @@ def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Pa
 
 
 @pytest.fixture
-def wheel(copy_wheel: Callable[[], Path]) -> Path:
+def wheel(copy_wheel: Callable[[], Path]) -> Iterator[Path]:
     archive = copy_wheel()
 
     yield archive
@@ -267,9 +269,9 @@ Package operations: 4 installs, 1 update, 1 removal
   • Installing demo (0.1.0 master)
 """
 
-    expected = set(expected.splitlines())
-    output = set(io.fetch_output().splitlines())
-    assert output == expected
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
     assert wheel_install.call_count == 5
     # Two pip uninstalls: one for the remove operation one for the update operation
     assert len(env.executed) == 2
@@ -513,9 +515,9 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cleo (1.0.0a5)
 """
-    expected = set(expected.splitlines())
-    output = set(io_not_decorated.fetch_output().splitlines())
-    assert output == expected
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io_not_decorated.fetch_output().splitlines())
+    assert output_lines == expected_lines
     assert return_code == 0
 
 
@@ -1225,9 +1227,9 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing simple-project (1.2.3 {directory_package.source_url})
 """
 
-    expected = set(expected.splitlines())
-    output = set(io.fetch_output().splitlines())
-    assert output == expected
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
     assert return_code == 0
     assert mock_create_poetry.call_count == 1
     assert mock_sdist_builder.call_count == 0
