@@ -85,12 +85,7 @@ pre-commit = "^2.6"
 [tool.poetry.group.test.dependencies]
 # Cachy frozen to test backwards compatibility for `poetry.utils.cache`.
 cachy = "0.3.0"
-deepdiff = [
-    { version = "^6.2" },
-    # avoid orjson, which is required by deepdiff 6.2.3, on FreeBSD
-    # because it requires a rust compiler
-    { version = "<6.2.3", markers = "platform_system == 'FreeBSD'"},
-]
+deepdiff = "^6.3"
 httpretty = "^1.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
