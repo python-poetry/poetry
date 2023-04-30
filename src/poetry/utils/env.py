@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import sys
 import sysconfig
-import warnings
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -190,33 +189,15 @@ print(json.dumps(sysconfig.get_paths()))
 """
 
 GET_PATHS_FOR_GENERIC_ENVS = """\
-# We can't use sysconfig.get_paths() because
-# on some distributions it does not return the proper paths
-# (those used by pip for instance). We go through distutils
-# to get the proper ones.
 import json
 import site
 import sysconfig
 
-from distutils.command.install import SCHEME_KEYS
-from distutils.core import Distribution
-
-d = Distribution()
-d.parse_config_files()
-obj = d.get_command_obj("install", create=True)
-obj.finalize_options()
-
 paths = sysconfig.get_paths().copy()
-for key in SCHEME_KEYS:
-    if key == "headers":
-        # headers is not a path returned by sysconfig.get_paths()
-        continue
 
-    paths[key] = getattr(obj, f"install_{key}")
-
-if site.check_enableusersite() and hasattr(obj, "install_usersite"):
-    paths["usersite"] = getattr(obj, "install_usersite")
-    paths["userbase"] = getattr(obj, "install_userbase")
+if site.check_enableusersite():
+    paths["usersite"] = site.getusersitepackages()
+    paths["userbase"] = site.getuserbase()
 
 print(json.dumps(paths))
 """
@@ -1637,37 +1618,13 @@ class SystemEnv(Env):
         return platform.python_implementation()
 
     def get_paths(self) -> dict[str, str]:
-        # We can't use sysconfig.get_paths() because
-        # on some distributions it does not return the proper paths
-        # (those used by pip for instance). We go through distutils
-        # to get the proper ones.
         import site
 
-        from distutils.command.install import SCHEME_KEYS
-        from distutils.core import Distribution
-
-        d = Distribution()
-        d.parse_config_files()
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "setup.py install is deprecated")
-            obj = d.get_command_obj("install", create=True)
-        assert obj is not None
-        obj.finalize_options()
-
         paths = sysconfig.get_paths().copy()
-        for key in SCHEME_KEYS:
-            if key == "headers":
-                # headers is not a path returned by sysconfig.get_paths()
-                continue
-
-            paths[key] = getattr(obj, f"install_{key}")
 
         if site.check_enableusersite():
-            usersite = getattr(obj, "install_usersite", None)
-            userbase = getattr(obj, "install_userbase", None)
-            if usersite is not None and userbase is not None:
-                paths["usersite"] = usersite
-                paths["userbase"] = userbase
+            paths["usersite"] = site.getusersitepackages()
+            paths["userbase"] = site.getuserbase()
 
         return paths
 
