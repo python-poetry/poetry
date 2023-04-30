@@ -192,7 +192,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 for extra in self.option("extras"):
                     extras += extra.split()
 
-                constraint["extras"] = self.option("extras")
+                constraint["extras"] = extras
 
             if self.option("editable"):
                 if "git" in _constraint or "path" in _constraint:
