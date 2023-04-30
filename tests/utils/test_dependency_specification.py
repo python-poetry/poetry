@@ -11,6 +11,8 @@ from poetry.utils.dependency_specification import RequirementsParser
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+
     from pytest_mock import MockerFixture
 
     from poetry.utils.cache import ArtifactCache
@@ -69,12 +71,38 @@ if TYPE_CHECKING:
         ),
         (
             'requests [security,tests] >= 2.8.1, == 2.8.* ; python_version < "2.7"',
-            {
-                "name": "requests",
-                "markers": 'python_version < "2.7"',
-                "version": ">=2.8.1,<2.9.0",
-                "extras": ["security", "tests"],
-            },
+            (  # allow several equivalent versions to make test more robust
+                {
+                    "name": "requests",
+                    "markers": 'python_version < "2.7"',
+                    "version": ">=2.8.1,<2.9",
+                    "extras": ["security", "tests"],
+                },
+                {
+                    "name": "requests",
+                    "markers": 'python_version < "2.7"',
+                    "version": ">=2.8.1,<2.9.0",
+                    "extras": ["security", "tests"],
+                },
+                {
+                    "name": "requests",
+                    "markers": 'python_version < "2.7"',
+                    "version": ">=2.8.1,<2.9.dev0",
+                    "extras": ["security", "tests"],
+                },
+                {
+                    "name": "requests",
+                    "markers": 'python_version < "2.7"',
+                    "version": ">=2.8.1,<2.9.0.dev0",
+                    "extras": ["security", "tests"],
+                },
+                {
+                    "name": "requests",
+                    "markers": 'python_version < "2.7"',
+                    "version": ">=2.8.1,!=2.8.*",
+                    "extras": ["security", "tests"],
+                },
+            ),
         ),
         ("name (>=3,<4)", {"name": "name", "version": ">=3,<4"}),
         (
@@ -106,7 +134,7 @@ if TYPE_CHECKING:
 )
 def test_parse_dependency_specification(
     requirement: str,
-    specification: DependencySpec,
+    specification: DependencySpec | Collection[DependencySpec],
     mocker: MockerFixture,
     artifact_cache: ArtifactCache,
 ) -> None:
@@ -119,8 +147,13 @@ def test_parse_dependency_specification(
 
     mocker.patch("pathlib.Path.exists", _mock)
 
-    assert not DeepDiff(
-        RequirementsParser(artifact_cache=artifact_cache).parse(requirement),
-        specification,
-        ignore_order=True,
+    if isinstance(specification, dict):
+        specification = [specification]
+    assert any(
+        not DeepDiff(
+            RequirementsParser(artifact_cache=artifact_cache).parse(requirement),
+            spec,
+            ignore_order=True,
+        )
+        for spec in specification
     )
