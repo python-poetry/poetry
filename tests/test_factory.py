@@ -400,7 +400,13 @@ def test_poetry_with_non_default_multiple_sources_pypi(
     expected = ["bar", "PyPI", "baz", "foo"]
     assert [repo.name for repo in poetry.pool.repositories] == expected
     error = io.fetch_error()
-    assert error == ""
+    assert (
+        error.strip()
+        == "<warning>Warning: Found deprecated priority 'secondary' in pyproject.toml"
+        " configuration for source foo. Consider changing the priority to one of the"
+        " non-deprecated values: 'default', 'primary', 'supplemental',"
+        " 'explicit'."
+    )
 
 
 def test_poetry_with_no_default_source(fixture_dir: FixtureDirGetter) -> None:

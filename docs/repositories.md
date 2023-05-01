@@ -29,11 +29,11 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) as a [secondary](#secondary-package-sources) (or [supplemental](#supplemental-package-sources), or [explicit](#explicit-package-sources)) package source to your
+First, [configure](#project-configuration) the [package source](#package-source) as a [supplemental](#supplemental-package-sources) (or [explicit](#explicit-package-sources)) package source to your
 project.
 
 ```bash
-poetry source add --priority=secondary foo https://pypi.example.org/simple/
+poetry source add --priority=supplemental foo https://pypi.example.org/simple/
 ```
 
 Then, assuming the repository requires authentication, configure credentials for it.
@@ -129,7 +129,7 @@ Package sources are considered in the following order:
 1. [default source](#default-package-source),
 2. primary sources,
 3. implicit PyPI (unless disabled by another [default source](#default-package-source) or configured explicitly),
-4. [secondary sources](#secondary-package-sources),
+4. [secondary sources](#secondary-package-sources) (DEPRECATED),
 5. [supplemental sources](#supplemental-package-sources).
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
@@ -183,7 +183,9 @@ as a package source for your project.
 
 {{% /warning %}}
 
-#### Secondary Package Sources
+#### Secondary Package Sources (DEPRECATED)
+
+*Deprecated in 1.5.0*
 
 If package sources are configured as secondary, all it means is that these will be given a lower
 priority when selecting compatible package distribution that also exists in your default and primary package sources. If the package source should instead be searched only if higher-priority repositories did not return results, please consider a [supplemental source](#supplemental-package-sources) instead.
@@ -196,6 +198,12 @@ poetry source add --priority=secondary https://foo.bar/simple/
 ```
 
 There can be more than one secondary package source.
+
+{{% warning %}}
+
+Secondary package sources are deprecated in favor of supplemental package sources.
+
+{{% /warning %}}
 
 #### Supplemental Package Sources
 

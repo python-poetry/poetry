@@ -28,11 +28,20 @@ def assert_source_added_legacy(
     source_existing: Source,
     source_added: Source,
 ) -> None:
+    secondary_deprecated_str = (
+        ""
+        if source_added.priority is not Priority.SECONDARY
+        else (
+            "\nWarning: Priority 'secondary' is deprecated. Consider changing the"
+            " priority to one of the non-deprecated values: 'default', 'primary',"
+            " 'supplemental', 'explicit'."
+        )
+    )
     assert (
         tester.io.fetch_error().strip()
-        == "Warning: Priority was set through a deprecated flag"
-        " (--default or --secondary). Consider using --priority next"
-        " time."
+        == "Warning: Priority was set through a deprecated flag (--default or"
+        " --secondary). Consider using --priority next time."
+        + secondary_deprecated_str
     )
     assert (
         tester.io.fetch_output().strip()
