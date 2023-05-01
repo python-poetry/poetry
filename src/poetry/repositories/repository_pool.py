@@ -28,6 +28,7 @@ class Priority(IntEnum):
     DEFAULT = enum.auto()
     PRIMARY = enum.auto()
     SECONDARY = enum.auto()
+    SUPPLEMENTAL = enum.auto()
     EXPLICIT = enum.auto()
 
 
