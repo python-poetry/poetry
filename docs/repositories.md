@@ -29,7 +29,7 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) as a [secondary package source](#secondary-package-sources) to your
+First, [configure](#project-configuration) the [package source](#package-source) as a [secondary](#secondary-package-sources) (or [supplemental](#supplemental-package-sources), or [explicit](#explicit-package-sources)) package source to your
 project.
 
 ```bash
@@ -123,13 +123,14 @@ url = "https://foo.bar/simple/"
 priority = "primary"
 ```
 
-If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary and explicit sources.
+If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
 
 Package sources are considered in the following order:
 1. [default source](#default-package-source),
 2. primary sources,
 3. implicit PyPI (unless disabled by another [default source](#default-package-source) or configured explicitly),
 4. [secondary sources](#secondary-package-sources),
+5. [supplemental sources](#supplemental-package-sources).
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
 
@@ -185,7 +186,7 @@ as a package source for your project.
 #### Secondary Package Sources
 
 If package sources are configured as secondary, all it means is that these will be given a lower
-priority when selecting compatible package distribution that also exists in your default and primary package sources.
+priority when selecting compatible package distribution that also exists in your default and primary package sources. If the package source should instead be searched only if higher-priority repositories did not return results, please consider a [supplemental source](#supplemental-package-sources) instead.
 
 You can configure a package source as a secondary source with `priority = "secondary"` in your package
 source configuration.
@@ -195,6 +196,22 @@ poetry source add --priority=secondary https://foo.bar/simple/
 ```
 
 There can be more than one secondary package source.
+
+#### Supplemental Package Sources
+
+*Introduced in 1.5.0*
+
+Package sources configured as supplemental are only searched if no other (higher-priority) source yields a compatible package distribution. This is particularly convenient if the response time of the source is high and relatively few package distributions are to be fetched from this source.
+
+You can configure a package source as a supplemental source with `priority = "supplemental"` in your package
+source configuration.
+
+```bash
+poetry source add --priority=supplemental https://foo.bar/simple/
+```
+
+There can be more than one supplemental package source.
+
 
 #### Explicit Package Sources
 
@@ -212,7 +229,7 @@ There can be more than one explicit package source.
 
 #### Package Source Constraint
 
-All package sources (including secondary sources) will be searched during the package lookup
+All package sources (including secondary and possibly supplemental sources) will be searched during the package lookup
 process. These network requests will occur for all sources, regardless of if the package is
 found at one or more sources.
 
