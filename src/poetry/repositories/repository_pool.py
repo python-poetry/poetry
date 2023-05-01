@@ -187,11 +187,13 @@ class RepositoryPool(AbstractRepository):
 
         packages: list[Package] = []
         for repo in self.repositories:
+            if packages and self.get_priority(repo.name) is Priority.SUPPLEMENTAL:
+                break
             packages += repo.find_packages(dependency)
         return packages
 
     def search(self, query: str) -> list[Package]:
         results: list[Package] = []
-        for repository in self.repositories:
-            results += repository.search(query)
+        for repo in self.repositories:
+            results += repo.search(query)
         return results
