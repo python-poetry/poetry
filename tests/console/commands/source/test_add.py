@@ -136,6 +136,20 @@ def test_source_add_secondary(
     assert_source_added(tester, poetry_with_source, source_existing, source_secondary)
 
 
+def test_source_add_supplemental(
+    tester: CommandTester,
+    source_existing: Source,
+    source_supplemental: Source,
+    poetry_with_source: Poetry,
+) -> None:
+    tester.execute(
+        f"--priority=supplemental {source_supplemental.name} {source_supplemental.url}"
+    )
+    assert_source_added(
+        tester, poetry_with_source, source_existing, source_supplemental
+    )
+
+
 def test_source_add_explicit(
     tester: CommandTester,
     source_existing: Source,
