@@ -124,6 +124,10 @@ class SelfCommand(InstallerCommand):
         #
         # This method **should not** be overridden in child classes as it may have
         # unexpected consequences.
+        self.line_error(
+            "<warning>`poetry self` commands are deprecated and will be removed in a"
+            " future release</>"
+        )
 
         self.reset()
 
