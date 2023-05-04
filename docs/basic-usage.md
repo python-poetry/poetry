@@ -123,6 +123,9 @@ To take advantage of this, simply activate a virtual environment using your pref
 any Poetry commands that expect to manipulate an environment.
 {{% /note %}}
 
+If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
+set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
+
 ### Using `poetry run`
 
 To run your script simply use `poetry run python your_script.py`.
