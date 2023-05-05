@@ -134,6 +134,9 @@ extend-select = [
     "TCH",  # flake8-type-checking
     "N",  # pep8-naming
     "RUF",  # ruff checks
+    "UP",  # pyupgrade
+    "I",  # isort
+    "PGH",  # pygrep
 ]
 ignore = [
     "B904",  # use 'raise ... from err'
@@ -151,17 +154,13 @@ extend-exclude = [
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-
-[tool.isort]
-py_version = 37
-profile = "black"
-force_single_line = true
-combine_as_imports = true
-lines_between_types = 1
-lines_after_imports = 2
-src_paths = ["src", "tests"]
-extend_skip = ["setup.py"]
-known_third_party = ["poetry.core"]
+[tool.ruff.isort]
+force-single-line = true
+lines-between-types = 1
+lines-after-imports = 2
+known-first-party = ["poetry"]
+known-third-party = ["poetry.core"]
+required-imports = ["from __future__ import annotations"]
 
 
 [tool.black]
