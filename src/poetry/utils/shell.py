@@ -107,6 +107,9 @@ class Shell:
             if self._name == "zsh":
                 # Under ZSH the source command should be invoked in zsh's bash emulator
                 c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
+        elif self._name == "fish":
+            # Under fish "\r" should be sent explicitly
+            c.sendline(f"source {shlex.quote(str(activate_path))}\r")
         else:
             c.sendline(
                 f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
@@ -141,7 +144,7 @@ class Shell:
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if self._name in ("fish", "csh", "tcsh", "nu"):
+        if self._name in ("csh", "tcsh", "nu"):
             return "source"
         return "."
 
