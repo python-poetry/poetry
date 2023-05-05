@@ -9,29 +9,23 @@ maintainers = [
     "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
     "Bjorn Neergaard <bjorn@neersighted.com>",
     "Branch Vincent <branchevincent@gmail.com>",
-    "Bryce Drennan <github@accounts.brycedrennan.com>",
-    "Daniel Eades <danieleades@hotmail.com>",
     "Randy Döring <radoering.poetry@gmail.com>",
     "Steph Samson <hello@stephsamson.com>",
     "finswimmer <finswimmer77@gmail.com>",
+    "Secrus <b.sokorski@gmail.com>",
 ]
 license = "MIT"
-
 readme = "README.md"
-
 packages = [
     { include = "poetry", from = "src" }
 ]
 include = [
     { path = "tests", format = "sdist" }
 ]
-
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs"
-
 keywords = ["packaging", "dependency", "poetry"]
-
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules"
@@ -40,8 +34,6 @@ classifiers = [
 [tool.poetry.urls]
 Changelog = "https://python-poetry.org/history/"
 
-[tool.poetry.build]
-generate-setup-file = false
 
 # Requirements
 [tool.poetry.dependencies]
@@ -113,7 +105,7 @@ poetry = "poetry.console.application:main"
 
 
 [build-system]
-requires = ["poetry-core>=1.1.0"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"
 
 
