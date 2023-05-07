@@ -99,7 +99,7 @@ if TYPE_CHECKING:
                 {
                     "name": "requests",
                     "markers": 'python_version < "2.7"',
-                    "version": ">=2.8.1,!=2.8.*",
+                    "version": ">=2.8.1,==2.8.*",
                     "extras": ["security", "tests"],
                 },
             ),
