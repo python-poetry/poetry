@@ -2,9 +2,7 @@
 name = "poetry"
 version = "1.5.0.dev0"
 description = "Python dependency management and packaging made easy."
-authors = [
-    "Sébastien Eustace <sebastien@eustace.io>",
-]
+authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
     "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
     "Bjorn Neergaard <bjorn@neersighted.com>",
@@ -16,24 +14,19 @@ maintainers = [
 ]
 license = "MIT"
 readme = "README.md"
-packages = [
-    { include = "poetry", from = "src" }
-]
-include = [
-    { path = "tests", format = "sdist" }
-]
+packages = [{ include = "poetry", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs"
 keywords = ["packaging", "dependency", "poetry"]
 classifiers = [
     "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [tool.poetry.urls]
 Changelog = "https://python-poetry.org/history/"
-
 
 # Requirements
 [tool.poetry.dependencies]
@@ -88,17 +81,16 @@ zipp = { version = "^3.4", python = "<3.8" }
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.0"
+typing-extensions = { version = "^4.0.0", python = "<3.8" }
 types-html5lib = ">=1.1.9"
 types-jsonschema = ">=4.9.0"
 types-requests = ">=2.28.8"
-typing-extensions = { version = "^4.0.0", python = "<3.8" }
 
 # only used in github actions
 [tool.poetry.group.github-actions]
 optional = true
 [tool.poetry.group.github-actions.dependencies]
 pytest-github-actions-annotate-failures = "^0.1.7"
-
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
@@ -112,28 +104,28 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 fix = true
 unfixable = [
-    "ERA",  # do not autoremove commented out code
+    "ERA", # do not autoremove commented out code
 ]
 target-version = "py37"
 line-length = 88
 extend-select = [
-    "B",  # flake8-bugbear
+    "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
-    "ERA",  # flake8-eradicate/eradicate
-    "PIE",  # flake8-pie
-    "SIM",  # flake8-simplify
-    "TID",  # flake8-tidy-imports
-    "TCH",  # flake8-type-checking
-    "N",  # pep8-naming
-    "RUF",  # ruff checks
+    "ERA", # flake8-eradicate/eradicate
+    "I",   # isort
+    "N",   # pep8-naming
+    "PIE", # flake8-pie
+    "PGH", # pygrep
+    "RUF", # ruff checks
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
     "UP",  # pyupgrade
-    "I",  # isort
-    "PGH",  # pygrep
 ]
 ignore = [
-    "B904",  # use 'raise ... from err'
-    "B905",  # use explicit 'strict=' parameter with 'zip()'
-    "N818"  #  Exception name should be named with an Error suffix
+    "B904", # use 'raise ... from err'
+    "B905", # use explicit 'strict=' parameter with 'zip()'
+    "N818", #  Exception name should be named with an Error suffix
 ]
 extend-exclude = [
     "docs/*",
@@ -170,15 +162,11 @@ namespace_packages = true
 explicit_package_bases = true
 show_error_codes = true
 strict = true
-enable_error_code = [
-    "ignore-without-code",
-    "redundant-expr",
-    "truthy-bool",
-]
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 exclude = [
-  "tests/fixtures",
-  "tests/masonry/builders/fixtures",
-  "tests/utils/fixtures"
+    "tests/fixtures",
+    "tests/masonry/builders/fixtures",
+    "tests/utils/fixtures",
 ]
 
 # use of importlib-metadata backport makes it impossible to satisfy mypy
@@ -189,9 +177,9 @@ module = [
     'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
     'poetry.utils.env',
+    'tests.console.commands.self.test_show_plugins',
     'tests.helpers',
     'tests.repositories.test_installed_repository',
-    'tests.console.commands.self.test_show_plugins'
 ]
 warn_unused_ignores = false
 
@@ -208,20 +196,15 @@ module = [
     'shellingham.*',
     'virtualenv.*',
     'xattr.*',
-    'zipp.*'
+    'zipp.*',
 ]
 ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
 addopts = "-n auto"
-testpaths = [
-    "tests"
-]
+testpaths = ["tests"]
 
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:"
-]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
