@@ -112,9 +112,7 @@ class Shell:
             if self._name == "fish":
                 # Under fish "\r" should be sent explicitly
                 cmd += "\r"
-            c.sendline(
-                cmd
-            )
+            c.sendline(cmd)
 
         def resize(sig: Any, data: Any) -> None:
             terminal = shutil.get_terminal_size()
