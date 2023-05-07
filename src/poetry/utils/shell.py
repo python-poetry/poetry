@@ -107,12 +107,13 @@ class Shell:
             if self._name == "zsh":
                 # Under ZSH the source command should be invoked in zsh's bash emulator
                 c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
-        elif self._name == "fish":
-            # Under fish "\r" should be sent explicitly
-            c.sendline(f"source {shlex.quote(str(activate_path))}\r")
         else:
+            cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+            if self._name == "fish":
+                # Under fish "\r" should be sent explicitly
+                cmd += "\r"
             c.sendline(
-                f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+                cmd
             )
 
         def resize(sig: Any, data: Any) -> None:
