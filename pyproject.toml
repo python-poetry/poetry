@@ -81,10 +81,10 @@ zipp = { version = "^3.4", python = "<3.8" }
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.0"
-typing-extensions = { version = "^4.0.0", python = "<3.8" }
 types-html5lib = ">=1.1.9"
 types-jsonschema = ">=4.9.0"
 types-requests = ">=2.28.8"
+typing-extensions = { version = "^4.0.0", python = "<3.8" }
 
 # only used in github actions
 [tool.poetry.group.github-actions]
