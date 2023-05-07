@@ -56,8 +56,6 @@ class Installer:
         self._write_lock = True
         self._groups: Iterable[str] | None = None
         self._skip_directory = False
-
-        self._execute_operations = True
         self._lock = False
 
         self._whitelist: list[NormalizedName] = []
@@ -102,7 +100,6 @@ class Installer:
         if self.is_dry_run():
             self.verbose(True)
             self._write_lock = False
-            self._execute_operations = False
 
         return self._do_install()
 
@@ -160,8 +157,6 @@ class Installer:
         return self._update
 
     def execute_operations(self, execute: bool = True) -> Installer:
-        self._execute_operations = execute
-
         if not execute:
             self._executor.disable()
 
