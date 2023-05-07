@@ -108,9 +108,11 @@ class Shell:
                 # Under ZSH the source command should be invoked in zsh's bash emulator
                 c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
         else:
-            c.sendline(
-                f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
-            )
+            cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+            if self._name == "fish":
+                # Under fish "\r" should be sent explicitly
+                cmd += "\r"
+            c.sendline(cmd)
 
         def resize(sig: Any, data: Any) -> None:
             terminal = shutil.get_terminal_size()
