@@ -145,7 +145,7 @@ class Shell:
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if self._name in ("csh", "tcsh", "nu"):
+        if self._name in ("fish", "csh", "tcsh", "nu"):
             return "source"
         return "."
 
