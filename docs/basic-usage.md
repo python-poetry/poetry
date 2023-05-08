@@ -123,9 +123,6 @@ To take advantage of this, simply activate a virtual environment using your pref
 any Poetry commands that expect to manipulate an environment.
 {{% /note %}}
 
-If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
-set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
-
 ### Using `poetry run`
 
 To run your script simply use `poetry run python your_script.py`.
@@ -157,6 +154,9 @@ virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_v
 To get the path to your virtual environment run `poetry env info --path`.
 You can also combine these into a one-liner, such as `source $(poetry env info --path)/bin/activate`
 (`& ((poetry env info --path) + "\Scripts\activate.ps1")` in Powershell).
+
+If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
+set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
 
 To deactivate this virtual environment simply use `deactivate`.
 
