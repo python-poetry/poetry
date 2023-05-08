@@ -144,9 +144,7 @@ lines-between-types = 1
 lines-after-imports = 2
 known-first-party = ["poetry"]
 known-third-party = ["poetry.core"]
-required-imports = [
-    "from __future__ import annotations"
-]
+required-imports = ["from __future__ import annotations"]
 
 
 [tool.black]
