@@ -165,7 +165,7 @@ strict = true
 enable_error_code = [
     "ignore-without-code",
     "redundant-expr",
-    "truthy-bool"
+    "truthy-bool",
 ]
 exclude = [
     "tests/fixtures",
