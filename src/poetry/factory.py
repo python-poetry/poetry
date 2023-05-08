@@ -156,11 +156,11 @@ class Factory(BaseFactory):
                     priority = Priority.SECONDARY
 
             if priority is Priority.SECONDARY:
-                allowed_prios = filter(lambda p: p is not Priority.SECONDARY, Priority)
+                allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
                 warning = (
-                    "Found deprecated priority 'secondary' in pyproject.toml"
-                    f" configuration for source {source.get('name')}. Consider"
-                    " changing the priority to one of the non-deprecated values:"
+                    "Found deprecated priority 'secondary' for source"
+                    f" '{source.get('name')}' in pyproject.toml. Consider changing the"
+                    " priority to one of the non-deprecated values:"
                     f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
                 )
                 io.write_error_line(f"<warning>Warning: {warning}</warning>")

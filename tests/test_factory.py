@@ -402,10 +402,9 @@ def test_poetry_with_non_default_multiple_sources_pypi(
     error = io.fetch_error()
     assert (
         error.strip()
-        == "<warning>Warning: Found deprecated priority 'secondary' in pyproject.toml"
-        " configuration for source foo. Consider changing the priority to one of the"
-        " non-deprecated values: 'default', 'primary', 'supplemental',"
-        " 'explicit'."
+        == "<warning>Warning: Found deprecated priority 'secondary' for source 'foo' in"
+        " pyproject.toml. Consider changing the priority to one of the"
+        " non-deprecated values: 'default', 'primary', 'supplemental', 'explicit'."
     )
 
 

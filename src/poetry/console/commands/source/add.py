@@ -115,7 +115,7 @@ class SourceAddCommand(Command):
             priority = Priority[priority_str.upper()]
 
         if priority is Priority.SECONDARY:
-            allowed_prios = filter(lambda p: p is not Priority.SECONDARY, Priority)
+            allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
             self.line_error(
                 "<warning>Warning: Priority 'secondary' is deprecated. Consider"
                 " changing the priority to one of the non-deprecated values:"
