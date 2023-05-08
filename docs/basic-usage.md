@@ -149,14 +149,14 @@ Therefore, Poetry has to create a sub-shell with the virtual environment activat
 in order for the subsequent commands to run from within the virtual environment.
 {{% /note %}}
 
+If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
+set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
+
 Alternatively, to avoid creating a new shell, you can manually activate the
 virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` in PowerShell).
 To get the path to your virtual environment run `poetry env info --path`.
 You can also combine these into a one-liner, such as `source $(poetry env info --path)/bin/activate`
 (`& ((poetry env info --path) + "\Scripts\activate.ps1")` in Powershell).
-
-If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
-set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
 
 To deactivate this virtual environment simply use `deactivate`.
 
