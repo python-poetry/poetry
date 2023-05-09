@@ -257,7 +257,7 @@ Writing lock file
 
 
 def test_add_constraint_dependencies(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
@@ -327,7 +327,6 @@ Writing lock file
 
 
 def test_add_git_constraint_with_poetry(
-    app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
@@ -415,9 +414,7 @@ def test_add_git_constraint_with_subdirectory(
     url: str,
     rev: str | None,
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
 ) -> None:
     tester.execute(url)
 
@@ -586,7 +583,6 @@ def test_add_file_constraint_wheel(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    poetry: Poetry,
 ) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
@@ -750,7 +746,6 @@ def test_add_url_constraint_wheel_with_extras(
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
-    mocker: MockerFixture,
 ) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -923,9 +918,7 @@ Writing lock file
     }
 
 
-def test_add_constraint_with_source_that_does_not_exist(
-    app: PoetryTestApplication, tester: CommandTester
-) -> None:
+def test_add_constraint_with_source_that_does_not_exist(tester: CommandTester) -> None:
     with pytest.raises(IndexError) as e:
         tester.execute("foo --source i-dont-exist")
 
@@ -933,7 +926,6 @@ def test_add_constraint_with_source_that_does_not_exist(
 
 
 def test_add_constraint_not_found_with_source(
-    app: PoetryTestApplication,
     poetry: Poetry,
     mocker: MockerFixture,
     tester: CommandTester,
@@ -1224,7 +1216,7 @@ Writing lock file
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -1247,7 +1239,7 @@ Writing lock file
 
 
 def test_add_prefers_stable_releases(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
