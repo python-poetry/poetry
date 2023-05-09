@@ -790,6 +790,35 @@ Writing lock file
     }
 
 
+def test_add_constraint_with_optional(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+) -> None:
+    repo.add_package(get_package("cachy", "0.2.0"))
+    tester.execute("cachy=0.2.0 --optional")
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+No dependencies to install or update
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 0
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {
+        "version": "0.2.0",
+        "optional": True,
+    }
+
+
 def test_add_constraint_with_python(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:
@@ -987,29 +1016,6 @@ cachy = "^0.2.0"
         expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
-
-
-@pytest.mark.parametrize(
-    "command",
-    [
-        "requests --extras security socks",
-    ],
-)
-def test_add_extras_only_accepts_one_value(
-    command: str, tester: CommandTester, repo: TestRepository
-) -> None:
-    """
-    You cannot pass in multiple values to a single --extras flag.\
-    e.g. --extras security socks is not allowed.
-    """
-    repo.add_package(get_package("requests", "2.30.0"))
-
-    with pytest.raises(ValueError) as e:
-        tester.execute(command)
-        assert (
-            str(e.value)
-            == "You can only specify one package when using the --extras option"
-        )
 
 
 def test_add_to_dev_section_deprecated(
@@ -1477,3 +1483,26 @@ Writing lock file
         "version": "^0.2.0",
         "extras": ["redis", "msgpack"],
     }
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "requests --extras security socks",
+    ],
+)
+def test_add_extras_only_accepts_one_package(
+    command: str, tester: CommandTester, repo: TestRepository
+) -> None:
+    """
+    You cannot pass in multiple package values to a single --extras flag.\
+    e.g. --extras security socks is not allowed.
+    """
+    repo.add_package(get_package("requests", "2.30.0"))
+
+    with pytest.raises(ValueError) as e:
+        tester.execute(command)
+        assert (
+            str(e.value)
+            == "You can only specify one package when using the --extras option"
+        )
