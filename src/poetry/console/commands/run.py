@@ -22,16 +22,20 @@ class RunCommand(EnvCommand):
 
     def handle(self) -> int:
         args = self.argument("args")
-        script = args[0]
+        tasks = self.poetry.local_config.get("tasks")
         scripts = self.poetry.local_config.get("scripts")
 
-        if scripts and script in scripts:
-            return self.run_script(scripts[script], args)
+        if tasks and args[0] in tasks:
+            cmd = tasks[args[0]].split()
+            args = [*cmd, *args]
+
+        elif scripts and args[0] in scripts:
+            return self.run_script(scripts[args[0]], args)
 
         try:
             return self.env.execute(*args)
         except FileNotFoundError:
-            self.line_error(f"<error>Command not found: <c1>{script}</c1></error>")
+            self.line_error(f"<error>Command not found: <c1>{args[0]}</c1></error>")
             return 1
 
     @property
