@@ -1000,7 +1000,7 @@ cachy = "^0.2.0"
 @pytest.mark.parametrize(
     "command",
     [
-        "cachy --extras security socks",
+        "requests --extras security socks",
     ],
 )
 def test_add_extras_only_accepts_one_value(
@@ -1010,7 +1010,7 @@ def test_add_extras_only_accepts_one_value(
     You cannot pass in multiple values to a single --extras flag.\
     e.g. --extras security socks is not allowed.
     """
-    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("requests", "2.30.0"))
 
     with pytest.raises(ValueError) as e:
         tester.execute(command)
