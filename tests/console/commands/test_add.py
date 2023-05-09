@@ -175,9 +175,7 @@ No changes were applied.
     assert content == pyproject2["tool"]["poetry"]
 
 
-def test_add_equal_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-) -> None:
+def test_add_equal_constraint(repo: TestRepository, tester: CommandTester) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -200,9 +198,7 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 1
 
 
-def test_add_greater_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-) -> None:
+def test_add_greater_constraint(repo: TestRepository, tester: CommandTester) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -227,7 +223,6 @@ Writing lock file
 
 @pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras(
-    app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
@@ -1002,6 +997,29 @@ cachy = "^0.2.0"
     assert expected in string_content
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cachy --extras security socks",
+    ],
+)
+def test_add_extras_only_accepts_one_value(
+    command: str, tester: CommandTester, repo: TestRepository
+) -> None:
+    """
+    You cannot pass in multiple values to a single --extras flag.\
+    e.g. --extras security socks is not allowed.
+    """
+    repo.add_package(get_package("cachy", "0.1.0"))
+
+    with pytest.raises(ValueError) as e:
+        tester.execute(command)
+        assert (
+            str(e.value)
+            == "You can only specify one package when using the --extras option"
+        )
+
+
 def test_add_to_dev_section_deprecated(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:
@@ -1122,7 +1140,7 @@ If you prefer to upgrade it to the latest available version,\
 
 
 def test_add_should_fail_circular_dependency(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("simple-project", "1.1.2"))
     result = tester.execute("simple-project")
