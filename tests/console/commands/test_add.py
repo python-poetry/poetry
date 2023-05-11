@@ -175,9 +175,7 @@ No changes were applied.
     assert content == pyproject2["tool"]["poetry"]
 
 
-def test_add_equal_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-) -> None:
+def test_add_equal_constraint(repo: TestRepository, tester: CommandTester) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -200,9 +198,7 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 1
 
 
-def test_add_greater_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-) -> None:
+def test_add_greater_constraint(repo: TestRepository, tester: CommandTester) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
@@ -227,7 +223,6 @@ Writing lock file
 
 @pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras(
-    app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
@@ -262,7 +257,7 @@ Writing lock file
 
 
 def test_add_constraint_dependencies(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
@@ -332,7 +327,6 @@ Writing lock file
 
 
 def test_add_git_constraint_with_poetry(
-    app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
@@ -420,9 +414,7 @@ def test_add_git_constraint_with_subdirectory(
     url: str,
     rev: str | None,
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
-    env: MockEnv,
 ) -> None:
     tester.execute(url)
 
@@ -591,7 +583,6 @@ def test_add_file_constraint_wheel(
     app: PoetryTestApplication,
     repo: TestRepository,
     tester: CommandTester,
-    poetry: Poetry,
 ) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
 
@@ -755,7 +746,6 @@ def test_add_url_constraint_wheel_with_extras(
     repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
-    mocker: MockerFixture,
 ) -> None:
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -797,6 +787,35 @@ Writing lock file
             "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         ),
         "extras": [extra_name, "bar"],
+    }
+
+
+def test_add_constraint_with_optional(
+    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+) -> None:
+    repo.add_package(get_package("cachy", "0.2.0"))
+    tester.execute("cachy=0.2.0 --optional")
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+No dependencies to install or update
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 0
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {
+        "version": "0.2.0",
+        "optional": True,
     }
 
 
@@ -928,9 +947,7 @@ Writing lock file
     }
 
 
-def test_add_constraint_with_source_that_does_not_exist(
-    app: PoetryTestApplication, tester: CommandTester
-) -> None:
+def test_add_constraint_with_source_that_does_not_exist(tester: CommandTester) -> None:
     with pytest.raises(IndexError) as e:
         tester.execute("foo --source i-dont-exist")
 
@@ -938,7 +955,6 @@ def test_add_constraint_with_source_that_does_not_exist(
 
 
 def test_add_constraint_not_found_with_source(
-    app: PoetryTestApplication,
     poetry: Poetry,
     mocker: MockerFixture,
     tester: CommandTester,
@@ -1122,7 +1138,7 @@ If you prefer to upgrade it to the latest available version,\
 
 
 def test_add_should_fail_circular_dependency(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("simple-project", "1.1.2"))
     result = tester.execute("simple-project")
@@ -1206,7 +1222,7 @@ Writing lock file
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -1229,7 +1245,7 @@ Writing lock file
 
 
 def test_add_prefers_stable_releases(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    repo: TestRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
@@ -1467,3 +1483,26 @@ Writing lock file
         "version": "^0.2.0",
         "extras": ["redis", "msgpack"],
     }
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "requests --extras security socks",
+    ],
+)
+def test_add_extras_only_accepts_one_package(
+    command: str, tester: CommandTester, repo: TestRepository
+) -> None:
+    """
+    You cannot pass in multiple package values to a single --extras flag.\
+    e.g. --extras security socks is not allowed.
+    """
+    repo.add_package(get_package("requests", "2.30.0"))
+
+    with pytest.raises(ValueError) as e:
+        tester.execute(command)
+        assert (
+            str(e.value)
+            == "You can only specify one package when using the --extras option"
+        )
