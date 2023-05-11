@@ -11,6 +11,7 @@ from deepdiff import DeepDiff
 from poetry.core.pyproject.exceptions import PyProjectException
 
 from poetry.config.config_source import ConfigSource
+from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from tests.conftest import Config
 
@@ -52,7 +53,6 @@ def test_list_displays_default_value_if_not_set(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -82,7 +82,6 @@ def test_list_displays_set_get_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -99,7 +98,7 @@ virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
-    assert config.set_config_source.call_count == 0
+    assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
 
 
@@ -136,7 +135,6 @@ def test_list_displays_set_get_local_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -153,7 +151,7 @@ virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
-    assert config.set_config_source.call_count == 1
+    assert config.set_config_source.call_count == 1  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
 
 
@@ -174,7 +172,6 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.new-installer = true
 experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
@@ -247,9 +244,9 @@ def test_config_installer_parallel(
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"
 
-    workers = command_tester_factory(
-        "install"
-    )._command._installer._executor._max_workers
+    command = command_tester_factory("install")._command
+    assert isinstance(command, InstallCommand)
+    workers = command.installer._executor._max_workers
     assert workers > 1
 
     tester.io.clear_output()
@@ -257,9 +254,9 @@ def test_config_installer_parallel(
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "false"
 
-    workers = command_tester_factory(
-        "install"
-    )._command._installer._executor._max_workers
+    command = command_tester_factory("install")._command
+    assert isinstance(command, InstallCommand)
+    workers = command.installer._executor._max_workers
     assert workers == 1
 
 

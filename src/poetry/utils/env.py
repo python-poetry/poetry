@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import sys
 import sysconfig
-import warnings
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -190,33 +189,15 @@ print(json.dumps(sysconfig.get_paths()))
 """
 
 GET_PATHS_FOR_GENERIC_ENVS = """\
-# We can't use sysconfig.get_paths() because
-# on some distributions it does not return the proper paths
-# (those used by pip for instance). We go through distutils
-# to get the proper ones.
 import json
 import site
 import sysconfig
 
-from distutils.command.install import SCHEME_KEYS
-from distutils.core import Distribution
-
-d = Distribution()
-d.parse_config_files()
-obj = d.get_command_obj("install", create=True)
-obj.finalize_options()
-
 paths = sysconfig.get_paths().copy()
-for key in SCHEME_KEYS:
-    if key == "headers":
-        # headers is not a path returned by sysconfig.get_paths()
-        continue
 
-    paths[key] = getattr(obj, f"install_{key}")
-
-if site.check_enableusersite() and hasattr(obj, "install_usersite"):
-    paths["usersite"] = getattr(obj, "install_usersite")
-    paths["userbase"] = getattr(obj, "install_userbase")
+if site.check_enableusersite():
+    paths["usersite"] = site.getusersitepackages()
+    paths["userbase"] = site.getuserbase()
 
 print(json.dumps(paths))
 """
@@ -588,6 +569,11 @@ class EnvManager:
 
         return Version.parse(version)
 
+    @property
+    def in_project_venv(self) -> Path:
+        venv: Path = self._poetry.file.parent / ".venv"
+        return venv
+
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
         cwd = self._poetry.file.parent
@@ -621,12 +607,11 @@ class EnvManager:
         patch = python_version.text
 
         create = False
-        is_root_venv = self._poetry.config.get("virtualenvs.in-project")
-        # If we are required to create the virtual environment in the root folder,
+        # If we are required to create the virtual environment in the project directory,
         # create or recreate it if needed
-        if is_root_venv:
+        if self.use_in_project_venv():
             create = False
-            venv = self._poetry.file.parent / ".venv"
+            venv = self.in_project_venv
             if venv.exists():
                 # We need to check if the patch version is correct
                 _venv = VirtualEnv(venv)
@@ -730,12 +715,8 @@ class EnvManager:
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if (
-                self._poetry.config.get("virtualenvs.in-project") is not False
-                and (cwd / ".venv").exists()
-                and (cwd / ".venv").is_dir()
-            ):
-                venv = cwd / ".venv"
+            if self.use_in_project_venv():
+                venv = self.in_project_venv
 
                 return VirtualEnv(venv)
 
@@ -772,12 +753,8 @@ class EnvManager:
         venv_path = self._poetry.config.virtualenvs_path
         env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
 
-        venv = self._poetry.file.parent / ".venv"
-        if (
-            self._poetry.config.get("virtualenvs.in-project") is not False
-            and venv.exists()
-            and venv.is_dir()
-        ):
+        if self.use_in_project_venv():
+            venv = self.in_project_venv
             env_list.insert(0, VirtualEnv(venv))
         return env_list
 
@@ -891,6 +868,12 @@ class EnvManager:
 
         return VirtualEnv(venv_path, venv_path)
 
+    def use_in_project_venv(self) -> bool:
+        in_project: bool | None = self._poetry.config.get("virtualenvs.in-project")
+        if in_project is not None:
+            return in_project
+        return self.in_project_venv.is_dir()
+
     def create_venv(
         self,
         name: str | None = None,
@@ -918,7 +901,7 @@ class EnvManager:
             return env
 
         create_venv = self._poetry.config.get("virtualenvs.create")
-        root_venv = self._poetry.config.get("virtualenvs.in-project")
+        in_project_venv = self.use_in_project_venv()
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
@@ -927,12 +910,13 @@ class EnvManager:
         if not executable and prefer_active_python:
             executable = self._detect_active_python()
 
-        venv_path: Path = (
-            cwd / ".venv" if root_venv else self._poetry.config.virtualenvs_path
+        venv_path = (
+            self.in_project_venv
+            if in_project_venv
+            else self._poetry.config.virtualenvs_path
         )
         if not name:
             name = self._poetry.package.name
-        assert name is not None
 
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
@@ -1007,7 +991,7 @@ class EnvManager:
                     self._poetry.package.python_versions
                 )
 
-        if root_venv:
+        if in_project_venv:
             venv = venv_path
         else:
             name = self.generate_env_name(name, str(cwd))
@@ -1499,16 +1483,16 @@ class Env:
 
         return [str(self._bin(bin))]
 
-    def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
+    def run(self, bin: str, *args: str, **kwargs: Any) -> str:
         cmd = self.get_command_from_bin(bin) + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_pip(self, *args: str, **kwargs: Any) -> int | str:
+    def run_pip(self, *args: str, **kwargs: Any) -> str:
         pip = self.get_pip_command()
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_python_script(self, content: str, **kwargs: Any) -> int | str:
+    def run_python_script(self, content: str, **kwargs: Any) -> str:
         return self.run(
             self._executable,
             "-I",
@@ -1520,7 +1504,7 @@ class Env:
             **kwargs,
         )
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         """
         Run a command inside the Python environment.
         """
@@ -1542,7 +1526,8 @@ class Env:
                 ).stdout
             elif call:
                 assert stderr != subprocess.PIPE
-                return subprocess.call(cmd, stderr=stderr, env=env, **kwargs)
+                subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
+                output = ""
             else:
                 output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
         except CalledProcessError as e:
@@ -1633,37 +1618,13 @@ class SystemEnv(Env):
         return platform.python_implementation()
 
     def get_paths(self) -> dict[str, str]:
-        # We can't use sysconfig.get_paths() because
-        # on some distributions it does not return the proper paths
-        # (those used by pip for instance). We go through distutils
-        # to get the proper ones.
         import site
 
-        from distutils.command.install import SCHEME_KEYS
-        from distutils.core import Distribution
-
-        d = Distribution()
-        d.parse_config_files()
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "setup.py install is deprecated")
-            obj = d.get_command_obj("install", create=True)
-        assert obj is not None
-        obj.finalize_options()
-
         paths = sysconfig.get_paths().copy()
-        for key in SCHEME_KEYS:
-            if key == "headers":
-                # headers is not a path returned by sysconfig.get_paths()
-                continue
-
-            paths[key] = getattr(obj, f"install_{key}")
 
         if site.check_enableusersite():
-            usersite = getattr(obj, "install_usersite", None)
-            userbase = getattr(obj, "install_userbase", None)
-            if usersite is not None and userbase is not None:
-                paths["usersite"] = usersite
-                paths["userbase"] = userbase
+            paths["usersite"] = site.getusersitepackages()
+            paths["userbase"] = site.getuserbase()
 
         return paths
 
@@ -1723,13 +1684,11 @@ class VirtualEnv(Env):
         # from inside the virtualenv.
         if base is None:
             output = self.run_python_script(GET_BASE_PREFIX)
-            assert isinstance(output, str)
             self._base = Path(output.strip())
 
     @property
     def sys_path(self) -> list[str]:
         output = self.run_python_script(GET_SYS_PATH)
-        assert isinstance(output, str)
         paths: list[str] = json.loads(output)
         return paths
 
@@ -1745,20 +1704,17 @@ class VirtualEnv(Env):
 
     def get_supported_tags(self) -> list[Tag]:
         output = self.run_python_script(GET_SYS_TAGS)
-        assert isinstance(output, str)
 
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
-        assert isinstance(output, str)
 
         env: dict[str, Any] = json.loads(output)
         return env
 
     def get_pip_version(self) -> Version:
         output = self.run_pip("--version")
-        assert isinstance(output, str)
         output = output.strip()
 
         m = re.match("pip (.+?)(?: from .+)?$", output)
@@ -1769,7 +1725,6 @@ class VirtualEnv(Env):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS)
-        assert isinstance(output, str)
         paths: dict[str, str] = json.loads(output)
         return paths
 
@@ -1780,7 +1735,7 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if "python" exists.
         return os.path.exists(self.python)
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
         return super()._run(cmd, **kwargs)
 
@@ -1885,7 +1840,6 @@ class GenericEnv(VirtualEnv):
 
     def get_paths(self) -> dict[str, str]:
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
-        assert isinstance(output, str)
 
         paths: dict[str, str] = json.loads(output)
         return paths
@@ -1902,7 +1856,7 @@ class GenericEnv(VirtualEnv):
 
         return exe.returncode
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
@@ -1932,15 +1886,15 @@ class NullEnv(SystemEnv):
 
         return self._paths
 
-    def _run(self, cmd: list[str], **kwargs: Any) -> int | str:
+    def _run(self, cmd: list[str], **kwargs: Any) -> str:
         self.executed.append(cmd)
 
         if self._execute:
             return super()._run(cmd, **kwargs)
-        return 0
+        return ""
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
-        self.executed.append([bin] + list(args))
+        self.executed.append([bin, *list(args)])
 
         if self._execute:
             return super().execute(bin, *args, **kwargs)

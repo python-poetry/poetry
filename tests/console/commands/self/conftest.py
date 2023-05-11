@@ -35,11 +35,6 @@ def _patch_repos(repo: TestRepository, installed: Repository) -> None:
     installed.add_package(poetry)
 
 
-@pytest.fixture(autouse=True)
-def save_environ(environ: None) -> Repository:
-    yield
-
-
 @pytest.fixture()
 def pool(repo: TestRepository) -> RepositoryPool:
     return RepositoryPool([repo])

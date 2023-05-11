@@ -18,7 +18,7 @@ def pip_install(
     editable: bool = False,
     deps: bool = False,
     upgrade: bool = False,
-) -> int | str:
+) -> str:
     is_wheel = path.suffix == ".whl"
 
     # We disable version check here as we are already pinning to version available in

@@ -147,7 +147,7 @@ class PyPiRepository(HTTPRepository):
 
     def _get_release_info(
         self, name: NormalizedName, version: Version
-    ) -> dict[str, str | list[str] | None]:
+    ) -> dict[str, Any]:
         from poetry.inspection.info import PackageInfo
 
         self._log(f"Getting info for {name} ({version}) from PyPI", "debug")
@@ -246,5 +246,5 @@ class PyPiRepository(HTTPRepository):
     @staticmethod
     def _get_yanked(json_data: dict[str, Any]) -> str | bool:
         if json_data.get("yanked", False):
-            return json_data.get("yanked_reason") or True  # noqa: SIM222
+            return json_data.get("yanked_reason") or True
         return False

@@ -397,9 +397,9 @@ class Authenticator:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
                 url = self._config.get(f"repositories.{repository_name}.url")
-                self._configured_repositories[
-                    repository_name
-                ] = AuthenticatorRepositoryConfig(repository_name, url)
+                self._configured_repositories[repository_name] = (
+                    AuthenticatorRepositoryConfig(repository_name, url)
+                )
 
         return self._configured_repositories
 

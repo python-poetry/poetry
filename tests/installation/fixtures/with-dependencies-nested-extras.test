@@ -2,7 +2,6 @@
 name = "A"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -17,7 +16,6 @@ b = ["B[c] (>=1.0,<2.0)"]
 name = "B"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -32,7 +30,6 @@ c = ["C (>=1.0,<2.0)"]
 name = "C"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []

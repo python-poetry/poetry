@@ -13,7 +13,7 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.dependency_specification import parse_dependency_specification
+from poetry.utils.dependency_specification import RequirementsParser
 
 
 if TYPE_CHECKING:
@@ -434,17 +434,17 @@ You can specify a package in the following forms:
 
         try:
             cwd = self.poetry.file.parent
+            artifact_cache = self.poetry.pool.artifact_cache
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
+            artifact_cache = self._get_pool().artifact_cache
 
-        return [
-            parse_dependency_specification(
-                requirement=requirement,
-                env=self.env if isinstance(self, EnvCommand) else None,
-                cwd=cwd,
-            )
-            for requirement in requirements
-        ]
+        parser = RequirementsParser(
+            artifact_cache=artifact_cache,
+            env=self.env if isinstance(self, EnvCommand) else None,
+            cwd=cwd,
+        )
+        return [parser.parse(requirement) for requirement in requirements]
 
     def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
         requires: Requirements = {}

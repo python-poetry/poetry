@@ -39,6 +39,8 @@ from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import httpretty
 
     from httpretty.core import HTTPrettyRequest
@@ -134,17 +136,12 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture
-def artifact_cache(config: Config) -> ArtifactCache:
-    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
-
-
-@pytest.fixture
 def mock_file_downloads(
     http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
 ) -> None:
     def callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> list[int | dict[str, Any] | str]:
+    ) -> list[int | dict[str, Any] | bytes]:
         name = Path(urlparse(uri).path).name
 
         fixture = Path(__file__).parent.parent.joinpath(
@@ -184,7 +181,7 @@ def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Pa
 
 
 @pytest.fixture
-def wheel(copy_wheel: Callable[[], Path]) -> Path:
+def wheel(copy_wheel: Callable[[], Path]) -> Iterator[Path]:
     archive = copy_wheel()
 
     yield archive
@@ -267,9 +264,9 @@ Package operations: 4 installs, 1 update, 1 removal
   • Installing demo (0.1.0 master)
 """
 
-    expected = set(expected.splitlines())
-    output = set(io.fetch_output().splitlines())
-    assert output == expected
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
     assert wheel_install.call_count == 5
     # Two pip uninstalls: one for the remove operation one for the update operation
     assert len(env.executed) == 2
@@ -513,9 +510,9 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing cleo (1.0.0a5)
 """
-    expected = set(expected.splitlines())
-    output = set(io_not_decorated.fetch_output().splitlines())
-    assert output == expected
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io_not_decorated.fetch_output().splitlines())
+    assert output_lines == expected_lines
     assert return_code == 0
 
 
@@ -622,10 +619,14 @@ def verify_installed_distribution(
     assert metadata["Name"] == package.name
     assert metadata["Version"] == package.version.text
 
-    direct_url_file = distribution._path.joinpath("direct_url.json")
+    direct_url_file = distribution._path.joinpath(  # type: ignore[attr-defined]
+        "direct_url.json"
+    )
 
     if url_reference is not None:
-        record_file = distribution._path.joinpath("RECORD")
+        record_file = distribution._path.joinpath(  # type: ignore[attr-defined]
+            "RECORD"
+        )
         with open(record_file, encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             rows = list(reader)
@@ -855,6 +856,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     if is_artifact_cached:
         download_spy.assert_not_called()
     else:
+        assert package.source_url is not None
         download_spy.assert_called_once_with(
             mocker.ANY, operation, Link(package.source_url)
         )
@@ -901,7 +903,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
 
         def mock_get_cached_archive_for_link_func(
             _: Link, *, strict: bool, **__: Any
-        ) -> None:
+        ) -> Path | None:
             if is_wheel_cached and not strict:
                 return cached_wheel
             if is_sdist_cached:
@@ -948,6 +950,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         mock_prepare.assert_not_called()
 
     if expect_artifact_download:
+        assert package.source_url is not None
         download_spy.assert_called_once_with(
             mocker.ANY, operation, Link(package.source_url)
         )
@@ -1053,6 +1056,7 @@ def test_executor_should_write_pep610_url_references_for_editable_git(
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
     executor.execute([Install(package)])
+    assert package.source_url is not None
     verify_installed_distribution(
         tmp_venv,
         package,
@@ -1218,9 +1222,9 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing simple-project (1.2.3 {directory_package.source_url})
 """
 
-    expected = set(expected.splitlines())
-    output = set(io.fetch_output().splitlines())
-    assert output == expected
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
     assert return_code == 0
     assert mock_create_poetry.call_count == 1
     assert mock_sdist_builder.call_count == 0
@@ -1281,6 +1285,7 @@ Package operations: 1 install, 0 updates, 0 removals
   Error on stdout
 """
 
+    assert directory_package.source_url is not None
     if editable:
         pip_command = "pip wheel --use-pep517 --editable"
         requirement = directory_package.source_url

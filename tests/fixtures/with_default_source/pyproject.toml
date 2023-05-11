@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "my-package"
+name = "with-default-source"
 version = "1.2.3"
 description = "Some description."
 authors = [
@@ -22,11 +22,11 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+python = "^3.6"
 cleo = "^0.6"
 pendulum = { git = "https://github.com/sdispater/pendulum.git", branch = "2.0" }
 requests = { version = "^2.18", optional = true, extras=[ "security" ] }
-pathlib2 = { version = "^2.2", python = "~2.7" }
+pathlib2 = { version = "^2.2", python = "~3.6" }
 
 orator = { version = "^0.9", optional = true }
 
@@ -48,7 +48,7 @@ pytest = "~3.4"
 
 
 [tool.poetry.scripts]
-my-script = "my_package:main"
+my-script = "with_default_source:main"
 
 
 [tool.poetry.plugins."blogtool.parsers"]

@@ -7,6 +7,7 @@ from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 import pytest
 
@@ -79,9 +80,11 @@ def source_directory_name(source_url: str) -> str:
 
 
 @pytest.fixture(scope="module")
-def local_repo(tmp_path_factory: TempPathFactory, source_directory_name: str) -> Repo:
+def local_repo(
+    tmp_path_factory: TempPathFactory, source_directory_name: str
+) -> Iterator[Repo]:
     with Repo.init(
-        tmp_path_factory.mktemp("src") / source_directory_name, mkdir=True
+        str(tmp_path_factory.mktemp("src") / source_directory_name), mkdir=True
     ) as repo:
         yield repo
 
@@ -103,7 +106,8 @@ def remote_refs(_remote_refs: FetchPackResult) -> FetchPackResult:
 
 @pytest.fixture(scope="module")
 def remote_default_ref(_remote_refs: FetchPackResult) -> bytes:
-    return _remote_refs.symrefs[b"HEAD"]
+    ref: bytes = _remote_refs.symrefs[b"HEAD"]
+    return ref
 
 
 @pytest.fixture(scope="module")
@@ -269,7 +273,11 @@ def test_system_git_fallback_on_http_401(
     source_url: str,
 ) -> None:
     spy = mocker.spy(Git, "_clone_legacy")
-    mocker.patch.object(Git, "_clone", side_effect=HTTPUnauthorized(None, None))
+    mocker.patch.object(
+        Git,
+        "_clone",
+        side_effect=HTTPUnauthorized(None, None),  # type: ignore[no-untyped-call]
+    )
 
     with Git.clone(url=source_url, branch="0.1") as repo:
         path = Path(repo.path)

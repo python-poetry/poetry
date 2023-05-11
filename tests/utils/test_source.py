@@ -34,7 +34,7 @@ from poetry.utils.source import source_to_table
 )
 def test_source_to_table(source: Source, table_body: dict[str, str | bool]) -> None:
     table = Table(Container(), Trivia(), False)
-    table._value = table_body
+    table._value = table_body  # type: ignore[assignment]
 
     assert source_to_table(source) == table
 
@@ -70,5 +70,9 @@ def test_source_legacy_handling(
     ],
 )
 def test_source_priority_as_string(priority: str, expected_priority: Priority) -> None:
-    source = Source("foo", "https://example.com", priority=priority)
+    source = Source(
+        "foo",
+        "https://example.com",
+        priority=priority,  # type: ignore[arg-type]
+    )
     assert source.priority == Priority.SECONDARY

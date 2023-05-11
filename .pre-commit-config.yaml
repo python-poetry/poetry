@@ -20,74 +20,17 @@ repos:
       - id: debug-statements
       - id: check-docstring-first
 
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
-    hooks:
-      - id: python-check-mock-methods
-      - id: python-use-type-annotations
-      - id: python-check-blanket-noqa
-
-  - repo: https://github.com/asottile/yesqa
-    rev: v1.4.0
-    hooks:
-      - id: yesqa
-        additional_dependencies: &flake8_deps
-          - flake8-annotations==3.0.0
-          - flake8-bugbear==23.1.20
-          - flake8-comprehensions==3.10.1
-          - flake8-eradicate==1.4.0
-          - flake8-pie==0.16.0
-          - flake8-quotes==3.3.2
-          - flake8-simplify==0.19.3
-          - flake8-tidy-imports==4.8.0
-          - flake8-type-checking==2.3.0
-          - flake8-typing-imports==1.14.0
-          - flake8-use-fstring==1.4
-          - pep8-naming==0.13.3
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-      - id: pyupgrade
-        args: [--py37-plus]
-        exclude: ^(install|get)-poetry.py$
-
-  - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.2
-    hooks:
-      - id: pycln
-        args: [--all]
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: "isort (python)"
-        types: [python]
-        args: [--add-import, from __future__ import annotations]
-        exclude: |
-          (?x)(
-             ^(install|get)-poetry.py$
-              | ^src/poetry/__init__.py$
-          )
-      - id: isort
-        name: "isort (pyi)"
-        types: [pyi]
-        args: [--lines-after-imports, "-1"]
-
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.3.0
     hooks:
       - id: black
 
-  - repo: https://github.com/pycqa/flake8
-    # freeze to commit rev to prevent automatic updates, since newer versions of flake8 are not compatible with plugins
-    rev: 6027577d325b0dd8bf1e465ebd29b71b5f0d005b
-    hooks:
-      - id: flake8
-        additional_dependencies: *flake8_deps
-
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v2.21.0
+    rev: v3.3.1
     hooks:
       - id: validate_manifest
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.265
+    hooks:
+    -   id: ruff

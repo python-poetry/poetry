@@ -12,7 +12,7 @@ from poetry.factory import Factory
 
 
 @pytest.fixture
-def example_system_pyproject():
+def example_system_pyproject() -> str:
     package = ProjectPackage("poetry-instance", __version__)
     plugin = Package("poetry-plugin", "1.2.3")
 
@@ -27,7 +27,7 @@ def example_system_pyproject():
 def test_generate_system_pyproject_trailing_newline(
     existing_newlines: int,
     example_system_pyproject: str,
-):
+) -> None:
     cmd = SelfCommand()
     cmd.system_pyproject.write_text(example_system_pyproject + "\n" * existing_newlines)
     cmd.generate_system_pyproject()
@@ -38,7 +38,7 @@ def test_generate_system_pyproject_trailing_newline(
 
 def test_generate_system_pyproject_carriage_returns(
     example_system_pyproject: str,
-):
+) -> None:
     cmd = SelfCommand()
     cmd.system_pyproject.write_text(example_system_pyproject + "\n")
     cmd.generate_system_pyproject()

@@ -555,7 +555,7 @@ $ poetry cache clear pypi --all
 - Added in info output to `poetry lock --check` ([#5081](https://github.com/python-poetry/poetry/pull/5081)).
 - Added new argument `--all` for `poetry env remove` to delete all venv of a project at once ([#3212](https://github.com/python-poetry/poetry/pull/3212)).
 - Added new argument `--without-urls` for `poetry export` to exclude source repository urls from the exported file ([#4763](https://github.com/python-poetry/poetry/pull/4763)).
-- Added a `new installer.max-workers` property to the configuration ([#3516](https://github.com/python-poetry/poetry/pull/3516)).
+- Added a new `installer.max-workers` property to the configuration ([#3516](https://github.com/python-poetry/poetry/pull/3516)).
 - Added experimental option `virtualenvs.prefer-active-python` to detect current activated python ([#4852](https://github.com/python-poetry/poetry/pull/4852)).
 - Added better windows shell support ([#5053](https://github.com/python-poetry/poetry/pull/5053)).
 

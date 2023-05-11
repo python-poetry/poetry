@@ -47,7 +47,8 @@ class SystemGit:
                 (folder / ".git").as_posix(),
                 "--work-tree",
                 folder.as_posix(),
-            ) + args
+                *args,
+            )
 
         git_command = find_git_command()
         env = os.environ.copy()

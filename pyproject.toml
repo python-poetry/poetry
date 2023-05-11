@@ -2,46 +2,31 @@
 name = "poetry"
 version = "1.5.0.dev0"
 description = "Python dependency management and packaging made easy."
-authors = [
-    "Sébastien Eustace <sebastien@eustace.io>",
-]
+authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
     "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
     "Bjorn Neergaard <bjorn@neersighted.com>",
     "Branch Vincent <branchevincent@gmail.com>",
-    "Bryce Drennan <github@accounts.brycedrennan.com>",
-    "Daniel Eades <danieleades@hotmail.com>",
     "Randy Döring <radoering.poetry@gmail.com>",
     "Steph Samson <hello@stephsamson.com>",
     "finswimmer <finswimmer77@gmail.com>",
+    "Secrus <b.sokorski@gmail.com>",
 ]
 license = "MIT"
-
 readme = "README.md"
-
-packages = [
-    { include = "poetry", from = "src" }
-]
-include = [
-    { path = "tests", format = "sdist" }
-]
-
+packages = [{ include = "poetry", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs"
-
 keywords = ["packaging", "dependency", "poetry"]
-
 classifiers = [
     "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [tool.poetry.urls]
 Changelog = "https://python-poetry.org/history/"
-
-[tool.poetry.build]
-generate-setup-file = false
 
 # Requirements
 [tool.poetry.dependencies]
@@ -66,22 +51,16 @@ lockfile = "^0.12.2"
 packaging = ">=20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
-platformdirs = "^2.5.2"
+platformdirs = "^3.0.0"
 pyproject-hooks = "^1.0.0"
 requests = "^2.18"
 requests-toolbelt = ">=0.9.1,<0.11.0"
 shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
-# exclude 0.11.2 and 0.11.3 due to https://github.com/sdispater/tomlkit/issues/225
-tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
+tomlkit = ">=0.11.4,<1.0.0"
 # trove-classifiers uses calver, so version is unclamped
 trove-classifiers = ">=2022.5.19"
-# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
-virtualenv = [
-    { version = "^20.4.3,!=20.4.5,!=20.4.6" },
-    # see https://github.com/python-poetry/poetry/pull/6950 for details
-    { version = "<20.16.6", markers = "sys_platform == 'win32' and python_version == '3.9'" },
-]
+virtualenv = "^20.22.0"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 urllib3 = "^1.26.0"
 
@@ -91,12 +70,7 @@ pre-commit = "^2.6"
 [tool.poetry.group.test.dependencies]
 # Cachy frozen to test backwards compatibility for `poetry.utils.cache`.
 cachy = "0.3.0"
-deepdiff = [
-    { version = "^6.2" },
-    # avoid orjson, which is required by deepdiff 6.2.3, on FreeBSD
-    # because it requires a rust compiler
-    { version = "<6.2.3", markers = "platform_system == 'FreeBSD'"},
-]
+deepdiff = "^6.3"
 httpretty = "^1.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
@@ -118,26 +92,59 @@ optional = true
 [tool.poetry.group.github-actions.dependencies]
 pytest-github-actions-annotate-failures = "^0.1.7"
 
-
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
 
 
 [build-system]
-requires = ["poetry-core>=1.1.0"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"
 
 
-[tool.isort]
-py_version = 37
-profile = "black"
-force_single_line = true
-combine_as_imports = true
-lines_between_types = 1
-lines_after_imports = 2
-src_paths = ["src", "tests"]
-extend_skip = ["setup.py"]
-known_third_party = ["poetry.core"]
+[tool.ruff]
+fix = true
+unfixable = [
+    "ERA", # do not autoremove commented out code
+]
+target-version = "py37"
+line-length = 88
+extend-select = [
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "ERA", # flake8-eradicate/eradicate
+    "I",   # isort
+    "N",   # pep8-naming
+    "PIE", # flake8-pie
+    "PGH", # pygrep
+    "RUF", # ruff checks
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B904", # use 'raise ... from err'
+    "B905", # use explicit 'strict=' parameter with 'zip()'
+    "N818", #  Exception name should be named with an Error suffix
+]
+extend-exclude = [
+    "docs/*",
+    # Frozen and not subject to change in this repo
+    "install-poetry.py",
+    # External to the project's coding standards
+    "tests/**/fixtures/*",
+]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.isort]
+force-single-line = true
+lines-between-types = 1
+lines-after-imports = 2
+known-first-party = ["poetry"]
+known-third-party = ["poetry.core"]
+required-imports = ["from __future__ import annotations"]
 
 
 [tool.black]
@@ -149,7 +156,7 @@ force-exclude = '''
 
 
 [tool.mypy]
-files = "src"
+files = "src, tests"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
@@ -161,22 +168,22 @@ enable_error_code = [
     "truthy-bool",
 ]
 exclude = [
-  "tests/fixtures",
-  "tests/masonry/builders/fixtures",
-  "tests/utils/fixtures"
+    "tests/fixtures",
+    "tests/masonry/builders/fixtures",
+    "tests/utils/fixtures",
 ]
 
-# use of importlib-metadata backport at python3.7 makes it impossible to
-# satisfy mypy without some ignores: but we get a different set of ignores at
-# different python versions.
-#
-# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
-# warning.
+# use of importlib-metadata backport makes it impossible to satisfy mypy
+# without some ignores: but we get different sets of ignores at different
+# python versions.
 [[tool.mypy.overrides]]
 module = [
     'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
     'poetry.utils.env',
+    'tests.console.commands.self.test_show_plugins',
+    'tests.helpers',
+    'tests.repositories.test_installed_repository',
 ]
 warn_unused_ignores = false
 
@@ -193,15 +200,14 @@ module = [
     'shellingham.*',
     'virtualenv.*',
     'xattr.*',
+    'zipp.*',
 ]
 ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
 addopts = "-n auto"
-testpaths = [
-    "tests"
-]
+testpaths = ["tests"]
 
 
 [tool.coverage.report]
