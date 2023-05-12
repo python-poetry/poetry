@@ -273,6 +273,21 @@ def test_set_cert(
     assert auth_config_source.config["certificates"]["foo"]["cert"] == result
 
 
+def test_unset_cert(
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
+) -> None:
+    mocker.spy(ConfigSource, "__init__")
+
+    tester.execute("certificates.foo.cert path/to/ca.pem")
+
+    assert "cert" in auth_config_source.config["certificates"]["foo"]
+
+    tester.execute("certificates.foo.cert --unset")
+    assert "cert" not in auth_config_source.config["certificates"]["foo"]
+
+
 def test_config_installer_parallel(
     tester: CommandTester, command_tester_factory: CommandTesterFactory
 ) -> None:
