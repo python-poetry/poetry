@@ -194,7 +194,6 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     project_factory: ProjectFactory,
     fixture_dir: FixtureDirGetter,
     command_tester_factory: CommandTesterFactory,
-    config: Config,
     config_cache_dir: Path,
 ) -> None:
     source = fixture_dir("with_non_default_source_implicit")
@@ -249,6 +248,18 @@ def test_set_client_cert(
         auth_config_source.config["certificates"]["foo"]["client-cert"]
         == "path/to/cert.pem"
     )
+
+
+def test_set_client_cert_unsuccessful_multiple_values(
+    tester: CommandTester,
+    mocker: MockerFixture,
+) -> None:
+    mocker.spy(ConfigSource, "__init__")
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("certificates.foo.client-cert path/to/cert.pem path/to/cert.pem")
+
+    assert str(e.value) == "You must pass exactly 1 value"
 
 
 @pytest.mark.parametrize(
