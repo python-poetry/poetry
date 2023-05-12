@@ -308,6 +308,28 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
+def test_set_http_basic(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    tester.execute("http-basic.foo username password")
+    tester.execute("--list")
+
+    assert auth_config_source.config["http-basic"]["foo"] == {
+        "username": "username",
+        "password": "password",
+    }
+
+
+def test_unset_http_basic(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    tester.execute("http-basic.foo username password")
+    tester.execute("http-basic.foo --unset")
+    tester.execute("--list")
+
+    assert "foo" not in auth_config_source.config["http-basic"]
+
+
 def test_set_pypi_token(
     tester: CommandTester, auth_config_source: DictConfigSource
 ) -> None:
@@ -315,6 +337,16 @@ def test_set_pypi_token(
     tester.execute("--list")
 
     assert auth_config_source.config["pypi-token"]["pypi"] == "mytoken"
+
+
+def test_unset_pypi_token(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    tester.execute("pypi-token.pypi mytoken")
+    tester.execute("pypi-token.pypi --unset")
+    tester.execute("--list")
+
+    assert "pypi" not in auth_config_source.config["pypi-token"]
 
 
 def test_set_client_cert(
