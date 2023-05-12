@@ -887,7 +887,7 @@ def test_run_with_optional_and_python_restricted_dependencies(
     repo.add_package(package_c13)
     repo.add_package(package_d)
 
-    package.extras = {canonicalize_name("foo"): [get_dependency("A", "~1.0")]}
+    package.extras = {canonicalize_name("foo"): {get_dependency("A", "~1.0")}}
     package.add_dependency(
         Factory.create_dependency("A", {"version": "~1.0", "optional": True})
     )
@@ -935,7 +935,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     repo.add_package(package_c13)
     repo.add_package(package_d)
 
-    package.extras = {canonicalize_name("foo"): [get_dependency("A", "~1.0")]}
+    package.extras = {canonicalize_name("foo"): {get_dependency("A", "~1.0")}}
     package.add_dependency(
         Factory.create_dependency("A", {"version": "~1.0", "optional": True})
     )
@@ -968,7 +968,7 @@ def test_run_with_dependencies_extras(
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
 
-    package_b.extras = {canonicalize_name("foo"): [get_dependency("C", "^1.0")]}
+    package_b.extras = {canonicalize_name("foo"): {get_dependency("C", "^1.0")}}
     package_b.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -1002,11 +1002,11 @@ def test_run_with_dependencies_nested_extras(
     )
     dependency_a = Factory.create_dependency("A", {"version": "^1.0", "extras": ["B"]})
 
-    package_b.extras = {canonicalize_name("c"): [dependency_c]}
+    package_b.extras = {canonicalize_name("c"): {dependency_c}}
     package_b.add_dependency(dependency_c)
 
     package_a.add_dependency(dependency_b)
-    package_a.extras = {canonicalize_name("b"): [dependency_b]}
+    package_a.extras = {canonicalize_name("b"): {dependency_b}}
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -1024,7 +1024,7 @@ def test_run_with_dependencies_nested_extras(
 def test_run_does_not_install_extras_if_not_requested(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
-    package.extras[canonicalize_name("foo")] = [get_dependency("D")]
+    package.extras[canonicalize_name("foo")] = {get_dependency("D")}
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -1056,7 +1056,7 @@ def test_run_does_not_install_extras_if_not_requested(
 def test_run_installs_extras_if_requested(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
-    package.extras[canonicalize_name("foo")] = [get_dependency("D")]
+    package.extras[canonicalize_name("foo")] = {get_dependency("D")}
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -1089,7 +1089,7 @@ def test_run_installs_extras_if_requested(
 def test_run_installs_extras_with_deps_if_requested(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
-    package.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package.extras[canonicalize_name("foo")] = {get_dependency("C")}
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -1126,7 +1126,7 @@ def test_run_installs_extras_with_deps_if_requested_locked(
 ) -> None:
     locker.locked(True)
     locker.mock_lock_data(fixture("extras-with-dependencies"))
-    package.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package.extras[canonicalize_name("foo")] = {get_dependency("C")}
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -1506,7 +1506,7 @@ def test_run_update_with_locked_extras(
         }
     )
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("B")]
+    package_a.extras[canonicalize_name("foo")] = {get_dependency("B")}
     b_dependency = get_dependency("B", "^1.0", optional=True)
     b_dependency.in_extras.append(canonicalize_name("foo"))
     c_dependency = get_dependency("C", "^1.0")
@@ -1901,7 +1901,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     package_b.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
-    package_b.extras = {canonicalize_name("foo"): [get_dependency("C")]}
+    package_b.extras = {canonicalize_name("foo"): {get_dependency("C")}}
 
     package_c = get_package("C", "1.0.0")
     package_d = get_package("D", "1.0.0")

@@ -145,7 +145,7 @@ def test_package() -> None:
         },
     ]
 
-    win_inet = package.extras[canonicalize_name("socks")][0]
+    win_inet = next(iter(package.extras[canonicalize_name("socks")]))
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
 
@@ -254,15 +254,15 @@ def test_fallback_can_read_setup_to_get_dependencies() -> None:
     assert len([r for r in package.requires if r.is_optional()]) == 9
 
     assert package.extras == {
-        "mssql-pymssql": [Dependency("pymssql", "*")],
-        "mssql-pyodbc": [Dependency("pyodbc", "*")],
-        "mysql": [Dependency("mysqlclient", "*")],
-        "oracle": [Dependency("cx_oracle", "*")],
-        "postgresql": [Dependency("psycopg2", "*")],
-        "postgresql-pg8000": [Dependency("pg8000", "*")],
-        "postgresql-psycopg2binary": [Dependency("psycopg2-binary", "*")],
-        "postgresql-psycopg2cffi": [Dependency("psycopg2cffi", "*")],
-        "pymysql": [Dependency("pymysql", "*")],
+        "mssql-pymssql": {Dependency("pymssql", "*")},
+        "mssql-pyodbc": {Dependency("pyodbc", "*")},
+        "mysql": {Dependency("mysqlclient", "*")},
+        "oracle": {Dependency("cx_oracle", "*")},
+        "postgresql": {Dependency("psycopg2", "*")},
+        "postgresql-pg8000": {Dependency("pg8000", "*")},
+        "postgresql-psycopg2binary": {Dependency("psycopg2-binary", "*")},
+        "postgresql-psycopg2cffi": {Dependency("psycopg2cffi", "*")},
+        "pymysql": {Dependency("pymysql", "*")},
     }
 
 

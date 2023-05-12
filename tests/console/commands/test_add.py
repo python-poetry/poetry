@@ -228,7 +228,7 @@ def test_add_constraint_with_extras(
     extra_name: str,
 ) -> None:
     cachy1 = get_package("cachy", "0.1.0")
-    cachy1.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
+    cachy1.extras = {canonicalize_name("msgpack"): {get_dependency("msgpack-python")}}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
     cachy1.add_dependency(msgpack_dep)
 
@@ -661,7 +661,7 @@ def test_add_constraint_with_extras_option(
     extra_name: str,
 ) -> None:
     cachy2 = get_package("cachy", "0.2.0")
-    cachy2.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
+    cachy2.extras = {canonicalize_name("msgpack"): {get_dependency("msgpack-python")}}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
     cachy2.add_dependency(msgpack_dep)
 
@@ -1445,8 +1445,8 @@ def test_add_extras_are_parsed_and_included(
     cachy.add_dependency(msgpack_dep)
     cachy.add_dependency(redis_dep)
     cachy.extras = {
-        canonicalize_name("redis"): [redis_dep],
-        canonicalize_name("msgpack"): [msgpack_dep],
+        canonicalize_name("redis"): {redis_dep},
+        canonicalize_name("msgpack"): {msgpack_dep},
     }
     repo.add_package(cachy)
 

@@ -222,9 +222,9 @@ class PackageInfo:
                     if extra not in package.extras:
                         # this is the first time we encounter this extra for this
                         # package
-                        package.extras[extra] = []
+                        package.extras[extra] = set()
 
-                    package.extras[extra].append(dependency)
+                    package.extras[extra].add(dependency)
 
             req = dependency.to_pep_508(with_extras=True)
 

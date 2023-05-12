@@ -235,7 +235,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     assert len(package.requires) == 3
     assert len(package.extras) == 2
 
-    lockfile_dep = package.extras[canonicalize_name("filecache")][0]
+    lockfile_dep = next(iter(package.extras[canonicalize_name("filecache")]))
     assert lockfile_dep.name == "lockfile"
 
 
@@ -298,7 +298,7 @@ content-hash = "123456789"
     assert len(package.requires) == 1
     assert len(package.extras) == 1
 
-    dependency_b = package.extras[canonicalize_name("b")][0]
+    dependency_b = next(iter(package.extras[canonicalize_name("b")]))
     assert dependency_b.name == "b"
     assert dependency_b.extras == frozenset({"c"})
 
@@ -309,7 +309,7 @@ content-hash = "123456789"
     assert len(package.requires) == 1
     assert len(package.extras) == 1
 
-    dependency_c = package.extras[canonicalize_name("c")][0]
+    dependency_c = next(iter(package.extras[canonicalize_name("c")]))
     assert dependency_c.name == "c"
     assert dependency_c.extras == frozenset()
 
@@ -362,7 +362,7 @@ content-hash = "123456789"
     assert len(package.requires) == 1
     assert len(package.extras) == 1
 
-    dependency_b = package.extras[canonicalize_name("b")][0]
+    dependency_b = next(iter(package.extras[canonicalize_name("b")]))
     assert dependency_b.name == "b"
 
 
@@ -552,7 +552,7 @@ def test_lock_file_should_not_have_mixed_types(
         Factory.create_dependency("B", {"version": ">=1.0.0", "optional": True})
     )
     package_a.requires[-1].activate()
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("B", ">=1.0.0")]
+    package_a.extras[canonicalize_name("foo")] = {get_dependency("B", ">=1.0.0")}
 
     locker.set_lock_data(root, [package_a])
 
@@ -724,8 +724,8 @@ def test_root_extras_dependencies_are_ordered(
     package_third = Factory.create_dependency("third", "1.0.0", root_dir=fixture_base)
 
     root.extras = {
-        canonicalize_name("C"): [package_third, package_second, package_first],
-        canonicalize_name("B"): [package_first, package_second, package_third],
+        canonicalize_name("C"): {package_third, package_second, package_first},
+        canonicalize_name("B"): {package_first, package_second, package_third},
     }
     locker.set_lock_data(root, [])
 
@@ -952,8 +952,8 @@ def test_locker_dumps_dependency_extras_in_correct_order(
     package_third = Factory.create_dependency("third", "1.0.0", root_dir=fixture_base)
 
     package_a.extras = {
-        canonicalize_name("C"): [package_third, package_second, package_first],
-        canonicalize_name("B"): [package_first, package_second, package_third],
+        canonicalize_name("C"): {package_third, package_second, package_first},
+        canonicalize_name("B"): {package_first, package_second, package_third},
     }
 
     locker.set_lock_data(root, [package_a])

@@ -181,8 +181,8 @@ def test_search_for_vcs_setup_egg_info(provider: Provider) -> None:
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -201,8 +201,8 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider) -> None:
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -221,8 +221,8 @@ def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture) ->
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -279,8 +279,8 @@ def test_search_for_directory_setup_egg_info(
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -303,8 +303,8 @@ def test_search_for_directory_setup_egg_info_with_extras(
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -328,8 +328,8 @@ def test_search_for_directory_setup_with_base(
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
     assert package.root_dir == (fixture_dir("git") / "github.com" / "demo" / directory)
 
@@ -354,8 +354,8 @@ def test_search_for_directory_setup_read_setup(
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -380,8 +380,8 @@ def test_search_for_directory_setup_read_setup_with_extras(
     assert required == [get_dependency("pendulum", ">=1.4.4")]
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -426,8 +426,8 @@ def test_search_for_directory_poetry(
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras-b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": {get_dependency("pendulum", ">=1.4.4")},
+        "extras-b": {get_dependency("cachy", ">=0.2.0")},
     }
 
 
@@ -457,8 +457,8 @@ def test_search_for_directory_poetry_with_extras(
         get_dependency("pendulum", ">=1.4.4"),
     ]
     assert package.extras == {
-        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras-b": [get_dependency("cachy", ">=0.2.0")],
+        "extras-a": {get_dependency("pendulum", ">=1.4.4")},
+        "extras-b": {get_dependency("cachy", ">=0.2.0")},
     }
 
 
@@ -487,8 +487,8 @@ def test_search_for_file_sdist(
         get_dependency("tomlkit"),
     ]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -518,8 +518,8 @@ def test_search_for_file_sdist_with_extras(
         get_dependency("tomlkit"),
     ]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -548,8 +548,8 @@ def test_search_for_file_wheel(
         get_dependency("tomlkit"),
     ]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -579,8 +579,8 @@ def test_search_for_file_wheel_with_extras(
         get_dependency("tomlkit"),
     ]
     assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
+        "foo": {get_dependency("cleo")},
+        "bar": {get_dependency("tomlkit")},
     }
 
 
@@ -682,7 +682,7 @@ def test_complete_package_with_extras_preserves_source_name(
     package_b = Package("B", "1.0")
     dep = get_dependency("B", "^1.0", optional=True)
     package_a.add_dependency(dep)
-    package_a.extras = {canonicalize_name("foo"): [dep]}
+    package_a.extras = {canonicalize_name("foo"): {dep}}
     repository.add_package(package_a)
     repository.add_package(package_b)
 
@@ -711,7 +711,7 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
     )
     package = Package("A", "1.0", features=["foo"] if with_extra else [])
     package.add_dependency(optional_vcs_dependency)
-    package.extras[canonicalize_name("foo")] = [optional_vcs_dependency]
+    package.extras[canonicalize_name("foo")] = {optional_vcs_dependency}
     repository.add_package(package)
 
     spy = mocker.spy(provider, "_search_for_vcs")

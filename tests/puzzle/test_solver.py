@@ -451,7 +451,7 @@ def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
     set_package_python_versions(solver.provider, "~3.4")
-    package.extras[canonicalize_name("foo")] = [get_dependency("B")]
+    package.extras[canonicalize_name("foo")] = {get_dependency("B")}
     package.add_dependency(
         Factory.create_dependency("A", {"version": "*", "python": "^3.4"})
     )
@@ -492,7 +492,7 @@ def test_solver_does_not_return_extras_if_not_requested(
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
 
-    package_b.extras = {canonicalize_name("foo"): [get_dependency("C", "^1.0")]}
+    package_b.extras = {canonicalize_name("foo"): {get_dependency("C", "^1.0")}}
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -523,7 +523,7 @@ def test_solver_returns_extras_if_requested(
 
     dep = get_dependency("C", "^1.0", optional=True)
     dep.marker = parse_marker("extra == 'foo'")
-    package_b.extras = {canonicalize_name("foo"): [dep]}
+    package_b.extras = {canonicalize_name("foo"): {dep}}
     package_b.add_dependency(dep)
 
     repo.add_package(package_a)
@@ -573,8 +573,8 @@ def test_solver_returns_extras_only_requested(
     dep20.marker = parse_marker("extra == 'two'")
 
     package_b.extras = {
-        canonicalize_name("one"): [dep10],
-        canonicalize_name("two"): [dep20],
+        canonicalize_name("one"): {dep10},
+        canonicalize_name("two"): {dep20},
     }
 
     package_b.add_dependency(dep10)
@@ -628,8 +628,8 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     dep._in_extras.append(canonicalize_name("two"))
 
     package_b.extras = {
-        canonicalize_name("one"): [dep],
-        canonicalize_name("two"): [dep],
+        canonicalize_name("one"): {dep},
+        canonicalize_name("two"): {dep},
     }
 
     package_b.add_dependency(dep)
@@ -685,8 +685,8 @@ def test_solver_returns_extras_only_requested_nested(
     dep20.marker = parse_marker("extra == 'two'")
 
     package_b.extras = {
-        canonicalize_name("one"): [dep10],
-        canonicalize_name("two"): [dep20],
+        canonicalize_name("one"): {dep10},
+        canonicalize_name("two"): {dep20},
     }
 
     package_b.add_dependency(dep10)
@@ -744,14 +744,14 @@ def test_solver_finds_extras_next_to_non_extras(
             "B", {"version": "*", "extras": ["bar"], "markers": "extra == 'foo'"}
         )
     )
-    package_a.extras = {canonicalize_name("foo"): [get_dependency("B", "*")]}
+    package_a.extras = {canonicalize_name("foo"): {get_dependency("B", "*")}}
 
     # B depends on C; B[bar] depends on D.
     package_b.add_dependency(Factory.create_dependency("C", "*"))
     package_b.add_dependency(
         Factory.create_dependency("D", {"version": "*", "markers": 'extra == "bar"'})
     )
-    package_b.extras = {canonicalize_name("bar"): [get_dependency("D", "*")]}
+    package_b.extras = {canonicalize_name("bar"): {get_dependency("D", "*")}}
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -780,7 +780,7 @@ def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
     package.add_dependency(Factory.create_dependency("B", {"version": "*"}))
 
     package_a = get_package("A", "1.0")
-    package_a.extras = {canonicalize_name("foo"): []}
+    package_a.extras = {canonicalize_name("foo"): set()}
 
     repo.add_package(package_a)
 
@@ -788,7 +788,7 @@ def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
     package_b.add_dependency(package_a.with_features(["foo"]).to_dependency())
 
     package_a = Package("A", "1.0", source_type="legacy")
-    package_a.extras = {canonicalize_name("foo"): []}
+    package_a.extras = {canonicalize_name("foo"): set()}
 
     repo = Repository("legacy")
     repo.add_package(package_a)
@@ -821,7 +821,7 @@ def test_solver_returns_extras_if_excluded_by_markers_without_extras(
     # optional dependency with same constraint and no marker except for extra
     dep = get_dependency("B", "^1.0", optional=True)
     dep.marker = parse_marker("extra == 'foo'")
-    package_a.extras = {canonicalize_name("foo"): [dep]}
+    package_a.extras = {canonicalize_name("foo"): {dep}}
     package_a.add_dependency(dep)
 
     repo.add_package(package_a)
@@ -1077,7 +1077,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     )
 
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package_a.extras[canonicalize_name("foo")] = {get_dependency("C")}
     package_a.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -1120,7 +1120,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     )
 
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package_a.extras[canonicalize_name("foo")] = {get_dependency("C")}
     package_a.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -2137,8 +2137,8 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
 
     package_a = get_package("A", "1.0.0")
     package_a.extras = {
-        canonicalize_name("foo"): [dep1],
-        canonicalize_name("bar"): [dep2],
+        canonicalize_name("foo"): {dep1},
+        canonicalize_name("bar"): {dep2},
     }
     package_a.add_dependency(dep1)
     package_a.add_dependency(dep2)
@@ -2216,7 +2216,7 @@ def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_pack
         Factory.create_dependency("D", {"version": "^1.0", "optional": True})
     )
     package_c.extras = {
-        canonicalize_name("foo"): [Factory.create_dependency("D", "^1.0")]
+        canonicalize_name("foo"): {Factory.create_dependency("D", "^1.0")}
     }
 
     repo.add_package(package_a)
@@ -3133,7 +3133,7 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
             "idna", {"version": ">=2.0.0", "markers": "extra == 'security'"}
         )
     )
-    requests.extras[canonicalize_name("security")] = [get_dependency("idna", ">=2.0.0")]
+    requests.extras[canonicalize_name("security")] = {get_dependency("idna", ">=2.0.0")}
     idna = get_package("idna", "2.8")
 
     repo.add_package(requests)
@@ -3506,7 +3506,7 @@ def test_solver_can_resolve_transitive_extras(
     requests.add_dependency(
         Factory.create_dependency("PyOpenSSL", {"version": ">=0.14", "optional": True})
     )
-    requests.extras[canonicalize_name("security")] = [dep]
+    requests.extras[canonicalize_name("security")] = {dep}
     pyota = get_package("PyOTA", "2.1.0")
     pyota.add_dependency(
         Factory.create_dependency(
@@ -3547,9 +3547,9 @@ def test_solver_can_resolve_for_packages_with_missing_extras(
     django_anymail.add_dependency(
         Factory.create_dependency("boto3", {"version": "*", "optional": True})
     )
-    django_anymail.extras[canonicalize_name("amazon_ses")] = [
+    django_anymail.extras[canonicalize_name("amazon_ses")] = {
         Factory.create_dependency("boto3", "*")
-    ]
+    }
     django = get_package("django", "2.2.0")
     boto3 = get_package("boto3", "1.0.0")
     requests = get_package("requests", "2.24.0")
@@ -3870,11 +3870,11 @@ def test_solver_incompatible_dependency_with_and_without_extras(
     baz = get_package("baz", "1.0.0")  # required by google-auth[aiohttp]
 
     google_auth = get_package("google-auth", "1.2.3")
-    google_auth.extras = {canonicalize_name("aiohttp"): [get_dependency("baz", "^1.0")]}
+    google_auth.extras = {canonicalize_name("aiohttp"): {get_dependency("baz", "^1.0")}}
 
     google_auth2 = get_package("google-auth", "2.3.4")
     google_auth2.extras = {
-        canonicalize_name("aiohttp"): [get_dependency("baz", "^1.0")]
+        canonicalize_name("aiohttp"): {get_dependency("baz", "^1.0")}
     }
 
     repo.add_package(foo)

@@ -12,7 +12,7 @@ files = [
 ]
 
 [package.extras]
-dev = ["coverage", "hypothesis", "pympler", "pytest", "six", "sphinx", "zope.interface", "zope.interface"]
+dev = ["coverage", "hypothesis", "pympler", "pytest", "six", "sphinx", "zope.interface"]
 docs = ["sphinx", "zope.interface"]
 tests = ["coverage", "hypothesis", "pympler", "pytest", "six", "zope.interface"]
 

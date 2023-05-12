@@ -161,7 +161,7 @@ class Locker:
             if extras:
                 for name, deps in extras.items():
                     name = canonicalize_name(name)
-                    package.extras[name] = []
+                    package.extras[name] = set()
 
                     for dep in deps:
                         try:
@@ -177,7 +177,7 @@ class Locker:
                             dependency = Dependency(
                                 dep_name, constraint, extras=extras.split(",")
                             )
-                        package.extras[name].append(dependency)
+                        package.extras[name].add(dependency)
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
