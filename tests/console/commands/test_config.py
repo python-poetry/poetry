@@ -181,6 +181,20 @@ def test_display_single_local_setting(
     assert tester.io.fetch_output() == expected
 
 
+def test_display_empty_repositories_key(
+    command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
+) -> None:
+    tester = command_tester_factory(
+        "config",
+        poetry=Factory().create_poetry(fixture_dir("with_empty_repositories_key")),
+    )
+    tester.execute("repositories")
+
+    expected = """{}
+"""
+    assert tester.io.fetch_output() == expected
+
+
 def test_list_displays_set_get_local_setting(
     tester: CommandTester, config: Config, config_cache_dir: Path
 ) -> None:
