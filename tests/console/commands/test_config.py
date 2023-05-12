@@ -151,6 +151,13 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
+def test_unset_value_not_exists(tester: CommandTester) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("foobar --unset")
+
+    assert str(e.value) == "Setting foobar does not exist"
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
