@@ -155,6 +155,16 @@ class Factory(BaseFactory):
                 elif source.get("secondary"):
                     priority = Priority.SECONDARY
 
+            if priority is Priority.SECONDARY:
+                allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
+                warning = (
+                    "Found deprecated priority 'secondary' for source"
+                    f" '{source.get('name')}' in pyproject.toml. Consider changing the"
+                    " priority to one of the non-deprecated values:"
+                    f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
+
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
                 if priority is Priority.DEFAULT:
