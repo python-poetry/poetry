@@ -196,19 +196,37 @@ def test_display_empty_repositories_setting(
 
 
 @pytest.mark.parametrize(
-    ("setting", "expected_output"),
+    ("setting", "expected"),
+    [
+        ("repositories", "You cannot remove the [repositories] section"),
+        ("repositories.test", "There is no test repository defined"),
+    ],
+)
+def test_unset_nonempty_repositories_section(
+    tester: CommandTester, setting: str, expected: str
+) -> None:
+    tester.execute("repositories.foo.url https://bar.com/simple/")
+
+    with pytest.raises(ValueError) as e:
+        tester.execute(f"{setting} --unset")
+
+    assert str(e.value) == expected
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected"),
     [
         ("repositories.foo", "There is no foo repository defined"),
         ("foo", "There is no foo setting."),
     ],
 )
 def test_display_undefined_setting(
-    tester: CommandTester, setting: str, expected_output: str
+    tester: CommandTester, setting: str, expected: str
 ) -> None:
     with pytest.raises(ValueError) as e:
         tester.execute(setting)
 
-    assert str(e.value) == expected_output
+    assert str(e.value) == expected
 
 
 def test_list_displays_set_get_local_setting(
