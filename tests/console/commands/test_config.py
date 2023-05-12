@@ -330,6 +330,15 @@ def test_unset_http_basic(
     assert "foo" not in auth_config_source.config["http-basic"]
 
 
+def test_set_http_basic_unsuccessful_multiple_values(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("http-basic.foo username password password")
+
+    assert str(e.value) == "Expected one or two arguments (username, password), got 3"
+
+
 def test_set_pypi_token(
     tester: CommandTester, auth_config_source: DictConfigSource
 ) -> None:
@@ -347,6 +356,15 @@ def test_unset_pypi_token(
     tester.execute("--list")
 
     assert "pypi" not in auth_config_source.config["pypi-token"]
+
+
+def test_set_pypi_token_unsuccessful_multiple_values(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("pypi-token.pypi mytoken mytoken")
+
+    assert str(e.value) == "Expected only one argument (token), got 2"
 
 
 def test_set_client_cert(
