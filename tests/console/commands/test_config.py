@@ -181,7 +181,7 @@ def test_display_single_local_setting(
     assert tester.io.fetch_output() == expected
 
 
-def test_display_empty_repositories_key(
+def test_display_empty_repositories_setting(
     command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
 ) -> None:
     tester = command_tester_factory(
@@ -193,6 +193,20 @@ def test_display_empty_repositories_key(
     expected = """{}
 """
     assert tester.io.fetch_output() == expected
+
+
+def test_display_undefined_repository_setting(
+    command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
+) -> None:
+    tester = command_tester_factory(
+        "config",
+        poetry=Factory().create_poetry(fixture_dir("with_undefined_repository_key")),
+    )
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("repositories.foo")
+
+    assert str(e.value) == "There is no foo repository defined"
 
 
 def test_list_displays_set_get_local_setting(
