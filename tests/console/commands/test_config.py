@@ -46,7 +46,7 @@ def test_show_config_with_local_config_file_empty(
 
 
 def test_list_displays_default_value_if_not_set(
-    tester: CommandTester, config: Config, config_cache_dir: Path
+    tester: CommandTester, config_cache_dir: Path
 ) -> None:
     tester.execute("--list")
 
@@ -102,7 +102,42 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
-def test_display_single_setting(tester: CommandTester, config: Config) -> None:
+def test_cannot_unset_with_value(tester: CommandTester) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("virtualenvs.create false --unset")
+
+    assert str(e.value) == "You can not combine a setting value with --unset"
+
+
+def test_unset_value_successfully(
+    tester: CommandTester, config: Config, config_cache_dir: Path
+) -> None:
+    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute("repositories.foo.url --unset ")
+    tester.execute("--list")
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
+experimental.system-git-client = false
+installer.max-workers = null
+installer.modern-installation = true
+installer.no-binary = null
+installer.parallel = true
+virtualenvs.create = true
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
+    assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
+    assert tester.io.fetch_output() == expected
+
+
+def test_display_single_setting(tester: CommandTester) -> None:
     tester.execute("virtualenvs.create")
 
     expected = """true
