@@ -151,11 +151,18 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
-def test_display_single_setting(tester: CommandTester) -> None:
-    tester.execute("virtualenvs.create")
-
-    expected = """true
-"""
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("virtualenvs.create", "true\n"),
+        ("repositories.foo.url", "{'url': 'https://bar.com/simple/'}\n"),
+    ],
+)
+def test_display_single_setting(
+    tester: CommandTester, value: str, expected: str | bool
+) -> None:
+    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute(value)
 
     assert tester.io.fetch_output() == expected
 
