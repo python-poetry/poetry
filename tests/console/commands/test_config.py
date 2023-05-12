@@ -102,6 +102,13 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
+def test_cannot_set_with_multiple_values(tester: CommandTester) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("virtualenvs.create false true")
+
+    assert str(e.value) == "You can only pass one value."
+
+
 def test_cannot_unset_with_value(tester: CommandTester) -> None:
     with pytest.raises(RuntimeError) as e:
         tester.execute("virtualenvs.create false --unset")
