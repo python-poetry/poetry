@@ -213,6 +213,19 @@ def test_unset_nonempty_repositories_section(
     assert str(e.value) == expected
 
 
+def test_set_malformed_repositories_setting(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("repositories.foo bar baz")
+
+    assert (
+        str(e.value)
+        == "You must pass the url. Example: poetry config repositories.foo"
+        " https://bar.com"
+    )
+
+
 @pytest.mark.parametrize(
     ("setting", "expected"),
     [
