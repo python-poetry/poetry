@@ -108,6 +108,10 @@ class Executor:
     def removals_count(self) -> int:
         return self._executed["uninstall"]
 
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
 
