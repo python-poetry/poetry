@@ -79,10 +79,13 @@ class HTTPRepository(CachedRepository):
         from poetry.inspection.info import PackageInfo
 
         wheel_name = urllib.parse.urlparse(url).path.rsplit("/")[-1]
+
+        filepath = self._authenticator.get_cached_file_for_url(url)
+        if filepath:
+            return PackageInfo.from_wheel(filepath)
+
         self._log(f"Downloading wheel: {wheel_name}", level="debug")
-
         filename = os.path.basename(wheel_name)
-
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
             self._download(url, filepath)
@@ -95,10 +98,12 @@ class HTTPRepository(CachedRepository):
         sdist_name = urllib.parse.urlparse(url).path
         sdist_name_log = sdist_name.rsplit("/")[-1]
 
+        filepath = self._authenticator.get_cached_file_for_url(url)
+        if filepath:
+            return PackageInfo.from_wheel(filepath)
+
         self._log(f"Downloading sdist: {sdist_name_log}", level="debug")
-
         filename = os.path.basename(sdist_name)
-
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
             self._download(url, filepath)
@@ -238,8 +243,10 @@ class HTTPRepository(CachedRepository):
                 and hasattr(hashlib, link.hash_name)
             ):
                 with temporary_directory() as temp_dir:
-                    filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, filepath)
+                    filepath = self._authenticator.get_cached_file_for_url(link.url)
+                    if not filepath:
+                        filepath = Path(temp_dir) / link.filename
+                        self._download(link.url, filepath)
 
                     known_hash = (
                         getattr(hashlib, link.hash_name)() if link.hash_name else None
