@@ -35,6 +35,7 @@ class RemoveCommand(InstallerCommand):
                 "(implicitly enables --verbose)."
             ),
         ),
+        option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
 
     help = """The <info>remove</info> command removes a package from the current
@@ -117,6 +118,7 @@ list of installed packages
         self.installer.dry_run(self.option("dry-run", False))
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
+        self.installer.execute_operations(not self.option("lock"))
         self.installer.whitelist(removed_set)
 
         status = self.installer.run()
