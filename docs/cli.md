@@ -471,6 +471,7 @@ about dependency groups.
 * `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock`: Do not perform operations (only update the lockfile).
 
 
 ## show
