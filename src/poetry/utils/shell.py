@@ -104,13 +104,14 @@ class Shell:
 
         if self._name in ["zsh", "nu"]:
             c.setecho(False)
-            if self._name == "zsh":
-                # Under ZSH the source command should be invoked in zsh's bash emulator
-                c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
+
+        if self._name == "zsh":
+            # Under ZSH the source command should be invoked in zsh's bash emulator
+            c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
         else:
             cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
-            if self._name == "fish":
-                # Under fish "\r" should be sent explicitly
+            if self._name in ["fish", "nu"]:
+                # Under fish and nu "\r" should be sent explicitly
                 cmd += "\r"
             c.sendline(cmd)
 
@@ -143,8 +144,10 @@ class Shell:
         return "activate" + suffix
 
     def _get_source_command(self) -> str:
-        if self._name in ("fish", "csh", "tcsh", "nu"):
+        if self._name in ("fish", "csh", "tcsh"):
             return "source"
+        elif self._name == "nu":
+            return "overlay use"
         return "."
 
     def __repr__(self) -> str:
