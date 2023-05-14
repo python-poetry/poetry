@@ -60,3 +60,8 @@ class FixtureDirGetter(Protocol):
 class FixtureCopier(Protocol):
     def __call__(self, relative_path: str, target: Path | None = None) -> Path:
         ...
+
+
+class HTMLPageGetter(Protocol):
+    def __call__(self, content: str, base_url: str | None = None) -> str:
+        ...
