@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import functools
-import os
-import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -77,20 +75,19 @@ class DirectOrigin:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
     def get_package_from_url(self, url: str) -> Package:
-        file_name = os.path.basename(urllib.parse.urlparse(url).path)
         link = Link(url)
         artifact = self._artifact_cache.get_cached_archive_for_link(link, strict=True)
 
         if not artifact:
             artifact = (
-                self._artifact_cache.get_cache_directory_for_link(link) / file_name
+                self._artifact_cache.get_cache_directory_for_link(link) / link.filename
             )
             artifact.parent.mkdir(parents=True, exist_ok=True)
             download_file(url, artifact)
 
         package = self.get_package_from_file(artifact)
         package.files = [
-            {"file": file_name, "hash": "sha256:" + get_file_hash(artifact)}
+            {"file": link.filename, "hash": "sha256:" + get_file_hash(artifact)}
         ]
 
         package._source_type = "url"
