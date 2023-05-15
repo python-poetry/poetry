@@ -249,7 +249,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     constraint_name,
                     constraint,
                     groups=[group],
-                    root_dir=self.poetry.file.parent,
+                    root_dir=self.poetry.file.path.parent,
                 )
             )
 

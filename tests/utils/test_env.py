@@ -157,7 +157,7 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
 @pytest.fixture
 def in_project_venv_dir(poetry: Poetry) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
-    venv_dir = poetry.file.parent.joinpath(".venv")
+    venv_dir = poetry.file.path.parent.joinpath(".venv")
     venv_dir.mkdir()
     try:
         yield venv_dir
@@ -842,7 +842,7 @@ def test_raises_if_acting_on_different_project_by_name(
     different_venv_name = (
         EnvManager.generate_env_name(
             "different-project",
-            str(poetry.file.parent),
+            str(poetry.file.path.parent),
         )
         + "-py3.6"
     )
@@ -1344,7 +1344,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     version = Version.from_parts(*sys.version_info[:3])
     assert version.minor is not None
     poetry.package.python_versions = f"~{version.major}.{version.minor - 1}.0"
-    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    venv_name = manager.generate_env_name(
+        "simple-project", str(poetry.file.path.parent)
+    )
 
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -1433,7 +1435,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     manager.activate("python3.7")
 
     m.assert_called_with(
-        poetry.file.parent / ".venv",
+        poetry.file.path.parent / ".venv",
         executable=Path("/usr/bin/python3.7"),
         flags={
             "always-copy": False,
@@ -1772,7 +1774,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     manager = EnvManager(poetry)
 
     poetry.package.python_versions = "^3.7"
-    venv_name = manager.generate_env_name("", str(poetry.file.parent))
+    venv_name = manager.generate_env_name("", str(poetry.file.path.parent))
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")

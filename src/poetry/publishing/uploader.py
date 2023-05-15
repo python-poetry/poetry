@@ -77,7 +77,7 @@ class Uploader:
 
     @property
     def files(self) -> list[Path]:
-        dist = self._poetry.file.parent / "dist"
+        dist = self._poetry.file.path.parent / "dist"
         version = self._package.version.to_string()
         escaped_name = distribution_name(self._package.name)
 
@@ -301,7 +301,7 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self._poetry.file.parent / "dist"
+        dist = self._poetry.file.path.parent / "dist"
         escaped_name = distribution_name(self._package.name)
         file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 

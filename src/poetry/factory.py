@@ -57,12 +57,7 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
-        # TODO: backward compatibility, can be simplified if poetry-core with
-        #       https://github.com/python-poetry/poetry-core/pull/483 is available
-        poetry_file: Path = (
-            getattr(base_poetry, "pyproject_path", None) or base_poetry.file.path
-        )
-
+        poetry_file = base_poetry.pyproject_path
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
 
         # Loading global configuration

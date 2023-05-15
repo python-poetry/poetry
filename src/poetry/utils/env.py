@@ -289,10 +289,7 @@ class SitePackages:
             )
         )
 
-        yield from metadata.PathDistribution.discover(  # type: ignore[no-untyped-call]
-            name=name,
-            path=path,
-        )
+        yield from metadata.PathDistribution.discover(name=name, path=path)
 
     def find_distribution(
         self, name: str, writable_only: bool = False
@@ -310,9 +307,7 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 if file.name.endswith(suffix):
-                    yield Path(
-                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
-                    )
+                    yield Path(distribution.locate_file(file))
 
     def find_distribution_files_with_name(
         self, distribution_name: str, name: str, writable_only: bool = False
@@ -323,18 +318,7 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 if file.name == name:
-                    yield Path(
-                        distribution.locate_file(file),  # type: ignore[no-untyped-call]
-                    )
-
-    def find_distribution_nspkg_pth_files(
-        self, distribution_name: str, writable_only: bool = False
-    ) -> Iterable[Path]:
-        return self.find_distribution_files_with_suffix(
-            distribution_name=distribution_name,
-            suffix="-nspkg.pth",
-            writable_only=writable_only,
-        )
+                    yield Path(distribution.locate_file(file))
 
     def find_distribution_direct_url_json_files(
         self, distribution_name: str, writable_only: bool = False
@@ -353,9 +337,8 @@ class SitePackages:
         ):
             files = [] if distribution.files is None else distribution.files
             for file in files:
-                path = Path(
-                    distribution.locate_file(file),  # type: ignore[no-untyped-call]
-                )
+                path = Path(distribution.locate_file(file))
+
                 # We can't use unlink(missing_ok=True) because it's not always available
                 if path.exists():
                     path.unlink()
@@ -571,12 +554,12 @@ class EnvManager:
 
     @property
     def in_project_venv(self) -> Path:
-        venv: Path = self._poetry.file.parent / ".venv"
+        venv: Path = self._poetry.file.path.parent / ".venv"
         return venv
 
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
 
@@ -665,7 +648,7 @@ class EnvManager:
     def deactivate(self) -> None:
         venv_path = self._poetry.config.virtualenvs_path
         name = self.generate_env_name(
-            self._poetry.package.name, str(self._poetry.file.parent)
+            self._poetry.package.name, str(self._poetry.file.path.parent)
         )
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
@@ -694,7 +677,7 @@ class EnvManager:
 
         venv_path = self._poetry.config.virtualenvs_path
 
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         env = None
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
@@ -749,7 +732,7 @@ class EnvManager:
         if name is None:
             name = self._poetry.package.name
 
-        venv_name = self.generate_env_name(name, str(self._poetry.file.parent))
+        venv_name = self.generate_env_name(name, str(self._poetry.file.path.parent))
         venv_path = self._poetry.config.virtualenvs_path
         env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
 
@@ -770,7 +753,7 @@ class EnvManager:
     def remove(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
 
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
@@ -883,7 +866,7 @@ class EnvManager:
         if self._env is not None and not force:
             return self._env
 
-        cwd = self._poetry.file.parent
+        cwd = self._poetry.file.path.parent
         env = self.get(reload=True)
 
         if not env.is_sane():
