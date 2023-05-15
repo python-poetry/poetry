@@ -471,6 +471,7 @@ about dependency groups.
 * `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock`: Do not perform operations (only update the lockfile).
 
 
 ## show
@@ -790,7 +791,7 @@ poetry source add --priority=explicit pypi
 
 * `--default`: Set this source as the [default]({{< relref "repositories#default-package-source" >}}) (disable PyPI). Deprecated in favor of `--priority`.
 * `--secondary`: Set this source as a [secondary]({{< relref "repositories#secondary-package-sources" >}}) source. Deprecated in favor of `--priority`.
-* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
+* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 {{% note %}}
 At most one of the options above can be provided. See [package sources]({{< relref "repositories#package-sources" >}}) for more information.

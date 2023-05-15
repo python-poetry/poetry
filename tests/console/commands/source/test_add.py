@@ -28,11 +28,20 @@ def assert_source_added_legacy(
     source_existing: Source,
     source_added: Source,
 ) -> None:
+    secondary_deprecated_str = (
+        ""
+        if source_added.priority is not Priority.SECONDARY
+        else (
+            "\nWarning: Priority 'secondary' is deprecated. Consider changing the"
+            " priority to one of the non-deprecated values: 'default', 'primary',"
+            " 'supplemental', 'explicit'."
+        )
+    )
     assert (
         tester.io.fetch_error().strip()
-        == "Warning: Priority was set through a deprecated flag"
-        " (--default or --secondary). Consider using --priority next"
-        " time."
+        == "Warning: Priority was set through a deprecated flag (--default or"
+        " --secondary). Consider using --priority next time."
+        + secondary_deprecated_str
     )
     assert (
         tester.io.fetch_output().strip()
@@ -134,6 +143,20 @@ def test_source_add_secondary(
         f"--priority=secondary {source_secondary.name} {source_secondary.url}"
     )
     assert_source_added(tester, poetry_with_source, source_existing, source_secondary)
+
+
+def test_source_add_supplemental(
+    tester: CommandTester,
+    source_existing: Source,
+    source_supplemental: Source,
+    poetry_with_source: Poetry,
+) -> None:
+    tester.execute(
+        f"--priority=supplemental {source_supplemental.name} {source_supplemental.url}"
+    )
+    assert_source_added(
+        tester, poetry_with_source, source_existing, source_supplemental
+    )
 
 
 def test_source_add_explicit(

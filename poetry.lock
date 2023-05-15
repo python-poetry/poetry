@@ -1077,14 +1077,14 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-core"
-version = "1.5.2"
+version = "1.6.0"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "poetry_core-1.5.2-py3-none-any.whl", hash = "sha256:832d40a1ea5fd10c0f648d0575cadddc8b79f06f91d83a1f1a73a7e1dfacfbd7"},
-    {file = "poetry_core-1.5.2.tar.gz", hash = "sha256:c6556c3b1ec5b8668e6ef5a4494726bc41d31907339425e194e78a6178436c14"},
+    {file = "poetry_core-1.6.0-py3-none-any.whl", hash = "sha256:ff96620579f02ec30ee9f789fa5dfdcddd9ab4ac848394f6f8f2f4e88306b534"},
+    {file = "poetry_core-1.6.0.tar.gz", hash = "sha256:a9c7296a12d6c8e4f8aa50a66ef3c967b2b50fba634da144d358e676fad9989f"},
 ]
 
 [package.dependencies]
@@ -1616,14 +1616,14 @@ files = [
 
 [[package]]
 name = "tomlkit"
-version = "0.11.6"
+version = "0.11.8"
 description = "Style preserving TOML library"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "tomlkit-0.11.6-py3-none-any.whl", hash = "sha256:07de26b0d8cfc18f871aec595fda24d95b08fef89d147caa861939f37230bf4b"},
-    {file = "tomlkit-0.11.6.tar.gz", hash = "sha256:71b952e5721688937fb02cf9d354dbcf0785066149d2855e44531ebdd2b65d73"},
+    {file = "tomlkit-0.11.8-py3-none-any.whl", hash = "sha256:8c726c4c202bdb148667835f68d68780b9a003a9ec34167b6c673b38eff2a171"},
+    {file = "tomlkit-0.11.8.tar.gz", hash = "sha256:9330fc7faa1db67b541b28e62018c17d20be733177d290a13b24c62d1614e0c3"},
 ]
 
 [[package]]
@@ -1890,4 +1890,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "4cf834689e7b1f659c3202df4fe6ce6faeaccd5dedf5431e14076333b3266311"
+content-hash = "88510d026496be61125bc3157ece9584978ce58bf42fb551ca6d03066b8d8c61"

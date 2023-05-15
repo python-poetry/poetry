@@ -35,6 +35,7 @@ class RemoveCommand(InstallerCommand):
                 "(implicitly enables --verbose)."
             ),
         ),
+        option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
 
     help = """The <info>remove</info> command removes a package from the current
@@ -108,15 +109,13 @@ list of installed packages
             )
 
         # Refresh the locker
-        self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
-        )
+        self.poetry.locker.set_local_config(poetry_content)
         self.installer.set_locker(self.poetry.locker)
-
         self.installer.set_package(self.poetry.package)
         self.installer.dry_run(self.option("dry-run", False))
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
+        self.installer.execute_operations(not self.option("lock"))
         self.installer.whitelist(removed_set)
 
         status = self.installer.run()

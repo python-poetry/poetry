@@ -57,12 +57,7 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
-        # TODO: backward compatibility, can be simplified if poetry-core with
-        #       https://github.com/python-poetry/poetry-core/pull/483 is available
-        poetry_file: Path = (
-            getattr(base_poetry, "pyproject_path", None) or base_poetry.file.path
-        )
-
+        poetry_file = base_poetry.pyproject_path
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
 
         # Loading global configuration
@@ -154,6 +149,16 @@ class Factory(BaseFactory):
                     priority = Priority.DEFAULT
                 elif source.get("secondary"):
                     priority = Priority.SECONDARY
+
+            if priority is Priority.SECONDARY:
+                allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
+                warning = (
+                    "Found deprecated priority 'secondary' for source"
+                    f" '{source.get('name')}' in pyproject.toml. Consider changing the"
+                    " priority to one of the non-deprecated values:"
+                    f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"

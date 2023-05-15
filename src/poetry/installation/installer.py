@@ -53,7 +53,6 @@ class Installer:
         self._requires_synchronization = False
         self._update = False
         self._verbose = False
-        self._write_lock = True
         self._groups: Iterable[str] | None = None
         self._skip_directory = False
         self._lock = False
@@ -99,7 +98,6 @@ class Installer:
 
         if self.is_dry_run():
             self.verbose(True)
-            self._write_lock = False
 
         return self._do_install()
 
@@ -269,7 +267,7 @@ class Installer:
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
 
-        if self._lock and self._update:
+        if not self.executor.enabled:
             # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
             return 0
@@ -348,7 +346,7 @@ class Installer:
         return status
 
     def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
-        if self._write_lock and (force or self._update):
+        if not self.is_dry_run() and (force or self._update):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:

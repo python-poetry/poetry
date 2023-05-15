@@ -627,6 +627,22 @@ def test_authenticator_git_repositories(
     assert not three.password
 
 
+def test_authenticator_get_cached_file_for_url__cache_miss(config: Config) -> None:
+    authenticator = Authenticator(config, NullIO())
+    assert (
+        authenticator.get_cached_file_for_url("https://foo.bar/cache/miss.whl") is None
+    )
+
+
+def test_authenticator_get_cached_file_for_url__cache_hit(config: Config) -> None:
+    authenticator = Authenticator(config, NullIO())
+    url = "https://foo.bar/files/foo-0.1.0.tar.gz"
+
+    authenticator._cache_control.set(url, b"hello")
+
+    assert authenticator.get_cached_file_for_url(url)
+
+
 @pytest.mark.parametrize(
     ("ca_cert", "client_cert", "result"),
     [

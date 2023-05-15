@@ -187,12 +187,8 @@ class TestLocker(Locker):
     __test__ = False
 
     def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
-        self._lock = lock
-        self._local_config = local_config
-        self._lock_data = None
-        self._content_hash = self._get_content_hash()
+        super().__init__(lock, local_config)
         self._locked = False
-        self._lock_data = None
         self._write = False
 
     def write(self, write: bool = True) -> None:

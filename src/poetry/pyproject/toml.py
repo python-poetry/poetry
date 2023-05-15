@@ -29,7 +29,7 @@ class PyProjectTOML(BasePyProjectTOML):
         self._toml_document: TOMLDocument | None = None
 
     @property
-    def file(self) -> TOMLFile:  # type: ignore[override]
+    def file(self) -> TOMLFile:
         return self._toml_file
 
     @property

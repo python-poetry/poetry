@@ -267,7 +267,7 @@ lists all packages available."""
                         version_length,
                         len(
                             get_package_version_display_string(
-                                locked, root=self.poetry.file.parent
+                                locked, root=self.poetry.file.path.parent
                             )
                         ),
                     )
@@ -275,7 +275,7 @@ lists all packages available."""
                         latest_length,
                         len(
                             get_package_version_display_string(
-                                latest, root=self.poetry.file.parent
+                                latest, root=self.poetry.file.path.parent
                             )
                         ),
                     )
@@ -292,7 +292,7 @@ lists all packages available."""
                     version_length,
                     len(
                         get_package_version_display_string(
-                            locked, root=self.poetry.file.parent
+                            locked, root=self.poetry.file.path.parent
                         )
                     ),
                 )
@@ -353,7 +353,7 @@ lists all packages available."""
             )
             if write_version:
                 version = get_package_version_display_string(
-                    locked, root=self.poetry.file.parent
+                    locked, root=self.poetry.file.path.parent
                 )
                 line += f" <b>{version:{version_length}}</b>"
             if show_latest:
@@ -368,7 +368,7 @@ lists all packages available."""
                         color = "yellow"
 
                     version = get_package_version_display_string(
-                        latest, root=self.poetry.file.parent
+                        latest, root=self.poetry.file.path.parent
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 

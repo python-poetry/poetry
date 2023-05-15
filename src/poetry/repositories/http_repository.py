@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import functools
 import hashlib
-import os
-import urllib
-import urllib.parse
 
 from collections import defaultdict
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 
 import requests
 
@@ -75,34 +74,28 @@ class HTTPRepository(CachedRepository):
     def _download(self, url: str, dest: Path) -> None:
         return download_file(url, dest, session=self.session)
 
+    @contextmanager
+    def _cached_or_downloaded_file(self, link: Link) -> Iterator[Path]:
+        filepath = self._authenticator.get_cached_file_for_url(link.url)
+        if filepath:
+            yield filepath
+        else:
+            self._log(f"Downloading: {link.url}", level="debug")
+            with temporary_directory() as temp_dir:
+                filepath = Path(temp_dir) / link.filename
+                self._download(link.url, filepath)
+                yield filepath
+
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        wheel_name = urllib.parse.urlparse(url).path.rsplit("/")[-1]
-        self._log(f"Downloading wheel: {wheel_name}", level="debug")
-
-        filename = os.path.basename(wheel_name)
-
-        with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, filepath)
-
+        with self._cached_or_downloaded_file(Link(url)) as filepath:
             return PackageInfo.from_wheel(filepath)
 
     def _get_info_from_sdist(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        sdist_name = urllib.parse.urlparse(url).path
-        sdist_name_log = sdist_name.rsplit("/")[-1]
-
-        self._log(f"Downloading sdist: {sdist_name_log}", level="debug")
-
-        filename = os.path.basename(sdist_name)
-
-        with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, filepath)
-
+        with self._cached_or_downloaded_file(Link(url)) as filepath:
             return PackageInfo.from_sdist(filepath)
 
     def _get_info_from_urls(self, urls: dict[str, list[str]]) -> PackageInfo:
@@ -237,10 +230,7 @@ class HTTPRepository(CachedRepository):
                 and link.hash_name not in ("sha256", "sha384", "sha512")
                 and hasattr(hashlib, link.hash_name)
             ):
-                with temporary_directory() as temp_dir:
-                    filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, filepath)
-
+                with self._cached_or_downloaded_file(link) as filepath:
                     known_hash = (
                         getattr(hashlib, link.hash_name)() if link.hash_name else None
                     )
