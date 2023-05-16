@@ -544,7 +544,7 @@ class EnvManager:
             if executable:
                 python_patch = decode(
                     subprocess.check_output(
-                        [executable, "-c", GET_PYTHON_VERSION_ONELINER],
+                        [str(executable), "-c", GET_PYTHON_VERSION_ONELINER],
                     ).strip()
                 )
 
@@ -579,7 +579,7 @@ class EnvManager:
         try:
             python_version_string = decode(
                 subprocess.check_output(
-                    [python_path, "-c", GET_PYTHON_VERSION_ONELINER],
+                    [str(python_path), "-c", GET_PYTHON_VERSION_ONELINER],
                 )
             )
         except CalledProcessError as e:
@@ -906,7 +906,7 @@ class EnvManager:
         if executable:
             python_patch = decode(
                 subprocess.check_output(
-                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
+                    [str(executable), "-c", GET_PYTHON_VERSION_ONELINER],
                 ).strip()
             )
             python_minor = ".".join(python_patch.split(".")[:2])
@@ -954,7 +954,7 @@ class EnvManager:
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            [python, "-c", GET_PYTHON_VERSION_ONELINER],
+                            [str(python), "-c", GET_PYTHON_VERSION_ONELINER],
                             stderr=subprocess.STDOUT,
                         ).strip()
                     )
