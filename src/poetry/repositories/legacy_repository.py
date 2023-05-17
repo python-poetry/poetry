@@ -46,7 +46,11 @@ class LegacyRepository(HTTPRepository):
         return []
 
     def package(
-        self, name: str, version: Version, extras: list[str] | None = None
+        self,
+        name: str,
+        version: Version,
+        python_constraint: VersionConstraint,
+        extras: list[str] | None = None,
     ) -> Package:
         """
         Retrieve the release information.
@@ -64,7 +68,7 @@ class LegacyRepository(HTTPRepository):
 
             return self._packages[index]
         except ValueError:
-            package = super().package(name, version, extras)
+            package = super().package(name, version, python_constraint, extras)
             package._source_type = "legacy"
             package._source_url = self._url
             package._source_reference = self.name
@@ -110,7 +114,10 @@ class LegacyRepository(HTTPRepository):
         ]
 
     def _get_release_info(
-        self, name: NormalizedName, version: Version
+        self,
+        name: NormalizedName,
+        version: Version,
+        python_constraint: VersionConstraint,
     ) -> dict[str, Any]:
         page = self.get_page(name)
 
@@ -129,6 +136,7 @@ class LegacyRepository(HTTPRepository):
                 yanked=yanked,
                 cache_version=str(self.CACHE_VERSION),
             ),
+            python_constraint,
         )
 
     def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:

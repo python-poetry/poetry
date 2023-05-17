@@ -110,7 +110,11 @@ class Repository(AbstractRepository):
         return []
 
     def package(
-        self, name: str, version: Version, extras: list[str] | None = None
+        self,
+        name: str,
+        version: Version,
+        python_version: VersionConstraint,
+        extras: list[str] | None = None,
     ) -> Package:
         canonicalized_name = canonicalize_name(name)
         for package in self.packages:

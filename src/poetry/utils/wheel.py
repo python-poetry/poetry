@@ -5,11 +5,15 @@ import logging
 from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionRange
 
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import VersionConstraint
+
     from poetry.utils.env import Env
 
 
@@ -45,3 +49,27 @@ class Wheel:
 
     def is_supported_by_environment(self, env: Env) -> bool:
         return bool(set(env.supported_tags).intersection(self.tags))
+
+    @staticmethod
+    def _pyversion_to_constraint(pyversion: str) -> VersionConstraint:
+        version = pyversion[2:]
+        major = int(version[0])
+        minor = int(version[1:]) if len(version) > 1 else None
+        return VersionRange(
+            min=Version.from_parts(major=major, minor=minor or 0, patch=0),
+            max=Version.from_parts(
+                major=(major + 1) if minor is None else major,
+                minor=(minor + 1) if minor is not None else 0,
+                patch=0,
+            ),
+            include_min=True,
+            include_max=False,
+        )
+
+    def is_compatible_with_python(self, python: VersionConstraint) -> bool:
+        for pyversion in self.pyversions:
+            pyversion_constraint = self._pyversion_to_constraint(pyversion)
+            if pyversion_constraint.allows_any(python):
+                return True
+
+        return False

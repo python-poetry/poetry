@@ -12,6 +12,7 @@ from typing import Iterator
 
 import requests
 
+from poetry.core.constraints.version import VersionConstraint
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
@@ -26,6 +27,7 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import download_file
 from poetry.utils.patterns import wheel_file_re
+from poetry.utils.wheel import Wheel
 
 
 if TYPE_CHECKING:
@@ -204,7 +206,9 @@ class HTTPRepository(CachedRepository):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
+    def _links_to_data(
+        self, links: list[Link], data: PackageInfo, python_constraint: VersionConstraint
+    ) -> dict[str, Any]:
         if not links:
             raise PackageNotFound(
                 f'No valid distribution links found for package: "{data.name}" version:'
@@ -217,6 +221,10 @@ class HTTPRepository(CachedRepository):
                 # drop yanked files unless the entire release is yanked
                 continue
             if link.is_wheel:
+                if not Wheel(link.filename).is_compatible_with_python(
+                    python_constraint
+                ):
+                    continue
                 urls["bdist_wheel"].append(link.url)
             elif link.filename.endswith(
                 (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")

@@ -483,6 +483,7 @@ class Provider:
                     self._pool.package(
                         package.pretty_name,
                         package.version,
+                        python_constraint=self._python_constraint,
                         extras=list(dependency.extras),
                         repository_name=dependency.source_name,
                     ),

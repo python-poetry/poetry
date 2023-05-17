@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
@@ -32,6 +33,7 @@ class AbstractRepository(ABC):
         self,
         name: str,
         version: Version,
+        python_constraint: VersionConstraint,
         extras: list[str] | None = None,
     ) -> Package:
         ...
