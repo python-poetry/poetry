@@ -362,5 +362,5 @@ def test_get_release_info_includes_only_supported_types() -> None:
         name=canonicalize_name("hbmqtt"), version=Version.parse("0.9.6")
     )
 
-    assert len(release_info["files"]) == 1
-    assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"
+    assert len(release_info.files) == 1
+    assert release_info.files[0]["file"] == "hbmqtt-0.9.6.tar.gz"
