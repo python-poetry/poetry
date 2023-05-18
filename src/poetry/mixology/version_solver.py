@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import functools
 import time
 
@@ -94,7 +95,9 @@ class VersionSolver:
         self._provider = provider
         self._dependency_cache = DependencyCache(provider)
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
-        self._contradicted_incompatibilities: set[Incompatibility] = set()
+        self._contradicted_incompatibilities: dict[int, set[Incompatibility]] = (
+            collections.defaultdict(set)
+        )
         self._solution = PartialSolution()
 
     @property
@@ -143,7 +146,10 @@ class VersionSolver:
             # we can derive stronger assignments sooner and more eagerly find
             # conflicts.
             for incompatibility in reversed(self._incompatibilities[package]):
-                if incompatibility in self._contradicted_incompatibilities:
+                if any(
+                    incompatibility in c
+                    for c in self._contradicted_incompatibilities.values()
+                ):
                     continue
 
                 result = self._propagate_incompatibility(incompatibility)
@@ -192,7 +198,9 @@ class VersionSolver:
                 # If term is already contradicted by _solution, then
                 # incompatibility is contradicted as well and there's nothing new we
                 # can deduce from it.
-                self._contradicted_incompatibilities.add(incompatibility)
+                self._contradicted_incompatibilities[self._solution.decision_level].add(
+                    incompatibility
+                )
                 return None
             elif relation == SetRelation.OVERLAPPING:
                 # If more than one term is inconclusive, we can't deduce anything about
@@ -210,7 +218,9 @@ class VersionSolver:
         if unsatisfied is None:
             return _conflict
 
-        self._contradicted_incompatibilities.add(incompatibility)
+        self._contradicted_incompatibilities[self._solution.decision_level].add(
+            incompatibility
+        )
 
         adverb = "not " if unsatisfied.is_positive() else ""
         self._log(f"derived: {adverb}{unsatisfied.dependency}")
@@ -304,8 +314,12 @@ class VersionSolver:
                 previous_satisfier_level < most_recent_satisfier.decision_level
                 or most_recent_satisfier.cause is None
             ):
+                for level in range(
+                    self._solution.decision_level, previous_satisfier_level, -1
+                ):
+                    self._contradicted_incompatibilities.pop(level, None)
+
                 self._solution.backtrack(previous_satisfier_level)
-                self._contradicted_incompatibilities.clear()
                 self._dependency_cache.clear()
                 if new_incompatibility:
                     self._add_incompatibility(incompatibility)
