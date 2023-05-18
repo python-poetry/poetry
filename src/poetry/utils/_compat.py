@@ -15,8 +15,8 @@ else:
     import tomllib  # nopycln: import
 
 
-if sys.version_info < (3, 10):
-    # compatibility for python <3.10
+if sys.version_info < (3, 9):
+    # compatibility for python <3.9
     import importlib_metadata as metadata
 else:
     from importlib import metadata
