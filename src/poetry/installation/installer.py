@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -335,6 +337,13 @@ class Installer:
         # not compatible with the current system,
         # or optional and not requested, are dropped
         self._filter_operations(ops, lockfile_repo)
+
+        # Validate the dependencies
+        for op in ops:
+            dep = op.package.to_dependency()
+            if dep.is_file() or dep.is_directory():
+                dep = cast("PathDependency", dep)
+                dep.validate(raise_error=True)
 
         # Execute operations
         status = self._execute(ops)

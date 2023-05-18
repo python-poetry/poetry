@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
-    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
@@ -560,11 +559,6 @@ class Provider:
                     if locked is not None and locked.package.is_same_package_as(dep):
                         continue
                     self.search_for_direct_origin_dependency(dep)
-        else:
-            for dep in _dependencies:
-                if dep.is_file() or dep.is_directory():
-                    dep = cast("PathDependency", dep)
-                    dep.validate(raise_error=True)
 
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package
