@@ -1827,3 +1827,10 @@ def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
     active_python = EnvManager(poetry)._detect_active_python()
 
     assert active_python == wrapped_python
+
+
+def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
+    # https://github.com/python-poetry/poetry/issues/7959
+    env = manager.get()
+    command = env.get_command_from_bin("./foo.py")
+    assert command == ["./foo.py"]

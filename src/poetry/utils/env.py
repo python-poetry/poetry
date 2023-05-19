@@ -1243,7 +1243,7 @@ class Env:
         """
         Path to current python executable
         """
-        return self._bin(self._executable)
+        return Path(self._bin(self._executable))
 
     @property
     def marker_env(self) -> dict[str, Any]:
@@ -1311,7 +1311,7 @@ class Env:
         """
         # we do not use as_posix() here due to issues with windows pathlib2
         # implementation
-        path = self._bin(self._pip_executable)
+        path = Path(self._bin(self._pip_executable))
         if not path.exists():
             return self.pip_embedded
         return path
@@ -1431,7 +1431,7 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
-        if embedded or not self._bin(self._pip_executable).exists():
+        if embedded or not Path(self._bin(self._pip_executable)).exists():
             return [str(self.python), str(self.pip_embedded)]
         # run as module so that pip can update itself on Windows
         return [str(self.python), "-m", "pip"]
@@ -1461,7 +1461,7 @@ class Env:
             # embedded pip when pip is not available in the environment
             return self.get_pip_command()
 
-        return [str(self._bin(bin))]
+        return [self._bin(bin)]
 
     def run(self, bin: str, *args: str, **kwargs: Any) -> str:
         cmd = self.get_command_from_bin(bin) + list(args)
@@ -1541,7 +1541,7 @@ class Env:
                 self._script_dirs.append(self.userbase / self._script_dirs[0].name)
         return self._script_dirs
 
-    def _bin(self, bin: str) -> Path:
+    def _bin(self, bin: str) -> str:
         """
         Return path to the given executable.
         """
@@ -1562,11 +1562,11 @@ class Env:
                     bin_path = self._path / bin
 
                 if bin_path.exists():
-                    return bin_path
+                    return str(bin_path)
 
-            return Path(bin)
+            return bin
 
-        return bin_path
+        return str(bin_path)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Env):
@@ -1880,8 +1880,8 @@ class NullEnv(SystemEnv):
             return super().execute(bin, *args, **kwargs)
         return 0
 
-    def _bin(self, bin: str) -> Path:
-        return Path(bin)
+    def _bin(self, bin: str) -> str:
+        return bin
 
 
 @contextmanager
