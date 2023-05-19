@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
-from poetry.utils._compat import cached_property
 
 
 if TYPE_CHECKING:

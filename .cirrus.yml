@@ -12,7 +12,6 @@ test_task:
     # avoid failures on tests that depend on it.
     SHELL: sh
     matrix:
-      - PYTHON: python3.7
       - PYTHON: python3.8
       - PYTHON: python3.9
       - PYTHON: python3.10

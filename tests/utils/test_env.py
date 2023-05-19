@@ -192,7 +192,6 @@ def check_output_wrapper(
 ) -> Callable[[list[str], Any, Any], str]:
     def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
         # cmd is a list, like ["python", "-c", "do stuff"]
-        assert all(isinstance(arg, str) for arg in cmd)
         python_cmd = cmd[2]
         if "sys.version_info[:3]" in python_cmd:
             return version.text

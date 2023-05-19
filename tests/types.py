@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-
-from tests.compat import Protocol
+from typing import Protocol
 
 
 if TYPE_CHECKING:

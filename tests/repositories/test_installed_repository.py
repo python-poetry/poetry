@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import zipfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
@@ -9,7 +11,6 @@ import pytest
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
 from poetry.utils.env import MockEnv as BaseMockEnv
-from tests.compat import zipfile
 
 
 if TYPE_CHECKING:
