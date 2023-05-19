@@ -29,7 +29,7 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) as a [supplemental](#supplemental-package-sources) (or [explicit](#explicit-package-sources)) package source to your
+First, [configure](#project-configuration) the [package source](#package-sources) as a [supplemental](#supplemental-package-sources) (or [explicit](#explicit-package-sources)) package source to your
 project.
 
 ```bash
