@@ -777,9 +777,15 @@ class Executor:
             strict=False,
             env=self._env,
         )
-        # 'archive' can at this point never be None. Since we previously downloaded
-        # an archive, we now should have something cached that we can use here
-        assert archive is not None
+        if archive is None:
+            # Since we previously downloaded an archive, we now should have
+            # something cached that we can use here. The only case in which
+            # archive is None is if the original archive is not valid for the
+            # current environment.
+            raise RuntimeError(
+                f"Package {link.url} cannot be installed in the current environment"
+                f" {self._env.marker_env}"
+            )
 
         if archive.suffix != ".whl":
             message = (
