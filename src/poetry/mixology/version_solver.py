@@ -5,6 +5,8 @@ import functools
 import time
 
 from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Tuple
 
 from poetry.core.packages.dependency import Dependency
 
@@ -29,6 +31,11 @@ if TYPE_CHECKING:
 _conflict = object()
 
 
+DependencyCacheKey = Tuple[
+    str, Optional[str], Optional[str], Optional[str], Optional[str]
+]
+
+
 class DependencyCache:
     """
     A cache of the valid dependencies.
@@ -40,36 +47,37 @@ class DependencyCache:
 
     def __init__(self, provider: Provider) -> None:
         self._provider = provider
-        self._cache: dict[
-            int,
-            dict[
-                tuple[str, str | None, str | None, str | None, str | None],
-                list[DependencyPackage],
-            ],
-        ] = collections.defaultdict(dict)
 
-        self.search_for = functools.lru_cache(maxsize=128)(self._search_for)
-
-    def _search_for(
-        self, dependency: Dependency, level: int
-    ) -> list[DependencyPackage]:
-        key = (
-            dependency.complete_name,
-            dependency.source_type,
-            dependency.source_url,
-            dependency.source_reference,
-            dependency.source_subdirectory,
+        # self._cache maps a package name to a stack of cached package lists,
+        # ordered by the decision level which added them to the cache. This is
+        # done so that when backtracking we can maintain cache entries from
+        # previous decision levels, while clearing cache entries from only the
+        # rolled back levels.
+        #
+        # In order to maintain the integrity of the cache, `clear_level()`
+        # needs to be called in descending order as decision levels are
+        # backtracked so that the correct items can be popped from the stack.
+        self._cache: dict[DependencyCacheKey, list[list[DependencyPackage]]] = (
+            collections.defaultdict(list)
+        )
+        self._cached_dependencies_by_level: dict[int, list[DependencyCacheKey]] = (
+            collections.defaultdict(list)
         )
 
-        for check_level in range(level, -1, -1):
-            packages = self._cache[check_level].get(key)
-            if packages is not None:
-                packages = [
-                    p
-                    for p in packages
-                    if dependency.constraint.allows(p.package.version)
-                ]
-                break
+        self._search_for_cached = functools.lru_cache(maxsize=128)(self._search_for)
+
+    def _search_for(
+        self,
+        dependency: Dependency,
+        key: DependencyCacheKey,
+    ) -> list[DependencyPackage]:
+        cache_entries = self._cache[key]
+        if cache_entries:
+            packages = [
+                p
+                for p in cache_entries[-1]
+                if dependency.constraint.allows(p.package.version)
+            ]
         else:
             packages = None
 
@@ -83,12 +91,33 @@ class DependencyCache:
         if not packages:
             packages = self._provider.search_for(dependency)
 
-        self._cache[level][key] = packages
+        return packages
+
+    def search_for(
+        self,
+        dependency: Dependency,
+        decision_level: int,
+    ) -> list[DependencyPackage]:
+        key = (
+            dependency.complete_name,
+            dependency.source_type,
+            dependency.source_url,
+            dependency.source_reference,
+            dependency.source_subdirectory,
+        )
+
+        packages = self._search_for_cached(dependency, key)
+        if not self._cache[key] or self._cache[key][-1] is not packages:
+            self._cache[key].append(packages)
+            self._cached_dependencies_by_level[decision_level].append(key)
+
         return packages
 
     def clear_level(self, level: int) -> None:
-        self.search_for.cache_clear()
-        self._cache.pop(level, None)
+        if level in self._cached_dependencies_by_level:
+            self._search_for_cached.cache_clear()
+            for key in self._cached_dependencies_by_level.pop(level):
+                self._cache[key].pop()
 
 
 class VersionSolver:
@@ -327,9 +356,10 @@ class VersionSolver:
                 for level in range(
                     self._solution.decision_level, previous_satisfier_level, -1
                 ):
-                    self._contradicted_incompatibilities.difference_update(
-                        self._contradicted_incompatibilities_by_level.pop(level, set()),
-                    )
+                    if level in self._contradicted_incompatibilities_by_level:
+                        self._contradicted_incompatibilities.difference_update(
+                            self._contradicted_incompatibilities_by_level.pop(level),
+                        )
                     self._dependency_cache.clear_level(level)
 
                 self._solution.backtrack(previous_satisfier_level)
