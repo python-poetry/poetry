@@ -4,6 +4,7 @@ import contextlib
 import logging
 import re
 
+from itertools import combinations
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -358,7 +359,15 @@ class Factory(BaseFactory):
 
         results["errors"].extend(validate_object(config))
 
-        # A project should not depend on itself.
+        cls._validate_project_should_not_depend_on_itself(config, results)
+        cls._validate_dependencies_have_mutually_exclusive_markers(config, results)
+
+        return results
+
+    @staticmethod
+    def _validate_project_should_not_depend_on_itself(
+        config: dict[str, Any], results: dict[str, list[str]]
+    ) -> None:
         dependencies = set(config.get("dependencies", {}).keys())
         dependencies.update(config.get("dev-dependencies", {}).keys())
         groups = config.get("group", {}).values()
@@ -369,7 +378,33 @@ class Factory(BaseFactory):
 
         if canonicalize_name(config["name"]) in dependencies:
             results["errors"].append(
-                f"Project name ({config['name']}) is same as one of its dependencies"
+                f"Project name ({config['name']}) is same as one of its dependencies."
             )
 
-        return results
+    @classmethod
+    def _validate_dependencies_have_mutually_exclusive_markers(
+        cls, config: dict[str, Any], results: dict[str, list[str]]
+    ) -> None:
+        dep_groups = [
+            config.get("dependencies", {}),
+            config.get("dev-dependencies", {}),
+            *(
+                group.get("dependencies", {})
+                for group in config.get("group", {}).values()
+            ),
+        ]
+        for group in dep_groups:
+            for name, constraints in group.items():
+                if isinstance(constraints, list) and len(constraints) > 1:
+                    deps = [
+                        cls.create_dependency(name, constraint)
+                        for constraint in constraints
+                    ]
+                    if not all(
+                        d1.marker.intersect(d2.marker).is_empty()
+                        for d1, d2 in combinations(deps, 2)
+                    ):
+                        results["errors"].append(
+                            f"Dependency {name} does not have mutually exclusive"
+                            " markers."
+                        )

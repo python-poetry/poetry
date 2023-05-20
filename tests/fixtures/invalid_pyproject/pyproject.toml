@@ -1,18 +1,20 @@
 [tool.poetry]
-name = "invalid"
-version = "1.0.0"
-authors = [
-    "Foo <foo@bar.com>"
-]
-license = "INVALID"
+authors = ["Foo <foo@bar.com>"]
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Clowns",
     "Natural Language :: Ukranian",
     "Topic :: Communications :: Chat :: AOL Instant Messenger",
 ]
+license = "INVALID"
+name = "invalid"
+version = "1.0.0"
 
 [tool.poetry.dependencies]
-python = "*"
-pendulum = {"version" = "^2.0.5", allows-prereleases = true}
 invalid = "1.0"
+pendulum = { "version" = "^2.0.5", allows-prereleases = true }
+pillow = [
+    { version = "^9", python = "^3.9" },
+    { version = "^7", python = "^3.7" },
+]
+python = "*"

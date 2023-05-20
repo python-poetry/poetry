@@ -43,7 +43,8 @@ def test_check_invalid(
 
     expected = """\
 Error: 'description' is a required property
-Error: Project name (invalid) is same as one of its dependencies
+Error: Project name (invalid) is same as one of its dependencies.
+Error: Dependency pillow does not have mutually exclusive markers.
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.

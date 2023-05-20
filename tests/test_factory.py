@@ -518,7 +518,8 @@ def test_create_poetry_fails_on_invalid_configuration(
     expected = """\
 The Poetry configuration is invalid:
   - 'description' is a required property
-  - Project name (invalid) is same as one of its dependencies
+  - Project name (invalid) is same as one of its dependencies.
+  - Dependency pillow does not have mutually exclusive markers.
 """
     assert str(e.value) == expected
 
