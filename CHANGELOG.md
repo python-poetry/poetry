@@ -23,7 +23,7 @@
 
 - **Remove the old deprecated installer and the corresponding setting `experimental.new-installer`** ([#7356](https://github.com/python-poetry/poetry/pull/7356)).
 - **Introduce `priority` key for sources and deprecate flags `default` and `secondary`** ([#7658](https://github.com/python-poetry/poetry/pull/7658)).
-- Deprecate `poetry run <script>` if the script was not previously installed via `poetry install` ([#7606](https://github.com/python-poetry/poetry/pull/7606)).
+- Deprecate `poetry run <entry point>` if the entry point was not previously installed via `poetry install` ([#7606](https://github.com/python-poetry/poetry/pull/7606)).
 - Only write the lock file if the installation succeeds ([#7498](https://github.com/python-poetry/poetry/pull/7498)).
 - Do not write the unused package category into the lock file ([#7637](https://github.com/python-poetry/poetry/pull/7637)).
 
