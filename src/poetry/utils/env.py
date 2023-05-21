@@ -1191,6 +1191,7 @@ class Env:
 
     def __init__(self, path: Path, base: Path | None = None) -> None:
         self._is_windows = sys.platform == "win32"
+        self._is_windows_from_microsoft_store = Path.home() / 'AppData' / 'Local' / 'Microsoft' in Path(sys.executable).parents
         self._is_mingw = sysconfig.get_platform().startswith("mingw")
         self._is_conda = bool(os.environ.get("CONDA_DEFAULT_ENV"))
 
@@ -1200,7 +1201,7 @@ class Env:
 
         bin_dir = "bin" if not self._is_windows or self._is_mingw else "Scripts"
         self._path = path
-        self._bin_dir = self._path / bin_dir
+        self._bin_dir = self._path if self._is_windows_from_microsoft_store else self._path / bin_dir
 
         self._executable = "python"
         self._pip_executable = "pip"
