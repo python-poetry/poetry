@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import ssl
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -50,6 +51,13 @@ class UploadError(Exception):
         super().__init__(message)
 
 
+class SSLContextAdapter(adapters.HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        context = ssl.create_default_context()
+        kwargs['ssl_context'] = context
+        return super(SSLContextAdapter, self).init_poolmanager(*args, **kwargs)
+
+
 class Uploader:
     def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
@@ -73,7 +81,7 @@ class Uploader:
             status_forcelist=STATUS_FORCELIST,
         )
 
-        return adapters.HTTPAdapter(max_retries=retry)
+        return SSLContextAdapter(max_retries=retry)
 
     @property
     def files(self) -> list[Path]:
