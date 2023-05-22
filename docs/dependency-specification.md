@@ -79,10 +79,14 @@ Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, 
 
 You can specify the exact version of a package.
 
-`==1.2.3` is an example of an exact version specification.
+`1.2.3` is an example of an exact version specification.
 
 This will tell Poetry to install this version and this version only.
 If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+
+Exact versions can also be specified with `==` according to [PEP 440](https://peps.python.org/pep-0440/).
+
+`==1.2.3` is an example of this.
 
 ### Using the `@` operator
 
@@ -247,14 +251,14 @@ for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}
 
 ## `source` dependencies
 
-To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
+To depend on a package from an [alternate repository]({{< relref "repositories#installing-from-private-package-sources" >}}),
 you can use the `source` property:
 
 ```toml
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "supplemental"
 
 [tool.poetry.dependencies]
 my-cool-package = { version = "*", source = "foo" }
@@ -267,7 +271,7 @@ poetry add my-cool-package --source foo
 ```
 
 {{% note %}}
-In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository)
+In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories#installing-from-private-package-sources" >}})
 for further information.
 {{% /note %}}
 

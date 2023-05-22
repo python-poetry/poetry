@@ -5,12 +5,9 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import FrozenSet
 from typing import Tuple
 from typing import TypeVar
-
-from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
@@ -21,6 +18,7 @@ from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Iterator
 
     from cleo.io.io import IO
@@ -31,7 +29,7 @@ if TYPE_CHECKING:
 
     from poetry.packages import DependencyPackage
     from poetry.puzzle.transaction import Transaction
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -39,7 +37,7 @@ class Solver:
     def __init__(
         self,
         package: ProjectPackage,
-        pool: Pool,
+        pool: RepositoryPool,
         installed: list[Package],
         locked: list[Package],
         io: IO,
@@ -77,12 +75,12 @@ class Solver:
             if len(self._overrides) > 1:
                 self._provider.debug(
                     # ignore the warning as provider does not do interpolation
-                    f"Complete version solving took {end - start:.3f}"  # noqa: PIE803
+                    f"Complete version solving took {end - start:.3f}"
                     f" seconds with {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
                     # ignore the warning as provider does not do interpolation
-                    "Resolved with overrides:"  # noqa: PIE803
+                    "Resolved with overrides:"
                     f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
@@ -128,7 +126,7 @@ class Solver:
         for override in overrides:
             self._provider.debug(
                 # ignore the warning as provider does not do interpolation
-                "<comment>Retrying dependency resolution "  # noqa: PIE803
+                "<comment>Retrying dependency resolution "
                 f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
@@ -181,8 +179,16 @@ class Solver:
                             if _package.name == dep.name:
                                 continue
 
-                            if dep not in _package.requires:
+                            try:
+                                index = _package.requires.index(dep)
+                            except ValueError:
                                 _package.add_dependency(dep)
+                            else:
+                                _dep = _package.requires[index]
+                                if _dep.marker != dep.marker:
+                                    # marker of feature package is more accurate
+                                    # because it includes relevant extras
+                                    _dep.marker = dep.marker
             else:
                 final_packages.append(package)
                 depths.append(results[package])
@@ -265,11 +271,9 @@ class PackageNode(DFSNode):
         self.depth = -1
 
         if not previous:
-            self.category = "dev"
             self.groups: frozenset[str] = frozenset()
             self.optional = True
         elif dep:
-            self.category = "main" if MAIN_GROUP in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
         else:
@@ -319,14 +323,11 @@ def aggregate_package_nodes(nodes: list[PackageNode]) -> tuple[Package, int]:
     for node in nodes:
         groups.extend(node.groups)
 
-    category = "main" if any(MAIN_GROUP in node.groups for node in nodes) else "dev"
     optional = all(node.optional for node in nodes)
     for node in nodes:
         node.depth = depth
-        node.category = category
         node.optional = optional
 
-    package.category = category
     package.optional = optional
 
     return package, depth

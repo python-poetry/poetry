@@ -6,54 +6,21 @@ import re
 from typing import TYPE_CHECKING
 from typing import Any
 
-from packaging.tags import Tag
-
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
-from poetry.utils.patterns import wheel_file_re
+from poetry.utils.wheel import Wheel
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version import Version
 
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidWheelName(Exception):
-    pass
-
-
-class Wheel:
-    def __init__(self, filename: str) -> None:
-        wheel_info = wheel_file_re.match(filename)
-        if not wheel_info:
-            raise InvalidWheelName(f"{filename} is not a valid wheel filename.")
-
-        self.filename = filename
-        self.name = wheel_info.group("name").replace("_", "-")
-        self.version = wheel_info.group("ver").replace("_", "-")
-        self.build_tag = wheel_info.group("build")
-        self.pyversions = wheel_info.group("pyver").split(".")
-        self.abis = wheel_info.group("abi").split(".")
-        self.plats = wheel_info.group("plat").split(".")
-
-        self.tags = {
-            Tag(x, y, z) for x in self.pyversions for y in self.abis for z in self.plats
-        }
-
-    def get_minimum_supported_index(self, tags: list[Tag]) -> int | None:
-        indexes = [tags.index(t) for t in self.tags if t in tags]
-
-        return min(indexes) if indexes else None
-
-    def is_supported_by_environment(self, env: Env) -> bool:
-        return bool(set(env.supported_tags).intersection(self.tags))
 
 
 class Chooser:
@@ -61,7 +28,9 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: Pool, env: Env, config: Config | None = None) -> None:
+    def __init__(
+        self, pool: RepositoryPool, env: Env, config: Config | None = None
+    ) -> None:
         self._pool = pool
         self._env = env
         self._config = config or Config.create()
@@ -78,8 +47,10 @@ class Chooser:
             if link.is_wheel:
                 if not self._no_binary_policy.allows(package.name):
                     logger.debug(
-                        "Skipping wheel for %s as requested in no binary policy for"
-                        " package (%s)",
+                        (
+                            "Skipping wheel for %s as requested in no binary policy for"
+                            " package (%s)"
+                        ),
                         link.filename,
                         package.name,
                     )
@@ -87,8 +58,10 @@ class Chooser:
 
                 if not Wheel(link.filename).is_supported_by_environment(self._env):
                     logger.debug(
-                        "Skipping wheel %s as this is not supported by the current"
-                        " environment",
+                        (
+                            "Skipping wheel %s as this is not supported by the current"
+                            " environment"
+                        ),
                         link.filename,
                     )
                     continue
@@ -118,7 +91,7 @@ class Chooser:
             repository = self._pool.repository("pypi")
         links = repository.find_links_for_package(package)
 
-        hashes = [f["hash"] for f in package.files]
+        hashes = {f["hash"] for f in package.files}
         if not hashes:
             return links
 

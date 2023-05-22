@@ -9,12 +9,9 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
-from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 
 from poetry.config.config import Config
@@ -29,9 +26,11 @@ from poetry.utils._compat import metadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Any
+    from typing import Mapping
 
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.semver.version import Version
     from pytest_mock import MockerFixture
     from tomlkit.toml_document import TOMLDocument
 
@@ -67,13 +66,6 @@ def get_dependency(
     constraint["allow-prereleases"] = allows_prereleases
 
     return Factory.create_dependency(name, constraint or "*", groups=groups)
-
-
-def fixture(path: str | None = None) -> Path:
-    if path:
-        return FIXTURE_PATH / path
-    else:
-        return FIXTURE_PATH
 
 
 def copy_or_symlink(source: Path, dest: Path) -> None:
@@ -112,9 +104,11 @@ def mock_clone(
 ) -> MockDulwichRepo:
     # Checking source to determine which folder we need to copy
     parsed = ParsedUrl.parse(url)
+    assert parsed.pathname is not None
     path = re.sub(r"(.git)?$", "", parsed.pathname.lstrip("/"))
 
-    folder = Path(__file__).parent / "fixtures" / "git" / parsed.resource / path
+    assert parsed.resource is not None
+    folder = FIXTURE_PATH / "git" / parsed.resource / path
 
     if not source_root:
         source_root = Path(Config.create().get("cache-dir")) / "src"
@@ -129,8 +123,7 @@ def mock_clone(
 def mock_download(url: str, dest: Path) -> None:
     parts = urllib.parse.urlparse(url)
 
-    fixtures = Path(__file__).parent / "fixtures"
-    fixture = fixtures / parts.path.lstrip("/")
+    fixture = FIXTURE_PATH / parts.path.lstrip("/")
 
     copy_or_symlink(fixture, dest)
 
@@ -139,9 +132,9 @@ class TestExecutor(Executor):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self._installs = []
-        self._updates = []
-        self._uninstalls = []
+        self._installs: list[Package] = []
+        self._updates: list[Package] = []
+        self._uninstalls: list[Package] = []
 
     @property
     def installations(self) -> list[Package]:
@@ -155,11 +148,13 @@ class TestExecutor(Executor):
     def removals(self) -> list[Package]:
         return self._uninstalls
 
-    def _do_execute_operation(self, operation: Operation) -> None:
-        super()._do_execute_operation(operation)
+    def _do_execute_operation(self, operation: Operation) -> int:
+        rc = super()._do_execute_operation(operation)
 
         if not operation.skipped:
             getattr(self, f"_{operation.job_type}s").append(operation.package)
+
+        return rc
 
     def _execute_install(self, operation: Operation) -> int:
         return 0
@@ -177,23 +172,23 @@ class PoetryTestApplication(Application):
         self._poetry = poetry
 
     def reset_poetry(self) -> None:
+        assert self._poetry is not None
         poetry = self._poetry
         self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
         self._poetry.set_locker(
-            TestLocker(poetry.locker.lock.path, self._poetry.local_config)
+            TestLocker(poetry.locker.lock, self._poetry.local_config)
         )
 
 
 class TestLocker(Locker):
-    def __init__(self, lock: str | Path, local_config: dict) -> None:
-        self._lock = TOMLFile(lock)
-        self._local_config = local_config
-        self._lock_data = None
-        self._content_hash = self._get_content_hash()
+    # class name begins 'Test': tell pytest that it does not contain testcases.
+    __test__ = False
+
+    def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
+        super().__init__(lock, local_config)
         self._locked = False
-        self._lock_data = None
         self._write = False
 
     def write(self, write: bool = True) -> None:
@@ -207,7 +202,7 @@ class TestLocker(Locker):
 
         return self
 
-    def mock_lock_data(self, data: dict) -> None:
+    def mock_lock_data(self, data: dict[str, Any]) -> None:
         self.locked()
 
         self._lock_data = data
@@ -235,7 +230,7 @@ class TestRepository(Repository):
     def find_links_for_package(self, package: Package) -> list[Link]:
         return [
             Link(
-                f"https://foo.bar/files/{escape_name(package.name)}"
+                f"https://foo.bar/files/{package.name.replace('-', '_')}"
                 f"-{package.version.to_string()}-py2.py3-none-any.whl"
             )
         ]
@@ -262,14 +257,16 @@ def isolated_environment(
 def make_entry_point_from_plugin(
     name: str, cls: type[Any], dist: metadata.Distribution | None = None
 ) -> metadata.EntryPoint:
+    group: str | None = getattr(cls, "group", None)
     ep = metadata.EntryPoint(
         name=name,
-        group=getattr(cls, "group", None),
+        group=group,  # type: ignore[arg-type]
         value=f"{cls.__module__}:{cls.__name__}",
     )
 
     if dist:
-        return ep._for(dist)
+        ep = ep._for(dist)  # type: ignore[attr-defined,no-untyped-call]
+        return ep
 
     return ep
 
@@ -285,3 +282,33 @@ def mock_metadata_entry_points(
         "entry_points",
         return_value=[make_entry_point_from_plugin(name, cls, dist)],
     )
+
+
+def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, Any]:
+    """
+    Flatten a nested dict.
+
+    A flatdict replacement.
+
+    :param obj: A nested dict to be flattened
+    :delimiter str: A delimiter used in the key path
+    :return: Flattened dict
+    """
+
+    def recurse_keys(obj: Mapping[str, Any]) -> Iterator[tuple[list[str], Any]]:
+        """
+        A recursive generator to yield key paths and their values
+
+        :param obj: A nested dict to be flattened
+        :return:  dict
+        """
+        if isinstance(obj, dict):
+            for key in obj:
+                for leaf in recurse_keys(obj[key]):
+                    leaf_path, leaf_value = leaf
+                    leaf_path.insert(0, key)
+                    yield (leaf_path, leaf_value)
+        else:
+            yield ([], obj)
+
+    return {delimiter.join(path): value for path, value in recurse_keys(obj)}

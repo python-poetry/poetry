@@ -3,11 +3,17 @@ from __future__ import annotations
 import re
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 
+from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
 from poetry.repositories.single_page_repository import SinglePageRepository
+
+
+if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
 
 
 class MockSinglePageRepository(SinglePageRepository):
@@ -20,10 +26,10 @@ class MockSinglePageRepository(SinglePageRepository):
             disable_cache=True,
         )
 
-    def _get_page(self, endpoint: str = None) -> SimpleRepositoryPage | None:
+    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
         fixture = self.FIXTURES / self.url.rsplit("/", 1)[-1]
         if not fixture.exists():
-            return
+            raise PackageNotFound(f"Package [{name}] not found.")
 
         with fixture.open(encoding="utf-8") as f:
             return SimpleRepositoryPage(self._url, f.read())
@@ -32,10 +38,10 @@ class MockSinglePageRepository(SinglePageRepository):
         raise RuntimeError("Tests are not configured for downloads")
 
 
-def test_single_page_repository_get_page():
+def test_single_page_repository_get_page() -> None:
     repo = MockSinglePageRepository("jax_releases")
 
-    page = repo._get_page("/ignored")
+    page = repo.get_page("/ignored")
     links = list(page.links)
 
     assert len(links) == 21
@@ -46,7 +52,7 @@ def test_single_page_repository_get_page():
         assert link.path.startswith("/jax-releases/")
 
 
-def test_single_page_repository_find_packages():
+def test_single_page_repository_find_packages() -> None:
     repo = MockSinglePageRepository("jax_releases")
 
     dep = Dependency("jaxlib", "0.3.7")

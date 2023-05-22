@@ -18,7 +18,7 @@ Poetry offers a lockfile to ensure repeatable installs, and can build your proje
 
 ## System requirements
 
-Poetry requires **Python 3.7+**. It is multi-platform and the goal is to make it work equally well
+Poetry requires **Python 3.8+**. It is multi-platform and the goal is to make it work equally well
 on Linux, macOS and Windows.
 
 ## Installation
@@ -46,9 +46,13 @@ The script can be executed directly (i.e. 'curl python') or downloaded and then 
 (e.g. in a CI environment).
 
 {{% warning %}}
-The previous `get-poetry.py` and `install-poetry.py` installers are deprecated. Any installs performed
-using `get-poetry.py` should be uninstalled and reinstalled using `install.python-poetry.org` to ensure
-in-place upgrades are possible.
+The `get-poetry.py` installer has been deprecated and removed. If you installed
+Poetry using `get-poetry.py`, please uninstall (as documented in the relevant
+step below), and then follow these installation instructions.
+
+The previous `install-poetry.py` script as included in the Poetry repository
+is deprecated and frozen. Please migrate to the standalone version described
+above, as the in-tree version is [scheduled to be removed](https://github.com/python-poetry/poetry/issues/6676).
 {{% /warning %}}
 
 **Linux, macOS, Windows (WSL)**
@@ -182,11 +186,13 @@ curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
 
 {{% warning %}}
-If you installed using the deprecated `get-poetry.py` script, you should use it to uninstall instead:
+If you installed using the deprecated `get-poetry.py` script, you should remove the path it uses manually, e.g.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 - --uninstall
+rm -rf "${POETRY_HOME:-~/.poetry}"
 ```
+
+Also remove ~/.poetry/bin from your `$PATH` in your shell configuration, if it is present.
 {{% /warning %}}
 
 {{< /step >}}
@@ -233,11 +239,11 @@ poetry@preview --version
 Finally, `pipx` can install any valid [pip requirement spec](https://pip.pypa.io/en/stable/cli/pip_install/), which
 allows for installations of the development version from `git`, or even for local testing of pull requests:
 
-```
+```bash
 pipx install --suffix @master git+https://github.com/python-poetry/poetry.git@master
 pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@refs/pull/1234/head
-
 ```
+
 {{< /step >}}
 {{< step >}}
 **Update Poetry**
@@ -367,7 +373,7 @@ poetry completions bash >> ~/.bash_completion
 #### Lazy-loaded
 
 ```bash
-poetry completions bash > ${XDG_DATA_HOME:~/.local/share}/bash-completion/completions/poetry
+poetry completions bash > ${XDG_DATA_HOME:-~/.local/share}/bash-completion/completions/poetry
 ```
 
 ### Fish

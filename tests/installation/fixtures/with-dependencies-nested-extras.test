@@ -2,22 +2,20 @@
 name = "A"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
 
 [package.dependencies]
-B = {version = "^1.0", optional = true, extras = ["C"]}
+B = {version = "^1.0", optional = true, extras = ["c"]}
 
 [package.extras]
-b = ["B[C] (>=1.0,<2.0)"]
+b = ["B[c] (>=1.0,<2.0)"]
 
 [[package]]
 name = "B"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -32,7 +30,6 @@ c = ["C (>=1.0,<2.0)"]
 name = "C"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []

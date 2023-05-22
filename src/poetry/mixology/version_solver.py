@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import time
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
@@ -12,7 +11,6 @@ from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import NoVersionsCause
-from poetry.mixology.incompatibility_cause import PackageNotFoundCause
 from poetry.mixology.incompatibility_cause import RootCause
 from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
@@ -58,12 +56,21 @@ class DependencyCache:
         )
 
         packages = self.cache.get(key)
-        if packages is None:
-            packages = self.provider.search_for(dependency)
-        else:
+
+        if packages:
             packages = [
                 p for p in packages if dependency.constraint.allows(p.package.version)
             ]
+
+        # provider.search_for() normally does not include pre-release packages
+        # (unless requested), but will include them if there are no other
+        # eligible package versions for a version constraint.
+        #
+        # Therefore, if the eligible versions have been filtered down to
+        # nothing, we need to call provider.search_for() again as it may return
+        # additional results this time.
+        if not packages:
+            packages = self.provider.search_for(dependency)
 
         self.cache[key] = packages
 
@@ -322,8 +329,8 @@ class VersionSolver:
             # The most_recent_satisfier may not satisfy most_recent_term on its own
             # if there are a collection of constraints on most_recent_term that
             # only satisfy it together. For example, if most_recent_term is
-            # `foo ^1.0.0` and _solution contains `[foo >=1.0.0,
-            # foo <2.0.0]`, then most_recent_satisfier will be `foo <2.0.0` even
+            # `foo ^1.0.0` and _solution contains `[foo >=1.0.0,
+            # foo <2.0.0]`, then most_recent_satisfier will be `foo <2.0.0` even
             # though it doesn't totally satisfy `foo ^1.0.0`.
             #
             # In this case, we add `not (most_recent_satisfier \ most_recent_term)` to
@@ -333,7 +340,9 @@ class VersionSolver:
             # .. _algorithm documentation:
             # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
             if difference is not None:
-                new_terms.append(difference.inverse)
+                inverse = difference.inverse
+                if inverse.dependency != most_recent_satisfier.dependency:
+                    new_terms.append(inverse)
 
             incompatibility = Incompatibility(
                 new_terms, ConflictCause(incompatibility, most_recent_satisfier.cause)
@@ -395,10 +404,8 @@ class VersionSolver:
                 if locked:
                     return is_specific_marker, Preference.LOCKED, 1
 
-            try:
-                num_packages = len(self._dependency_cache.search_for(dependency))
-            except ValueError:
-                num_packages = 0
+            num_packages = len(self._dependency_cache.search_for(dependency))
+
             if num_packages < 2:
                 preference = Preference.NO_CHOICE
             elif use_latest:
@@ -414,28 +421,8 @@ class VersionSolver:
 
         locked = self._provider.get_locked(dependency)
         if locked is None:
-            try:
-                packages = self._dependency_cache.search_for(dependency)
-            except ValueError as e:
-                self._add_incompatibility(
-                    Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
-                )
-                complete_name: str = dependency.complete_name
-                return complete_name
-
-            package = None
-            if locked is not None:
-                package = next(
-                    (
-                        p
-                        for p in packages
-                        if p.package.version == locked.package.version
-                    ),
-                    None,
-                )
-            if package is None:
-                with suppress(IndexError):
-                    package = packages[0]
+            packages = self._dependency_cache.search_for(dependency)
+            package = next(iter(packages), None)
 
             if package is None:
                 # If there are no versions that satisfy the constraint,

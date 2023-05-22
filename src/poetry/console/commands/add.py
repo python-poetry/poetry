@@ -30,7 +30,10 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dev",
             "D",
-            "Add as a development dependency. (<warning>Deprecated</warning>)",
+            (
+                "Add as a development dependency. (<warning>Deprecated</warning>) Use"
+                " --group=dev instead."
+            ),
         ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
@@ -63,8 +66,10 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dry-run",
             None,
-            "Output the operations but do not execute anything (implicitly enables"
-            " --verbose).",
+            (
+                "Output the operations but do not execute anything (implicitly enables"
+                " --verbose)."
+            ),
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
@@ -95,7 +100,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self) -> int:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
         from tomlkit import inline_table
         from tomlkit import parse as parse_toml
         from tomlkit import table
@@ -121,6 +126,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
+        project_name = canonicalize_name(poetry_content["name"])
 
         if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
@@ -186,7 +192,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 for extra in self.option("extras"):
                     extras += extra.split()
 
-                constraint["extras"] = self.option("extras")
+                constraint["extras"] = extras
 
             if self.option("editable"):
                 if "git" in _constraint or "path" in _constraint:
@@ -215,7 +221,23 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             constraint_name = _constraint["name"]
             assert isinstance(constraint_name, str)
-            section[constraint_name] = constraint
+
+            canonical_constraint_name = canonicalize_name(constraint_name)
+
+            if canonical_constraint_name == project_name:
+                self.line_error(
+                    f"<error>Cannot add dependency on <c1>{constraint_name}</c1> to"
+                    " project with the same name."
+                )
+                self.line_error("\nNo changes were applied.")
+                return 1
+
+            for key in section:
+                if canonicalize_name(key) == canonical_constraint_name:
+                    section[key] = constraint
+                    break
+            else:
+                section[constraint_name] = constraint
 
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(
@@ -227,14 +249,12 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     constraint_name,
                     constraint,
                     groups=[group],
-                    root_dir=self.poetry.file.parent,
+                    root_dir=self.poetry.file.path.parent,
                 )
             )
 
         # Refresh the locker
-        self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
-        )
+        self.poetry.locker.set_local_config(poetry_content)
         self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
@@ -244,8 +264,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.installer.dry_run(self.option("dry-run"))
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
-        if self.option("lock"):
-            self.installer.lock()
+        self.installer.execute_operations(not self.option("lock"))
 
         self.installer.whitelist([r["name"] for r in requirements])
 

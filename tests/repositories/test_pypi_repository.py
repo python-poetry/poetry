@@ -10,17 +10,20 @@ from typing import Any
 
 import pytest
 
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
-from poetry.core.semver.version import Version
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
 from poetry.factory import Factory
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import encode
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
 
@@ -36,15 +39,20 @@ class MockRepository(PyPiRepository):
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
+    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
+        fixture = self.JSON_FIXTURES / (name + ".json")
+
+        if not fixture.exists():
+            raise PackageNotFound(f"Package [{name}] not found.")
+
+        return SimpleJsonPage("", json.loads(fixture.read_text()))
+
     def _get(
         self, url: str, headers: dict[str, str] | None = None
     ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]
-        if len(parts) == 3:
-            version = parts[1]
-        else:
-            version = None
+        version = parts[1] if len(parts) == 3 else None
 
         if not version:
             fixture = self.JSON_FIXTURES / (name + ".json")
@@ -55,7 +63,8 @@ class MockRepository(PyPiRepository):
             return None
 
         with fixture.open(encoding="utf-8") as f:
-            return json.loads(f.read())
+            data: dict[str, Any] = json.load(f)
+            return data
 
     def _download(self, url: str, dest: Path) -> None:
         filename = url.split("/")[-1]
@@ -87,7 +96,7 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
 
 
 @pytest.mark.parametrize(
-    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+    ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
 def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
     repo = MockRepository()
@@ -122,8 +131,8 @@ def test_package() -> None:
     assert package.name == "requests"
     assert len(package.requires) == 9
     assert len([r for r in package.requires if r.is_optional()]) == 5
-    assert len(package.extras["security"]) == 3
-    assert len(package.extras["socks"]) == 2
+    assert len(package.extras[canonicalize_name("security")]) == 3
+    assert len(package.extras[canonicalize_name("socks")]) == 2
 
     assert package.files == [
         {
@@ -136,14 +145,21 @@ def test_package() -> None:
         },
     ]
 
-    win_inet = package.extras["socks"][0]
+    win_inet = package.extras[canonicalize_name("socks")][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
-    assert (
-        str(win_inet.marker)
-        == 'sys_platform == "win32" and (python_version == "2.7"'
-        ' or python_version == "2.6") and extra == "socks"'
+
+    # Different versions of poetry-core simplify the following marker differently,
+    # either is fine.
+    marker1 = (
+        'sys_platform == "win32" and (python_version == "2.7" or python_version =='
+        ' "2.6") and extra == "socks"'
     )
+    marker2 = (
+        'sys_platform == "win32" and python_version == "2.7" and extra == "socks" or'
+        ' sys_platform == "win32" and python_version == "2.6" and extra == "socks"'
+    )
+    assert str(win_inet.marker) in {marker1, marker2}
 
 
 @pytest.mark.parametrize(
@@ -238,14 +254,14 @@ def test_fallback_can_read_setup_to_get_dependencies() -> None:
     assert len([r for r in package.requires if r.is_optional()]) == 9
 
     assert package.extras == {
-        "mssql_pymssql": [Dependency("pymssql", "*")],
-        "mssql_pyodbc": [Dependency("pyodbc", "*")],
+        "mssql-pymssql": [Dependency("pymssql", "*")],
+        "mssql-pyodbc": [Dependency("pyodbc", "*")],
         "mysql": [Dependency("mysqlclient", "*")],
         "oracle": [Dependency("cx_oracle", "*")],
         "postgresql": [Dependency("psycopg2", "*")],
-        "postgresql_pg8000": [Dependency("pg8000", "*")],
-        "postgresql_psycopg2binary": [Dependency("psycopg2-binary", "*")],
-        "postgresql_psycopg2cffi": [Dependency("psycopg2cffi", "*")],
+        "postgresql-pg8000": [Dependency("pg8000", "*")],
+        "postgresql-psycopg2binary": [Dependency("psycopg2-binary", "*")],
+        "postgresql-psycopg2cffi": [Dependency("psycopg2cffi", "*")],
         "pymysql": [Dependency("pymysql", "*")],
     }
 
@@ -270,7 +286,7 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
     ]
 
     expected_extras = {
-        "all_non_platform": [
+        "all-non-platform": [
             Dependency("appdirs", ">=1.4.0"),
             Dependency("cryptography", ">=1.5"),
             Dependency("h2", ">=3.0,<4.0"),
@@ -284,9 +300,10 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         ]
     }
 
-    for name in expected_extras.keys():
+    for name, expected_extra in expected_extras.items():
         assert (
-            sorted(package.extras[name], key=lambda r: r.name) == expected_extras[name]
+            sorted(package.extras[canonicalize_name(name)], key=lambda r: r.name)
+            == expected_extra
         )
 
 
@@ -307,7 +324,7 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(
     response = Response()
     response.status_code = 200
     response.encoding = "utf-8"
-    response.raw = BytesIO(encode('{"foo": "bar"}'))
+    response.raw = BytesIO(b'{"foo": "bar"}')
     mocker.patch(
         "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],
@@ -325,15 +342,7 @@ def test_urls() -> None:
     assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
-def test_use_pypi_pretty_name() -> None:
-    repo = MockRepository(fallback=True)
-
-    package = repo.find_packages(Factory.create_dependency("twisted", "*"))
-    assert len(package) == 1
-    assert package[0].pretty_name == "Twisted"
-
-
-def test_find_links_for_package_of_supported_types():
+def test_find_links_for_package_of_supported_types() -> None:
     repo = MockRepository()
     package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))
 
@@ -346,10 +355,12 @@ def test_find_links_for_package_of_supported_types():
     assert links[0].show_url == "hbmqtt-0.9.6.tar.gz"
 
 
-def test_get_release_info_includes_only_supported_types():
+def test_get_release_info_includes_only_supported_types() -> None:
     repo = MockRepository()
 
-    release_info = repo._get_release_info(name="hbmqtt", version="0.9.6")
+    release_info = repo._get_release_info(
+        name=canonicalize_name("hbmqtt"), version=Version.parse("0.9.6")
+    )
 
     assert len(release_info["files"]) == 1
     assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"

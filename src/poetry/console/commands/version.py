@@ -5,13 +5,14 @@ from typing import Any
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from poetry.core.version.exceptions import InvalidVersion
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver.version import Version
+    from poetry.core.constraints.version import Version
 
 
 class VersionCommand(Command):
@@ -91,11 +92,11 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         return 0
 
     def increment_version(self, version: str, rule: str) -> Version:
-        from poetry.core.semver.version import Version
+        from poetry.core.constraints.version import Version
 
         try:
             parsed = Version.parse(version)
-        except ValueError:
+        except InvalidVersion:
             raise ValueError("The project's version doesn't seem to follow semver")
 
         if rule in {"major", "premajor"}:

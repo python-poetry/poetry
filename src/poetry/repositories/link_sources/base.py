@@ -3,14 +3,15 @@ from __future__ import annotations
 import logging
 import re
 
+from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import DefaultDict
 from typing import List
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
-from poetry.core.semver.version import Version
+from poetry.core.version.exceptions import InvalidVersion
 
-from poetry.utils._compat import cached_property
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 
@@ -84,7 +85,7 @@ class LinkSource:
         if version_string:
             try:
                 version = Version.parse(version_string)
-            except ValueError:
+            except InvalidVersion:
                 logger.debug(
                     "Skipping url (%s) due to invalid version (%s)", link.url, version
                 )

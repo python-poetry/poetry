@@ -13,22 +13,24 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 from cleo.io.null_io import NullIO
-from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.chef import Chef
+from poetry.installation.chef import ChefBuildError
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.wheel_installer import WheelInstaller
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import atomic_open
+from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -42,7 +44,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -50,7 +52,7 @@ class Executor:
     def __init__(
         self,
         env: Env,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         io: IO,
         parallel: bool | None = None,
@@ -61,11 +63,10 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._authenticator = Authenticator(
-            config, self._io, disable_cache=disable_cache
+        self._wheel_installer = WheelInstaller(self._env)
+        self._use_modern_installation = config.get(
+            "installer.modern-installation", True
         )
-        self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env, config)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -76,6 +77,13 @@ class Executor:
             )
         else:
             self._max_workers = 1
+
+        self._artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
+        self._authenticator = Authenticator(
+            config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
+        )
+        self._chef = Chef(self._artifact_cache, self._env, pool)
+        self._chooser = Chooser(pool, self._env, config)
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
         self._total_operations = 0
@@ -100,6 +108,10 @@ class Executor:
     def removals_count(self) -> int:
         return self._executed["uninstall"]
 
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
 
@@ -117,6 +129,9 @@ class Executor:
         self._verbose = verbose
 
         return self
+
+    def enable_bytecode_compilation(self, enable: bool = True) -> None:
+        self._wheel_installer.enable_bytecode_compilation(enable)
 
     def pip_install(
         self, req: Path, upgrade: bool = False, editable: bool = False
@@ -196,6 +211,14 @@ class Executor:
 
         for warning in self._yanked_warnings:
             self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
+        for path, issues in self._wheel_installer.invalid_wheels.items():
+            formatted_issues = "\n".join(issues)
+            warning = (
+                f"Validation of the RECORD file of {path.name} failed."
+                " Please report to the maintainers of that package so they can fix"
+                f" their build process. Details:\n{formatted_issues}\n"
+            )
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
         return 1 if self._shutdown else 0
 
@@ -272,7 +295,7 @@ class Executor:
             # error to be picked up by the error handler.
             if result == -2:
                 raise KeyboardInterrupt
-        except Exception as e:  # noqa: PIE786
+        except Exception as e:
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
@@ -291,6 +314,35 @@ class Executor:
                 with self._lock:
                     trace = ExceptionTrace(e)
                     trace.render(io)
+                    if isinstance(e, ChefBuildError):
+                        pkg = operation.package
+                        pip_command = "pip wheel --use-pep517"
+                        if pkg.develop:
+                            requirement = pkg.source_url
+                            pip_command += " --editable"
+                        else:
+                            requirement = (
+                                pkg.to_dependency().to_pep_508().split(";")[0].strip()
+                            )
+                        io.write_line("")
+                        io.write_line(
+                            "<info>"
+                            "Note: This error originates from the build backend,"
+                            " and is likely not a problem with poetry"
+                            f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
+                            " not supporting PEP 517 builds. You can verify this by"
+                            f" running '{pip_command} \"{requirement}\"'."
+                            "</info>"
+                        )
+                    elif isinstance(e, SolverProblemError):
+                        pkg = operation.package
+                        io.write_line("")
+                        io.write_line(
+                            "<error>"
+                            "Cannot resolve build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
+                        )
                     io.write_line("")
             finally:
                 with self._lock:
@@ -318,10 +370,12 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
-                    "<fg=default;options=bold,dark>Skipped</> "
-                    "<fg=default;options=dark>for the following reason:</> "
-                    f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
+                    (
+                        f"  <fg=default;options=bold,dark>•</> {operation_message}: "
+                        "<fg=default;options=bold,dark>Skipped</> "
+                        "<fg=default;options=dark>for the following reason:</> "
+                        f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
+                    ),
                 )
 
             self._skipped[operation.job_type] += 1
@@ -469,18 +523,22 @@ class Executor:
         message = f"  <fg=blue;options=bold>•</> {op_msg}: <info>Removing...</info>"
         self._write(operation, message)
 
-        return self._remove(operation)
+        return self._remove(operation.package)
 
     def _install(self, operation: Install | Update) -> int:
         package = operation.package
-        if package.source_type == "directory":
-            return self._install_directory(operation)
+        if package.source_type == "directory" and not self._use_modern_installation:
+            return self._install_directory_without_wheel_installer(operation)
 
+        cleanup_archive: bool = False
         if package.source_type == "git":
-            return self._install_git(operation)
-
-        if package.source_type == "file":
-            archive = self._prepare_file(operation)
+            archive = self._prepare_git_archive(operation)
+            cleanup_archive = operation.package.develop
+        elif package.source_type == "file":
+            archive = self._prepare_archive(operation)
+        elif package.source_type == "directory":
+            archive = self._prepare_archive(operation)
+            cleanup_archive = True
         elif package.source_type == "url":
             assert package.source_url is not None
             archive = self._download_link(operation, Link(package.source_url))
@@ -493,14 +551,29 @@ class Executor:
             " <info>Installing...</info>"
         )
         self._write(operation, message)
-        return self.pip_install(archive, upgrade=operation.job_type == "update")
+
+        if not self._use_modern_installation:
+            return self.pip_install(archive, upgrade=operation.job_type == "update")
+
+        try:
+            if operation.job_type == "update":
+                # Uninstall first
+                # TODO: Make an uninstaller and find a way to rollback in case
+                # the new package can't be installed
+                assert isinstance(operation, Update)
+                self._remove(operation.initial_package)
+
+            self._wheel_installer.install(archive)
+        finally:
+            if cleanup_archive:
+                archive.unlink()
+
+        return 0
 
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
-    def _remove(self, operation: Uninstall) -> int:
-        package = operation.package
-
+    def _remove(self, package: Package) -> int:
         # If we have a VCS package, remove its source directory
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
@@ -515,7 +588,9 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Install | Update) -> Path:
+    def _prepare_archive(
+        self, operation: Install | Update, *, output_dir: Path | None = None
+    ) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
@@ -527,13 +602,76 @@ class Executor:
 
         assert package.source_url is not None
         archive = Path(package.source_url)
+        if package.source_subdirectory:
+            archive = archive / package.source_subdirectory
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
+        self._populate_hashes_dict(archive, package)
+
+        return self._chef.prepare(
+            archive, editable=package.develop, output_dir=output_dir
+        )
+
+    def _prepare_git_archive(self, operation: Install | Update) -> Path:
+        from poetry.vcs.git import Git
+
+        package = operation.package
+        assert package.source_url is not None
+
+        if package.source_resolved_reference and not package.develop:
+            # Only cache git archives when we know precise reference hash,
+            # otherwise we might get stale archives
+            cached_archive = self._artifact_cache.get_cached_archive_for_git(
+                package.source_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+                env=self._env,
+            )
+            if cached_archive is not None:
+                return cached_archive
+
+        operation_message = self.get_operation_message(operation)
+
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
+        )
+        self._write(operation, message)
+
+        source = Git.clone(
+            url=package.source_url,
+            source_root=self._env.path / "src",
+            revision=package.source_resolved_reference or package.source_reference,
+        )
+
+        # Now we just need to install from the source directory
+        original_url = package.source_url
+        package._source_url = str(source.path)
+
+        output_dir = None
+        if package.source_resolved_reference and not package.develop:
+            output_dir = self._artifact_cache.get_cache_directory_for_git(
+                original_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+            )
+
+        archive = self._prepare_archive(operation, output_dir=output_dir)
+        if not package.develop:
+            package._source_url = original_url
+
+        if output_dir is not None and output_dir.is_dir():
+            # Mark directories with cached git packages, to distinguish from
+            # "normal" cache
+            (output_dir / ".created_from_git_dependency").touch()
+
         return archive
 
-    def _install_directory(self, operation: Install | Update) -> int:
+    def _install_directory_without_wheel_installer(
+        self, operation: Install | Update
+    ) -> int:
         from poetry.factory import Factory
+        from poetry.pyproject.toml import PyProjectTOML
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
@@ -553,7 +691,7 @@ class Executor:
         if package.source_subdirectory:
             req /= package.source_subdirectory
 
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
+        pyproject = PyProjectTOML(req / "pyproject.toml")
 
         package_poetry = None
         if pyproject.is_poetry_project():
@@ -594,34 +732,6 @@ class Executor:
 
         return self.pip_install(req, upgrade=True, editable=package.develop)
 
-    def _install_git(self, operation: Install | Update) -> int:
-        from poetry.vcs.git import Git
-
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
-        )
-        self._write(operation, message)
-
-        assert package.source_url is not None
-        source = Git.clone(
-            url=package.source_url,
-            source_root=self._env.path / "src",
-            revision=package.source_resolved_reference or package.source_reference,
-        )
-
-        # Now we just need to install from the source directory
-        original_url = package.source_url
-        package._source_url = str(source.path)
-
-        status_code = self._install_directory(operation)
-
-        package._source_url = original_url
-
-        return status_code
-
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
 
@@ -642,33 +752,64 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        archive = self._chef.get_cached_archive_for_link(link)
-        if archive is None:
-            # No cached distributions was found, so we download and prepare it
+        output_dir = self._artifact_cache.get_cache_directory_for_link(link)
+        # Try to get cached original package for the link provided
+        original_archive = self._artifact_cache.get_cached_archive_for_link(
+            link, strict=True
+        )
+        if original_archive is None:
+            # No cached original distributions was found, so we download and prepare it
             try:
-                archive = self._download_archive(operation, link)
+                original_archive = self._download_archive(operation, link)
             except BaseException:
-                cache_directory = self._chef.get_cache_directory_for_link(link)
+                cache_directory = self._artifact_cache.get_cache_directory_for_link(
+                    link
+                )
                 cached_file = cache_directory.joinpath(link.filename)
-                # We can't use unlink(missing_ok=True) because it's not available
-                # prior to Python 3.8
-                if cached_file.exists():
-                    cached_file.unlink()
+                cached_file.unlink(missing_ok=True)
 
                 raise
 
-        if package.files:
-            archive_hash = self._validate_archive_hash(archive, package)
+        # Get potential higher prioritized cached archive, otherwise it will fall back
+        # to the original archive.
+        archive = self._artifact_cache.get_cached_archive_for_link(
+            link,
+            strict=False,
+            env=self._env,
+        )
+        if archive is None:
+            # Since we previously downloaded an archive, we now should have
+            # something cached that we can use here. The only case in which
+            # archive is None is if the original archive is not valid for the
+            # current environment.
+            raise RuntimeError(
+                f"Package {link.url} cannot be installed in the current environment"
+                f" {self._env.marker_env}"
+            )
 
-            self._hashes[package.name] = archive_hash
+        if archive.suffix != ".whl":
+            message = (
+                f"  <fg=blue;options=bold>•</> {self.get_operation_message(operation)}:"
+                " <info>Preparing...</info>"
+            )
+            self._write(operation, message)
+
+            archive = self._chef.prepare(archive, output_dir=output_dir)
+
+        # Use the original archive to provide the correct hash.
+        self._populate_hashes_dict(original_archive, package)
 
         return archive
 
+    def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
+        if package.files and archive.name in {f["file"] for f in package.files}:
+            archive_hash = self._validate_archive_hash(archive, package)
+            self._hashes[package.name] = archive_hash
+
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        file_dep = FileDependency(package.name, archive)
-        archive_hash: str = "sha256:" + file_dep.hash()
-        known_hashes = {f["hash"] for f in package.files}
+        archive_hash: str = "sha256:" + get_file_hash(archive)
+        known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
@@ -705,7 +846,9 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive = (
+            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
+        )
         archive.parent.mkdir(parents=True, exist_ok=True)
         with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
@@ -751,19 +894,17 @@ class Executor:
             ) in self._env.site_packages.find_distribution_direct_url_json_files(
                 distribution_name=package.name, writable_only=True
             ):
-                # We can't use unlink(missing_ok=True) because it's not always available
-                if direct_url_json.exists():
-                    direct_url_json.unlink()
+                direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None
 
-        if package.source_type == "git":
+        if package.source_type == "git" and not package.develop:
             url_reference = self._create_git_url_reference(package)
+        elif package.source_type in ("directory", "git"):
+            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "url":
             url_reference = self._create_url_url_reference(package)
-        elif package.source_type == "directory":
-            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "file":
             url_reference = self._create_file_url_reference(package)
 
@@ -771,7 +912,8 @@ class Executor:
             for dist in self._env.site_packages.distributions(
                 name=package.name, writable_only=True
             ):
-                dist_path = cast(Path, dist._path)  # type: ignore[attr-defined]
+                dist_path = dist._path  # type: ignore[attr-defined]
+                assert isinstance(dist_path, Path)
                 url = dist_path / "direct_url.json"
                 url.write_text(json.dumps(url_reference), encoding="utf-8")
 
@@ -797,20 +939,12 @@ class Executor:
         return reference
 
     def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
-        archive_info = {}
+        archive_info = self._get_archive_info(package)
 
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
-
-        reference = {"url": package.source_url, "archive_info": archive_info}
-
-        return reference
+        return {"url": package.source_url, "archive_info": archive_info}
 
     def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
-        archive_info = {}
-
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
+        archive_info = self._get_archive_info(package)
 
         assert package.source_url is not None
         return {
@@ -829,3 +963,20 @@ class Executor:
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
+
+    def _get_archive_info(self, package: Package) -> dict[str, Any]:
+        """
+        Create dictionary `archive_info` for file `direct_url.json`.
+
+        Specification: https://packaging.python.org/en/latest/specifications/direct-url
+        (it supersedes PEP 610)
+
+        :param package: This must be a poetry package instance.
+        """
+        archive_info = {}
+
+        if package.name in self._hashes:
+            algorithm, value = self._hashes[package.name].split(":")
+            archive_info["hashes"] = {algorithm: value}
+
+        return archive_info

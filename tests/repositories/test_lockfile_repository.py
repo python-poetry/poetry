@@ -9,6 +9,7 @@ from poetry.core.packages.package import Package
 
 from poetry.repositories.lockfile_repository import LockfileRepository
 
+
 @pytest.fixture(scope="module")
 def packages():
     return [
