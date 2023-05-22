@@ -465,6 +465,7 @@ def fixture_copier(fixture_base: Path, tmp_path: Path) -> FixtureCopier:
     return _copy
 
 
+@pytest.fixture
 def required_fixtures() -> list[str]:
     return []
 
