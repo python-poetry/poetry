@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 
 from typing import TYPE_CHECKING
+from typing import TypeVar
 
 import pytest
 
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
 
     from tests.conftest import Config
+
+T = TypeVar("T")
 
 
 @pytest.fixture
@@ -47,8 +50,10 @@ def cache(
     repository_cache_dir: Path,
     repository_one: str,
     mock_caches: None,
-) -> FileCache:
-    cache = FileCache(path=repository_cache_dir / repository_one)
+) -> FileCache[dict[str, str]]:
+    cache: FileCache[dict[str, str]] = FileCache(
+        path=repository_cache_dir / repository_one
+    )
 
     cache.remember(
         "cachy:0.1", lambda: {"name": "cachy", "version": "0.1"}, minutes=None

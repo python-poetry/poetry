@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import TypeVar
 
 import pytest
 
@@ -13,6 +14,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from poetry.utils.cache import FileCache
+
+T = TypeVar("T")
 
 
 @pytest.fixture
@@ -27,7 +30,7 @@ def test_cache_clear_all(
     tester: ApplicationTester,
     repository_one: str,
     repository_cache_dir: Path,
-    cache: FileCache,
+    cache: FileCache[T],
 ) -> None:
     exit_code = tester.execute(f"cache clear {repository_one} --all", inputs="yes")
     repository_one_dir = repository_cache_dir / repository_one
@@ -44,7 +47,7 @@ def test_cache_clear_all_no(
     tester: ApplicationTester,
     repository_one: str,
     repository_cache_dir: Path,
-    cache: FileCache,
+    cache: FileCache[T],
 ) -> None:
     exit_code = tester.execute(f"cache clear {repository_one} --all", inputs="no")
 
@@ -60,7 +63,7 @@ def test_cache_clear_all_no(
 def test_cache_clear_pkg(
     tester: ApplicationTester,
     repository_one: str,
-    cache: FileCache,
+    cache: FileCache[T],
     package_name: str,
 ) -> None:
     exit_code = tester.execute(
@@ -76,7 +79,7 @@ def test_cache_clear_pkg(
 def test_cache_clear_pkg_no(
     tester: ApplicationTester,
     repository_one: str,
-    cache: FileCache,
+    cache: FileCache[T],
 ) -> None:
     exit_code = tester.execute(f"cache clear {repository_one}:cachy:0.1", inputs="no")
 
