@@ -1,9 +1,8 @@
 from __future__ import annotations
-from struct import pack
-
-import pytest
 
 from copy import deepcopy
+
+import pytest
 
 from poetry.core.packages.package import Package
 
@@ -13,13 +12,11 @@ from poetry.repositories.lockfile_repository import LockfileRepository
 @pytest.fixture(scope="module")
 def packages():
     return [
-        Package(
-            "a", "1.0", source_type="url", source_url="https://example.org/a.whl"
-        ),
+        Package("a", "1.0", source_type="url", source_url="https://example.org/a.whl"),
         Package("a", "1.0"),
         Package(
             "a", "1.0", source_type="url", source_url="https://example.org/a-1.whl"
-        )
+        ),
     ]
 
 
