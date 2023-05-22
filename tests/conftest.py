@@ -477,12 +477,12 @@ def load_required_fixtures(
     for fixture in required_fixtures:
         fixture_copier(fixture)
 
-        
+
 @pytest.fixture
 def venv_flags_default() -> dict[str, bool]:
     return {
-      "always-copy": False,
-      "system-site-packages": False,
-      "no-pip": False,
-      "no-setuptools": False,
+        "always-copy": False,
+        "system-site-packages": False,
+        "no-pip": False,
+        "no-setuptools": False,
     }

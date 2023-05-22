@@ -1190,7 +1190,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
-      venv_flags_default: dict[str, bool],
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1276,7 +1276,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
-      venv_flags_default: dict[str, bool],
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
