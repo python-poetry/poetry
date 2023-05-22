@@ -1,38 +1,20 @@
-import shutil
+from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
+from tests.helpers import mock_clone
 
 
-def mock_clone(self, source, dest):
-    # Checking source to determine which folder we need to copy
-    parts = urlparse.urlparse(source)
-
-    folder = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / parts.netloc
-        / parts.path.lstrip("/").rstrip(".git")
-    )
-
-    shutil.rmtree(str(dest))
-    shutil.copytree(str(folder), str(dest))
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker):
+def setup(mocker: MockerFixture) -> None:
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
-    p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-
-    yield
+    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
+    p = mocker.patch("poetry.vcs.git.Git.get_revision")
+    p.return_value = MOCK_DEFAULT_GIT_REVISION

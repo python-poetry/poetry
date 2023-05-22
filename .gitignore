@@ -15,7 +15,6 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
 .pytest_cache
 
 .DS_Store
@@ -38,3 +37,5 @@ MANIFEST.in
 /releases/*
 pip-wheel-metadata
 /poetry.toml
+
+poetry/core/*

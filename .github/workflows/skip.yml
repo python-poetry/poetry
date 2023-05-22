@@ -3,35 +3,31 @@ name: Skip All Jobs
 
 on:
   push:
-    paths:
-      - '!**'
-      - 'docs/**'
-      - '.cirrus.yml'
+    paths-ignore:
+      - '**'
+      - '!docs/**'
+      - '!.cirrus.yml'
+      - '!.github/workflows/docs.yml'
     branches:
       - master
       - develop
   pull_request:
-    paths:
-      - '!**'
-      - 'docs/**'
-      - '.cirrus.yml'
+    paths-ignore:
+      - '**'
+      - '!docs/**'
+      - '!.cirrus.yml'
+      - '!.github/workflows/docs.yml'
     branches:
       - '**'
 
 jobs:
-  pre-commit:
-    name: Linting
-    runs-on: ubuntu-latest
-    steps:
-      - run: exit 0
-
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     # we do not need os specific runners here, using linux is quicker
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [Ubuntu, MacOS, Windows]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [Ubuntu, macOS, Windows]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
       - run: exit 0

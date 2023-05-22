@@ -38,8 +38,8 @@ version = "1.0.0"
 
 # ...
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.7"
-poetry = "^1.0"
+python = "^3.7"
+poetry = "^1.2"
 
 [tool.poetry.plugins."poetry.plugin"]
 demo = "poetry_demo_plugin.plugin:MyPlugin"
@@ -50,7 +50,7 @@ demo = "poetry_demo_plugin.plugin:MyPlugin"
 Every plugin has to supply a class which implements the `poetry.plugins.Plugin` interface.
 
 The `activate()` method of the plugin is called after the plugin is loaded
-and receives an instance of `Poetry` as well as an instance of `cleo.io.IO`.
+and receives an instance of `Poetry` as well as an instance of `cleo.io.io.IO`.
 
 Using these two objects all configuration can be read
 and all public internal objects and state can be manipulated as desired.
@@ -67,11 +67,8 @@ from poetry.poetry import Poetry
 class MyPlugin(Plugin):
 
     def activate(self, poetry: Poetry, io: IO):
-        version = self.get_custom_version()
-        io.write_line(f"Setting package version to <b>{version}</b>")
-        poetry.package.set_version(version)
-
-    def get_custom_version(self) -> str:
+        io.write_line("Setting readme")
+        poetry.package.readme = "README.md"
         ...
 ```
 
@@ -81,7 +78,7 @@ If you want to add commands or options to the `poetry` script you need
 to create an application plugin which implements the `poetry.plugins.ApplicationPlugin` interface.
 
 The `activate()` method of the application plugin is called after the plugin is loaded
-and receives an instance of `console.Application`.
+and receives an instance of `poetry.console.Application`.
 
 ```python
 from cleo.commands.command import Command
@@ -122,7 +119,7 @@ This will help keep the performances of Poetry good.
 {{% /note %}}
 
 The plugin also must be declared in the `pyproject.toml` file of the plugin package
-as an `application.plugin` plugin:
+as a `poetry.application.plugin` plugin:
 
 ```toml
 [tool.poetry.plugins."poetry.application.plugin"]
@@ -138,7 +135,7 @@ A plugin **must not** remove or modify in any way the core commands of Poetry.
 
 Plugins can also listen to specific events and act on them if necessary.
 
-These events are fired by [Cleo](https://github.com/sdispater/cleo)
+These events are fired by [Cleo](https://github.com/python-poetry/cleo)
 and are accessible from the `cleo.events.console_events` module.
 
 - `COMMAND`: this event allows attaching listeners before any command is executed.
@@ -194,30 +191,30 @@ Installed plugin packages are automatically loaded when Poetry starts up.
 
 You have multiple ways to install plugins for Poetry
 
-### The `plugin add` command
+### The `self add` command
 
 This is the easiest way and should account for all the ways Poetry can be installed.
 
 ```bash
-poetry plugin add poetry-plugin
+poetry self add poetry-plugin
 ```
 
-The `plugin add` command will ensure that the plugin is compatible with the current version of Poetry
+The `self add` command will ensure that the plugin is compatible with the current version of Poetry
 and install the needed packages for the plugin to work.
 
-The package specification formats supported by the `plugin add` command are the same as the ones supported
+The package specification formats supported by the `self add` command are the same as the ones supported
 by the [`add` command]({{< relref "cli#add" >}}).
 
-If you no longer need a plugin and want to uninstall it, you can use the `plugin remove` command.
+If you no longer need a plugin and want to uninstall it, you can use the `self remove` command.
 
 ```shell
-poetry plugin remove poetry-plugin
+poetry self remove poetry-plugin
 ```
 
 You can also list all currently installed plugins by running:
 
 ```shell
-poetry plugin show
+poetry self show
 ```
 
 ### With `pipx inject`
@@ -236,14 +233,34 @@ pipx runpip poetry uninstall poetry-plugin
 
 ### With `pip`
 
-If you used `pip` to install Poetry you can add the plugin packages via the `pip install` command.
+The `pip` binary in Poetry's virtual environment can also be used to install and remove plugins.
+The environment variable `$POETRY_HOME` here is used to represent the path to the virtual environment.
+The [installation instructions](/docs/) can be referenced if you are not
+sure where Poetry has been installed.
+
+To add a plugin, you can use `pip install`:
 
 ```shell
-pip install --user poetry-plugin
+$POETRY_HOME/bin/pip install --user poetry-plugin
 ```
 
 If you want to uninstall a plugin, you can run:
 
 ```shell
-pip uninstall poetry-plugin
+$POETRY_HOME/bin/pip uninstall poetry-plugin
 ```
+
+
+## Maintaining a plugin
+
+When writing a plugin, you will probably access internals of Poetry, since there is no
+stable public API. Although we try our best to deprecate methods first, before
+removing them, sometimes the signature of an internal method has to be changed.
+
+As the author of a plugin, you are probably testing your plugin
+against the latest release of Poetry.
+Additionally, you should consider testing against the latest release branch and the
+master branch of Poetry and schedule a CI job that runs regularly even if you did not
+make any changes to your plugin.
+This way, you will notice internal changes that break your plugin immediately
+and can prepare for the next Poetry release.

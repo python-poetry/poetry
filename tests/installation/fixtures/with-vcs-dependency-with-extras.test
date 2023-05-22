@@ -1,0 +1,42 @@
+[[package]]
+name = "demo"
+version = "0.1.2"
+description = ""
+optional = false
+python-versions = "*"
+files = []
+develop = false
+
+[package.dependencies]
+cleo = {version = "*", optional = true, markers = "extra == \"foo\""}
+pendulum = ">=1.4.4"
+
+[package.extras]
+foo = ["cleo"]
+
+[package.source]
+type = "git"
+url = "https://github.com/demo/demo.git"
+reference = "master"
+resolved_reference = "123456"
+
+[[package]]
+name = "pendulum"
+version = "1.4.4"
+description = ""
+optional = false
+python-versions = "*"
+files = []
+
+[[package]]
+name = "cleo"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+files = []
+
+[metadata]
+python-versions = "*"
+lock-version = "2.0"
+content-hash = "123456789"

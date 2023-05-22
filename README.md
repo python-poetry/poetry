@@ -1,158 +1,18 @@
-# Poetry: Dependency Management for Python
+# Poetry: Python packaging and dependency management made easy
+
+[![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)][PyPI Releases]
+[![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=pre-release&include_prereleases&sort=semver)][PyPI Releases]
+[![Python Versions](https://img.shields.io/pypi/pyversions/poetry)][PyPI]
+[![Download Stats](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
+[![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)][Discord]
 
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 3.6+.
-
-
-[![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
-
-The [complete documentation](https://python-poetry.org/docs/) is available on the [official website](https://python-poetry.org).
-
-## Installation
-
-Poetry provides a custom installer that will install `poetry` isolated
-from the rest of your system.
-
-### osx / linux / bashonwindows install instructions
-```bash
-curl -sSL https://install.python-poetry.org | python -
-```
-### windows powershell install instructions
-```powershell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
-```
-
-**Warning**: The previous `get-poetry.py` installer is now deprecated, if you are currently using it
-you should migrate to the new, supported, `install-poetry.py` installer.
-
-The installer installs the `poetry` tool to Poetry's `bin` directory. This location depends on your system:
-
-- `$HOME/.local/bin` for Unix
-- `%APPDATA%\Python\Scripts` on Windows
-
-If this directory is not on your `PATH`, you will need to add it manually
-if you want to invoke Poetry with simply `poetry`.
-
-Alternatively, you can use the full path to `poetry` to use it.
-
-Once Poetry is installed you can execute the following:
-
-```bash
-poetry --version
-```
-
-If you see something like `Poetry (version 1.2.0)` then you are ready to use Poetry.
-If you decide Poetry isn't your thing, you can completely remove it from your system
-by running the installer again with the `--uninstall` option or by setting
-the `POETRY_UNINSTALL` environment variable before executing the installer.
-
-```bash
-python install-poetry.py --uninstall
-POETRY_UNINSTALL=1 python install-poetry.py
-```
-
-By default, Poetry is installed into the user's platform-specific home directory.
-If you wish to change this, you may define the `POETRY_HOME` environment variable:
-
-```bash
-POETRY_HOME=/etc/poetry python install-poetry.py
-```
-
-If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`
-or by using the `POETRY_PREVIEW` environment variable:
-
-```bash
-python install-poetry.py --preview
-POETRY_PREVIEW=1 python install-poetry.py
-```
-
-Similarly, if you want to install a specific version, you can use `--version` option or the `POETRY_VERSION`
-environment variable:
-
-```bash
-python install-poetry.py --version 1.2.0
-POETRY_VERSION=1.2.0 python install-poetry.py
-```
-
-You can also install Poetry for a `git` repository by using the `--git` option:
-
-```bash
-python install-poetry.py --git https://github.com/python-poetry/poetry.git@master
-````
-
-**Note**: Note that the installer does not support Python < 3.6.
-
-## Updating `poetry`
-
-Updating poetry to the latest stable version is as simple as calling the `self update` command.
-
-**Warning**: Poetry versions installed using the now deprecated `get-poetry.py` installer will not be able to use this
-command to update to 1.2 releases or later. Migrate to using the `install-poetry.py` installer or `pipx`.
-
-```bash
-poetry self update
-```
-
-If you want to install prerelease versions, you can use the `--preview` option.
-
-```bash
-poetry self update --preview
-```
-
-And finally, if you want to install a specific version you can pass it as an argument
-to `self update`.
-
-```bash
-poetry self update 1.2.0
-```
-
-
-## Enable tab completion for Bash, Fish, or Zsh
-
-`poetry` supports generating completion scripts for Bash, Fish, and Zsh.
-See `poetry help completions` for full details, but the gist is as simple as using one of the following:
-
-```bash
-# Bash
-poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
-
-# Fish
-poetry completions fish > ~/.config/fish/completions/poetry.fish
-
-# Zsh
-poetry completions zsh > ~/.zfunc/_poetry
-
-# Zsh (Oh-My-Zsh)
-mkdir $ZSH_CUSTOM/plugins/poetry
-poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
-rm ~/.zcompdump*
-# add `poetry` in the `plugins` list (https://github.com/ohmyzsh/ohmyzsh#enabling-plugins)
-
-# Zsh (prezto)
-poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
-```
-
-*Note:* you may need to restart your shell in order for the changes to take
-effect.
-
-For `zsh`, you must then add the following line in your `~/.zshrc` before
-`compinit` (not for homebrew setup):
-
-```zsh
-fpath+=~/.zfunc
-```
-
-
-## Introduction
-
-`poetry` is a tool to handle dependency installation as well as building and packaging of Python packages.
-It only needs one file to do all of that: the new, [standardized](https://www.python.org/dev/peps/pep-0518/) `pyproject.toml`.
-
-In other words, poetry uses `pyproject.toml` to replace `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
+Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile` with a simple `pyproject.toml`
+based project format.
 
 ```toml
 [tool.poetry]
@@ -166,130 +26,89 @@ authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 
-readme = 'README.md'  # Markdown files are supported
-
 repository = "https://github.com/python-poetry/poetry"
-homepage = "https://github.com/python-poetry/poetry"
+homepage = "https://python-poetry.org"
 
-keywords = ['packaging', 'poetry']
+# README file(s) are used as the package description
+readme = ["README.md", "LICENSE"]
+
+# Keywords (translated to tags on the package index)
+keywords = ["packaging", "poetry"]
 
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
-toml = "^0.9"
-# Dependencies with extras
-requests = { version = "^2.13", extras = [ "security" ] }
-# Python specific dependencies with prereleases allowed
-pathlib2 = { version = "^2.2", python = "~2.7", allow-prereleases = true }
+# Compatible Python versions
+python = ">=3.8"
+# Standard dependency with semver constraints
+aiohttp = "^3.8.1"
+# Dependency with extras
+requests = { version = "^2.28", extras = ["security"] }
+# Version-specific dependencies with prereleases allowed
+tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
 # Git dependencies
-cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
+cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "master" }
+# Optional dependencies (installed by extras)
+pendulum = { version = "^2.1.2", optional = true }
 
-# Optional dependencies (extras)
-pendulum = { version = "^1.4", optional = true }
+# Dependency groups are supported for organizing your dependencies
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.2"
+pytest-cov = "^3.0"
 
-[tool.poetry.dev-dependencies]
-pytest = "^3.0"
-pytest-cov = "^2.4"
+# ...and can be installed only when explicitly requested
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^5.1.1"
 
+# Python-style entrypoints and scripts are easily expressed
 [tool.poetry.scripts]
-my-script = 'my_package:main'
+my-script = "my_package:main"
 ```
 
-There are some things we can notice here:
+## Installation
 
-* It will try to enforce [semantic versioning](<http://semver.org>) as the best practice in version naming.
-* You can specify the readme, included and excluded files: no more `MANIFEST.in`.
-`poetry` will also use VCS ignore files (like `.gitignore`) to populate the `exclude` section.
-* Keywords can be specified and will act as tags on the packaging site.
-* The dependencies sections support caret, tilde, wildcard, inequality and multiple requirements.
-* You must specify the python versions for which your package is compatible.
+Poetry supports multiple installation methods, including a simple script found at [install.python-poetry.org]. For full
+installation instructions, including advanced usage of the script, alternate install methods, and CI best practices, see
+the full [installation documentation].
 
-`poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
-So, `poetry` can be installed globally and used everywhere.
+## Documentation
 
-`poetry` also comes with a full fledged dependency resolution library.
+[Documentation] for the current version of Poetry (as well as the development branch and recently out of support
+versions) is available from the [official website].
 
-## Why?
+## Contribute
 
-Packaging systems and dependency management in Python are rather convoluted and hard to understand for newcomers.
-Even for seasoned developers it might be cumbersome at times to create all files needed in a Python project: `setup.py`,
-`requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
-
-So I wanted a tool that would limit everything to a single configuration file to do:
-dependency management, packaging and publishing.
-
-It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
-
-And, finally, I started `poetry` to bring another exhaustive dependency resolver to the Python community apart from
-[Conda's](https://conda.io).
-
-### What about Pipenv?
-
-In short: I do not like the CLI it provides, or some of the decisions made,
-and I think we can make a better and more intuitive one. Here are a few things
-that I don't like.
-
-#### Dependency resolution
-
-The dependency resolution is erratic and will fail even if there is a solution. Let's take an example:
-
-```bash
-pipenv install oslo.utils==1.4.0
-```
-
-will fail with this error:
-
-```text
-Could not find a version that matches pbr!=0.7,!=2.1.0,<1.0,>=0.6,>=2.0.0
-```
-
-while Poetry will get you the right set of packages:
-
-```bash
-poetry add oslo.utils=1.4.0
-```
-
-results in :
-
-```text
-  - Installing pytz (2018.3)
-  - Installing netifaces (0.10.6)
-  - Installing netaddr (0.7.19)
-  - Installing oslo.i18n (2.1.0)
-  - Installing iso8601 (0.1.12)
-  - Installing six (1.11.0)
-  - Installing babel (2.5.3)
-  - Installing pbr (0.11.1)
-  - Installing oslo.utils (1.4.0)
-```
-
-This is possible thanks to the efficient dependency resolver at the heart of Poetry.
-
-Here is a breakdown of what exactly happens here:
-
-`oslo.utils (1.4.0)` depends on:
-
-- `pbr (>=0.6,!=0.7,<1.0)`
-- `Babel (>=1.3)`
-- `six (>=1.9.0)`
-- `iso8601 (>=0.1.9)`
-- `oslo.i18n (>=1.3.0)`
-- `netaddr (>=0.7.12)`
-- `netifaces (>=0.10.4)`
-
-What interests us is `pbr (>=0.6,!=0.7,<1.0)`.
-
-At this point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
-
-Next it will try to select `oslo.i18n==3.20.0` which is the latest version that matches `oslo.i18n (>=1.3.0)`.
-
-However this version requires `pbr (!=2.1.0,>=2.0.0)` which is incompatible with `pbr==0.11.1`,
-so `poetry` will try to find a version of `oslo.i18n` that satisfies `pbr (>=0.6,!=0.7,<1.0)`.
-
-By analyzing the releases of `oslo.i18n`, it will find `oslo.i18n==2.1.0` which requires `pbr (>=0.11,<2.0)`.
-At this point the rest of the resolution is straightforward since there is no more conflict.
+Poetry is a large, complex project always in need of contributors. For those new to the project, a list of
+[suggested issues] to work on in Poetry and poetry-core is available. The full [contributing documentation] also
+provides helpful guidance.
 
 ## Resources
 
-* [Official Website](https://python-poetry.org)
-* [Issue Tracker](https://github.com/python-poetry/poetry/issues)
-* [Discord](https://discord.com/invite/awxPgve)
+* [Releases][PyPI Releases]
+* [Official Website]
+* [Documentation]
+* [Issue Tracker]
+* [Discord]
+
+  [PyPI]: https://pypi.org/project/poetry/
+  [PyPI Releases]: https://pypi.org/project/poetry/#history
+  [Official Website]: https://python-poetry.org
+  [Documentation]: https://python-poetry.org/docs/
+  [Issue Tracker]: https://github.com/python-poetry/poetry/issues
+  [Suggested Issues]: https://github.com/python-poetry/poetry/contribute
+  [Contributing Documentation]: https://python-poetry.org/docs/contributing
+  [Discord]: https://discord.com/invite/awxPgve
+  [install.python-poetry.org]: https://install.python-poetry.org
+  [Installation Documentation]: https://python-poetry.org/docs/#installation
+
+## Related Projects
+
+* [poetry-core](https://github.com/python-poetry/poetry-core): PEP 517 build-system for Poetry projects, and
+dependency-free core functionality of the Poetry frontend
+* [poetry-plugin-export](https://github.com/python-poetry/poetry-plugin-export): Export Poetry projects/lock files to
+foreign formats like requirements.txt
+* [poetry-plugin-bundle](https://github.com/python-poetry/poetry-plugin-bundle): Install Poetry projects/lock files to
+external formats like virtual environments
+* [install.python-poetry.org](https://github.com/python-poetry/install.python-poetry.org): The official Poetry
+installation script
+* [website](https://github.com/python-poetry/website): The official Poetry website and blog

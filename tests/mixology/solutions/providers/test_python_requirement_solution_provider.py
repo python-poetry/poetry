@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from poetry.core.packages.dependency import Dependency
+
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import NoVersionsCause
@@ -7,7 +10,7 @@ from poetry.mixology.term import Term
 from poetry.puzzle.exceptions import SolverProblemError
 
 
-def test_it_can_solve_python_incompatibility_solver_errors():
+def test_it_can_solve_python_incompatibility_solver_errors() -> None:
     from poetry.mixology.solutions.providers import PythonRequirementSolutionProvider
     from poetry.mixology.solutions.solutions import PythonRequirementSolution
 
@@ -21,7 +24,7 @@ def test_it_can_solve_python_incompatibility_solver_errors():
     assert isinstance(provider.get_solutions(exception)[0], PythonRequirementSolution)
 
 
-def test_it_cannot_solve_other_solver_errors():
+def test_it_cannot_solve_other_solver_errors() -> None:
     from poetry.mixology.solutions.providers import PythonRequirementSolutionProvider
 
     incompatibility = Incompatibility(

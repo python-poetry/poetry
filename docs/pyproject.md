@@ -17,16 +17,37 @@ The `tool.poetry` section of the `pyproject.toml` file is composed of multiple s
 
 The name of the package. **Required**
 
+This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-0508/#names).
+
+
+```toml
+name = "my-package"
+```
+
 ## version
 
 The version of the package. **Required**
 
-This should follow [semantic versioning](http://semver.org/). However it will not be enforced and you remain
-free to follow another specification.
+This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
+
+```toml
+version = "0.1.0"
+```
+
+{{% note %}}
+
+If you would like to use semantic versioning for your project, please see
+[here]({{< relref "libraries#versioning" >}}).
+
+{{% /note %}}
 
 ## description
 
 A short description of the package. **Required**
+
+```toml
+description = "A short description of the package."
+```
 
 ## license
 
@@ -51,6 +72,9 @@ The recommended notation for the most common licenses is (alphabetical):
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
+```toml
+license = "MIT"
+```
 {{% note %}}
 If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
 {{% /note %}}
@@ -61,33 +85,83 @@ The authors of the package. **Required**
 
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
+```toml
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>",
+]
+```
+
 ## maintainers
 
 The maintainers of the package. **Optional**
 
 This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
 
+```toml
+maintainers = [
+    "John Smith <johnsmith@example.org>",
+    "Jane Smith <janesmith@example.org>",
+]
+```
+
 ## readme
 
-The readme file of the package. **Optional**
+A path, or list of paths corresponding to the README file(s) of the package.
+**Optional**
 
-The file can be either `README.rst` or `README.md`.
+The file(s) can be of any format, but if you intend to publish to PyPI keep the
+[recommendations for a PyPI-friendly README](
+https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/) in
+mind. README paths are implicitly relative to `pyproject.toml`.
+
+The contents of the README file(s) are used to populate the [Description
+field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
+of your distribution's metadata (similar to `long_description` in setuptools).
+When multiple files are specified they are concatenated with newlines.
+
+```toml
+[tool.poetry]
+# ...
+readme = "README.md"
+```
+
+```toml
+[tool.poetry]
+# ...
+readme = ["docs/README1.md", "docs/README2.md"]
+```
 
 ## homepage
 
 An URL to the website of the project. **Optional**
 
+```toml
+homepage = "https://python-poetry.org/"
+```
+
 ## repository
 
 An URL to the repository of the project. **Optional**
+
+```toml
+repository = "https://github.com/python-poetry/poetry"
+```
 
 ## documentation
 
 An URL to the documentation of the project. **Optional**
 
+```toml
+documentation = "https://python-poetry.org/docs/"
+```
+
 ## keywords
 
 A list of keywords that the package is related to. **Optional**
+
+```toml
+keywords = ["packaging", "poetry"]
+```
 
 ## classifiers
 
@@ -134,7 +208,7 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific [build](#build) format you can specify
+If you want to restrict a package to a specific build format you can specify
 it by using `format`:
 
 ```toml
@@ -178,6 +252,10 @@ The globs specified in the exclude field identify a set of files that are not in
 
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
 
+{{% note %}}
+Explicitly declaring entries in `include` will negate VCS' ignore settings.
+{{% /note %}}
+
 ```toml
 [tool.poetry]
 # ...
@@ -203,7 +281,7 @@ exclude = ["my_package/excluded.py"]
 
 ## dependencies and dependency groups
 
-Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
+Poetry is configured to look for dependencies on [PyPI](https://pypi.org) by default.
 Only the name and a version string are required in this case.
 
 ```toml
@@ -216,8 +294,15 @@ you can add it to your `pyproject.toml` file, like so:
 
 ```toml
 [[tool.poetry.source]]
-name = 'private'
-url = 'http://example.com/simple'
+name = "private"
+url = "http://example.com/simple"
+```
+
+If you have multiple repositories configured, you can explicitly tell poetry where to look for a specific package:
+
+```toml
+[tool.poetry.dependencies]
+requests = { version = "^2.13.0", source = "private" }
 ```
 
 {{% note %}}
@@ -226,7 +311,7 @@ is compatible is mandatory:
 
 ```toml
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 ```
 {{% /note %}}
 
@@ -242,7 +327,8 @@ mkdocs = "*"
 ```
 
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for a more in-depth look
-at how to manage dependency groups.
+at how to manage dependency groups and [Dependency specification]({{< relref "dependency-specification" >}})
+for more information on other keys and specifying version ranges.
 
 ## `scripts`
 
@@ -250,10 +336,17 @@ This section describes the scripts or executables that will be installed when in
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry.console:run'
+my_package_cli = 'my_package.console:run'
 ```
 
-Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
+
+To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
+
+```toml
+[tool.poetry.scripts]
+devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
+```
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
@@ -276,7 +369,7 @@ mandatory = "^1.0"
 
 # A list of all of the optional dependencies, some of which are included in the
 # below `extras`. They can be opted into by apps.
-psycopg2 = { version = "^2.7", optional = true }
+psycopg2 = { version = "^2.9", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
 
 [tool.poetry.extras]
@@ -291,6 +384,24 @@ When installing packages with Poetry, you can specify extras by using the `-E|--
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
+
+Any extras you don't specify will be removed. Note this behavior is different from
+[optional dependency groups]({{< relref "managing-dependencies#optional-groups" >}}) not
+selected for install, e.g. those not specified via `install --with`.
+
+You can install all extras with the `--all-extras` option:
+
+```bash
+poetry install --all-extras
+```
+
+{{% note %}}
+Note that `install --extras` and the variations mentioned above (`--all-extras`, `--extras foo`, etc.) only work on dependencies defined in the current project. If you want to install extras defined by dependencies, you'll have to express that in the dependency itself:
+```toml
+[tool.poetry.group.dev.dependencies]
+fastapi = {version="^0.92.0", extras=["all"]}
+```
+{{% /note %}}
 
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
@@ -311,15 +422,27 @@ Dependencies listed in [dependency groups]({{< relref "managing-dependencies#dep
 
 ## `plugins`
 
-Poetry supports arbitrary plugins which work similarly to
-[setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
-To match the example in the setuptools documentation, you would use the following:
+Poetry supports arbitrary plugins, which are exposed as the ecosystem-standard [entry points](https://packaging.python.org/en/latest/specifications/entry-points/) and discoverable using `importlib.metadata`. This is similar to (and compatible with) the entry points feature of `setuptools`.
+The syntax for registering a plugin is:
 
 ```toml
 [tool.poetry.plugins] # Optional super table
 
-[tool.poetry.plugins."blogtool.parsers"]
-".rst" = "some_module:SomeClass"
+[tool.poetry.plugins."A"]
+"B" = "C:D"
+```
+Which are:
+
+- `A` - type of the plugin, for example `poetry.plugin` or `flake8.extension`
+- `B` - name of the plugin
+- `C` - python module import path
+- `D` - the entry point of the plugin (a function or class)
+
+Example (from [`poetry-plugin-export`](http://github.com/python-poetry/poetry-plugin-export)):
+
+```toml
+[tool.poetry.plugins."poetry.application.plugin"]
+export = "poetry_plugin_export.plugins:ExportApplicationPlugin"
 ```
 
 ## `urls`

@@ -71,15 +71,55 @@ Here are some examples of inequality requirements:
 != 1.2.3
 ```
 
-### Exact requirements
-
-You can specify the exact version of a package.
-This will tell Poetry to install this version and this version only.
-If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
-
 #### Multiple requirements
 
 Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
+
+### Exact requirements
+
+You can specify the exact version of a package.
+
+`1.2.3` is an example of an exact version specification.
+
+This will tell Poetry to install this version and this version only.
+If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+
+Exact versions can also be specified with `==` according to [PEP 440](https://peps.python.org/pep-0440/).
+
+`==1.2.3` is an example of this.
+
+### Using the `@` operator
+
+When adding dependencies via `poetry add`, you can use the `@` operator.
+This is understood similarly to the `==` syntax, but also allows prefixing any
+specifiers that are valid in `pyproject.toml`. For example:
+
+```shell
+poetry add django@^4.0.0
+```
+
+The above would translate to the following entry in `pyproject.toml`:
+```toml
+Django = "^4.0.0"
+```
+
+The special keyword `latest` is also understood by the `@` operator:
+```shell
+poetry add django@latest
+```
+
+The above would translate to the following entry in `pyproject.toml`, assuming the latest release of `django` is `4.0.5`:
+```toml
+Django = "^4.0.5"
+```
+
+#### Extras
+
+Extras and `@` can be combined as one might expect (`package[extra]@version`):
+
+```shell
+poetry add django[bcrypt]@^4.0.0
+```
 
 ## `git` dependencies
 
@@ -109,12 +149,54 @@ flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
+In cases where the package you want to install is located in a subdirectory of the VCS repository, you can use the `subdirectory` option, similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides:
+
+```toml
+[tool.poetry.dependencies]
+# Install a package named `subdir_package` from a folder called `subdir` within the repository
+subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", subdirectory = "subdir" }
+```
+
+with the corresponding `add` call:
+
+```bash
+poetry add "https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
+```
+
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:
 
 ```toml
 [tool.poetry.dependencies]
 requests = { git = "git@github.com:requests/requests.git" }
 ```
+
+To use HTTP basic authentication with your git repositories, you can configure credentials similar to
+how [repository credentials]({{< relref "repositories#configuring-credentials" >}}) are configured.
+
+```bash
+poetry config repositories.git-org-project https://github.com/org/project.git
+poetry config http-basic.git-org-project username token
+poetry add git+https://github.com/org/project.git
+```
+
+{{% note %}}
+With Poetry 1.2 releases, the default git client used is [Dulwich](https://www.dulwich.io/).
+
+We fall back to legacy system git client implementation in cases where
+[gitcredentials](https://git-scm.com/docs/gitcredentials) is used. This fallback will be removed in
+a future release where `gitcredentials` helpers can be better supported natively.
+
+In cases where you encounter issues with the default implementation that used to work prior to
+Poetry 1.2, you may wish to explicitly configure the use of the system git client via a shell
+subprocess call.
+
+```bash
+poetry config experimental.system-git-client true
+```
+
+Keep in mind however, that doing so will surface bugs that existed in versions prior to 1.2 which
+were caused due to the use of the system git client.
+{{% /note %}}
 
 ## `path` dependencies
 
@@ -152,6 +234,46 @@ with the corresponding `add` call:
 poetry add https://example.com/my-package-0.1.0.tar.gz
 ```
 
+## Dependency `extras`
+
+You can specify [PEP-508 Extras](https://www.python.org/dev/peps/pep-0508/#extras)
+for a dependency as shown here.
+
+```toml
+[tool.poetry.dependencies]
+gunicorn = { version = "^20.1", extras = ["gevent"] }
+```
+
+{{% note %}}
+These activate extra defined for the dependency, to configure an optional dependency
+for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
+{{% /note %}}
+
+## `source` dependencies
+
+To depend on a package from an [alternate repository]({{< relref "repositories#installing-from-private-package-sources" >}}),
+you can use the `source` property:
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+priority = "supplemental"
+
+[tool.poetry.dependencies]
+my-cool-package = { version = "*", source = "foo" }
+```
+
+with the corresponding `add` call:
+
+```sh
+poetry add my-cool-package --source foo
+```
+
+{{% note %}}
+In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories#installing-from-private-package-sources" >}})
+for further information.
+{{% /note %}}
 
 ## Python restricted dependencies
 
@@ -159,12 +281,12 @@ You can also specify that a dependency should be installed only for specific Pyt
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7" }
+tomli = { version = "^2.0.1", python = "<3.11" }
 ```
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7 || ^3.2" }
+pathlib2 = { version = "^2.2", python = "^3.2" }
 ```
 
 ## Using environment markers
@@ -175,9 +297,8 @@ via the `markers` property:
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
+pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platform == 'win32'" }
 ```
-
 
 ## Multiple constraints dependencies
 
@@ -185,14 +306,14 @@ Sometimes, one of your dependency may have different version ranges depending
 on the target Python versions.
 
 Let's say you have a dependency on the package `foo` which is only compatible
-with Python <3.0 up to version 1.9 and compatible with Python 3.4+ from version 2.0:
+with Python 3.6-3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
 you would declare it like so:
 
 ```toml
 [tool.poetry.dependencies]
 foo = [
-    {version = "<=1.9", python = "^2.7"},
-    {version = "^2.0", python = "^3.4"}
+    {version = "<=1.9", python = ">=3.6,<3.8"},
+    {version = "^2.0", python = ">=3.8"}
 ]
 ```
 
@@ -211,7 +332,7 @@ An example where this might be useful is the following:
 
 ```toml
 [tool.poetry.group.dev.dependencies]
-black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.7", markers = "platform_python_implementation == 'CPython'"}
 ```
 
 As a single line, this is a lot to digest. To make this a bit easier to
@@ -221,7 +342,7 @@ work with, you can do the following:
 [tool.poetry.group.dev.dependencies.black]
 version = "19.10b0"
 allow-prereleases = true
-python = "^3.6"
+python = "^3.7"
 markers = "platform_python_implementation == 'CPython'"
 ```
 

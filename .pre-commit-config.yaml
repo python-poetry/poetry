@@ -1,41 +1,36 @@
+ci:
+  autofix_prs: false
+
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: ^.*\.egg-info/
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-toml
+        exclude: tests/fixtures/invalid_lock/poetry\.lock
+      - id: check-yaml
+      - id: pretty-format-json
+        args: [--autofix, --no-ensure-ascii, --no-sort-keys]
+      - id: check-ast
+      - id: debug-statements
+      - id: check-docstring-first
+
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 23.3.0
     hooks:
       - id: black
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v3.3.1
     hooks:
-      - id: flake8
-        additional_dependencies: [flake8-bugbear]
+      - id: validate_manifest
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.910
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.267
     hooks:
-      - id: mypy
-        pass_filenames: false
-        additional_dependencies:
-          - types-requests
-        args:
-          - poetry
-
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.7.0
-    hooks:
-      - id: isort
-        additional_dependencies: [toml]
-        exclude: ^.*/?setup\.py$
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
-    hooks:
-      - id: trailing-whitespace
-        exclude: |
-          (?x)(
-            ^tests/.*/fixtures/.*
-            | ^tests/console/commands/debug/test_resolve.py
-          )
-      - id: end-of-file-fixer
-        exclude: ^tests/.*/fixtures/.*
-      - id: debug-statements
+    -   id: ruff
