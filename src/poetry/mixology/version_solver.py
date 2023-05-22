@@ -56,12 +56,21 @@ class DependencyCache:
         )
 
         packages = self.cache.get(key)
-        if packages is None:
-            packages = self.provider.search_for(dependency)
-        else:
+
+        if packages:
             packages = [
                 p for p in packages if dependency.constraint.allows(p.package.version)
             ]
+
+        # provider.search_for() normally does not include pre-release packages
+        # (unless requested), but will include them if there are no other
+        # eligible package versions for a version constraint.
+        #
+        # Therefore, if the eligible versions have been filtered down to
+        # nothing, we need to call provider.search_for() again as it may return
+        # additional results this time.
+        if not packages:
+            packages = self.provider.search_for(dependency)
 
         self.cache[key] = packages
 
