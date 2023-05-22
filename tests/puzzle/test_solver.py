@@ -1183,6 +1183,64 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies(
     )
 
 
+def test_solver_with_dependency_and_prerelease_sub_dependencies_increasing_constraints(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
+) -> None:
+    """Regression test to ensure the solver eventually uses pre-release
+    dependencies if the package is progressively constrained enough.
+
+    This is different from test_solver_with_dependency_and_prerelease_sub_dependencies
+    above because it also has a wildcard dependency on B at the root level.
+    This causes the solver to first narrow B's candidate versions down to
+    {0.9.0} at an early level, then eventually down to the empty set once A's
+    dependencies are processed at a later level.
+
+    Once the candidate version set is narrowed down to the empty set, the
+    solver should re-evaluate available candidate versions from the source, but
+    include pre-release versions this time as there are no other options.
+    """
+    # Note: The order matters here; B must be added before A or the solver
+    # evaluates A first and we don't encounter the issue. This is a bit
+    # fragile, but the mock call assertions ensure this ordering is maintained.
+    package.add_dependency(Factory.create_dependency("B", "*"))
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", ">0.9.0"))
+
+    repo.add_package(package_a)
+    repo.add_package(get_package("B", "0.9.0"))
+    package_b = get_package("B", "1.0.0.dev4")
+    repo.add_package(package_b)
+
+    search_for_spy = mocker.spy(solver._provider, "search_for")
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    # The assertions below aren't really the point of this test, but are just
+    # being used to ensure the dependency resolution ordering remains the same.
+    search_calls = [
+        call.args[0]
+        for call in search_for_spy.mock_calls
+        if call.args[0].name in ("a", "b")
+    ]
+    assert search_calls == [
+        Dependency("a", "*"),
+        Dependency("b", "*"),
+        Dependency("b", ">0.9.0"),
+    ]
+
+
 def test_solver_circular_dependency(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
