@@ -202,6 +202,8 @@ This configuration is ignored when `installer.parallel` is set to `false`.
 
 **Default**: `true`
 
+**Environment Variable**: `POETRY_INSTALLER_MODERN_INSTALLATION`
+
 *Introduced in 1.4.0*
 
 Use a more modern and faster method for package installation.
