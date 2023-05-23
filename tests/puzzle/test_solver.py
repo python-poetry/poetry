@@ -3084,22 +3084,27 @@ def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
 
 def test_solver_ignores_explicit_repo_for_transient_dependencies(
     package: ProjectPackage,
+    repo: Repository,
     io: NullIO,
 ) -> None:
-    # clikit depends on pylev, which is in MockPyPIRepository (explicit) but not in
-    # MockLegacyRepository
-    package.python_versions = "^3.7"
+    # dependency of root with explicit source
     package.add_dependency(
-        Factory.create_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
+        Factory.create_dependency("demo", {"version": "*", "source": "repo"})
     )
+    demo = Package("demo", "0.1.2")
+    repo.add_package(demo)
+
+    # transient dependency of demo with explicit source
+    # not specified as dependency of root
+    demo.add_dependency(Factory.create_dependency("pendulum", "*"))
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
-    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(repo, priority=Priority.EXPLICIT)
 
     solver = Solver(package, pool, [], [], io)
-
-    with pytest.raises(SolverProblemError):
+    with pytest.raises(SolverProblemError, match="no versions of pendulum match"):
         solver.solve()
 
 
