@@ -66,8 +66,6 @@ urllib3 = "^1.26.0"
 pre-commit = "^2.6"
 
 [tool.poetry.group.test.dependencies]
-# Cachy frozen to test backwards compatibility for `poetry.utils.cache`.
-cachy = "0.3.0"
 deepdiff = "^6.3"
 httpretty = "^1.0"
 pytest = "^7.1"
@@ -184,7 +182,6 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = [
     'cachecontrol.*',
-    'cachy.*',
     'deepdiff.*',
     'httpretty.*',
     'keyring.*',
