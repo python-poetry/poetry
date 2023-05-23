@@ -3108,6 +3108,42 @@ def test_solver_ignores_explicit_repo_for_transient_dependencies(
         solver.solve()
 
 
+def test_solver_finds_inter_dependencies_in_explicit_repo(
+    package: ProjectPackage,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    # dependency of root with explicit source
+    package.add_dependency(
+        Factory.create_dependency("demo", {"version": "*", "source": "repo"})
+    )
+    demo = Package("demo", "0.1.2")
+    repo.add_package(demo)
+
+    # transient dependency of demo with explicit source
+    # also specified as dependency of root with explicit source
+    package.add_dependency(
+        Factory.create_dependency("pendulum", {"version": "*", "source": "repo"})
+    )
+    demo.add_dependency(Factory.create_dependency("pendulum", "*"))
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    pool = RepositoryPool()
+    pool.add_repository(repo, priority=Priority.EXPLICIT)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": pendulum, "skipped": False},
+            {"job": "install", "package": demo, "skipped": False},
+        ],
+    )
+
+
 def test_solver_discards_packages_with_empty_markers(
     package: ProjectPackage,
     repo: Repository,
