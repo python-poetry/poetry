@@ -695,7 +695,7 @@ class EnvManager:
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if self.use_in_project_venv():
+            if self.in_project_venv_exists():
                 venv = self.in_project_venv
 
                 return VirtualEnv(venv)
@@ -733,7 +733,7 @@ class EnvManager:
         venv_path = self._poetry.config.virtualenvs_path
         env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
 
-        if self.use_in_project_venv():
+        if self.in_project_venv_exists():
             venv = self.in_project_venv
             env_list.insert(0, VirtualEnv(venv))
         return env_list
@@ -852,6 +852,14 @@ class EnvManager:
         in_project: bool | None = self._poetry.config.get("virtualenvs.in-project")
         if in_project is not None:
             return in_project
+
+        return self.in_project_venv.is_dir()
+
+    def in_project_venv_exists(self) -> bool:
+        in_project: bool | None = self._poetry.config.get("virtualenvs.in-project")
+        if in_project is False:
+            return False
+
         return self.in_project_venv.is_dir()
 
     def create_venv(
