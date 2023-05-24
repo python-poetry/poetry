@@ -1230,9 +1230,9 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies_increasing_const
     # The assertions below aren't really the point of this test, but are just
     # being used to ensure the dependency resolution ordering remains the same.
     search_calls = [
-        call.args[0]
+        call[1][0]
         for call in search_for_spy.mock_calls
-        if call.args[0].name in ("a", "b")
+        if call[1][0].name in ("a", "b")
     ]
     assert search_calls == [
         Dependency("a", "*"),
