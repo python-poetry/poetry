@@ -19,7 +19,6 @@ import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import FileCache
-from cachecontrol.caches.file_cache import url_to_file_path
 from filelock import FileLock
 
 from poetry.config.config import Config
@@ -463,13 +462,6 @@ class Authenticator:
         if selected:
             return selected.certs(config=self._config)
         return RepositoryCertificateConfig()
-
-    def get_cached_file_for_url(self, url: str) -> Path | None:
-        if self._cache_control is None:
-            return None
-
-        path = Path(url_to_file_path(url, self._cache_control))
-        return path if path.exists() else None
 
 
 _authenticator: Authenticator | None = None
