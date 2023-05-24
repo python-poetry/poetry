@@ -8,7 +8,7 @@ from typing import Any
 
 import requests
 
-from cachecontrol.controller import logger as cache_control_logger
+from cacheyou.controller import logger as cache_control_logger
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersion

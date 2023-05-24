@@ -319,7 +319,7 @@ def test_invalid_versions_ignored() -> None:
 def test_get_should_invalid_cache_on_too_many_redirects_error(
     mocker: MockerFixture,
 ) -> None:
-    delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
+    delete_cache = mocker.patch("cacheyou.caches.file_cache.FileCache.delete")
 
     response = Response()
     response.status_code = 200
