@@ -76,15 +76,11 @@ class HTTPRepository(CachedRepository):
 
     @contextmanager
     def _cached_or_downloaded_file(self, link: Link) -> Iterator[Path]:
-        filepath = self._authenticator.get_cached_file_for_url(link.url)
-        if filepath:
+        self._log(f"Downloading: {link.url}", level="debug")
+        with temporary_directory() as temp_dir:
+            filepath = Path(temp_dir) / link.filename
+            self._download(link.url, filepath)
             yield filepath
-        else:
-            self._log(f"Downloading: {link.url}", level="debug")
-            with temporary_directory() as temp_dir:
-                filepath = Path(temp_dir) / link.filename
-                self._download(link.url, filepath)
-                yield filepath
 
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
