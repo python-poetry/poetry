@@ -636,6 +636,10 @@ This command is also available as a pre-commit hook. See [pre-commit hooks]({{< 
 poetry check
 ```
 
+### Options
+
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`.
+
 ## search
 
 This command searches for packages on a remote index.
@@ -659,7 +663,7 @@ poetry lock
 
 ### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ## version
@@ -944,7 +948,7 @@ poetry self lock
 
 #### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ### self show
