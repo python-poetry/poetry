@@ -90,7 +90,7 @@ jobs:
           timeout 10s poetry run pip --version || rm -rf .venv
 
       - name: Check lock file
-        run: poetry check --lock
+        run: poetry lock --check
 
       - name: Install dependencies
         run: poetry install --with github-actions
