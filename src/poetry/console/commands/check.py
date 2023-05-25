@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+from cleo.helpers import option
+
 from poetry.console.commands.command import Command
 
 
 class CheckCommand(Command):
     name = "check"
     description = "Checks the validity of the <comment>pyproject.toml</comment> file."
+
+    options = [
+        option(
+            "lock",
+            None,
+            (
+                "Check that the <comment>poetry.lock</> file corresponds to the current"
+                " version of <comment>pyproject.toml</>."
+            ),
+        ),
+    ]
 
     def validate_classifiers(
         self, project_classifiers: set[str]
@@ -58,6 +71,18 @@ class CheckCommand(Command):
         return errors, warnings
 
     def handle(self) -> int:
+        if self.option("lock"):
+            if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
+                self.line("poetry.lock is consistent with pyproject.toml.")
+                return 0
+            self.line_error(
+                "<error>"
+                "Error: poetry.lock is not consistent with pyproject.toml. "
+                "Run `poetry lock [--no-update]` to fix it."
+                "</error>"
+            )
+            return 1
+
         from poetry.factory import Factory
         from poetry.pyproject.toml import PyProjectTOML
 
