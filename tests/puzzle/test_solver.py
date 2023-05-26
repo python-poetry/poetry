@@ -3437,6 +3437,69 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
         solver.solve()
 
 
+@pytest.mark.parametrize("explicit_source", [True, False])
+def test_solver_cannot_choose_url_dependency_for_explicit_source(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    explicit_source: bool,
+) -> None:
+    """A direct origin dependency cannot satisfy a version dependency with an explicit
+    source. (It can satisfy a version dependency without an explicit source.)
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "markers": "sys_platform != 'darwin'",
+                "url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "version": "0.1.0",
+                "markers": "sys_platform == 'darwin'",
+                "source": "repo" if explicit_source else None,
+            },
+        )
+    )
+
+    package_pendulum = get_package("pendulum", "1.4.4")
+    package_demo = get_package("demo", "0.1.0")
+    package_demo_url = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_url="https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+    )
+    # The url demo dependency depends on pendulum.
+    repo.add_package(package_pendulum)
+    repo.add_package(package_demo)
+
+    transaction = solver.solve()
+
+    if explicit_source:
+        # direct origin cannot satisfy explicit source
+        # -> package_demo MUST be included
+        expected = [
+            {"job": "install", "package": package_pendulum},
+            {"job": "install", "package": package_demo_url},
+            {"job": "install", "package": package_demo},
+        ]
+    else:
+        # direct origin can satisfy dependency without source
+        # -> package_demo NEED NOT (but could) be included
+        expected = [
+            {"job": "install", "package": package_pendulum},
+            {"job": "install", "package": package_demo_url},
+        ]
+
+    check_solver_result(transaction, expected)
+
+
 def test_solver_should_not_update_same_version_packages_if_installed_has_no_source_type(
     package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
 ) -> None:
