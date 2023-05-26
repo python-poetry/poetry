@@ -7,7 +7,9 @@ import re
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
