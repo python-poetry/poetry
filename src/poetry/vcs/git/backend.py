@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
@@ -348,7 +348,7 @@ class Git:
 
                 url_string = url.decode("utf-8")
                 if relative_submodule_regex.search(url_string):
-                    url_string = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
+                    url_string = _urljoin(f"{Git.get_remote_url(repo)}/", url_string)
 
                 source_root = path_absolute.parent
                 source_root.mkdir(parents=True, exist_ok=True)
@@ -456,3 +456,22 @@ class Git:
 
         # fallback to legacy git client
         return cls._clone_legacy(url=url, refspec=refspec, target=target)
+
+
+def _urljoin(base: str, path: str) -> str:
+    """Allow any URL to be joined with a path
+    
+    This works around an issue with urllib.parse.urljoin where it only handles
+    relative URLs for protocols contained in urllib.parse.uses_relative. As it
+    happens common protocols used with git, like ssh or git+ssh are not in that
+    list.
+
+    Thus we need to implement our own version of urljoin that handles all URLs
+    protocols. This is accomplished by using urlparse and urlunparse to split
+    the URL into its components, join the path, and then reassemble the URL.
+
+    See: https://github.com/python-poetry/poetry/issues/6499#issuecomment-1564712609
+    """
+    parsed_base = urlparse(base)
+    new = parsed_base._replace(path=urljoin(parsed_base.path, path))
+    return urlunparse(new)
