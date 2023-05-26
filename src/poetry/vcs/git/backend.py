@@ -460,7 +460,7 @@ class Git:
 
 def _urljoin(base: str, path: str) -> str:
     """Allow any URL to be joined with a path
-    
+
     This works around an issue with urllib.parse.urljoin where it only handles
     relative URLs for protocols contained in urllib.parse.uses_relative. As it
     happens common protocols used with git, like ssh or git+ssh are not in that
