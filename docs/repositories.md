@@ -227,7 +227,7 @@ There can be more than one supplemental package source.
 
 If package sources are configured as explicit, these sources are only searched when a package configuration [explicitly indicates](#package-source-constraint) that it should be found on this package source.
 
-You can configure a package source as an explicit source with `priority = "explicit` in your package source configuration.
+You can configure a package source as an explicit source with `priority = "explicit"` in your package source configuration.
 
 ```bash
 poetry source add --priority=explicit foo https://foo.bar/simple/
