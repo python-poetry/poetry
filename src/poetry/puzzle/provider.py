@@ -280,12 +280,8 @@ class Provider:
         #
         # We rely on the VersionSolver resolving direct-origin dependencies first.
         direct_origin_package = self._direct_origin_packages.get(dependency.name)
-        if direct_origin_package is not None:
-            packages = (
-                [direct_origin_package]
-                if dependency.constraint.allows(direct_origin_package.version)
-                else []
-            )
+        if direct_origin_package and direct_origin_package.satisfies(dependency):
+            packages = [direct_origin_package]
             return PackageCollection(dependency, packages)
 
         packages = self._pool.find_packages(dependency)
