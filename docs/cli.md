@@ -638,7 +638,7 @@ poetry check
 
 ### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`.
+* `--lock`: Verify that `poetry.lock` is consistent with `pyproject.toml`.
 
 ## search
 
