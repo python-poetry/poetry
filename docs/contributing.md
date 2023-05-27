@@ -145,6 +145,15 @@ You should first fork the Poetry repository and then clone it locally, so that y
 project. If you are new to Git and pull request based development, GitHub provides a
 [guide](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) you will find helpful.
 
+{{% note %}}
+The Poetry repo includes a [Dev Container](https://containers.dev/) configuration.
+
+If you already have Visual Studio Code and Docker installed, you can [click here](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/python-poetry/poetry) to get started. This will cause VS Code to automatically install the Dev Containers extension if needed, clone the source code into a container volume, and spin up a Dev Container with all dependencies and tools installed for contributing. Alternatively, you can also open your fork of the repository in Visual Studio Code using the **Dev Containers: Clone Repository in Container Volume...** command.
+
+If the repo is opened in GitHub Codespaces, the environment will be automatically set up for contributing with all dependencies and tools installed.
+
+{{% /note %}}
+
 Next, you should install Poetry's dependencies, and run the test suite to make sure everything is working as expected:
 
 ```bash
