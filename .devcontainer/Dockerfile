@@ -1,4 +1,3 @@
-
 ARG IMAGE="python:3.11"
 FROM --platform=amd64 mcr.microsoft.com/vscode/devcontainers/${IMAGE}
 RUN apt-get update \
