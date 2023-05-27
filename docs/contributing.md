@@ -146,11 +146,11 @@ project. If you are new to Git and pull request based development, GitHub provid
 [guide](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) you will find helpful.
 
 {{% note %}}
-The Poetry repo includes a [Dev Container](https://containers.dev/) configuration.
+The Poetry repo includes a [Dev Container](https://containers.dev/) configuration. By opening the repo in a Dev Container, you will have all tools/dependencies, as outlined by this guide, installed for you for easy contributing.
 
-If you already have Visual Studio Code and Docker installed, you can [click here](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/python-poetry/poetry) to get started. This will cause VS Code to automatically install the Dev Containers extension if needed, clone the source code into a container volume, and spin up a Dev Container with all dependencies and tools installed for contributing. Alternatively, you can also open your fork of the repository in Visual Studio Code using the **Dev Containers: Clone Repository in Container Volume...** command.
+If you already have Visual Studio Code and Docker installed, you can install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) and then use the **Dev Containers: Clone Repository in Container Volume...** command to open your fork.
 
-If the repo is opened in GitHub Codespaces, the environment will be automatically set up for contributing with all dependencies and tools installed.
+If you are using GitHub Codespaces, the environment will be automatically set up when the repository is opened.
 {{% /note %}}
 
 Next, you should install Poetry's dependencies, and run the test suite to make sure everything is working as expected:
