@@ -1,11 +1,7 @@
 {
   "name": "Poetry",
   "build": {
-    "dockerfile": "Dockerfile",
-    "context": "..",
-    "args": {
-      "IMAGE": "python:3.11"
-    }
+    "dockerfile": "Dockerfile"
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "customizations": {
