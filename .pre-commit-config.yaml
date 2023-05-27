@@ -15,7 +15,6 @@ repos:
         exclude: tests/fixtures/invalid_lock/poetry\.lock
       - id: check-yaml
       - id: pretty-format-json
-        exclude: .devcontainer/devcontainer.json
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]
       - id: check-ast
       - id: debug-statements

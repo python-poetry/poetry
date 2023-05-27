@@ -1,30 +1,32 @@
 {
-	"name": "Poetry",
-	"build": {
-        "dockerfile": "Dockerfile",
-        "context": "..",
-        "args": {
-            "IMAGE": "python:3.11"
-        }
-    },
-	"postCreateCommand": "bash .devcontainer/setup.sh",
-	"customizations": {
-		"vscode": {
-			"settings": {
-				"python.formatting.blackPath": "black",
-				"python.formatting.provider": "black",
-				"python.testing.pytestEnabled": true,
-				"python.testing.pytestPath": "pytest",
-				"python.editor.codeActionsOnSave": {"source.fixAll": true},
-				"python.testing.pytestArgs": [
-					"tests"
-				]
-			},
-			"extensions": [
-				"ms-python.python",
-				"ms-python.black-formatter",
-                "charliermarsh.ruff"
-			]
-		}
-	}
+  "name": "Poetry",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "IMAGE": "python:3.11"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.formatting.blackPath": "black",
+        "python.formatting.provider": "black",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestPath": "pytest",
+        "python.editor.codeActionsOnSave": {
+          "source.fixAll": true
+        },
+        "python.testing.pytestArgs": [
+          "tests"
+        ]
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
 }
