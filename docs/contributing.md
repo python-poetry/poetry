@@ -150,7 +150,7 @@ The Poetry repo includes a [Dev Container](https://containers.dev/) configuratio
 
 If you already have Visual Studio Code and Docker installed, you can install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) and then use the **Dev Containers: Clone Repository in Container Volume...** command to open your fork.
 
-If you are using GitHub Codespaces, the environment will be automatically set up when the repository is opened.
+If you are using GitHub Codespaces, the environment will be automatically set up for you as the container is built.
 {{% /note %}}
 
 Next, you should install Poetry's dependencies, and run the test suite to make sure everything is working as expected:
