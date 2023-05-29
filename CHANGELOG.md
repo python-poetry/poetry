@@ -1,6 +1,40 @@
 # Change Log
 
 
+## [1.5.1] - 2023-05-29
+
+### Added
+
+- Improve dependency resolution performance in cases with a lot of backtracking ([#7950](https://github.com/python-poetry/poetry/pull/7950)).
+
+### Changed
+
+- Disable wheel content validation during installation ([#7987](https://github.com/python-poetry/poetry/pull/7987)).
+
+### Fixed
+
+- Fix an issue where partially downloaded wheels were cached ([#7968](https://github.com/python-poetry/poetry/pull/7968)).
+- Fix an issue where `poetry run` did no longer execute relative-path scripts ([#7963](https://github.com/python-poetry/poetry/pull/7963)).
+- Fix an issue where dependencies were not installed in `in-project` environments ([#7977](https://github.com/python-poetry/poetry/pull/7977)).
+- Fix an issue where no solution was found for a transitive dependency on a pre-release of a package ([#7978](https://github.com/python-poetry/poetry/pull/7978)).
+- Fix an issue where cached repository packages were incorrectly parsed, leading to its dependencies being ignored ([#7995](https://github.com/python-poetry/poetry/pull/7995)).
+- Fix an issue where an explicit source was ignored so that a direct origin dependency was used instead ([#7973](https://github.com/python-poetry/poetry/pull/7973)).
+- Fix an issue where the installation of big wheels consumed a lot of memory ([#7987](https://github.com/python-poetry/poetry/pull/7987)).
+
+### Docs
+
+- Add information about multiple constraints dependencies with direct origin and version dependencies ([#7973](https://github.com/python-poetry/poetry/pull/7973)).
+
+### poetry-core ([`1.6.1`](https://github.com/python-poetry/poetry-core/releases/tag/1.6.1))
+
+- Fix an endless recursion in marker handling ([#593](https://github.com/python-poetry/poetry-core/pull/593)).
+- Fix an issue where the wheel tag was not built correctly under certain circumstances ([#591](https://github.com/python-poetry/poetry-core/pull/591)).
+
+### poetry-plugin-export ([`^1.4.0`](https://github.com/python-poetry/poetry-plugin-export/releases/tag/1.4.0))
+
+- Fix an issue where `--extra-index-url` and `--trusted-host` was not generated for sources with priority `explicit` ([#205](https://github.com/python-poetry/poetry-plugin-export/pull/205)).
+
+
 ## [1.5.0] - 2023-05-19
 
 ### Added
@@ -1870,7 +1904,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.5.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.5.1...master
+[1.5.1]: https://github.com/python-poetry/poetry/releases/tag/1.5.1
 [1.5.0]: https://github.com/python-poetry/poetry/releases/tag/1.5.0
 [1.4.2]: https://github.com/python-poetry/poetry/releases/tag/1.4.2
 [1.4.1]: https://github.com/python-poetry/poetry/releases/tag/1.4.1
