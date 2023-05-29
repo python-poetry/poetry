@@ -335,6 +335,7 @@ def test_execute_prints_warning_for_yanked_package(
         assert error.count("yanked") == 0
 
 
+@pytest.mark.skip(reason="https://github.com/python-poetry/poetry/issues/7983")
 def test_execute_prints_warning_for_invalid_wheels(
     config: Config,
     pool: RepositoryPool,
