@@ -136,7 +136,7 @@ class EditableBuilder(Builder):
 
         try:
             pth_file = self._env.site_packages.write_text(
-                pth_file, content, encoding="utf-8"
+                pth_file, content, encoding="locale"
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"

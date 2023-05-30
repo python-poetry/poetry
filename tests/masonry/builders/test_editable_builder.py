@@ -275,7 +275,7 @@ def test_builder_installs_proper_files_when_packages_configured(
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
 
     paths = set()
-    with pth_file.open() as f:
+    with pth_file.open(encoding="locale") as f:
         for line in f.readlines():
             line = line.strip(os.linesep)
             if line:
