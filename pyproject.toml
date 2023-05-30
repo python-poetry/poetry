@@ -102,7 +102,7 @@ unfixable = [
 target-version = "py38"
 line-length = 88
 extend-select = [
-    "ARG", # flake8-unused-arguments
+    "ARG001", # flake8-unused-arguments - Rules other than ARG001 result in false positives only
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "ERA", # flake8-eradicate/eradicate

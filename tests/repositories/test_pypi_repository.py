@@ -48,7 +48,7 @@ class MockRepository(PyPiRepository):
         return SimpleJsonPage("", json.loads(fixture.read_text()))
 
     def _get(
-        self, url: str, headers: dict[str, str] | None = None  # noqa: ARG002
+        self, url: str, headers: dict[str, str] | None = None
     ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]

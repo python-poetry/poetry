@@ -68,9 +68,7 @@ class Chef(BaseChef):
 
         self._sdist_wheels = wheels
 
-    def _prepare_sdist(
-        self, archive: Path, destination: Path | None = None  # noqa: ARG002
-    ) -> Path:
+    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
         if self._sdist_wheels is not None:
             wheel = self._sdist_wheels.pop(0)
             self._sdist_wheels.append(wheel)

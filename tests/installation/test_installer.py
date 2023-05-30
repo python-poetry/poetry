@@ -77,20 +77,20 @@ class Executor(BaseExecutor):
 
         return ret_val
 
-    def _execute_install(self, _: Operation) -> int:
+    def _execute_install(self, operation: Operation) -> int:
         return 0
 
-    def _execute_update(self, _: Operation) -> int:
+    def _execute_update(self, operation: Operation) -> int:
         return 0
 
-    def _execute_uninstall(self, _: Operation) -> int:
+    def _execute_uninstall(self, operation: Operation) -> int:
         return 0
 
 
 class CustomInstalledRepository(InstalledRepository):
     @classmethod
     def load(
-        cls, env: Env, with_dependencies: bool = False  # noqa: ARG003
+        cls, env: Env, with_dependencies: bool = False
     ) -> CustomInstalledRepository:
         return cls()
 
