@@ -13,15 +13,13 @@ from poetry.utils.cache import FileCache
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from _pytest.monkeypatch import MonkeyPatch
-
     from tests.conftest import Config
 
 T = TypeVar("T")
 
 
 @pytest.fixture
-def repository_cache_dir(monkeypatch: MonkeyPatch, config: Config) -> Path:
+def repository_cache_dir(config: Config) -> Path:
     return config.repository_cache_directory
 
 
@@ -49,7 +47,7 @@ def mock_caches(
 def cache(
     repository_cache_dir: Path,
     repository_one: str,
-    mock_caches: None,
+    mock_caches: None,  # noqa: ARG001
 ) -> FileCache[dict[str, str]]:
     cache: FileCache[dict[str, str]] = FileCache(
         path=repository_cache_dir / repository_one

@@ -156,13 +156,13 @@ class TestExecutor(Executor):
 
         return rc
 
-    def _execute_install(self, operation: Operation) -> int:
+    def _execute_install(self, _: Operation) -> int:
         return 0
 
-    def _execute_update(self, operation: Operation) -> int:
+    def _execute_update(self, _: Operation) -> int:
         return 0
 
-    def _execute_remove(self, operation: Operation) -> int:
+    def _execute_remove(self, _: Operation) -> int:
         return 0
 
 

@@ -11,7 +11,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_pyproject_toml_reload(pyproject_toml: Path, poetry_section: str) -> None:
+def test_pyproject_toml_reload(
+    pyproject_toml: Path, poetry_section: str  # noqa: ARG001
+) -> None:
     pyproject = PyProjectTOML(pyproject_toml)
     name_original = pyproject.poetry_config["name"]
     name_new = str(uuid.uuid4())
@@ -25,7 +27,7 @@ def test_pyproject_toml_reload(pyproject_toml: Path, poetry_section: str) -> Non
 
 
 def test_pyproject_toml_save(
-    pyproject_toml: Path, poetry_section: str, build_system_section: str
+    pyproject_toml: Path, poetry_section: str, build_system_section: str  # noqa: ARG001
 ) -> None:
     pyproject = PyProjectTOML(pyproject_toml)
 

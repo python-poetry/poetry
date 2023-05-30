@@ -310,7 +310,6 @@ def test_source_add_existing_fails_due_to_other_default(
     tester: CommandTester,
     source_existing: Source,
     source_default: Source,
-    poetry_with_source: Poetry,
 ) -> None:
     tester.execute(f"--priority=default {source_default.name} {source_default.url}")
     tester.io.fetch_output()

@@ -49,7 +49,7 @@ class EditableBuilder(Builder):
         self._env = env
         self._io = io
 
-    def build(self, target_dir: Path | None = None) -> Path:
+    def build(self, _: Path | None = None) -> Path:
         self._debug(
             f"  - Building package <c1>{self._package.name}</c1> in"
             " <info>editable</info> mode"

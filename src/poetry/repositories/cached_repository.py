@@ -71,8 +71,7 @@ class CachedRepository(Repository, ABC):
         self,
         name: str,
         version: Version,
-        extras: list[str] | None = None,
     ) -> Package:
         return self.get_release_info(canonicalize_name(name), version).to_package(
-            name=name, extras=extras
+            name=name
         )

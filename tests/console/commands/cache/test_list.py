@@ -6,8 +6,6 @@ import pytest
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.testers.command_tester import CommandTester
 
     from tests.types import CommandTesterFactory
@@ -19,7 +17,10 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 def test_cache_list(
-    tester: CommandTester, mock_caches: None, repository_one: str, repository_two: str
+    tester: CommandTester,
+    mock_caches: None,  # noqa: ARG001
+    repository_one: str,
+    repository_two: str,
 ) -> None:
     tester.execute()
 
@@ -31,7 +32,7 @@ def test_cache_list(
     assert tester.io.fetch_output() == expected
 
 
-def test_cache_list_empty(tester: CommandTester, repository_cache_dir: Path) -> None:
+def test_cache_list_empty(tester: CommandTester) -> None:
     tester.execute()
 
     expected = """\

@@ -360,7 +360,6 @@ def project_factory(
     repo: TestRepository,
     installed: Repository,
     default_python: str,
-    load_required_fixtures: None,
 ) -> ProjectFactory:
     workspace = tmp_path
 

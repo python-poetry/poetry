@@ -77,20 +77,20 @@ class Executor(BaseExecutor):
 
         return ret_val
 
-    def _execute_install(self, operation: Operation) -> int:
+    def _execute_install(self, _: Operation) -> int:
         return 0
 
-    def _execute_update(self, operation: Operation) -> int:
+    def _execute_update(self, _: Operation) -> int:
         return 0
 
-    def _execute_uninstall(self, operation: Operation) -> int:
+    def _execute_uninstall(self, _: Operation) -> int:
         return 0
 
 
 class CustomInstalledRepository(InstalledRepository):
     @classmethod
     def load(
-        cls, env: Env, with_dependencies: bool = False
+        cls, env: Env, with_dependencies: bool = False  # noqa: ARG003
     ) -> CustomInstalledRepository:
         return cls()
 
@@ -1207,7 +1207,6 @@ def test_run_installs_with_local_file(
 def test_run_installs_wheel_with_no_requires_dist(
     installer: Installer,
     locker: Locker,
-    repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1238,7 +1237,6 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
     root_dir = Path(__file__).parent.parent.parent
@@ -1318,7 +1316,6 @@ def test_run_installs_with_local_poetry_file_transitive(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: str,
     fixture_dir: FixtureDirGetter,
 ) -> None:
     root_dir = fixture_dir("directory")
@@ -1353,7 +1350,6 @@ def test_run_installs_with_local_setuptools_directory(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
     root_dir = Path(__file__).parent.parent.parent
@@ -1856,7 +1852,6 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    installed: CustomInstalledRepository,
 ) -> None:
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
@@ -1949,7 +1944,6 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(  # noqa: E501
     locker: Locker,
-    repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
     env: NullEnv,
@@ -2013,7 +2007,6 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 def test_installer_required_extras_should_be_installed(
     locker: Locker,
-    repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
     env: NullEnv,
@@ -2286,7 +2279,6 @@ def test_installer_uses_prereleases_if_they_are_compatible(
 def test_installer_can_handle_old_lock_files(
     locker: Locker,
     package: ProjectPackage,
-    repo: Repository,
     installed: CustomInstalledRepository,
     config: Config,
 ) -> None:
@@ -2565,7 +2557,6 @@ def test_installer_distinguishes_locked_packages_by_source(
     locker: Locker,
     installed: CustomInstalledRepository,
     config: Config,
-    repo: Repository,
     package: ProjectPackage,
     env_platform: str,
 ) -> None:

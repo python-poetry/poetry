@@ -56,7 +56,9 @@ def atomic_open(filename: str | os.PathLike[str]) -> Iterator[BufferedWriter]:
         raise
 
 
-def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:
+def _on_rm_error(
+    func: Callable[[str], None], path: str, exc_info: Exception  # noqa: ARG001
+) -> None:
     if not os.path.exists(path):
         return
 

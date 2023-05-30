@@ -190,7 +190,7 @@ VERSION_3_7_1 = Version.parse("3.7.1")
 def check_output_wrapper(
     version: Version = VERSION_3_7_1,
 ) -> Callable[[list[str], Any, Any], str]:
-    def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
+    def check_output(cmd: list[str], *_: Any, **__: Any) -> str:
         # cmd is a list, like ["python", "-c", "do stuff"]
         python_cmd = cmd[2]
         if "sys.version_info[:3]" in python_cmd:
@@ -211,10 +211,8 @@ def check_output_wrapper(
 def test_activate_in_project_venv_no_explicit_config(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     mocker: MockerFixture,
-    venv_name: str,
-    in_project_venv_dir: Path,
+    in_project_venv_dir: Path,  # noqa: ARG001
 ) -> None:
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
@@ -257,7 +255,6 @@ def test_activate_in_project_venv_no_explicit_config(
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -302,7 +299,6 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 def test_activate_fails_when_python_cannot_be_found(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -326,7 +322,6 @@ def test_activate_fails_when_python_cannot_be_found(
 def test_activate_activates_existing_virtualenv_no_envs_file(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -366,7 +361,6 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 def test_activate_activates_same_virtualenv_with_envs_file(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -410,7 +404,6 @@ def test_activate_activates_same_virtualenv_with_envs_file(
 def test_activate_activates_different_virtualenv_with_envs_file(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -460,7 +453,6 @@ def test_activate_activates_different_virtualenv_with_envs_file(
 def test_activate_activates_recreates_for_different_patch(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -523,7 +515,6 @@ def test_activate_activates_recreates_for_different_patch(
 def test_activate_does_not_recreate_when_switching_minor(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -575,7 +566,6 @@ def test_activate_does_not_recreate_when_switching_minor(
 def test_deactivate_non_activated_but_existing(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -602,7 +592,6 @@ def test_deactivate_non_activated_but_existing(
 def test_deactivate_activated(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -642,7 +631,6 @@ def test_deactivate_activated(
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -675,7 +663,6 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 def test_list(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     venv_name: str,
 ) -> None:
@@ -694,7 +681,6 @@ def test_list(
 def test_remove_by_python_version(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -719,7 +705,6 @@ def test_remove_by_python_version(
 def test_remove_by_name(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -744,7 +729,6 @@ def test_remove_by_name(
 def test_remove_by_string_with_python_and_version(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -769,7 +753,6 @@ def test_remove_by_string_with_python_and_version(
 def test_remove_by_full_path_to_python(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -796,7 +779,6 @@ def test_remove_by_full_path_to_python(
 def test_raises_if_acting_on_different_project_by_full_path(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
 ) -> None:
@@ -813,7 +795,7 @@ def test_raises_if_acting_on_different_project_by_full_path(
     # Patch initial call where python env path is extracted
     mocker.patch(
         "subprocess.check_output",
-        side_effect=lambda *args, **kwargs: str(different_venv_path),
+        return_value=str(different_venv_path),
     )
 
     with pytest.raises(IncorrectEnvError):
@@ -877,7 +859,6 @@ def test_raises_when_passing_old_env_after_dir_rename(
 def test_remove_also_deactivates(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -910,7 +891,6 @@ def test_remove_also_deactivates(
 def test_remove_keeps_dir_if_not_deleteable(
     tmp_path: Path,
     manager: EnvManager,
-    poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
@@ -936,7 +916,7 @@ def test_remove_keeps_dir_if_not_deleteable(
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    def err_on_rm_venv_only(path: Path, *args: Any, **kwargs: Any) -> None:
+    def err_on_rm_venv_only(path: Path, *_: Any, **__: Any) -> None:
         if path.resolve() == venv_path.resolve():
             raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
         else:
@@ -961,17 +941,17 @@ def test_remove_keeps_dir_if_not_deleteable(
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
-def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
+def test_env_has_symlinks_on_nix(tmp_venv: VirtualEnv) -> None:
     assert os.path.islink(tmp_venv.python)
 
 
-def test_run_with_input(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
+def test_run_with_input(tmp_venv: VirtualEnv) -> None:
     result = tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
 
     assert result == "Minimal Output" + os.linesep
 
 
-def test_run_with_input_non_zero_return(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
+def test_run_with_input_non_zero_return(tmp_venv: VirtualEnv) -> None:
     with pytest.raises(EnvCommandError) as process_error:
         # Test command that will return non-zero returncode.
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
@@ -980,7 +960,7 @@ def test_run_with_input_non_zero_return(tmp_path: Path, tmp_venv: VirtualEnv) ->
 
 
 def test_run_with_keyboard_interrupt(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     with pytest.raises(KeyboardInterrupt):
@@ -989,7 +969,7 @@ def test_run_with_keyboard_interrupt(
 
 
 def test_call_with_input_and_keyboard_interrupt(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     kwargs = {"call": True}
@@ -999,7 +979,7 @@ def test_call_with_input_and_keyboard_interrupt(
 
 
 def test_call_no_input_with_keyboard_interrupt(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch("subprocess.check_call", side_effect=KeyboardInterrupt())
     kwargs = {"call": True}
@@ -1009,7 +989,7 @@ def test_call_no_input_with_keyboard_interrupt(
 
 
 def test_run_with_called_process_error(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.run",
@@ -1025,7 +1005,7 @@ def test_run_with_called_process_error(
 
 
 def test_call_with_input_and_called_process_error(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.run",
@@ -1042,7 +1022,7 @@ def test_call_with_input_and_called_process_error(
 
 
 def test_call_no_input_with_called_process_error(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.check_call",
@@ -1059,7 +1039,7 @@ def test_call_no_input_with_called_process_error(
 
 
 def test_check_output_with_called_process_error(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.check_output",
@@ -1099,7 +1079,7 @@ for i in range(10000):
 
 
 def test_run_python_script_called_process_error(
-    tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
+    tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.run",
@@ -1113,7 +1093,7 @@ def test_run_python_script_called_process_error(
     assert "some error" in str(error.value)
 
 
-def test_run_python_script_only_stdout(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
+def test_run_python_script_only_stdout(tmp_venv: VirtualEnv) -> None:
     output = tmp_venv.run_python_script(
         "import sys; print('some warning', file=sys.stderr); print('some output')"
     )
@@ -1124,7 +1104,6 @@ def test_run_python_script_only_stdout(tmp_path: Path, tmp_venv: VirtualEnv) -> 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(  # noqa: E501
     manager: EnvManager,
     poetry: Poetry,
-    config: Config,
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
@@ -1141,9 +1120,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.5")),
     )
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     manager.create_venv()
 
@@ -1158,10 +1135,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 def test_create_venv_finds_no_python_executable(
     manager: EnvManager,
     poetry: Poetry,
-    config: Config,
     mocker: MockerFixture,
-    config_virtualenvs_path: Path,
-    venv_name: str,
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1186,7 +1160,6 @@ def test_create_venv_finds_no_python_executable(
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific_ones(
     manager: EnvManager,
     poetry: Poetry,
-    config: Config,
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
@@ -1203,9 +1176,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
         "subprocess.check_output",
         side_effect=["/usr/bin/python3", "3.5.3", "/usr/bin/python3.9", "3.9.0"],
     )
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     manager.create_venv()
 
@@ -1218,7 +1189,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
 
 def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
-    manager: EnvManager, poetry: Poetry, config: Config, mocker: MockerFixture
+    manager: EnvManager, poetry: Poetry, mocker: MockerFixture
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1226,9 +1197,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
     poetry.package.python_versions = "^4.8"
 
     mocker.patch("subprocess.check_output", side_effect=["", "", "", ""])
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     with pytest.raises(NoCompatiblePythonVersionFound) as e:
         manager.create_venv()
@@ -1244,7 +1213,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
 
 def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
-    manager: EnvManager, poetry: Poetry, config: Config, mocker: MockerFixture
+    manager: EnvManager, poetry: Poetry, mocker: MockerFixture
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1252,9 +1221,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     poetry.package.python_versions = "^4.8"
 
     mocker.patch("subprocess.check_output", side_effect=["3.8.0"])
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     with pytest.raises(NoCompatiblePythonVersionFound) as e:
         manager.create_venv(executable=Path("python3.8"))
@@ -1272,7 +1239,6 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 def test_create_venv_uses_patch_version_to_detect_compatibility(
     manager: EnvManager,
     poetry: Poetry,
-    config: Config,
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
@@ -1292,9 +1258,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.9")),
     )
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     manager.create_venv()
 
@@ -1310,7 +1274,6 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     manager: EnvManager,
     poetry: Poetry,
-    config: Config,
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
@@ -1332,9 +1295,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
             Version.parse(f"{version.major}.{version.minor - 1}.0")
         ),
     )
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     manager.create_venv(executable=Path(f"python{version.major}.{version.minor - 1}"))
 
@@ -1616,7 +1577,6 @@ def test_env_finds_fallback_executables_for_generic_env(
 def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     manager: EnvManager,
     poetry: Poetry,
-    config: Config,
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
@@ -1626,7 +1586,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
 
     poetry.package.python_versions = "~3.5.1"
 
-    def mock_check_output(cmd: str, *args: Any, **kwargs: Any) -> str:
+    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
         if GET_PYTHON_VERSION_ONELINER in cmd:
             executable = cmd[0]
             if "python3.5" in str(executable):
@@ -1641,9 +1601,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
         "subprocess.check_output",
         side_effect=mock_check_output,
     )
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     manager.create_venv()
 
@@ -1661,10 +1619,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     )
 
 
-def test_generate_env_name_ignores_case_for_case_insensitive_fs(
-    poetry: Poetry,
-    tmp_path: Path,
-) -> None:
+def test_generate_env_name_ignores_case_for_case_insensitive_fs(poetry: Poetry) -> None:
     venv_name1 = EnvManager.generate_env_name(poetry.package.name, "MyDiR")
     venv_name2 = EnvManager.generate_env_name(poetry.package.name, "mYdIr")
     if sys.platform == "win32":
@@ -1673,9 +1628,7 @@ def test_generate_env_name_ignores_case_for_case_insensitive_fs(
         assert venv_name1 != venv_name2
 
 
-def test_generate_env_name_uses_real_path(
-    tmp_path: Path, mocker: MockerFixture
-) -> None:
+def test_generate_env_name_uses_real_path(mocker: MockerFixture) -> None:
     mocker.patch("os.path.realpath", return_value="the_real_dir")
     venv_name1 = EnvManager.generate_env_name("simple-project", "the_real_dir")
     venv_name2 = EnvManager.generate_env_name("simple-project", "linked_dir")
@@ -1732,7 +1685,6 @@ def test_build_environment_not_called_without_build_script_specified(
 def test_create_venv_project_name_empty_sets_correct_prompt(
     fixture_dir: FixtureDirGetter,
     project_factory: ProjectFactory,
-    config: Config,
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
 ) -> None:
@@ -1751,9 +1703,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.5")),
     )
-    m = mocker.patch(
-        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
-    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", return_value="")
 
     manager.create_venv()
 

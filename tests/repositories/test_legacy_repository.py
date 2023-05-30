@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def _use_simple_keyring(with_simple_keyring: None) -> None:
+def _use_simple_keyring(with_simple_keyring: None) -> None:  # noqa: ARG001
     pass
 
 
@@ -512,7 +512,7 @@ def test_get_redirected_response_url(
     redirect_url = "http://legacy.redirect.bar"
 
     def get_mock(
-        url: str, raise_for_status: bool = True, timeout: int = 5
+        url: str, raise_for_status: bool = True, timeout: int = 5  # noqa: ARG001
     ) -> requests.Response:
         response = requests.Response()
         response.status_code = 200

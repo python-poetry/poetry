@@ -1938,7 +1938,7 @@ def test_duplicate_path_dependencies_same_path(
 
 
 def test_solver_fails_if_dependency_name_does_not_match_package(
-    solver: Solver, repo: Repository, package: ProjectPackage
+    solver: Solver, package: ProjectPackage
 ) -> None:
     package.add_dependency(
         Factory.create_dependency(
@@ -2508,7 +2508,6 @@ def test_solver_can_resolve_directory_dependencies(
 
 
 def test_solver_can_resolve_directory_dependencies_nested_editable(
-    repo: Repository,
     pool: RepositoryPool,
     io: NullIO,
     fixture_dir: FixtureDirGetter,

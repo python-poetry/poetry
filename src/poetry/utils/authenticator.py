@@ -102,7 +102,7 @@ class AuthenticatorRepositoryConfig:
         return [self.url, self.netloc, self.name]
 
     def get_http_credentials(
-        self, password_manager: PasswordManager, username: str | None = None
+        self, password_manager: PasswordManager
     ) -> HTTPAuthCredential:
         # try with the repository name via the password manager
         credential = HTTPAuthCredential(
@@ -300,7 +300,7 @@ class Authenticator:
 
         if key not in self._credentials:
             self._credentials[key] = repository.get_http_credentials(
-                password_manager=self._password_manager, username=username
+                password_manager=self._password_manager
             )
 
         return self._credentials[key]

@@ -45,9 +45,7 @@ class LegacyRepository(HTTPRepository):
         # https://github.com/python-poetry/poetry/pull/6669#discussion_r990874908.
         return []
 
-    def package(
-        self, name: str, version: Version, extras: list[str] | None = None
-    ) -> Package:
+    def package(self, name: str, version: Version) -> Package:
         """
         Retrieve the release information.
 
@@ -64,7 +62,7 @@ class LegacyRepository(HTTPRepository):
 
             return self._packages[index]
         except ValueError:
-            package = super().package(name, version, extras)
+            package = super().package(name, version)
             package._source_type = "legacy"
             package._source_url = self._url
             package._source_reference = self.name

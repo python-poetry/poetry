@@ -102,6 +102,7 @@ unfixable = [
 target-version = "py38"
 line-length = 88
 extend-select = [
+    "ARG", # flake8-unused-arguments
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "ERA", # flake8-eradicate/eradicate
@@ -127,6 +128,12 @@ extend-exclude = [
     # External to the project's coding standards
     "tests/**/fixtures/*",
 ]
+
+[tool.ruff.extend-per-file-ignores]
+"tests/installation/test_chooser.py" = ["ARG001"]      # rule gets too noisy
+"tests/integration/test_utils_vcs_git.py" = ["ARG001"] # rule gets too noisy
+"tests/utils/test_authenticator.py" = ["ARG001"]       # rule gets too noisy
+"tests/utils/test_password_manager.py" = ["ARG001"]    # rule gets too noisy
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"

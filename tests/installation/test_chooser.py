@@ -46,7 +46,7 @@ def env() -> MockEnv:
 @pytest.fixture()
 def mock_pypi(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+        _: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | str] | None:
         parts = uri.rsplit("/")
 
@@ -73,7 +73,7 @@ def mock_pypi(http: type[httpretty.httpretty]) -> None:
 @pytest.fixture()
 def mock_legacy(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+        _: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | str]:
         parts = uri.rsplit("/")
         name = parts[-2]
@@ -93,7 +93,7 @@ def mock_legacy(http: type[httpretty.httpretty]) -> None:
 @pytest.fixture()
 def mock_legacy_partial_yank(http: type[httpretty.httpretty]) -> None:
     def callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+        _: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | str]:
         parts = uri.rsplit("/")
         name = parts[-2]

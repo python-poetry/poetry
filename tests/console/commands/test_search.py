@@ -30,7 +30,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("search")
 
 
-def test_search(tester: CommandTester, http: type[httpretty.httpretty]) -> None:
+def test_search(tester: CommandTester) -> None:
     tester.execute("sqlalchemy")
 
     expected = """

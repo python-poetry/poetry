@@ -478,7 +478,6 @@ class Provider:
                     self._pool.package(
                         package.pretty_name,
                         package.version,
-                        extras=list(dependency.extras),
                         repository_name=dependency.source_name,
                     ),
                 )

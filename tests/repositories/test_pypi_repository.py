@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def _use_simple_keyring(with_simple_keyring: None) -> None:
+def _use_simple_keyring(with_simple_keyring: None) -> None:  # noqa: ARG001
     pass
 
 
@@ -48,7 +48,7 @@ class MockRepository(PyPiRepository):
         return SimpleJsonPage("", json.loads(fixture.read_text()))
 
     def _get(
-        self, url: str, headers: dict[str, str] | None = None
+        self, url: str, headers: dict[str, str] | None = None  # noqa: ARG002
     ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]

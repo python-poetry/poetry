@@ -115,7 +115,7 @@ class Shell:
                 cmd += "\r"
             c.sendline(cmd)
 
-        def resize(sig: Any, data: Any) -> None:
+        def resize(sig: Any, data: Any) -> None:  # noqa: ARG001
             terminal = shutil.get_terminal_size()
             c.setwinsize(terminal.lines, terminal.columns)
 

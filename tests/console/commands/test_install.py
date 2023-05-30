@@ -70,9 +70,7 @@ def poetry(project_factory: ProjectFactory) -> Poetry:
 
 
 @pytest.fixture
-def tester(
-    command_tester_factory: CommandTesterFactory, poetry: Poetry
-) -> CommandTester:
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("install")
 
 

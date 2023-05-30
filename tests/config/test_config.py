@@ -62,7 +62,7 @@ def generate_environment_variable_tests() -> Iterator[tuple[str, str, str, bool]
 )
 def test_config_get_from_environment_variable(
     config: Config,
-    environ: Iterator[None],
+    environ: Iterator[None],  # noqa: ARG001
     name: str,
     env_var: str,
     env_value: str,

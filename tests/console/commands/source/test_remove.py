@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def tester(
     command_tester_factory: CommandTesterFactory,
     poetry_with_source: Poetry,
-    add_multiple_sources: None,
+    add_multiple_sources: None,  # noqa: ARG001
 ) -> CommandTester:
     return command_tester_factory("source remove", poetry=poetry_with_source)
 

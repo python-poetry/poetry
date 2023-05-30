@@ -67,7 +67,7 @@ def io() -> IO:
 
 
 @pytest.fixture()
-def manager_factory(poetry: Poetry, io: BufferedIO) -> ManagerFactory:
+def manager_factory() -> ManagerFactory:
     def _manager(group: str = Plugin.group) -> PluginManager:
         return PluginManager(group)
 
@@ -75,7 +75,7 @@ def manager_factory(poetry: Poetry, io: BufferedIO) -> ManagerFactory:
 
 
 @pytest.fixture()
-def no_plugin_manager(poetry: Poetry, io: BufferedIO) -> PluginManager:
+def no_plugin_manager() -> PluginManager:
     return PluginManager(Plugin.group, disable_plugins=True)
 
 
@@ -83,7 +83,7 @@ def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    with_my_plugin: None,
+    with_my_plugin: None,  # noqa: ARG001
 ) -> None:
     manager = manager_factory()
     manager.load_plugins()
@@ -105,9 +105,7 @@ def with_invalid_plugin(mocker: MockerFixture) -> None:
 
 def test_load_plugins_with_invalid_plugin(
     manager_factory: ManagerFactory,
-    poetry: Poetry,
-    io: BufferedIO,
-    with_invalid_plugin: None,
+    with_invalid_plugin: None,  # noqa: ARG001
 ) -> None:
     manager = manager_factory()
 
@@ -119,7 +117,7 @@ def test_load_plugins_with_plugins_disabled(
     no_plugin_manager: PluginManager,
     poetry: Poetry,
     io: BufferedIO,
-    with_my_plugin: None,
+    with_my_plugin: None,  # noqa: ARG001
 ) -> None:
     no_plugin_manager.load_plugins()
 

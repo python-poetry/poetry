@@ -121,7 +121,7 @@ def test_solver_dependency_cache_pulls_from_prior_level_cache(
 
 
 def test_solver_dependency_cache_respects_subdirectories(
-    root: ProjectPackage, provider: Provider, repo: Repository
+    root: ProjectPackage, provider: Provider
 ) -> None:
     dependency_one = Factory.create_dependency(
         "one",

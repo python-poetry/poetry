@@ -171,9 +171,8 @@ def test_publish_uses_client_cert(
 
 def test_publish_read_from_environment_variable(
     fixture_dir: FixtureDirGetter,
-    environ: None,
+    environ: None,  # noqa: ARG001
     mocker: MockerFixture,
-    config: Config,
 ) -> None:
     os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"

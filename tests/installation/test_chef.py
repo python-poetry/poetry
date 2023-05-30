@@ -42,7 +42,6 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
 
 def test_prepare_sdist(
     config: Config,
-    config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -60,7 +59,6 @@ def test_prepare_sdist(
 
 def test_prepare_directory(
     config: Config,
-    config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -80,7 +78,6 @@ def test_prepare_directory(
 
 def test_prepare_directory_with_extensions(
     config: Config,
-    config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -99,7 +96,6 @@ def test_prepare_directory_with_extensions(
 
 def test_prepare_directory_editable(
     config: Config,
-    config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
 ) -> None:
