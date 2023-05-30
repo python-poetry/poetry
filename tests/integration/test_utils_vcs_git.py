@@ -8,6 +8,8 @@ from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 import pytest
 
@@ -389,3 +391,32 @@ def test_system_git_called_when_configured(
         target=path,
         refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
     )
+
+
+def test_relative_submodules_with_ssh(
+    source_url: str, tmpdir: Path, mocker: MockerFixture
+) -> None:
+    target = tmpdir / "temp"
+    ssh_source_url = urlunparse(urlparse(source_url)._replace(scheme="ssh"))
+
+    repo_with_unresolved_submodules = Git._clone(
+        url=source_url,
+        refspec=GitRefSpec(branch="relative_submodule"),
+        target=target,
+    )
+
+    # construct fake git config
+    fake_config = ConfigFile(
+        {(b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}}
+    )
+    # trick Git into thinking remote.origin is an ssh url
+    mock_get_config = mocker.patch.object(repo_with_unresolved_submodules, "get_config")
+    mock_get_config.return_value = fake_config
+
+    submodules = Git._get_submodules(repo_with_unresolved_submodules)
+
+    assert [s.url for s in submodules] == [
+        "https://github.com/pypa/sample-namespace-packages.git",
+        "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
+        "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
+    ]

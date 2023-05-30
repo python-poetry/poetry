@@ -32,6 +32,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# A relative URL by definition starts with ../ or ./
+RELATIVE_SUBMODULE_REGEX = re.compile(r"^\.{1,2}/")
+
 
 def is_revision_sha(revision: str | None) -> bool:
     return re.match(r"^\b[0-9a-f]{5,40}\b$", revision or "") is not None
@@ -332,49 +335,59 @@ class Git:
         Helper method to identify configured submodules and clone them recursively.
         """
         repo_root = Path(repo.path)
-        modules_config = repo_root.joinpath(".gitmodules")
+        for submodule in cls._get_submodules(repo):
+            path_absolute = repo_root / submodule.path
+            source_root = path_absolute.parent
+            source_root.mkdir(parents=True, exist_ok=True)
+            cls.clone(
+                url=submodule.url,
+                source_root=source_root,
+                name=path_absolute.name,
+                revision=submodule.revision,
+                clean=path_absolute.exists()
+                and not path_absolute.joinpath(".git").is_dir(),
+            )
 
-        # A relative URL by definition starts with ../ or ./
-        relative_submodule_regex = re.compile(r"^\.{1,2}/")
+    @classmethod
+    def _get_submodules(cls, repo: Repo) -> list[SubmoduleInfo]:
+        modules_config = Path(repo.path, ".gitmodules")
 
-        if modules_config.exists():
-            config = ConfigFile.from_path(str(modules_config))
+        if not modules_config.exists():
+            return []
 
-            url: bytes
-            path: bytes
-            submodules = parse_submodules(config)
+        config = ConfigFile.from_path(str(modules_config))
 
-            for path, url, name in submodules:
-                path_relative = Path(path.decode("utf-8"))
-                path_absolute = repo_root.joinpath(path_relative)
+        submodules: list[SubmoduleInfo] = []
+        for path, url, name in parse_submodules(config):
+            url_str = url.decode("utf-8")
+            path_str = path.decode("utf-8")
+            name_str = name.decode("utf-8")
 
-                url_string = url.decode("utf-8")
-                if relative_submodule_regex.search(url_string):
-                    url_string = _urljoin(f"{Git.get_remote_url(repo)}/", url_string)
+            if RELATIVE_SUBMODULE_REGEX.search(url_str):
+                url_str = urlpathjoin(f"{cls.get_remote_url(repo)}/", url_str)
 
-                source_root = path_absolute.parent
-                source_root.mkdir(parents=True, exist_ok=True)
+            with repo:
+                try:
+                    revision = repo.open_index()[path].sha.decode("utf-8")
+                except KeyError:
+                    logger.debug(
+                        "Skip submodule %s in %s, path %s not found",
+                        name_str,
+                        repo.path,
+                        path_str,
+                    )
+                    continue
 
-                with repo:
-                    try:
-                        revision = repo.open_index()[path].sha.decode("utf-8")
-                    except KeyError:
-                        logger.debug(
-                            "Skip submodule %s in %s, path %s not found",
-                            name,
-                            repo.path,
-                            path,
-                        )
-                        continue
-
-                cls.clone(
-                    url=url_string,
-                    source_root=source_root,
-                    name=path_relative.name,
+            submodules.append(
+                SubmoduleInfo(
+                    path=path_str,
+                    url=url_str,
+                    name=name_str,
                     revision=revision,
-                    clean=path_absolute.exists()
-                    and not path_absolute.joinpath(".git").is_dir(),
                 )
+            )
+
+        return submodules
 
     @staticmethod
     def is_using_legacy_client() -> bool:
@@ -460,7 +473,7 @@ class Git:
         return cls._clone_legacy(url=url, refspec=refspec, target=target)
 
 
-def _urljoin(base: str, path: str) -> str:
+def urlpathjoin(base: str, path: str) -> str:
     """
     Allow any URL to be joined with a path
 
@@ -478,3 +491,11 @@ def _urljoin(base: str, path: str) -> str:
     parsed_base = urlparse(base)
     new = parsed_base._replace(path=urljoin(parsed_base.path, path))
     return urlunparse(new)
+
+
+@dataclasses.dataclass
+class SubmoduleInfo:
+    path: str
+    url: str
+    name: str
+    revision: str
