@@ -46,7 +46,7 @@ def test_none_activated(
 def test_activated(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
-    venv_activate_37: None,  # noqa: ARG001
+    venv_activate_37: None,
 ) -> None:
     tester.execute()
     expected = "\n".join(venvs_in_cache_dirs).replace("py3.7", "py3.7 (Activated)")
@@ -54,7 +54,7 @@ def test_activated(
 
 
 def test_in_project_venv(
-    tester: CommandTester, venvs_in_project_dir: list[str]  # noqa: ARG001
+    tester: CommandTester, venvs_in_project_dir: list[str]
 ) -> None:
     tester.execute()
     expected = ".venv (Activated)\n"
@@ -62,7 +62,7 @@ def test_in_project_venv(
 
 
 def test_in_project_venv_no_explicit_config(
-    tester: CommandTester, venvs_in_project_dir_none: list[str]  # noqa: ARG001
+    tester: CommandTester, venvs_in_project_dir_none: list[str]
 ) -> None:
     tester.execute()
     expected = ".venv (Activated)\n"
@@ -70,7 +70,7 @@ def test_in_project_venv_no_explicit_config(
 
 
 def test_in_project_venv_is_false(
-    tester: CommandTester, venvs_in_project_dir_false: list[str]  # noqa: ARG001
+    tester: CommandTester, venvs_in_project_dir_false: list[str]
 ) -> None:
     tester.execute()
     expected = ""

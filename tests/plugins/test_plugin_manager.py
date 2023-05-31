@@ -83,7 +83,7 @@ def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
     io: BufferedIO,
-    with_my_plugin: None,  # noqa: ARG001
+    with_my_plugin: None,
 ) -> None:
     manager = manager_factory()
     manager.load_plugins()
@@ -105,7 +105,7 @@ def with_invalid_plugin(mocker: MockerFixture) -> None:
 
 def test_load_plugins_with_invalid_plugin(
     manager_factory: ManagerFactory,
-    with_invalid_plugin: None,  # noqa: ARG001
+    with_invalid_plugin: None,
 ) -> None:
     manager = manager_factory()
 
@@ -117,7 +117,7 @@ def test_load_plugins_with_plugins_disabled(
     no_plugin_manager: PluginManager,
     poetry: Poetry,
     io: BufferedIO,
-    with_my_plugin: None,  # noqa: ARG001
+    with_my_plugin: None,
 ) -> None:
     no_plugin_manager.load_plugins()
 

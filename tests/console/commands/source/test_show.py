@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def tester(
     command_tester_factory: CommandTesterFactory,
     poetry_with_source: Poetry,
-    add_multiple_sources: None,  # noqa: ARG001
+    add_multiple_sources: None,
 ) -> CommandTester:
     return command_tester_factory("source show", poetry=poetry_with_source)
 
@@ -50,7 +50,7 @@ def tester_pypi_and_other(
 def tester_all_types(
     command_tester_factory: CommandTesterFactory,
     poetry_with_source: Poetry,
-    add_all_source_types: None,  # noqa: ARG001
+    add_all_source_types: None,
 ) -> CommandTester:
     return command_tester_factory("source show", poetry=poetry_with_source)
 

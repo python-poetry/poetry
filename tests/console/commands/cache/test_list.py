@@ -18,7 +18,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 def test_cache_list(
     tester: CommandTester,
-    mock_caches: None,  # noqa: ARG001
+    mock_caches: None,
     repository_one: str,
     repository_two: str,
 ) -> None:

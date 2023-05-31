@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def _use_simple_keyring(with_simple_keyring: None) -> None:  # noqa: ARG001
+def _use_simple_keyring(with_simple_keyring: None) -> None:
     pass
 
 

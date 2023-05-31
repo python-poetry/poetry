@@ -212,7 +212,7 @@ def test_activate_in_project_venv_no_explicit_config(
     tmp_path: Path,
     manager: EnvManager,
     mocker: MockerFixture,
-    in_project_venv_dir: Path,  # noqa: ARG001
+    in_project_venv_dir: Path,
 ) -> None:
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(

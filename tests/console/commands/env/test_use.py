@@ -55,7 +55,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tester: CommandTester,
     venv_cache: Path,
     venv_name: str,
-    venvs_in_cache_config: None,  # noqa: ARG001
+    venvs_in_cache_config: None,
 ) -> None:
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
@@ -101,7 +101,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     current_python: tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
-    venvs_in_cache_config: None,  # noqa: ARG001
+    venvs_in_cache_config: None,
 ) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
@@ -132,7 +132,7 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     current_python: tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
-    venvs_in_cache_config: None,  # noqa: ARG001
+    venvs_in_cache_config: None,
 ) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 

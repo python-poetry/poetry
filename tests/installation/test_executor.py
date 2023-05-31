@@ -140,7 +140,7 @@ def mock_file_downloads(
     http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
 ) -> None:
     def callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]  # noqa: ARG001
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> list[int | dict[str, Any] | bytes]:
         name = Path(urlparse(uri).path).name
 
@@ -806,7 +806,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
-    mock_file_downloads: None,  # noqa: ARG001
+    mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
     is_artifact_cached: bool,
@@ -876,7 +876,7 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
-    mock_file_downloads: None,  # noqa: ARG001
+    mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
     is_sdist_cached: bool,
@@ -1231,7 +1231,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,  # noqa: ARG001
+    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:

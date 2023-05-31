@@ -47,7 +47,7 @@ def mock_caches(
 def cache(
     repository_cache_dir: Path,
     repository_one: str,
-    mock_caches: None,  # noqa: ARG001
+    mock_caches: None,
 ) -> FileCache[dict[str, str]]:
     cache: FileCache[dict[str, str]] = FileCache(
         path=repository_cache_dir / repository_one

@@ -54,7 +54,7 @@ def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> No
 
 
 @pytest.fixture
-def tester(patches: None) -> CommandTester:  # noqa: ARG001
+def tester(patches: None) -> CommandTester:
     app = Application()
     return CommandTester(app.find("init"))
 

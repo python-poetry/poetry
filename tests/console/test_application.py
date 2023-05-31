@@ -41,7 +41,7 @@ def with_add_command_plugin(mocker: MockerFixture) -> None:
 
 
 def test_application_with_plugins(
-    with_add_command_plugin: None,  # noqa: ARG001
+    with_add_command_plugin: None,
 ) -> None:
     app = Application()
 
@@ -53,7 +53,7 @@ def test_application_with_plugins(
 
 
 def test_application_with_plugins_disabled(
-    with_add_command_plugin: None,  # noqa: ARG001
+    with_add_command_plugin: None,
 ) -> None:
     app = Application()
 
@@ -65,7 +65,7 @@ def test_application_with_plugins_disabled(
 
 
 def test_application_execute_plugin_command(
-    with_add_command_plugin: None,  # noqa: ARG001
+    with_add_command_plugin: None,
 ) -> None:
     app = Application()
 
@@ -77,7 +77,7 @@ def test_application_execute_plugin_command(
 
 
 def test_application_execute_plugin_command_with_plugins_disabled(
-    with_add_command_plugin: None,  # noqa: ARG001
+    with_add_command_plugin: None,
 ) -> None:
     app = Application()
 

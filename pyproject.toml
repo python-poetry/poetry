@@ -130,10 +130,7 @@ extend-exclude = [
 ]
 
 [tool.ruff.extend-per-file-ignores]
-"tests/installation/test_chooser.py" = ["ARG001"]      # rule gets too noisy
-"tests/integration/test_utils_vcs_git.py" = ["ARG001"] # rule gets too noisy
-"tests/utils/test_authenticator.py" = ["ARG001"]       # rule gets too noisy
-"tests/utils/test_password_manager.py" = ["ARG001"]    # rule gets too noisy
+"tests/*.py" = ["ARG001"] # rule gets too noisy with pytest fixtures
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"

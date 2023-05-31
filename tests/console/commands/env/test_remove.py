@@ -26,7 +26,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def test_remove_by_python_version(
     mocker: MockerFixture,
     tester: CommandTester,
-    venvs_in_cache_dirs: list[str],  # noqa: ARG001
+    venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
 ) -> None:
