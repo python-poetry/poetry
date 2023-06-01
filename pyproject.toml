@@ -35,16 +35,14 @@ python = "^3.8"
 poetry-core = "1.6.1"
 poetry-plugin-export = "^1.4.0"
 build = "^0.10.0"
-cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
+cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
 dulwich = "^0.21.2"
-filelock = "^3.8.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
 jsonschema = "^4.10.0"
 keyring = "^23.9.0"
-lockfile = "^0.12.2"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
@@ -181,17 +179,14 @@ warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-    'cachecontrol.*',
     'deepdiff.*',
     'httpretty.*',
     'keyring.*',
-    'lockfile.*',
     'pexpect.*',
     'requests_toolbelt.*',
     'shellingham.*',
     'virtualenv.*',
     'xattr.*',
-    'zipp.*',
 ]
 ignore_missing_imports = true
 
