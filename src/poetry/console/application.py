@@ -229,8 +229,8 @@ class Application(BaseApplication):
     def register_command_loggers(
         self,
         event: Event,
-        event_name: str,
-        dispatcher: EventDispatcher,
+        event_name: str,  # noqa: ARG002
+        dispatcher: EventDispatcher,  # noqa: ARG002
     ) -> None:
         from poetry.console.logging.filters import POETRY_FILTER
         from poetry.console.logging.io_formatter import IOFormatter
@@ -282,7 +282,7 @@ class Application(BaseApplication):
             logger.setLevel(_level)
 
     def configure_env(
-        self, event: Event, event_name: str, dispatcher: EventDispatcher
+        self, event: Event, event_name: str, dispatcher: EventDispatcher  # noqa: ARG002
     ) -> None:
         from poetry.console.commands.env_command import EnvCommand
         from poetry.console.commands.self.self_command import SelfCommand
@@ -312,8 +312,8 @@ class Application(BaseApplication):
     def configure_installer_for_event(
         cls,
         event: Event,
-        event_name: str,
-        dispatcher: EventDispatcher,
+        event_name: str,  # noqa: ARG003
+        dispatcher: EventDispatcher,  # noqa: ARG003
     ) -> None:
         from poetry.console.commands.installer_command import InstallerCommand
 

@@ -106,7 +106,7 @@ class Repository(AbstractRepository):
     def __len__(self) -> int:
         return len(self._packages)
 
-    def find_links_for_package(self, package: Package) -> list[Link]:
+    def find_links_for_package(self, package: Package) -> list[Link]:  # noqa: ARG002
         return []
 
     def package(self, name: str, version: Version) -> Package:

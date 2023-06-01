@@ -102,7 +102,7 @@ unfixable = [
 target-version = "py38"
 line-length = 88
 extend-select = [
-    "ARG001", # flake8-unused-arguments - Rules other than ARG001 result in false positives only
+    "ARG", # flake8-unused-arguments
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "ERA", # flake8-eradicate/eradicate
@@ -130,7 +130,7 @@ extend-exclude = [
 ]
 
 [tool.ruff.extend-per-file-ignores]
-"tests/*.py" = ["ARG001"] # rule gets too noisy with pytest fixtures
+"tests/*.py" = ["ARG"] # rule gets too noisy with pytest fixtures and mocks
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
