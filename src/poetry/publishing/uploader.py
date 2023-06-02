@@ -11,17 +11,14 @@ import requests
 
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import distribution_name
-from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
-from urllib3 import util
 
 from poetry.__version__ import __version__
 from poetry.utils.constants import REQUESTS_TIMEOUT
-from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -64,18 +61,6 @@ class Uploader:
         return agent
 
     @property
-    def adapter(self) -> adapters.HTTPAdapter:
-        retry = util.Retry(
-            connect=5,
-            total=10,
-            allowed_methods=["GET"],
-            respect_retry_after_header=True,
-            status_forcelist=STATUS_FORCELIST,
-        )
-
-        return adapters.HTTPAdapter(max_retries=retry)
-
-    @property
     def files(self) -> list[Path]:
         dist = self._poetry.file.path.parent / "dist"
         version = self._package.version.to_string()
@@ -97,9 +82,6 @@ class Uploader:
             session.auth = auth
 
         session.headers["User-Agent"] = self.user_agent
-        for scheme in ("http://", "https://"):
-            session.mount(scheme, self.adapter)
-
         return session
 
     def get_auth(self) -> tuple[str, str] | None:
