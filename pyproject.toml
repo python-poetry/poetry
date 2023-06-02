@@ -32,8 +32,8 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.6.0"
-poetry-plugin-export = "^1.3.1"
+poetry-core = "1.6.1"
+poetry-plugin-export = "^1.4.0"
 build = "^0.10.0"
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cleo = "^2.0.0"
