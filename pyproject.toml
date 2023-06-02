@@ -119,8 +119,6 @@ ignore = [
 ]
 extend-exclude = [
     "docs/*",
-    # Frozen and not subject to change in this repo
-    "install-poetry.py",
     # External to the project's coding standards
     "tests/**/fixtures/*",
 ]
