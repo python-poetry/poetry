@@ -87,7 +87,7 @@ If you wish to change this, you may define the `$POETRY_HOME` environment variab
 curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python3 -
 ```
 
-If you want to install prerelease versions, you can do so by passing `--preview` option to installation script
+If you want to install prerelease versions, you can do so by passing the `--preview` option to the installation script
 or by using the `$POETRY_PREVIEW` environment variable:
 
 ```bash
