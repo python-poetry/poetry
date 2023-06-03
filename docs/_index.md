@@ -46,13 +46,8 @@ The script can be executed directly (i.e. 'curl python') or downloaded and then 
 (e.g. in a CI environment).
 
 {{% warning %}}
-The `get-poetry.py` installer has been deprecated and removed. If you installed
-Poetry using `get-poetry.py`, please uninstall (as documented in the relevant
-step below), and then follow these installation instructions.
-
-The previous `install-poetry.py` script as included in the Poetry repository
-is deprecated and frozen. Please migrate to the standalone version described
-above, as the in-tree version is [scheduled to be removed](https://github.com/python-poetry/poetry/issues/6676).
+The `install-poetry.py` installer has been deprecated and removed from the Poetry repository.
+Please migrate from the in-tree version to the standalone version described above.
 {{% /warning %}}
 
 **Linux, macOS, Windows (WSL)**
@@ -92,7 +87,7 @@ If you wish to change this, you may define the `$POETRY_HOME` environment variab
 curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python3 -
 ```
 
-If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`
+If you want to install prerelease versions, you can do so by passing the `--preview` option to the installation script
 or by using the `$POETRY_PREVIEW` environment variable:
 
 ```bash
