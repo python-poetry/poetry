@@ -27,8 +27,6 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
 
-_has_blake2 = hasattr(hashlib, "blake2b")
-
 
 class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
@@ -115,8 +113,7 @@ class Uploader:
 
         file_type = self._get_type(file)
 
-        if _has_blake2:
-            blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
+        blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
 
         md5_hash = hashlib.md5()
         sha256_hash = hashlib.sha256()
@@ -124,15 +121,11 @@ class Uploader:
             for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
                 md5_hash.update(content)
                 sha256_hash.update(content)
-
-                if _has_blake2:
-                    blake2_256_hash.update(content)
+                blake2_256_hash.update(content)
 
         md5_digest = md5_hash.hexdigest()
         sha2_digest = sha256_hash.hexdigest()
-        blake2_256_digest: str | None = None
-        if _has_blake2:
-            blake2_256_digest = blake2_256_hash.hexdigest()
+        blake2_256_digest = blake2_256_hash.hexdigest()
 
         py_version: str | None = None
         if file_type == "bdist_wheel":
