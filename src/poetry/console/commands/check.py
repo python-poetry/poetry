@@ -7,7 +7,10 @@ from poetry.console.commands.command import Command
 
 class CheckCommand(Command):
     name = "check"
-    description = "Checks the validity of the <comment>pyproject.toml</comment> file."
+    description = (
+        "Validates the structure of the <comment>pyproject.toml</> file and returns a"
+        " detailed report if there are any errors."
+    )
 
     options = [
         option(
