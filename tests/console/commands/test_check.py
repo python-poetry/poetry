@@ -75,12 +75,13 @@ def test_check_invalid(
         new_callable=mocker.PropertyMock,
     )
 
-    tester.execute()
+    tester.execute("--lock")
 
     expected = """\
 Error: 'description' is a required property
 Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
+Error: poetry.lock was not found.
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.
 Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
@@ -112,7 +113,7 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
-def test_lock_check_outdated(
+def test_check_lock_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
     http: type[httpretty.httpretty],
@@ -138,7 +139,7 @@ def test_lock_check_outdated(
     assert status_code == 1
 
 
-def test_lock_check_up_to_date(
+def test_check_lock_up_to_date(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
     http: type[httpretty.httpretty],
@@ -153,7 +154,7 @@ def test_lock_check_up_to_date(
 
     tester = command_tester_factory("check", poetry=poetry_with_up_to_date_lockfile)
     status_code = tester.execute("--lock")
-    expected = "poetry.lock is consistent with pyproject.toml.\n"
+    expected = "All set!\n"
     assert tester.io.fetch_output() == expected
 
     # exit with an error

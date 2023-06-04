@@ -17,7 +17,7 @@ class CheckCommand(Command):
             "lock",
             None,
             (
-                "Check that the <comment>poetry.lock</> file corresponds to the current"
+                "Checks that <comment>poetry.lock</> exists for the current"
                 " version of <comment>pyproject.toml</>."
             ),
         ),
@@ -74,18 +74,6 @@ class CheckCommand(Command):
         return errors, warnings
 
     def handle(self) -> int:
-        if self.option("lock"):
-            if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
-                self.line("poetry.lock is consistent with pyproject.toml.")
-                return 0
-            self.line_error(
-                "<error>"
-                "Error: poetry.lock is not consistent with pyproject.toml. "
-                "Run `poetry lock [--no-update]` to fix it."
-                "</error>"
-            )
-            return 1
-
         from poetry.factory import Factory
         from poetry.pyproject.toml import PyProjectTOML
 
@@ -99,6 +87,15 @@ class CheckCommand(Command):
         errors, warnings = self.validate_classifiers(project_classifiers)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
+
+        # Verify that lock file is consistent
+        if self.option("lock") and not self.poetry.locker.is_locked():
+            check_result["errors"] += ["poetry.lock was not found."]
+        if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
+            check_result["errors"] += [
+                "poetry.lock is not consistent with pyproject.toml. Run `poetry"
+                " lock [--no-update]` to fix it."
+            ]
 
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")
