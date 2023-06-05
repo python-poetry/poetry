@@ -115,6 +115,30 @@ def test_page_invalid_version_link() -> None:
     assert packages[0].version.to_string() == "0.1.0"
 
 
+def test_page_filters_out_invalid_package_names() -> None:
+    class SpecialMockRepository(MockRepository):
+        def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+            return super()._get_page(canonicalize_name(f"{name}-with-extra-packages"))
+
+    repo = SpecialMockRepository()
+    packages = repo.find_packages(Factory.create_dependency("pytest", "*"))
+    assert len(packages) == 1
+    assert packages[0].name == "pytest"
+    assert packages[0].version == Version.parse("3.5.0")
+
+    package = repo.package("pytest", Version.parse("3.5.0"))
+    assert package.files == [
+        {
+            "file": "pytest-3.5.0-py2.py3-none-any.whl",
+            "hash": "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c",  # noqa: E501
+        },
+        {
+            "file": "pytest-3.5.0.tar.gz",
+            "hash": "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1",  # noqa: E501
+        },
+    ]
+
+
 def test_sdist_format_support() -> None:
     repo = MockRepository()
     page = repo.get_page("relative")
