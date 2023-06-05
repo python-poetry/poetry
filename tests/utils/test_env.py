@@ -943,7 +943,7 @@ def test_remove_keeps_dir_if_not_deleteable(
             remove_directory(path)
 
     m = mocker.patch(
-        "poetry.utils.env.remove_directory", side_effect=err_on_rm_venv_only
+        "poetry.utils.env.env_manager.remove_directory", side_effect=err_on_rm_venv_only
     )
 
     venv = manager.remove(f"{venv_name}-py3.6")
