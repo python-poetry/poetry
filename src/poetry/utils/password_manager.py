@@ -26,6 +26,10 @@ class HTTPAuthCredential:
     username: str | None = dataclasses.field(default=None)
     password: str | None = dataclasses.field(default=None)
 
+    @property
+    def empty(self) -> bool:
+        return self.username is None and self.password is None
+
 
 class PoetryKeyring:
     def __init__(self, namespace: str) -> None:
@@ -192,13 +196,15 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
+    def get_http_auth(
+        self, name: str, keyring: bool = True
+    ) -> dict[str, str | None] | None:
         username = self._config.get(f"http-basic.{name}.username")
         password = self._config.get(f"http-basic.{name}.password")
         if not username and not password:
             return None
 
-        if not password:
+        if not password and keyring:
             password = self.keyring.get_password(name, username)
 
         return {

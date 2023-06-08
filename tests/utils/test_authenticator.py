@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
+from typing import Iterable
 
 import httpretty
 import pytest
@@ -21,6 +23,7 @@ from poetry.utils.authenticator import RepositoryCertificateConfig
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
+    from httpretty.core import HTTPrettyRequest
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
@@ -148,9 +151,23 @@ def test_authenticator_uses_empty_strings_as_default_username(
     assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
+def status_callback(
+    codes: Iterable[int],
+) -> Callable[[HTTPrettyRequest, str, dict[str, str]], tuple[int, dict[str, str], str]]:
+    """Return a httpretty callback that returns a sequence of status codes."""
+    it = iter(codes)
+
+    def callback(
+        request: HTTPrettyRequest, url: str, headers: dict[str, str]
+    ) -> tuple[int, dict[str, str], str]:
+        v = next(it)
+        return v, headers, ""
+
+    return callback
+
+
 def test_authenticator_falls_back_to_keyring_url(
     config: Config,
-    mock_remote: None,
     repo: dict[str, dict[str, str]],
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
@@ -161,22 +178,24 @@ def test_authenticator_falls_back_to_keyring_url(
             "repositories": repo,
         }
     )
+
+    http.register_uri(http.GET, re.compile(r".*"), body=status_callback((401, 200)))
 
     dummy_keyring.set_password(
         "https://foo.bar/simple/", None, SimpleCredential("foo", "bar")
     )
 
     authenticator = Authenticator(config, NullIO())
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    authenticator.request("GET", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
+    assert request
 
     assert request.headers["Authorization"] == "Basic Zm9vOmJhcg=="
 
 
 def test_authenticator_falls_back_to_keyring_netloc(
     config: Config,
-    mock_remote: None,
     repo: dict[str, dict[str, str]],
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
@@ -187,6 +206,7 @@ def test_authenticator_falls_back_to_keyring_netloc(
             "repositories": repo,
         }
     )
+    http.register_uri(http.GET, re.compile(r".*"), body=status_callback((401, 200)))
 
     dummy_keyring.set_password("foo.bar", None, SimpleCredential("foo", "bar"))
 
@@ -273,9 +293,9 @@ def test_authenticator_request_respects_retry_header(
     ["status", "attempts"],
     [
         (400, 0),
-        (401, 0),
-        (403, 0),
-        (404, 0),
+        (401, 1),
+        (403, 1),
+        (404, 1),
         (429, 5),
         (500, 5),
         (501, 5),
@@ -435,7 +455,6 @@ def test_authenticator_uses_credentials_from_config_with_at_sign_in_path(
 
 def test_authenticator_falls_back_to_keyring_url_matched_by_path(
     config: Config,
-    mock_remote: None,
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
@@ -448,6 +467,8 @@ def test_authenticator_falls_back_to_keyring_url_matched_by_path(
             }
         }
     )
+
+    http.register_uri(http.GET, re.compile(r".*"), body=status_callback((401, 200) * 2))
 
     dummy_keyring.set_password(
         "https://foo.bar/alpha/files/simple/", None, SimpleCredential("foo", "bar")

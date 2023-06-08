@@ -18,11 +18,13 @@ import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import FileCache
+from requests import Request
 
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.constants import RETRY_AFTER_HEADER
+from poetry.utils.constants import STATUS_AUTHLIST
 from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
@@ -80,14 +82,17 @@ class AuthenticatorRepositoryConfig:
         return [self.url, self.netloc, self.name]
 
     def get_http_credentials(
-        self, password_manager: PasswordManager, username: str | None = None
+        self,
+        password_manager: PasswordManager,
+        username: str | None = None,
+        keyring: bool = True,
     ) -> HTTPAuthCredential:
         # try with the repository name via the password manager
         credential = HTTPAuthCredential(
-            **(password_manager.get_http_auth(self.name) or {})
+            **(password_manager.get_http_auth(self.name, keyring=keyring) or {})
         )
 
-        if credential.password is None:
+        if credential.password is None and keyring:
             # fallback to url and netloc based keyring entries
             credential = password_manager.keyring.get_credential(
                 self.url, self.netloc, username=credential.username
@@ -190,19 +195,31 @@ class Authenticator:
 
         return url
 
+    def _auth_request(
+        self, url: str, request: Request, keyring: bool
+    ) -> tuple[Request, bool]:
+        """Try to authenticate http request."""
+        credential = self.get_credentials_for_url(url, keyring=keyring)
+        if credential.empty:
+            return request, False
+
+        return (
+            requests.auth.HTTPBasicAuth(
+                credential.username or "", credential.password or ""
+            )(request),
+            True,
+        )
+
     def request(
         self, method: str, url: str, raise_for_status: bool = True, **kwargs: Any
     ) -> requests.Response:
         headers = kwargs.get("headers")
         request = requests.Request(method, url, headers=headers)
-        credential = self.get_credentials_for_url(url)
-
-        if credential.username is not None or credential.password is not None:
-            request = requests.auth.HTTPBasicAuth(
-                credential.username or "", credential.password or ""
-            )(request)
-
         session = self.get_session(url=url)
+
+        # check config for credentials
+        request, authenticated = self._auth_request(url, request, False)
+
         prepared_request = session.prepare_request(request)
 
         proxies: dict[str, str] = kwargs.get("proxies", {})
@@ -218,7 +235,7 @@ class Authenticator:
         verify = str(verify) if isinstance(verify, Path) else verify
 
         settings = session.merge_environment_settings(
-            prepared_request.url, proxies, stream, verify, cert
+            url, proxies, stream, verify, cert
         )
 
         # Send the request.
@@ -239,10 +256,18 @@ class Authenticator:
                 if is_last_attempt:
                     raise e
             else:
-                if resp.status_code not in STATUS_FORCELIST or is_last_attempt:
+                if (resp.status_code not in STATUS_FORCELIST or is_last_attempt) and (
+                    authenticated or resp.status_code not in STATUS_AUTHLIST
+                ):
                     if raise_for_status:
                         resp.raise_for_status()
                     return resp
+
+                if resp.status_code in STATUS_AUTHLIST:
+                    # ask keyring for authentication
+                    request, _ = self._auth_request(url, request, True)
+                    authenticated = True
+                    prepared_request = session.prepare_request(request)
 
             if not is_last_attempt:
                 attempt += 1
@@ -269,31 +294,39 @@ class Authenticator:
         return self.request("post", url, **kwargs)
 
     def _get_credentials_for_repository(
-        self, repository: AuthenticatorRepositoryConfig, username: str | None = None
+        self,
+        repository: AuthenticatorRepositoryConfig,
+        username: str | None = None,
+        keyring: bool = True,
     ) -> HTTPAuthCredential:
         # cache repository credentials by repository url to avoid multiple keyring
         # backend queries when packages are being downloaded from the same source
         key = f"{repository.url}#username={username or ''}"
 
         if key not in self._credentials:
-            self._credentials[key] = repository.get_http_credentials(
-                password_manager=self._password_manager, username=username
+            credential = repository.get_http_credentials(
+                password_manager=self._password_manager,
+                username=username,
+                keyring=keyring,
             )
+            if credential.empty:
+                return credential
+            self._credentials[key] = credential
 
         return self._credentials[key]
 
     def _get_credentials_for_url(
-        self, url: str, exact_match: bool = False
+        self, url: str, exact_match: bool = False, keyring: bool = True
     ) -> HTTPAuthCredential:
         repository = self.get_repository_config_for_url(url, exact_match)
 
         credential = (
-            self._get_credentials_for_repository(repository=repository)
+            self._get_credentials_for_repository(repository=repository, keyring=keyring)
             if repository is not None
             else HTTPAuthCredential()
         )
 
-        if credential.password is None:
+        if credential.password is None and keyring:
             parsed_url = urllib.parse.urlsplit(url)
             netloc = parsed_url.netloc
             credential = self._password_manager.keyring.get_credential(
@@ -319,7 +352,9 @@ class Authenticator:
 
         return self._credentials[key]
 
-    def get_credentials_for_url(self, url: str) -> HTTPAuthCredential:
+    def get_credentials_for_url(
+        self, url: str, keyring: bool = True
+    ) -> HTTPAuthCredential:
         parsed_url = urllib.parse.urlsplit(url)
         netloc = parsed_url.netloc
 
@@ -327,7 +362,10 @@ class Authenticator:
             if "@" not in netloc:
                 # no credentials were provided in the url, try finding the
                 # best repository configuration
-                self._credentials[url] = self._get_credentials_for_url(url)
+                credential = self._get_credentials_for_url(url, keyring=keyring)
+                if credential.empty:
+                    return credential
+                self._credentials[url] = credential
             else:
                 # Split from the right because that's how urllib.parse.urlsplit()
                 # behaves if more than one @ is present (which can be checked using

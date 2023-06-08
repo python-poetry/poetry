@@ -10,3 +10,6 @@ RETRY_AFTER_HEADER = "retry-after"
 
 # Server response codes to retry requests on.
 STATUS_FORCELIST = [429, 500, 501, 502, 503, 504]
+
+# Server response code to try to retrieve authentication on.
+STATUS_AUTHLIST = [401, 403, 404]
