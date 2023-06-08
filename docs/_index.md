@@ -380,6 +380,7 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 ### Zsh
 
 ```zsh
+mkdir ~/.zfunc
 poetry completions zsh > ~/.zfunc/_poetry
 ```
 
