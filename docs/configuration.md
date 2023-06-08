@@ -15,7 +15,7 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Preferences/pypoetry`
+- macOS:   `~/Library/Application Support/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
@@ -123,7 +123,7 @@ Poetry uses the following default directories:
 
 - Linux: `$XDG_CONFIG_HOME/pypoetry` or `~/.config/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Preferences/pypoetry`
+- MacOS: `~/Library/Application Support/pypoetry`
 
 You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
@@ -201,6 +201,8 @@ This configuration is ignored when `installer.parallel` is set to `false`.
 **Type**: `boolean`
 
 **Default**: `true`
+
+**Environment Variable**: `POETRY_INSTALLER_MODERN_INSTALLATION`
 
 *Introduced in 1.4.0*
 

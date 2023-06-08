@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import collections
 import functools
 import time
 
 from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Tuple
 
 from poetry.core.packages.dependency import Dependency
 
@@ -28,6 +31,11 @@ if TYPE_CHECKING:
 _conflict = object()
 
 
+DependencyCacheKey = Tuple[
+    str, Optional[str], Optional[str], Optional[str], Optional[str]
+]
+
+
 class DependencyCache:
     """
     A cache of the valid dependencies.
@@ -38,29 +46,40 @@ class DependencyCache:
     """
 
     def __init__(self, provider: Provider) -> None:
-        self.provider = provider
-        self.cache: dict[
-            tuple[str, str | None, str | None, str | None, str | None],
-            list[DependencyPackage],
-        ] = {}
+        self._provider = provider
 
-        self.search_for = functools.lru_cache(maxsize=128)(self._search_for)
-
-    def _search_for(self, dependency: Dependency) -> list[DependencyPackage]:
-        key = (
-            dependency.complete_name,
-            dependency.source_type,
-            dependency.source_url,
-            dependency.source_reference,
-            dependency.source_subdirectory,
+        # self._cache maps a package name to a stack of cached package lists,
+        # ordered by the decision level which added them to the cache. This is
+        # done so that when backtracking we can maintain cache entries from
+        # previous decision levels, while clearing cache entries from only the
+        # rolled back levels.
+        #
+        # In order to maintain the integrity of the cache, `clear_level()`
+        # needs to be called in descending order as decision levels are
+        # backtracked so that the correct items can be popped from the stack.
+        self._cache: dict[DependencyCacheKey, list[list[DependencyPackage]]] = (
+            collections.defaultdict(list)
+        )
+        self._cached_dependencies_by_level: dict[int, list[DependencyCacheKey]] = (
+            collections.defaultdict(list)
         )
 
-        packages = self.cache.get(key)
+        self._search_for_cached = functools.lru_cache(maxsize=128)(self._search_for)
 
-        if packages:
+    def _search_for(
+        self,
+        dependency: Dependency,
+        key: DependencyCacheKey,
+    ) -> list[DependencyPackage]:
+        cache_entries = self._cache[key]
+        if cache_entries:
             packages = [
-                p for p in packages if dependency.constraint.allows(p.package.version)
+                p
+                for p in cache_entries[-1]
+                if dependency.constraint.allows(p.package.version)
             ]
+        else:
+            packages = None
 
         # provider.search_for() normally does not include pre-release packages
         # (unless requested), but will include them if there are no other
@@ -70,14 +89,35 @@ class DependencyCache:
         # nothing, we need to call provider.search_for() again as it may return
         # additional results this time.
         if not packages:
-            packages = self.provider.search_for(dependency)
-
-        self.cache[key] = packages
+            packages = self._provider.search_for(dependency)
 
         return packages
 
-    def clear(self) -> None:
-        self.cache.clear()
+    def search_for(
+        self,
+        dependency: Dependency,
+        decision_level: int,
+    ) -> list[DependencyPackage]:
+        key = (
+            dependency.complete_name,
+            dependency.source_type,
+            dependency.source_url,
+            dependency.source_reference,
+            dependency.source_subdirectory,
+        )
+
+        packages = self._search_for_cached(dependency, key)
+        if not self._cache[key] or self._cache[key][-1] is not packages:
+            self._cache[key].append(packages)
+            self._cached_dependencies_by_level[decision_level].append(key)
+
+        return packages
+
+    def clear_level(self, level: int) -> None:
+        if level in self._cached_dependencies_by_level:
+            self._search_for_cached.cache_clear()
+            for key in self._cached_dependencies_by_level.pop(level):
+                self._cache[key].pop()
 
 
 class VersionSolver:
@@ -95,6 +135,9 @@ class VersionSolver:
         self._dependency_cache = DependencyCache(provider)
         self._incompatibilities: dict[str, list[Incompatibility]] = {}
         self._contradicted_incompatibilities: set[Incompatibility] = set()
+        self._contradicted_incompatibilities_by_level: dict[
+            int, set[Incompatibility]
+        ] = collections.defaultdict(set)
         self._solution = PartialSolution()
 
     @property
@@ -193,6 +236,9 @@ class VersionSolver:
                 # incompatibility is contradicted as well and there's nothing new we
                 # can deduce from it.
                 self._contradicted_incompatibilities.add(incompatibility)
+                self._contradicted_incompatibilities_by_level[
+                    self._solution.decision_level
+                ].add(incompatibility)
                 return None
             elif relation == SetRelation.OVERLAPPING:
                 # If more than one term is inconclusive, we can't deduce anything about
@@ -211,6 +257,9 @@ class VersionSolver:
             return _conflict
 
         self._contradicted_incompatibilities.add(incompatibility)
+        self._contradicted_incompatibilities_by_level[
+            self._solution.decision_level
+        ].add(incompatibility)
 
         adverb = "not " if unsatisfied.is_positive() else ""
         self._log(f"derived: {adverb}{unsatisfied.dependency}")
@@ -304,9 +353,16 @@ class VersionSolver:
                 previous_satisfier_level < most_recent_satisfier.decision_level
                 or most_recent_satisfier.cause is None
             ):
+                for level in range(
+                    self._solution.decision_level, previous_satisfier_level, -1
+                ):
+                    if level in self._contradicted_incompatibilities_by_level:
+                        self._contradicted_incompatibilities.difference_update(
+                            self._contradicted_incompatibilities_by_level.pop(level),
+                        )
+                    self._dependency_cache.clear_level(level)
+
                 self._solution.backtrack(previous_satisfier_level)
-                self._contradicted_incompatibilities.clear()
-                self._dependency_cache.clear()
                 if new_incompatibility:
                     self._add_incompatibility(incompatibility)
 
@@ -404,7 +460,11 @@ class VersionSolver:
                 if locked:
                     return is_specific_marker, Preference.LOCKED, 1
 
-            num_packages = len(self._dependency_cache.search_for(dependency))
+            num_packages = len(
+                self._dependency_cache.search_for(
+                    dependency, self._solution.decision_level
+                )
+            )
 
             if num_packages < 2:
                 preference = Preference.NO_CHOICE
@@ -421,7 +481,9 @@ class VersionSolver:
 
         locked = self._provider.get_locked(dependency)
         if locked is None:
-            packages = self._dependency_cache.search_for(dependency)
+            packages = self._dependency_cache.search_for(
+                dependency, self._solution.decision_level
+            )
             package = next(iter(packages), None)
 
             if package is None:
