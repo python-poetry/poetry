@@ -91,12 +91,7 @@ class AuthenticatorRepositoryConfig:
 
     def __post_init__(self) -> None:
         parsed_url = urllib.parse.urlsplit(self.url)
-        # Remove username:password from netloc string
-        if "@" in parsed_url.netloc:
-            self.netloc = parsed_url.netloc.rsplit("@", 1)[-1]
-        else:
-            self.netloc = parsed_url.netloc
-
+        self.netloc = parsed_url.netloc
         self.path = parsed_url.path
 
     def certs(self, config: Config) -> RepositoryCertificateConfig:
@@ -110,21 +105,20 @@ class AuthenticatorRepositoryConfig:
         self, password_manager: PasswordManager, username: str | None = None
     ) -> HTTPAuthCredential:
         # try with the URL
-        parsed_url = urllib.parse.urlsplit(self.url)
-        if "@" in parsed_url.netloc:
+        if "@" in self.netloc:
             # Split from the right because that's how urllib.parse.urlsplit()
             # behaves if more than one @ is present (which can be checked using
             # the password attribute of urlsplit()'s return value).
-            auth, netloc = parsed_url.netloc.rsplit("@", 1)
+            auth, netloc = self.netloc.rsplit("@", 1)
             # Split from the left because that's how urllib.parse.urlsplit()
             # behaves if more than one : is present (which again can be checked
             # using the password attribute of the return value)
             user, password = auth.split(":", 1) if ":" in auth else (auth, "")
-            credential = HTTPAuthCredential(user, password)
+            credential = HTTPAuthCredential(
+                    urllib.parse.unquote(user),
+                    urllib.parse.unquote(password),
+                )
         else:
-            credential = HTTPAuthCredential(None, None)
-
-        if credential.username is None and credential.password is None:
             # try with the repository name via the password manager
             credential = HTTPAuthCredential(
                 **(password_manager.get_http_auth(self.name) or {})
@@ -386,8 +380,6 @@ class Authenticator:
                     urllib.parse.unquote(password),
                 )
 
-        print(url)
-        print(self._credentials)
         return self._credentials[url]
 
     def get_pypi_token(self, name: str) -> str | None:
