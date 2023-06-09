@@ -115,9 +115,9 @@ class AuthenticatorRepositoryConfig:
             # using the password attribute of the return value)
             user, password = auth.split(":", 1) if ":" in auth else (auth, "")
             credential = HTTPAuthCredential(
-                    urllib.parse.unquote(user),
-                    urllib.parse.unquote(password),
-                )
+                urllib.parse.unquote(user),
+                urllib.parse.unquote(password),
+            )
         else:
             # try with the repository name via the password manager
             credential = HTTPAuthCredential(
@@ -412,9 +412,9 @@ class Authenticator:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
                 url = self._config.get(f"repositories.{repository_name}.url")
-                self._configured_repositories[
-                    repository_name
-                ] = AuthenticatorRepositoryConfig(repository_name, url)
+                self._configured_repositories[repository_name] = (
+                    AuthenticatorRepositoryConfig(repository_name, url)
+                )
 
         return self._configured_repositories
 
