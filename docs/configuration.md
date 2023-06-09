@@ -125,6 +125,8 @@ Poetry uses the following default directories:
 - Windows: `%APPDATA%\pypoetry`
 - MacOS: `~/Library/Application Support/pypoetry`
 
+If there is a `.poetry` directory in the project directory, this will override the default configuration directory.
+
 You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
 ### Data Directory

@@ -987,6 +987,11 @@ poetry self remove poetry-plugin-export
 
 * `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
 
+### self init
+
+The `self init` command creates a local `.poetry` configuration directory for poetry. Poetry will
+use configuration and it's dependencies from this directory instead of the system default.
+
 ### self install
 
 The `self install` command ensures all additional packages specified are installed in the current

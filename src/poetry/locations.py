@@ -18,6 +18,7 @@ _APP_NAME = "pypoetry"
 DEFAULT_CACHE_DIR = user_cache_path(_APP_NAME, appauthor=False)
 CONFIG_DIR = Path(
     os.getenv("POETRY_CONFIG_DIR")
+    or (Path.cwd() / ".poetry" if (Path.cwd() / ".poetry").exists() else None)
     or user_config_path(_APP_NAME, appauthor=False, roaming=True)
 )
 

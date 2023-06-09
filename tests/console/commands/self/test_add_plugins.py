@@ -1,7 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
+
+from poetry.core.utils.helpers import temporary_directory
+
+import poetry.locations
+
+from poetry.console.commands.self.add import SelfAddCommand
 
 
 if TYPE_CHECKING:
@@ -27,6 +35,11 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("self add")
+
+
+@pytest.fixture()
+def init_command_tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("self init")
 
 
 def assert_plugin_add_result(
@@ -62,6 +75,59 @@ Package operations: 1 install, 0 updates, 0 removals
 Writing lock file
 """
     assert_plugin_add_result(tester, expected, "^0.1.0")
+
+
+def test_add_after_init(
+    tester: CommandTester,
+    init_command_tester: CommandTester,
+    repo: TestRepository,
+) -> None:
+    with temporary_directory() as tmp_dir:
+        repo.add_package(Package("poetry-plugin", "0.1.0"))
+        init_command_tester.execute(args=f"--project-dir={tmp_dir}")
+        current_config_dir = poetry.locations.CONFIG_DIR
+        try:
+            poetry.locations.CONFIG_DIR = Path(tmp_dir) / ".poetry"
+            cast(SelfAddCommand, tester._command).reset_poetry()
+            tester.execute("poetry-plugin")
+
+            expected_add_output = """\
+Using version ^0.1.0 for poetry-plugin
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing poetry-plugin (0.1.0)
+
+Writing lock file
+"""
+
+            expected_pyproject_toml = """\
+[tool.poetry]
+name = "poetry-instance"
+version = "1.6.0.dev0"
+description = ""
+authors = []
+license = ""
+
+[tool.poetry.dependencies]
+python = "3.10.9"
+poetry = "1.6.0.dev0"
+
+[tool.poetry.group.additional.dependencies]
+poetry-plugin = "^0.1.0"
+
+"""
+
+            assert_plugin_add_result(tester, expected_add_output, "^0.1.0")
+            assert (
+                Path(tmp_dir) / ".poetry" / "pyproject.toml"
+            ).read_text() == expected_pyproject_toml
+
+        finally:
+            poetry.locations.CONFIG_DIR = current_config_dir
 
 
 def test_add_with_constraint(

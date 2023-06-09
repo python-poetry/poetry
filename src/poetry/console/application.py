@@ -80,6 +80,7 @@ COMMANDS = [
     "env use",
     # Self commands
     "self add",
+    "self init",
     "self install",
     "self lock",
     "self remove",
