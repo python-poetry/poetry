@@ -511,7 +511,7 @@ def test_authenticator_uses_url_provided_credentials_matched_by_url_path(
     config: Config,
     mock_remote: type[httpretty.httpretty],
     http: type[httpretty.httpretty],
-):
+) -> None:
     config.merge(
         {
             "repositories": {
