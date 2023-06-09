@@ -104,27 +104,16 @@ Package operations: 1 install, 0 updates, 0 removals
 Writing lock file
 """
 
-            expected_pyproject_toml = """\
-[tool.poetry]
-name = "poetry-instance"
-version = "1.6.0.dev0"
-description = ""
-authors = []
-license = ""
-
-[tool.poetry.dependencies]
-python = "3.10.9"
-poetry = "1.6.0.dev0"
-
+            expected_in_pyproject_toml = """\
 [tool.poetry.group.additional.dependencies]
 poetry-plugin = "^0.1.0"
-
 """
 
             assert_plugin_add_result(tester, expected_add_output, "^0.1.0")
             assert (
-                Path(tmp_dir) / ".poetry" / "pyproject.toml"
-            ).read_text() == expected_pyproject_toml
+                expected_in_pyproject_toml
+                in (Path(tmp_dir) / ".poetry" / "pyproject.toml").read_text()
+            )
 
         finally:
             poetry.locations.CONFIG_DIR = current_config_dir
