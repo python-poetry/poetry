@@ -444,7 +444,8 @@ class Authenticator:
                     return repository
                 continue
 
-            if repository.netloc == parsed_url.netloc:
+            # Compare repository URL without credentials
+            if repository.netloc.rsplit("@", 1)[-1] == parsed_url.netloc:
                 if parsed_url.path.startswith(repository.path) or commonprefix(
                     (parsed_url.path, repository.path)
                 ):
