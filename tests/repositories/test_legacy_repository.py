@@ -3,7 +3,6 @@ from __future__ import annotations
 import base64
 import re
 import shutil
-import urllib.parse as urlparse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,6 +13,7 @@ import requests
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.utils.link import Link
 
 from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
@@ -51,7 +51,7 @@ class MockRepository(LegacyRepository):
             return SimpleRepositoryPage(self._url + f"/{name}/", f.read())
 
     def _download(self, url: str, dest: Path) -> None:
-        filename = urlparse.urlparse(url).path.rsplit("/")[-1]
+        filename = Link(url).filename
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
         shutil.copyfile(str(filepath), dest)
@@ -113,6 +113,30 @@ def test_page_invalid_version_link() -> None:
     assert len(packages) == 1
     assert packages[0].name == "poetry"
     assert packages[0].version.to_string() == "0.1.0"
+
+
+def test_page_filters_out_invalid_package_names() -> None:
+    class SpecialMockRepository(MockRepository):
+        def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+            return super()._get_page(canonicalize_name(f"{name}-with-extra-packages"))
+
+    repo = SpecialMockRepository()
+    packages = repo.find_packages(Factory.create_dependency("pytest", "*"))
+    assert len(packages) == 1
+    assert packages[0].name == "pytest"
+    assert packages[0].version == Version.parse("3.5.0")
+
+    package = repo.package("pytest", Version.parse("3.5.0"))
+    assert package.files == [
+        {
+            "file": "pytest-3.5.0-py2.py3-none-any.whl",
+            "hash": "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c",  # noqa: E501
+        },
+        {
+            "file": "pytest-3.5.0.tar.gz",
+            "hash": "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1",  # noqa: E501
+        },
+    ]
 
 
 def test_sdist_format_support() -> None:
@@ -460,6 +484,14 @@ def test_find_links_for_package_yanked(
     for link in links:
         assert link.yanked == yanked
         assert link.yanked_reason == yanked_reason
+
+
+def test_cached_or_downloaded_file_supports_trailing_slash() -> None:
+    repo = MockRepository()
+    with repo._cached_or_downloaded_file(
+        Link("https://foo.bar/pytest-3.5.0-py2.py3-none-any.whl/")
+    ) as filepath:
+        assert filepath.name == "pytest-3.5.0-py2.py3-none-any.whl"
 
 
 class MockHttpRepository(LegacyRepository):

@@ -108,6 +108,10 @@ class Executor:
     def removals_count(self) -> int:
         return self._executed["uninstall"]
 
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
 
@@ -762,10 +766,7 @@ class Executor:
                     link
                 )
                 cached_file = cache_directory.joinpath(link.filename)
-                # We can't use unlink(missing_ok=True) because it's not available
-                # prior to Python 3.8
-                if cached_file.exists():
-                    cached_file.unlink()
+                cached_file.unlink(missing_ok=True)
 
                 raise
 
@@ -776,9 +777,15 @@ class Executor:
             strict=False,
             env=self._env,
         )
-        # 'archive' can at this point never be None. Since we previously downloaded
-        # an archive, we now should have something cached that we can use here
-        assert archive is not None
+        if archive is None:
+            # Since we previously downloaded an archive, we now should have
+            # something cached that we can use here. The only case in which
+            # archive is None is if the original archive is not valid for the
+            # current environment.
+            raise RuntimeError(
+                f"Package {link.url} cannot be installed in the current environment"
+                f" {self._env.marker_env}"
+            )
 
         if archive.suffix != ".whl":
             message = (
@@ -887,9 +894,7 @@ class Executor:
             ) in self._env.site_packages.find_distribution_direct_url_json_files(
                 distribution_name=package.name, writable_only=True
             ):
-                # We can't use unlink(missing_ok=True) because it's not always available
-                if direct_url_json.exists():
-                    direct_url_json.unlink()
+                direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None

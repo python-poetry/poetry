@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -53,7 +55,6 @@ class Installer:
         self._requires_synchronization = False
         self._update = False
         self._verbose = False
-        self._write_lock = True
         self._groups: Iterable[str] | None = None
         self._skip_directory = False
         self._lock = False
@@ -99,7 +100,6 @@ class Installer:
 
         if self.is_dry_run():
             self.verbose(True)
-            self._write_lock = False
 
         return self._do_install()
 
@@ -269,7 +269,7 @@ class Installer:
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
 
-        if self._lock and self._update:
+        if not self.executor.enabled:
             # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
             return 0
@@ -338,6 +338,13 @@ class Installer:
         # or optional and not requested, are dropped
         self._filter_operations(ops, lockfile_repo)
 
+        # Validate the dependencies
+        for op in ops:
+            dep = op.package.to_dependency()
+            if dep.is_file() or dep.is_directory():
+                dep = cast("PathDependency", dep)
+                dep.validate(raise_error=True)
+
         # Execute operations
         status = self._execute(ops)
 
@@ -348,7 +355,7 @@ class Installer:
         return status
 
     def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
-        if self._write_lock and (force or self._update):
+        if not self.is_dry_run() and (force or self._update):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:

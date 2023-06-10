@@ -114,6 +114,14 @@ class SourceAddCommand(Command):
         else:
             priority = Priority[priority_str.upper()]
 
+        if priority is Priority.SECONDARY:
+            allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
+            self.line_error(
+                "<warning>Warning: Priority 'secondary' is deprecated. Consider"
+                " changing the priority to one of the non-deprecated values:"
+                f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}.</warning>"
+            )
+
         sources = AoT([])
         new_source = Source(name=name, url=url, priority=priority)
         is_new_source = True

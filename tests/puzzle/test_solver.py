@@ -1183,6 +1183,64 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies(
     )
 
 
+def test_solver_with_dependency_and_prerelease_sub_dependencies_increasing_constraints(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
+) -> None:
+    """Regression test to ensure the solver eventually uses pre-release
+    dependencies if the package is progressively constrained enough.
+
+    This is different from test_solver_with_dependency_and_prerelease_sub_dependencies
+    above because it also has a wildcard dependency on B at the root level.
+    This causes the solver to first narrow B's candidate versions down to
+    {0.9.0} at an early level, then eventually down to the empty set once A's
+    dependencies are processed at a later level.
+
+    Once the candidate version set is narrowed down to the empty set, the
+    solver should re-evaluate available candidate versions from the source, but
+    include pre-release versions this time as there are no other options.
+    """
+    # Note: The order matters here; B must be added before A or the solver
+    # evaluates A first and we don't encounter the issue. This is a bit
+    # fragile, but the mock call assertions ensure this ordering is maintained.
+    package.add_dependency(Factory.create_dependency("B", "*"))
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", ">0.9.0"))
+
+    repo.add_package(package_a)
+    repo.add_package(get_package("B", "0.9.0"))
+    package_b = get_package("B", "1.0.0.dev4")
+    repo.add_package(package_b)
+
+    search_for_spy = mocker.spy(solver._provider, "search_for")
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    # The assertions below aren't really the point of this test, but are just
+    # being used to ensure the dependency resolution ordering remains the same.
+    search_calls = [
+        call.args[0]
+        for call in search_for_spy.mock_calls
+        if call.args[0].name in ("a", "b")
+    ]
+    assert search_calls == [
+        Dependency("a", "*"),
+        Dependency("b", "*"),
+        Dependency("b", ">0.9.0"),
+    ]
+
+
 def test_solver_circular_dependency(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
@@ -3377,6 +3435,69 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     # via the git dependency
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+@pytest.mark.parametrize("explicit_source", [True, False])
+def test_solver_cannot_choose_url_dependency_for_explicit_source(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    explicit_source: bool,
+) -> None:
+    """A direct origin dependency cannot satisfy a version dependency with an explicit
+    source. (It can satisfy a version dependency without an explicit source.)
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "markers": "sys_platform != 'darwin'",
+                "url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "version": "0.1.0",
+                "markers": "sys_platform == 'darwin'",
+                "source": "repo" if explicit_source else None,
+            },
+        )
+    )
+
+    package_pendulum = get_package("pendulum", "1.4.4")
+    package_demo = get_package("demo", "0.1.0")
+    package_demo_url = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_url="https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+    )
+    # The url demo dependency depends on pendulum.
+    repo.add_package(package_pendulum)
+    repo.add_package(package_demo)
+
+    transaction = solver.solve()
+
+    if explicit_source:
+        # direct origin cannot satisfy explicit source
+        # -> package_demo MUST be included
+        expected = [
+            {"job": "install", "package": package_pendulum},
+            {"job": "install", "package": package_demo_url},
+            {"job": "install", "package": package_demo},
+        ]
+    else:
+        # direct origin can satisfy dependency without source
+        # -> package_demo NEED NOT (but could) be included
+        expected = [
+            {"job": "install", "package": package_pendulum},
+            {"job": "install", "package": package_demo_url},
+        ]
+
+    check_solver_result(transaction, expected)
 
 
 def test_solver_should_not_update_same_version_packages_if_installed_has_no_source_type(

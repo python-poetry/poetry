@@ -121,7 +121,7 @@ def download_file(
             # but skip the updating
             set_indicator = total_size > 1024 * 1024
 
-        with dest.open("wb") as f:
+        with atomic_open(dest) as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)

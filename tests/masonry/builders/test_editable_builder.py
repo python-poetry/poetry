@@ -95,7 +95,7 @@ def test_builder_installs_proper_files_for_standard_packages(
     pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
-        simple_poetry.file.parent.resolve().as_posix()
+        simple_poetry.file.path.parent.resolve().as_posix()
         == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
     )
 
@@ -281,7 +281,7 @@ def test_builder_installs_proper_files_when_packages_configured(
             if line:
                 paths.add(line)
 
-    project_root = project_with_include.file.parent.resolve()
+    project_root = project_with_include.file.path.parent.resolve()
     expected = {project_root.as_posix(), project_root.joinpath("src").as_posix()}
 
     assert paths.issubset(expected)
@@ -339,5 +339,5 @@ def test_builder_should_execute_build_scripts(
     builder.build()
 
     assert [
-        ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
+        ["python", str(extended_without_setup_poetry.file.path.parent / "build.py")]
     ] == env.executed

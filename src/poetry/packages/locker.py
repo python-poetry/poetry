@@ -90,6 +90,10 @@ class Locker:
 
         return False
 
+    def set_local_config(self, local_config: dict[str, Any]) -> None:
+        self._local_config = local_config
+        self._content_hash = self._get_content_hash()
+
     def locked_repository(self) -> LockfileRepository:
         """
         Searches and returns a repository of locked packages.

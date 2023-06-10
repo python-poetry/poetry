@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
-    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
@@ -281,12 +280,8 @@ class Provider:
         #
         # We rely on the VersionSolver resolving direct-origin dependencies first.
         direct_origin_package = self._direct_origin_packages.get(dependency.name)
-        if direct_origin_package is not None:
-            packages = (
-                [direct_origin_package]
-                if dependency.constraint.allows(direct_origin_package.version)
-                else []
-            )
+        if direct_origin_package and direct_origin_package.satisfies(dependency):
+            packages = [direct_origin_package]
             return PackageCollection(dependency, packages)
 
         packages = self._pool.find_packages(dependency)
@@ -560,11 +555,6 @@ class Provider:
                     if locked is not None and locked.package.is_same_package_as(dep):
                         continue
                     self.search_for_direct_origin_dependency(dep)
-        else:
-            for dep in _dependencies:
-                if dep.is_file() or dep.is_directory():
-                    dep = cast("PathDependency", dep)
-                    dep.validate(raise_error=True)
 
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package

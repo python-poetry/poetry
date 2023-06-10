@@ -157,7 +157,7 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
 @pytest.fixture
 def in_project_venv_dir(poetry: Poetry) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
-    venv_dir = poetry.file.parent.joinpath(".venv")
+    venv_dir = poetry.file.path.parent.joinpath(".venv")
     venv_dir.mkdir()
     try:
         yield venv_dir
@@ -261,6 +261,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -283,16 +284,12 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m.assert_called_with(
         tmp_path / f"{venv_name}-py3.7",
         executable=Path("/usr/bin/python3.7"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt="simple-project-py3.7",
     )
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
+
     assert envs_file.exists()
     envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
@@ -417,6 +414,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -446,12 +444,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     m.assert_called_with(
         tmp_path / f"{venv_name}-py3.6",
         executable=Path("/usr/bin/python3.6"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt="simple-project-py3.6",
     )
 
@@ -471,6 +464,7 @@ def test_activate_activates_recreates_for_different_patch(
     config: Config,
     mocker: MockerFixture,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -511,12 +505,7 @@ def test_activate_activates_recreates_for_different_patch(
     build_venv_m.assert_called_with(
         tmp_path / f"{venv_name}-py3.7",
         executable=Path("/usr/bin/python3.7"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt="simple-project-py3.7",
     )
     remove_venv_m.assert_called_with(tmp_path / f"{venv_name}-py3.7")
@@ -842,7 +831,7 @@ def test_raises_if_acting_on_different_project_by_name(
     different_venv_name = (
         EnvManager.generate_env_name(
             "different-project",
-            str(poetry.file.parent),
+            str(poetry.file.path.parent),
         )
         + "-py3.6"
     )
@@ -954,7 +943,7 @@ def test_remove_keeps_dir_if_not_deleteable(
             remove_directory(path)
 
     m = mocker.patch(
-        "poetry.utils.env.remove_directory", side_effect=err_on_rm_venv_only
+        "poetry.utils.env.env_manager.remove_directory", side_effect=err_on_rm_venv_only
     )
 
     venv = manager.remove(f"{venv_name}-py3.6")
@@ -1139,6 +1128,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1160,12 +1150,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.7",
         executable=Path("/usr/bin/python3"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt="simple-project-py3.7",
     )
 
@@ -1205,6 +1190,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1226,12 +1212,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py3.9",
         executable=Path("/usr/bin/python3.9"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt="simple-project-py3.9",
     )
 
@@ -1295,6 +1276,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1320,12 +1302,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
         executable=None,
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt=f"simple-project-py{version.major}.{version.minor}",
     )
 
@@ -1337,6 +1314,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1344,7 +1322,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     version = Version.from_parts(*sys.version_info[:3])
     assert version.minor is not None
     poetry.package.python_versions = f"~{version.major}.{version.minor - 1}.0"
-    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    venv_name = manager.generate_env_name(
+        "simple-project", str(poetry.file.path.parent)
+    )
 
     check_output = mocker.patch(
         "subprocess.check_output",
@@ -1362,12 +1342,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor - 1}",
         executable=Path(f"python{version.major}.{version.minor - 1}"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt=f"simple-project-py{version.major}.{version.minor - 1}",
     )
 
@@ -1406,6 +1381,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     config: Config,
     tmp_path: Path,
     mocker: MockerFixture,
+    venv_flags_default: dict[str, bool],
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -1433,14 +1409,9 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     manager.activate("python3.7")
 
     m.assert_called_with(
-        poetry.file.parent / ".venv",
+        poetry.file.path.parent / ".venv",
         executable=Path("/usr/bin/python3.7"),
-        flags={
-            "always-copy": False,
-            "system-site-packages": False,
-            "no-pip": False,
-            "no-setuptools": False,
-        },
+        flags=venv_flags_default,
         prompt="simple-project-py3.7",
     )
 
@@ -1772,7 +1743,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     manager = EnvManager(poetry)
 
     poetry.package.python_versions = "^3.7"
-    venv_name = manager.generate_env_name("", str(poetry.file.parent))
+    venv_name = manager.generate_env_name("", str(poetry.file.path.parent))
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
@@ -1825,3 +1796,10 @@ def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
     active_python = EnvManager(poetry)._detect_active_python()
 
     assert active_python == wrapped_python
+
+
+def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
+    # https://github.com/python-poetry/poetry/issues/7959
+    env = manager.get()
+    command = env.get_command_from_bin("./foo.py")
+    assert command == ["./foo.py"]

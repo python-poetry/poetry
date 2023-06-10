@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 
+from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import DefaultDict
 from typing import List
@@ -11,7 +12,6 @@ from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.version.exceptions import InvalidVersion
 
-from poetry.utils._compat import cached_property
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 

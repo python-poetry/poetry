@@ -249,14 +249,12 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     constraint_name,
                     constraint,
                     groups=[group],
-                    root_dir=self.poetry.file.parent,
+                    root_dir=self.poetry.file.path.parent,
                 )
             )
 
         # Refresh the locker
-        self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
-        )
+        self.poetry.locker.set_local_config(poetry_content)
         self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
@@ -266,8 +264,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.installer.dry_run(self.option("dry-run"))
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
-        if self.option("lock"):
-            self.installer.lock()
+        self.installer.execute_operations(not self.option("lock"))
 
         self.installer.whitelist([r["name"] for r in requirements])
 

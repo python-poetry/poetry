@@ -15,7 +15,7 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Preferences/pypoetry`
+- macOS:   `~/Library/Application Support/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
@@ -123,7 +123,7 @@ Poetry uses the following default directories:
 
 - Linux: `$XDG_CONFIG_HOME/pypoetry` or `~/.config/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Preferences/pypoetry`
+- MacOS: `~/Library/Application Support/pypoetry`
 
 You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
@@ -202,6 +202,8 @@ This configuration is ignored when `installer.parallel` is set to `false`.
 
 **Default**: `true`
 
+**Environment Variable**: `POETRY_INSTALLER_MODERN_INSTALLATION`
+
 *Introduced in 1.4.0*
 
 Use a more modern and faster method for package installation.
@@ -279,9 +281,9 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 
 Create a new virtual environment if one doesn't already exist.
 
-If set to `false`, Poetry will not create a new virtual environment. If it detects a virtual environment
-in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` it will install dependencies into them, otherwise it will install
-dependencies into the systems python environment.
+If set to `false`, Poetry will not create a new virtual environment. If it detects an already enabled virtual
+environment or an existing one in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` it will
+install dependencies into them, otherwise it will install dependencies into the systems python environment.
 
 {{% note %}}
 If Poetry detects it's running within an activated virtual environment, it will never create a new virtual environment,

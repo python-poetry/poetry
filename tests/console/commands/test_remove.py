@@ -10,6 +10,7 @@ import tomlkit
 from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
+from tests.helpers import TestLocker
 from tests.helpers import get_package
 
 
@@ -33,11 +34,15 @@ def poetry_with_up_to_date_lockfile(
 ) -> Poetry:
     source = fixture_dir("up_to_date_lock")
 
-    return project_factory(
+    poetry = project_factory(
         name="foobar",
         pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
         poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
     )
+
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.locked(True)
+    return poetry
 
 
 @pytest.fixture()
@@ -49,7 +54,6 @@ def test_remove_without_specific_group_removes_from_all_groups(
     tester: CommandTester,
     app: PoetryTestApplication,
     repo: TestRepository,
-    command_tester_factory: CommandTesterFactory,
     installed: Repository,
 ) -> None:
     """
@@ -108,7 +112,6 @@ def test_remove_without_specific_group_removes_from_specific_groups(
     tester: CommandTester,
     app: PoetryTestApplication,
     repo: TestRepository,
-    command_tester_factory: CommandTesterFactory,
     installed: Repository,
 ) -> None:
     """
@@ -166,7 +169,6 @@ def test_remove_does_not_live_empty_groups(
     tester: CommandTester,
     app: PoetryTestApplication,
     repo: TestRepository,
-    command_tester_factory: CommandTesterFactory,
     installed: Repository,
 ) -> None:
     """
@@ -213,7 +215,6 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
     tester: CommandTester,
     app: PoetryTestApplication,
     repo: TestRepository,
-    command_tester_factory: CommandTesterFactory,
     installed: Repository,
 ) -> None:
     """
@@ -308,3 +309,47 @@ def test_remove_with_dry_run_keep_files_intact(
     assert (
         poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
     )
+
+
+def test_remove_performs_uninstall_op(
+    poetry_with_up_to_date_lockfile: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    installed: Repository,
+) -> None:
+    installed.add_package(get_package("docker", "4.3.1"))
+    tester = command_tester_factory("remove", poetry=poetry_with_up_to_date_lockfile)
+
+    tester.execute("docker")
+
+    expected = """\
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 0 installs, 0 updates, 1 removal
+
+  • Removing docker (4.3.1)
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_remove_with_lock_does_not_perform_uninstall_op(
+    poetry_with_up_to_date_lockfile: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    installed: Repository,
+) -> None:
+    installed.add_package(get_package("docker", "4.3.1"))
+    tester = command_tester_factory("remove", poetry=poetry_with_up_to_date_lockfile)
+
+    tester.execute("docker --lock")
+
+    expected = """\
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected

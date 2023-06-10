@@ -46,7 +46,7 @@ def test_show_config_with_local_config_file_empty(
 
 
 def test_list_displays_default_value_if_not_set(
-    tester: CommandTester, config: Config, config_cache_dir: Path
+    tester: CommandTester, config_cache_dir: Path
 ) -> None:
     tester.execute("--list")
 
@@ -102,11 +102,102 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
-def test_display_single_setting(tester: CommandTester, config: Config) -> None:
-    tester.execute("virtualenvs.create")
+def test_cannot_set_with_multiple_values(tester: CommandTester) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("virtualenvs.create false true")
 
-    expected = """true
+    assert str(e.value) == "You can only pass one value."
+
+
+def test_cannot_set_invalid_value(tester: CommandTester) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("virtualenvs.create foo")
+
+    assert str(e.value) == '"foo" is an invalid value for virtualenvs.create'
+
+
+def test_cannot_unset_with_value(tester: CommandTester) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("virtualenvs.create false --unset")
+
+    assert str(e.value) == "You can not combine a setting value with --unset"
+
+
+def test_unset_setting(
+    tester: CommandTester, config: Config, config_cache_dir: Path
+) -> None:
+    tester.execute("virtualenvs.path /some/path")
+    tester.execute("virtualenvs.path --unset")
+    tester.execute("--list")
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
+experimental.system-git-client = false
+installer.max-workers = null
+installer.modern-installation = true
+installer.no-binary = null
+installer.parallel = true
+virtualenvs.create = true
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
+    assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
+    assert tester.io.fetch_output() == expected
+
+
+def test_unset_repo_setting(
+    tester: CommandTester, config: Config, config_cache_dir: Path
+) -> None:
+    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute("repositories.foo.url --unset ")
+    tester.execute("--list")
+    cache_dir = json.dumps(str(config_cache_dir))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    expected = f"""cache-dir = {cache_dir}
+experimental.system-git-client = false
+installer.max-workers = null
+installer.modern-installation = true
+installer.no-binary = null
+installer.parallel = true
+virtualenvs.create = true
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.system-site-packages = false
+virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.prefer-active-python = false
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+"""
+    assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
+    assert tester.io.fetch_output() == expected
+
+
+def test_unset_value_not_exists(tester: CommandTester) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("foobar --unset")
+
+    assert str(e.value) == "Setting foobar does not exist"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("virtualenvs.create", "true\n"),
+        ("repositories.foo.url", "{'url': 'https://bar.com/simple/'}\n"),
+    ],
+)
+def test_display_single_setting(
+    tester: CommandTester, value: str, expected: str | bool
+) -> None:
+    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute(value)
 
     assert tester.io.fetch_output() == expected
 
@@ -123,6 +214,67 @@ def test_display_single_local_setting(
 """
 
     assert tester.io.fetch_output() == expected
+
+
+def test_display_empty_repositories_setting(
+    command_tester_factory: CommandTesterFactory, fixture_dir: FixtureDirGetter
+) -> None:
+    tester = command_tester_factory(
+        "config",
+        poetry=Factory().create_poetry(fixture_dir("with_empty_repositories_key")),
+    )
+    tester.execute("repositories")
+
+    expected = """{}
+"""
+    assert tester.io.fetch_output() == expected
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected"),
+    [
+        ("repositories", "You cannot remove the [repositories] section"),
+        ("repositories.test", "There is no test repository defined"),
+    ],
+)
+def test_unset_nonempty_repositories_section(
+    tester: CommandTester, setting: str, expected: str
+) -> None:
+    tester.execute("repositories.foo.url https://bar.com/simple/")
+
+    with pytest.raises(ValueError) as e:
+        tester.execute(f"{setting} --unset")
+
+    assert str(e.value) == expected
+
+
+def test_set_malformed_repositories_setting(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("repositories.foo bar baz")
+
+    assert (
+        str(e.value)
+        == "You must pass the url. Example: poetry config repositories.foo"
+        " https://bar.com"
+    )
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected"),
+    [
+        ("repositories.foo", "There is no foo repository defined"),
+        ("foo", "There is no foo setting."),
+    ],
+)
+def test_display_undefined_setting(
+    tester: CommandTester, setting: str, expected: str
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute(setting)
+
+    assert str(e.value) == expected
 
 
 def test_list_displays_set_get_local_setting(
@@ -159,7 +311,6 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     project_factory: ProjectFactory,
     fixture_dir: FixtureDirGetter,
     command_tester_factory: CommandTesterFactory,
-    config: Config,
     config_cache_dir: Path,
 ) -> None:
     source = fixture_dir("with_non_default_source_implicit")
@@ -192,6 +343,37 @@ virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
     assert tester.io.fetch_output() == expected
 
 
+def test_set_http_basic(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    tester.execute("http-basic.foo username password")
+    tester.execute("--list")
+
+    assert auth_config_source.config["http-basic"]["foo"] == {
+        "username": "username",
+        "password": "password",
+    }
+
+
+def test_unset_http_basic(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    tester.execute("http-basic.foo username password")
+    tester.execute("http-basic.foo --unset")
+    tester.execute("--list")
+
+    assert "foo" not in auth_config_source.config["http-basic"]
+
+
+def test_set_http_basic_unsuccessful_multiple_values(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("http-basic.foo username password password")
+
+    assert str(e.value) == "Expected one or two arguments (username, password), got 3"
+
+
 def test_set_pypi_token(
     tester: CommandTester, auth_config_source: DictConfigSource
 ) -> None:
@@ -199,6 +381,25 @@ def test_set_pypi_token(
     tester.execute("--list")
 
     assert auth_config_source.config["pypi-token"]["pypi"] == "mytoken"
+
+
+def test_unset_pypi_token(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    tester.execute("pypi-token.pypi mytoken")
+    tester.execute("pypi-token.pypi --unset")
+    tester.execute("--list")
+
+    assert "pypi" not in auth_config_source.config["pypi-token"]
+
+
+def test_set_pypi_token_unsuccessful_multiple_values(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("pypi-token.pypi mytoken mytoken")
+
+    assert str(e.value) == "Expected only one argument (token), got 2"
 
 
 def test_set_client_cert(
@@ -214,6 +415,18 @@ def test_set_client_cert(
         auth_config_source.config["certificates"]["foo"]["client-cert"]
         == "path/to/cert.pem"
     )
+
+
+def test_set_client_cert_unsuccessful_multiple_values(
+    tester: CommandTester,
+    mocker: MockerFixture,
+) -> None:
+    mocker.spy(ConfigSource, "__init__")
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("certificates.foo.client-cert path/to/cert.pem path/to/cert.pem")
+
+    assert str(e.value) == "You must pass exactly 1 value"
 
 
 @pytest.mark.parametrize(
@@ -236,6 +449,21 @@ def test_set_cert(
     tester.execute(f"certificates.foo.cert {value}")
 
     assert auth_config_source.config["certificates"]["foo"]["cert"] == result
+
+
+def test_unset_cert(
+    tester: CommandTester,
+    auth_config_source: DictConfigSource,
+    mocker: MockerFixture,
+) -> None:
+    mocker.spy(ConfigSource, "__init__")
+
+    tester.execute("certificates.foo.cert path/to/ca.pem")
+
+    assert "cert" in auth_config_source.config["certificates"]["foo"]
+
+    tester.execute("certificates.foo.cert --unset")
+    assert "cert" not in auth_config_source.config["certificates"]["foo"]
 
 
 def test_config_installer_parallel(

@@ -15,6 +15,7 @@ from poetry.core.packages.package import Package
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
+from tests.helpers import TestLocker
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -1506,3 +1507,36 @@ def test_add_extras_only_accepts_one_package(
             str(e.value)
             == "You can only specify one package when using the --extras option"
         )
+
+
+@pytest.mark.parametrize("command", ["foo", "foo --lock"])
+@pytest.mark.parametrize(
+    ("locked", "expected_docker"), [(True, "4.3.1"), (False, "4.3.2")]
+)
+def test_add_does_not_update_locked_dependencies(
+    repo: TestRepository,
+    poetry_with_up_to_date_lockfile: Poetry,
+    tester: CommandTester,
+    command_tester_factory: CommandTesterFactory,
+    command: str,
+    locked: bool,
+    expected_docker: str,
+) -> None:
+    assert isinstance(poetry_with_up_to_date_lockfile.locker, TestLocker)
+    poetry_with_up_to_date_lockfile.locker.locked(locked)
+    tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
+    docker_locked = get_package("docker", "4.3.1")
+    docker_new = get_package("docker", "4.3.2")
+    docker_dep = get_dependency("docker", ">=4.0.0")
+    foo = get_package("foo", "0.1.0")
+    foo.add_dependency(docker_dep)
+    for package in docker_locked, docker_new, foo:
+        repo.add_package(package)
+
+    tester.execute(command)
+
+    lock_data = poetry_with_up_to_date_lockfile.locker.lock_data
+    docker_locked_after_command = next(
+        p for p in lock_data["package"] if p["name"] == "docker"
+    )
+    assert docker_locked_after_command["version"] == expected_docker

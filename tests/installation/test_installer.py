@@ -2659,3 +2659,74 @@ def test_installer_distinguishes_locked_packages_by_source(
         source_url=source_url,
         source_reference=source_reference,
     )
+
+
+@pytest.mark.parametrize("env_platform", ["darwin", "linux"])
+def test_explicit_source_dependency_with_direct_origin_dependency(
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    repo: Repository,
+    package: ProjectPackage,
+    env_platform: str,
+) -> None:
+    """
+    A dependency with explicit source should not be satisfied by
+    a direct origin dependency even if there is a version match.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "markers": "sys_platform != 'darwin'",
+                "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo",
+            {
+                "version": "0.1.0",
+                "markers": "sys_platform == 'darwin'",
+                "source": "repo",
+            },
+        )
+    )
+    # The url demo dependency depends on pendulum.
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("demo", "0.1.0"))
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(platform=env_platform),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(platform=env_platform),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+
+    result = installer.run()
+
+    assert result == 0
+    assert isinstance(installer.executor, Executor)
+    if env_platform == "linux":
+        assert installer.executor.installations == [
+            Package("pendulum", "1.4.4"),
+            Package(
+                "demo",
+                "0.1.0",
+                source_type="url",
+                source_url="https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+            ),
+        ]
+    else:
+        assert installer.executor.installations == [Package("demo", "0.1.0")]

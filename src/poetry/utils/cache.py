@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-# Used by Cachy for items that do not expire.
+# Used by FileCache for items that do not expire.
 MAX_DATE = 9999999999
 T = TypeVar("T")
 

@@ -223,3 +223,10 @@ RUN poetry install --no-dev
 
 The two key options we are using here are `--no-root` (skips installing the project source) and `--no-directory` (skips installing any local directory path dependencies, you can omit this if you don't have any).
 [More information on the options available for `poetry install`]({{< relref "cli#install" >}}).
+
+
+### My requests are timing out!
+
+Poetry's default HTTP request timeout is 15 seconds, the same as `pip`.
+Similar to `PIP_REQUESTS_TIMEOUT`, the **experimental** environment variable `POETRY_REQUESTS_TIMEOUT`
+can be set to alter this value.
