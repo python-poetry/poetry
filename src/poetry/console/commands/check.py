@@ -75,7 +75,7 @@ class CheckCommand(Command):
 
         for name in readmes:
             if not (poetry_file.parent / name).exists():
-                errors.append(f"Declared README file must exist: found {name}")
+                errors.append(f"Declared README file does not exist: {name}")
 
         return errors, warnings
 
