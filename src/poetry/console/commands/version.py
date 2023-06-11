@@ -36,11 +36,7 @@ class VersionCommand(Command):
             None,
             "Do not update pyproject.toml file",
         ),
-        option(
-            "next-phase",
-            None,
-            "Increment the phase of the current version",
-        ),
+        option("next-phase", None, "Increment the phase of the current version"),
     ]
 
     help = """\
@@ -67,7 +63,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
         if version:
             version = self.increment_version(
-                self.poetry.package.pretty_version, version, self.option("next")
+                self.poetry.package.pretty_version, version, self.option("next-phase")
             )
 
             if self.option("short"):
