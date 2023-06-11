@@ -8,8 +8,8 @@ from poetry.console.commands.command import Command
 class CheckCommand(Command):
     name = "check"
     description = (
-        "Validates the structure of the <comment>pyproject.toml</> file and returns a"
-        " detailed report if there are any errors."
+        "Validates the content of the <comment>pyproject.toml</> file and its"
+        " consistency with the poetry.lock file."
     )
 
     options = [
