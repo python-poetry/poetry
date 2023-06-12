@@ -113,6 +113,39 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ("options", "expected", "expected_status"),
+    [
+        ("", "All set!\n", 0),
+        ("--lock", "Error: poetry.lock was not found.\n", 1),
+    ],
+)
+def test_check_lock_missing(
+    mocker: MockerFixture,
+    tester: CommandTester,
+    fixture_dir: FixtureDirGetter,
+    options: str,
+    expected: str,
+    expected_status: int,
+) -> None:
+    from poetry.toml import TOMLFile
+
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(fixture_dir("private_pyproject") / "pyproject.toml"),
+        new_callable=mocker.PropertyMock,
+    )
+
+    status_code = tester.execute(options)
+
+    assert status_code == expected_status
+
+    if status_code == 0:
+        assert tester.io.fetch_output() == expected
+    else:
+        assert tester.io.fetch_error() == expected
+
+
 @pytest.mark.parametrize("options", ["", "--lock"])
 def test_check_lock_outdated(
     command_tester_factory: CommandTesterFactory,
