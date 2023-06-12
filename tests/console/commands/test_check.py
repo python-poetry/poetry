@@ -113,10 +113,12 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize("options", ["", "--lock"])
 def test_check_lock_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
     http: type[httpretty.httpretty],
+    options: str,
 ) -> None:
     http.disable()
 
@@ -127,7 +129,7 @@ def test_check_lock_outdated(
     poetry_with_outdated_lockfile.set_locker(locker)
 
     tester = command_tester_factory("check", poetry=poetry_with_outdated_lockfile)
-    status_code = tester.execute("--lock")
+    status_code = tester.execute(options)
     expected = (
         "Error: poetry.lock is not consistent with pyproject.toml. "
         "Run `poetry lock [--no-update]` to fix it.\n"
@@ -139,10 +141,12 @@ def test_check_lock_outdated(
     assert status_code == 1
 
 
+@pytest.mark.parametrize("options", ["", "--lock"])
 def test_check_lock_up_to_date(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
     http: type[httpretty.httpretty],
+    options: str,
 ) -> None:
     http.disable()
 
@@ -153,7 +157,7 @@ def test_check_lock_up_to_date(
     poetry_with_up_to_date_lockfile.set_locker(locker)
 
     tester = command_tester_factory("check", poetry=poetry_with_up_to_date_lockfile)
-    status_code = tester.execute("--lock")
+    status_code = tester.execute(options)
     expected = "All set!\n"
     assert tester.io.fetch_output() == expected
 
