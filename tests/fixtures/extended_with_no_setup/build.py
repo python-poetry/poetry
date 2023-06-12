@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 import shutil
 
-from distutils.command.build_ext import build_ext
-from distutils.core import Distribution
-from distutils.core import Extension
+from setuptools import Distribution
+from setuptools import Extension
+from setuptools.command.build_ext import build_ext
 
 
 extensions = [Extension("extended.extended", ["extended/extended.c"])]
@@ -13,7 +13,7 @@ extensions = [Extension("extended.extended", ["extended/extended.c"])]
 
 def build():
     distribution = Distribution({"name": "extended", "ext_modules": extensions})
-    distribution.package_dir = "extended"
+    distribution.package_dir = {"extended": "extended"}
 
     cmd = build_ext(distribution)
     cmd.ensure_finalized()

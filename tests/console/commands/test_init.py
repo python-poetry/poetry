@@ -14,9 +14,9 @@ import pytest
 from cleo.testers.command_tester import CommandTester
 from packaging.utils import canonicalize_name
 
+from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
 from poetry.repositories import RepositoryPool
-from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
+    from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
 
@@ -54,8 +55,7 @@ def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> No
 
 @pytest.fixture
 def tester(patches: None) -> CommandTester:
-    # we need a test application without poetry here.
-    app = PoetryTestApplication(None)
+    app = Application()
     return CommandTester(app.find("init"))
 
 
@@ -108,6 +108,7 @@ def test_noninteractive(
     tmp_path: Path,
 ) -> None:
     command = app.find("init")
+    assert isinstance(command, InitCommand)
     command._pool = poetry.pool
 
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -328,7 +329,8 @@ _generate_choice_list_packages_params: list[list[Package]] = [
 
 @pytest.fixture(params=_generate_choice_list_packages_params)
 def _generate_choice_list_packages(request: FixtureRequest) -> list[Package]:
-    return request.param
+    packages: list[Package] = request.param
+    return packages
 
 
 @pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
@@ -338,6 +340,7 @@ def test_generate_choice_list(
     _generate_choice_list_packages: list[Package],
 ) -> None:
     init_command = tester.command
+    assert isinstance(init_command, InitCommand)
 
     packages = _generate_choice_list_packages
     choices = init_command._generate_choice_list(
@@ -880,7 +883,9 @@ pytest = "^3.6.0"
 
 
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
-    result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
+    command = tester.command
+    assert isinstance(command, InitCommand)
+    result = command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2
@@ -916,9 +921,7 @@ def test_init_existing_pyproject_consistent_linesep(
     existing_section = """
 [tool.black]
 line-length = 88
-""".replace(
-        "\n", linesep
-    )
+""".replace("\n", linesep)
     with open(pyproject_file, "w", newline="") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)
@@ -1044,10 +1047,7 @@ def test_package_include(
         ),
     )
 
-    if include is None:
-        packages = ""
-    else:
-        packages = f'packages = [{{include = "{include}"}}]\n'
+    packages = "" if include is None else f'packages = [{{include = "{include}"}}]\n'
 
     expected = (
         f"[tool.poetry]\n"
@@ -1087,7 +1087,8 @@ def test_respect_prefer_active_on_init(
         if GET_PYTHON_VERSION_ONELINER in cmd:
             return "1.1.1"
 
-        return orig_check_output(cmd, *_, **__)
+        result: str = orig_check_output(cmd, *_, **__)
+        return result
 
     mocker.patch("subprocess.check_output", side_effect=mock_check_output)
 

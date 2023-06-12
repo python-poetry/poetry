@@ -19,8 +19,10 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
 
+    Normalizer = Callable[[str], Any]
 
-def get_options_based_on_normalizer(normalizer: Callable[[str], Any]) -> str:
+
+def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
     flattened_config = flatten_dict(obj=Config.default_config, delimiter=".")
 
     for k in flattened_config:
@@ -42,10 +44,12 @@ def test_config_get_processes_depended_on_values(
 
 
 def generate_environment_variable_tests() -> Iterator[tuple[str, str, str, bool]]:
-    for normalizer, values in [
+    data: list[tuple[Normalizer, list[tuple[str, Any]]]] = [
         (boolean_normalizer, [("true", True), ("false", False)]),
         (int_normalizer, [("4", 4), ("2", 2)]),
-    ]:
+    ]
+
+    for normalizer, values in data:
         for env_value, value in values:
             for name in get_options_based_on_normalizer(normalizer=normalizer):
                 env_var = "POETRY_" + re.sub("[.-]+", "_", name).upper()

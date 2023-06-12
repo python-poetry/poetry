@@ -7,6 +7,7 @@ import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 import pytest
 
@@ -72,7 +73,7 @@ def env_manager(simple_poetry: Poetry) -> EnvManager:
 
 
 @pytest.fixture
-def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> VirtualEnv:
+def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> Iterator[VirtualEnv]:
     venv_path = tmp_path / "venv"
 
     env_manager.build_venv(venv_path)
@@ -94,7 +95,7 @@ def test_builder_installs_proper_files_for_standard_packages(
     pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
-        simple_poetry.file.parent.resolve().as_posix()
+        simple_poetry.file.path.parent.resolve().as_posix()
         == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
     )
 
@@ -236,8 +237,8 @@ def test_builder_setup_generation_runs_with_pip_editable(
 
     poetry = Factory().create_poetry(extended_project)
 
-    # we need a venv with setuptools since we are verifying setup.py builds
-    with ephemeral_environment(flags={"no-setuptools": False}) as venv:
+    # we need a venv with pip and setuptools since we are verifying setup.py builds
+    with ephemeral_environment(flags={"no-setuptools": False, "no-pip": False}) as venv:
         builder = EditableBuilder(poetry, venv, NullIO())
         builder.build()
 
@@ -280,7 +281,7 @@ def test_builder_installs_proper_files_when_packages_configured(
             if line:
                 paths.add(line)
 
-    project_root = project_with_include.file.parent.resolve()
+    project_root = project_with_include.file.path.parent.resolve()
     expected = {project_root.as_posix(), project_root.joinpath("src").as_posix()}
 
     assert paths.issubset(expected)
@@ -338,5 +339,5 @@ def test_builder_should_execute_build_scripts(
     builder.build()
 
     assert [
-        ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
+        ["python", str(extended_without_setup_poetry.file.path.parent / "build.py")]
     ] == env.executed

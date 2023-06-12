@@ -45,7 +45,6 @@ def install_plugin(installed: Repository) -> None:
             {
                 "name": "poetry-plugin",
                 "version": "1.2.3",
-                "category": "main",
                 "optional": False,
                 "platform": "*",
                 "python-versions": "*",

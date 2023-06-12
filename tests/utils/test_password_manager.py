@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -222,7 +223,7 @@ def test_fail_keyring_should_be_unavailable(
 
 
 def test_get_http_auth_from_environment_variables(
-    environ: None, config: Config, with_simple_keyring: None
+    environ: None, config: Config
 ) -> None:
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
@@ -230,10 +231,39 @@ def test_get_http_auth_from_environment_variables(
     manager = PasswordManager(config)
 
     auth = manager.get_http_auth("foo")
-    assert auth is not None
+    assert auth == {"username": "bar", "password": "baz"}
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+
+def test_get_http_auth_does_not_call_keyring_when_credentials_in_environment_variables(
+    environ: None, config: Config
+) -> None:
+    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+    manager._keyring = MagicMock()
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
+    manager._keyring.get_password.assert_not_called()
+
+
+def test_get_http_auth_does_not_call_keyring_when_password_in_environment_variables(
+    environ: None, config: Config
+) -> None:
+    config.merge(
+        {
+            "http-basic": {"foo": {"username": "bar"}},
+        }
+    )
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+    manager._keyring = MagicMock()
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
+    manager._keyring.get_password.assert_not_called()
 
 
 def test_get_pypi_token_with_env_var_positive(

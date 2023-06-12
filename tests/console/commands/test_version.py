@@ -76,6 +76,7 @@ def test_short_version_update(tester: CommandTester) -> None:
 
 
 def test_dry_run(tester: CommandTester) -> None:
+    assert isinstance(tester.command, VersionCommand)
     old_pyproject = tester.command.poetry.file.path.read_text()
     tester.execute("--dry-run major")
 

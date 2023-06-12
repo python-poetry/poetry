@@ -20,8 +20,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "name",
-        "url"
+        "name"
       ],
       "properties": {
         "name": {
@@ -46,6 +45,7 @@
             "primary",
             "default",
             "secondary",
+            "supplemental",
             "explicit"
           ],
           "description": "Declare the priority of this repository."

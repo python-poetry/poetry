@@ -4,6 +4,7 @@ import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 import tomlkit
@@ -83,7 +84,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 

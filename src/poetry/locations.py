@@ -25,21 +25,21 @@ CONFIG_DIR = Path(
 # /Users/<user>/Library/Application Support/<appname> to
 # /Users/<user>/Library/Preferences/<appname>.
 #
-# For now we only deprecate use of the old directory.
+# Then platformdirs 3.0.0 corrected it back again!
+#
+# Treat Preferences as deprecated, and hope that this is finally decided.
 if sys.platform == "darwin":
-    _LEGACY_CONFIG_DIR = CONFIG_DIR.parent.parent / "Application Support" / _APP_NAME
+    _LEGACY_CONFIG_DIR = CONFIG_DIR.parent.parent / "Preferences" / _APP_NAME
     config_toml = _LEGACY_CONFIG_DIR / "config.toml"
     auth_toml = _LEGACY_CONFIG_DIR / "auth.toml"
 
     if any(file.exists() for file in (auth_toml, config_toml)):
         logger.warning(
             (
-                (
-                    "Configuration file exists at %s, reusing this"
-                    " directory.\n\nConsider moving TOML configuration files to %s, as"
-                    " support for the legacy directory will be removed in an upcoming"
-                    " release."
-                ),
+                "Configuration file exists at %s, reusing this"
+                " directory.\n\nConsider moving TOML configuration files to %s, as"
+                " support for the legacy directory will be removed in an upcoming"
+                " release."
             ),
             _LEGACY_CONFIG_DIR,
             CONFIG_DIR,

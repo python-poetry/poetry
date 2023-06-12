@@ -247,9 +247,7 @@ class InstalledRepository(Repository):
                 continue
 
             for distribution in sorted(
-                metadata.distributions(  # type: ignore[no-untyped-call]
-                    path=[entry],
-                ),
+                metadata.distributions(path=[entry]),
                 key=lambda d: str(d._path),  # type: ignore[attr-defined]
             ):
                 path = Path(str(distribution._path))  # type: ignore[attr-defined]

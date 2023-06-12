@@ -9,6 +9,7 @@ import pytest
 
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 
 from poetry.factory import Factory
 from poetry.publishing.publisher import Publisher
@@ -72,7 +73,8 @@ def test_publish_can_publish_to_given_repository(
         ("http://foo.bar",),
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args
-    assert "Publishing my-package (1.2.3) to foo" in io.fetch_output()
+    project_name = canonicalize_name(fixture_name)
+    assert f"Publishing {project_name} (1.2.3) to foo" in io.fetch_output()
 
 
 def test_publish_raises_error_for_undefined_repository(

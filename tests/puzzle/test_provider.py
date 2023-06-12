@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.directory_dependency import DirectoryDependency
 from poetry.core.packages.file_dependency import FileDependency
@@ -36,7 +37,7 @@ SOME_URL = "https://example.com/path.tar.gz"
 
 
 class MockEnv(BaseMockEnv):
-    def run(self, bin: str, *args: str, **kwargs: Any) -> str | int:
+    def run(self, bin: str, *args: str, **kwargs: Any) -> str:
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
 
 
@@ -112,7 +113,7 @@ def test_search_for(
             Dependency("foo", ">=2"),
             URLDependency("foo", SOME_URL),
             [Package("foo", "3")],
-            [],
+            [Package("foo", "3")],
         ),
         (
             Dependency("foo", ">=1", extras=["bar"]),
@@ -681,7 +682,7 @@ def test_complete_package_with_extras_preserves_source_name(
     package_b = Package("B", "1.0")
     dep = get_dependency("B", "^1.0", optional=True)
     package_a.add_dependency(dep)
-    package_a.extras = {"foo": [dep]}
+    package_a.extras = {canonicalize_name("foo"): [dep]}
     repository.add_package(package_a)
     repository.add_package(package_b)
 
@@ -710,7 +711,7 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
     )
     package = Package("A", "1.0", features=["foo"] if with_extra else [])
     package.add_dependency(optional_vcs_dependency)
-    package.extras["foo"] = [optional_vcs_dependency]
+    package.extras[canonicalize_name("foo")] = [optional_vcs_dependency]
     repository.add_package(package)
 
     spy = mocker.spy(provider, "_search_for_vcs")
@@ -721,3 +722,38 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
         spy.assert_called()
     else:
         spy.assert_not_called()
+
+
+def test_source_dependency_is_satisfied_by_direct_origin(
+    provider: Provider, repository: Repository
+) -> None:
+    direct_origin_package = Package("foo", "1.1", source_type="url")
+    repository.add_package(Package("foo", "1.0"))
+    provider._direct_origin_packages = {"foo": direct_origin_package}
+    dep = Dependency("foo", ">=1")
+
+    assert provider.search_for(dep) == [direct_origin_package]
+
+
+def test_explicit_source_dependency_is_not_satisfied_by_direct_origin(
+    provider: Provider, repository: Repository
+) -> None:
+    repo_package = Package("foo", "1.0")
+    repository.add_package(repo_package)
+    provider._direct_origin_packages = {"foo": Package("foo", "1.1", source_type="url")}
+    dep = Dependency("foo", ">=1")
+    dep.source_name = repository.name
+
+    assert provider.search_for(dep) == [repo_package]
+
+
+def test_source_dependency_is_not_satisfied_by_incompatible_direct_origin(
+    provider: Provider, repository: Repository
+) -> None:
+    repo_package = Package("foo", "2.0")
+    repository.add_package(repo_package)
+    provider._direct_origin_packages = {"foo": Package("foo", "1.0", source_type="url")}
+    dep = Dependency("foo", ">=2")
+    dep.source_name = repository.name
+
+    assert provider.search_for(dep) == [repo_package]

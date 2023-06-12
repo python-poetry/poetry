@@ -8,8 +8,10 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+from poetry.config.config import Config
 from poetry.repositories.abstract_repository import AbstractRepository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.utils.cache import ArtifactCache
 
 
 if TYPE_CHECKING:
@@ -26,6 +28,7 @@ class Priority(IntEnum):
     DEFAULT = enum.auto()
     PRIMARY = enum.auto()
     SECONDARY = enum.auto()
+    SUPPLEMENTAL = enum.auto()
     EXPLICIT = enum.auto()
 
 
@@ -40,6 +43,8 @@ class RepositoryPool(AbstractRepository):
         self,
         repositories: list[Repository] | None = None,
         ignore_repository_names: bool = False,
+        *,
+        config: Config | None = None,
     ) -> None:
         super().__init__("poetry-repository-pool")
         self._repositories: OrderedDict[str, PrioritizedRepository] = OrderedDict()
@@ -49,6 +54,10 @@ class RepositoryPool(AbstractRepository):
             repositories = []
         for repository in repositories:
             self.add_repository(repository)
+
+        self._artifact_cache = ArtifactCache(
+            cache_dir=(config or Config.create()).artifacts_cache_directory
+        )
 
     @property
     def repositories(self) -> list[Repository]:
@@ -76,6 +85,10 @@ class RepositoryPool(AbstractRepository):
         return sorted(
             self._repositories.values(), key=lambda prio_repo: prio_repo.priority
         )
+
+    @property
+    def artifact_cache(self) -> ArtifactCache:
+        return self._artifact_cache
 
     def has_default(self) -> bool:
         return self._contains_priority(Priority.DEFAULT)
@@ -130,10 +143,7 @@ class RepositoryPool(AbstractRepository):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            if default:
-                priority = Priority.DEFAULT
-            else:
-                priority = Priority.SECONDARY
+            priority = Priority.DEFAULT if default else Priority.SECONDARY
 
         if priority is Priority.DEFAULT and self.has_default():
             raise ValueError("Only one repository can be the default.")
@@ -177,11 +187,13 @@ class RepositoryPool(AbstractRepository):
 
         packages: list[Package] = []
         for repo in self.repositories:
+            if packages and self.get_priority(repo.name) is Priority.SUPPLEMENTAL:
+                break
             packages += repo.find_packages(dependency)
         return packages
 
     def search(self, query: str) -> list[Package]:
         results: list[Package] = []
-        for repository in self.repositories:
-            results += repository.search(query)
+        for repo in self.repositories:
+            results += repo.search(query)
         return results

@@ -24,6 +24,7 @@ from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -121,7 +122,7 @@ def dummy_keyring() -> DummyBackend:
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
     import keyring
 
-    keyring.set_keyring(dummy_keyring)
+    keyring.set_keyring(dummy_keyring)  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -130,7 +131,7 @@ def with_fail_keyring() -> None:
 
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -139,31 +140,37 @@ def with_null_keyring() -> None:
 
     from keyring.backends.null import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_null_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.null import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -203,7 +210,7 @@ def config(
 
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
     c = Config()
     c.merge(config_source.config)
@@ -214,6 +221,11 @@ def config(
     mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
+
+
+@pytest.fixture
+def artifact_cache(config: Config) -> ArtifactCache:
+    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
 
 @pytest.fixture()
@@ -233,7 +245,7 @@ def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
 def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
-    mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
+    mocker.patch("poetry.packages.direct_origin.download_file", new=mock_download)
     mocker.patch("poetry.repositories.http_repository.download_file", new=mock_download)
 
 
@@ -464,3 +476,13 @@ def load_required_fixtures(
 ) -> None:
     for fixture in required_fixtures:
         fixture_copier(fixture)
+
+
+@pytest.fixture
+def venv_flags_default() -> dict[str, bool]:
+    return {
+        "always-copy": False,
+        "system-site-packages": False,
+        "no-pip": False,
+        "no-setuptools": False,
+    }

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-
-from tests.compat import Protocol
+from typing import Protocol
 
 
 if TYPE_CHECKING:
@@ -60,4 +59,9 @@ class FixtureDirGetter(Protocol):
 
 class FixtureCopier(Protocol):
     def __call__(self, relative_path: str, target: Path | None = None) -> Path:
+        ...
+
+
+class HTMLPageGetter(Protocol):
+    def __call__(self, content: str, base_url: str | None = None) -> str:
         ...

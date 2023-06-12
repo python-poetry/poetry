@@ -12,14 +12,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-import lockfile
 import requests
 import requests.auth
 import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import FileCache
-from filelock import FileLock
 
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
@@ -35,26 +33,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-
-class FileLockLockFile(lockfile.LockBase):  # type: ignore[misc]
-    # The default LockFile from the lockfile package as used by cachecontrol can remain
-    # locked if a process exits ungracefully.  See eg
-    # <https://github.com/python-poetry/poetry/issues/6030#issuecomment-1189383875>.
-    #
-    # FileLock from the filelock package does not have this problem, so we use that to
-    # construct something compatible with cachecontrol.
-    def __init__(
-        self, path: str, threaded: bool = True, timeout: float | None = None
-    ) -> None:
-        super().__init__(path, threaded, timeout)
-        self.file_lock = FileLock(self.lock_file)
-
-    def acquire(self, timeout: float | None = None) -> None:
-        self.file_lock.acquire(timeout=timeout)
-
-    def release(self) -> None:
-        self.file_lock.release()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -163,7 +141,6 @@ class Authenticator:
                     / (cache_id or "_default_cache")
                     / "_http"
                 ),
-                lock_class=FileLockLockFile,
             )
             if not disable_cache
             else None

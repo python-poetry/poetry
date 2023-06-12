@@ -63,7 +63,7 @@ PEP517_META_BUILD_DEPS = ["build==0.10.0", "pyproject_hooks==1.0.0"]
 
 class PackageInfoError(ValueError):
     def __init__(self, path: Path, *reasons: BaseException | str) -> None:
-        reasons = (f"Unable to determine package info for path: {path!s}",) + reasons
+        reasons = (f"Unable to determine package info for path: {path!s}", *reasons)
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
 
