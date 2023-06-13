@@ -889,6 +889,13 @@ Use of these commands will create the required `pyproject.toml` and `poetry.lock
 [configuration directory]({{< relref "configuration" >}}).
 {{% /note %}}
 
+{{% warning %}}
+Especially on Windows, `self` commands that update or remove packages may be problematic
+so that other methods for installing plugins and updating Poetry are recommended.
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) and
+[Installing Poetry]({{< relref "docs#installation" >}}) for more information.
+{{% /warning %}}
+
 ### self add
 
 The `self add` command installs Poetry plugins and make them available at runtime. Additionally, it can
