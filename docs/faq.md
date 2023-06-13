@@ -143,7 +143,7 @@ commands =
     poetry run pytest tests/ --import-mode importlib
 ```
 
-`tox` will not do any install. Poetry installs all the dependencies and the current package an editable mode.
+`tox` will not do any install. Poetry installs all the dependencies and the current package in editable mode.
 Thus, tests are running against the local files and not the built and installed package.
 
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
