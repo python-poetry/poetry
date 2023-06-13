@@ -212,6 +212,11 @@ If you see something like `Poetry (version 1.2.0)`, your install is ready to use
 
 Poetry is able to update itself when installed using the official installer.
 
+{{% warning %}}
+Especially on Windows, `self update` may be problematic
+so that a re-install with the installer should be preferred.
+{{% /warning %}}
+
 ```bash
 poetry self update
 ```
