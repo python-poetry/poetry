@@ -778,13 +778,6 @@ class EnvManager(object):
 
         if not venv.exists():
             if create_venv is False:
-                io.write_line(
-                    "<fg=black;bg=yellow>"
-                    "Skipping virtualenv creation, "
-                    "as specified in config file."
-                    "</>"
-                )
-
                 return self.get_system_env()
 
             io.write_line(
@@ -1043,14 +1036,28 @@ class Env(object):
 
         return self._platlib
 
+    @property
+    def pylibs_dir(self):
+        if not hasattr(self, '_pylibs_dir'):
+            pylibs_dir = None
+            pypath = os.environ.get('PYTHONPATH')
+            if pypath:
+                pylibs_pattern = re.compile(r'/home/runner/[^\/]+/\.pythonlibs/')
+                for p in pypath.split(':'):
+                    if pylibs_pattern.match(p):
+                        pylibs_dir = p
+                        break
+            self._pylibs_dir = pylibs_dir
+
+        return self._pylibs_dir
+
     def is_path_relative_to_lib(self, path):  # type: (Path) -> bool
-        for lib_path in [self.purelib, self.platlib]:
+        for lib_path in [self.purelib, self.platlib, self.pylibs_dir]:
             try:
                 path.relative_to(lib_path)
                 return True
             except ValueError:
                 pass
-
         return False
 
     @property
