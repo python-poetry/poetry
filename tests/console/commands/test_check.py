@@ -45,7 +45,7 @@ def test_check_invalid(
 Error: 'description' is a required property
 Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
-Error: Declared README file must exist: found never/exists.md
+Error: Declared README file does not exist: never/exists.md
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.
 Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
