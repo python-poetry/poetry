@@ -625,8 +625,9 @@ As such, `exit` should be used to properly exit the shell and the virtual enviro
 
 ## check
 
-The `check` command validates the structure of the `pyproject.toml` file
-and returns a detailed report if there are any errors.
+The `check` command validates the content of the `pyproject.toml` file
+and its consistency with the `poetry.lock` file.
+It returns a detailed report if there are any errors.
 
 {{% note %}}
 This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
