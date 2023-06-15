@@ -89,7 +89,7 @@ def poetry_with_invalid_lockfile(
     return _project_factory("invalid_lock", project_factory, fixture_dir)
 
 
-def test_lock_check_outdated(
+def test_lock_check_outdated_legacy(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
     http: type[httpretty.httpretty],
@@ -105,6 +105,7 @@ def test_lock_check_outdated(
     tester = command_tester_factory("lock", poetry=poetry_with_outdated_lockfile)
     status_code = tester.execute("--check")
     expected = (
+        "poetry lock --check is deprecated, use `poetry check --lock` instead.\n"
         "Error: poetry.lock is not consistent with pyproject.toml. "
         "Run `poetry lock [--no-update]` to fix it.\n"
     )
@@ -115,7 +116,7 @@ def test_lock_check_outdated(
     assert status_code == 1
 
 
-def test_lock_check_up_to_date(
+def test_lock_check_up_to_date_legacy(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
     http: type[httpretty.httpretty],
@@ -132,6 +133,11 @@ def test_lock_check_up_to_date(
     status_code = tester.execute("--check")
     expected = "poetry.lock is consistent with pyproject.toml.\n"
     assert tester.io.fetch_output() == expected
+
+    expected_error = (
+        "poetry lock --check is deprecated, use `poetry check --lock` instead.\n"
+    )
+    assert tester.io.fetch_error() == expected_error
 
     # exit with an error
     assert status_code == 0

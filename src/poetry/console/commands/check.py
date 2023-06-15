@@ -1,11 +1,27 @@
 from __future__ import annotations
 
+from cleo.helpers import option
+
 from poetry.console.commands.command import Command
 
 
 class CheckCommand(Command):
     name = "check"
-    description = "Checks the validity of the <comment>pyproject.toml</comment> file."
+    description = (
+        "Validates the content of the <comment>pyproject.toml</> file and its"
+        " consistency with the poetry.lock file."
+    )
+
+    options = [
+        option(
+            "lock",
+            None,
+            (
+                "Checks that <comment>poetry.lock</> exists for the current"
+                " version of <comment>pyproject.toml</>."
+            ),
+        ),
+    ]
 
     def validate_classifiers(
         self, project_classifiers: set[str]
@@ -71,6 +87,15 @@ class CheckCommand(Command):
         errors, warnings = self.validate_classifiers(project_classifiers)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
+
+        # Verify that lock file is consistent
+        if self.option("lock") and not self.poetry.locker.is_locked():
+            check_result["errors"] += ["poetry.lock was not found."]
+        if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
+            check_result["errors"] += [
+                "poetry.lock is not consistent with pyproject.toml. Run `poetry"
+                " lock [--no-update]` to fix it."
+            ]
 
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")
