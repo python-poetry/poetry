@@ -474,10 +474,7 @@ class VersionSolver:
                 preference = Preference.DEFAULT
             return is_specific_marker, preference, num_packages
 
-        if len(unsatisfied) == 1:
-            dependency = unsatisfied[0]
-        else:
-            dependency = min(*unsatisfied, key=_get_min)
+        dependency = min(unsatisfied, key=_get_min)
 
         locked = self._provider.get_locked(dependency)
         if locked is None:
