@@ -237,6 +237,12 @@ class EnvManager:
         prefer_active_python = self._poetry.config.get(
             "virtualenvs.prefer-active-python"
         )
+        if prefer_active_python:
+            executable = self._detect_active_python()
+            bin_dir = executable.parent
+            path = bin_dir.parent
+            return VirtualEnv(path, Path(executable.name))
+
         python_minor = self.get_python_version(
             precision=2, prefer_active_python=prefer_active_python, io=self._io
         ).to_string()
