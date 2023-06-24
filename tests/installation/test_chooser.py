@@ -405,3 +405,25 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     with pytest.raises(RuntimeError) as e:
         chooser.choose_for(package)
     assert files[0]["hash"] in str(e)
+
+
+@pytest.mark.usefixtures("mock_legacy")
+def test_chooser_md5_remote_fallback_to_sha256_inline_calculation(
+    env: MockEnv, pool: RepositoryPool
+) -> None:
+    chooser = Chooser(pool, env)
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://foo.bar/simple/",
+    )
+    package.files = [
+        {
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",  # noqa: E501
+            "filename": "demo-0.1.0.tar.gz",
+        }
+    ]
+    res = chooser.choose_for(package)
+    assert res.filename == "demo-0.1.0.tar.gz"

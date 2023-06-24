@@ -8,6 +8,7 @@ from typing import Any
 
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils.wheel import Wheel
 
 
@@ -103,6 +104,12 @@ class Chooser:
 
             assert link.hash_name is not None
             h = link.hash_name + ":" + link.hash
+            if (
+                h not in hashes
+                and link.hash_name not in ("sha256", "sha384", "sha512")
+                and isinstance(repository, HTTPRepository)
+            ):
+                h = repository.calculate_sha256(link) or h
             if h not in hashes:
                 logger.debug(
                     "Skipping %s as %s checksum does not match expected value",
