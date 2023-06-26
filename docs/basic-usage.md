@@ -234,6 +234,10 @@ Even if you develop alone, in six months when reinstalling the project you can f
 the dependencies installed are still working even if your dependencies released many new versions since then.
 (See note below about using the update command.)
 
+{{% warning %}} If you have added the recommended [`[build-system]`]({{< relref "pyproject#poetry-and-pep-517" >}}) section to your project's pyproject.toml then you _can_ successfully install your project and its dependencies into a virtual environment using a command like `pip install -e .`. However, pip will not use the lock file to determine dependency versions as the poetry-core build system is intended for library developers (see next section).
+{{% /warning %}}
+
+
 #### As a library developer
 
 Library developers have more to consider. Your users are application developers, and your library will run in a Python environment you don't control.
