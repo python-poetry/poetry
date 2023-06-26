@@ -319,6 +319,9 @@ If set to `true`, the virtualenv will be created and expected in a folder named
 If a virtual environment has already been created for the project under `{cache-dir}/virtualenvs`, setting this variable to `true` will not cause `poetry` to create or use a local virtual environment.
 
 In order for this setting to take effect for a project already in that state, you must delete the virtual environment folder located in `{cache-dir}/virtualenvs`.
+
+You can find out where the current project's virtual environment (if there is one) is stored
+with the command `poetry env info --path`.
 {{% /note %}}
 
 If set to `false`, `poetry` will ignore any existing `.venv` directory.
