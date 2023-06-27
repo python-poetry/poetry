@@ -14,8 +14,6 @@ from typing import Any
 
 from virtualenv.seed.wheels.embed import get_embed_wheel
 
-from poetry.utils._compat import decode
-from poetry.utils._compat import encode
 from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.site_packages import SitePackages
 from poetry.utils.helpers import get_real_windows_path
@@ -343,13 +341,14 @@ class Env:
 
         try:
             if input_:
-                output = subprocess.run(
+                output: str = subprocess.run(
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=stderr,
-                    input=encode(input_),
+                    input=input_,
                     check=True,
                     env=env,
+                    text=True,
                     **kwargs,
                 ).stdout
             elif call:
@@ -357,11 +356,13 @@ class Env:
                 subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
                 output = ""
             else:
-                output = subprocess.check_output(cmd, stderr=stderr, env=env, **kwargs)
+                output = subprocess.check_output(
+                    cmd, stderr=stderr, env=env, text=True, **kwargs
+                )
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
 
-        return decode(output)
+        return output
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)

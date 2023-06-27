@@ -226,24 +226,7 @@ class HTTPRepository(CachedRepository):
                 and link.hash_name not in ("sha256", "sha384", "sha512")
                 and hasattr(hashlib, link.hash_name)
             ):
-                with self._cached_or_downloaded_file(link) as filepath:
-                    known_hash = (
-                        getattr(hashlib, link.hash_name)() if link.hash_name else None
-                    )
-                    required_hash = hashlib.sha256()
-
-                    chunksize = 4096
-                    with filepath.open("rb") as f:
-                        while True:
-                            chunk = f.read(chunksize)
-                            if not chunk:
-                                break
-                            if known_hash:
-                                known_hash.update(chunk)
-                            required_hash.update(chunk)
-
-                    if not known_hash or known_hash.hexdigest() == link.hash:
-                        file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
+                file_hash = self.calculate_sha256(link) or file_hash
 
             files.append({"file": link.filename, "hash": file_hash})
 
@@ -256,6 +239,25 @@ class HTTPRepository(CachedRepository):
         data.requires_python = info.requires_python
 
         return data.asdict()
+
+    def calculate_sha256(self, link: Link) -> str | None:
+        with self._cached_or_downloaded_file(link) as filepath:
+            known_hash = getattr(hashlib, link.hash_name)() if link.hash_name else None
+            required_hash = hashlib.sha256()
+
+            chunksize = 4096
+            with filepath.open("rb") as f:
+                while True:
+                    chunk = f.read(chunksize)
+                    if not chunk:
+                        break
+                    if known_hash:
+                        known_hash.update(chunk)
+                    required_hash.update(chunk)
+
+            if not known_hash or known_hash.hexdigest() == link.hash:
+                return f"{required_hash.name}:{required_hash.hexdigest()}"
+        return None
 
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint
