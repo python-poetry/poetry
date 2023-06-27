@@ -943,7 +943,7 @@ def test_remove_keeps_dir_if_not_deleteable(
             remove_directory(path)
 
     m = mocker.patch(
-        "poetry.utils.env.remove_directory", side_effect=err_on_rm_venv_only
+        "poetry.utils.env.env_manager.remove_directory", side_effect=err_on_rm_venv_only
     )
 
     venv = manager.remove(f"{venv_name}-py3.6")
@@ -968,7 +968,7 @@ def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
 def test_run_with_input(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
     result = tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
 
-    assert result == "Minimal Output" + os.linesep
+    assert result == "Minimal Output\n"
 
 
 def test_run_with_input_non_zero_return(tmp_path: Path, tmp_venv: VirtualEnv) -> None:

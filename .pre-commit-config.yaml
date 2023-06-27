@@ -26,11 +26,11 @@ repos:
       - id: black
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v3.3.2
+    rev: v3.3.3
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.269
+    rev: v0.0.272
     hooks:
     -   id: ruff

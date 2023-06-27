@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
     from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
+    from poetry.utils.authenticator import Authenticator
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
@@ -120,7 +121,7 @@ def mock_clone(
     return MockDulwichRepo(dest)
 
 
-def mock_download(url: str, dest: Path) -> None:
+def mock_download(url: str, dest: Path, session: Authenticator | None = None) -> None:
     parts = urllib.parse.urlparse(url)
 
     fixture = FIXTURE_PATH / parts.path.lstrip("/")
