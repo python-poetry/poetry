@@ -135,7 +135,6 @@ class PackageInfo:
     def to_package(
         self,
         name: str | None = None,
-        extras: list[str] | None = None,
         root_dir: Path | None = None,
     ) -> Package:
         """
@@ -144,7 +143,6 @@ class PackageInfo:
 
         :param name: Name to use for the package, if not specified name from this
             instance is used.
-        :param extras: Extras to activate for this package.
         :param root_dir:  Optional root directory to use for the package. If set,
             dependency strings will be parsed relative to this directory.
         """

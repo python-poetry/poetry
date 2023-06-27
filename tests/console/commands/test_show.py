@@ -1233,7 +1233,6 @@ def test_show_hides_incompatible_package(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
@@ -1293,7 +1292,6 @@ def test_show_all_shows_incompatible_package(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
 ) -> None:
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -1349,8 +1347,6 @@ pendulum  2.0.0 Pendulum package
 def test_show_hides_incompatible_package_with_duplicate(
     tester: CommandTester,
     poetry: Poetry,
-    installed: Repository,
-    repo: TestRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
@@ -1398,8 +1394,6 @@ cachy (!) 0.1.1 Cachy package
 def test_show_all_shows_all_duplicates(
     tester: CommandTester,
     poetry: Poetry,
-    installed: Repository,
-    repo: TestRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
@@ -2000,7 +1994,6 @@ def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry) ->
 def test_show_dependency_installed_from_git_in_dev(
     tester: CommandTester,
     poetry: Poetry,
-    installed: Repository,
     repo: TestRepository,
 ) -> None:
     # Add a regular dependency for a package in main, and a git dependency for the same
@@ -2067,7 +2060,6 @@ def test_show_dependency_installed_from_git_in_dev(
 def test_url_dependency_is_not_outdated_by_repository_package(
     tester: CommandTester,
     poetry: Poetry,
-    installed: Repository,
     repo: TestRepository,
 ) -> None:
     demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -2248,8 +2240,6 @@ def test_show_error_top_level_with_single_package(tester: CommandTester) -> None
 def test_show_outdated_missing_directory_dependency(
     tester: CommandTester,
     poetry: Poetry,
-    installed: Repository,
-    repo: TestRepository,
 ) -> None:
     with (poetry.pyproject.file.path.parent / "poetry.lock").open(mode="rb") as f:
         data = tomllib.load(f)

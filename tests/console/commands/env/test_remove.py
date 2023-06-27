@@ -47,7 +47,6 @@ def test_remove_by_python_version(
 def test_remove_by_name(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
-    venv_name: str,
     venv_cache: Path,
 ) -> None:
     expected = ""
@@ -65,7 +64,6 @@ def test_remove_by_name(
 def test_remove_all(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
-    venv_name: str,
     venv_cache: Path,
 ) -> None:
     expected = {""}
@@ -79,7 +77,6 @@ def test_remove_all(
 def test_remove_all_and_version(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
-    venv_name: str,
     venv_cache: Path,
 ) -> None:
     expected = {""}
@@ -93,7 +90,6 @@ def test_remove_all_and_version(
 def test_remove_multiple(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
-    venv_name: str,
     venv_cache: Path,
 ) -> None:
     expected = {""}

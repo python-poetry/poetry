@@ -148,7 +148,7 @@ def test_uploader_skip_existing_bubbles_unskippable_errors(
 
 
 def test_uploader_properly_handles_file_not_existing(
-    mocker: MockerFixture, http: type[httpretty.httpretty], uploader: Uploader
+    mocker: MockerFixture, uploader: Uploader
 ) -> None:
     mocker.patch("pathlib.Path.is_file", return_value=False)
 

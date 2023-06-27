@@ -45,7 +45,6 @@ def env(tmp_path: Path) -> MockEnv:
 def setup(
     mocker: MockerFixture,
     installed: Repository,
-    config: Config,
     env: MockEnv,
 ) -> Iterator[None]:
     # Do not run pip commands of the executor

@@ -196,7 +196,6 @@ def test_execute_executes_a_batch_of_operations(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
     copy_wheel: Callable[[], Path],
     fixture_dir: FixtureDirGetter,
@@ -307,7 +306,6 @@ def test_execute_prints_warning_for_yanked_package(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
     operations: list[Operation],
     has_warning: bool,
@@ -341,7 +339,6 @@ def test_execute_prints_warning_for_invalid_wheels(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
@@ -456,7 +453,6 @@ def test_execute_works_with_ansi_output(
     pool: RepositoryPool,
     io_decorated: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
@@ -488,12 +484,10 @@ def test_execute_works_with_ansi_output(
 
 
 def test_execute_works_with_no_ansi_output(
-    mocker: MockerFixture,
     config: Config,
     pool: RepositoryPool,
     io_not_decorated: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
@@ -579,7 +573,6 @@ def test_executor_should_delete_incomplete_downloads(
     tmp_path: Path,
     mocker: MockerFixture,
     pool: RepositoryPool,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -967,7 +960,6 @@ def test_executor_should_write_pep610_url_references_for_git(
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
@@ -1031,10 +1023,8 @@ def test_executor_should_write_pep610_url_references_for_editable_git(
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
     mocker: MockerFixture,
-    fixture_dir: FixtureDirGetter,
 ) -> None:
     source_resolved_reference = "123456"
     source_url = "https://github.com/demo/demo.git"
@@ -1080,7 +1070,6 @@ def test_executor_should_append_subdirectory_for_git(
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
 ) -> None:
     package = Package(
@@ -1111,7 +1100,6 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
 ) -> None:
     package = Package(
@@ -1182,7 +1170,6 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1315,7 +1302,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess_enc
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1351,7 +1337,6 @@ def test_build_system_requires_not_available(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:

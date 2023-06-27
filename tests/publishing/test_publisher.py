@@ -173,7 +173,6 @@ def test_publish_read_from_environment_variable(
     fixture_dir: FixtureDirGetter,
     environ: None,
     mocker: MockerFixture,
-    config: Config,
 ) -> None:
     os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"

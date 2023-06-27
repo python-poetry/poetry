@@ -16,11 +16,8 @@ if TYPE_CHECKING:
     from cleo.testers.application_tester import ApplicationTester
     from pytest_mock import MockerFixture
 
-    from tests.helpers import PoetryTestApplication
-
 
 def test_publish_returns_non_zero_code_for_upload_errors(
-    app: PoetryTestApplication,
     app_tester: ApplicationTester,
     http: type[httpretty.httpretty],
 ) -> None:
@@ -45,7 +42,6 @@ HTTP Error 400: Bad Request | b'Bad Request'
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_publish_returns_non_zero_code_for_connection_errors(
-    app: PoetryTestApplication,
     app_tester: ApplicationTester,
     http: type[httpretty.httpretty],
 ) -> None:

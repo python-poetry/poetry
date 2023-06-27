@@ -169,7 +169,7 @@ class Layout:
 
         return content
 
-    def _create_default(self, path: Path, src: bool = True) -> None:
+    def _create_default(self, path: Path) -> None:
         package_path = path / self.package_path
         package_path.mkdir(parents=True)
 

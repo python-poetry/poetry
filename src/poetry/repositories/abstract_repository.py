@@ -32,6 +32,5 @@ class AbstractRepository(ABC):
         self,
         name: str,
         version: Version,
-        extras: list[str] | None = None,
     ) -> Package:
         ...

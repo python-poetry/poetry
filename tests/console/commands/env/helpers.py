@@ -22,7 +22,7 @@ def build_venv(path: Path | str, **_: Any) -> None:
 def check_output_wrapper(
     version: Version = VERSION_3_7_1,
 ) -> Callable[[list[str], Any, Any], str]:
-    def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
+    def check_output(cmd: list[str], *_: Any, **__: Any) -> str:
         # cmd is a list, like ["python", "-c", "do stuff"]
         python_cmd = cmd[2]
         if "sys.version_info[:3]" in python_cmd:

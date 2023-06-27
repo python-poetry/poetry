@@ -597,9 +597,7 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_wrong_dependency_inputs(
-    tester: CommandTester, repo: TestRepository
-) -> None:
+def test_interactive_with_wrong_dependency_inputs(tester: CommandTester) -> None:
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -934,7 +932,6 @@ line-length = 88
 def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
-    init_basic_inputs: str,
     repo: TestRepository,
 ) -> None:
     pyproject_file = source_dir / "pyproject.toml"

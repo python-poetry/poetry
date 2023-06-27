@@ -96,7 +96,6 @@ Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving faile
 def test_disjoint_root_constraints_path_dependencies(
     root: ProjectPackage,
     provider: Provider,
-    repo: Repository,
     fixture_dir: FixtureDirGetter,
 ) -> None:
     provider.set_package_python_versions("^3.7")

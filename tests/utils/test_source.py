@@ -75,4 +75,4 @@ def test_source_priority_as_string(priority: str, expected_priority: Priority) -
         "https://example.com",
         priority=priority,  # type: ignore[arg-type]
     )
-    assert source.priority == Priority.SECONDARY
+    assert source.priority == expected_priority

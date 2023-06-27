@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
     from poetry.utils.env import Env
-    from tests.helpers import PoetryTestApplication
     from tests.types import CommandTesterFactory
 
 
@@ -156,10 +155,7 @@ def mock_metadata_entry_points(
         }
     ],
 )
-def test_show_displays_installed_plugins(
-    app: PoetryTestApplication,
-    tester: CommandTester,
-) -> None:
+def test_show_displays_installed_plugins(tester: CommandTester) -> None:
     tester.execute("")
 
     expected = """
@@ -183,7 +179,6 @@ def test_show_displays_installed_plugins(
     ],
 )
 def test_show_displays_installed_plugins_with_multiple_plugins(
-    app: PoetryTestApplication,
     tester: CommandTester,
 ) -> None:
     tester.execute("")
@@ -209,7 +204,6 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
     ],
 )
 def test_show_displays_installed_plugins_with_dependencies(
-    app: PoetryTestApplication,
     tester: CommandTester,
 ) -> None:
     tester.execute("")

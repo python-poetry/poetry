@@ -10,8 +10,6 @@ from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from pytest_mock import MockerFixture
 
     from poetry.utils.env import VirtualEnv
@@ -19,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def test_pip_install_successful(
-    tmp_path: Path, tmp_venv: VirtualEnv, fixture_dir: FixtureDirGetter
+    tmp_venv: VirtualEnv, fixture_dir: FixtureDirGetter
 ) -> None:
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     result = pip_install(file_path, tmp_venv)
@@ -28,7 +26,6 @@ def test_pip_install_successful(
 
 
 def test_pip_install_with_keyboard_interrupt(
-    tmp_path: Path,
     tmp_venv: VirtualEnv,
     fixture_dir: FixtureDirGetter,
     mocker: MockerFixture,

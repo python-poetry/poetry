@@ -46,7 +46,6 @@ def test_none_activated(
 def test_activated(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
-    venv_cache: Path,
     venv_activate_37: None,
 ) -> None:
     tester.execute()

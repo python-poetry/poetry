@@ -17,8 +17,6 @@ from poetry.utils.env import EnvManager
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    import httpretty
-
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
@@ -43,12 +41,7 @@ def pool(repo: TestRepository) -> RepositoryPool:
 def create_pool_factory(
     repo: Repository,
 ) -> Callable[[Config, Iterable[dict[str, Any]], IO, bool], RepositoryPool]:
-    def _create_pool(
-        config: Config,
-        sources: Iterable[dict[str, Any]] = (),
-        io: IO | None = None,
-        disable_cache: bool = False,
-    ) -> RepositoryPool:
+    def _create_pool(*_: Any, **__: Any) -> RepositoryPool:
         pool = RepositoryPool()
         pool.add_repository(repo)
 
@@ -63,7 +56,6 @@ def setup_mocks(
     tmp_venv: VirtualEnv,
     installed: Repository,
     pool: RepositoryPool,
-    http: type[httpretty.httpretty],
     repo: Repository,
 ) -> None:
     mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)

@@ -4,6 +4,7 @@ import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 from poetry.core.packages.dependency import Dependency
 
@@ -34,7 +35,7 @@ class MockSinglePageRepository(SinglePageRepository):
         with fixture.open(encoding="utf-8") as f:
             return SimpleRepositoryPage(self._url, f.read())
 
-    def _download(self, url: str, dest: Path) -> None:
+    def _download(self, *_: Any, **__: Any) -> None:
         raise RuntimeError("Tests are not configured for downloads")
 
 

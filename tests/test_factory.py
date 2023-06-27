@@ -219,9 +219,7 @@ def test_create_poetry_with_multi_constraints_dependency(
     assert len(package.requires) == 2
 
 
-def test_poetry_with_default_source_legacy(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_default_source_legacy(fixture_dir: FixtureDirGetter) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(fixture_dir("with_default_source_legacy"), io=io)
 
@@ -229,9 +227,7 @@ def test_poetry_with_default_source_legacy(
     assert "Found deprecated key" in io.fetch_error()
 
 
-def test_poetry_with_default_source(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_default_source(fixture_dir: FixtureDirGetter) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(fixture_dir("with_default_source"), io=io)
 
@@ -239,9 +235,7 @@ def test_poetry_with_default_source(
     assert io.fetch_error() == ""
 
 
-def test_poetry_with_default_source_and_pypi(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_default_source_and_pypi(fixture_dir: FixtureDirGetter) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(fixture_dir("with_default_source_and_pypi"), io=io)
 
@@ -252,9 +246,7 @@ def test_poetry_with_default_source_and_pypi(
     assert "Warning: Found deprecated key" not in io.fetch_error()
 
 
-def test_poetry_with_default_source_pypi(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_default_source_pypi(fixture_dir: FixtureDirGetter) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(fixture_dir("with_default_source_pypi"), io=io)
 
@@ -269,7 +261,7 @@ def test_poetry_with_default_source_pypi(
     ("with_non_default_source_implicit", "with_non_default_source_explicit"),
 )
 def test_poetry_with_non_default_source(
-    project: str, fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    project: str, fixture_dir: FixtureDirGetter
 ) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(fixture_dir(project), io=io)
@@ -287,7 +279,7 @@ def test_poetry_with_non_default_source(
 
 
 def test_poetry_with_non_default_secondary_source_legacy(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     poetry = Factory().create_poetry(
         fixture_dir("with_non_default_secondary_source_legacy")
@@ -302,7 +294,7 @@ def test_poetry_with_non_default_secondary_source_legacy(
 
 
 def test_poetry_with_non_default_secondary_source(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     poetry = Factory().create_poetry(fixture_dir("with_non_default_secondary_source"))
 
@@ -316,7 +308,6 @@ def test_poetry_with_non_default_secondary_source(
 
 def test_poetry_with_non_default_multiple_secondary_sources_legacy(
     fixture_dir: FixtureDirGetter,
-    with_simple_keyring: None,
 ) -> None:
     poetry = Factory().create_poetry(
         fixture_dir("with_non_default_multiple_secondary_sources_legacy")
@@ -333,7 +324,7 @@ def test_poetry_with_non_default_multiple_secondary_sources_legacy(
 
 
 def test_poetry_with_non_default_multiple_secondary_sources(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     poetry = Factory().create_poetry(
         fixture_dir("with_non_default_multiple_secondary_sources")
@@ -350,7 +341,7 @@ def test_poetry_with_non_default_multiple_secondary_sources(
 
 
 def test_poetry_with_non_default_multiple_sources_legacy(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     poetry = Factory().create_poetry(
         fixture_dir("with_non_default_multiple_sources_legacy")
@@ -368,7 +359,7 @@ def test_poetry_with_non_default_multiple_sources_legacy(
 
 
 def test_poetry_with_non_default_multiple_sources(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     poetry = Factory().create_poetry(fixture_dir("with_non_default_multiple_sources"))
 
@@ -384,7 +375,7 @@ def test_poetry_with_non_default_multiple_sources(
 
 
 def test_poetry_with_non_default_multiple_sources_pypi(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(
@@ -417,9 +408,7 @@ def test_poetry_with_no_default_source(fixture_dir: FixtureDirGetter) -> None:
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI"}
 
 
-def test_poetry_with_supplemental_source(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_supplemental_source(fixture_dir: FixtureDirGetter) -> None:
     poetry = Factory().create_poetry(fixture_dir("with_supplemental_source"))
 
     assert poetry.pool.has_repository("PyPI")
@@ -431,9 +420,7 @@ def test_poetry_with_supplemental_source(
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "supplemental"}
 
 
-def test_poetry_with_explicit_source(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_explicit_source(fixture_dir: FixtureDirGetter) -> None:
     poetry = Factory().create_poetry(fixture_dir("with_explicit_source"))
 
     assert len(poetry.pool.repositories) == 1
@@ -446,9 +433,7 @@ def test_poetry_with_explicit_source(
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI"}
 
 
-def test_poetry_with_explicit_pypi_and_other(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_explicit_pypi_and_other(fixture_dir: FixtureDirGetter) -> None:
     io = BufferedIO()
     poetry = Factory().create_poetry(fixture_dir("with_explicit_pypi_and_other"), io=io)
 
@@ -462,25 +447,21 @@ def test_poetry_with_explicit_pypi_and_other(
     "project", ["with_explicit_pypi_no_other", "with_explicit_pypi_and_other_explicit"]
 )
 def test_poetry_with_pypi_explicit_only(
-    project: str, fixture_dir: FixtureDirGetter, with_simple_keyring: None
+    project: str, fixture_dir: FixtureDirGetter
 ) -> None:
     with pytest.raises(PoetryException) as e:
         Factory().create_poetry(fixture_dir(project))
     assert str(e.value) == "At least one source must not be configured as 'explicit'."
 
 
-def test_poetry_with_two_default_sources_legacy(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_two_default_sources_legacy(fixture_dir: FixtureDirGetter) -> None:
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixture_dir("with_two_default_sources_legacy"))
 
     assert str(e.value) == "Only one repository can be the default."
 
 
-def test_poetry_with_two_default_sources(
-    fixture_dir: FixtureDirGetter, with_simple_keyring: None
-) -> None:
+def test_poetry_with_two_default_sources(fixture_dir: FixtureDirGetter) -> None:
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixture_dir("with_two_default_sources"))
 

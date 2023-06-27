@@ -33,7 +33,7 @@ def setup(mocker: MockerFixture) -> None:
 
 @pytest.fixture(autouse=True)
 def mock_subprocess_calls(
-    setup: None, current_python: tuple[int, int, int], mocker: MockerFixture
+    current_python: tuple[int, int, int], mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.check_output",

@@ -41,7 +41,6 @@ def venvs_in_cache_config(app: PoetryTestApplication, venv_cache: Path) -> None:
 
 @pytest.fixture
 def venvs_in_cache_dirs(
-    app: PoetryTestApplication,
     venvs_in_cache_config: None,
     venv_name: str,
     venv_cache: Path,
