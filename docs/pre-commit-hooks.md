@@ -109,16 +109,16 @@ repos:
 `pre-commit autoupdate` updates the `rev` for each repository defined in your `.pre-commit-config.yaml`
 to the latest available tag in the default branch.
 
-Poetry follows a branching strategy, where the default branch is the active development branch
-and fixes gets back ported to stable branches. New tags are assigned in these stable branches.
+Poetry follows a branching strategy where the default branch is the active development branch
+and, fixes get backported to stable branches. New tags are assigned in these stable branches.
 
 `pre-commit` does not support such a branching strategy and has decided to not implement
-an option, either on the [user side](https://github.com/pre-commit/pre-commit/issues/2512)
-or [hook author side](https://github.com/pre-commit/pre-commit/issues/2508), to define a branch for lookup the latest
-available tag.
+an option, either on the [user's side](https://github.com/pre-commit/pre-commit/issues/2512)
+or the [hook author's side](https://github.com/pre-commit/pre-commit/issues/2508), to define a branch for looking
+up the latest available tag.
 
 Thus, `pre-commit autoupdate` is not usable for the hooks described here.
 
-You can avoid changing the `rev` to an unexpected value, by using the `--repo` parameter (may be specified multiple
-times), to explicit list repositories that should be updated. An option to explicit exclude
+You can avoid changing the `rev` to an unexpected value by using the `--repo` parameter (may be specified multiple
+times), to explicitly list repositories that should be updated. An option to explicitly exclude
 repositories [will not be implemented](https://github.com/pre-commit/pre-commit/issues/1959) into `pre-commit`.
