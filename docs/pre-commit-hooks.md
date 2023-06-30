@@ -109,8 +109,8 @@ repos:
 `pre-commit autoupdate` updates the `rev` for each repository defined in your `.pre-commit-config.yaml`
 to the latest available tag in the default branch.
 
-Poetry follows a branching strategy where the default branch is the active development branch
-and, fixes get backported to stable branches. New tags are assigned in these stable branches.
+Poetry follows a branching strategy where the default branch is the active development branch,
+and fixes get backported to stable branches. New tags are assigned in these stable branches.
 
 `pre-commit` does not support such a branching strategy and has decided to not implement
 an option, either on the [user's side](https://github.com/pre-commit/pre-commit/issues/2512)
