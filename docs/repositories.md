@@ -164,7 +164,7 @@ poetry source add --priority=default foo https://foo.bar/simple/
 {{% warning %}}
 
 In a future version of Poetry, PyPI will be disabled automatically
-if there is at least one custom source configured with another priority than `explicit`.
+if at least one custom primary source is configured.
 If you are using custom sources in addition to PyPI, you should configure PyPI explicitly
 with a certain priority, e.g.
 
