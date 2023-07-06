@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python:3
+FROM mcr.microsoft.com/devcontainers/python:3-bookworm
 
 RUN export DEBIAN_FRONTEND=noninteractive \
      && apt-get update && apt-get install -y xdg-utils \
