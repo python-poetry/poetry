@@ -181,12 +181,12 @@ class Factory(BaseFactory):
             else:
                 from poetry.repositories.pypi_repository import PyPiRepository
 
-                if pool.repositories:
+                if pool.has_primary_repositories():
                     io.write_error_line(
                         "<warning>"
                         "Warning: In a future version of Poetry, PyPI will be disabled"
-                        " automatically if at least one custom source is configured"
-                        " with another priority than 'explicit'. In order to avoid"
+                        " automatically if at least one custom primary source is"
+                        " configured. In order to avoid"
                         " a breaking change and make your pyproject.toml forward"
                         " compatible, add PyPI explicitly via 'poetry source add pypi'."
                         " By the way, this has the advantage that you can set the"
