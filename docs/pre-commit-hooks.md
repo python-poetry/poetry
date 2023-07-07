@@ -71,7 +71,7 @@ console:
 
 ```yaml
 hooks:
-  - id: poetry-export
+-   id: poetry-export
     args: ["-f", "requirements.txt"]
     verbose: true
 ```
@@ -80,7 +80,7 @@ Also, `--dev` can be added to `args` to write dev-dependencies to `requirements.
 
 ```yaml
 hooks:
-  - id: poetry-export
+-   id: poetry-export
     args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
 ```
 
@@ -93,12 +93,12 @@ A full `.pre-commit-config.yaml` example:
 
 ```yaml
 repos:
-  - repo: https://github.com/python-poetry/poetry
+-   repo: https://github.com/python-poetry/poetry
     rev: ''  # add version here
     hooks:
-      - id: poetry-check
-      - id: poetry-lock
-      - id: poetry-export
+    -   id: poetry-check
+    -   id: poetry-lock
+    -   id: poetry-export
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 ```
 
