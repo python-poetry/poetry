@@ -43,7 +43,7 @@ importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
 # jsonschema 4.18 uses Rust-based libraries which causes issues when building from source
 jsonschema = ">=4.10.0,<4.18.0"
-keyring = "^23.9.0"
+keyring = "^24.0.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
