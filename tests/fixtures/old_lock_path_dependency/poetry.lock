@@ -4,7 +4,6 @@
 name = "quix"
 version = "1.2.3"
 description = "Some description."
-category = "main"
 optional = false
 python-versions = "~2.7 || ^3.4"
 files = []

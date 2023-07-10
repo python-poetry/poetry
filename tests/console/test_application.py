@@ -11,6 +11,7 @@ from cleo.testers.application_tester import ApplicationTester
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.utils.authenticator import Authenticator
 from tests.helpers import mock_metadata_entry_points
 
@@ -39,7 +40,7 @@ def with_add_command_plugin(mocker: MockerFixture) -> None:
     mock_metadata_entry_points(mocker, AddCommandPlugin)
 
 
-def test_application_with_plugins(with_add_command_plugin: None):
+def test_application_with_plugins(with_add_command_plugin: None) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -49,7 +50,7 @@ def test_application_with_plugins(with_add_command_plugin: None):
     assert tester.status_code == 0
 
 
-def test_application_with_plugins_disabled(with_add_command_plugin: None):
+def test_application_with_plugins_disabled(with_add_command_plugin: None) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -59,7 +60,7 @@ def test_application_with_plugins_disabled(with_add_command_plugin: None):
     assert tester.status_code == 0
 
 
-def test_application_execute_plugin_command(with_add_command_plugin: None):
+def test_application_execute_plugin_command(with_add_command_plugin: None) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -71,7 +72,7 @@ def test_application_execute_plugin_command(with_add_command_plugin: None):
 
 def test_application_execute_plugin_command_with_plugins_disabled(
     with_add_command_plugin: None,
-):
+) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -83,7 +84,7 @@ def test_application_execute_plugin_command_with_plugins_disabled(
 
 
 @pytest.mark.parametrize("disable_cache", [True, False])
-def test_application_verify_source_cache_flag(disable_cache: bool):
+def test_application_verify_source_cache_flag(disable_cache: bool) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
@@ -99,6 +100,7 @@ def test_application_verify_source_cache_flag(disable_cache: bool):
     assert app.poetry.pool.repositories
 
     for repo in app.poetry.pool.repositories:
+        assert isinstance(repo, CachedRepository)
         assert repo._disable_cache == disable_cache
 
 

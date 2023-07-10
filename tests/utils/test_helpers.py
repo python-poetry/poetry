@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
 
 
-def test_parse_requires():
+def test_parse_requires() -> None:
     requires = """\
 jsonschema>=2.6.0.0,<3.0.0.0
 lockfile>=0.12.0.0,<0.13.0.0
@@ -43,7 +42,7 @@ zipfile36>=0.1.0.0,<0.2.0.0
 
 [dev]
 isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort
-"""  # noqa: E501
+"""
     result = parse_requires(requires)
     # fmt: off
     expected = [
@@ -71,65 +70,52 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
 
 
 def test_default_hash(fixture_dir: FixtureDirGetter) -> None:
-    root_dir = Path(__file__).parent.parent.parent
-    file_path = root_dir / fixture_dir("distributions/demo-0.1.0.tar.gz")
-    sha_256 = "72e8531e49038c5f9c4a837b088bfcb8011f4a9f76335c8f0654df6ac539b3d6"
-    assert get_file_hash(file_path) == sha_256
-
-
-try:
-    from hashlib import algorithms_guaranteed
-except ImportError:
-    algorithms_guaranteed = {"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}
+    sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+    assert get_file_hash(fixture_dir("distributions") / "demo-0.1.0.tar.gz") == sha_256
 
 
 @pytest.mark.parametrize(
     "hash_name,expected",
     [
-        (hash_name, value)
-        for hash_name, value in [
-            ("sha224", "972d02f36539a98599aed0566bc8aaf3e6701f4e895dd797d8f5248e"),
-            (
-                "sha3_512",
-                "c04ee109ae52d6440445e24dbd6d244a1d0f0289ef79cb7ba9bc3c139c0237169af9a8f61cd1cf4fc17f853ddf84f97c475ac5bb6c91a4aff0b825b884d4896c",  # noqa: E501
-            ),
-            (
-                "blake2s",
-                "c336ecbc9d867c9d860accfba4c3723c51c4b5c47a1e0a955e1c8df499e36741",
-            ),
-            (
-                "sha3_384",
-                "d4abb2459941369aabf8880c5287b7eeb80678e14f13c71b9ecf64c772029dc3f93939590bea9ecdb51a1d1a74fefc5a",  # noqa: E501
-            ),
-            (
-                "blake2b",
-                "48e70abac547ab38e2330e6e6743a0c0f6274dcaa6df2c98135a78a9dd5b04a072d551fc3851b34da03eb0bf50dd71c7f32a8c36956e99fd6c66491bc7844800",  # noqa: E501
-            ),
-            (
-                "sha256",
-                "72e8531e49038c5f9c4a837b088bfcb8011f4a9f76335c8f0654df6ac539b3d6",
-            ),
-            (
-                "sha512",
-                "e08a00a4b86358e49a318e7e3ba7a3d2fabdd17a2fef95559a0af681ea07ab1296b0b8e11e645297da296290661dc07ae3c8f74eab66bd18a80dce0c0ccb355b",  # noqa: E501
-            ),
-            (
-                "sha384",
-                "aa3144e28c6700a83247e8ec8711af5d3f5f75997990d48ec41e66bd275b3d0e19ee6f2fe525a358f874aa717afd06a9",  # noqa: E501
-            ),
-            ("sha3_224", "64bfc6e4125b4c6d67fd88ad1c7d1b5c4dc11a1970e433cd576c91d4"),
-            ("sha1", "4c057579005ac3e68e951a11ffdc4b27c6ae16af"),
-            (
-                "sha3_256",
-                "ba3d2a964b0680b6dc9565a03952e29c294c785d5a2307d3e2d785d73b75ed7e",
-            ),
-        ]
-        if hash_name in algorithms_guaranteed
+        ("sha224", "d26bd24163fe91c16b4b0162e773514beab77b76114d9faf6a31e350"),
+        (
+            "sha3_512",
+            "196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",  # noqa: E501
+        ),
+        (
+            "blake2s",
+            "6dd9007d36c106defcf362cc637abeca41e8e93999928c8fcfaba515ed33bc93",
+        ),
+        (
+            "sha3_384",
+            "787264d7885a0c305d2ee4daecfff435d11818399ef96cacef7e7c6bb638ce475f630d39fdd2800ca187dcd0071dc410",  # noqa: E501
+        ),
+        (
+            "blake2b",
+            "077a34e8252c8f6776bddd0d34f321cc52762cb4c11a1c7aa9b6168023f1722caf53c9f029074a6eb990a8de341d415dd986293bc2a2fccddad428be5605696e",  # noqa: E501
+        ),
+        (
+            "sha256",
+            "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
+        ),
+        (
+            "sha512",
+            "766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",  # noqa: E501
+        ),
+        (
+            "sha384",
+            "c638f32460f318035e4600284ba64fb531630740aebd33885946e527002d742787ff09eb65fd81bc34ce5ff5ef11cfe8",  # noqa: E501
+        ),
+        ("sha3_224", "72980fc7bdf8c4d34268dc469442b09e1ccd2a8ff390954fc4d55a5a"),
+        ("sha1", "91b585bd38f72d7ceedb07d03f94911b772fdc4c"),
+        (
+            "sha3_256",
+            "7da5c08b416e6bcb339d6bedc0fe077c6e69af00607251ef4424c356ea061fcb",
+        ),
     ],
 )
 def test_guaranteed_hash(
     hash_name: str, expected: str, fixture_dir: FixtureDirGetter
 ) -> None:
-    root_dir = Path(__file__).parent.parent.parent
-    file_path = root_dir / fixture_dir("distributions/demo-0.1.0.tar.gz")
+    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     assert get_file_hash(file_path, hash_name) == expected

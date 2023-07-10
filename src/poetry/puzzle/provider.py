@@ -1,18 +1,12 @@
 from __future__ import annotations
 
-import functools
 import logging
-import os
 import re
-import tempfile
 import time
-import urllib.parse
 
 from collections import defaultdict
 from contextlib import contextmanager
-from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Collection
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -23,25 +17,24 @@ from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import EmptyMarker
 from poetry.core.version.markers import MarkerUnion
 
-from poetry.inspection.info import PackageInfo
-from poetry.inspection.info import PackageInfoError
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
+from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
-from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
+    from pathlib import Path
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
@@ -99,39 +92,6 @@ class Indicator(ProgressIndicator):
         return f"{elapsed:.1f}s"
 
 
-@functools.lru_cache(maxsize=None)
-def _get_package_from_git(
-    url: str,
-    branch: str | None = None,
-    tag: str | None = None,
-    rev: str | None = None,
-    subdirectory: str | None = None,
-    source_root: Path | None = None,
-) -> Package:
-    source = Git.clone(
-        url=url,
-        source_root=source_root,
-        branch=branch,
-        tag=tag,
-        revision=rev,
-        clean=False,
-    )
-    revision = Git.get_revision(source)
-
-    path = Path(source.path)
-    if subdirectory:
-        path = path.joinpath(subdirectory)
-
-    package = Provider.get_package_from_directory(path)
-    package._source_type = "git"
-    package._source_url = url
-    package._source_reference = rev or tag or branch or "HEAD"
-    package._source_resolved_reference = revision
-    package._source_subdirectory = subdirectory
-
-    return package
-
-
 class Provider:
     UNSAFE_PACKAGES: set[str] = set()
 
@@ -146,6 +106,7 @@ class Provider:
     ) -> None:
         self._package = package
         self._pool = pool
+        self._direct_origin = DirectOrigin(self._pool.artifact_cache)
         self._io = io
         self._env: Env | None = None
         self._python_constraint = package.python_constraint
@@ -319,12 +280,8 @@ class Provider:
         #
         # We rely on the VersionSolver resolving direct-origin dependencies first.
         direct_origin_package = self._direct_origin_packages.get(dependency.name)
-        if direct_origin_package is not None:
-            packages = (
-                [direct_origin_package]
-                if dependency.constraint.allows(direct_origin_package.version)
-                else []
-            )
+        if direct_origin_package and direct_origin_package.satisfies(dependency):
+            packages = [direct_origin_package]
             return PackageCollection(dependency, packages)
 
         packages = self._pool.find_packages(dependency)
@@ -350,7 +307,7 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        package = self.get_package_from_vcs(
+        package = self._direct_origin.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
             branch=dependency.branch,
@@ -367,30 +324,9 @@ class Provider:
 
         return package
 
-    @staticmethod
-    def get_package_from_vcs(
-        vcs: str,
-        url: str,
-        branch: str | None = None,
-        tag: str | None = None,
-        rev: str | None = None,
-        subdirectory: str | None = None,
-        source_root: Path | None = None,
-    ) -> Package:
-        if vcs != "git":
-            raise ValueError(f"Unsupported VCS dependency {vcs}")
-
-        return _get_package_from_git(
-            url=url,
-            branch=branch,
-            tag=tag,
-            rev=rev,
-            subdirectory=subdirectory,
-            source_root=source_root,
-        )
-
     def _search_for_file(self, dependency: FileDependency) -> Package:
-        package = self.get_package_from_file(dependency.full_path)
+        dependency.validate(raise_error=True)
+        package = self._direct_origin.get_package_from_file(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -406,21 +342,9 @@ class Provider:
 
         return package
 
-    @classmethod
-    def get_package_from_file(cls, file_path: Path) -> Package:
-        try:
-            package = PackageInfo.from_path(path=file_path).to_package(
-                root_dir=file_path
-            )
-        except PackageInfoError:
-            raise RuntimeError(
-                f"Unable to determine package info from path: {file_path}"
-            )
-
-        return package
-
     def _search_for_directory(self, dependency: DirectoryDependency) -> Package:
-        package = self.get_package_from_directory(dependency.full_path)
+        dependency.validate(raise_error=True)
+        package = self._direct_origin.get_package_from_directory(dependency.full_path)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -431,12 +355,8 @@ class Provider:
 
         return package
 
-    @classmethod
-    def get_package_from_directory(cls, directory: Path) -> Package:
-        return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
-
     def _search_for_url(self, dependency: URLDependency) -> Package:
-        package = self.get_package_from_url(dependency.url)
+        package = self._direct_origin.get_package_from_url(dependency.url)
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
@@ -447,23 +367,6 @@ class Provider:
 
                 for extra_dep in package.extras[extra]:
                     package.add_dependency(extra_dep)
-
-        return package
-
-    @classmethod
-    def get_package_from_url(cls, url: str) -> Package:
-        file_name = os.path.basename(urllib.parse.urlparse(url).path)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dest = Path(temp_dir) / file_name
-            download_file(url, dest)
-            package = cls.get_package_from_file(dest)
-
-            package.files = [
-                {"file": file_name, "hash": "sha256:" + get_file_hash(dest)}
-            ]
-
-        package._source_type = "url"
-        package._source_url = url
 
         return package
 
@@ -663,18 +566,18 @@ class Provider:
         # the requirements will be merged.
         #
         # For instance:
-        #   - enum34; python_version=="2.7"
-        #   - enum34; python_version=="3.3"
+        #   • enum34; python_version=="2.7"
+        #   • enum34; python_version=="3.3"
         #
         # will become:
-        #   - enum34; python_version=="2.7" or python_version=="3.3"
+        #   • enum34; python_version=="2.7" or python_version=="3.3"
         #
         # If the duplicate dependencies have different constraints
         # we have to split the dependency graph.
         #
         # An example of this is:
-        #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
-        #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
+        #   • pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
+        #   • pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates: dict[str, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
             duplicates[dep.complete_name].append(dep)
@@ -694,19 +597,19 @@ class Provider:
             for group in dep_groups:
                 # In order to reduce the number of overrides we merge duplicate
                 # dependencies by constraint. For instance, if we have:
-                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   - foo (>=2.0) ; python_version >= "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.7"
                 # we can avoid two overrides by merging them to:
-                #   - foo (>=2.0) ; python_version >= "3.6"
+                #   • foo (>=2.0) ; python_version >= "3.6"
                 # However, if we want to merge dependencies by constraint we have to
                 # merge dependencies by markers first in order to avoid unnecessary
                 # solver failures. For instance, if we have:
-                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   - foo (>=2.0) ; python_version >= "3.7"
-                #   - foo (<2.1) ; python_version >= "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.7"
+                #   • foo (<2.1) ; python_version >= "3.7"
                 # we must not merge the first two constraints but the last two:
-                #   - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   - foo (>=2.0,<2.1) ; python_version >= "3.7"
+                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+                #   • foo (>=2.0,<2.1) ; python_version >= "3.7"
                 deps += self._merge_dependencies_by_constraint(
                     self._merge_dependencies_by_marker(group)
                 )
@@ -740,13 +643,13 @@ class Provider:
             # tell the solver to make new resolutions with specific overrides.
             #
             # For instance, if the foo (1.2.3) package has the following dependencies:
-            #   - bar (>=2.0) ; python_version >= "3.6"
-            #   - bar (<2.0) ; python_version < "3.6"
+            #   • bar (>=2.0) ; python_version >= "3.6"
+            #   • bar (<2.0) ; python_version < "3.6"
             #
             # then the solver will need to make two new resolutions
             # with the following overrides:
-            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
-            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
+            #   • {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
+            #   • {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
 
             def fmt_warning(d: Dependency) -> str:
                 dependency_marker = d.marker if not d.marker.is_any() else "*"
@@ -997,16 +900,16 @@ class Provider:
         environment markers to the inverse of the union of the
         other dependencies markers.
         For instance, if we have the following dependencies:
-          - ipython
-          - ipython (1.2.4) ; implementation_name == "pypy"
+          • ipython
+          • ipython (1.2.4) ; implementation_name == "pypy"
 
         the marker for `ipython` will become `implementation_name != "pypy"`.
 
         Further, we have to merge the constraints of the requirements
         without markers into the constraints of the requirements with markers.
         for instance, if we have the following dependencies:
-          - foo (>= 1.2)
-          - foo (!= 1.2.1) ; python == 3.10
+          • foo (>= 1.2)
+          • foo (!= 1.2.1) ; python == 3.10
 
         the constraint for the second entry will become (!= 1.2.1, >= 1.2).
         """
@@ -1044,10 +947,10 @@ class Provider:
                 # and the inverted marker is not empty,
                 # a dependency with the inverted union of all markers is required
                 # in order to not miss other dependencies later, for instance:
-                #   - foo (1.0) ; python == 3.7
-                #   - foo (2.0) ; python == 3.8
-                #   - bar (2.0) ; python == 3.8
-                #   - bar (3.0) ; python == 3.9
+                #   • foo (1.0) ; python == 3.7
+                #   • foo (2.0) ; python == 3.8
+                #   • bar (2.0) ; python == 3.8
+                #   • bar (3.0) ; python == 3.9
                 #
                 # the last dependency would be missed without this,
                 # because the intersection with both foo dependencies is empty.

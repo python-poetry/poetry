@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.console.commands.shell import ShellCommand
+
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
@@ -20,11 +22,12 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("shell")
 
 
-def test_shell(tester: CommandTester, mocker: MockerFixture):
+def test_shell(tester: CommandTester, mocker: MockerFixture) -> None:
     shell_activate = mocker.patch("poetry.utils.shell.Shell.activate")
 
     tester.execute()
 
+    assert isinstance(tester.command, ShellCommand)
     expected_output = f"Spawning shell within {tester.command.env.path}\n"
 
     shell_activate.assert_called_once_with(tester.command.env)
@@ -32,12 +35,13 @@ def test_shell(tester: CommandTester, mocker: MockerFixture):
     assert tester.status_code == 0
 
 
-def test_shell_already_active(tester: CommandTester, mocker: MockerFixture):
+def test_shell_already_active(tester: CommandTester, mocker: MockerFixture) -> None:
     os.environ["POETRY_ACTIVE"] = "1"
     shell_activate = mocker.patch("poetry.utils.shell.Shell.activate")
 
     tester.execute()
 
+    assert isinstance(tester.command, ShellCommand)
     expected_output = (
         f"Virtual environment already activated: {tester.command.env.path}\n"
     )
@@ -71,7 +75,8 @@ def test__is_venv_activated(
     real_prefix: str | None,
     prefix: str,
     expected: bool,
-):
+) -> None:
+    assert isinstance(tester.command, ShellCommand)
     mocker.patch.object(tester.command.env, "_path", Path("foobar"))
     mocker.patch("sys.prefix", prefix)
 

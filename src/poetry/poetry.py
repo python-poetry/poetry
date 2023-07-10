@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 from poetry.core.poetry import Poetry as BasePoetry
 
 from poetry.__version__ import __version__
 from poetry.config.source import Source
+from poetry.pyproject.toml import PyProjectTOML
 
 
 if TYPE_CHECKING:
@@ -18,6 +20,7 @@ if TYPE_CHECKING:
     from poetry.packages.locker import Locker
     from poetry.plugins.plugin_manager import PluginManager
     from poetry.repositories.repository_pool import RepositoryPool
+    from poetry.toml import TOMLFile
 
 
 class Poetry(BasePoetry):
@@ -34,13 +37,22 @@ class Poetry(BasePoetry):
     ) -> None:
         from poetry.repositories.repository_pool import RepositoryPool
 
-        super().__init__(file, local_config, package)
+        super().__init__(file, local_config, package, pyproject_type=PyProjectTOML)
 
         self._locker = locker
         self._config = config
-        self._pool = RepositoryPool()
+        self._pool = RepositoryPool(config=config)
         self._plugin_manager: PluginManager | None = None
         self._disable_cache = disable_cache
+
+    @property
+    def pyproject(self) -> PyProjectTOML:
+        pyproject = super().pyproject
+        return cast("PyProjectTOML", pyproject)
+
+    @property
+    def file(self) -> TOMLFile:
+        return self.pyproject.file
 
     @property
     def locker(self) -> Locker:

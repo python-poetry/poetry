@@ -40,11 +40,6 @@ class UpdateCommand(InstallerCommand):
 
     def handle(self) -> int:
         packages = self.argument("packages")
-
-        self.installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
-
         if packages:
             self.installer.whitelist({name: "*" for name in packages})
 

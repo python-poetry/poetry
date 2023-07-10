@@ -17,12 +17,12 @@ import pkginfo
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
 
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
@@ -58,12 +58,12 @@ with build.env.IsolatedEnvBuilder() as env:
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build==0.9.0", "pyproject_hooks==1.0.0"]
+PEP517_META_BUILD_DEPS = ["build==0.10.0", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
-    def __init__(self, path: Path | str, *reasons: BaseException | str) -> None:
-        reasons = (f"Unable to determine package info for path: {path!s}",) + reasons
+    def __init__(self, path: Path, *reasons: BaseException | str) -> None:
+        reasons = (f"Unable to determine package info for path: {path!s}", *reasons)
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
 
@@ -617,16 +617,16 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 )
 
             cwd = Path.cwd()
-            os.chdir(path.as_posix())
+            os.chdir(path)
             try:
                 venv.run("python", "setup.py", "egg_info")
                 info = PackageInfo.from_metadata(path)
             except EnvCommandError as fbe:
                 raise PackageInfoError(
-                    path, "Fallback egg_info generation failed.", fbe
+                    path, e, "Fallback egg_info generation failed.", fbe
                 )
             finally:
-                os.chdir(cwd.as_posix())
+                os.chdir(cwd)
 
     if info:
         logger.debug("Falling back to parsed setup.py file for %s", path)

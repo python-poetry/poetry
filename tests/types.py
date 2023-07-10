@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
-from tests.compat import Protocol
+from typing import Any
+from typing import Protocol
 
 
 if TYPE_CHECKING:
@@ -46,6 +46,8 @@ class ProjectFactory(Protocol):
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
         source: Path | None = None,
+        locker_config: dict[str, Any] | None = None,
+        use_test_locker: bool = True,
     ) -> Poetry:
         ...
 
@@ -57,4 +59,9 @@ class FixtureDirGetter(Protocol):
 
 class FixtureCopier(Protocol):
     def __call__(self, relative_path: str, target: Path | None = None) -> Path:
+        ...
+
+
+class HTMLPageGetter(Protocol):
+    def __call__(self, content: str, base_url: str | None = None) -> str:
         ...

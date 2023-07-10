@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -10,7 +14,9 @@ from poetry.factory import Factory
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
 
@@ -21,7 +27,10 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 def verify_project_directory(
-    path: Path, package_name: str, package_path: str, include_from: str | None = None
+    path: Path,
+    package_name: str,
+    package_path: str | Path,
+    include_from: str | None = None,
 ) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
@@ -149,18 +158,20 @@ def test_command_new(
     package_path: str,
     include_from: str | None,
     tester: CommandTester,
-    tmp_dir: str,
-):
-    path = Path(tmp_dir) / directory
-    options.append(path.as_posix())
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / directory
+    options.append(str(path))
     tester.execute(" ".join(options))
     verify_project_directory(path, package_name, package_path, include_from)
 
 
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
-def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir: str):
+def test_command_new_with_readme(
+    fmt: str | None, tester: CommandTester, tmp_path: Path
+) -> None:
     package = "package"
-    path = Path(tmp_dir) / package
+    path = tmp_path / package
     options = [path.as_posix()]
 
     if fmt:
@@ -170,3 +181,48 @@ def test_command_new_with_readme(fmt: str | None, tester: CommandTester, tmp_dir
 
     poetry = verify_project_directory(path, package, package, None)
     assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"
+
+
+@pytest.mark.parametrize(
+    ["prefer_active", "python"],
+    [
+        (True, "1.1"),
+        (False, f"{sys.version_info[0]}.{sys.version_info[1]}"),
+    ],
+)
+def test_respect_prefer_active_on_new(
+    prefer_active: bool,
+    python: str,
+    config: Config,
+    mocker: MockerFixture,
+    tester: CommandTester,
+    tmp_path: Path,
+) -> None:
+    from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
+
+    orig_check_output = subprocess.check_output
+
+    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
+        if GET_PYTHON_VERSION_ONELINER in cmd:
+            return "1.1.1"
+
+        output: str = orig_check_output(cmd, *_, **__)
+        return output
+
+    mocker.patch("subprocess.check_output", side_effect=mock_check_output)
+
+    config.config["virtualenvs"]["prefer-active-python"] = prefer_active
+
+    package = "package"
+    path = tmp_path / package
+    options = [str(path)]
+    tester.execute(" ".join(options))
+
+    pyproject_file = path / "pyproject.toml"
+
+    expected = f"""\
+[tool.poetry.dependencies]
+python = "^{python}"
+"""
+
+    assert expected in pyproject_file.read_text()

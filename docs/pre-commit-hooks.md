@@ -34,6 +34,9 @@ to make sure the poetry configuration does not get committed in a broken state.
 The hook takes the same arguments as the poetry command.
 For more information see the [check command]({{< relref "cli#check" >}}).
 
+{{% note %}}
+If the `pyproject.toml` file is not in the root directory, you can specify `args: ["-C", "./subdirectory"]`.
+{{% /note %}}
 
 ## poetry-lock
 
@@ -68,7 +71,7 @@ console:
 
 ```yaml
 hooks:
-  - id: poetry-export
+-   id: poetry-export
     args: ["-f", "requirements.txt"]
     verbose: true
 ```
@@ -77,7 +80,7 @@ Also, `--dev` can be added to `args` to write dev-dependencies to `requirements.
 
 ```yaml
 hooks:
-  - id: poetry-export
+-   id: poetry-export
     args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
 ```
 
@@ -90,12 +93,12 @@ A full `.pre-commit-config.yaml` example:
 
 ```yaml
 repos:
-  - repo: https://github.com/python-poetry/poetry
+-   repo: https://github.com/python-poetry/poetry
     rev: ''  # add version here
     hooks:
-      - id: poetry-check
-      - id: poetry-lock
-      - id: poetry-export
+    -   id: poetry-check
+    -   id: poetry-lock
+    -   id: poetry-export
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 ```
 
@@ -106,16 +109,16 @@ repos:
 `pre-commit autoupdate` updates the `rev` for each repository defined in your `.pre-commit-config.yaml`
 to the latest available tag in the default branch.
 
-Poetry follows a branching strategy, where the default branch is the active developement branch
-and fixes gets back ported to stable branches. New tags are assigned in these stable branches.
+Poetry follows a branching strategy where the default branch is the active development branch,
+and fixes get backported to stable branches. New tags are assigned in these stable branches.
 
 `pre-commit` does not support such a branching strategy and has decided to not implement
-an option, either on the [user side](https://github.com/pre-commit/pre-commit/issues/2512)
-or [hook author side](https://github.com/pre-commit/pre-commit/issues/2508), to define a branch for lookup the latest
-available tag.
+an option, either on the [user's side](https://github.com/pre-commit/pre-commit/issues/2512)
+or the [hook author's side](https://github.com/pre-commit/pre-commit/issues/2508), to define a branch for looking
+up the latest available tag.
 
 Thus, `pre-commit autoupdate` is not usable for the hooks described here.
 
-You can avoid changing the `rev` to an unexpected value, by using the `--repo` parameter (may be specified multiple
-times), to explicit list repositories that should be updated. An option to explicit exclude
+You can avoid changing the `rev` to an unexpected value by using the `--repo` parameter (may be specified multiple
+times), to explicitly list repositories that should be updated. An option to explicitly exclude
 repositories [will not be implemented](https://github.com/pre-commit/pre-commit/issues/1959) into `pre-commit`.

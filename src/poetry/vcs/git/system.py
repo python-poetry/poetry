@@ -47,20 +47,18 @@ class SystemGit:
                 (folder / ".git").as_posix(),
                 "--work-tree",
                 folder.as_posix(),
-            ) + args
+                *args,
+            )
 
         git_command = find_git_command()
         env = os.environ.copy()
         env["GIT_TERMINAL_PROMPT"] = "0"
-        return (
-            subprocess.check_output(
-                git_command + list(args),
-                stderr=subprocess.STDOUT,
-                env=env,
-            )
-            .decode()
-            .strip()
-        )
+        return subprocess.check_output(
+            git_command + list(args),
+            stderr=subprocess.STDOUT,
+            env=env,
+            text=True,
+        ).strip()
 
     @staticmethod
     def _check_parameter(parameter: str) -> None:

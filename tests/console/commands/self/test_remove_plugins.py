@@ -37,14 +37,14 @@ def install_plugin(installed: Repository) -> None:
     )
     content = Factory.create_pyproject_from_package(package)
     system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
-    system_pyproject_file.write_text(content.as_string(), encoding="utf-8")
+    with open(system_pyproject_file, "w", encoding="utf-8", newline="") as f:
+        f.write(content.as_string())
 
     lock_content = {
         "package": [
             {
                 "name": "poetry-plugin",
                 "version": "1.2.3",
-                "category": "main",
                 "optional": False,
                 "platform": "*",
                 "python-versions": "*",
@@ -65,18 +65,18 @@ def install_plugin(installed: Repository) -> None:
     installed.add_package(plugin)
 
 
-def test_remove_installed_package(tester: CommandTester):
+def test_remove_installed_package(tester: CommandTester) -> None:
     tester.execute("poetry-plugin")
 
     expected = """\
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
-
 Package operations: 0 installs, 0 updates, 1 removal
 
   • Removing poetry-plugin (1.2.3)
+
+Writing lock file
 """
     assert tester.io.fetch_output() == expected
 
@@ -86,7 +86,7 @@ Package operations: 0 installs, 0 updates, 1 removal
     assert not dependencies
 
 
-def test_remove_installed_package_dry_run(tester: CommandTester):
+def test_remove_installed_package_dry_run(tester: CommandTester) -> None:
     tester.execute("poetry-plugin --dry-run")
 
     expected = f"""\

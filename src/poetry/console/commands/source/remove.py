@@ -21,12 +21,13 @@ class SourceRemoveCommand(Command):
         from poetry.utils.source import source_to_table
 
         name = self.argument("name")
+        lower_name = name.lower()
 
         sources = AoT([])
         removed = False
 
         for source in self.poetry.get_sources():
-            if source.name == name:
+            if source.name.lower() == lower_name:
                 self.line(f"Removing source with name <c1>{source.name}</c1>.")
                 removed = True
                 continue

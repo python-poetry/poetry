@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def poetry_with_up_to_date_lockfile(
+def poetry_with_outdated_lockfile(
     project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
 ) -> Poetry:
     source = fixture_dir("outdated_lock")
@@ -37,21 +37,46 @@ def poetry_with_up_to_date_lockfile(
 )
 def test_update_with_dry_run_keep_files_intact(
     command: str,
-    poetry_with_up_to_date_lockfile: Poetry,
+    poetry_with_outdated_lockfile: Poetry,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
-):
-    tester = command_tester_factory("update", poetry=poetry_with_up_to_date_lockfile)
+) -> None:
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
 
-    original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
-    original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
+    original_pyproject_content = poetry_with_outdated_lockfile.file.read()
+    original_lockfile_content = poetry_with_outdated_lockfile._locker.lock_data
 
     repo.add_package(get_package("docker", "4.3.0"))
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute(command)
 
-    assert poetry_with_up_to_date_lockfile.file.read() == original_pyproject_content
-    assert (
-        poetry_with_up_to_date_lockfile._locker.lock_data == original_lockfile_content
-    )
+    assert poetry_with_outdated_lockfile.file.read() == original_pyproject_content
+    assert poetry_with_outdated_lockfile._locker.lock_data == original_lockfile_content
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        ("", True),
+        ("--dry-run", True),
+        ("--lock", False),
+    ],
+)
+def test_update_prints_operations(
+    command: str,
+    expected: bool,
+    poetry_with_outdated_lockfile: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+
+    repo.add_package(get_package("docker", "4.3.0"))
+    repo.add_package(get_package("docker", "4.3.1"))
+
+    tester.execute(command)
+    output = tester.io.fetch_output()
+
+    assert ("Package operations:" in output) is expected
+    assert ("Installing docker (4.3.1)" in output) is expected

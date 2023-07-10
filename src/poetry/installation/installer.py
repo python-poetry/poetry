@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
@@ -9,13 +10,11 @@ from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
-from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
 from poetry.utils.extras import get_extra_package_names
-from poetry.utils.helpers import pluralize
 
 
 if TYPE_CHECKING:
@@ -23,10 +22,10 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
-    from poetry.installation.base_installer import BaseInstaller
     from poetry.installation.operations.operation import Operation
     from poetry.packages import Locker
     from poetry.utils.env import Env
@@ -50,15 +49,14 @@ class Installer:
         self._package = package
         self._locker = locker
         self._pool = pool
+        self._config = config
 
         self._dry_run = False
         self._requires_synchronization = False
         self._update = False
         self._verbose = False
-        self._write_lock = True
         self._groups: Iterable[str] | None = None
-
-        self._execute_operations = True
+        self._skip_directory = False
         self._lock = False
         self._check_lock = False
 
@@ -72,9 +70,7 @@ class Installer:
             )
 
         self._executor = executor
-        self._use_executor = False
 
-        self._installer = self._get_installer()
         if installed is None:
             installed = self._get_installed()
 
@@ -83,10 +79,6 @@ class Installer:
     @property
     def executor(self) -> Executor:
         return self._executor
-
-    @property
-    def installer(self) -> BaseInstaller:
-        return self._installer
 
     def set_package(self, package: ProjectPackage) -> Installer:
         self._package = package
@@ -109,8 +101,6 @@ class Installer:
 
         if self.is_dry_run():
             self.verbose(True)
-            self._write_lock = False
-            self._execute_operations = False
 
         return self._do_install()
 
@@ -154,6 +144,11 @@ class Installer:
 
         return self
 
+    def skip_directory(self, skip_directory: bool = False) -> Installer:
+        self._skip_directory = skip_directory
+
+        return self
+
     def lock(self, update: bool = True) -> Installer:
         """
         Prepare the installer for locking only.
@@ -168,8 +163,6 @@ class Installer:
         return self._update
 
     def execute_operations(self, execute: bool = True) -> Installer:
-        self._execute_operations = execute
-
         if not execute:
             self._executor.disable()
 
@@ -182,11 +175,6 @@ class Installer:
 
     def extras(self, extras: list[str]) -> Installer:
         self._extras = [canonicalize_name(extra) for extra in extras]
-
-        return self
-
-    def use_executor(self, use_executor: bool = True) -> Installer:
-        self._use_executor = use_executor
 
         return self
 
@@ -289,12 +277,10 @@ class Installer:
         lockfile_repo = LockfileRepository()
         self._populate_lockfile_repo(lockfile_repo, ops)
 
-        if self._update:
+        if not self.executor.enabled:
+            # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
-
-            if self._lock:
-                # If we are only in lock mode, no need to go any further
-                return 0
+            return 0
 
         if self._groups is not None:
             root = self._package.with_dependency_groups(list(self._groups), only=True)
@@ -308,7 +294,7 @@ class Installer:
             )
 
         # We resolve again by only using the lock file
-        pool = RepositoryPool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True, config=self._config)
 
         # Making a new repo containing the packages
         # newly resolved and the ones from the current lock file
@@ -334,6 +320,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
+                skip_directory=self._skip_directory,
             )
 
         if not self._requires_synchronization:
@@ -359,11 +346,24 @@ class Installer:
         # or optional and not requested, are dropped
         self._filter_operations(ops, lockfile_repo)
 
+        # Validate the dependencies
+        for op in ops:
+            dep = op.package.to_dependency()
+            if dep.is_file() or dep.is_directory():
+                dep = cast("PathDependency", dep)
+                dep.validate(raise_error=True)
+
         # Execute operations
-        return self._execute(ops)
+        status = self._execute(ops)
+
+        if status == 0 and self._update:
+            # Only write lock file when installation is success
+            self._write_lock_file(lockfile_repo)
+
+        return status
 
     def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
-        if self._write_lock and (force or self._update):
+        if not self.is_dry_run() and (force or self._update):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:
@@ -371,119 +371,7 @@ class Installer:
                 self._io.write_line("<info>Writing lock file</>")
 
     def _execute(self, operations: list[Operation]) -> int:
-        if self._use_executor:
-            return self._executor.execute(operations)
-
-        if not operations and (self._execute_operations or self._dry_run):
-            self._io.write_line("No dependencies to install or update")
-
-        if operations and (self._execute_operations or self._dry_run):
-            installs = 0
-            updates = 0
-            uninstalls = 0
-            skipped = 0
-            for op in operations:
-                if op.skipped:
-                    skipped += 1
-                elif op.job_type == "install":
-                    installs += 1
-                elif op.job_type == "update":
-                    updates += 1
-                elif op.job_type == "uninstall":
-                    uninstalls += 1
-
-            self._io.write_line("")
-            self._io.write("Package operations: ")
-            self._io.write(f"<info>{installs}</> install{pluralize(installs)}, ")
-            self._io.write(f"<info>{updates}</> update{pluralize(updates)}, ")
-            self._io.write(f"<info>{uninstalls}</> removal{pluralize(uninstalls)}")
-            if skipped and self.is_verbose():
-                self._io.write(f", <info>{skipped}</> skipped")
-            self._io.write_line("")
-
-        self._io.write_line("")
-
-        for op in operations:
-            self._execute_operation(op)
-
-        return 0
-
-    def _execute_operation(self, operation: Operation) -> None:
-        """
-        Execute a given operation.
-        """
-        method = operation.job_type
-
-        getattr(self, f"_execute_{method}")(operation)
-
-    def _execute_install(self, operation: Install) -> None:
-        target = operation.package
-        if operation.skipped:
-            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
-                self._io.write_line(
-                    f"  - Skipping <c1>{target.pretty_name}</c1>"
-                    f" (<c2>{target.full_pretty_version}</c2>) {operation.skip_reason}"
-                )
-
-            return
-
-        if self._execute_operations or self.is_dry_run():
-            self._io.write_line(
-                f"  - Installing <c1>{target.pretty_name}</c1>"
-                f" (<c2>{target.full_pretty_version}</c2>)"
-            )
-
-        if not self._execute_operations:
-            return
-
-        self._installer.install(operation.package)
-
-    def _execute_update(self, operation: Update) -> None:
-        source = operation.initial_package
-        target = operation.target_package
-
-        if operation.skipped:
-            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
-                self._io.write_line(
-                    f"  - Skipping <c1>{target.pretty_name}</c1> "
-                    f"(<c2>{target.full_pretty_version}</c2>) {operation.skip_reason}"
-                )
-
-            return
-
-        if self._execute_operations or self.is_dry_run():
-            self._io.write_line(
-                f"  - Updating <c1>{target.pretty_name}</c1>"
-                f" (<c2>{source.full_pretty_version}</c2> ->"
-                f" <c2>{target.full_pretty_version}</c2>)"
-            )
-
-        if not self._execute_operations:
-            return
-
-        self._installer.update(source, target)
-
-    def _execute_uninstall(self, operation: Uninstall) -> None:
-        target = operation.package
-        if operation.skipped:
-            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
-                self._io.write_line(
-                    f"  - Not removing <c1>{target.pretty_name}</c1>"
-                    f" (<c2>{target.pretty_version}</c2>) {operation.skip_reason}"
-                )
-
-            return
-
-        if self._execute_operations or self.is_dry_run():
-            self._io.write_line(
-                f"  - Removing <c1>{target.pretty_name}</c1>"
-                f" (<c2>{target.pretty_version}</c2>)"
-            )
-
-        if not self._execute_operations:
-            return
-
-        self._installer.remove(operation.package)
+        return self._executor.execute(operations)
 
     def _populate_lockfile_repo(
         self, repo: LockfileRepository, ops: Iterable[Operation]
@@ -533,10 +421,7 @@ class Installer:
     def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
-            if isinstance(op, Update):
-                package = op.target_package
-            else:
-                package = op.package
+            package = op.target_package if isinstance(op, Update) else op.package
 
             if op.job_type == "uninstall":
                 continue
@@ -569,9 +454,6 @@ class Installer:
             }
 
         return get_extra_package_names(repo.packages, extras, self._extras)
-
-    def _get_installer(self) -> BaseInstaller:
-        return PipInstaller(self._env, self._io, self._pool)
 
     def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)

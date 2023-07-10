@@ -1,58 +1,37 @@
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import hashlib
 import json
+import logging
 import shutil
 import time
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
+from poetry.utils._compat import decode
+from poetry.utils._compat import encode
+from poetry.utils.wheel import InvalidWheelName
+from poetry.utils.wheel import Wheel
 
-# Used by Cachy for items that do not expire.
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from poetry.core.packages.utils.link import Link
+
+    from poetry.utils.env import Env
+
+
+# Used by FileCache for items that do not expire.
 MAX_DATE = 9999999999
 T = TypeVar("T")
 
-
-def decode(string: bytes, encodings: list[str] | None = None) -> str:
-    """
-    Compatiblity decode function pulled from cachy.
-
-    :param string: The byte string to decode.
-    :param encodings: List of encodings to apply
-    :return: Decoded string
-    """
-    if encodings is None:
-        encodings = ["utf-8", "latin1", "ascii"]
-
-    for encoding in encodings:
-        with contextlib.suppress(UnicodeDecodeError):
-            return string.decode(encoding)
-
-    return string.decode(encodings[0], errors="ignore")
-
-
-def encode(string: str, encodings: list[str] | None = None) -> bytes:
-    """
-    Compatibility encode function from cachy.
-
-    :param string: The string to encode.
-    :param encodings: List of encodings to apply
-    :return: Encoded byte string
-    """
-    if encodings is None:
-        encodings = ["utf-8", "latin1", "ascii"]
-
-    for encoding in encodings:
-        with contextlib.suppress(UnicodeDecodeError):
-            return string.encode(encoding)
-
-    return string.encode(encodings[0], errors="ignore")
+logger = logging.getLogger(__name__)
 
 
 def _expiration(minutes: int) -> int:
@@ -130,7 +109,7 @@ class FileCache(Generic[T]):
         )
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "wb") as f:
+        with path.open("wb") as f:
             f.write(self._serialize(payload))
 
     def forget(self, key: str) -> None:
@@ -171,8 +150,15 @@ class FileCache(Generic[T]):
         if not path.exists():
             return None
 
-        with open(path, "rb") as f:
-            payload = self._deserialize(f.read())
+        with path.open("rb") as f:
+            file_content = f.read()
+
+        try:
+            payload = self._deserialize(file_content)
+        except (json.JSONDecodeError, ValueError):
+            self.forget(key)
+            logger.warning("Corrupt cache file was detected and cleaned up.")
+            return None
 
         if payload.expired:
             self.forget(key)
@@ -196,3 +182,115 @@ class FileCache(Generic[T]):
         data = json.loads(data_str[10:])
         expires = int(data_str[:10])
         return CacheItem(data, expires)
+
+
+class ArtifactCache:
+    def __init__(self, *, cache_dir: Path) -> None:
+        self._cache_dir = cache_dir
+
+    def get_cache_directory_for_link(self, link: Link) -> Path:
+        key_parts = {"url": link.url_without_fragment}
+
+        if link.hash_name is not None and link.hash is not None:
+            key_parts[link.hash_name] = link.hash
+
+        if link.subdirectory_fragment:
+            key_parts["subdirectory"] = link.subdirectory_fragment
+
+        return self._get_directory_from_hash(key_parts)
+
+    def _get_directory_from_hash(self, key_parts: object) -> Path:
+        key = hashlib.sha256(
+            json.dumps(
+                key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+            ).encode("ascii")
+        ).hexdigest()
+
+        split_key = [key[:2], key[2:4], key[4:6], key[6:]]
+        return self._cache_dir.joinpath(*split_key)
+
+    def get_cache_directory_for_git(
+        self, url: str, ref: str, subdirectory: str | None
+    ) -> Path:
+        key_parts = {"url": url, "ref": ref}
+        if subdirectory:
+            key_parts["subdirectory"] = subdirectory
+
+        return self._get_directory_from_hash(key_parts)
+
+    def get_cached_archive_for_link(
+        self,
+        link: Link,
+        *,
+        strict: bool,
+        env: Env | None = None,
+    ) -> Path | None:
+        cache_dir = self.get_cache_directory_for_link(link)
+
+        return self._get_cached_archive(
+            cache_dir, strict=strict, filename=link.filename, env=env
+        )
+
+    def get_cached_archive_for_git(
+        self, url: str, reference: str, subdirectory: str | None, env: Env
+    ) -> Path | None:
+        cache_dir = self.get_cache_directory_for_git(url, reference, subdirectory)
+
+        return self._get_cached_archive(cache_dir, strict=False, env=env)
+
+    def _get_cached_archive(
+        self,
+        cache_dir: Path,
+        *,
+        strict: bool,
+        filename: str | None = None,
+        env: Env | None = None,
+    ) -> Path | None:
+        assert strict or env is not None
+        # implication "strict -> filename should not be None"
+        assert not strict or filename is not None
+
+        archives = self._get_cached_archives(cache_dir)
+        if not archives:
+            return None
+
+        candidates: list[tuple[float | None, Path]] = []
+
+        for archive in archives:
+            if strict:
+                # in strict mode return the original cached archive instead of the
+                # prioritized archive type.
+                if filename == archive.name:
+                    return archive
+                continue
+
+            assert env is not None
+
+            if archive.suffix != ".whl":
+                candidates.append((float("inf"), archive))
+                continue
+
+            try:
+                wheel = Wheel(archive.name)
+            except InvalidWheelName:
+                continue
+
+            if not wheel.is_supported_by_environment(env):
+                continue
+
+            candidates.append(
+                (wheel.get_minimum_supported_index(env.supported_tags), archive),
+            )
+
+        if not candidates:
+            return None
+
+        return min(candidates)[1]
+
+    def _get_cached_archives(self, cache_dir: Path) -> list[Path]:
+        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
+        paths: list[Path] = []
+        for archive_type in archive_types:
+            paths += cache_dir.glob(f"*.{archive_type}")
+
+        return paths
