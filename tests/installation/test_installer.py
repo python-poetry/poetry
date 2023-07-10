@@ -209,7 +209,7 @@ def fixture(name: str) -> dict[str, Any]:
     return content
 
 
-def test_run_check_lock(installer: Installer, locker: Locker):
+def test_run_check_lock(installer: Installer, locker: Locker) -> None:
     locker.fresh(False)
     locker.locked(True)
     locker.mock_lock_data(

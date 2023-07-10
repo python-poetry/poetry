@@ -172,7 +172,7 @@ def test_sync_option_is_passed_to_the_installer(
 
 def test_check_lock_option_is_passed_to_the_installer(
     tester: CommandTester, mocker: MockerFixture
-):
+) -> None:
     """
     The --check-lock option is passed properly to the installer.
     """
