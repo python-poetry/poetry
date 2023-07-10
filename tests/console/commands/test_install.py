@@ -176,6 +176,7 @@ def test_check_lock_option_is_passed_to_the_installer(
     """
     The --check-lock option is passed properly to the installer.
     """
+    assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
 
     tester.execute("--check-lock")
