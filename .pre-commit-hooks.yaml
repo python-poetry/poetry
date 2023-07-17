@@ -12,6 +12,7 @@
   entry: poetry lock
   language: python
   pass_filenames: false
+  files: ^(.*/)?(poetry.lock|pyproject.toml)$
 
 - id: poetry-export
   name: poetry-export
@@ -19,5 +20,5 @@
   entry: poetry export
   language: python
   pass_filenames: false
-  files: ^poetry.lock$
+  files: ^(.*/)?poetry.lock$
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
