@@ -9,6 +9,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from packaging.utils import canonicalize_name
 
@@ -104,7 +105,7 @@ _default_config: Config | None = None
 
 
 class Config:
-    default_config: dict[str, Any] = {
+    default_config: ClassVar[dict[str, Any]] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
             "create": True,

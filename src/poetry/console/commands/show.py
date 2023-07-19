@@ -48,10 +48,8 @@ class ShowCommand(GroupCommand, EnvCommand):
         option(
             "why",
             None,
-            (
-                "When showing the full list, or a <info>--tree</info> for a single"
-                " package, also display why it's included."
-            ),
+            "When showing the full list, or a <info>--tree</info> for a single"
+            " package, also display why it's included.",
         ),
         option("latest", "l", "Show the latest version."),
         option(
