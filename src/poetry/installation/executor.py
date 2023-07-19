@@ -370,12 +370,10 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    (
-                        f"  <fg=default;options=bold,dark>•</> {operation_message}: "
-                        "<fg=default;options=bold,dark>Skipped</> "
-                        "<fg=default;options=dark>for the following reason:</> "
-                        f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
-                    ),
+                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
+                    "<fg=default;options=bold,dark>Skipped</> "
+                    "<fg=default;options=dark>for the following reason:</> "
+                    f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
                 )
 
             self._skipped[operation.job_type] += 1

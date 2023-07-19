@@ -21,19 +21,15 @@ class RemoveCommand(InstallerCommand):
         option(
             "dev",
             "D",
-            (
-                "Remove a package from the development dependencies."
-                " (<warning>Deprecated</warning>)"
-                " Use --group=dev instead."
-            ),
+            "Remove a package from the development dependencies."
+            " (<warning>Deprecated</warning>)"
+            " Use --group=dev instead.",
         ),
         option(
             "dry-run",
             None,
-            (
-                "Output the operations but do not execute anything "
-                "(implicitly enables --verbose)."
-            ),
+            "Output the operations but do not execute anything "
+            "(implicitly enables --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]

@@ -78,10 +78,8 @@ class EnvManager:
     def _detect_active_python(io: None | IO = None) -> Path | None:
         io = io or NullIO()
         io.write_error_line(
-            (
-                "Trying to detect current active python executable as specified in"
-                " the config."
-            ),
+            "Trying to detect current active python executable as specified in"
+            " the config.",
             verbosity=Verbosity.VERBOSE,
         )
 
@@ -91,10 +89,8 @@ class EnvManager:
             io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         else:
             io.write_error_line(
-                (
-                    "Unable to detect the current active python executable. Falling"
-                    " back to default."
-                ),
+                "Unable to detect the current active python executable. Falling"
+                " back to default.",
                 verbosity=Verbosity.VERBOSE,
             )
 
