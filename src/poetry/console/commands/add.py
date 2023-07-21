@@ -30,10 +30,8 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dev",
             "D",
-            (
-                "Add as a development dependency. (<warning>Deprecated</warning>) Use"
-                " --group=dev instead."
-            ),
+            "Add as a development dependency. (<warning>Deprecated</warning>) Use"
+            " --group=dev instead.",
         ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
@@ -66,10 +64,8 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dry-run",
             None,
-            (
-                "Output the operations but do not execute anything (implicitly enables"
-                " --verbose)."
-            ),
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]

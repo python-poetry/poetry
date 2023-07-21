@@ -7,6 +7,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -93,7 +94,7 @@ class Indicator(ProgressIndicator):
 
 
 class Provider:
-    UNSAFE_PACKAGES: set[str] = set()
+    UNSAFE_PACKAGES: ClassVar[set[str]] = set()
 
     def __init__(
         self,

@@ -21,11 +21,9 @@ class Source:
             self.priority = Priority[self.priority.upper()]
         if default or secondary:
             warnings.warn(
-                (
-                    "Parameters 'default' and 'secondary' to"
-                    " 'Source' are deprecated. Please provide"
-                    " 'priority' instead."
-                ),
+                "Parameters 'default' and 'secondary' to"
+                " 'Source' are deprecated. Please provide"
+                " 'priority' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )

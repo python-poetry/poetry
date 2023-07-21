@@ -41,7 +41,8 @@ crashtest = "^0.4.1"
 dulwich = "^0.21.2"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-jsonschema = "^4.10.0"
+# jsonschema 4.18 uses Rust-based libraries which causes issues when building from source
+jsonschema = ">=4.10.0,<4.18.0"
 keyring = "^23.9.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
@@ -133,6 +134,9 @@ lines-after-imports = 2
 known-first-party = ["poetry"]
 known-third-party = ["poetry.core"]
 required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.per-file-ignores]
+"src/poetry/console/*" = ["RUF012"]  # Can't annotate properly until new version of Cleo
 
 [tool.black]
 target-version = ['py38']
