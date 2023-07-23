@@ -13,6 +13,7 @@ import pytest
 
 from cleo.testers.command_tester import CommandTester
 from packaging.utils import canonicalize_name
+from poetry.core.utils.helpers import module_name
 
 from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
@@ -1025,16 +1026,8 @@ def test_package_include(
         ),
     )
 
-    def module_name(name: str) -> str:
-        return name.replace("_", "-")
-
-    if (
-        include is None
-        or package_name == include
-        or package_name == module_name(include)
-    ):
-        packages = ""
-    else:
+    packages = ""
+    if include and module_name(package_name) != include:
         packages = f'packages = [{{include = "{include}"}}]\n'
 
     expected = (
