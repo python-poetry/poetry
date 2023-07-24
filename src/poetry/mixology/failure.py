@@ -170,8 +170,8 @@ class _Writer:
 
                     self._write(
                         incompatibility,
-                        f"{conjunction} because"
-                        f" {cause.conflict!s} ({self._line_numbers[cause.conflict]}),"
+                        f"{conjunction} because {cause.conflict!s}"
+                        f" ({self._line_numbers[cause.conflict]}),"
                         f" {incompatibility_string}",
                         numbered=numbered,
                     )

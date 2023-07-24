@@ -21,8 +21,7 @@ class AboutCommand(Command):
         # that.
         version: Callable[[str], str] = metadata.version
 
-        self.line(
-            f"""\
+        self.line(f"""\
 <info>Poetry - Package Management for Python
 
 Version: {version('poetry')}
@@ -31,7 +30,6 @@ Poetry-Core Version: {version('poetry-core')}</info>
 <comment>Poetry is a dependency manager tracking local dependencies of your projects\
  and libraries.
 See <fg=blue>https://github.com/python-poetry/poetry</> for more information.</comment>\
-"""
-        )
+""")
 
         return 0

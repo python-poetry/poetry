@@ -17,7 +17,8 @@ class LockCommand(InstallerCommand):
             "check",
             None,
             "Check that the <comment>poetry.lock</> file corresponds to the current"
-            " version of <comment>pyproject.toml</>.",
+            " version of <comment>pyproject.toml</>. (<warning>Deprecated</>) Use"
+            " <comment>poetry check --lock</> instead.",
         ),
     ]
 
@@ -33,11 +34,11 @@ file.
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
-        self.installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
-
         if self.option("check"):
+            self.line_error(
+                "<warning>poetry lock --check is deprecated, use `poetry"
+                " check --lock` instead.</warning>"
+            )
             if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
                 self.line("poetry.lock is consistent with pyproject.toml.")
                 return 0

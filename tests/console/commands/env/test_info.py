@@ -32,7 +32,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("env info")
 
 
-def test_env_info_displays_complete_info(tester: CommandTester):
+def test_env_info_displays_complete_info(tester: CommandTester) -> None:
     tester.execute()
 
     expected = f"""
@@ -54,7 +54,13 @@ Executable: python
     assert tester.io.fetch_output() == expected
 
 
-def test_env_info_displays_path_only(tester: CommandTester):
+def test_env_info_displays_path_only(tester: CommandTester) -> None:
     tester.execute("--path")
     expected = str(Path("/prefix")) + "\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_env_info_displays_executable_only(tester: CommandTester) -> None:
+    tester.execute("--executable")
+    expected = str(sys.executable) + "\n"
     assert tester.io.fetch_output() == expected

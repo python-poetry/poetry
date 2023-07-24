@@ -48,8 +48,8 @@ class ShowCommand(GroupCommand, EnvCommand):
         option(
             "why",
             None,
-            "When showing the full list, or a <info>--tree</info> for a single package,"
-            " also display why it's included.",
+            "When showing the full list, or a <info>--tree</info> for a single"
+            " package, also display why it's included.",
         ),
         option("latest", "l", "Show the latest version."),
         option(
@@ -62,6 +62,7 @@ class ShowCommand(GroupCommand, EnvCommand):
             "a",
             "Show all packages (even those not compatible with current system).",
         ),
+        option("top-level", "T", "Show only top-level dependencies."),
     ]
 
     help = """The show command displays detailed information about a package, or
@@ -74,6 +75,20 @@ lists all packages available."""
 
         if self.option("tree"):
             self.init_styles(self.io)
+
+        if self.option("top-level"):
+            if self.option("tree"):
+                self.line_error(
+                    "<error>Error: Cannot use --tree and --top-level at the same"
+                    " time.</error>"
+                )
+                return 1
+            if package is not None:
+                self.line_error(
+                    "<error>Error: Cannot use --top-level when displaying a single"
+                    " package.</error>"
+                )
+                return 1
 
         if self.option("why"):
             if self.option("tree") and package is None:
@@ -140,10 +155,7 @@ lists all packages available."""
                 packages = [pkg]
                 if required_by:
                     packages = [
-                        p
-                        for p in locked_packages
-                        for r in required_by.keys()
-                        if p.name == r
+                        p for p in locked_packages for r in required_by if p.name == r
                     ]
                 else:
                     # if no rev-deps exist we'll make this clear as it can otherwise
@@ -199,7 +211,7 @@ lists all packages available."""
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = RepositoryPool(ignore_repository_names=True)
+        pool = RepositoryPool(ignore_repository_names=True, config=self.poetry.config)
         pool.add_repository(locked_repository)
         solver = Solver(
             root,
@@ -216,6 +228,7 @@ lists all packages available."""
 
         show_latest = self.option("latest")
         show_all = self.option("all")
+        show_top_level = self.option("top-level")
         width = shutil.get_terminal_size().columns
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
@@ -242,9 +255,9 @@ lists all packages available."""
                     latest = locked
 
                 latest_packages[locked.pretty_name] = latest
-                update_status = latest_statuses[
-                    locked.pretty_name
-                ] = self.get_update_status(latest, locked)
+                update_status = latest_statuses[locked.pretty_name] = (
+                    self.get_update_status(latest, locked)
+                )
 
                 if not self.option("outdated") or update_status != "up-to-date":
                     name_length = max(name_length, current_length)
@@ -252,7 +265,7 @@ lists all packages available."""
                         version_length,
                         len(
                             get_package_version_display_string(
-                                locked, root=self.poetry.file.parent
+                                locked, root=self.poetry.file.path.parent
                             )
                         ),
                     )
@@ -260,7 +273,7 @@ lists all packages available."""
                         latest_length,
                         len(
                             get_package_version_display_string(
-                                latest, root=self.poetry.file.parent
+                                latest, root=self.poetry.file.path.parent
                             )
                         ),
                     )
@@ -277,7 +290,7 @@ lists all packages available."""
                     version_length,
                     len(
                         get_package_version_display_string(
-                            locked, root=self.poetry.file.parent
+                            locked, root=self.poetry.file.path.parent
                         )
                     ),
                 )
@@ -297,10 +310,18 @@ lists all packages available."""
         write_why = self.option("why") and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
 
+        requires = root.all_requires
+
         for locked in locked_packages:
             color = "cyan"
             name = locked.pretty_name
             install_marker = ""
+
+            if show_top_level and not any(
+                locked.is_same_package_as(r) for r in requires
+            ):
+                continue
+
             if locked not in required_locked_packages:
                 if not show_all:
                     continue
@@ -330,7 +351,7 @@ lists all packages available."""
             )
             if write_version:
                 version = get_package_version_display_string(
-                    locked, root=self.poetry.file.parent
+                    locked, root=self.poetry.file.path.parent
                 )
                 line += f" <b>{version:{version_length}}</b>"
             if show_latest:
@@ -345,7 +366,7 @@ lists all packages available."""
                         color = "yellow"
 
                     version = get_package_version_display_string(
-                        latest, root=self.poetry.file.parent
+                        latest, root=self.poetry.file.path.parent
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 
@@ -520,18 +541,25 @@ lists all packages available."""
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
+        requires = root.all_requires
         if package.is_direct_origin():
-            requires = root.all_requires
-
             for dep in requires:
                 if dep.name == package.name and dep.source_type == package.source_type:
                     provider = Provider(root, self.poetry.pool, NullIO())
                     return provider.search_for_direct_origin_dependency(dep)
 
+        allow_prereleases = False
+        for dep in requires:
+            if dep.name == package.name:
+                allow_prereleases = dep.allows_prereleases()
+                break
+
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
-        return selector.find_best_candidate(name, f">={package.pretty_version}")
+        return selector.find_best_candidate(
+            name, f">={package.pretty_version}", allow_prereleases
+        )
 
     def get_update_status(self, latest: Package, package: Package) -> str:
         from poetry.core.constraints.version import parse_constraint

@@ -5,13 +5,11 @@ import os
 import re
 import shutil
 import sys
-import tempfile
 
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TextIO
 
 import httpretty
 import pytest
@@ -26,10 +24,10 @@ from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
-from poetry.utils.helpers import remove_directory
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
@@ -41,6 +39,7 @@ from tests.helpers import mock_download
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
 
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
@@ -70,6 +69,9 @@ def pytest_configure(config: PyTestConfig) -> None:
 
 
 class Config(BaseConfig):
+    _config_source: DictConfigSource
+    _auth_config_source: DictConfigSource
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
@@ -91,7 +93,7 @@ class Config(BaseConfig):
 
 class DummyBackend(KeyringBackend):
     def __init__(self) -> None:
-        self._passwords = {}
+        self._passwords: dict[str, dict[str | None, str | None]] = {}
 
     @classmethod
     def priority(cls) -> int:
@@ -120,7 +122,7 @@ def dummy_keyring() -> DummyBackend:
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
     import keyring
 
-    keyring.set_keyring(dummy_keyring)
+    keyring.set_keyring(dummy_keyring)  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -129,7 +131,7 @@ def with_fail_keyring() -> None:
 
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -138,36 +140,42 @@ def with_null_keyring() -> None:
 
     from keyring.backends.null import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_null_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.null import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     import keyring
 
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
-def config_cache_dir(tmp_dir: str) -> Path:
-    path = Path(tmp_dir) / ".cache" / "pypoetry"
+def config_cache_dir(tmp_path: Path) -> Path:
+    path = tmp_path / ".cache" / "pypoetry"
     path.mkdir(parents=True)
     return path
 
@@ -202,7 +210,7 @@ def config(
 
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
     c = Config()
     c.merge(config_source.config)
@@ -215,9 +223,16 @@ def config(
     return c
 
 
+@pytest.fixture
+def artifact_cache(config: Config) -> ArtifactCache:
+    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
+
+
 @pytest.fixture()
-def config_dir(tmp_dir: str) -> Path:
-    return Path(tempfile.mkdtemp(prefix="poetry_config_", dir=tmp_dir))
+def config_dir(tmp_path: Path) -> Path:
+    path = tmp_path / "config"
+    path.mkdir()
+    return path
 
 
 @pytest.fixture(autouse=True)
@@ -230,7 +245,7 @@ def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
 def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
-    mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
+    mocker.patch("poetry.packages.direct_origin.download_file", new=mock_download)
     mocker.patch("poetry.repositories.http_repository.download_file", new=mock_download)
 
 
@@ -280,11 +295,16 @@ def http() -> Iterator[type[httpretty.httpretty]]:
 
 
 @pytest.fixture
+def project_root() -> Path:
+    return Path(__file__).parent.parent
+
+
+@pytest.fixture(scope="session")
 def fixture_base() -> Path:
     return Path(__file__).parent / "fixtures"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
     def _fixture_dir(name: str) -> Path:
         return fixture_base / name
@@ -293,39 +313,15 @@ def fixture_dir(fixture_base: Path) -> FixtureDirGetter:
 
 
 @pytest.fixture
-def tmp_dir() -> Iterator[str]:
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
+def tmp_venv(tmp_path: Path) -> Iterator[VirtualEnv]:
+    venv_path = tmp_path / "venv"
 
-    yield Path(dir_).resolve().as_posix()
-
-    remove_directory(dir_, force=True)
-
-
-@pytest.fixture
-def mocked_open_files(mocker: MockerFixture) -> list:
-    files = []
-    original = Path.open
-
-    def mocked_open(self: Path, *args: Any, **kwargs: Any) -> TextIO:
-        if self.name in {"pyproject.toml"}:
-            return mocker.MagicMock()
-        return original(self, *args, **kwargs)
-
-    mocker.patch("pathlib.Path.open", mocked_open)
-
-    return files
-
-
-@pytest.fixture
-def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
-    venv_path = Path(tmp_dir) / "venv"
-
-    EnvManager.build_venv(str(venv_path))
+    EnvManager.build_venv(venv_path)
 
     venv = VirtualEnv(venv_path)
     yield venv
 
-    shutil.rmtree(str(venv.path))
+    shutil.rmtree(venv.path)
 
 
 @pytest.fixture
@@ -359,24 +355,25 @@ def repo(http: type[httpretty.httpretty]) -> TestRepository:
 
 @pytest.fixture
 def project_factory(
-    tmp_dir: str,
+    tmp_path: Path,
     config: Config,
     repo: TestRepository,
     installed: Repository,
     default_python: str,
     load_required_fixtures: None,
 ) -> ProjectFactory:
-    workspace = Path(tmp_dir)
+    workspace = tmp_path
 
     def _factory(
         name: str | None = None,
-        dependencies: dict[str, str] | None = None,
-        dev_dependencies: dict[str, str] | None = None,
+        dependencies: Mapping[str, str] | None = None,
+        dev_dependencies: Mapping[str, str] | None = None,
         pyproject_content: str | None = None,
         poetry_lock_content: str | None = None,
         install_deps: bool = True,
         source: Path | None = None,
         locker_config: dict[str, Any] | None = None,
+        use_test_locker: bool = True,
     ) -> Poetry:
         project_dir = workspace / f"poetry-fixture-{name}"
         dependencies = dependencies or {}
@@ -390,11 +387,10 @@ def project_factory(
                 project_dir.mkdir(parents=True, exist_ok=True)
 
             if pyproject_content:
-                with project_dir.joinpath("pyproject.toml").open(
-                    "w", encoding="utf-8"
-                ) as f:
+                with (project_dir / "pyproject.toml").open("w", encoding="utf-8") as f:
                     f.write(pyproject_content)
         else:
+            assert name is not None
             layout("src")(
                 name,
                 "0.1.0",
@@ -411,12 +407,14 @@ def project_factory(
 
         poetry = Factory().create_poetry(project_dir)
 
-        locker = TestLocker(
-            poetry.locker.lock, locker_config or poetry.locker._local_config
-        )
-        locker.write()
+        if use_test_locker:
+            locker = TestLocker(
+                poetry.locker.lock, locker_config or poetry.locker._local_config
+            )
+            locker.write()
 
-        poetry.set_locker(locker)
+            poetry.set_locker(locker)
+
         poetry.set_config(config)
 
         pool = RepositoryPool()
@@ -436,11 +434,6 @@ def project_factory(
     return _factory
 
 
-@pytest.fixture
-def project_root() -> Path:
-    return Path(__file__).parent.parent
-
-
 @pytest.fixture(autouse=True)
 def set_simple_log_formatter() -> None:
     """
@@ -453,10 +446,10 @@ def set_simple_log_formatter() -> None:
 
 
 @pytest.fixture
-def fixture_copier(fixture_base: Path, tmp_dir: str) -> FixtureCopier:
+def fixture_copier(fixture_base: Path, tmp_path: Path) -> FixtureCopier:
     def _copy(relative_path: str, target: Path | None = None) -> Path:
-        path = fixture_base.joinpath(relative_path)
-        target = target or Path(tmp_dir, relative_path)
+        path = fixture_base / relative_path
+        target = target or (tmp_path / relative_path)
         target.parent.mkdir(parents=True, exist_ok=True)
 
         if target.exists():
@@ -483,3 +476,13 @@ def load_required_fixtures(
 ) -> None:
     for fixture in required_fixtures:
         fixture_copier(fixture)
+
+
+@pytest.fixture
+def venv_flags_default() -> dict[str, bool]:
+    return {
+        "always-copy": False,
+        "system-site-packages": False,
+        "no-pip": False,
+        "no-setuptools": False,
+    }

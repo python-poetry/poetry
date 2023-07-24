@@ -214,7 +214,7 @@ poetry self remove poetry-plugin
 You can also list all currently installed plugins by running:
 
 ```shell
-poetry self show
+poetry self show plugins
 ```
 
 ### With `pipx inject`
@@ -249,3 +249,18 @@ If you want to uninstall a plugin, you can run:
 ```shell
 $POETRY_HOME/bin/pip uninstall poetry-plugin
 ```
+
+
+## Maintaining a plugin
+
+When writing a plugin, you will probably access internals of Poetry, since there is no
+stable public API. Although we try our best to deprecate methods first, before
+removing them, sometimes the signature of an internal method has to be changed.
+
+As the author of a plugin, you are probably testing your plugin
+against the latest release of Poetry.
+Additionally, you should consider testing against the latest release branch and the
+master branch of Poetry and schedule a CI job that runs regularly even if you did not
+make any changes to your plugin.
+This way, you will notice internal changes that break your plugin immediately
+and can prepare for the next Poetry release.

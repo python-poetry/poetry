@@ -3,10 +3,15 @@ from __future__ import annotations
 import ast
 
 from configparser import ConfigParser
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from poetry.core.constraints.version import Version
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class SetupReader:
@@ -14,7 +19,7 @@ class SetupReader:
     Class that reads a setup.py file without executing it.
     """
 
-    DEFAULT: dict[str, Any] = {
+    DEFAULT: ClassVar[dict[str, Any]] = {
         "name": None,
         "version": None,
         "install_requires": [],
@@ -22,13 +27,10 @@ class SetupReader:
         "python_requires": None,
     }
 
-    FILES = ["setup.py", "setup.cfg"]
+    FILES: ClassVar[list[str]] = ["setup.py", "setup.cfg"]
 
     @classmethod
-    def read_from_directory(cls, directory: str | Path) -> dict[str, Any]:
-        if isinstance(directory, str):
-            directory = Path(directory)
-
+    def read_from_directory(cls, directory: Path) -> dict[str, Any]:
         result = cls.DEFAULT.copy()
         for filename in cls.FILES:
             filepath = directory / filename
@@ -38,16 +40,13 @@ class SetupReader:
             read_file_func = getattr(cls(), "read_" + filename.replace(".", "_"))
             new_result = read_file_func(filepath)
 
-            for key in result.keys():
+            for key in result:
                 if new_result[key]:
                     result[key] = new_result[key]
 
         return result
 
-    def read_setup_py(self, filepath: str | Path) -> dict[str, Any]:
-        if isinstance(filepath, str):
-            filepath = Path(filepath)
-
+    def read_setup_py(self, filepath: Path) -> dict[str, Any]:
         with filepath.open(encoding="utf-8") as f:
             content = f.read()
 
@@ -71,7 +70,7 @@ class SetupReader:
 
         return result
 
-    def read_setup_cfg(self, filepath: str | Path) -> dict[str, Any]:
+    def read_setup_cfg(self, filepath: Path) -> dict[str, Any]:
         parser = ConfigParser()
 
         parser.read(str(filepath))

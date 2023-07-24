@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -15,7 +13,7 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.dependency_specification import parse_dependency_specification
+from poetry.utils.dependency_specification import RequirementsParser
 
 
 if TYPE_CHECKING:
@@ -50,8 +48,8 @@ class InitCommand(Command):
         option(
             "dev-dependency",
             None,
-            "Package to require for development, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            "Package to require for development, with an optional version"
+            " constraint, e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
         ),
@@ -71,11 +69,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def handle(self) -> int:
         from pathlib import Path
 
-        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
 
+        from poetry.config.config import Config
         from poetry.layouts import layout
-        from poetry.utils.env import SystemEnv
+        from poetry.pyproject.toml import PyProjectTOML
+        from poetry.utils.env import EnvManager
 
         project_path = Path.cwd()
 
@@ -146,10 +145,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question.set_validator(lambda v: self._validate_author(v, author))
         author = self.ask(question)
 
-        if not author:
-            authors = []
-        else:
-            authors = [author]
+        authors = [author] if author else []
 
         license = self.option("license")
         if not license:
@@ -157,10 +153,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         python = self.option("python")
         if not python:
-            current_env = SystemEnv(Path(sys.executable))
-            default_python = "^" + ".".join(
-                str(v) for v in current_env.version_info[:2]
+            config = Config.create()
+            default_python = (
+                "^"
+                + EnvManager.get_python_version(
+                    precision=2,
+                    prefer_active_python=config.get("virtualenvs.prefer-active-python"),
+                    io=self.io,
+                ).to_string()
             )
+
             question = self.create_question(
                 f"Compatible Python versions [<comment>{default_python}</comment>]: ",
                 default=default_python,
@@ -231,8 +233,9 @@ You can specify a package in the following forms:
         )
 
         content = layout_.generate_poetry_content()
-        for section in content:
-            pyproject.data.append(section, content[section])
+        for section, item in content.items():
+            pyproject.data.append(section, item)
+
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
@@ -282,6 +285,11 @@ You can specify a package in the following forms:
             )
             question.set_validator(self._validate_package)
 
+            follow_up_question = self.create_question(
+                "\nAdd a package (leave blank to skip):"
+            )
+            follow_up_question.set_validator(self._validate_package)
+
             package = self.ask(question)
             while package:
                 constraint = self._parse_requirements([package])[0]
@@ -293,7 +301,7 @@ You can specify a package in the following forms:
                 ):
                     self.line(f"Adding <info>{package}</info>")
                     result.append(constraint)
-                    package = self.ask("\nAdd a package (leave blank to skip):")
+                    package = self.ask(follow_up_question)
                     continue
 
                 canonicalized_name = canonicalize_name(constraint["name"])
@@ -318,8 +326,8 @@ You can specify a package in the following forms:
                     choices.append("")
 
                     package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it"
-                        " is not listed",
+                        "\nEnter package # to add, or the complete package name if"
+                        " it is not listed",
                         choices,
                         attempts=3,
                         default=len(choices) - 1,
@@ -359,7 +367,7 @@ You can specify a package in the following forms:
                     result.append(constraint)
 
                 if self.io.is_interactive():
-                    package = self.ask("\nAdd a package (leave blank to skip):")
+                    package = self.ask(follow_up_question)
 
             return result
 
@@ -413,24 +421,24 @@ You can specify a package in the following forms:
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, selector.find_recommended_require_version(package)
+        return package.pretty_name, f"^{package.version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException
 
         try:
-            cwd = self.poetry.file.parent
+            cwd = self.poetry.file.path.parent
+            artifact_cache = self.poetry.pool.artifact_cache
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
+            artifact_cache = self._get_pool().artifact_cache
 
-        return [
-            parse_dependency_specification(
-                requirement=requirement,
-                env=self.env if isinstance(self, EnvCommand) else None,
-                cwd=cwd,
-            )
-            for requirement in requirements
-        ]
+        parser = RequirementsParser(
+            artifact_cache=artifact_cache,
+            env=self.env if isinstance(self, EnvCommand) else None,
+            cwd=cwd,
+        )
+        return [parser.parse(requirement) for requirement in requirements]
 
     def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
         requires: Requirements = {}

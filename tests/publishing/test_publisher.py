@@ -9,6 +9,7 @@ import pytest
 
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 
 from poetry.factory import Factory
 from poetry.publishing.publisher import Publisher
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 def test_publish_publishes_to_pypi_by_default(
     fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
-):
+) -> None:
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -48,7 +49,7 @@ def test_publish_can_publish_to_given_repository(
     mocker: MockerFixture,
     config: Config,
     fixture_name: str,
-):
+) -> None:
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
 
@@ -72,12 +73,13 @@ def test_publish_can_publish_to_given_repository(
         ("http://foo.bar",),
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args
-    assert "Publishing my-package (1.2.3) to foo" in io.fetch_output()
+    project_name = canonicalize_name(fixture_name)
+    assert f"Publishing {project_name} (1.2.3) to foo" in io.fetch_output()
 
 
 def test_publish_raises_error_for_undefined_repository(
     fixture_dir: FixtureDirGetter, config: Config
-):
+) -> None:
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
     poetry.config.merge(
@@ -91,7 +93,7 @@ def test_publish_raises_error_for_undefined_repository(
 
 def test_publish_uses_token_if_it_exists(
     fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
-):
+) -> None:
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -110,7 +112,7 @@ def test_publish_uses_token_if_it_exists(
 
 def test_publish_uses_cert(
     fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
-):
+) -> None:
     cert = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -141,7 +143,7 @@ def test_publish_uses_cert(
 
 def test_publish_uses_client_cert(
     fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
-):
+) -> None:
     client_cert = "path/to/client.pem"
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -172,7 +174,7 @@ def test_publish_read_from_environment_variable(
     environ: None,
     mocker: MockerFixture,
     config: Config,
-):
+) -> None:
     os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"

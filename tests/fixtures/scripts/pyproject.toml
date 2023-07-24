@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.7"
 
 [tool.poetry.scripts]
+check-argv0 = "scripts.check_argv0:main"
 exit-code = "scripts.exit_code:main"
 return-code = "scripts.return_code:main"
 

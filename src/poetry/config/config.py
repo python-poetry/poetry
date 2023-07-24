@@ -9,14 +9,15 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from packaging.utils import canonicalize_name
-from poetry.core.toml import TOMLFile
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
+from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -100,12 +101,11 @@ class PackageFilterPolicy:
 
 logger = logging.getLogger(__name__)
 
-
 _default_config: Config | None = None
 
 
 class Config:
-    default_config: dict[str, Any] = {
+    default_config: ClassVar[dict[str, Any]] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
             "create": True,
@@ -124,8 +124,15 @@ class Config:
             "prefer-active-python": False,
             "prompt": "{project_name}-py{python_version}",
         },
-        "experimental": {"new-installer": True, "system-git-client": False},
-        "installer": {"parallel": True, "max-workers": None, "no-binary": None},
+        "experimental": {
+            "system-git-client": False,
+        },
+        "installer": {
+            "modern-installation": True,
+            "parallel": True,
+            "max-workers": None,
+            "no-binary": None,
+        },
     }
 
     def __init__(
@@ -192,7 +199,7 @@ class Config:
         repositories = {}
         pattern = re.compile(r"POETRY_REPOSITORIES_(?P<name>[A-Z_]+)_URL")
 
-        for env_key in os.environ.keys():
+        for env_key in os.environ:
             match = pattern.match(env_key)
             if match:
                 repositories[match.group("name").lower().replace("_", "-")] = {
@@ -203,7 +210,11 @@ class Config:
 
     @property
     def repository_cache_directory(self) -> Path:
-        return Path(self.get("cache-dir")) / "cache" / "repositories"
+        return Path(self.get("cache-dir")).expanduser() / "cache" / "repositories"
+
+    @property
+    def artifacts_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")).expanduser() / "artifacts"
 
     @property
     def virtualenvs_path(self) -> Path:
@@ -265,8 +276,8 @@ class Config:
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
-            "experimental.new-installer",
             "experimental.system-git-client",
+            "installer.modern-installation",
             "installer.parallel",
         }:
             return boolean_normalizer
