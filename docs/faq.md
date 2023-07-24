@@ -122,12 +122,12 @@ allowlist_externals = poetry
 commands_pre =
     poetry install --no-root --sync
 commands =
-    poetry run pytest tests/ --import-mode importlib
+    pytest tests/ --import-mode importlib
 ```
 
-`tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
-Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry,
- which will install the locked dependencies into the environment.
+`tox` will create an `sdist` package of the project and use `pip` to install it in a fresh environment.
+Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry, which will
+install the locked dependencies into the environment.
 
 #### Usecase #3
 ```ini
@@ -145,6 +145,57 @@ commands =
 
 `tox` will not do any install. Poetry installs all the dependencies and the current package in editable mode.
 Thus, tests are running against the local files and not the built and installed package.
+
+#### Complex Usage with Dependency Groups
+
+```ini
+[tox]
+isolated_build = true
+
+[testenv]
+allowlist_externals = poetry
+
+[testenv:test]
+commands_pre =
+    poetry install --no-root --sync --with test
+commands =
+    pytest tests/
+
+[testenv:style]
+skip_install = true
+commands_pre =
+    poetry install --no-root --sync --with style
+commands =
+    flake8 src/
+    black --check src/
+
+[testenv:typing]
+skip_install = true
+commands_pre =
+    poetry install --sync --with typing
+commands =
+    mypy src/
+```
+
+In the `test` testenv, `tox` will create an `sdist` package of the project and use `pip` to install
+it in a fresh environment.
+Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry, which will
+install the locked dependencies into the environment.
+
+In the `style` testenv, `tox` will only create the virtual environment, and
+again we will rely on Poetry to install requirements.
+The project itself will not be installed at all, as `tox` uses `skip_install`
+and poetry uses `--no-root`.
+
+In the `typing` testenv, `tox` will only create the virtual environment, without installing the package,
+and Poetry will be used to install requirements.
+The project will be installed into the testenv by Poetry in addition to its
+dependencies.
+
+`poetry` is used to sync package dependencies and named dependency groups into
+the `tox`-created virtual environments. This allows dependency groups to provide
+dependencies for different `tox` environments, providing `test` to the `test`
+testenv, `style` to the `style` env, and `typing` to the `typing` env.
 
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
