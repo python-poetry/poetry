@@ -16,6 +16,7 @@ from typing import Any
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.utils.link import Link
+from requests.utils import atomic_open
 
 from poetry.installation.chef import Chef
 from poetry.installation.chef import ChefBuildError
@@ -29,7 +30,6 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
