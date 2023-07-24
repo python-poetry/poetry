@@ -47,12 +47,18 @@ class PoetryKeyring:
 
         import keyring
 
+        from keyring.errors import KeyringError
+        from keyring.errors import KeyringLocked
+
         for name in names:
+            credential = None
             try:
                 credential = keyring.get_credential(name, username)
-            except keyring.errors.KeyringLocked:
+            except KeyringLocked:
                 logger.debug("Keyring %s is locked", name)
-                credential = None
+            except (KeyringError, RuntimeError):
+                logger.debug("Accessing keyring %s failed", name, exc_info=True)
+
             if credential:
                 return HTTPAuthCredential(
                     username=credential.username, password=credential.password
