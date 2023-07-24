@@ -317,9 +317,7 @@ lists all packages available."""
             name = locked.pretty_name
             install_marker = ""
 
-            if show_top_level and not any(
-                locked.is_same_package_as(r) for r in requires
-            ):
+            if show_top_level and not any(locked.satisfies(r) for r in requires):
                 continue
 
             if locked not in required_locked_packages:
