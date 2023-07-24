@@ -870,6 +870,15 @@ class Executor:
             with self._lock:
                 progress.finish()
 
+        # Validate expected byte size based on http headers
+        if wheel_size is not None and done != int(wheel_size):
+            raise RuntimeError(
+                "Downloaded wheel does not match expected size, "
+                f" was {done} expected {wheel_size}. "
+                "This means probably connection was interrupted "
+                "and might corrupt the cache."
+            )
+
         return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
