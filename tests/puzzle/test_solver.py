@@ -2233,7 +2233,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference=ref[list(ref.keys())[0]],
+        source_reference=ref[next(iter(ref.keys()))],
         source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
@@ -2253,7 +2253,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
     op = ops[1]
 
     assert op.package.source_type == "git"
-    assert op.package.source_reference == ref[list(ref.keys())[0]]
+    assert op.package.source_reference == ref[next(iter(ref.keys()))]
     assert op.package.source_resolved_reference is not None
     assert op.package.source_resolved_reference.startswith("9cf87a2")
 
