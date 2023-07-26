@@ -9,6 +9,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import cast
 
 from packaging.utils import canonicalize_name
@@ -50,8 +51,13 @@ class Locker:
     _VERSION = "2.0"
     _READ_VERSION_RANGE = ">=1,<3"
 
-    _legacy_keys = ["dependencies", "source", "extras", "dev-dependencies"]
-    _relevant_keys = [*_legacy_keys, "group"]
+    _legacy_keys: ClassVar[list[str]] = [
+        "dependencies",
+        "source",
+        "extras",
+        "dev-dependencies",
+    ]
+    _relevant_keys: ClassVar[list[str]] = [*_legacy_keys, "group"]
 
     def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
         self._lock = lock

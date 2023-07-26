@@ -21,10 +21,8 @@ class SourceAddCommand(Command):
         ),
         argument(
             "url",
-            (
-                "Source repository URL."
-                " Required, except for PyPI, for which it is not allowed."
-            ),
+            "Source repository URL."
+            " Required, except for PyPI, for which it is not allowed.",
             optional=True,
         ),
     ]
@@ -33,28 +31,22 @@ class SourceAddCommand(Command):
         option(
             "default",
             "d",
-            (
-                "Set this source as the default (disable PyPI). A "
-                "default source will also be the fallback source if "
-                "you add other sources. (<warning>Deprecated</warning>, use --priority)"
-            ),
+            "Set this source as the default (disable PyPI). A "
+            "default source will also be the fallback source if "
+            "you add other sources. (<warning>Deprecated</warning>, use --priority)",
         ),
         option(
             "secondary",
             "s",
-            (
-                "Set this source as secondary. (<warning>Deprecated</warning>, use"
-                " --priority)"
-            ),
+            "Set this source as secondary. (<warning>Deprecated</warning>, use"
+            " --priority)",
         ),
         option(
             "priority",
             "p",
-            (
-                "Set the priority of this source. One of:"
-                f" {', '.join(p.name.lower() for p in Priority)}. Defaults to"
-                f" {Priority.PRIMARY.name.lower()}."
-            ),
+            "Set the priority of this source. One of:"
+            f" {', '.join(p.name.lower() for p in Priority)}. Defaults to"
+            f" {Priority.PRIMARY.name.lower()}.",
             flag=False,
         ),
     ]

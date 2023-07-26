@@ -53,7 +53,7 @@ def test_link_attributes(
     page = HTMLPage("https://example.org", content)
 
     assert len(list(page.links)) == 1
-    link = list(page.links)[0]
+    link = next(iter(page.links))
     assert link.url == expected_link.url
     assert link.requires_python == expected_link.requires_python
     assert link.yanked == expected_link.yanked
@@ -111,5 +111,5 @@ def test_base_url(
 ) -> None:
     content = html_page_content(anchor, base_url)
     page = HTMLPage("https://example.org", content)
-    link = list(page.links)[0]
+    link = next(iter(page.links))
     assert link.url == expected

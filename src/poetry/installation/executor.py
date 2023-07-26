@@ -370,12 +370,10 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    (
-                        f"  <fg=default;options=bold,dark>•</> {operation_message}: "
-                        "<fg=default;options=bold,dark>Skipped</> "
-                        "<fg=default;options=dark>for the following reason:</> "
-                        f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
-                    ),
+                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
+                    "<fg=default;options=bold,dark>Skipped</> "
+                    "<fg=default;options=dark>for the following reason:</> "
+                    f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
                 )
 
             self._skipped[operation.job_type] += 1
@@ -461,13 +459,18 @@ class Executor:
             )
 
         if isinstance(operation, Update):
+            initial_version = (initial_pkg := operation.initial_package).version
+            target_version = (target_pkg := operation.target_package).version
+            update_kind = (
+                "Updating" if target_version >= initial_version else "Downgrading"
+            )
             return (
-                f"<{base_tag}>Updating"
-                f" <{package_color}>{operation.initial_package.name}</{package_color}> "
+                f"<{base_tag}>{update_kind}"
+                f" <{package_color}>{initial_pkg.name}</{package_color}> "
                 f"(<{source_operation_color}>"
-                f"{operation.initial_package.full_pretty_version}"
+                f"{initial_pkg.full_pretty_version}"
                 f"</{source_operation_color}> -> <{operation_color}>"
-                f"{operation.target_package.full_pretty_version}</>)</>"
+                f"{target_pkg.full_pretty_version}</>)</>"
             )
         return ""
 

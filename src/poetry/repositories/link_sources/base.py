@@ -5,6 +5,7 @@ import re
 
 from functools import cached_property
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import DefaultDict
 from typing import List
 
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 class LinkSource:
     VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
     CLEAN_REGEX = re.compile(r"[^a-z0-9$&+,/:;=?@.#%_\\|-]", re.I)
-    SUPPORTED_FORMATS = [
+    SUPPORTED_FORMATS: ClassVar[list[str]] = [
         ".tar.gz",
         ".whl",
         ".zip",

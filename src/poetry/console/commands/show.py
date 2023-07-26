@@ -48,10 +48,8 @@ class ShowCommand(GroupCommand, EnvCommand):
         option(
             "why",
             None,
-            (
-                "When showing the full list, or a <info>--tree</info> for a single"
-                " package, also display why it's included."
-            ),
+            "When showing the full list, or a <info>--tree</info> for a single"
+            " package, also display why it's included.",
         ),
         option("latest", "l", "Show the latest version."),
         option(
@@ -319,9 +317,7 @@ lists all packages available."""
             name = locked.pretty_name
             install_marker = ""
 
-            if show_top_level and not any(
-                locked.is_same_package_as(r) for r in requires
-            ):
+            if show_top_level and not any(locked.satisfies(r) for r in requires):
                 continue
 
             if locked not in required_locked_packages:

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 def html_page_content() -> HTMLPageGetter:
     def _fixture(content: str, base_url: str | None = None) -> str:
         base = f'<base href="{base_url}"' if base_url else ""
-        return """
+        return f"""
         <!DOCTYPE html>
         <html>
           <head>
@@ -26,6 +26,6 @@ def html_page_content() -> HTMLPageGetter:
             {content}
             </body>
         </html>
-        """.format(content=content, base=base)
+        """
 
     return _fixture
