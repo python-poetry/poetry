@@ -179,7 +179,7 @@ The equivalent specification in `pyproject.toml` is:
 ```toml
 [[tool.poetry.source]]
 name = "pypi"
-priority = "supplemental"
+priority = "primary"
 ```
 
 **Omit the `url` when specifying PyPI as a supplemental source.** Because PyPI is internally configured
