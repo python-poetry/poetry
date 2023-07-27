@@ -182,8 +182,8 @@ name = "pypi"
 priority = "primary"
 ```
 
-**Omit the `url` when specifying PyPI as a supplemental source.** Because PyPI is internally configured
-with Poetry, the PyPI repository cannot be configured with a given URL.  Remember, you can always use
+**Omit the `url` when specifying PyPI explicitly.** Because PyPI is internally configured
+with Poetry, the PyPI repository cannot be configured with a given URL. Remember, you can always use
 `poetry check` to ensure the validity of the `pyproject.toml` file.
 
 {{% /warning %}}
