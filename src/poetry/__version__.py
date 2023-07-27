@@ -13,7 +13,4 @@ if TYPE_CHECKING:
 # that.
 version: Callable[[str], str] = metadata.version
 
-try:
-  __version__ = version("poetry")
-except:
-  __version__ = "dev"
+__version__ = version("poetry")
