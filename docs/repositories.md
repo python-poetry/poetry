@@ -275,6 +275,15 @@ poetry source add --priority=explicit foo https://foo.bar/simple/
 
 There can be more than one explicit package source.
 
+{{% note %}}
+A real-world example where an explicit package source is useful, is for PyTorch GPU packages.
+
+```bash
+poetry source add --priority=explicit pytorch-gpu-src https://download.pytorch.org/whl/cu118
+poetry add --source pytorch-gpu-src torch torchvision torchaudio
+```
+{{% /note %}}
+
 #### Package Source Constraint
 
 All package sources (including secondary and possibly supplemental sources) will be searched during the package lookup
