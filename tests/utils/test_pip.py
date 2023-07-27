@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import os
 
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import VirtualEnv
     from tests.types import FixtureDirGetter
 
-
+@pytest.mark.skipif(bool(os.getenv('REPL_HOME')), reason="not setup in a repl")
 def test_pip_install_successful(
     tmp_path: Path, tmp_venv: VirtualEnv, fixture_dir: FixtureDirGetter
 ) -> None:
