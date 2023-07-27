@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
+import os
 import pytest
 
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("about")
 
-
+@pytest.mark.skipif(bool(os.getenv('REPL_HOME')), reason="not setup in a repl")
 def test_about(tester: CommandTester) -> None:
     from poetry.utils._compat import metadata
 

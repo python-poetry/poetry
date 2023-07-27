@@ -1,0 +1,7 @@
+modules = ["python-3.10:v16-20230726-64244b3"]
+
+[nix]
+channel = "stable-22_11"
+
+[env]
+PYTHONPATH = "$PYTHONPATH:$REPL_HOME/src"

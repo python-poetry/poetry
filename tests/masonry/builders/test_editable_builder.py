@@ -224,7 +224,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     )
     assert [] == env.executed
 
-
+@pytest.mark.skipif(bool(os.getenv('REPL_HOME')), reason="not setup in a repl")
 def test_builder_setup_generation_runs_with_pip_editable(
     fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:

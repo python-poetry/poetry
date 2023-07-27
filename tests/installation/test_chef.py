@@ -77,7 +77,7 @@ def test_prepare_directory(
     # cleanup generated tmp dir artifact
     os.unlink(wheel)
 
-
+@pytest.mark.skipif(bool(os.getenv('REPL_HOME')), reason="not setup in a repl")
 def test_prepare_directory_with_extensions(
     config: Config,
     config_cache_dir: Path,

@@ -39,3 +39,5 @@ pip-wheel-metadata
 /poetry.toml
 
 poetry/core/*
+
+.pythonlibs
