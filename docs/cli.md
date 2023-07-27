@@ -351,6 +351,18 @@ poetry add pendulum@latest
 See the [Dependency specification]({{< relref "dependency-specification" >}}) for more information on setting the version constraints for a package.
 {{% /note %}}
 
+The `add` command uses PyPi as its default source of dependency package. You can also specify other sources for your packages, such as other online source, git, local, and local and editable.
+
+You can add an online source using [`source add`](#source-add) command. After the source has been added, you can then add a dependency with the newly added source:
+
+```bash
+# Use `source add` command to define a source
+poetry source add --priority=explicit pytorch-gpu-src https://download.pytorch.org/whl/cu118
+
+# Add an online dependency with the newly added source.
+poetry add --source pytorch-gpu-src torch torchvision torchaudio
+```
+
 You can also add `git` dependencies:
 
 ```bash
