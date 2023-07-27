@@ -41,3 +41,5 @@ pip-wheel-metadata
 poetry/core/*
 
 .pythonlibs
+
+poetry-*-bundle.tgz
