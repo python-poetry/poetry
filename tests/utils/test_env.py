@@ -1474,6 +1474,12 @@ def test_system_env_usersite(mocker: MockerFixture, enabled: bool) -> None:
         not enabled and env.usersite is None
     )
 
+@pytest.mark.skipif(not bool(os.getenv('REPL_HOME')), reason="test only works in a repl")
+def test_system_env_is_path_relative_to_lib() -> None:
+    env = SystemEnv(Path(sys.prefix))
+    repl_home = os.getenv("REPL_HOME")
+    assert repl_home is not None
+    assert (env.is_path_relative_to_lib(Path(repl_home + "/.pythonlibs")))
 
 def test_venv_has_correct_paths(tmp_venv: VirtualEnv) -> None:
     paths = tmp_venv.paths

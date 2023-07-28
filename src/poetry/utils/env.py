@@ -997,13 +997,6 @@ class EnvManager:
 
         if not venv.exists():
             if create_venv is False:
-                self._io.write_error_line(
-                    "<fg=black;bg=yellow>"
-                    "Skipping virtualenv creation, "
-                    "as specified in config file."
-                    "</>"
-                )
-
                 return self.get_system_env()
 
             self._io.write_error_line(
@@ -1385,7 +1378,10 @@ class Env:
         return self._platlib
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
-        for lib_path in [self.purelib, self.platlib]:
+        lib_paths = [self.purelib, self.platlib]
+        if self.userbase:
+            lib_paths.append(self.userbase)
+        for lib_path in lib_paths:
             with contextlib.suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
