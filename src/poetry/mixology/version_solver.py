@@ -22,6 +22,7 @@ from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.packages import DependencyPackage
@@ -139,6 +140,13 @@ class VersionSolver:
             int, set[Incompatibility]
         ] = collections.defaultdict(set)
         self._solution = PartialSolution()
+
+        # package name -> package.requires names for an arbitrary version of the package
+        # This is only used to determine which package to resolve next.
+        self._requiresHeuristics: dict[str, set[str]] = {}
+        self._get_package_for_dependency = functools.lru_cache(maxsize=None)(
+            self._get_package_for_dependency_uncached
+        )
 
     @property
     def solution(self) -> PartialSolution:
@@ -415,6 +423,30 @@ class VersionSolver:
 
         raise SolveFailure(incompatibility)
 
+    def _get_package_for_dependency_uncached(
+        self,
+        dependency: Dependency,
+        # Constraint is unused but required to calculate the cache key,
+        # because two direct origin dependencies with the same origin are equal
+        # independent of the constraint. If neglected, we run into
+        # https://github.com/python-poetry/poetry/issues/7398 again.
+        constraint: VersionConstraint,
+    ) -> DependencyPackage | None:
+        locked = self._provider.get_locked(dependency)
+        if locked is None:
+            packages = self._dependency_cache.search_for(
+                dependency, self._solution.decision_level
+            )
+            package = next(iter(packages), None)
+
+            if package is None:
+                return None
+        else:
+            package = locked
+
+        # complete package so that package.requires are set
+        return self._provider.complete_package(package)
+
     def _choose_package_version(self) -> str | None:
         """
         Tries to select a version of a required package.
@@ -426,6 +458,27 @@ class VersionSolver:
         unsatisfied = self._solution.unsatisfied
         if not unsatisfied:
             return None
+
+        transitive_names = set()
+        for dependency in unsatisfied:
+            if dependency.name not in self._requiresHeuristics:
+                package = self._get_package_for_dependency(
+                    dependency, dependency.constraint
+                )
+                if package is None:
+                    # If there are no versions that satisfy the constraint,
+                    # add an incompatibility that indicates that.
+                    self._add_incompatibility(
+                        Incompatibility([Term(dependency, True)], NoVersionsCause())
+                    )
+                    return dependency.complete_name
+                self._requiresHeuristics[dependency.name] = {
+                    dep.name
+                    for dep in package.package.requires
+                    # dependencies with extra may depend on itself (without extra)
+                    if dep.name != dependency.name
+                }
+            transitive_names.update(self._requiresHeuristics[dependency.name])
 
         class Preference:
             """
@@ -440,17 +493,33 @@ class VersionSolver:
             LOCKED = 3
             DEFAULT = 4
 
-        # Prefer packages with as few remaining versions as possible,
-        # so that if a conflict is necessary it's forced quickly.
-        # In order to provide results that are as deterministic as possible
-        # and consistent between `poetry lock` and `poetry update`, the return value
-        # of two different dependencies should not be equal if possible.
-        def _get_min(dependency: Dependency) -> tuple[bool, int, int]:
+        def _get_min(dependency: Dependency) -> tuple[bool, int, bool, int]:
+            """
+            Heuristic for choosing which dependency to solve next:
+            1. Prefer any marker dependencies.
+            2. Prefer direct origin dependencies.
+            3. Prefer packages that are not constrained
+               by other unsatisfied dependencies.
+            3. Prefer packages with as few remaining versions as possible,
+               so that if a conflict is necessary it's forced quickly.
+
+            In order to provide results that are as deterministic as possible
+            and consistent between `poetry lock` and `poetry update`, the return value
+            of two different dependencies should not be equal if possible.
+
+            Returns a tuple of:
+            * True if dependency has a specific marker, False if any marker
+            * preference (see Preference class)
+            * True if dependency is required by other unsatisfied dependency, else False
+            * number of package versions that satisfy the dependency
+            """
+            required_by_other = dependency.name in transitive_names
+
             # Direct origin dependencies must be handled first: we don't want to resolve
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, Preference.DIRECT_ORIGIN, 1
+                return False, Preference.DIRECT_ORIGIN, required_by_other, 1
 
             is_specific_marker = not dependency.marker.is_any()
 
@@ -458,7 +527,7 @@ class VersionSolver:
             if not use_latest:
                 locked = self._provider.get_locked(dependency)
                 if locked:
-                    return is_specific_marker, Preference.LOCKED, 1
+                    return is_specific_marker, Preference.LOCKED, required_by_other, 1
 
             num_packages = len(
                 self._dependency_cache.search_for(
@@ -472,33 +541,21 @@ class VersionSolver:
                 preference = Preference.USE_LATEST
             else:
                 preference = Preference.DEFAULT
-            return is_specific_marker, preference, num_packages
+            return is_specific_marker, preference, required_by_other, num_packages
 
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]
         else:
             dependency = min(*unsatisfied, key=_get_min)
 
-        locked = self._provider.get_locked(dependency)
-        if locked is None:
-            packages = self._dependency_cache.search_for(
-                dependency, self._solution.decision_level
+        package = self._get_package_for_dependency(dependency, dependency.constraint)
+        if package is None:
+            # If there are no versions that satisfy the constraint,
+            # add an incompatibility that indicates that.
+            self._add_incompatibility(
+                Incompatibility([Term(dependency, True)], NoVersionsCause())
             )
-            package = next(iter(packages), None)
-
-            if package is None:
-                # If there are no versions that satisfy the constraint,
-                # add an incompatibility that indicates that.
-                self._add_incompatibility(
-                    Incompatibility([Term(dependency, True)], NoVersionsCause())
-                )
-
-                complete_name = dependency.complete_name
-                return complete_name
-        else:
-            package = locked
-
-        package = self._provider.complete_package(package)
+            return dependency.complete_name
 
         conflict = False
         for incompatibility in self._provider.incompatibilities_for(package):

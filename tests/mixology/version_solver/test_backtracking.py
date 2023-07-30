@@ -135,11 +135,13 @@ def test_backjump_to_nearer_unsatisfied_package(
 def test_traverse_into_package_with_fewer_versions_first(
     root: ProjectPackage, provider: Provider, repo: Repository
 ) -> None:
-    # Dependencies are ordered so that packages with fewer versions are tried
-    # first. Here, there are two valid solutions (either a or b must be
-    # downgraded once). The chosen one depends on which dep is traversed first.
-    # Since b has fewer versions, it will be traversed first, which means a will
-    # come later. Since later selections are revised first, a gets downgraded.
+    """
+    Dependencies are ordered so that packages with fewer versions are tried
+    first. Here, there are two valid solutions (either a or b must be
+    downgraded once). The chosen one depends on which dep is traversed first.
+    Since b has fewer versions, it will be traversed first, which means a will
+    come later. Since later selections are revised first, a gets downgraded.
+    """
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
 
@@ -156,6 +158,30 @@ def test_traverse_into_package_with_fewer_versions_first(
     add_to_repo(repo, "c", "2.0.0")
 
     check_solver_result(root, provider, {"a": "4.0.0", "b": "4.0.0", "c": "2.0.0"})
+
+
+def test_traverse_into_package_not_required_by_other_package_first(
+    root: ProjectPackage, provider: Provider, repo: Repository
+) -> None:
+    """
+    Dependencies are ordered so that packages that are not required by other
+    packages are tried first.
+    Here, there are two valid solutions (either a or b must be downgraded).
+    The chosen one depends on which dep is traversed first.
+    Since a depends on b, a will be traversed first (in spite of the fact
+    that b has fewer versions), which means a will come later.
+    Since later selections are revised first, a gets downgraded.
+    """
+    root.add_dependency(Factory.create_dependency("a", "*"))
+    root.add_dependency(Factory.create_dependency("b", "*"))
+
+    add_to_repo(repo, "a", "1.0", deps={"b": "*"})
+    add_to_repo(repo, "a", "2.0", deps={"b": "1.0"})
+    add_to_repo(repo, "a", "3.0", deps={"b": "1.0"})
+    add_to_repo(repo, "b", "1.0")
+    add_to_repo(repo, "b", "2.0")
+
+    check_solver_result(root, provider, {"a": "3.0", "b": "1.0"})
 
 
 def test_backjump_past_failed_package_on_disjoint_constraint(
