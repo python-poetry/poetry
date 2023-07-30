@@ -5,6 +5,7 @@ import ast
 from configparser import ConfigParser
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from poetry.core.constraints.version import Version
 
@@ -18,7 +19,7 @@ class SetupReader:
     Class that reads a setup.py file without executing it.
     """
 
-    DEFAULT: dict[str, Any] = {
+    DEFAULT: ClassVar[dict[str, Any]] = {
         "name": None,
         "version": None,
         "install_requires": [],
@@ -26,7 +27,7 @@ class SetupReader:
         "python_requires": None,
     }
 
-    FILES = ["setup.py", "setup.cfg"]
+    FILES: ClassVar[list[str]] = ["setup.py", "setup.cfg"]
 
     @classmethod
     def read_from_directory(cls, directory: Path) -> dict[str, Any]:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import logging
 import re
 import time
@@ -7,15 +8,16 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
 from poetry.core.constraints.version import EmptyConstraint
 from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionRange
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
-from poetry.core.version.markers import EmptyMarker
-from poetry.core.version.markers import MarkerUnion
+from poetry.core.version.markers import union as marker_union
 
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
@@ -59,10 +61,22 @@ class IncompatibleConstraintsError(Exception):
     Exception when there are duplicate dependencies with incompatible constraints.
     """
 
-    def __init__(self, package: Package, *dependencies: Dependency) -> None:
-        constraints = "\n".join(dep.to_pep_508() for dep in dependencies)
+    def __init__(
+        self, package: Package, *dependencies: Dependency, with_sources: bool = False
+    ) -> None:
+        constraints = []
+        for dep in dependencies:
+            constraint = dep.to_pep_508()
+            if dep.is_direct_origin():
+                # add version info because issue might be a version conflict
+                # with a version constraint
+                constraint += f" ({dep.constraint})"
+            if with_sources and dep.source_name:
+                constraint += f" ; source={dep.source_name}"
+            constraints.append(constraint)
         super().__init__(
-            f"Incompatible constraints in requirements of {package}:\n{constraints}"
+            f"Incompatible constraints in requirements of {package}:\n"
+            + "\n".join(constraints)
         )
 
 
@@ -93,7 +107,7 @@ class Indicator(ProgressIndicator):
 
 
 class Provider:
-    UNSAFE_PACKAGES: set[str] = set()
+    UNSAFE_PACKAGES: ClassVar[set[str]] = set()
 
     def __init__(
         self,
@@ -590,53 +604,13 @@ class Provider:
 
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
-            # Group dependencies for merging.
-            # We must not merge dependencies from different sources!
-            dep_groups = self._group_by_source(deps)
-            deps = []
-            for group in dep_groups:
-                # In order to reduce the number of overrides we merge duplicate
-                # dependencies by constraint. For instance, if we have:
-                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   • foo (>=2.0) ; python_version >= "3.7"
-                # we can avoid two overrides by merging them to:
-                #   • foo (>=2.0) ; python_version >= "3.6"
-                # However, if we want to merge dependencies by constraint we have to
-                # merge dependencies by markers first in order to avoid unnecessary
-                # solver failures. For instance, if we have:
-                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   • foo (>=2.0) ; python_version >= "3.7"
-                #   • foo (<2.1) ; python_version >= "3.7"
-                # we must not merge the first two constraints but the last two:
-                #   • foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
-                #   • foo (>=2.0,<2.1) ; python_version >= "3.7"
-                deps += self._merge_dependencies_by_constraint(
-                    self._merge_dependencies_by_marker(group)
-                )
+            # For dependency resolution, markers of duplicate dependencies must be
+            # mutually exclusive.
+            deps = self._resolve_overlapping_markers(package, deps)
+
             if len(deps) == 1:
                 self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
                 dependencies.append(deps[0])
-                continue
-
-            # We leave dependencies as-is if they have the same
-            # python/platform constraints.
-            # That way the resolver will pickup the conflict
-            # and display a proper error.
-            seen = set()
-            for dep in deps:
-                pep_508_dep = dep.to_pep_508(False)
-                if ";" not in pep_508_dep:
-                    _requirements = ""
-                else:
-                    _requirements = pep_508_dep.split(";")[1].strip()
-
-                if _requirements not in seen:
-                    seen.add(_requirements)
-
-            if len(deps) != len(seen):
-                for dep in deps:
-                    dependencies.append(dep)
-
                 continue
 
             # At this point, we raise an exception that will
@@ -664,8 +638,6 @@ class Provider:
                 f"<warning>Different requirements found for {warnings}.</warning>"
             )
 
-            deps = self._handle_any_marker_dependencies(package, deps)
-
             overrides = []
             overrides_marker_intersection: BaseMarker = AnyMarker()
             for dep_overrides in self._overrides.values():
@@ -690,18 +662,18 @@ class Provider:
         clean_dependencies = []
         for dep in dependencies:
             if not dependency.transitive_marker.without_extras().is_any():
-                marker_intersection = (
+                transitive_marker_intersection = (
                     dependency.transitive_marker.without_extras().intersect(
                         dep.marker.without_extras()
                     )
                 )
-                if marker_intersection.is_empty():
+                if transitive_marker_intersection.is_empty():
                     # The dependency is not needed, since the markers specified
                     # for the current package selection are not compatible with
                     # the markers for the current dependency, so we skip it
                     continue
 
-                dep.transitive_marker = marker_intersection
+                dep.transitive_marker = transitive_marker_intersection
 
             if not dependency.python_constraint.is_any():
                 python_constraint_intersection = dep.python_constraint.intersect(
@@ -845,118 +817,127 @@ class Provider:
         """
         Merge dependencies with the same constraint
         by building a union of their markers.
+
+        For instance, if we have:
+           - foo (>=2.0) ; python_version >= "3.6" and python_version < "3.7"
+           - foo (>=2.0) ; python_version >= "3.7"
+        we can avoid two overrides by merging them to:
+           - foo (>=2.0) ; python_version >= "3.6"
         """
-        by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
-        for dep in dependencies:
-            by_constraint[dep.constraint].append(dep)
-        for constraint, _deps in by_constraint.items():
-            new_markers = [dep.marker for dep in _deps]
+        dep_groups = self._group_by_source(dependencies)
+        merged_dependencies = []
+        for group in dep_groups:
+            by_constraint: dict[VersionConstraint, list[Dependency]] = defaultdict(list)
+            for dep in group:
+                by_constraint[dep.constraint].append(dep)
+            for deps in by_constraint.values():
+                dep = deps[0]
+                if len(deps) > 1:
+                    new_markers = (dep.marker for dep in deps)
+                    dep.marker = marker_union(*new_markers)
+                merged_dependencies.append(dep)
 
-            dep = _deps[0]
+        return merged_dependencies
 
-            # Union with EmptyMarker is to make sure we get the benefit of marker
-            # simplifications.
-            dep.marker = MarkerUnion(*new_markers).union(EmptyMarker())
-            by_constraint[constraint] = [dep]
-
-        return [value[0] for value in by_constraint.values()]
-
-    def _merge_dependencies_by_marker(
-        self, dependencies: Iterable[Dependency]
-    ) -> list[Dependency]:
+    def _is_relevant_marker(self, marker: BaseMarker) -> bool:
         """
-        Merge dependencies with the same marker
-        by building the intersection of their constraints.
+        A marker is relevant if
+        - it is not empty
+        - allowed by the project's python constraint
+        - allowed by the environment (only during installation)
         """
-        by_marker: dict[BaseMarker, list[Dependency]] = defaultdict(list)
-        for dep in dependencies:
-            by_marker[dep.marker].append(dep)
-        deps = []
-        for _deps in by_marker.values():
-            if len(_deps) == 1:
-                deps.extend(_deps)
-            else:
-                new_constraint = _deps[0].constraint
-                for dep in _deps[1:]:
-                    new_constraint = new_constraint.intersect(dep.constraint)
-                if new_constraint.is_empty():
-                    # leave dependencies as-is so the resolver will pickup
-                    # the conflict and display a proper error.
-                    deps.extend(_deps)
-                else:
-                    self.debug(
-                        f"<debug>Merging constraints for {_deps[0].name} for"
-                        f" marker {_deps[0].marker}</debug>"
-                    )
-                    deps.append(_deps[0].with_constraint(new_constraint))
-        return deps
+        return (
+            not marker.is_empty()
+            and self._python_constraint.allows_any(
+                get_python_constraint_from_marker(marker)
+            )
+            and (not self._env or marker.validate(self._env.marker_env))
+        )
 
-    def _handle_any_marker_dependencies(
+    def _resolve_overlapping_markers(
         self, package: Package, dependencies: list[Dependency]
     ) -> list[Dependency]:
         """
-        We need to check if one of the duplicate dependencies
-        has no markers. If there is one, we need to change its
-        environment markers to the inverse of the union of the
-        other dependencies markers.
-        For instance, if we have the following dependencies:
-          • ipython
-          • ipython (1.2.4) ; implementation_name == "pypy"
+        Convert duplicate dependencies with potentially overlapping markers
+        into duplicate dependencies with mutually exclusive markers.
 
-        the marker for `ipython` will become `implementation_name != "pypy"`.
-
-        Further, we have to merge the constraints of the requirements
-        without markers into the constraints of the requirements with markers.
-        for instance, if we have the following dependencies:
-          • foo (>= 1.2)
-          • foo (!= 1.2.1) ; python == 3.10
-
-        the constraint for the second entry will become (!= 1.2.1, >= 1.2).
+        Therefore, the intersections of all combinations of markers and inverted markers
+        have to be calculated. If such an intersection is relevant (not empty, etc.),
+        the intersection of all constraints, whose markers were not inverted is built
+        and a new dependency with the calculated version constraint and marker is added.
+        (The marker of such a dependency does not overlap with the marker
+        of any other new dependency.)
         """
-        any_markers_dependencies = [d for d in dependencies if d.marker.is_any()]
-        other_markers_dependencies = [d for d in dependencies if not d.marker.is_any()]
+        # In order to reduce the number of intersections,
+        # we merge duplicate dependencies by constraint.
+        dependencies = self._merge_dependencies_by_constraint(dependencies)
 
-        if any_markers_dependencies:
-            for dep_other in other_markers_dependencies:
-                new_constraint = dep_other.constraint
-                for dep_any in any_markers_dependencies:
-                    new_constraint = new_constraint.intersect(dep_any.constraint)
-                if new_constraint.is_empty():
-                    raise IncompatibleConstraintsError(
-                        package, dep_other, *any_markers_dependencies
-                    )
-                dep_other.constraint = new_constraint
-
-        marker = other_markers_dependencies[0].marker
-        for other_dep in other_markers_dependencies[1:]:
-            marker = marker.union(other_dep.marker)
-        inverted_marker = marker.invert()
-
-        if (
-            not inverted_marker.is_empty()
-            and self._python_constraint.allows_any(
-                get_python_constraint_from_marker(inverted_marker)
+        new_dependencies = []
+        for uses in itertools.product([True, False], repeat=len(dependencies)):
+            # intersection of markers
+            # For performance optimization, we don't just intersect all markers at once,
+            # but intersect them one after the other to get empty markers early.
+            # Further, we intersect the inverted markers at last because
+            # they are more likely to overlap than the non-inverted ones.
+            markers = (
+                dep.marker if use else dep.marker.invert()
+                for use, dep in sorted(
+                    zip(uses, dependencies), key=lambda ud: ud[0], reverse=True
+                )
             )
-            and (not self._env or inverted_marker.validate(self._env.marker_env))
-        ):
-            if any_markers_dependencies:
-                for dep_any in any_markers_dependencies:
-                    dep_any.marker = inverted_marker
-            else:
-                # If there is no any marker dependency
-                # and the inverted marker is not empty,
-                # a dependency with the inverted union of all markers is required
-                # in order to not miss other dependencies later, for instance:
+            used_marker_intersection: BaseMarker = AnyMarker()
+            for m in markers:
+                used_marker_intersection = used_marker_intersection.intersect(m)
+            if not self._is_relevant_marker(used_marker_intersection):
+                continue
+
+            # intersection of constraints
+            constraint: VersionConstraint = VersionRange()
+            specific_source_dependency = None
+            used_dependencies = list(itertools.compress(dependencies, uses))
+            for dep in used_dependencies:
+                if dep.is_direct_origin() or dep.source_name:
+                    # if direct origin or specific source:
+                    # conflict if specific source already set and not the same
+                    if specific_source_dependency and (
+                        not dep.is_same_source_as(specific_source_dependency)
+                        or dep.source_name != specific_source_dependency.source_name
+                    ):
+                        raise IncompatibleConstraintsError(
+                            package, dep, specific_source_dependency, with_sources=True
+                        )
+                    specific_source_dependency = dep
+                constraint = constraint.intersect(dep.constraint)
+            if constraint.is_empty():
+                # conflict in overlapping area
+                raise IncompatibleConstraintsError(package, *used_dependencies)
+
+            if not any(uses):
+                # This is an edge case where the dependency is not required
+                # for the resulting marker. However, we have to consider it anyway
+                #  in order to not miss other dependencies later, for instance:
                 #   • foo (1.0) ; python == 3.7
                 #   • foo (2.0) ; python == 3.8
                 #   • bar (2.0) ; python == 3.8
                 #   • bar (3.0) ; python == 3.9
-                #
                 # the last dependency would be missed without this,
                 # because the intersection with both foo dependencies is empty.
-                inverted_marker_dep = dependencies[0].with_constraint(EmptyConstraint())
-                inverted_marker_dep.marker = inverted_marker
-                dependencies.append(inverted_marker_dep)
-        else:
-            dependencies = other_markers_dependencies
-        return dependencies
+
+                # Set constraint to empty to mark dependency as "not required".
+                constraint = EmptyConstraint()
+                used_dependencies = dependencies
+
+            # build new dependency with intersected constraint and marker
+            # (and correct source)
+            new_dep = (
+                specific_source_dependency
+                if specific_source_dependency
+                else used_dependencies[0]
+            ).with_constraint(constraint)
+            new_dep.marker = used_marker_intersection
+            new_dependencies.append(new_dep)
+
+        # In order to reduce the number of overrides we merge duplicate
+        # dependencies by constraint again. After overlapping markers were
+        # resolved, there might be new dependencies with the same constraint.
+        return self._merge_dependencies_by_constraint(new_dependencies)

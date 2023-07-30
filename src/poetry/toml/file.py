@@ -38,11 +38,9 @@ class TOMLFile(BaseTOMLFile):
 
     def __getattr__(self, item: str) -> Any:
         warnings.warn(
-            (
-                "`__getattr__` will be removed from the `TOMLFile` in a future release."
-                "\n\nInstead of accessing properties of the underlying `Path` as "
-                "`tomlfile.whatever`, prefer `tomlfile.path.whatever`."
-            ),
+            "`__getattr__` will be removed from the `TOMLFile` in a future release."
+            "\n\nInstead of accessing properties of the underlying `Path` as "
+            "`tomlfile.whatever`, prefer `tomlfile.path.whatever`.",
             DeprecationWarning,
             stacklevel=2,
         )

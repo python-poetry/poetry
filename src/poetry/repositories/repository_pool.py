@@ -135,11 +135,9 @@ class RepositoryPool(AbstractRepository):
 
         if default or secondary:
             warnings.warn(
-                (
-                    "Parameters 'default' and 'secondary' to"
-                    " 'RepositoryPool.add_repository' are deprecated. Please provide"
-                    " the keyword-argument 'priority' instead."
-                ),
+                "Parameters 'default' and 'secondary' to"
+                " 'RepositoryPool.add_repository' are deprecated. Please provide"
+                " the keyword-argument 'priority' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )

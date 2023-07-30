@@ -351,7 +351,7 @@ To specify a script that [depends on an extra](#extras), you may provide an entr
 
 ```toml
 [tool.poetry.scripts]
-devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
+devtest = { reference = "mypackage:test.run_tests", extras = ["test"], type = "console" }
 ```
 
 {{% note %}}

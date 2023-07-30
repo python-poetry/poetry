@@ -258,11 +258,9 @@ class InstalledRepository(Repository):
                 name = distribution.metadata.get("name")  # type: ignore[attr-defined]
                 if name is None:
                     logger.warning(
-                        (
-                            "Project environment contains an invalid distribution"
-                            " (<c1>%s</>). Consider removing it manually or recreate"
-                            " the environment."
-                        ),
+                        "Project environment contains an invalid distribution"
+                        " (<c1>%s</>). Consider removing it manually or recreate"
+                        " the environment.",
                         path,
                     )
                     skipped.add(path)

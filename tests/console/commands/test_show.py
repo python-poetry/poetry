@@ -2222,6 +2222,75 @@ def test_show_top_level_with_explicitly_defined_depenancy(
     assert tester.io.fetch_output() == expected
 
 
+def test_show_top_level_with_extras(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    black_dep = Factory.create_dependency(
+        "black", {"version": "23.3.0", "extras": ["d"]}
+    )
+    poetry.package.add_dependency(black_dep)
+
+    black_package = get_package("black", "23.3.0")
+    black_package.add_dependency(
+        Factory.create_dependency(
+            "aiohttp",
+            {
+                "version": ">=3.7.4",
+                "optional": True,
+                "markers": 'extra == "d"',
+            },
+        )
+    )
+    installed.add_package(black_package)
+
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "black",
+                    "version": "23.3.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "aiohttp": {
+                            "version": ">=3.7.4",
+                            "optional": True,
+                            "markers": 'extra == "d"',
+                        }
+                    },
+                },
+                {
+                    "name": "aiohttp",
+                    "version": "3.8.4",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"black": [], "aiohttp": []},
+            },
+        }
+    )
+
+    tester.execute("--top-level")
+
+    expected = """black 23.3.0 \n"""
+
+    assert tester.io.fetch_output() == expected
+
+
 def test_show_error_top_level_with_tree(tester: CommandTester) -> None:
     expected = "Error: Cannot use --tree and --top-level at the same time.\n"
     tester.execute("--top-level --tree")

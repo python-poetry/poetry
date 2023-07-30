@@ -22,10 +22,8 @@ class CheckCommand(Command):
         option(
             "lock",
             None,
-            (
-                "Checks that <comment>poetry.lock</> exists for the current"
-                " version of <comment>pyproject.toml</>."
-            ),
+            "Checks that <comment>poetry.lock</> exists for the current"
+            " version of <comment>pyproject.toml</>.",
         ),
     ]
 
