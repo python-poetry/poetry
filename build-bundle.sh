@@ -15,7 +15,7 @@ rm -fr $BUILD_DIR
 mkdir -p $BUILD_DIR
 VERSION=$(toml2json pyproject.toml | jq '.tool.poetry.version' --raw-output)
 POETRY_TAR_FILE="poetry-${VERSION}.tgz"
-tar cz --sort=name --mtime='@1' --exclude="$BUILD_DIR" --exclude="$POETRY_TAR_FILE" --exclude="$REPL_HOME/.pythonlibs" --owner=0 --group=0 --numeric-owner -P -f "$POETRY_TAR_FILE" .
+tar cz --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -P -f "$POETRY_TAR_FILE" src pyproject.toml LICENSE README.md
 pip download "$POETRY_TAR_FILE" -d $BUILD_DIR
 tar czf poetry-${VERSION}-bundle.tgz $BUILD_DIR
 rm "$POETRY_TAR_FILE"
