@@ -1438,6 +1438,8 @@ class Env:
         raise NotImplementedError()
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
+        if os.getenv("POETRY_PIP_FROM_PATH") == "1":
+            return ["pip"]
         if embedded or not Path(self._bin(self._pip_executable)).exists():
             return [str(self.python), str(self.pip_embedded)]
         # run as module so that pip can update itself on Windows

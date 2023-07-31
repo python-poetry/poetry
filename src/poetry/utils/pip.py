@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from poetry.exceptions import PoetryException
 from poetry.utils.env import EnvCommandError
-
+import os
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -30,9 +30,13 @@ def pip_install(
         "--disable-pip-version-check",
         "--isolated",
         "--no-input",
-        "--prefix",
-        str(environment.path),
     ]
+
+    if os.getenv("POETRY_PIP_NO_PREFIX") != "1":
+        args += [
+            "--prefix",	
+            str(environment.path),
+        ]
 
     if not is_wheel and not editable:
         args.insert(1, "--use-pep517")
