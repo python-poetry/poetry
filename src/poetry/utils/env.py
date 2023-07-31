@@ -1481,7 +1481,7 @@ class Env:
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_python_script(self, content: str, isolate=True, **kwargs: Any) -> str:
+    def run_python_script(self, content: str, isolate: bool=True, **kwargs: Any) -> str:
         args = [self._executable]
         if isolate:
             args.append("-I")
