@@ -30,7 +30,7 @@ def pip_install(
         "--disable-pip-version-check"
     ]
 
-    if os.getenv("POETRY_USE_USER_SITE") != "1":
+    if os.getenv("POETRY_PIP_NO_ISOLATE") != "1":
         args.append("--isolated")
 
     args.append("--no-input")
