@@ -1379,7 +1379,7 @@ class Env:
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         lib_paths = [self.purelib, self.platlib]
-        if self.userbase:
+        if os.getenv("POETRY_USE_USER_SITE") == "1" and self.userbase:
             lib_paths.append(self.userbase)
         for lib_path in lib_paths:
             with contextlib.suppress(ValueError):
@@ -1481,13 +1481,13 @@ class Env:
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_python_script(self, content: str, **kwargs: Any) -> str:
+    def run_python_script(self, content: str, isolate: bool=True, **kwargs: Any) -> str:
+        args = [self._executable]
+        if isolate:
+            args.append("-I")
+        args += ["-W", "ignore", "-"]
         return self.run(
-            self._executable,
-            "-I",
-            "-W",
-            "ignore",
-            "-",
+            *args,
             input_=content,
             stderr=subprocess.PIPE,
             **kwargs,
@@ -1828,7 +1828,7 @@ class GenericEnv(VirtualEnv):
                 self._pip_executable = pip_executable
 
     def get_paths(self) -> dict[str, str]:
-        output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
+        output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS, isolate=False)
 
         paths: dict[str, str] = json.loads(output)
         return paths

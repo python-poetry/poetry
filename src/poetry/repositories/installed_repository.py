@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import json
 import logging
+import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -238,7 +239,14 @@ class InstalledRepository(Repository):
         seen = set()
         skipped = set()
 
-        for entry in reversed(env.sys_path):
+        paths = env.sys_path
+        
+        if os.getenv("POETRY_USE_USER_SITE") == "1":
+            user_site = env.get_paths().get('usersite')
+            if user_site:
+                paths += [user_site]
+
+        for entry in reversed(paths):
             if not entry.strip():
                 logger.debug(
                     "Project environment contains an empty path in <c1>sys_path</>,"
