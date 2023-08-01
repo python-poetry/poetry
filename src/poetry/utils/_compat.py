@@ -3,6 +3,15 @@ from __future__ import annotations
 import sys
 
 from contextlib import suppress
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from importlib import metadata
+
+    import importlib_metadata as metadata
+    import tomli as tomllib
+    import tomllib
 
 
 # TODO: use try/except ImportError when
@@ -10,16 +19,16 @@ from contextlib import suppress
 
 if sys.version_info < (3, 11):
     # compatibility for python <3.11
-    import tomli as tomllib
+    pass
 else:
-    import tomllib  # nopycln: import
+    pass  # nopycln: import
 
 
 if sys.version_info < (3, 10):
     # compatibility for python <3.10
-    import importlib_metadata as metadata
+    pass
 else:
-    from importlib import metadata
+    pass
 
 WINDOWS = sys.platform == "win32"
 

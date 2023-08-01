@@ -6,28 +6,7 @@ from typing import TYPE_CHECKING
 
 from poetry.core.utils.helpers import temporary_directory
 
-from poetry.utils.env.base_env import Env
 from poetry.utils.env.env_manager import EnvManager
-from poetry.utils.env.exceptions import EnvCommandError
-from poetry.utils.env.exceptions import EnvError
-from poetry.utils.env.exceptions import IncorrectEnvError
-from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
-from poetry.utils.env.exceptions import PythonVersionNotFound
-from poetry.utils.env.generic_env import GenericEnv
-from poetry.utils.env.mock_env import MockEnv
-from poetry.utils.env.null_env import NullEnv
-from poetry.utils.env.script_strings import GET_BASE_PREFIX
-from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
-from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
-from poetry.utils.env.script_strings import GET_PATHS
-from poetry.utils.env.script_strings import GET_PATHS_FOR_GENERIC_ENVS
-from poetry.utils.env.script_strings import GET_PYTHON_VERSION
-from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
-from poetry.utils.env.script_strings import GET_SYS_PATH
-from poetry.utils.env.script_strings import GET_SYS_TAGS
-from poetry.utils.env.site_packages import SitePackages
-from poetry.utils.env.system_env import SystemEnv
 from poetry.utils.env.virtual_env import VirtualEnv
 
 
@@ -36,6 +15,28 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from poetry.core.poetry import Poetry as CorePoetry
+
+    from poetry.utils.env.base_env import Env
+    from poetry.utils.env.exceptions import EnvCommandError
+    from poetry.utils.env.exceptions import EnvError
+    from poetry.utils.env.exceptions import IncorrectEnvError
+    from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
+    from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
+    from poetry.utils.env.exceptions import PythonVersionNotFound
+    from poetry.utils.env.generic_env import GenericEnv
+    from poetry.utils.env.mock_env import MockEnv
+    from poetry.utils.env.null_env import NullEnv
+    from poetry.utils.env.script_strings import GET_BASE_PREFIX
+    from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
+    from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
+    from poetry.utils.env.script_strings import GET_PATHS
+    from poetry.utils.env.script_strings import GET_PATHS_FOR_GENERIC_ENVS
+    from poetry.utils.env.script_strings import GET_PYTHON_VERSION
+    from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
+    from poetry.utils.env.script_strings import GET_SYS_PATH
+    from poetry.utils.env.script_strings import GET_SYS_TAGS
+    from poetry.utils.env.site_packages import SitePackages
+    from poetry.utils.env.system_env import SystemEnv
 
 
 @contextmanager
