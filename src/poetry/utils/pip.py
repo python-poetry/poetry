@@ -27,10 +27,13 @@ def pip_install(
     # lot of packages.
     args = [
         "install",
-        "--disable-pip-version-check",
-        "--isolated",
-        "--no-input",
+        "--disable-pip-version-check"
     ]
+
+    if os.getenv("POETRY_USE_USER_SITE") != "1":
+        args.append("--isolated")
+
+    args.append("--no-input")
 
     if os.getenv("POETRY_PIP_NO_PREFIX") != "1":
         args += [
