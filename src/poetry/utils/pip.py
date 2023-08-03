@@ -11,6 +11,20 @@ if TYPE_CHECKING:
 
     from poetry.utils.env import Env
 
+def pip_install_from_url(
+    url: str,
+    environment: Env,
+    upgrade: bool = False,
+) -> str:
+    args = ["install", "--no-deps"]
+    if upgrade:
+        args.append("--upgrade")
+    args.append(url)
+    
+    try:
+        return environment.run_pip(*args)
+    except EnvCommandError as e:
+        raise PoetryException(f"Failed to install {url}") from e
 
 def pip_install(
     path: Path,

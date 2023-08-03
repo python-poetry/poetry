@@ -1478,8 +1478,10 @@ def test_system_env_usersite(mocker: MockerFixture, enabled: bool) -> None:
 def test_system_env_is_path_relative_to_lib() -> None:
     env = SystemEnv(Path(sys.prefix))
     repl_home = os.getenv("REPL_HOME")
+    os.environ['POETRY_USE_USER_SITE'] = '1'
     assert repl_home is not None
     assert (env.is_path_relative_to_lib(Path(repl_home + "/.pythonlibs")))
+    del os.environ['POETRY_USE_USER_SITE']
 
 def test_venv_has_correct_paths(tmp_venv: VirtualEnv) -> None:
     paths = tmp_venv.paths
