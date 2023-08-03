@@ -40,7 +40,7 @@ class RunCommand(EnvCommand):
 
         poetry = self.poetry
         package = poetry.package
-        path = poetry.file.parent
+        path = poetry.file.path.parent
         module = Module(package.name, path.as_posix(), package.packages)
 
         return module
@@ -63,6 +63,9 @@ class RunCommand(EnvCommand):
             if script_path.exists():
                 args = [str(script_path), *args[1:]]
                 break
+        else:
+            # If we reach this point, the script is not installed
+            self._warning_not_installed_script(args[0])
 
         if isinstance(script, dict):
             script = script["callable"]
@@ -81,3 +84,14 @@ class RunCommand(EnvCommand):
         ]
 
         return self.env.execute(*cmd)
+
+    def _warning_not_installed_script(self, script: str) -> None:
+        message = f"""\
+Warning: '{script}' is an entry point defined in pyproject.toml, but it's not \
+installed as a script. You may get improper `sys.argv[0]`.
+
+The support to run uninstalled scripts will be removed in a future release.
+
+Run `poetry install` to resolve and get rid of this message.
+"""
+        self.line_error(message, style="warning")

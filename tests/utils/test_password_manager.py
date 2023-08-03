@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 def test_set_http_password(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     manager = PasswordManager(config)
 
     assert manager.keyring.is_available()
@@ -35,13 +36,14 @@ def test_set_http_password(
 
 def test_get_http_auth(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     dummy_keyring.set_password("poetry-repository-foo", "bar", "baz")
     config.auth_config_source.add_property("http-basic.foo", {"username": "bar"})
     manager = PasswordManager(config)
 
     assert manager.keyring.is_available()
     auth = manager.get_http_auth("foo")
+    assert auth is not None
 
     assert auth["username"] == "bar"
     assert auth["password"] == "baz"
@@ -49,7 +51,7 @@ def test_get_http_auth(
 
 def test_delete_http_password(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     dummy_keyring.set_password("poetry-repository-foo", "bar", "baz")
     config.auth_config_source.add_property("http-basic.foo", {"username": "bar"})
     manager = PasswordManager(config)
@@ -63,7 +65,7 @@ def test_delete_http_password(
 
 def test_set_pypi_token(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     manager = PasswordManager(config)
 
     assert manager.keyring.is_available()
@@ -76,7 +78,7 @@ def test_set_pypi_token(
 
 def test_get_pypi_token(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     dummy_keyring.set_password("poetry-repository-foo", "__token__", "baz")
     manager = PasswordManager(config)
 
@@ -86,7 +88,7 @@ def test_get_pypi_token(
 
 def test_delete_pypi_token(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     dummy_keyring.set_password("poetry-repository-foo", "__token__", "baz")
     manager = PasswordManager(config)
 
@@ -98,7 +100,7 @@ def test_delete_pypi_token(
 
 def test_set_http_password_with_unavailable_backend(
     config: Config, with_fail_keyring: None
-):
+) -> None:
     manager = PasswordManager(config)
 
     assert not manager.keyring.is_available()
@@ -111,7 +113,7 @@ def test_set_http_password_with_unavailable_backend(
 
 def test_get_http_auth_with_unavailable_backend(
     config: Config, with_fail_keyring: None
-):
+) -> None:
     config.auth_config_source.add_property(
         "http-basic.foo", {"username": "bar", "password": "baz"}
     )
@@ -119,6 +121,7 @@ def test_get_http_auth_with_unavailable_backend(
 
     assert not manager.keyring.is_available()
     auth = manager.get_http_auth("foo")
+    assert auth is not None
 
     assert auth["username"] == "bar"
     assert auth["password"] == "baz"
@@ -126,7 +129,7 @@ def test_get_http_auth_with_unavailable_backend(
 
 def test_delete_http_password_with_unavailable_backend(
     config: Config, with_fail_keyring: None
-):
+) -> None:
     config.auth_config_source.add_property(
         "http-basic.foo", {"username": "bar", "password": "baz"}
     )
@@ -140,7 +143,7 @@ def test_delete_http_password_with_unavailable_backend(
 
 def test_set_pypi_token_with_unavailable_backend(
     config: Config, with_fail_keyring: None
-):
+) -> None:
     manager = PasswordManager(config)
 
     assert not manager.keyring.is_available()
@@ -151,7 +154,7 @@ def test_set_pypi_token_with_unavailable_backend(
 
 def test_get_pypi_token_with_unavailable_backend(
     config: Config, with_fail_keyring: None
-):
+) -> None:
     config.auth_config_source.add_property("pypi-token.foo", "baz")
     manager = PasswordManager(config)
 
@@ -161,7 +164,7 @@ def test_get_pypi_token_with_unavailable_backend(
 
 def test_delete_pypi_token_with_unavailable_backend(
     config: Config, with_fail_keyring: None
-):
+) -> None:
     config.auth_config_source.add_property("pypi-token.foo", "baz")
     manager = PasswordManager(config)
 
@@ -173,7 +176,7 @@ def test_delete_pypi_token_with_unavailable_backend(
 
 def test_keyring_raises_errors_on_keyring_errors(
     mocker: MockerFixture, with_fail_keyring: None
-):
+) -> None:
     mocker.patch("poetry.utils.password_manager.PoetryKeyring._check")
 
     key_ring = PoetryKeyring("poetry")
@@ -189,7 +192,7 @@ def test_keyring_raises_errors_on_keyring_errors(
 
 def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
     with_chained_fail_keyring: None,
-):
+) -> None:
     key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
@@ -197,7 +200,7 @@ def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
 
 def test_keyring_with_chainer_backend_and_null_keyring_should_be_unavailable(
     with_chained_null_keyring: None,
-):
+) -> None:
     key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
@@ -205,7 +208,7 @@ def test_keyring_with_chainer_backend_and_null_keyring_should_be_unavailable(
 
 def test_null_keyring_should_be_unavailable(
     with_null_keyring: None,
-):
+) -> None:
     key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
@@ -213,24 +216,54 @@ def test_null_keyring_should_be_unavailable(
 
 def test_fail_keyring_should_be_unavailable(
     with_fail_keyring: None,
-):
+) -> None:
     key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
 
 
 def test_get_http_auth_from_environment_variables(
-    environ: None, config: Config, with_simple_keyring: None
-):
+    environ: None, config: Config
+) -> None:
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
 
     manager = PasswordManager(config)
 
     auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+
+def test_get_http_auth_does_not_call_keyring_when_credentials_in_environment_variables(
+    environ: None, config: Config
+) -> None:
+    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+    manager._keyring = MagicMock()
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
+    manager._keyring.get_password.assert_not_called()
+
+
+def test_get_http_auth_does_not_call_keyring_when_password_in_environment_variables(
+    environ: None, config: Config
+) -> None:
+    config.merge(
+        {
+            "http-basic": {"foo": {"username": "bar"}},
+        }
+    )
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+    manager._keyring = MagicMock()
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
+    manager._keyring.get_password.assert_not_called()
 
 
 def test_get_pypi_token_with_env_var_positive(
@@ -238,7 +271,7 @@ def test_get_pypi_token_with_env_var_positive(
     config: Config,
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
-):
+) -> None:
     sample_token = "sampletoken-1234"
     repo_name = "foo"
     manager = PasswordManager(config)
@@ -252,7 +285,7 @@ def test_get_pypi_token_with_env_var_positive(
 
 def test_get_pypi_token_with_env_var_not_available(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
-):
+) -> None:
     repo_name = "foo"
     manager = PasswordManager(config)
 

@@ -5,16 +5,17 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from packaging.utils import canonicalize_name
-from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import module_name
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
 from tomlkit.toml_document import TOMLDocument
 
+from poetry.pyproject.toml import PyProjectTOML
+
 
 if TYPE_CHECKING:
-    from typing import Mapping
+    from collections.abc import Mapping
 
     from tomlkit.items import InlineTable
 
@@ -48,8 +49,8 @@ class Layout:
         author: str | None = None,
         license: str | None = None,
         python: str = "*",
-        dependencies: dict[str, str | Mapping[str, Any]] | None = None,
-        dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+        dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -90,15 +91,12 @@ class Layout:
             return None
 
         include = parts[0]
-        package.append("include", include)  # type: ignore[no-untyped-call]
+        package.append("include", include)
 
         if self.basedir != Path():
-            package.append(  # type: ignore[no-untyped-call]
-                "from",
-                self.basedir.as_posix(),
-            )
+            package.append("from", self.basedir.as_posix())
         else:
-            if include == self._project:
+            if module_name(self._project) == include:
                 # package include and package name are the same,
                 # packages table is redundant here.
                 return None

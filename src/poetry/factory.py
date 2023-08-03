@@ -9,17 +9,19 @@ from typing import Any
 from typing import cast
 
 from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.core.toml.file import TOMLFile
 
 from poetry.config.config import Config
+from poetry.exceptions import PoetryException
 from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
+from poetry.toml.file import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -31,7 +33,7 @@ if TYPE_CHECKING:
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories import RepositoryPool
-    from poetry.repositories.legacy_repository import LegacyRepository
+    from poetry.repositories.http_repository import HTTPRepository
     from poetry.utils.dependency_specification import DependencySpec
 
 logger = logging.getLogger(__name__)
@@ -55,15 +57,14 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
-        locker = Locker(
-            base_poetry.file.parent / "poetry.lock", base_poetry.local_config
-        )
+        poetry_file = base_poetry.pyproject_path
+        locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
 
         # Loading global configuration
         config = Config.create()
 
         # Loading local configuration
-        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
+        local_config_file = TOMLFile(poetry_file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(f"Loading configuration file {local_config_file.path}")
@@ -82,7 +83,7 @@ class Factory(BaseFactory):
         config.merge({"repositories": repositories})
 
         poetry = Poetry(
-            base_poetry.file.path,
+            poetry_file,
             base_poetry.local_config,
             base_poetry.package,
             locker,
@@ -113,12 +114,13 @@ class Factory(BaseFactory):
     @classmethod
     def create_pool(
         cls,
-        auth_config: Config,
+        config: Config,
         sources: Iterable[dict[str, Any]] = (),
         io: IO | None = None,
         disable_cache: bool = False,
     ) -> RepositoryPool:
         from poetry.repositories import RepositoryPool
+        from poetry.repositories.repository_pool import Priority
 
         if io is None:
             io = NullIO()
@@ -126,56 +128,113 @@ class Factory(BaseFactory):
         if disable_cache:
             logger.debug("Disabling source caches")
 
-        pool = RepositoryPool()
+        pool = RepositoryPool(config=config)
 
+        explicit_pypi = False
         for source in sources:
             repository = cls.create_package_source(
-                source, auth_config, disable_cache=disable_cache
+                source, config, disable_cache=disable_cache
             )
-            is_default = source.get("default", False)
-            is_secondary = source.get("secondary", False)
+            priority = Priority[source.get("priority", Priority.PRIMARY.name).upper()]
+            if "default" in source or "secondary" in source:
+                warning = (
+                    "Found deprecated key 'default' or 'secondary' in"
+                    " pyproject.toml configuration for source"
+                    f" {source.get('name')}. Please provide the key 'priority'"
+                    " instead. Accepted values are:"
+                    f" {', '.join(repr(p.name.lower()) for p in Priority)}."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
+                if source.get("default"):
+                    priority = Priority.DEFAULT
+                elif source.get("secondary"):
+                    priority = Priority.SECONDARY
+
+            if priority is Priority.SECONDARY:
+                allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
+                warning = (
+                    "Found deprecated priority 'secondary' for source"
+                    f" '{source.get('name')}' in pyproject.toml. Consider changing the"
+                    " priority to one of the non-deprecated values:"
+                    f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
+
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
-                if is_default:
+                if priority is Priority.DEFAULT:
                     message += " and setting it as the default one"
-                elif is_secondary:
-                    message += " and setting it as secondary"
+                else:
+                    message += f" and setting it as {priority.name.lower()}"
 
                 io.write_line(message)
 
-            pool.add_repository(repository, is_default, secondary=is_secondary)
+            pool.add_repository(repository, priority=priority)
+            if repository.name.lower() == "pypi":
+                explicit_pypi = True
 
-        # Put PyPI last to prefer private repositories
-        # unless we have no default source AND no primary sources
-        # (default = false, secondary = false)
-        if pool.has_default():
-            if io.is_debug():
-                io.write_line("Deactivating the PyPI repository")
-        else:
-            from poetry.repositories.pypi_repository import PyPiRepository
+        # Only add PyPI if no default repository is configured
+        if not explicit_pypi:
+            if pool.has_default():
+                if io.is_debug():
+                    io.write_line("Deactivating the PyPI repository")
+            else:
+                from poetry.repositories.pypi_repository import PyPiRepository
 
-            default = not pool.has_primary_repositories()
-            pool.add_repository(
-                PyPiRepository(disable_cache=disable_cache), default, not default
+                if pool.has_primary_repositories():
+                    io.write_error_line(
+                        "<warning>"
+                        "Warning: In a future version of Poetry, PyPI will be disabled"
+                        " automatically if at least one custom primary source is"
+                        " configured. In order to avoid"
+                        " a breaking change and make your pyproject.toml forward"
+                        " compatible, add PyPI explicitly via 'poetry source add pypi'."
+                        " By the way, this has the advantage that you can set the"
+                        " priority of PyPI as with any other source."
+                        "</warning>"
+                    )
+
+                if pool.has_primary_repositories():
+                    pypi_priority = Priority.SECONDARY
+                else:
+                    pypi_priority = Priority.DEFAULT
+
+                pool.add_repository(
+                    PyPiRepository(disable_cache=disable_cache), priority=pypi_priority
+                )
+
+        if not pool.repositories:
+            raise PoetryException(
+                "At least one source must not be configured as 'explicit'."
             )
 
         return pool
 
     @classmethod
     def create_package_source(
-        cls, source: dict[str, str], auth_config: Config, disable_cache: bool = False
-    ) -> LegacyRepository:
+        cls, source: dict[str, str], config: Config, disable_cache: bool = False
+    ) -> HTTPRepository:
+        from poetry.repositories.exceptions import InvalidSourceError
         from poetry.repositories.legacy_repository import LegacyRepository
+        from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.repositories.single_page_repository import SinglePageRepository
 
-        if "url" not in source:
-            raise RuntimeError("Unsupported source specified")
+        try:
+            name = source["name"]
+        except KeyError:
+            raise InvalidSourceError("Missing [name] in source.")
 
-        # PyPI-like repository
-        if "name" not in source:
-            raise RuntimeError("Missing [name] in source.")
-        name = source["name"]
-        url = source["url"]
+        if name.lower() == "pypi":
+            if "url" in source:
+                raise InvalidSourceError(
+                    "The PyPI repository cannot be configured with a custom url."
+                )
+            return PyPiRepository(disable_cache=disable_cache)
+
+        try:
+            url = source["url"]
+        except KeyError:
+            raise InvalidSourceError(f"Missing [url] in source {name!r}.")
 
         repository_class = LegacyRepository
 
@@ -185,14 +244,12 @@ class Factory(BaseFactory):
         return repository_class(
             name,
             url,
-            config=auth_config,
+            config=config,
             disable_cache=disable_cache,
         )
 
     @classmethod
-    def create_pyproject_from_package(
-        cls, package: Package, path: Path | None = None
-    ) -> TOMLDocument:
+    def create_pyproject_from_package(cls, package: Package) -> TOMLDocument:
         import tomlkit
 
         from poetry.utils.dependency_specification import dependency_to_specification
@@ -290,12 +347,6 @@ class Factory(BaseFactory):
             content["extras"] = extras_section
 
         pyproject = cast("TOMLDocument", pyproject)
-        pyproject.add(tomlkit.nl())
-
-        if path:
-            path.joinpath("pyproject.toml").write_text(
-                pyproject.as_string(), encoding="utf-8"
-            )
 
         return pyproject
 
@@ -306,5 +357,19 @@ class Factory(BaseFactory):
         results = super().validate(config, strict)
 
         results["errors"].extend(validate_object(config))
+
+        # A project should not depend on itself.
+        dependencies = set(config.get("dependencies", {}).keys())
+        dependencies.update(config.get("dev-dependencies", {}).keys())
+        groups = config.get("group", {}).values()
+        for group in groups:
+            dependencies.update(group.get("dependencies", {}).keys())
+
+        dependencies = {canonicalize_name(d) for d in dependencies}
+
+        if canonicalize_name(config["name"]) in dependencies:
+            results["errors"].append(
+                f"Project name ({config['name']}) is same as one of its dependencies"
+            )
 
         return results

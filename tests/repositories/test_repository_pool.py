@@ -8,6 +8,7 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.repository_pool import Priority
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -27,6 +28,7 @@ def test_pool_with_initial_repositories() -> None:
     assert len(pool.repositories) == 1
     assert not pool.has_default()
     assert pool.has_primary_repositories()
+    assert pool.get_priority("repo") == Priority.PRIMARY
 
 
 def test_repository_no_repository() -> None:
@@ -47,40 +49,89 @@ def test_adding_repositories_with_same_name_twice_raises_value_error() -> None:
         RepositoryPool([repo1]).add_repository(repo2)
 
 
-def test_repository_from_normal_pool() -> None:
+@pytest.mark.parametrize("priority", (p for p in Priority))
+def test_repository_from_single_repo_pool(priority: Priority) -> None:
     repo = LegacyRepository("foo", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(repo)
+
+    pool.add_repository(repo, priority=priority)
 
     assert pool.repository("foo") is repo
+    assert pool.get_priority("foo") == priority
 
 
-def test_repository_from_secondary_pool() -> None:
+@pytest.mark.parametrize(
+    ("default", "secondary", "expected_priority"),
+    [
+        (False, True, Priority.SECONDARY),
+        (True, False, Priority.DEFAULT),
+        (True, True, Priority.DEFAULT),
+    ],
+)
+def test_repository_from_single_repo_pool_legacy(
+    default: bool, secondary: bool, expected_priority: Priority
+) -> None:
     repo = LegacyRepository("foo", "https://foo.bar")
     pool = RepositoryPool()
-    pool.add_repository(repo, secondary=True)
+
+    with pytest.warns(DeprecationWarning):
+        pool.add_repository(repo, default=default, secondary=secondary)
 
     assert pool.repository("foo") is repo
+    assert pool.get_priority("foo") == expected_priority
 
 
-def test_repository_with_normal_default_and_secondary_repositories() -> None:
+def test_repository_with_all_prio_repositories() -> None:
     secondary = LegacyRepository("secondary", "https://secondary.com")
     default = LegacyRepository("default", "https://default.com")
+    supplemental = LegacyRepository("supplemental", "https://supplemental.com")
     repo1 = LegacyRepository("foo", "https://foo.bar")
     repo2 = LegacyRepository("bar", "https://bar.baz")
+    explicit = LegacyRepository("explicit", "https://bar.baz")
 
     pool = RepositoryPool()
     pool.add_repository(repo1)
-    pool.add_repository(secondary, secondary=True)
+    pool.add_repository(secondary, priority=Priority.SECONDARY)
     pool.add_repository(repo2)
-    pool.add_repository(default, default=True)
+    pool.add_repository(supplemental, priority=Priority.SUPPLEMENTAL)
+    pool.add_repository(explicit, priority=Priority.EXPLICIT)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     assert pool.repository("secondary") is secondary
     assert pool.repository("default") is default
     assert pool.repository("foo") is repo1
     assert pool.repository("bar") is repo2
+    assert pool.repository("supplemental") is supplemental
+    assert pool.repository("explicit") is explicit
     assert pool.has_default()
     assert pool.has_primary_repositories()
+
+
+def test_repository_secondary_and_supplemental_repositories_do_show() -> None:
+    secondary = LegacyRepository("secondary", "https://secondary.com")
+    supplemental = LegacyRepository("supplemental", "https://supplemental.com")
+
+    pool = RepositoryPool()
+    pool.add_repository(secondary, priority=Priority.SECONDARY)
+    pool.add_repository(supplemental, priority=Priority.SUPPLEMENTAL)
+
+    assert pool.repository("secondary") is secondary
+    assert pool.repository("supplemental") is supplemental
+    assert pool.repositories == [secondary, supplemental]
+
+
+def test_repository_explicit_repositories_do_not_show() -> None:
+    explicit = LegacyRepository("explicit", "https://explicit.com")
+    default = LegacyRepository("default", "https://default.com")
+
+    pool = RepositoryPool()
+    pool.add_repository(explicit, priority=Priority.EXPLICIT)
+    pool.add_repository(default, priority=Priority.DEFAULT)
+
+    assert pool.repository("explicit") is explicit
+    assert pool.repository("default") is default
+    assert pool.repositories == [default]
+    assert pool.all_repositories == [default, explicit]
 
 
 def test_remove_non_existing_repository_raises_indexerror() -> None:
@@ -115,19 +166,19 @@ def test_remove_default_repository() -> None:
     pool = RepositoryPool()
     pool.add_repository(repo1)
     pool.add_repository(repo2)
-    pool.add_repository(default, default=True)
+    pool.add_repository(default, priority=Priority.DEFAULT)
 
     assert pool.has_default()
 
     pool.remove_repository("default")
 
+    assert not pool.has_repository("default")
     assert not pool.has_default()
 
-    pool.add_repository(new_default, default=True)
+    pool.add_repository(new_default, priority=Priority.DEFAULT)
 
+    assert pool.get_priority("new_default") is Priority.DEFAULT
     assert pool.has_default()
-    assert pool.repositories[0] is new_default
-    assert not pool.has_repository("default")
 
 
 def test_repository_ordering() -> None:
@@ -139,23 +190,32 @@ def test_repository_ordering() -> None:
     secondary1 = LegacyRepository("secondary1", "https://secondary1.com")
     secondary2 = LegacyRepository("secondary2", "https://secondary2.com")
     secondary3 = LegacyRepository("secondary3", "https://secondary3.com")
+    supplemental = LegacyRepository("supplemental", "https://supplemental.com")
 
     pool = RepositoryPool()
-    pool.add_repository(secondary1, secondary=True)
+    pool.add_repository(secondary1, priority=Priority.SECONDARY)
+    pool.add_repository(supplemental, priority=Priority.SUPPLEMENTAL)
     pool.add_repository(primary1)
-    pool.add_repository(default1, default=True)
+    pool.add_repository(default1, priority=Priority.DEFAULT)
     pool.add_repository(primary2)
-    pool.add_repository(secondary2, secondary=True)
+    pool.add_repository(secondary2, priority=Priority.SECONDARY)
 
     pool.remove_repository("primary2")
     pool.remove_repository("secondary2")
 
     pool.add_repository(primary3)
-    pool.add_repository(secondary3, secondary=True)
+    pool.add_repository(secondary3, priority=Priority.SECONDARY)
 
-    assert pool.repositories == [default1, primary1, primary3, secondary1, secondary3]
+    assert pool.repositories == [
+        default1,
+        primary1,
+        primary3,
+        secondary1,
+        secondary3,
+        supplemental,
+    ]
     with pytest.raises(ValueError):
-        pool.add_repository(default2, default=True)
+        pool.add_repository(default2, priority=Priority.DEFAULT)
 
 
 def test_pool_get_package_in_any_repository() -> None:
@@ -172,11 +232,32 @@ def test_pool_get_package_in_any_repository() -> None:
     assert returned_package2 == package2
 
 
+def test_pool_find_packages_only_considers_supplemental_when_needed() -> None:
+    package1 = get_package("foo", "1.1.1")
+    package2 = get_package("foo", "1.2.3")
+    package3 = get_package("foo", "2.0.0")
+    repo1 = Repository("repo1", [package1, package3])
+    repo2 = Repository("repo2", [package1, package2])
+    pool = RepositoryPool([repo1]).add_repository(repo2, priority=Priority.SUPPLEMENTAL)
+
+    dependency_in_nonsupplemental = get_dependency("foo", "^1.0.0")
+    returned_packages_in_nonsupplemental = pool.find_packages(
+        dependency_in_nonsupplemental
+    )
+    dependency_needs_supplemental = get_dependency("foo", "1.2.3")
+    returned_packages_needs_supplemental = pool.find_packages(
+        dependency_needs_supplemental
+    )
+
+    assert returned_packages_in_nonsupplemental == [package1]
+    assert returned_packages_needs_supplemental == [package2]
+
+
 def test_pool_get_package_in_specified_repository() -> None:
     package = get_package("foo", "1.0.0")
-    repo1 = Repository("repo1")
+    repo1 = Repository("repo1", [package])
     repo2 = Repository("repo2", [package])
-    pool = RepositoryPool([repo1, repo2])
+    pool = RepositoryPool([repo1]).add_repository(repo2, priority=Priority.SUPPLEMENTAL)
 
     returned_package = pool.package(
         "foo", Version.parse("1.0.0"), repository_name="repo2"

@@ -1,13 +1,33 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from cleo.helpers import option
+
 from poetry.console.commands.command import Command
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class CheckCommand(Command):
     name = "check"
-    description = "Checks the validity of the <comment>pyproject.toml</comment> file."
+    description = (
+        "Validates the content of the <comment>pyproject.toml</> file and its"
+        " consistency with the poetry.lock file."
+    )
 
-    def validate_classifiers(
+    options = [
+        option(
+            "lock",
+            None,
+            "Checks that <comment>poetry.lock</> exists for the current"
+            " version of <comment>pyproject.toml</>.",
+        ),
+    ]
+
+    def _validate_classifiers(
         self, project_classifiers: set[str]
     ) -> tuple[list[str], list[str]]:
         """Identify unrecognized and deprecated trove classifiers.
@@ -57,10 +77,20 @@ class CheckCommand(Command):
 
         return errors, warnings
 
-    def handle(self) -> int:
-        from poetry.core.pyproject.toml import PyProjectTOML
+    def _validate_readme(self, readme: str | list[str], poetry_file: Path) -> list[str]:
+        """Check existence of referenced readme files"""
 
+        readmes = [readme] if isinstance(readme, str) else readme
+
+        errors = []
+        for name in readmes:
+            if not (poetry_file.parent / name).exists():
+                errors.append(f"Declared README file does not exist: {name}")
+        return errors
+
+    def handle(self) -> int:
         from poetry.factory import Factory
+        from poetry.pyproject.toml import PyProjectTOML
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path
@@ -69,9 +99,23 @@ class CheckCommand(Command):
 
         # Validate trove classifiers
         project_classifiers = set(config.get("classifiers", []))
-        errors, warnings = self.validate_classifiers(project_classifiers)
+        errors, warnings = self._validate_classifiers(project_classifiers)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
+
+        # Validate readme (files must exist)
+        if "readme" in config:
+            errors = self._validate_readme(config["readme"], poetry_file)
+            check_result["errors"].extend(errors)
+
+        # Verify that lock file is consistent
+        if self.option("lock") and not self.poetry.locker.is_locked():
+            check_result["errors"] += ["poetry.lock was not found."]
+        if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
+            check_result["errors"] += [
+                "poetry.lock is not consistent with pyproject.toml. Run `poetry"
+                " lock [--no-update]` to fix it."
+            ]
 
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")

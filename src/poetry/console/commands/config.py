@@ -68,7 +68,6 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.path": (str, lambda val: str(Path(val))),
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
-            "experimental.new-installer": (boolean_validator, boolean_normalizer),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
             "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
@@ -86,17 +85,17 @@ To remove a repository (repo is a short alias for repositories):
         from pathlib import Path
 
         from poetry.core.pyproject.exceptions import PyProjectException
-        from poetry.core.toml.file import TOMLFile
 
         from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
+        from poetry.toml.file import TOMLFile
 
         config = Config.create()
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
 
         try:
-            local_config_file = TOMLFile(self.poetry.file.parent / "poetry.toml")
+            local_config_file = TOMLFile(self.poetry.file.path.parent / "poetry.toml")
             if local_config_file.exists():
                 config.merge(local_config_file.read())
         except (RuntimeError, PyProjectException):
@@ -107,7 +106,7 @@ To remove a repository (repo is a short alias for repositories):
 
         if not config_file.exists():
             config_file.path.parent.mkdir(parents=True, exist_ok=True)
-            config_file.touch(mode=0o0600)
+            config_file.path.touch(mode=0o0600)
 
         if self.option("list"):
             self._list_configuration(config.all(), config.raw())
@@ -211,6 +210,7 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     # Only username, so we prompt for password
                     password = self.secret("Password:")
+                    assert isinstance(password, str)
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "

@@ -3,10 +3,11 @@ from __future__ import annotations
 import uuid
 
 from typing import TYPE_CHECKING
+from typing import TypeVar
 
 import pytest
 
-from cachy import CacheManager
+from poetry.utils.cache import FileCache
 
 
 if TYPE_CHECKING:
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
 
     from tests.conftest import Config
+
+T = TypeVar("T")
 
 
 @pytest.fixture
@@ -47,19 +50,13 @@ def cache(
     repository_cache_dir: Path,
     repository_one: str,
     mock_caches: None,
-) -> CacheManager:
-    cache = CacheManager(
-        {
-            "default": repository_one,
-            "serializer": "json",
-            "stores": {
-                repository_one: {
-                    "driver": "file",
-                    "path": str(repository_cache_dir / repository_one),
-                }
-            },
-        }
+) -> FileCache[dict[str, str]]:
+    cache: FileCache[dict[str, str]] = FileCache(
+        path=repository_cache_dir / repository_one
     )
-    cache.remember_forever("cachy:0.1", lambda: {"name": "cachy", "version": "0.1"})
-    cache.remember_forever("cleo:0.2", lambda: {"name": "cleo", "version": "0.2"})
+
+    cache.remember(
+        "cachy:0.1", lambda: {"name": "cachy", "version": "0.1"}, minutes=None
+    )
+    cache.remember("cleo:0.2", lambda: {"name": "cleo", "version": "0.2"}, minutes=None)
     return cache

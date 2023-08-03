@@ -1,6 +1,5 @@
 [[package]]
 description = ""
-category = "main"
 name = "pendulum"
 optional = false
 python-versions = "*"
@@ -8,7 +7,6 @@ files = []
 version = "1.4.4"
 
 [[package]]
-category = "main"
 description = "This is a description"
 develop = false
 name = "project-with-extras"

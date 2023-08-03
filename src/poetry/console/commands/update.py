@@ -20,18 +20,14 @@ class UpdateCommand(InstallerCommand):
         option(
             "no-dev",
             None,
-            (
-                "Do not update the development dependencies."
-                " (<warning>Deprecated</warning>)"
-            ),
+            "Do not update the development dependencies."
+            " (<warning>Deprecated</warning>)",
         ),
         option(
             "dry-run",
             None,
-            (
-                "Output the operations but do not execute anything "
-                "(implicitly enables --verbose)."
-            ),
+            "Output the operations but do not execute anything "
+            "(implicitly enables --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
@@ -40,12 +36,6 @@ class UpdateCommand(InstallerCommand):
 
     def handle(self) -> int:
         packages = self.argument("packages")
-
-        use_executor = self.poetry.config.get("experimental.new-installer", False)
-        if not use_executor:
-            # only set if false because the method is deprecated
-            self.installer.use_executor(False)
-
         if packages:
             self.installer.whitelist({name: "*" for name in packages})
 

@@ -4,13 +4,11 @@ import csv
 import hashlib
 import json
 import os
-import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from poetry.core.constraints.version import Version
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
@@ -44,6 +42,7 @@ WINDOWS_CMD_TEMPLATE = """\
 
 class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
+        self._poetry: Poetry
         super().__init__(poetry)
 
         self._env = env
@@ -101,23 +100,10 @@ class EditableBuilder(Builder):
                 f.write(decode(builder.build_setup()))
 
         try:
-            if self._env.pip_version < Version.from_parts(19, 0):
-                pip_install(self._path, self._env, upgrade=True, editable=True)
-            else:
-                # Temporarily rename pyproject.toml
-                shutil.move(
-                    str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
-                )
-                try:
-                    pip_install(self._path, self._env, upgrade=True, editable=True)
-                finally:
-                    shutil.move(
-                        str(self._poetry.file.with_suffix(".tmp")),
-                        str(self._poetry.file),
-                    )
+            pip_install(self._path, self._env, upgrade=True, editable=True)
         finally:
             if not has_setup:
-                os.remove(str(setup))
+                os.remove(setup)
 
     def _add_pth(self) -> list[Path]:
         paths = {
@@ -134,11 +120,9 @@ class EditableBuilder(Builder):
         for file in self._env.site_packages.find(path=pth_file, writable_only=True):
             self._debug(
                 f"  - Removing existing <c2>{file.name}</c2> from <b>{file.parent}</b>"
-                f" for {self._poetry.file.parent}"
+                f" for {self._poetry.file.path.parent}"
             )
-            # We can't use unlink(missing_ok=True) because it's not always available
-            if file.exists():
-                file.unlink()
+            file.unlink(missing_ok=True)
 
         try:
             pth_file = self._env.site_packages.write_text(
@@ -146,14 +130,14 @@ class EditableBuilder(Builder):
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"
-                f" {self._poetry.file.parent}"
+                f" {self._poetry.file.path.parent}"
             )
             return [pth_file]
         except OSError:
             # TODO: Replace with PermissionError
             self._io.write_error_line(
                 f"  - Failed to create <c2>{pth_file.name}</c2> for"
-                f" {self._poetry.file.parent}"
+                f" {self._poetry.file.path.parent}"
             )
             return []
 
@@ -167,7 +151,7 @@ class EditableBuilder(Builder):
         else:
             self._io.write_error_line(
                 "  - Failed to find a suitable script installation directory for"
-                f" {self._poetry.file.parent}"
+                f" {self._poetry.file.path.parent}"
             )
             return []
 

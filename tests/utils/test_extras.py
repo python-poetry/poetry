@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poetry.core.packages.package import Package
@@ -7,6 +9,9 @@ from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.utils.extras import get_extra_package_names
 
+
+if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
 
 _PACKAGE_FOO = Package("foo", "0.1.0")
 _PACKAGE_SPAM = Package("spam", "0.2.0")
@@ -60,8 +65,8 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
 )
 def test_get_extra_package_names(
     packages: list[Package],
-    extras: dict[str, list[str]],
-    extra_names: list[str],
+    extras: dict[NormalizedName, list[NormalizedName]],
+    extra_names: list[NormalizedName],
     expected_extra_package_names: set[str],
 ) -> None:
     assert (

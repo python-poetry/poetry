@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "with-explicit-source"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Your Name <you@example.com>"
+]
+license = "MIT"
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+
+[[tool.poetry.source]]
+name = "supplemental"
+url = "https://supplemental.com/simple/"
+priority = "supplemental"

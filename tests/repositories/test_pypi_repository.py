@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
 from requests.exceptions import TooManyRedirects
@@ -19,7 +20,6 @@ from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import encode
 
 
 if TYPE_CHECKING:
@@ -52,10 +52,7 @@ class MockRepository(PyPiRepository):
     ) -> dict[str, Any] | None:
         parts = url.split("/")[1:]
         name = parts[0]
-        if len(parts) == 3:
-            version = parts[1]
-        else:
-            version = None
+        version = parts[1] if len(parts) == 3 else None
 
         if not version:
             fixture = self.JSON_FIXTURES / (name + ".json")
@@ -66,7 +63,8 @@ class MockRepository(PyPiRepository):
             return None
 
         with fixture.open(encoding="utf-8") as f:
-            return json.loads(f.read())
+            data: dict[str, Any] = json.load(f)
+            return data
 
     def _download(self, url: str, dest: Path) -> None:
         filename = url.split("/")[-1]
@@ -133,8 +131,8 @@ def test_package() -> None:
     assert package.name == "requests"
     assert len(package.requires) == 9
     assert len([r for r in package.requires if r.is_optional()]) == 5
-    assert len(package.extras["security"]) == 3
-    assert len(package.extras["socks"]) == 2
+    assert len(package.extras[canonicalize_name("security")]) == 3
+    assert len(package.extras[canonicalize_name("socks")]) == 2
 
     assert package.files == [
         {
@@ -147,7 +145,7 @@ def test_package() -> None:
         },
     ]
 
-    win_inet = package.extras["socks"][0]
+    win_inet = package.extras[canonicalize_name("socks")][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
 
@@ -302,9 +300,10 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         ]
     }
 
-    for name in expected_extras.keys():
+    for name, expected_extra in expected_extras.items():
         assert (
-            sorted(package.extras[name], key=lambda r: r.name) == expected_extras[name]
+            sorted(package.extras[canonicalize_name(name)], key=lambda r: r.name)
+            == expected_extra
         )
 
 
@@ -325,7 +324,7 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(
     response = Response()
     response.status_code = 200
     response.encoding = "utf-8"
-    response.raw = BytesIO(encode('{"foo": "bar"}'))
+    response.raw = BytesIO(b'{"foo": "bar"}')
     mocker.patch(
         "poetry.utils.authenticator.Authenticator.get",
         side_effect=[TooManyRedirects(), response],
@@ -343,7 +342,7 @@ def test_urls() -> None:
     assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
-def test_find_links_for_package_of_supported_types():
+def test_find_links_for_package_of_supported_types() -> None:
     repo = MockRepository()
     package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))
 
@@ -356,10 +355,12 @@ def test_find_links_for_package_of_supported_types():
     assert links[0].show_url == "hbmqtt-0.9.6.tar.gz"
 
 
-def test_get_release_info_includes_only_supported_types():
+def test_get_release_info_includes_only_supported_types() -> None:
     repo = MockRepository()
 
-    release_info = repo._get_release_info(name="hbmqtt", version="0.9.6")
+    release_info = repo._get_release_info(
+        name=canonicalize_name("hbmqtt"), version=Version.parse("0.9.6")
+    )
 
     assert len(release_info["files"]) == 1
     assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"

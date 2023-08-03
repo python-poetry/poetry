@@ -39,10 +39,7 @@ class NewCommand(Command):
                 " be ignored. You should consider the option --path instead.</warning>"
             )
 
-        if self.option("src"):
-            layout_cls = layout("src")
-        else:
-            layout_cls = layout("standard")
+        layout_cls = layout("src") if self.option("src") else layout("standard")
 
         path = Path(self.argument("path"))
         if not path.is_absolute():

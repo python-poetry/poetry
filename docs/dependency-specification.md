@@ -258,7 +258,7 @@ you can use the `source` property:
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "supplemental"
 
 [tool.poetry.dependencies]
 my-cool-package = { version = "*", source = "foo" }
@@ -321,6 +321,29 @@ foo = [
 The constraints **must** have different requirements (like `python`)
 otherwise it will cause an error when resolving dependencies.
 {{% /note %}}
+
+### Combining git / url / path dependencies with source repositories
+
+Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
+doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance
+in the following example the url package will also be a valid solution for the second requirement:
+```toml
+foo = [
+    { platform = "darwin", url = "https://example.com/example-1.0-py3-none-any.whl" },
+    { platform = "linux", version = "^1.0" },
+]
+```
+
+Sometimes you may instead want to use a direct origin dependency for specific conditions
+(i.e. a compiled package that is not available on PyPI for a certain platform/architecture) while
+falling back on source repositories in other cases. In this case you should explicitly ask for your
+dependency to be satisfied by another `source`. For example:
+```toml
+foo = [
+    { platform = "darwin", url = "https://example.com/foo-1.0.0-py3-none-macosx_11_0_arm64.whl" },
+    { platform = "linux", version = "^1.0", source = "pypi" },
+]
+```
 
 ## Expanded dependency specification syntax
 
