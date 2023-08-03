@@ -581,7 +581,7 @@ class Executor:
         if package.source_type == "directory":
             return self._install_directory_without_wheel_installer(operation)
 
-        req: Path | Link = None
+        req: Path | Link | None = None
         if package.source_type == "git":
             req = self._prepare_git_archive(operation)
         elif package.source_type == "file":
@@ -771,7 +771,7 @@ class Executor:
 
         return self.pip_install(req, upgrade=True, editable=package.develop)
 
-    def _maybe_add_yanked_warning(self, link: Link, operation: Install | Update):
+    def _maybe_add_yanked_warning(self, link: Link, operation: Install | Update) -> None:
         if link.yanked:
             # Store yanked warnings in a list and print after installing, so they can't
             # be overlooked. Further, printing them in the concerning section would have

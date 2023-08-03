@@ -24,7 +24,7 @@ def pip_install_from_url(
     try:
         return environment.run_pip(*args)
     except EnvCommandError as e:
-        raise PoetryException(f"Failed to install {path}") from e
+        raise PoetryException(f"Failed to install {url}") from e
 
 def pip_install(
     path: Path,
