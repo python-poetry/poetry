@@ -214,7 +214,7 @@ poetry self remove poetry-plugin
 You can also list all currently installed plugins by running:
 
 ```shell
-poetry self show
+poetry self show plugins
 ```
 
 ### With `pipx inject`

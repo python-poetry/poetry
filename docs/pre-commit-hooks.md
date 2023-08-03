@@ -24,6 +24,10 @@ the defaults are overwritten. You must fully specify all arguments for
 your hook if you make use of `args:`.
 {{% /note %}}
 
+{{% note %}}
+If the `pyproject.toml` file is not in the root directory, you can specify `args: ["-C", "./subdirectory"]`.
+{{% /note %}}
+
 ## poetry-check
 
 The `poetry-check` hook calls the `poetry check` command
@@ -34,10 +38,6 @@ to make sure the poetry configuration does not get committed in a broken state.
 The hook takes the same arguments as the poetry command.
 For more information see the [check command]({{< relref "cli#check" >}}).
 
-{{% note %}}
-If the `pyproject.toml` file is not in the root directory, you can specify `args: ["-C", "./subdirectory"]`.
-{{% /note %}}
-
 ## poetry-lock
 
 The `poetry-lock` hook calls the `poetry lock` command
@@ -47,7 +47,6 @@ to make sure the lock file is up-to-date when committing changes.
 
 The hook takes the same arguments as the poetry command.
 For more information see the [lock command]({{< relref "cli#lock" >}}).
-
 
 ## poetry-export
 
@@ -64,14 +63,14 @@ The hook takes the same arguments as the poetry command.
 For more information see the [export command]({{< relref "cli#export" >}}).
 
 The default arguments are `args: ["-f", "requirements.txt", "-o", "requirements.txt"]`,
-which will create/update the requirements.txt file in the current working directory.
+which will create/update the `requirements.txt` file in the current working directory.
 
 You may add `verbose: true` in your `.pre-commit-config.yaml` in order to output to the
 console:
 
 ```yaml
 hooks:
-  - id: poetry-export
+-   id: poetry-export
     args: ["-f", "requirements.txt"]
     verbose: true
 ```
@@ -80,26 +79,39 @@ Also, `--dev` can be added to `args` to write dev-dependencies to `requirements.
 
 ```yaml
 hooks:
-  - id: poetry-export
+-   id: poetry-export
     args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
 ```
-
 
 ## Usage
 
 For more information on how to use pre-commit please see the [official documentation](https://pre-commit.com/).
 
-A full `.pre-commit-config.yaml` example:
+A minimalistic `.pre-commit-config.yaml` example:
 
 ```yaml
 repos:
-  - repo: https://github.com/python-poetry/poetry
+-   repo: https://github.com/python-poetry/poetry
     rev: ''  # add version here
     hooks:
-      - id: poetry-check
-      - id: poetry-lock
-      - id: poetry-export
-        args: ["-f", "requirements.txt", "-o", "requirements.txt"]
+    -   id: poetry-check
+    -   id: poetry-lock
+    -   id: poetry-export
+```
+
+A `.pre-commit-config.yaml` example for a monorepo setup or if the `pyproject.toml` file is not in the root directory:
+
+```yaml
+repos:
+-   repo: https://github.com/python-poetry/poetry
+    rev: ''  # add version here
+    hooks:
+    -   id: poetry-check
+        args: ["-C", "./subdirectory"]
+    -   id: poetry-lock
+        args: ["-C", "./subdirectory"]
+    -   id: poetry-export
+        args: ["-C", "./subdirectory", "-f", "requirements.txt", "-o", "./subdirectory/requirements.txt"]
 ```
 
 ## FAQ

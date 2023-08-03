@@ -174,6 +174,18 @@ poetry source add --priority=primary PyPI
 
 This way, the priority of PyPI can be set in a fine-granular way.
 
+The equivalent specification in `pyproject.toml` is:
+
+```toml
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+```
+
+**Omit the `url` when specifying PyPI explicitly.** Because PyPI is internally configured
+with Poetry, the PyPI repository cannot be configured with a given URL. Remember, you can always use
+`poetry check` to ensure the validity of the `pyproject.toml` file.
+
 {{% /warning %}}
 
 {{% warning %}}

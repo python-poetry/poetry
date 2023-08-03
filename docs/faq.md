@@ -146,6 +146,11 @@ commands =
 `tox` will not do any install. Poetry installs all the dependencies and the current package in editable mode.
 Thus, tests are running against the local files and not the built and installed package.
 
+### Is Nox supported?
+
+Use the [`nox-poetry`](https://github.com/cjolowicz/nox-poetry) package to install locked versions of
+dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/stable/) sessions.
+
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
