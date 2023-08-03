@@ -33,7 +33,7 @@ from poetry.utils.helpers import atomic_open
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
-from poetry.utils.pip import pip_install
+from poetry.utils.pip import pip_install, pip_install_from_url
 
 
 if TYPE_CHECKING:
@@ -66,6 +66,9 @@ class Executor:
         self._wheel_installer = WheelInstaller(self._env)
         self._use_modern_installation = config.get(
             "installer.modern-installation", True
+        )
+        self._use_pip_cache = config.get(
+            "pip.use_pip_cache", False
         )
 
         if parallel is None:
@@ -134,10 +137,13 @@ class Executor:
         self._wheel_installer.enable_bytecode_compilation(enable)
 
     def pip_install(
-        self, req: Path, upgrade: bool = False, editable: bool = False
+        self, req: Path | Link, upgrade: bool = False, editable: bool = False
     ) -> int:
         try:
-            pip_install(req, self._env, upgrade=upgrade, editable=editable)
+            if isinstance(req, Link):
+                pip_install_from_url(str(req), self._env)
+            else:
+                pip_install(req, self._env, upgrade=upgrade, editable=editable)
         except EnvCommandError as e:
             output = decode(e.e.output)
             if (
@@ -526,10 +532,13 @@ class Executor:
         return self._remove(operation.package)
 
     def _install(self, operation: Install | Update) -> int:
-        package = operation.package
-        if package.source_type == "directory" and not self._use_modern_installation:
-            return self._install_directory_without_wheel_installer(operation)
+        if self._use_modern_installation:
+            return self._modern_install(operation)
+        else:
+            return self._traditional_install(operation)
 
+    def _modern_install(self, operation: Install | Update) -> int:
+        package = operation.package
         cleanup_archive: bool = False
         if package.source_type == "git":
             archive = self._prepare_git_archive(operation)
@@ -552,9 +561,6 @@ class Executor:
         )
         self._write(operation, message)
 
-        if not self._use_modern_installation:
-            return self.pip_install(archive, upgrade=operation.job_type == "update")
-
         try:
             if operation.job_type == "update":
                 # Uninstall first
@@ -570,6 +576,39 @@ class Executor:
 
         return 0
 
+    def _traditional_install(self, operation: Install | Update) -> int:
+        package = operation.package
+        if package.source_type == "directory":
+            return self._install_directory_without_wheel_installer(operation)
+
+        req: Path | Link = None
+        if package.source_type == "git":
+            req = self._prepare_git_archive(operation)
+        elif package.source_type == "file":
+            req = self._prepare_archive(operation)
+        elif package.source_type == "directory":
+            req = self._prepare_archive(operation)
+        elif package.source_type == "url":
+            assert package.source_url is not None
+            if self._use_pip_cache:
+                req = Link(package.source_url)
+            else:
+                req = self._download_link(operation, Link(package.source_url))
+        else:
+            if self._use_pip_cache:
+                req = self._chooser.choose_for(operation.package)
+                self._maybe_add_yanked_warning(req, operation)
+            else:
+                req = self._download(operation)
+
+        operation_message = self.get_operation_message(operation)
+        message = (
+            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            " <info>Installing...</info>"
+        )
+        self._write(operation, message)
+        return self.pip_install(req, upgrade=operation.job_type == "update")
+        
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
@@ -732,9 +771,7 @@ class Executor:
 
         return self.pip_install(req, upgrade=True, editable=package.develop)
 
-    def _download(self, operation: Install | Update) -> Path:
-        link = self._chooser.choose_for(operation.package)
-
+    def _maybe_add_yanked_warning(self, link: Link, operation: Install | Update):
         if link.yanked:
             # Store yanked warnings in a list and print after installing, so they can't
             # be overlooked. Further, printing them in the concerning section would have
@@ -746,7 +783,10 @@ class Executor:
             if link.yanked_reason:
                 message += f" Reason for being yanked: {link.yanked_reason}"
             self._yanked_warnings.append(message)
-
+                    
+    def _download(self, operation: Install | Update) -> Path:
+        link = self._chooser.choose_for(operation.package)
+        self._maybe_add_yanked_warning(link, operation)
         return self._download_link(operation, link)
 
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
