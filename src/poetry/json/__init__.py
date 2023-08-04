@@ -22,10 +22,7 @@ def validate_object(obj: dict[str, Any]) -> list[str]:
     schema = json.loads(schema_file.read_text(encoding="utf-8"))
 
     validator = jsonschema.Draft7Validator(schema)
-    validation_errors = sorted(
-        validator.iter_errors(obj),
-        key=lambda e: e.path,  # type: ignore[no-any-return]
-    )
+    validation_errors = sorted(validator.iter_errors(obj), key=lambda e: e.path)
 
     errors = []
 

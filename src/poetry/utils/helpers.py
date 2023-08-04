@@ -14,13 +14,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
+from requests.utils import atomic_open
+
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
-    from io import BufferedWriter
 
     from poetry.core.packages.package import Package
     from requests import Session
@@ -36,24 +37,6 @@ def directory(path: Path) -> Iterator[Path]:
         yield path
     finally:
         os.chdir(cwd)
-
-
-@contextmanager
-def atomic_open(filename: str | os.PathLike[str]) -> Iterator[BufferedWriter]:
-    """
-    write a file to the disk in an atomic fashion
-
-    Taken from requests.utils
-    (https://github.com/psf/requests/blob/7104ad4b135daab0ed19d8e41bd469874702342b/requests/utils.py#L296)
-    """
-    tmp_descriptor, tmp_name = tempfile.mkstemp(dir=os.path.dirname(filename))
-    try:
-        with os.fdopen(tmp_descriptor, "wb") as tmp_handler:
-            yield tmp_handler
-        os.replace(tmp_name, filename)
-    except BaseException:
-        os.remove(tmp_name)
-        raise
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:

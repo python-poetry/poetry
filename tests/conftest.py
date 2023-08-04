@@ -122,7 +122,7 @@ def dummy_keyring() -> DummyBackend:
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
     import keyring
 
-    keyring.set_keyring(dummy_keyring)  # type: ignore[no-untyped-call]
+    keyring.set_keyring(dummy_keyring)
 
 
 @pytest.fixture()

@@ -436,10 +436,7 @@ class Locker:
             "description": package.description or "",
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "files": sorted(
-                package.files,
-                key=lambda x: x["file"],  # type: ignore[no-any-return]
-            ),
+            "files": sorted(package.files, key=lambda x: x["file"]),
         }
 
         if dependencies:

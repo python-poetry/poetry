@@ -98,7 +98,7 @@ class PyPiRepository(HTTPRepository):
 
         return [Package(name, version, yanked=yanked) for version, yanked in versions]
 
-    def _get_package_info(self, name: str) -> dict[str, Any]:
+    def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
         info = self._get(f"simple/{name}/", headers=headers)
         if info is None:
