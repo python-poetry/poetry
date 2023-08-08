@@ -117,6 +117,20 @@ curl -sSL https://install.python-poetry.org | python3 - --git https://github.com
 {{< step >}}
 **Add Poetry to your PATH**
 
+System PATH enables running commands like `poetry` in the CLI conveniently
+without typing in the full path to that executable.
+The way to add Poetry to your PATH differs by platform.
+For the changes in PATH to take effect, you should always restart the terminal or re-open the window.
+
+- On Linux and macOS, open (or create) the shell file.
+  For example, if Bash is your default shell, you should be editing `$HOME/.bashrc` file.
+  The filepath and filename will be different depending on the default shell.
+  Typing `echo $SHELL` in your Terminal will tell you which shell you’re using.
+  Add `export PATH="$PATH:[PATH_OF_POETRY_DIRECTORY]/bin"` to the shell file, changing `[PATH_OF_FLUTTER_GIT_DIRECTORY]` into the path of your Poetry directory.
+- On Windows, From the Start search bar, enter `env` and open `Edit environment variables for your account`.
+  Under `User variables`, Find (or create) an entry called `Path`
+  and append the full path to Poetry binary using `;` as a separator from existing values.
+
 The installer creates a `poetry` wrapper in a well-known, platform-specific directory:
 
 - `$HOME/.local/bin` on Unix.
