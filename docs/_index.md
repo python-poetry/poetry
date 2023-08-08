@@ -175,10 +175,21 @@ If you decide Poetry isn't your thing, you can completely remove it from your sy
 by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
+**Linux, macOS, Windows (WSL)**
+
 ```bash
 curl -sSL https://install.python-poetry.org | python3 - --uninstall
-curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
+
+**Windows (Powershell)**
+```powershell
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py - --uninstall
+```
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
+above.
+{{% /note %}}
 
 {{% warning %}}
 If you installed using the deprecated `get-poetry.py` script, you should remove the path it uses manually, e.g.
