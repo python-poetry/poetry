@@ -126,7 +126,8 @@ For the changes in PATH to take effect, you should always restart the terminal o
   For example, if Bash is your default shell, you should be editing `$HOME/.bashrc` file.
   The filepath and filename will be different depending on the default shell.
   Typing `echo $SHELL` in your Terminal will tell you which shell you’re using.
-  Add `export PATH="$PATH:[PATH_OF_POETRY_DIRECTORY]/bin"` to the shell file, changing `[PATH_OF_FLUTTER_GIT_DIRECTORY]` into the path of your Poetry directory.
+  Add `export PATH="$PATH:[PATH_OF_POETRY_DIRECTORY]/bin"` to the shell file,
+  changing `[PATH_OF_FLUTTER_GIT_DIRECTORY]` into the path of your Poetry directory.
 - On Windows, From the Start search bar, enter `env` and open `Edit environment variables for your account`.
   Under `User variables`, Find (or create) an entry called `Path`
   and append the full path to Poetry binary using `;` as a separator from existing values.
