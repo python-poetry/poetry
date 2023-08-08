@@ -67,8 +67,13 @@ Note: On some systems, `python` may still refer to Python 2 instead of Python 3.
 ```
 
 {{% note %}}
-If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
-above.
+If you have installed Python through the Microsoft Store,
+replace `py` with `python` in the command above.
+In this case, you might also want to declare `POETRY_HOME` environment variable
+by adding `$env:POETRY_HOME="$env:userprofile\poetry";` before the CLI command above
+to make Poetry be installed in a directory that can be easily added to PATH.
+Since Python from the Microsoft Store is installed in a sandboxed environment,
+Poetry cannot be installed in a normal app data directory (`%APPDATA%`).
 {{% /note %}}
 
 {{< /step >}}
@@ -79,7 +84,7 @@ By default, Poetry is installed into a platform and user-specific directory:
 
 - `~/Library/Application Support/pypoetry` on MacOS.
 - `~/.local/share/pypoetry` on Linux/Unix.
-- `%APPDATA%\pypoetry` on Windows.
+- `%APPDATA%\pypoetry` on Windows (If Python is installed via web installer).
 
 If you wish to change this, you may define the `$POETRY_HOME` environment variable:
 
@@ -115,7 +120,7 @@ curl -sSL https://install.python-poetry.org | python3 - --git https://github.com
 The installer creates a `poetry` wrapper in a well-known, platform-specific directory:
 
 - `$HOME/.local/bin` on Unix.
-- `%APPDATA%\Python\Scripts` on Windows.
+- `%APPDATA%\Python\Scripts` on Windows (If Python is installed via web installer).
 - `$POETRY_HOME/bin` if `$POETRY_HOME` is set.
 
 If this directory is not present in your `$PATH`, you can add it in order to invoke Poetry
@@ -125,7 +130,7 @@ Alternatively, the full path to the `poetry` binary can always be used:
 
 - `~/Library/Application Support/pypoetry/venv/bin/poetry` on MacOS.
 - `~/.local/share/pypoetry/venv/bin/poetry` on Linux/Unix.
-- `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows.
+- `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows (If Python is installed via web installer).
 - `$POETRY_HOME/venv/bin/poetry` if `$POETRY_HOME` is set.
 
 {{< /step >}}
