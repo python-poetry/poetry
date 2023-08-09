@@ -69,7 +69,10 @@ def pytest_configure(config: PyTestConfig) -> None:
     config.addinivalue_line("markers", "integration: mark integration tests")
 
     if not config.option.integration:
-        config.option.markexpr = "not integration"
+        if config.option.markexpr:
+            config.option.markexpr += " and not integration"
+        else:
+            config.option.markexpr = "not integration"
 
 
 class Config(BaseConfig):
