@@ -190,6 +190,13 @@ def test_keyring_raises_errors_on_keyring_errors(
         key_ring.delete_password("foo", "bar")
 
 
+def test_keyring_returns_none_on_locked_keyring(with_locked_keyring: None) -> None:
+    key_ring = PoetryKeyring("poetry")
+
+    cred = key_ring.get_credential("any password", "any name")
+    assert cred.password is None
+
+
 def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
     with_chained_fail_keyring: None,
 ) -> None:
@@ -220,6 +227,12 @@ def test_fail_keyring_should_be_unavailable(
     key_ring = PoetryKeyring("poetry")
 
     assert not key_ring.is_available()
+
+
+def test_locked_keyring_should_be_available(with_locked_keyring: None) -> None:
+    key_ring = PoetryKeyring("poetry")
+
+    assert key_ring.is_available()
 
 
 def test_get_http_auth_from_environment_variables(

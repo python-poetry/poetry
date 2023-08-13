@@ -94,6 +94,19 @@ def test_authenticator_uses_username_only_credentials(
     assert request.headers["Authorization"] == "Basic Zm9vMDAxOg=="
 
 
+def test_authenticator_ignores_locked_keyring(
+    mock_config: Config,
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_locked_keyring: None,
+) -> None:
+    authenticator = Authenticator(mock_config, NullIO())
+    authenticator.request("get", "https://foo001@foo.bar/files/foo-0.1.0.tar.gz")
+    request = http.last_request()
+
+    assert request.headers["Authorization"] == "Basic Zm9vMDAxOg=="
+
+
 def test_authenticator_uses_password_only_credentials(
     mock_config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ) -> None:
