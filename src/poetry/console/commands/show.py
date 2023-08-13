@@ -211,8 +211,7 @@ lists all packages available."""
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = RepositoryPool(ignore_repository_names=True, config=self.poetry.config)
-        pool.add_repository(locked_repository)
+        pool = RepositoryPool.from_packages(locked_packages, self.poetry.config)
         solver = Solver(
             root,
             pool=pool,

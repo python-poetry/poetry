@@ -286,19 +286,8 @@ class Installer:
             )
 
         # We resolve again by only using the lock file
-        pool = RepositoryPool(config=self._config)
-
-        # Make a new collection of repositories containing the packages newly resolved
-        # and the ones from the current lock file.
-        for package in lockfile_repo.packages + locked_repository.packages:
-            if not package.is_direct_origin():
-                repo_name = package.source_reference or "PyPI"
-                try:
-                    repo = pool.repository(repo_name)
-                except IndexError:
-                    repo = Repository(repo_name)
-                    pool.add_repository(repo)
-                repo.add_package(package)
+        packages = lockfile_repo.packages + locked_repository.packages
+        pool = RepositoryPool.from_packages(packages, self._config)
 
         solver = Solver(
             root,
