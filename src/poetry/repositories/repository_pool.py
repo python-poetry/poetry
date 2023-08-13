@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
+_SENTINEL = object()
+
 
 class Priority(IntEnum):
     # The order of the members below dictates the actual priority. The first member has
@@ -41,6 +43,7 @@ class RepositoryPool(AbstractRepository):
     def __init__(
         self,
         repositories: list[Repository] | None = None,
+        ignore_repository_names: object = _SENTINEL,
         *,
         config: Config | None = None,
     ) -> None:
@@ -55,6 +58,15 @@ class RepositoryPool(AbstractRepository):
         self._artifact_cache = ArtifactCache(
             cache_dir=(config or Config.create()).artifacts_cache_directory
         )
+
+        if ignore_repository_names is not _SENTINEL:
+            warnings.warn(
+                "The 'ignore_repository_names' argument to 'RepositoryPool.__init__' is"
+                " deprecated. It has no effect anymore and will be removed in a future"
+                " version.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
     @staticmethod
     def from_packages(packages: list[Package], config: Config | None) -> RepositoryPool:
