@@ -114,8 +114,12 @@ class Uploader:
         file_type = self._get_type(file)
 
         blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
+        # Enable FIPS support if Python version is greater or equal to 3.9
+        if sys.version_info >= (3, 9):
+            md5_hash = hashlib.md5(usedforsecurity=False)
+        else:
+            md5_hash = hashlib.md5()
 
-        md5_hash = hashlib.md5()
         sha256_hash = hashlib.sha256()
         with file.open("rb") as fp:
             for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
