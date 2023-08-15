@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     [
         (
             "git+http://github.com/demo/demo.git",
-            {"git": "http://github.com/demo/demo.git", "name": "demo"},
+            ({"git": "http://github.com/demo/demo.git", "name": "demo"},),
         ),
         (
             "git+https://github.com/demo/demo.git",
