@@ -83,6 +83,18 @@ hooks:
     args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
 ```
 
+## poetry-update
+
+The `poetry-update` hook calls the `poetry install --sync` command
+to make sure the installed dependencies match the packages defined in `poetry.lock`.
+In order to install this hook, you either need to specify `default_install_hook_types`, or you have
+to install it via `pre-commit install --install-hooks -t post-checkout -t post-merge`.
+
+### Arguments
+
+The hook takes the same arguments as the poetry command.
+For more information see the [install command]({{< relref "cli#install" >}}).
+
 ## Usage
 
 For more information on how to use pre-commit please see the [official documentation](https://pre-commit.com/).

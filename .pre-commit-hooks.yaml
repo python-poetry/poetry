@@ -22,3 +22,12 @@
   pass_filenames: false
   files: ^(.*/)?poetry\.lock$
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
+
+- id: poetry-update
+  name: poetry-update
+  description: Update the Poetry dependencies if out of sync
+  entry: poetry install --sync
+  language: python
+  pass_filenames: false
+  stages: [post-checkout, post-merge]
+  always_run: true
