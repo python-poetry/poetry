@@ -2558,9 +2558,8 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
     )
 
 
-# https://github.com/python-poetry/poetry/issues/6710
 @pytest.mark.parametrize("env_platform", ["darwin", "linux"])
-def test_installer_distinguishes_locked_packages_by_source(
+def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     pool: RepositoryPool,
     locker: Locker,
     installed: CustomInstalledRepository,
@@ -2569,6 +2568,7 @@ def test_installer_distinguishes_locked_packages_by_source(
     package: ProjectPackage,
     env_platform: str,
 ) -> None:
+    """https://github.com/python-poetry/poetry/issues/6710"""
     # Require 1.11.0+cpu from pytorch for most platforms, but specify 1.11.0 and pypi on
     # darwin.
     package.add_dependency(
@@ -2661,6 +2661,110 @@ def test_installer_distinguishes_locked_packages_by_source(
     )
 
 
+@pytest.mark.parametrize("env_platform_machine", ["aarch64", "amd64"])
+def test_installer_distinguishes_locked_packages_with_same_version_by_source(
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    repo: Repository,
+    package: ProjectPackage,
+    env_platform_machine: str,
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/8303"""
+    package.add_dependency(
+        Factory.create_dependency(
+            "kivy",
+            {
+                "version": "2.2.1",
+                "markers": "platform_machine == 'aarch64'",
+                "source": "pywheels",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "kivy",
+            {
+                "version": "2.2.1",
+                "markers": "platform_machine != 'aarch64'",
+                "source": "PyPI",
+            },
+        )
+    )
+
+    # Locking finds both the pypi and the pyhweels packages.
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "kivy",
+                    "version": "2.2.1",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                },
+                {
+                    "name": "kivy",
+                    "version": "2.2.1",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://www.piwheels.org/simple",
+                        "reference": "pywheels",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+            },
+        }
+    )
+    installer = Installer(
+        NullIO(),
+        MockEnv(platform_machine=env_platform_machine),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(platform_machine=env_platform_machine),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    result = installer.run()
+    assert result == 0
+
+    # Results of installation are consistent with the platform requirements.
+    version = "2.2.1"
+    if env_platform_machine == "aarch64":
+        source_type = "legacy"
+        source_url = "https://www.piwheels.org/simple"
+        source_reference = "pywheels"
+    else:
+        source_type = None
+        source_url = None
+        source_reference = None
+
+    assert isinstance(installer.executor, Executor)
+    assert len(installer.executor.installations) == 1
+    assert installer.executor.installations[0] == Package(
+        "kivy",
+        version,
+        source_type=source_type,
+        source_url=source_url,
+        source_reference=source_reference,
+    )
+
+
 @pytest.mark.parametrize("env_platform", ["darwin", "linux"])
 def test_explicit_source_dependency_with_direct_origin_dependency(
     pool: RepositoryPool,
@@ -2675,12 +2779,13 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     A dependency with explicit source should not be satisfied by
     a direct origin dependency even if there is a version match.
     """
+    demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency(
         Factory.create_dependency(
             "demo",
             {
                 "markers": "sys_platform != 'darwin'",
-                "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+                "url": demo_url,
             },
         )
     )
@@ -2698,6 +2803,50 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("demo", "0.1.0"))
 
+    # Locking finds both the direct origin and the explicit source packages.
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "dependencies": {"pendulum": ">=1.4.4"},
+                    "source": {
+                        "type": "url",
+                        "url": demo_url,
+                    },
+                },
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://www.demo.org/simple",
+                        "reference": "repo",
+                    },
+                },
+                {
+                    "name": "pendulum",
+                    "version": "1.4.4",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+            },
+        }
+    )
     installer = Installer(
         NullIO(),
         MockEnv(platform=env_platform),
@@ -2725,8 +2874,16 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
                 "demo",
                 "0.1.0",
                 source_type="url",
-                source_url="https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
+                source_url=demo_url,
             ),
         ]
     else:
-        assert installer.executor.installations == [Package("demo", "0.1.0")]
+        assert installer.executor.installations == [
+            Package(
+                "demo",
+                "0.1.0",
+                source_type="legacy",
+                source_url="https://www.demo.org/simple",
+                source_reference="repo",
+            )
+        ]

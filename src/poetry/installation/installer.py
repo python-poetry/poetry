@@ -286,16 +286,8 @@ class Installer:
             )
 
         # We resolve again by only using the lock file
-        pool = RepositoryPool(ignore_repository_names=True, config=self._config)
-
-        # Making a new repo containing the packages
-        # newly resolved and the ones from the current lock file
-        repo = Repository("poetry-repo")
-        for package in lockfile_repo.packages + locked_repository.packages:
-            if not package.is_direct_origin() and not repo.has_package(package):
-                repo.add_package(package)
-
-        pool.add_repository(repo)
+        packages = lockfile_repo.packages + locked_repository.packages
+        pool = RepositoryPool.from_packages(packages, self._config)
 
         solver = Solver(
             root,
