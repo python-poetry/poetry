@@ -440,8 +440,13 @@ class VersionSolver:
             LOCKED = 3
             DEFAULT = 4
 
-        # Prefer packages with as few remaining versions as possible,
-        # so that if a conflict is necessary it's forced quickly.
+        # The original algorithm proposes to prefer packages with as few remaining
+        # versions as possible, so that if a conflict is necessary it's forced quickly.
+        # https://github.com/dart-lang/pub/blob/master/doc/solver.md#decision-making
+        # However, this leads to the famous boto3 vs. urllib3 issue, so we prefer
+        # packages with more remaining versions (see
+        # https://github.com/python-poetry/poetry/pull/8255#issuecomment-1657198242
+        # for more details).
         # In order to provide results that are as deterministic as possible
         # and consistent between `poetry lock` and `poetry update`, the return value
         # of two different dependencies should not be equal if possible.
@@ -450,7 +455,7 @@ class VersionSolver:
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, Preference.DIRECT_ORIGIN, 1
+                return False, Preference.DIRECT_ORIGIN, -1
 
             is_specific_marker = not dependency.marker.is_any()
 
@@ -458,7 +463,7 @@ class VersionSolver:
             if not use_latest:
                 locked = self._provider.get_locked(dependency)
                 if locked:
-                    return is_specific_marker, Preference.LOCKED, 1
+                    return is_specific_marker, Preference.LOCKED, -1
 
             num_packages = len(
                 self._dependency_cache.search_for(
@@ -472,7 +477,7 @@ class VersionSolver:
                 preference = Preference.USE_LATEST
             else:
                 preference = Preference.DEFAULT
-            return is_specific_marker, preference, num_packages
+            return is_specific_marker, preference, -num_packages
 
         dependency = min(unsatisfied, key=_get_min)
 

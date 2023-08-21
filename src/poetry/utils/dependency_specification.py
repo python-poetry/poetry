@@ -29,6 +29,8 @@ if TYPE_CHECKING:
 DependencySpec = Dict[str, Union[str, bool, Dict[str, Union[str, bool]], List[str]]]
 BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
+GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
+
 
 def dependency_to_specification(
     dependency: Dependency, specification: BaseSpec
@@ -143,7 +145,7 @@ class RequirementsParser:
         if not (url_parsed.scheme and url_parsed.netloc):
             return None
 
-        if url_parsed.scheme in ["git+https", "git+ssh"]:
+        if url_parsed.scheme in GIT_URL_SCHEMES:
             return self._parse_git_url(requirement)
 
         if url_parsed.scheme in ["http", "https"]:

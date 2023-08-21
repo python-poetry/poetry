@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.6.0.dev0"
+version = "1.7.0.dev0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -32,8 +32,8 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.6.1"
-poetry-plugin-export = "^1.4.0"
+poetry-core = "1.7.0"
+poetry-plugin-export = "^1.5.0"
 build = "^0.10.0"
 cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
 cleo = "^2.0.0"
@@ -50,7 +50,7 @@ pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = "^3.0.0"
 pyproject-hooks = "^1.0.0"
-requests = "^2.18"
+requests = "^2.26"
 requests-toolbelt = ">=0.9.1,<2"
 shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
@@ -61,7 +61,7 @@ virtualenv = "^20.22.0"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^2.6"
+pre-commit = ">=2.6"
 
 [tool.poetry.group.test.dependencies]
 deepdiff = "^6.3"

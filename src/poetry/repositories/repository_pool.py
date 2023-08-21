@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from poetry.config.config import Config
 from poetry.repositories.abstract_repository import AbstractRepository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.repository import Repository
 from poetry.utils.cache import ArtifactCache
 
 
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
-    from poetry.repositories.repository import Repository
+_SENTINEL = object()
 
 
 class Priority(IntEnum):
@@ -42,13 +43,12 @@ class RepositoryPool(AbstractRepository):
     def __init__(
         self,
         repositories: list[Repository] | None = None,
-        ignore_repository_names: bool = False,
+        ignore_repository_names: object = _SENTINEL,
         *,
         config: Config | None = None,
     ) -> None:
         super().__init__("poetry-repository-pool")
         self._repositories: OrderedDict[str, PrioritizedRepository] = OrderedDict()
-        self._ignore_repository_names = ignore_repository_names
 
         if repositories is None:
             repositories = []
@@ -58,6 +58,34 @@ class RepositoryPool(AbstractRepository):
         self._artifact_cache = ArtifactCache(
             cache_dir=(config or Config.create()).artifacts_cache_directory
         )
+
+        if ignore_repository_names is not _SENTINEL:
+            warnings.warn(
+                "The 'ignore_repository_names' argument to 'RepositoryPool.__init__' is"
+                " deprecated. It has no effect anymore and will be removed in a future"
+                " version.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+    @staticmethod
+    def from_packages(packages: list[Package], config: Config | None) -> RepositoryPool:
+        pool = RepositoryPool(config=config)
+        for package in packages:
+            if package.is_direct_origin():
+                continue
+
+            repo_name = package.source_reference or "PyPI"
+            try:
+                repo = pool.repository(repo_name)
+            except IndexError:
+                repo = Repository(repo_name)
+                pool.add_repository(repo)
+
+            if not repo.has_package(package):
+                repo.add_package(package)
+
+        return pool
 
     @property
     def repositories(self) -> list[Repository]:
@@ -166,7 +194,7 @@ class RepositoryPool(AbstractRepository):
         extras: list[str] | None = None,
         repository_name: str | None = None,
     ) -> Package:
-        if repository_name and not self._ignore_repository_names:
+        if repository_name:
             return self.repository(repository_name).package(
                 name, version, extras=extras
             )
@@ -180,7 +208,7 @@ class RepositoryPool(AbstractRepository):
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         repository_name = dependency.source_name
-        if repository_name and not self._ignore_repository_names:
+        if repository_name:
             return self.repository(repository_name).find_packages(dependency)
 
         packages: list[Package] = []
