@@ -1,6 +1,13 @@
 # Change Log
 
 
+## [1.6.1] - 2023-08-21
+
+### Fixed
+
+- Update the minimum required version of `requests` ([#8336](https://github.com/python-poetry/poetry/pull/8336)).
+
+
 ## [1.6.0] - 2023-08-20
 
 ### Added
@@ -1959,7 +1966,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.6.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.6.1...master
+[1.6.1]: https://github.com/python-poetry/poetry/releases/tag/1.6.1
 [1.6.0]: https://github.com/python-poetry/poetry/releases/tag/1.6.0
 [1.5.1]: https://github.com/python-poetry/poetry/releases/tag/1.5.1
 [1.5.0]: https://github.com/python-poetry/poetry/releases/tag/1.5.0
