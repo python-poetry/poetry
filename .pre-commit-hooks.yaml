@@ -31,4 +31,3 @@
   pass_filenames: false
   stages: [post-checkout, post-merge]
   always_run: true
-  args: ["--sync"]
