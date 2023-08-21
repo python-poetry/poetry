@@ -23,8 +23,8 @@
   files: ^(.*/)?poetry\.lock$
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 
-- id: poetry-sync
-  name: poetry-sync
+- id: poetry-install
+  name: poetry-install
   description: Synchronize the Poetry dependencies with the lock file if out of sync
   entry: poetry install
   language: python
