@@ -50,7 +50,7 @@ pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = "^3.0.0"
 pyproject-hooks = "^1.0.0"
-requests = "^2.18"
+requests = "^2.26"
 requests-toolbelt = ">=0.9.1,<2"
 shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
