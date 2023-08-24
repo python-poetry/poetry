@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import site
 import sys
 import sysconfig
 
@@ -87,3 +88,6 @@ class SystemEnv(Env):
 
     def is_venv(self) -> bool:
         return self._path != self._base
+
+    def _get_lib_dirs(self) -> list[Path]:
+        return super()._get_lib_dirs() + [Path(d) for d in site.getsitepackages()]

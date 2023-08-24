@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import os
+import site
 import subprocess
 import sys
 
@@ -1475,8 +1477,13 @@ def test_env_system_packages_are_relative_to_lib(
     venv_path = tmp_path / "venv"
     EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
     env = VirtualEnv(venv_path)
-    pytest_dist = metadata.distribution("pytest")
-    assert env.is_path_relative_to_lib(pytest_dist._path)  # type: ignore[attr-defined]
+    site_dir = Path(site.getsitepackages()[-1])
+    for dist in metadata.distributions():
+        # Emulate is_relative_to, only available in 3.9+
+        with contextlib.suppress(ValueError):
+            dist._path.relative_to(site_dir)  # type: ignore[attr-defined]
+            break
+    assert env.is_path_relative_to_lib(dist._path)  # type: ignore[attr-defined]
 
 
 @pytest.mark.parametrize(
