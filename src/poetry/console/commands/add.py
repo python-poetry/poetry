@@ -68,7 +68,7 @@ class AddCommand(InstallerCommand, InitCommand):
             " --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
-        option("only" None, "Do not install additional packages from the toml."),
+        option("only", None, "Do not install additional packages from the toml."),
     ]
     examples = """\
 If you do not specify a version constraint, poetry will choose a suitable one based on\
