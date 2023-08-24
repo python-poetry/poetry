@@ -68,6 +68,7 @@ class AddCommand(InstallerCommand, InitCommand):
             " --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
+        option("only" None, "Do not install additional packages from the toml."),
     ]
     examples = """\
 If you do not specify a version constraint, poetry will choose a suitable one based on\
@@ -261,6 +262,8 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
         self.installer.execute_operations(not self.option("lock"))
+        if self.option("only"):
+            self.installer.only_groups(group)
 
         self.installer.whitelist([r["name"] for r in requirements])
 
