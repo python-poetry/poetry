@@ -141,8 +141,7 @@ class VirtualEnv(Env):
         return "include-system-site-packages = true" in pyvenv_cfg.read_text()
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
-        system_env = SystemEnv(Path(sys.prefix))
-        return (
+        return super().is_path_relative_to_lib(path) or (
             self.includes_system_site_packages()
-            and system_env.is_path_relative_to_lib(path)
-        ) or super().is_path_relative_to_lib(path)
+            and SystemEnv(Path(sys.prefix)).is_path_relative_to_lib(path)
+        )
