@@ -1468,7 +1468,7 @@ def test_env_system_packages(tmp_path: Path, poetry: Poetry) -> None:
     env = VirtualEnv(venv_path)
 
     assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
-    assert env.includes_system_site_packages()
+    assert env.includes_system_site_packages
 
 
 def test_env_system_packages_are_relative_to_lib(
