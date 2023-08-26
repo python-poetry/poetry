@@ -155,6 +155,11 @@ dependencies and not including the current project, run the command with the
         if self.option("no-root"):
             return 0
 
+        # Prior to https://github.com/python-poetry/poetry-core/pull/629
+        # the existence of a module/package was checked when creating the
+        # EditableBuilder. Afterwards, the existence is checked after
+        # executing the build script (if there is one),
+        # i.e. during EditableBuilder.build().
         try:
             builder = EditableBuilder(self.poetry, self.env, self.io)
         except ModuleOrPackageNotFound:
@@ -178,7 +183,13 @@ dependencies and not including the current project, run the command with the
             self.line("")
             return 0
 
-        builder.build()
+        try:
+            builder.build()
+        except ModuleOrPackageNotFound:
+            # This is likely due to the fact that the project is an application
+            # not following the structure expected by Poetry.
+            # No need for an editable install in this case.
+            return 0
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))

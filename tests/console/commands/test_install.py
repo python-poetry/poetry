@@ -33,7 +33,6 @@ authors = [
     "Python Poetry <tests@python-poetry.org>"
 ]
 license = "MIT"
-readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
