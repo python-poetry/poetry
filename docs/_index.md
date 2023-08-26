@@ -69,7 +69,7 @@ Note: On some systems, `python` may still refer to Python 2 instead of Python 3.
 {{% note %}}
 If you have installed Python through the Microsoft Store,
 replace `py` with `python` in the command above.
-In this case, you might also want to declare `POETRY_HOME` environment variable
+In this case, you might also want to declare the `POETRY_HOME` environment variable
 by adding `$env:POETRY_HOME="$env:userprofile\poetry";` before the CLI command above
 to make Poetry be installed in a directory that can be easily added to PATH.
 Since Python from the Microsoft Store is installed in a sandboxed environment,
