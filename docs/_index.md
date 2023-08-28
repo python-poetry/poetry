@@ -195,7 +195,7 @@ If you decide Poetry isn't your thing, you can completely remove it from your sy
 by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 If you have installed Poetry somewhere other than the default location,
-declare `POETRY_HOME` environment variable once again before uninstallation.
+declare the `POETRY_HOME` environment variable once again before uninstallation.
 
 **Linux, macOS, Windows (WSL)**
 
