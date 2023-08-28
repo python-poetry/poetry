@@ -219,8 +219,11 @@ class Env:
 
         return self._platlib
 
+    def _get_lib_dirs(self) -> list[Path]:
+        return [self.purelib, self.platlib]
+
     def is_path_relative_to_lib(self, path: Path) -> bool:
-        for lib_path in [self.purelib, self.platlib]:
+        for lib_path in self._get_lib_dirs():
             with contextlib.suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
