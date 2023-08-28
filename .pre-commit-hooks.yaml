@@ -25,7 +25,7 @@
 
 - id: poetry-install
   name: poetry-install
-  description: Synchronize the Poetry dependencies with the lock file if out of sync
+  description: run poetry install to install dependencies from the lock file
   entry: poetry install
   language: python
   pass_filenames: false
