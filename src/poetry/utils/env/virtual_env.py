@@ -140,7 +140,14 @@ class VirtualEnv(Env):
     @cached_property
     def includes_system_site_packages(self) -> bool:
         pyvenv_cfg = self._path / "pyvenv.cfg"
-        return "include-system-site-packages = true" in pyvenv_cfg.read_text()
+        return (
+            re.search(
+                r"^\s*include-system-site-packages\s*=\s*true\s*$",
+                pyvenv_cfg.read_text(),
+                re.IGNORECASE | re.MULTILINE,
+            )
+            is not None
+        )
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         return super().is_path_relative_to_lib(path) or (
