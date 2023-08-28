@@ -83,6 +83,17 @@ hooks:
     args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
 ```
 
+## poetry-install
+
+The `poetry-install` hook calls the `poetry install` command to make sure all locked packages are installed.
+In order to install this hook, you either need to specify `default_install_hook_types`, or you have
+to install it via `pre-commit install --install-hooks -t post-checkout -t post-merge`.
+
+### Arguments
+
+The hook takes the same arguments as the poetry command.
+For more information see the [install command]({{< relref "cli#install" >}}).
+
 ## Usage
 
 For more information on how to use pre-commit please see the [official documentation](https://pre-commit.com/).
@@ -97,6 +108,7 @@ repos:
     -   id: poetry-check
     -   id: poetry-lock
     -   id: poetry-export
+    -   id: poetry-install
 ```
 
 A `.pre-commit-config.yaml` example for a monorepo setup or if the `pyproject.toml` file is not in the root directory:
@@ -112,6 +124,8 @@ repos:
         args: ["-C", "./subdirectory"]
     -   id: poetry-export
         args: ["-C", "./subdirectory", "-f", "requirements.txt", "-o", "./subdirectory/requirements.txt"]
+    -   id: poetry-install
+        args: ["-C", "./subdirectory"]
 ```
 
 ## FAQ
