@@ -112,3 +112,17 @@ external formats like virtual environments
 * [install.python-poetry.org](https://github.com/python-poetry/install.python-poetry.org): The official Poetry
 installation script
 * [website](https://github.com/python-poetry/website): The official Poetry website and blog
+
+## Bundle
+
+For the Replit [Python Nix modules](https://github.com/replit/nixmodules/tree/main/pkgs/modules/python), we build a separate Poetry bundle for each supported version of Python 
+containing Poetry plus all its dependencies and uploaded it to gcf. To build a bundle:
+
+1. Make sure you have the correct version of Python and Pip, and that they match.
+2. Get access to the latest version of poetry.
+3. If you are working in a Repl, using a Python Nix module should give you all 3.
+4. Run `build-bundle.sh`
+5. It should produce a file `poetry-${VERSION}-python-${PYTHON_VERSION}-bundle.tgz` in `dist`
+6. Upload this to gcf in the `poetry-bundles` of the Goval project.
+7. Click on the ... and choose "Copy Public URL" for use in the poetry derivation back in
+[Nix modules](https://github.com/replit/nixmodules)
