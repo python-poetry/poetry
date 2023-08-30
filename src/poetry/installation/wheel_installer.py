@@ -74,13 +74,13 @@ class WheelInstaller:
                 script_kind = "win-arm64" if sys.maxsize > 2**32 else "win-arm"
             else:
                 script_kind = "win-amd64" if sys.maxsize > 2**32 else "win-ia32"
-        self.script_kind = script_kind
+        self._script_kind = script_kind
 
-        self.bytecode_optimization_levels: Collection[int] = ()
+        self._bytecode_optimization_levels: Collection[int] = ()
         self.invalid_wheels: dict[Path, list[str]] = {}
 
     def enable_bytecode_compilation(self, enable: bool = True) -> None:
-        self.bytecode_optimization_levels = (-1,) if enable else ()
+        self._bytecode_optimization_levels = (-1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
         with WheelFile.open(wheel) as source:
@@ -99,8 +99,8 @@ class WheelInstaller:
             destination = WheelDestination(
                 scheme_dict,
                 interpreter=str(self._env.python),
-                script_kind=self.script_kind,
-                bytecode_optimization_levels=self.bytecode_optimization_levels,
+                script_kind=self._script_kind,
+                bytecode_optimization_levels=self._bytecode_optimization_levels,
             )
 
             install(
