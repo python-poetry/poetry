@@ -179,7 +179,7 @@ If you encounter any problems with it, set to `true` to use the system git backe
 
 **Type**: `int`
 
-**Default**: `number_of_cores + 4`
+**Default**: `min(number_of_cores + 4, 8)`
 
 **Environment Variable**: `POETRY_INSTALLER_MAX_WORKERS`
 

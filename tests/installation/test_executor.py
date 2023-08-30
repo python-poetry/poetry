@@ -1151,6 +1151,8 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
     ("max_workers", "cpu_count", "side_effect", "expected_workers"),
     [
         (None, 3, None, 7),
+        (None, 5, None, 8),
+        (9, 5, None, 9),
         (3, 4, None, 3),
         (8, 3, None, 7),
         (None, 8, NotImplementedError(), 5),

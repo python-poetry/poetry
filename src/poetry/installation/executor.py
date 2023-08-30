@@ -234,7 +234,7 @@ class Executor:
             default_max_workers = 5
 
         if desired_max_workers is None:
-            return default_max_workers
+            return min(default_max_workers, 8)
         return min(default_max_workers, desired_max_workers)
 
     def _write(self, operation: Operation, line: str) -> None:
