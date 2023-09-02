@@ -162,10 +162,16 @@ dependencies and not including the current project, run the command with the
         # i.e. during EditableBuilder.build().
         try:
             builder = EditableBuilder(self.poetry, self.env, self.io)
-        except ModuleOrPackageNotFound:
+        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
             # If this is a true error it will be picked up later by build anyway.
+            self.line_error(
+                f"The current project could not be installed: <error>{e}</error>\n"
+                "If you do not want to install the current project"
+                " use <c1>--no-root</c1>",
+                style="warning",
+            )
             return 0
 
         log_install = (
@@ -185,10 +191,17 @@ dependencies and not including the current project, run the command with the
 
         try:
             builder.build()
-        except ModuleOrPackageNotFound:
+        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry.
             # No need for an editable install in this case.
+            self.line("")
+            self.line_error(
+                f"The current project could not be installed: <error>{e}</error>\n"
+                "If you do not want to install the current project"
+                " use <c1>--no-root</c1>",
+                style="warning",
+            )
             return 0
 
         if overwrite:

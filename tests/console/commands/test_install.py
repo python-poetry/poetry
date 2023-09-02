@@ -347,9 +347,9 @@ def test_remove_untracked_outputs_deprecation_warning(
 
     assert tester.status_code == 0
     assert (
-        tester.io.fetch_error()
-        == "The `--remove-untracked` option is deprecated, use the `--sync` option"
+        "The `--remove-untracked` option is deprecated, use the `--sync` option"
         " instead.\n"
+        in tester.io.fetch_error()
     )
 
 
@@ -414,6 +414,38 @@ def test_install_logs_output_decorated(
     )
     assert tester.status_code == 0
     assert tester.io.fetch_output() == expected
+
+
+@pytest.mark.parametrize("with_root", [True])
+@pytest.mark.parametrize("error", ["module", "readme", ""])
+def test_install_warning_corrupt_root(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    with_root: bool,
+    error: str,
+) -> None:
+    name = "corrupt"
+    content = f"""\
+[tool.poetry]
+name = "{name}"
+version = "1.2.3"
+description = ""
+authors = []
+"""
+    if error == "readme":
+        content += 'readme = "missing_readme.md"\n'
+    poetry = project_factory(name=name, pyproject_content=content)
+    if error != "module":
+        (poetry.pyproject_path.parent / f"{name}.py").touch()
+
+    tester = command_tester_factory("install", poetry=poetry)
+    tester.execute("" if with_root else "--no-root")
+
+    assert tester.status_code == 0
+    if with_root and error:
+        assert "The current project could not be installed: " in tester.io.fetch_error()
+    else:
+        assert tester.io.fetch_error() == ""
 
 
 @pytest.mark.parametrize("options", ["", "--without dev"])
