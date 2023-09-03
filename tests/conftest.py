@@ -15,7 +15,9 @@ import httpretty
 import keyring
 import pytest
 
+from keyring import backends
 from keyring.backend import KeyringBackend
+from keyring.errors import KeyringError
 from keyring.errors import KeyringLocked
 
 from poetry.config.config import Config as BaseConfig
@@ -131,10 +133,6 @@ class LockedBackend(KeyringBackend):
 
     def delete_password(self, service: str, username: str | None) -> None:
         raise KeyringLocked()
-
-
-from keyring import backends
-from keyring.errors import KeyringError
 
 
 class ErroneousBackend(backends.fail.Keyring):
