@@ -579,7 +579,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
             return info
 
     with ephemeral_environment(
-        flags={"no-pip": False, "no-setuptools": False, "no-wheel": False}
+        flags={"no-pip": False, "setuptools": "bundle", "wheel": "bundle"}
     ) as venv:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         dest_dir = venv.path.parent / "dist"

@@ -1489,18 +1489,21 @@ def test_env_system_packages_are_relative_to_lib(
 @pytest.mark.parametrize(
     ("flags", "packages"),
     [
-        ({"no-pip": False}, {"pip", "wheel"}),
+        ({"no-pip": False}, {"pip"}),
         ({"no-pip": False, "no-wheel": True}, {"pip"}),
+        ({"no-pip": False, "no-wheel": False}, {"pip", "wheel"}),
         ({"no-pip": True}, set()),
         ({"no-setuptools": False}, {"setuptools"}),
         ({"no-setuptools": True}, set()),
+        ({"setuptools": "bundle"}, {"setuptools"}),
         ({"no-pip": True, "no-setuptools": False}, {"setuptools"}),
         ({"no-wheel": False}, {"wheel"}),
+        ({"wheel": "bundle"}, {"wheel"}),
         ({}, set()),
     ],
 )
 def test_env_no_pip(
-    tmp_path: Path, poetry: Poetry, flags: dict[str, bool], packages: set[str]
+    tmp_path: Path, poetry: Poetry, flags: dict[str, str | bool], packages: set[str]
 ) -> None:
     venv_path = tmp_path / "venv"
     EnvManager(poetry).build_venv(path=venv_path, flags=flags)

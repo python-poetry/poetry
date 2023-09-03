@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 @contextmanager
 def ephemeral_environment(
     executable: Path | None = None,
-    flags: dict[str, bool] | None = None,
+    flags: dict[str, str | bool] | None = None,
 ) -> Iterator[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
