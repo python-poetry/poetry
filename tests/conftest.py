@@ -133,6 +133,19 @@ class LockedBackend(KeyringBackend):
         raise KeyringLocked()
 
 
+from keyring import backends
+from keyring.errors import KeyringError
+
+
+class ErroneousBackend(backends.fail.Keyring):
+    @classmethod
+    def priority(cls) -> int:
+        return 42
+
+    def get_credential(self, service: str, username: str | None) -> Any:
+        raise KeyringError()
+
+
 @pytest.fixture()
 def dummy_keyring() -> DummyBackend:
     return DummyBackend()
@@ -153,6 +166,11 @@ def with_fail_keyring() -> None:
 @pytest.fixture()
 def with_locked_keyring() -> None:
     keyring.set_keyring(LockedBackend())  # type: ignore[no-untyped-call]
+
+
+@pytest.fixture()
+def with_erroneous_keyring() -> None:
+    keyring.set_keyring(ErroneousBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()

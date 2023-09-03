@@ -235,6 +235,12 @@ def test_locked_keyring_should_be_available(with_locked_keyring: None) -> None:
     assert key_ring.is_available()
 
 
+def test_erroneous_keyring_should_be_available(with_erroneous_keyring: None) -> None:
+    key_ring = PoetryKeyring("poetry")
+
+    assert key_ring.is_available()
+
+
 def test_get_http_auth_from_environment_variables(
     environ: None, config: Config
 ) -> None:
