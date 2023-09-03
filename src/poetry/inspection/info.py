@@ -46,11 +46,10 @@ import pyproject_hooks
 source = '{source}'
 dest = '{dest}'
 
-with build.env.IsolatedEnvBuilder() as env:
+with build.env.DefaultIsolatedEnv() as env:
     builder = build.ProjectBuilder(
-        srcdir=source,
-        scripts_dir=env.scripts_dir,
-        python_executable=env.executable,
+        source_dir=source,
+        python_executable=env.python_executable,
         runner=pyproject_hooks.quiet_subprocess_runner,
     )
     env.install(builder.build_system_requires)
@@ -58,7 +57,7 @@ with build.env.IsolatedEnvBuilder() as env:
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build==0.10.0", "pyproject_hooks==1.0.0"]
+PEP517_META_BUILD_DEPS = ["build==1.0.3", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
