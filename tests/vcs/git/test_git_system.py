@@ -42,8 +42,11 @@ def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
             "commit",
             "--allow-empty",
             "--message=test commit",
-            "--author=Test <test@example.com>",
         ],
+        env={
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.com",
+        },
         cwd=target_dir,
         text=True,
     )
@@ -61,7 +64,7 @@ class TestSystemGit:
 
         stdout = SystemGit.clone(current_repo_path.as_uri(), target_dir)
 
-        assert re.search(r"Cloning into '.+/poetry-test'...", stdout)
+        assert re.search(r"Cloning into '.+[\\/]poetry-test'...", stdout)
         assert (target_dir / ".git").is_dir()
 
     def test_clone_code_execution(self, tmp_path: Path) -> None:
