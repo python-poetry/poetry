@@ -59,7 +59,7 @@ def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
 
 
 class TestSystemGit:
-    def test_clone_success(self, current_repo_path: Path, tmp_path: Path):
+    def test_clone_success(self, current_repo_path: Path, tmp_path: Path) -> None:
         target_dir = tmp_path / "poetry-test"
 
         stdout = SystemGit.clone(current_repo_path.as_uri(), target_dir)
@@ -67,18 +67,18 @@ class TestSystemGit:
         assert re.search(r"Cloning into '.+/poetry-test'...", stdout)
         assert (target_dir / ".git").is_dir()
 
-    def test_clone_code_execution(self, tmp_path: Path):
+    def test_clone_code_execution(self, tmp_path: Path) -> None:
         with pytest.raises(RuntimeError):
             SystemGit.clone("--upload-pack=touch ./HELL", tmp_path)
 
-    def test_checkout_1(self, tmp_repo: Path, current_sha: str):
+    def test_checkout_1(self, tmp_repo: Path, current_sha: str) -> None:
         # case 1 - with 'target' arg
         SystemGit.checkout(current_sha[:12], tmp_repo)
         assert get_head_sha(tmp_repo) == current_sha
 
     def test_checkout_2(
         self, monkeypatch: pytest.MonkeyPatch, tmp_repo: Path, current_sha: str
-    ):
+    ) -> None:
         # case 2 - without 'target' arg
         monkeypatch.chdir(tmp_repo)
         SystemGit.checkout(current_sha[:12])
