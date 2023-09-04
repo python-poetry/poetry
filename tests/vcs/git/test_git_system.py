@@ -35,6 +35,12 @@ def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
     target_dir = tmp_path / "poetry-test"
     SystemGit.clone(current_repo_path.as_uri(), target_dir)
 
+    # configure author
+    subprocess.check_output(["git", "config", "user.name", "User"], cwd=target_dir)
+    subprocess.check_output(
+        ["git", "config", "user.email", "user@example.com"], cwd=target_dir
+    )
+
     # add redundant commit
     stdout = subprocess.check_output(
         [
@@ -43,10 +49,6 @@ def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
             "--allow-empty",
             "--message=test commit",
         ],
-        env={
-            "GIT_AUTHOR_NAME": "Test",
-            "GIT_AUTHOR_EMAIL": "test@example.com",
-        },
         cwd=target_dir,
         text=True,
     )
