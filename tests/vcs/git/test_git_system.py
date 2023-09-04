@@ -12,7 +12,7 @@ from poetry.vcs.git.system import SystemGit
 
 def get_head_sha(cwd: Path) -> str:
     return subprocess.check_output(
-        ["git", "rev-parse", "head"],
+        ["git", "rev-parse", "HEAD"],
         cwd=cwd,
         text=True,
     ).strip()
