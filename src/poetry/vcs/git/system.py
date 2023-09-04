@@ -22,21 +22,14 @@ class SystemGit:
 
     @classmethod
     def checkout(cls, rev: str, target: Path | None = None) -> str:
-        args = []
-
-        if target:
-            args += [
-                "--git-dir",
-                (target / ".git").as_posix(),
-                "--work-tree",
-                target.as_posix(),
-            ]
-
         cls._check_parameter(rev)
 
-        args += ["checkout", rev]
+        args = ("checkout", rev)
 
-        return cls.run(*args)
+        if target:
+            return cls.run(*args, folder=target)
+        else:
+            return cls.run(*args)
 
     @staticmethod
     def run(*args: Any, **kwargs: Any) -> str:
