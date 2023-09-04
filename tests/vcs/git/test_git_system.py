@@ -30,10 +30,7 @@ def current_sha(current_repo_path: Path) -> str:
 
 @pytest.fixture
 def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
-    """Temporary repository + 1 redundant commit for testing `checkout`
-
-    CI performs shallow clone by default so only head commit commit would be visible.
-    """
+    """Temporary repository + 1 redundant commit"""
     # create repo
     target_dir = tmp_path / "poetry-test"
     SystemGit.clone(current_repo_path.as_uri(), target_dir)
