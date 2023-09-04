@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 
 from pathlib import Path
@@ -8,6 +9,9 @@ from pathlib import Path
 import pytest
 
 from poetry.vcs.git.system import SystemGit
+
+
+GIT_NOT_INSTALLLED = shutil.which("git") is None
 
 
 def get_head_sha(cwd: Path) -> str:
@@ -60,6 +64,7 @@ def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
     return target_dir
 
 
+@pytest.mark.skipif(GIT_NOT_INSTALLLED, reason="These tests requires git cli")
 class TestSystemGit:
     def test_clone_success(self, current_repo_path: Path, tmp_path: Path) -> None:
         target_dir = tmp_path / "poetry-test"
