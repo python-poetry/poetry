@@ -26,11 +26,11 @@ repos:
       - id: black
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v3.3.3
+    rev: v3.4.0
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.286
+    rev: v0.0.287
     hooks:
     -   id: ruff
