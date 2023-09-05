@@ -5,6 +5,7 @@ import ast
 from configparser import ConfigParser
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from poetry.core.constraints.version import Version
 
@@ -18,7 +19,7 @@ class SetupReader:
     Class that reads a setup.py file without executing it.
     """
 
-    DEFAULT: dict[str, Any] = {
+    DEFAULT: ClassVar[dict[str, Any]] = {
         "name": None,
         "version": None,
         "install_requires": [],
@@ -26,7 +27,7 @@ class SetupReader:
         "python_requires": None,
     }
 
-    FILES = ["setup.py", "setup.cfg"]
+    FILES: ClassVar[list[str]] = ["setup.py", "setup.cfg"]
 
     @classmethod
     def read_from_directory(cls, directory: Path) -> dict[str, Any]:
@@ -213,15 +214,15 @@ class SetupReader:
 
         if isinstance(value, ast.List):
             for el in value.elts:
-                if isinstance(el, ast.Str):
-                    install_requires.append(el.s)
+                if isinstance(el, ast.Constant) and isinstance(el.value, str):
+                    install_requires.append(el.value)
         elif isinstance(value, ast.Name):
             variable = self._find_variable_in_body(body, value.id)
 
             if variable is not None and isinstance(variable, ast.List):
                 for el in variable.elts:
-                    if isinstance(el, ast.Str):
-                        install_requires.append(el.s)
+                    if isinstance(el, ast.Constant) and isinstance(el.value, str):
+                        install_requires.append(el.value)
 
         return install_requires
 
@@ -258,15 +259,17 @@ class SetupReader:
         if isinstance(value, ast.Dict):
             val: ast.expr | None
             for key, val in zip(value.keys, value.values):
-                if not isinstance(key, ast.Str):
+                if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
                     continue
 
                 if isinstance(val, ast.Name):
                     val = self._find_variable_in_body(body, val.id)
 
                 if isinstance(val, ast.List):
-                    extras_require[key.s] = [
-                        e.s for e in val.elts if isinstance(e, ast.Str)
+                    extras_require[key.value] = [
+                        e.value
+                        for e in val.elts
+                        if isinstance(e, ast.Constant) and isinstance(e.value, str)
                     ]
         elif isinstance(value, ast.Name):
             variable = self._find_variable_in_body(body, value.id)
@@ -275,15 +278,17 @@ class SetupReader:
                 return extras_require
 
             for key, val in zip(variable.keys, variable.values):
-                if not isinstance(key, ast.Str):
+                if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
                     continue
 
                 if isinstance(val, ast.Name):
                     val = self._find_variable_in_body(body, val.id)
 
                 if isinstance(val, ast.List):
-                    extras_require[key.s] = [
-                        e.s for e in val.elts if isinstance(e, ast.Str)
+                    extras_require[key.value] = [
+                        e.value
+                        for e in val.elts
+                        if isinstance(e, ast.Constant) and isinstance(e.value, str)
                     ]
 
         return extras_require
@@ -317,13 +322,17 @@ class SetupReader:
         if value is None:
             return None
 
-        if isinstance(value, ast.Str):
-            return value.s
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            return value.value
         elif isinstance(value, ast.Name):
             variable = self._find_variable_in_body(body, value.id)
 
-            if variable is not None and isinstance(variable, ast.Str):
-                return variable.s
+            if (
+                variable is not None
+                and isinstance(variable, ast.Constant)
+                and isinstance(variable.value, str)
+            ):
+                return variable.value
 
         return None
 
@@ -359,7 +368,11 @@ class SetupReader:
 
     def _find_in_dict(self, dict_: ast.Dict, name: str) -> ast.expr | None:
         for key, val in zip(dict_.keys, dict_.values):
-            if isinstance(key, ast.Str) and key.s == name:
+            if (
+                isinstance(key, ast.Constant)
+                and isinstance(key.value, str)
+                and key.value == name
+            ):
                 return val
 
         return None

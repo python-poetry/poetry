@@ -48,10 +48,8 @@ class ShowCommand(GroupCommand, EnvCommand):
         option(
             "why",
             None,
-            (
-                "When showing the full list, or a <info>--tree</info> for a single"
-                " package, also display why it's included."
-            ),
+            "When showing the full list, or a <info>--tree</info> for a single"
+            " package, also display why it's included.",
         ),
         option("latest", "l", "Show the latest version."),
         option(
@@ -213,8 +211,7 @@ lists all packages available."""
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = RepositoryPool(ignore_repository_names=True, config=self.poetry.config)
-        pool.add_repository(locked_repository)
+        pool = RepositoryPool.from_packages(locked_packages, self.poetry.config)
         solver = Solver(
             root,
             pool=pool,
@@ -319,9 +316,7 @@ lists all packages available."""
             name = locked.pretty_name
             install_marker = ""
 
-            if show_top_level and not any(
-                locked.is_same_package_as(r) for r in requires
-            ):
+            if show_top_level and not any(locked.satisfies(r) for r in requires):
                 continue
 
             if locked not in required_locked_packages:

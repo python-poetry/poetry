@@ -164,7 +164,7 @@ poetry source add --priority=default foo https://foo.bar/simple/
 {{% warning %}}
 
 In a future version of Poetry, PyPI will be disabled automatically
-if there is at least one custom source configured with another priority than `explicit`.
+if at least one custom primary source is configured.
 If you are using custom sources in addition to PyPI, you should configure PyPI explicitly
 with a certain priority, e.g.
 
@@ -173,6 +173,18 @@ poetry source add --priority=primary PyPI
 ```
 
 This way, the priority of PyPI can be set in a fine-granular way.
+
+The equivalent specification in `pyproject.toml` is:
+
+```toml
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+```
+
+**Omit the `url` when specifying PyPI explicitly.** Because PyPI is internally configured
+with Poetry, the PyPI repository cannot be configured with a given URL. Remember, you can always use
+`poetry check` to ensure the validity of the `pyproject.toml` file.
 
 {{% /warning %}}
 

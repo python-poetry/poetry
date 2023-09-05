@@ -902,21 +902,16 @@ def test_add_constraint_with_source(
     mocker: MockerFixture,
 ) -> None:
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
-    repo.add_package(get_package("cachy", "0.2.0"))
-    mocker.patch.object(
-        repo,
-        "_find_packages",
-        wraps=lambda _, name: [
-            Package(
-                "cachy",
-                Version.parse("0.2.0"),
-                source_type="legacy",
-                source_reference=repo.name,
-                source_url=repo._url,
-                yanked=False,
-            )
-        ],
+    package = Package(
+        "cachy",
+        Version.parse("0.2.0"),
+        source_type="legacy",
+        source_reference=repo.name,
+        source_url=repo._url,
+        yanked=False,
     )
+    mocker.patch.object(repo, "package", return_value=package)
+    mocker.patch.object(repo, "_find_packages", wraps=lambda _, name: [package])
 
     poetry.pool.add_repository(repo)
 

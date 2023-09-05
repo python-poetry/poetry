@@ -8,6 +8,7 @@ from typing import Any
 
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
+from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils.wheel import Wheel
 
 
@@ -47,10 +48,8 @@ class Chooser:
             if link.is_wheel:
                 if not self._no_binary_policy.allows(package.name):
                     logger.debug(
-                        (
-                            "Skipping wheel for %s as requested in no binary policy for"
-                            " package (%s)"
-                        ),
+                        "Skipping wheel for %s as requested in no binary policy for"
+                        " package (%s)",
                         link.filename,
                         package.name,
                     )
@@ -58,10 +57,8 @@ class Chooser:
 
                 if not Wheel(link.filename).is_supported_by_environment(self._env):
                     logger.debug(
-                        (
-                            "Skipping wheel %s as this is not supported by the current"
-                            " environment"
-                        ),
+                        "Skipping wheel %s as this is not supported by the current"
+                        " environment",
                         link.filename,
                     )
                     continue
@@ -103,6 +100,12 @@ class Chooser:
 
             assert link.hash_name is not None
             h = link.hash_name + ":" + link.hash
+            if (
+                h not in hashes
+                and link.hash_name not in ("sha256", "sha384", "sha512")
+                and isinstance(repository, HTTPRepository)
+            ):
+                h = repository.calculate_sha256(link) or h
             if h not in hashes:
                 logger.debug(
                     "Skipping %s as %s checksum does not match expected value",

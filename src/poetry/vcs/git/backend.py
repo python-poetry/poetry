@@ -301,10 +301,8 @@ class Git:
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
                 logger.debug(
-                    (
-                        "Removing local clone (<c1>%s</>) of repository as it is in a"
-                        " broken state."
-                    ),
+                    "Removing local clone (<c1>%s</>) of repository as it is in a"
+                    " broken state.",
                     local.path,
                 )
                 remove_directory(Path(local.path), force=True)
@@ -313,11 +311,9 @@ class Git:
                 raise
 
             logger.debug(
-                (
-                    "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
-                    " cannot be used. The following error was"
-                    " raised:\n\n\t<warning>%s</>"
-                ),
+                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                " cannot be used. The following error was"
+                " raised:\n\n\t<warning>%s</>",
                 refspec.key,
                 e,
             )
@@ -462,10 +458,8 @@ class Git:
             # without additional configuration or changes for existing projects that
             # use http basic auth credentials.
             logger.debug(
-                (
-                    "Unable to fetch from private repository '%s', falling back to"
-                    " system git"
-                ),
+                "Unable to fetch from private repository '%s', falling back to"
+                " system git",
                 url,
             )
 

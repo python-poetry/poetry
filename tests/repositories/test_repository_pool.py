@@ -38,6 +38,17 @@ def test_repository_no_repository() -> None:
         pool.repository("foo")
 
 
+def test_repository_deprecated_ignore_repository_names() -> None:
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(ignore_repository_names=True)
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(ignore_repository_names=False)
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(None, True)
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(None, False)
+
+
 def test_adding_repositories_with_same_name_twice_raises_value_error() -> None:
     repo1 = Repository("repo")
     repo2 = Repository("repo")

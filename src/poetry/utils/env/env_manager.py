@@ -23,7 +23,6 @@ from poetry.core.constraints.version import parse_constraint
 
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.exceptions import IncorrectEnvError
@@ -67,11 +66,9 @@ class EnvManager:
             return None
 
         try:
-            executable = decode(
-                subprocess.check_output(
-                    [path_python, "-c", "import sys; print(sys.executable)"],
-                ).strip()
-            )
+            executable = subprocess.check_output(
+                [path_python, "-c", "import sys; print(sys.executable)"], text=True
+            ).strip()
             return Path(executable)
 
         except CalledProcessError:
@@ -81,10 +78,8 @@ class EnvManager:
     def _detect_active_python(io: None | IO = None) -> Path | None:
         io = io or NullIO()
         io.write_error_line(
-            (
-                "Trying to detect current active python executable as specified in"
-                " the config."
-            ),
+            "Trying to detect current active python executable as specified in"
+            " the config.",
             verbosity=Verbosity.VERBOSE,
         )
 
@@ -94,10 +89,8 @@ class EnvManager:
             io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
         else:
             io.write_error_line(
-                (
-                    "Unable to detect the current active python executable. Falling"
-                    " back to default."
-                ),
+                "Unable to detect the current active python executable. Falling"
+                " back to default.",
                 verbosity=Verbosity.VERBOSE,
             )
 
@@ -115,11 +108,9 @@ class EnvManager:
             executable = EnvManager._detect_active_python(io)
 
             if executable:
-                python_patch = decode(
-                    subprocess.check_output(
-                        [executable, "-c", GET_PYTHON_VERSION_ONELINER],
-                    ).strip()
-                )
+                python_patch = subprocess.check_output(
+                    [executable, "-c", GET_PYTHON_VERSION_ONELINER], text=True
+                ).strip()
 
                 version = ".".join(str(v) for v in python_patch.split(".")[:precision])
 
@@ -150,10 +141,8 @@ class EnvManager:
             raise PythonVersionNotFound(python)
 
         try:
-            python_version_string = decode(
-                subprocess.check_output(
-                    [python_path, "-c", GET_PYTHON_VERSION_ONELINER],
-                )
+            python_version_string = subprocess.check_output(
+                [python_path, "-c", GET_PYTHON_VERSION_ONELINER], text=True
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)
@@ -334,10 +323,8 @@ class EnvManager:
         if python_path.is_file():
             # Validate env name if provided env is a full path to python
             try:
-                env_dir = decode(
-                    subprocess.check_output(
-                        [python, "-c", GET_ENV_PATH_ONELINER],
-                    )
+                env_dir = subprocess.check_output(
+                    [python, "-c", GET_ENV_PATH_ONELINER], text=True
                 ).strip("\n")
                 env_name = Path(env_dir).name
                 if not self.check_env_is_for_current_project(env_name, base_env_name):
@@ -393,10 +380,8 @@ class EnvManager:
             pass
 
         try:
-            python_version_string = decode(
-                subprocess.check_output(
-                    [python, "-c", GET_PYTHON_VERSION_ONELINER],
-                )
+            python_version_string = subprocess.check_output(
+                [python, "-c", GET_PYTHON_VERSION_ONELINER], text=True
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)
@@ -485,11 +470,9 @@ class EnvManager:
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_patch = decode(
-                subprocess.check_output(
-                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
-                ).strip()
-            )
+            python_patch = subprocess.check_output(
+                [executable, "-c", GET_PYTHON_VERSION_ONELINER], text=True
+            ).strip()
             python_minor = ".".join(python_patch.split(".")[:2])
 
         supported_python = self._poetry.package.python_constraint
@@ -533,12 +516,11 @@ class EnvManager:
                     continue
 
                 try:
-                    python_patch = decode(
-                        subprocess.check_output(
-                            [python, "-c", GET_PYTHON_VERSION_ONELINER],
-                            stderr=subprocess.STDOUT,
-                        ).strip()
-                    )
+                    python_patch = subprocess.check_output(
+                        [python, "-c", GET_PYTHON_VERSION_ONELINER],
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                    ).strip()
                 except CalledProcessError:
                     continue
 

@@ -8,8 +8,8 @@ files = []
 
 [package.dependencies]
 B = [
-    {version = "^1.0", markers = "python_version < \"4.0\""},
-    {version = "^2.0", markers = "python_version >= \"4.0\""},
+    {version = ">=1.0,<2.0", markers = "python_version < \"4.0\""},
+    {version = ">=2.0,<3.0", markers = "python_version >= \"4.0\""},
 ]
 
 [[package]]

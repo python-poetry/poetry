@@ -3,13 +3,13 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import locale
 import os
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from poetry.core.constraints.version import Version
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
@@ -101,16 +101,7 @@ class EditableBuilder(Builder):
                 f.write(decode(builder.build_setup()))
 
         try:
-            if self._env.pip_version < Version.from_parts(19, 0):
-                pip_install(self._path, self._env, upgrade=True, editable=True)
-            else:
-                # Temporarily rename pyproject.toml
-                renamed_pyproject = self._poetry.file.path.with_suffix(".tmp")
-                self._poetry.file.path.rename(renamed_pyproject)
-                try:
-                    pip_install(self._path, self._env, upgrade=True, editable=True)
-                finally:
-                    renamed_pyproject.rename(self._poetry.file.path)
+            pip_install(self._path, self._env, upgrade=True, editable=True)
         finally:
             if not has_setup:
                 os.remove(setup)
@@ -136,7 +127,7 @@ class EditableBuilder(Builder):
 
         try:
             pth_file = self._env.site_packages.write_text(
-                pth_file, content, encoding="utf-8"
+                pth_file, content, encoding=locale.getpreferredencoding()
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"

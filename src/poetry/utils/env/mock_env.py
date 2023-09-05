@@ -16,8 +16,10 @@ class MockEnv(NullEnv):
     def __init__(
         self,
         version_info: tuple[int, int, int] = (3, 7, 0),
+        *,
         python_implementation: str = "CPython",
         platform: str = "darwin",
+        platform_machine: str = "amd64",
         os_name: str = "posix",
         is_venv: bool = False,
         pip_version: str = "19.1",
@@ -31,6 +33,7 @@ class MockEnv(NullEnv):
         self._version_info = version_info
         self._python_implementation = python_implementation
         self._platform = platform
+        self._platform_machine = platform_machine
         self._os_name = os_name
         self._is_venv = is_venv
         self._pip_version: Version = Version.parse(pip_version)
@@ -41,6 +44,10 @@ class MockEnv(NullEnv):
     @property
     def platform(self) -> str:
         return self._platform
+
+    @property
+    def platform_machine(self) -> str:
+        return self._platform_machine
 
     @property
     def os(self) -> str:
@@ -67,6 +74,7 @@ class MockEnv(NullEnv):
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
         marker_env["python_full_version"] = ".".join(str(v) for v in self._version_info)
         marker_env["sys_platform"] = self._platform
+        marker_env["platform_machine"] = self._platform_machine
         marker_env["interpreter_name"] = self._python_implementation.lower()
         marker_env["interpreter_version"] = "cp" + "".join(
             str(v) for v in self._version_info[:2]
