@@ -136,9 +136,11 @@ class Authenticator:
             self._get_repository_config_for_url
         )
         self._pool_size = pool_size
+        self.user_agent = user_agent("poetry", __version__)
 
     def create_session(self) -> requests.Session:
         session = requests.Session()
+        session.headers["User-Agent"] = self.user_agent
 
         if self._cache_control is None:
             return session
@@ -195,8 +197,7 @@ class Authenticator:
     def request(
         self, method: str, url: str, raise_for_status: bool = True, **kwargs: Any
     ) -> requests.Response:
-        headers = kwargs.get("headers", {}) or {}
-        headers["User-agent"] = user_agent("poetry", __version__)
+        headers = kwargs.get("headers")
         request = requests.Request(method, url, headers=headers)
         credential = self.get_credentials_for_url(url)
 
