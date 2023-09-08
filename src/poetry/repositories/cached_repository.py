@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class CachedRepository(Repository, ABC):
-    CACHE_VERSION = parse_constraint("2.0.0")
+    CACHE_VERSION = parse_constraint("3.0.0")
 
     def __init__(
         self, name: str, disable_cache: bool = False, config: Config | None = None
@@ -33,9 +33,7 @@ class CachedRepository(Repository, ABC):
         self._release_cache: FileCache[dict[str, Any]] = FileCache(path=self._cache_dir)
 
     @abstractmethod
-    def _get_release_info(
-        self, name: NormalizedName, version: Version
-    ) -> dict[str, Any]:
+    def _get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
         ...
 
     def get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
@@ -48,11 +46,15 @@ class CachedRepository(Repository, ABC):
         from poetry.inspection.info import PackageInfo
 
         if self._disable_cache:
-            return PackageInfo.load(self._get_release_info(name, version))
+            return self._get_release_info(name, version)
 
-        cached = self._release_cache.remember(
-            f"{name}:{version}", lambda: self._get_release_info(name, version)
-        )
+        def _cache_func() -> dict[str, Any]:
+            return {
+                "_cache_version": str(self.CACHE_VERSION),
+                "release_info": self._get_release_info(name, version).asdict(),
+            }
+
+        cached = self._release_cache.remember(f"{name}:{version}", _cache_func)
 
         cache_version = cached.get("_cache_version", "0.0.0")
         if parse_constraint(cache_version) != self.CACHE_VERSION:
@@ -61,11 +63,11 @@ class CachedRepository(Repository, ABC):
                 f"The cache for {name} {version} is outdated. Refreshing.",
                 level="debug",
             )
-            cached = self._get_release_info(name, version)
+            cached = _cache_func()
 
             self._release_cache.put(f"{name}:{version}", cached)
 
-        return PackageInfo.load(cached)
+        return PackageInfo.load(cached["release_info"])
 
     def package(
         self,

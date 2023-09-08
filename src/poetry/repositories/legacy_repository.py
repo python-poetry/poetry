@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 
 from poetry.core.packages.package import Package
 
@@ -109,9 +108,7 @@ class LegacyRepository(HTTPRepository):
             for version, yanked in versions
         ]
 
-    def _get_release_info(
-        self, name: NormalizedName, version: Version
-    ) -> dict[str, Any]:
+    def _get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
         page = self.get_page(name)
 
         links = list(page.links_for_version(name, version))
@@ -127,7 +124,6 @@ class LegacyRepository(HTTPRepository):
                 requires_python=None,
                 files=[],
                 yanked=yanked,
-                cache_version=str(self.CACHE_VERSION),
             ),
         )
 

@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
     from poetry.core.constraints.version import VersionConstraint
 
+    from poetry.inspection.info import PackageInfo
+
 SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
@@ -119,9 +121,7 @@ class PyPiRepository(HTTPRepository):
 
         return links
 
-    def _get_release_info(
-        self, name: NormalizedName, version: Version
-    ) -> dict[str, Any]:
+    def _get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
         self._log(f"Getting info for {name} ({version}) from PyPI", "debug")
@@ -140,7 +140,6 @@ class PyPiRepository(HTTPRepository):
             requires_python=info["requires_python"],
             files=info.get("files", []),
             yanked=self._get_yanked(info),
-            cache_version=str(self.CACHE_VERSION),
         )
 
         try:
@@ -174,7 +173,7 @@ class PyPiRepository(HTTPRepository):
                 urls[dist_type].append(url["url"])
 
             if not urls:
-                return data.asdict()
+                return data
 
             info = self._get_info_from_urls(urls)
 
@@ -183,7 +182,7 @@ class PyPiRepository(HTTPRepository):
             if not data.requires_python:
                 data.requires_python = info.requires_python
 
-        return data.asdict()
+        return data
 
     def _get_page(self, name: NormalizedName) -> SimpleJsonPage:
         source = self._base_url + f"simple/{name}/"

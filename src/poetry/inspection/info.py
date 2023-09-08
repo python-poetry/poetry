@@ -77,7 +77,6 @@ class PackageInfo:
         requires_python: str | None = None,
         files: list[dict[str, str]] | None = None,
         yanked: str | bool = False,
-        cache_version: str | None = None,
     ) -> None:
         self.name = name
         self.version = version
@@ -86,14 +85,9 @@ class PackageInfo:
         self.requires_python = requires_python
         self.files = files or []
         self.yanked = yanked
-        self._cache_version = cache_version
         self._source_type: str | None = None
         self._source_url: str | None = None
         self._source_reference: str | None = None
-
-    @property
-    def cache_version(self) -> str | None:
-        return self._cache_version
 
     def update(self, other: PackageInfo) -> PackageInfo:
         self.name = other.name or self.name
@@ -102,7 +96,6 @@ class PackageInfo:
         self.requires_dist = other.requires_dist or self.requires_dist
         self.requires_python = other.requires_python or self.requires_python
         self.files = other.files or self.files
-        self._cache_version = other.cache_version or self._cache_version
         return self
 
     def asdict(self) -> dict[str, Any]:
@@ -117,7 +110,6 @@ class PackageInfo:
             "requires_python": self.requires_python,
             "files": self.files,
             "yanked": self.yanked,
-            "_cache_version": self._cache_version,
         }
 
     @classmethod
@@ -128,8 +120,7 @@ class PackageInfo:
         :param data: Data to load. This is expected to be a `dict` object output by
             `asdict()`.
         """
-        cache_version = data.pop("_cache_version", None)
-        return cls(cache_version=cache_version, **data)
+        return cls(**data)
 
     def to_package(
         self,

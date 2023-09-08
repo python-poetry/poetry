@@ -200,7 +200,7 @@ class HTTPRepository(CachedRepository):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
+    def _links_to_data(self, links: list[Link], data: PackageInfo) -> PackageInfo:
         if not links:
             raise PackageNotFound(
                 f'No valid distribution links found for package: "{data.name}" version:'
@@ -238,7 +238,7 @@ class HTTPRepository(CachedRepository):
         data.requires_dist = info.requires_dist
         data.requires_python = info.requires_python
 
-        return data.asdict()
+        return data
 
     def calculate_sha256(self, link: Link) -> str | None:
         with self._cached_or_downloaded_file(link) as filepath:
