@@ -120,7 +120,10 @@ class PyPiRepository(HTTPRepository):
         return links
 
     def _get_release_info(
-        self, name: NormalizedName, version: Version
+        self,
+        name: NormalizedName,
+        version: Version,
+        python_constraint: VersionConstraint,
     ) -> dict[str, Any]:
         from poetry.inspection.info import PackageInfo
 

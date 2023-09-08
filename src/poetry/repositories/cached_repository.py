@@ -16,6 +16,7 @@ from poetry.utils.cache import FileCache
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.package import Package
 
     from poetry.inspection.info import PackageInfo
@@ -34,11 +35,19 @@ class CachedRepository(Repository, ABC):
 
     @abstractmethod
     def _get_release_info(
-        self, name: NormalizedName, version: Version
+        self,
+        name: NormalizedName,
+        version: Version,
+        python_constraint: VersionConstraint,
     ) -> dict[str, Any]:
         ...
 
-    def get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
+    def get_release_info(
+        self,
+        name: NormalizedName,
+        version: Version,
+        python_constraint: VersionConstraint,
+    ) -> PackageInfo:
         """
         Return the release information given a package name and a version.
 
@@ -48,10 +57,16 @@ class CachedRepository(Repository, ABC):
         from poetry.inspection.info import PackageInfo
 
         if self._disable_cache:
-            return PackageInfo.load(self._get_release_info(name, version))
+            return PackageInfo.load(
+                self._get_release_info(name, version, python_constraint)
+            )
 
         cached = self._release_cache.remember(
-            f"{name}:{version}", lambda: self._get_release_info(name, version)
+            f"{name}:{version}",
+            lambda: {
+                "python": str(python_constraint),
+                "info": self._get_release_info(name, version, python_constraint),
+            },
         )
 
         cache_version = cached.get("_cache_version", "0.0.0")
@@ -61,9 +76,11 @@ class CachedRepository(Repository, ABC):
                 f"The cache for {name} {version} is outdated. Refreshing.",
                 level="debug",
             )
-            cached = self._get_release_info(name, version)
+            cached = self._get_release_info(name, version, python_constraint)
 
-            self._release_cache.put(f"{name}:{version}", cached)
+            self._release_cache.put(
+                f"{name}:{version}", {"python": str(python_constraint), "info": cached}
+            )
 
         return PackageInfo.load(cached)
 
@@ -71,8 +88,9 @@ class CachedRepository(Repository, ABC):
         self,
         name: str,
         version: Version,
+        python_constraint: VersionConstraint,
         extras: list[str] | None = None,
     ) -> Package:
-        return self.get_release_info(canonicalize_name(name), version).to_package(
-            name=name, extras=extras
-        )
+        return self.get_release_info(
+            canonicalize_name(name), version, python_constraint
+        ).to_package(name=name, extras=extras)

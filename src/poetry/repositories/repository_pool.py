@@ -17,6 +17,7 @@ from poetry.utils.cache import ArtifactCache
 
 if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
@@ -191,17 +192,18 @@ class RepositoryPool(AbstractRepository):
         self,
         name: str,
         version: Version,
+        python_constraint: VersionConstraint,
         extras: list[str] | None = None,
         repository_name: str | None = None,
     ) -> Package:
         if repository_name:
             return self.repository(repository_name).package(
-                name, version, extras=extras
+                name, version, python_constraint, extras=extras
             )
 
         for repo in self.repositories:
             try:
-                return repo.package(name, version, extras=extras)
+                return repo.package(name, version, python_constraint, extras=extras)
             except PackageNotFound:
                 continue
         raise PackageNotFound(f"Package {name} ({version}) not found.")
