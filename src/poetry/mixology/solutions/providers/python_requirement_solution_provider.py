@@ -19,7 +19,7 @@ class PythonRequirementSolutionProvider(HasSolutionsForException):
             return False
 
         m = re.match(
-            "^The current project's Python requirement (.+) is not compatible "
+            "^The current project's supported Python range (.+) is not compatible "
             "with some of the required packages Python requirement",
             str(exception),
         )
