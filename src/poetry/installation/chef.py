@@ -30,12 +30,10 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-class ChefError(Exception):
-    ...
+class ChefError(Exception): ...
 
 
-class ChefBuildError(ChefError):
-    ...
+class ChefBuildError(ChefError): ...
 
 
 class IsolatedEnv(BaseIsolatedEnv):
