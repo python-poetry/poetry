@@ -276,7 +276,7 @@ def test_system_git_fallback_on_http_401(
     mocker.patch.object(
         Git,
         "_clone",
-        side_effect=HTTPUnauthorized(None, None),  # type: ignore[no-untyped-call]
+        side_effect=HTTPUnauthorized(None, None),
     )
 
     with Git.clone(url=source_url, branch="0.1") as repo:
