@@ -27,13 +27,13 @@ class CommandTesterFactory(Protocol):
         installer: Installer | None = None,
         executor: Executor | None = None,
         environment: Env | None = None,
-    ) -> CommandTester:
-        ...
+    ) -> CommandTester: ...
 
 
 class SourcesFactory(Protocol):
-    def __call__(self, poetry: Poetry, sources: Source, config: Config, io: IO) -> None:
-        ...
+    def __call__(
+        self, poetry: Poetry, sources: Source, config: Config, io: IO
+    ) -> None: ...
 
 
 class ProjectFactory(Protocol):
@@ -48,20 +48,16 @@ class ProjectFactory(Protocol):
         source: Path | None = None,
         locker_config: dict[str, Any] | None = None,
         use_test_locker: bool = True,
-    ) -> Poetry:
-        ...
+    ) -> Poetry: ...
 
 
 class FixtureDirGetter(Protocol):
-    def __call__(self, name: str) -> Path:
-        ...
+    def __call__(self, name: str) -> Path: ...
 
 
 class FixtureCopier(Protocol):
-    def __call__(self, relative_path: str, target: Path | None = None) -> Path:
-        ...
+    def __call__(self, relative_path: str, target: Path | None = None) -> Path: ...
 
 
 class HTMLPageGetter(Protocol):
-    def __call__(self, content: str, base_url: str | None = None) -> str:
-        ...
+    def __call__(self, content: str, base_url: str | None = None) -> str: ...
