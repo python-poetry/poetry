@@ -426,10 +426,11 @@ def test_search_for_directory_poetry(
         get_dependency("cachy", ">=0.2.0"),
         get_dependency("pendulum", ">=1.4.4"),
     ]
-    assert package.extras == {
-        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras-b": [get_dependency("cachy", ">=0.2.0")],
-    }
+    extras_a = canonicalize_name("extras-a")
+    extras_b = canonicalize_name("extras-b")
+    assert set(package.extras) == {extras_a, extras_b}
+    assert set(package.extras[extras_a]) == {get_dependency("pendulum", ">=1.4.4")}
+    assert set(package.extras[extras_b]) == {get_dependency("cachy", ">=0.2.0")}
 
 
 def test_search_for_directory_poetry_with_extras(
@@ -457,10 +458,11 @@ def test_search_for_directory_poetry_with_extras(
         get_dependency("cachy", ">=0.2.0"),
         get_dependency("pendulum", ">=1.4.4"),
     ]
-    assert package.extras == {
-        "extras-a": [get_dependency("pendulum", ">=1.4.4")],
-        "extras-b": [get_dependency("cachy", ">=0.2.0")],
-    }
+    extras_a = canonicalize_name("extras-a")
+    extras_b = canonicalize_name("extras-b")
+    assert set(package.extras) == {extras_a, extras_b}
+    assert set(package.extras[extras_a]) == {get_dependency("pendulum", ">=1.4.4")}
+    assert set(package.extras[extras_b]) == {get_dependency("cachy", ">=0.2.0")}
 
 
 def test_search_for_file_sdist(
