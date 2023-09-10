@@ -695,11 +695,11 @@ The table below illustrates the effect of these rules with concrete examples.
 
 The option `--next-phase` allows the increment of prerelease phase versions.
 
-| rule       | before  | after   |
-| ---------- |---------|---------|
-| prerelease --next-phase | 1.0.3a0 | 1.0.3b0 |
-| prerelease --next-phase | 1.0.3b0 | 1.0.3rc0 |
-| prerelease --next-phase | 1.0.3rc0 | 1.0.3 |
+| rule                    | before   | after    |
+| ----------              |--------- |--------- |
+| prerelease --next-phase | 1.0.3a0  | 1.0.3b0  |
+| prerelease --next-phase | 1.0.3b0  | 1.0.3rc0 |
+| prerelease --next-phase | 1.0.3rc0 | 1.0.3    |
 
 ### Options
 
