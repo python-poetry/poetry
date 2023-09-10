@@ -95,8 +95,9 @@ def test_short_version_update(tester: CommandTester) -> None:
 
 
 def test_phase_version_update(tester: CommandTester) -> None:
+    tester.command.poetry.package._set_version("1.2.4a0")
     tester.execute("prerelease --next-phase")
-    assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 1.2.4a0\n"
+    assert tester.io.fetch_output() == "Bumping version from 1.2.4a0 to 1.2.4b0\n"
 
 
 def test_dry_run(tester: CommandTester) -> None:
