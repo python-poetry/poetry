@@ -94,6 +94,11 @@ def test_short_version_update(tester: CommandTester) -> None:
     assert tester.io.fetch_output() == "2.0.0\n"
 
 
+def test_phase_version_update(tester: CommandTester) -> None:
+    tester.execute("prerelease --next-phase")
+    assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 1.2.4a0\n"
+
+
 def test_dry_run(tester: CommandTester) -> None:
     assert isinstance(tester.command, VersionCommand)
     old_pyproject = tester.command.poetry.file.path.read_text()
