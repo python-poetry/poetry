@@ -1406,13 +1406,13 @@ def test_solver_duplicate_dependencies_different_constraints_same_requirements(
     repo.add_package(package_b10)
     repo.add_package(package_b20)
 
-    with pytest.raises(SolverProblemError) as e:
+    with pytest.raises(IncompatibleConstraintsError) as e:
         solver.solve()
 
     expected = """\
-Because a (1.0) depends on both B (^1.0) and B (^2.0), a is forbidden.
-So, because no versions of a match !=1.0
- and root depends on A (*), version solving failed."""
+Incompatible constraints in requirements of a (1.0):
+B (>=1.0,<2.0)
+B (>=2.0,<3.0)"""
 
     assert str(e.value) == expected
 
@@ -1455,7 +1455,7 @@ def test_solver_duplicate_dependencies_different_constraints_merge_by_marker(
 
 
 @pytest.mark.parametrize("git_first", [False, True])
-def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
+def test_solver_duplicate_dependencies_different_sources_direct_origin_preserved(
     solver: Solver, repo: Repository, package: ProjectPackage, git_first: bool
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
@@ -1504,19 +1504,12 @@ def test_solver_duplicate_dependencies_different_sources_types_are_preserved(
         DependencyPackage(package.to_dependency(), package)
     )
 
-    assert len(complete_package.package.all_requires) == 2
+    assert len(complete_package.package.all_requires) == 1
+    dep = complete_package.package.all_requires[0]
 
-    if git_first:
-        git, pypi = complete_package.package.all_requires
-    else:
-        pypi, git = complete_package.package.all_requires
-
-    assert isinstance(pypi, Dependency)
-    assert pypi == dependency_pypi
-
-    assert isinstance(git, VCSDependency)
-    assert git.constraint != dependency_git.constraint
-    assert (git.name, git.source_type, git.source_url, git.source_reference) == (
+    assert isinstance(dep, VCSDependency)
+    assert dep.constraint == demo.version
+    assert (dep.name, dep.source_type, dep.source_url, dep.source_reference) == (
         dependency_git.name,
         dependency_git.source_type,
         dependency_git.source_url,
@@ -1581,8 +1574,8 @@ def test_solver_duplicate_dependencies_different_constraints_conflict(
 
     expectation = (
         "Incompatible constraints in requirements of root (1.0):\n"
-        'A (<1.1) ; python_version == "3.10"\n'
-        "A (>=1.1)"
+        "A (>=1.1)\n"
+        'A (<1.1) ; python_version == "3.10"'
     )
     with pytest.raises(IncompatibleConstraintsError, match=re.escape(expectation)):
         solver.solve()
@@ -1880,6 +1873,179 @@ def test_solver_duplicate_dependencies_sub_dependencies(
     )
 
 
+def test_solver_duplicate_dependencies_with_overlapping_markers_simple(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    package.add_dependency(get_dependency("b", "1.0"))
+
+    package_b = get_package("b", "1.0")
+    dep_strings = [
+        "a (>=1.0)",
+        "a (>=1.1) ; python_version >= '3.7'",
+        "a (<2.0) ; python_version < '3.8'",
+        "a (!=1.2) ; python_version == '3.7'",
+    ]
+    deps = [Dependency.create_from_pep_508(dep) for dep in dep_strings]
+    for dep in deps:
+        package_b.add_dependency(dep)
+
+    package_a09 = get_package("a", "0.9")
+    package_a10 = get_package("a", "1.0")
+    package_a11 = get_package("a", "1.1")
+    package_a12 = get_package("a", "1.2")
+    package_a20 = get_package("a", "2.0")
+
+    package_a11.python_versions = ">=3.7"
+    package_a12.python_versions = ">=3.7"
+    package_a20.python_versions = ">=3.7"
+
+    repo.add_package(package_a09)
+    repo.add_package(package_a10)
+    repo.add_package(package_a11)
+    repo.add_package(package_a12)
+    repo.add_package(package_a20)
+    repo.add_package(package_b)
+
+    transaction = solver.solve()
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_a10},
+            {"job": "install", "package": package_a11},
+            {"job": "install", "package": package_a20},
+            {"job": "install", "package": package_b},
+        ],
+    )
+    package_b_requires = {dep.to_pep_508() for dep in ops[-1].package.requires}
+    assert package_b_requires == {
+        'a (>=1.0,<2.0) ; python_version < "3.7"',
+        'a (>=1.1,!=1.2,<2.0) ; python_version == "3.7"',
+        'a (>=1.1) ; python_version >= "3.8"',
+    }
+
+
+def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Dependencies with overlapping markers from
+    https://pypi.org/project/opencv-python/4.6.0.66/
+    """
+    package.add_dependency(get_dependency("opencv", "4.6.0.66"))
+
+    opencv_package = get_package("opencv", "4.6.0.66")
+    dep_strings = [
+        "numpy (>=1.13.3) ; python_version < '3.7'",
+        "numpy (>=1.21.2) ; python_version >= '3.10'",
+        (
+            "numpy (>=1.21.2) ; python_version >= '3.6' "
+            "and platform_system == 'Darwin' and platform_machine == 'arm64'"
+        ),
+        (
+            "numpy (>=1.19.3) ; python_version >= '3.6' "
+            "and platform_system == 'Linux' and platform_machine == 'aarch64'"
+        ),
+        "numpy (>=1.14.5) ; python_version >= '3.7'",
+        "numpy (>=1.17.3) ; python_version >= '3.8'",
+        "numpy (>=1.19.3) ; python_version >= '3.9'",
+    ]
+    deps = [Dependency.create_from_pep_508(dep) for dep in dep_strings]
+    for dep in deps:
+        opencv_package.add_dependency(dep)
+
+    for version in {"1.13.3", "1.21.2", "1.19.3", "1.14.5", "1.17.3"}:
+        repo.add_package(get_package("numpy", version))
+    repo.add_package(opencv_package)
+
+    transaction = solver.solve()
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": get_package("numpy", "1.21.2")},
+            {"job": "install", "package": opencv_package},
+        ],
+    )
+    opencv_requires = {dep.to_pep_508() for dep in ops[-1].package.requires}
+    expectation = (
+        {  # concise solution, but too expensive
+            (
+                "numpy (>=1.21.2) ;"
+                ' platform_system == "Darwin" and platform_machine == "arm64"'
+                ' and python_version >= "3.6" or python_version >= "3.10"'
+            ),
+            (
+                'numpy (>=1.19.3) ; python_version >= "3.9" and python_version < "3.10"'
+                ' and platform_system != "Darwin" or platform_system == "Linux"'
+                ' and platform_machine == "aarch64" and python_version < "3.10"'
+                ' and python_version >= "3.6" or python_version >= "3.9"'
+                ' and python_version < "3.10" and platform_machine != "arm64"'
+            ),
+            (
+                'numpy (>=1.17.3) ; python_version >= "3.8" and python_version < "3.9"'
+                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
+                ' and (platform_system != "Linux" or platform_machine != "aarch64")'
+            ),
+            (
+                'numpy (>=1.14.5) ; python_version >= "3.7" and python_version < "3.8"'
+                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
+                ' and (platform_system != "Linux" or platform_machine != "aarch64")'
+            ),
+            (
+                'numpy (>=1.13.3) ; python_version < "3.7"'
+                ' and (python_version < "3.6" or platform_system != "Darwin"'
+                ' or platform_machine != "arm64") and (python_version < "3.6"'
+                ' or platform_system != "Linux" or platform_machine != "aarch64")'
+            ),
+        },
+        {  # current solution
+            (
+                "numpy (>=1.21.2) ;"
+                ' python_version >= "3.6" and platform_system == "Darwin"'
+                ' and platform_machine == "arm64" or python_version >= "3.10"'
+            ),
+            (
+                'numpy (>=1.19.3) ; python_version >= "3.9" and python_version < "3.10"'
+                ' and platform_system != "Darwin" or python_version >= "3.9"'
+                ' and python_version < "3.10" and platform_machine != "arm64"'
+                ' or platform_system == "Linux" and python_version < "3.10"'
+                ' and platform_machine == "aarch64" and python_version >= "3.6"'
+            ),
+            (
+                'numpy (>=1.17.3) ; python_version < "3.9"'
+                ' and (platform_system != "Darwin" and platform_system != "Linux")'
+                ' and python_version >= "3.8" or python_version < "3.9"'
+                ' and platform_system != "Darwin" and python_version >= "3.8"'
+                ' and platform_machine != "aarch64" or python_version < "3.9"'
+                ' and platform_machine != "arm64" and python_version >= "3.8"'
+                ' and platform_system != "Linux" or python_version < "3.9"'
+                ' and (platform_machine != "arm64" and platform_machine != "aarch64")'
+                ' and python_version >= "3.8"'
+            ),
+            (
+                'numpy (>=1.14.5) ; python_version < "3.8"'
+                ' and (platform_system != "Darwin" and platform_system != "Linux")'
+                ' and python_version >= "3.7" or python_version < "3.8"'
+                ' and platform_system != "Darwin" and python_version >= "3.7"'
+                ' and platform_machine != "aarch64" or python_version < "3.8"'
+                ' and platform_machine != "arm64" and python_version >= "3.7"'
+                ' and platform_system != "Linux" or python_version < "3.8"'
+                ' and (platform_machine != "arm64" and platform_machine != "aarch64")'
+                ' and python_version >= "3.7"'
+            ),
+            (
+                'numpy (>=1.13.3) ; python_version < "3.6" or python_version < "3.7"'
+                ' and (platform_system != "Darwin" and platform_system != "Linux")'
+                ' or python_version < "3.7" and platform_system != "Darwin"'
+                ' and platform_machine != "aarch64" or python_version < "3.7"'
+                ' and platform_machine != "arm64" and platform_system != "Linux"'
+                ' or python_version < "3.7" and (platform_machine != "arm64"'
+                ' and platform_machine != "aarch64")'
+            ),
+        },
+    )
+    assert opencv_requires in expectation
+
+
 def test_duplicate_path_dependencies(
     solver: Solver, package: ProjectPackage, fixture_dir: FixtureDirGetter
 ) -> None:
@@ -2067,7 +2233,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference=ref[list(ref.keys())[0]],
+        source_reference=ref[next(iter(ref.keys()))],
         source_resolved_reference=MOCK_DEFAULT_GIT_REVISION,
     )
 
@@ -2087,7 +2253,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(
     op = ops[1]
 
     assert op.package.source_type == "git"
-    assert op.package.source_reference == ref[list(ref.keys())[0]]
+    assert op.package.source_reference == ref[next(iter(ref.keys()))]
     assert op.package.source_resolved_reference is not None
     assert op.package.source_resolved_reference.startswith("9cf87a2")
 
@@ -4099,7 +4265,7 @@ def test_update_with_use_latest_vs_lock(
     A1 depends on B2, A2 and A3 depend on B1. Same for C.
     B1 depends on A2/C2, B2 depends on A1/C1.
 
-    Because there are fewer versions B than of A and C, B is resolved first
+    Because there are more versions of B than of A and C, B is resolved first
     so that latest version of B is used.
     There shouldn't be a difference between `poetry lock` (not is_locked)
     and `poetry update` (is_locked + use_latest)
@@ -4111,18 +4277,14 @@ def test_update_with_use_latest_vs_lock(
     package.add_dependency(Factory.create_dependency("C", "*"))
 
     package_a1 = get_package("A", "1")
-    package_a1.add_dependency(Factory.create_dependency("B", "2"))
+    package_a1.add_dependency(Factory.create_dependency("B", "3"))
     package_a2 = get_package("A", "2")
     package_a2.add_dependency(Factory.create_dependency("B", "1"))
-    package_a3 = get_package("A", "3")
-    package_a3.add_dependency(Factory.create_dependency("B", "1"))
 
     package_c1 = get_package("C", "1")
-    package_c1.add_dependency(Factory.create_dependency("B", "2"))
+    package_c1.add_dependency(Factory.create_dependency("B", "3"))
     package_c2 = get_package("C", "2")
     package_c2.add_dependency(Factory.create_dependency("B", "1"))
-    package_c3 = get_package("C", "3")
-    package_c3.add_dependency(Factory.create_dependency("B", "1"))
 
     package_b1 = get_package("B", "1")
     package_b1.add_dependency(Factory.create_dependency("A", "2"))
@@ -4130,18 +4292,20 @@ def test_update_with_use_latest_vs_lock(
     package_b2 = get_package("B", "2")
     package_b2.add_dependency(Factory.create_dependency("A", "1"))
     package_b2.add_dependency(Factory.create_dependency("C", "1"))
+    package_b3 = get_package("B", "3")
+    package_b3.add_dependency(Factory.create_dependency("A", "1"))
+    package_b3.add_dependency(Factory.create_dependency("C", "1"))
 
     repo.add_package(package_a1)
     repo.add_package(package_a2)
-    repo.add_package(package_a3)
     repo.add_package(package_b1)
     repo.add_package(package_b2)
+    repo.add_package(package_b3)
     repo.add_package(package_c1)
     repo.add_package(package_c2)
-    repo.add_package(package_c3)
 
     if is_locked:
-        locked = [package_a1, package_b2, package_c1]
+        locked = [package_a1, package_b3, package_c1]
         use_latest = [package.name for package in locked]
     else:
         locked = []
@@ -4154,7 +4318,7 @@ def test_update_with_use_latest_vs_lock(
         transaction,
         [
             {"job": "install", "package": package_c1},
-            {"job": "install", "package": package_b2},
+            {"job": "install", "package": package_b3},
             {"job": "install", "package": package_a1},
         ],
     )

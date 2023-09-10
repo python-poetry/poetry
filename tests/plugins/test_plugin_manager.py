@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import Protocol
 
 import pytest
@@ -22,13 +23,13 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
+    from poetry.console.commands.command import Command
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
 
 class ManagerFactory(Protocol):
-    def __call__(self, group: str = Plugin.group) -> PluginManager:
-        ...
+    def __call__(self, group: str = Plugin.group) -> PluginManager: ...
 
 
 class MyPlugin(Plugin):
@@ -38,7 +39,7 @@ class MyPlugin(Plugin):
 
 
 class MyCommandPlugin(ApplicationPlugin):
-    commands = []
+    commands: ClassVar[list[type[Command]]] = []
 
 
 class InvalidPlugin:

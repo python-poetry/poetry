@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.6.0.dev0"
+version = "1.7.0.dev0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -32,24 +32,25 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.6.1"
-poetry-plugin-export = "^1.4.0"
-build = "^0.10.0"
+poetry-core = "1.7.0"
+poetry-plugin-export = "^1.5.0"
+build = "^1.0.3"
 cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
 dulwich = "^0.21.2"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-jsonschema = "^4.10.0"
-keyring = "^23.9.0"
+# jsonschema 4.18 uses Rust-based libraries which causes issues when building from source
+jsonschema = ">=4.10.0,<4.18.0"
+keyring = "^24.0.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = "^3.0.0"
 pyproject-hooks = "^1.0.0"
-requests = "^2.18"
+requests = "^2.26"
 requests-toolbelt = ">=0.9.1,<2"
 shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
@@ -60,7 +61,7 @@ virtualenv = "^20.22.0"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^2.6"
+pre-commit = ">=2.6"
 
 [tool.poetry.group.test.dependencies]
 deepdiff = "^6.3"
@@ -133,6 +134,9 @@ lines-after-imports = 2
 known-first-party = ["poetry"]
 known-third-party = ["poetry.core"]
 required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.per-file-ignores]
+"src/poetry/console/*" = ["RUF012"]  # Can't annotate properly until new version of Cleo
 
 [tool.black]
 target-version = ['py38']

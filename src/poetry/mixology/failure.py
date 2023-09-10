@@ -41,7 +41,7 @@ class _Writer:
             if isinstance(incompatibility.cause, PythonCause):
                 if not required_python_version_notification:
                     buffer.append(
-                        "The current project's Python requirement"
+                        "The current project's supported Python range"
                         f" ({incompatibility.cause.root_python_version}) is not"
                         " compatible with some of the required packages Python"
                         " requirement:"
@@ -144,10 +144,8 @@ class _Writer:
                 self._visit(without_line)
                 self._write(
                     incompatibility,
-                    (
-                        f"{conjunction} because {with_line!s} ({line}),"
-                        f" {incompatibility_string}."
-                    ),
+                    f"{conjunction} because {with_line!s} ({line}),"
+                    f" {incompatibility_string}.",
                     numbered=numbered,
                 )
             else:
@@ -172,11 +170,9 @@ class _Writer:
 
                     self._write(
                         incompatibility,
-                        (
-                            f"{conjunction} because {cause.conflict!s}"
-                            f" ({self._line_numbers[cause.conflict]}),"
-                            f" {incompatibility_string}"
-                        ),
+                        f"{conjunction} because {cause.conflict!s}"
+                        f" ({self._line_numbers[cause.conflict]}),"
+                        f" {incompatibility_string}",
                         numbered=numbered,
                     )
         elif isinstance(cause.conflict.cause, ConflictCause) or isinstance(

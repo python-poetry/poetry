@@ -309,11 +309,20 @@ might contain additional Python packages as well.
 
 Create the virtualenv inside the project's root directory.
 
-If not set explicitly, `poetry` by default will create virtual environment under
-`{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory when one is available.
+If not set explicitly, `poetry` by default will create a virtual environment under
+`{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory if one already exists.
 
 If set to `true`, the virtualenv will be created and expected in a folder named
 `.venv` within the root directory of the project.
+
+{{% note %}}
+If a virtual environment has already been created for the project under `{cache-dir}/virtualenvs`, setting this variable to `true` will not cause `poetry` to create or use a local virtual environment.
+
+In order for this setting to take effect for a project already in that state, you must delete the virtual environment folder located in `{cache-dir}/virtualenvs`.
+
+You can find out where the current project's virtual environment (if there is one) is stored
+with the command `poetry env info --path`.
+{{% /note %}}
 
 If set to `false`, `poetry` will ignore any existing `.venv` directory.
 

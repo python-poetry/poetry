@@ -22,7 +22,7 @@ By default, Poetry will try to use the Python version used during Poetry's insta
 to create the virtual environment for the current project.
 
 However, for various reasons, this Python version might not be compatible
-with the `python` requirement of the project. In this case, Poetry will try
+with the `python` range supported by the project. In this case, Poetry will try
 to find one that is and use it. If it's unable to do so then you will be prompted
 to activate one explicitly, see [Switching environments](#switching-between-environments).
 

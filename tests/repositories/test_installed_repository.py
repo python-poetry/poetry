@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import zipfile
 
 from pathlib import Path
@@ -10,13 +11,19 @@ import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
+from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv as BaseMockEnv
+from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
     from _pytest.logging import LogCaptureFixture
     from poetry.core.packages.package import Package
     from pytest_mock.plugin import MockerFixture
+
+    from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 ENV_DIR = (FIXTURES_DIR / "installed").resolve()
@@ -102,6 +109,11 @@ def get_package_from_repository(
         if pkg.name == name:
             return pkg
     return None
+
+
+@pytest.fixture
+def poetry(project_factory: ProjectFactory, fixture_dir: FixtureDirGetter) -> Poetry:
+    return project_factory("simple", source=fixture_dir("simple_project"))
 
 
 def test_load_successful(repository: InstalledRepository) -> None:
@@ -301,3 +313,27 @@ def test_load_pep_610_compliant_editable_directory_packages(
     assert package.source_type == "directory"
     assert package.source_url == "/path/to/distributions/directory-pep-610"
     assert package.develop
+
+
+def test_system_site_packages_source_type(
+    tmp_path: Path, mocker: MockerFixture, poetry: Poetry
+) -> None:
+    """
+    The source type of system site packages
+    must not be falsely identified as "directory".
+    """
+    venv_path = tmp_path / "venv"
+    site_path = tmp_path / "site"
+    for dist_info in {"cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"}:
+        shutil.copytree(SITE_PURELIB / dist_info, site_path / dist_info)
+    mocker.patch("poetry.utils.env.virtual_env.VirtualEnv.sys_path", [str(site_path)])
+    mocker.patch("site.getsitepackages", return_value=[str(site_path)])
+
+    EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
+    env = VirtualEnv(venv_path)
+    installed_repository = InstalledRepository.load(env)
+
+    source_types = {
+        package.name: package.source_type for package in installed_repository.packages
+    }
+    assert source_types == {"cleo": None, "directory-pep-610": "directory"}

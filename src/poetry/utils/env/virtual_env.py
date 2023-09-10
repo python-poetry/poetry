@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -20,6 +22,7 @@ from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION
 from poetry.utils.env.script_strings import GET_SYS_PATH
 from poetry.utils.env.script_strings import GET_SYS_TAGS
+from poetry.utils.env.system_env import SystemEnv
 
 
 if TYPE_CHECKING:
@@ -133,3 +136,21 @@ class VirtualEnv(Env):
 
     def _updated_path(self) -> str:
         return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
+
+    @cached_property
+    def includes_system_site_packages(self) -> bool:
+        pyvenv_cfg = self._path / "pyvenv.cfg"
+        return (
+            re.search(
+                r"^\s*include-system-site-packages\s*=\s*true\s*$",
+                pyvenv_cfg.read_text(),
+                re.IGNORECASE | re.MULTILINE,
+            )
+            is not None
+        )
+
+    def is_path_relative_to_lib(self, path: Path) -> bool:
+        return super().is_path_relative_to_lib(path) or (
+            self.includes_system_site_packages
+            and SystemEnv(Path(sys.prefix)).is_path_relative_to_lib(path)
+        )

@@ -246,6 +246,7 @@ def test_execute_executes_a_batch_of_operations(
             Install(Package("pytest", "3.5.1")),
             Uninstall(Package("attrs", "17.4.0")),
             Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
+            Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
             Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
             Install(file_package),
             Install(directory_package),
@@ -254,11 +255,12 @@ def test_execute_executes_a_batch_of_operations(
     )
 
     expected = f"""
-Package operations: 4 installs, 1 update, 1 removal
+Package operations: 4 installs, 2 updates, 1 removal
 
   • Installing pytest (3.5.1)
   • Removing attrs (17.4.0)
   • Updating requests (2.18.3 -> 2.18.4)
+  • Downgrading pytest (3.5.1 -> 3.5.0)
   • Installing demo (0.1.0 {file_package.source_url})
   • Installing simple-project (1.2.3 {directory_package.source_url})
   • Installing demo (0.1.0 master)
@@ -267,9 +269,9 @@ Package operations: 4 installs, 1 update, 1 removal
     expected_lines = set(expected.splitlines())
     output_lines = set(io.fetch_output().splitlines())
     assert output_lines == expected_lines
-    assert wheel_install.call_count == 5
-    # Two pip uninstalls: one for the remove operation one for the update operation
-    assert len(env.executed) == 2
+    assert wheel_install.call_count == 6
+    # 3 pip uninstalls: one for the remove operation and two for the update operations
+    assert len(env.executed) == 3
     assert return_code == 0
 
     assert prepare_spy.call_count == 2

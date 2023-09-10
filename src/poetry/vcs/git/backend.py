@@ -15,6 +15,7 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
@@ -296,10 +297,8 @@ class Git:
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
                 logger.debug(
-                    (
-                        "Removing local clone (<c1>%s</>) of repository as it is in a"
-                        " broken state."
-                    ),
+                    "Removing local clone (<c1>%s</>) of repository as it is in a"
+                    " broken state.",
                     local.path,
                 )
                 remove_directory(Path(local.path), force=True)
@@ -308,11 +307,9 @@ class Git:
                 raise
 
             logger.debug(
-                (
-                    "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
-                    " cannot be used. The following error was"
-                    " raised:\n\n\t<warning>%s</>"
-                ),
+                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                " cannot be used. The following error was"
+                " raised:\n\n\t<warning>%s</>",
                 refspec.key,
                 e,
             )
@@ -354,8 +351,10 @@ class Git:
                 source_root.mkdir(parents=True, exist_ok=True)
 
                 with repo:
+                    index = repo.open_index()
+
                     try:
-                        revision = repo.open_index()[path].sha.decode("utf-8")
+                        entry = index[path]
                     except KeyError:
                         logger.debug(
                             "Skip submodule %s in %s, path %s not found",
@@ -364,6 +363,9 @@ class Git:
                             path,
                         )
                         continue
+
+                    assert isinstance(entry, IndexEntry)
+                    revision = entry.sha.decode("utf-8")
 
                 cls.clone(
                     url=url_string,
@@ -447,10 +449,8 @@ class Git:
             # without additional configuration or changes for existing projects that
             # use http basic auth credentials.
             logger.debug(
-                (
-                    "Unable to fetch from private repository '%s', falling back to"
-                    " system git"
-                ),
+                "Unable to fetch from private repository '%s', falling back to"
+                " system git",
                 url,
             )
 

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from poetry.factory import Factory
+from poetry.puzzle.provider import IncompatibleConstraintsError
 from tests.mixology.helpers import add_to_repo
 from tests.mixology.helpers import check_solver_result
 
@@ -88,9 +91,14 @@ def test_disjoint_root_constraints(
     add_to_repo(repo, "foo", "2.0.0")
 
     error = """\
-Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving failed."""
+Incompatible constraints in requirements of myapp (0.0.0):
+foo (==1.0.0)
+foo (==2.0.0)"""
 
-    check_solver_result(root, provider, error=error)
+    with pytest.raises(IncompatibleConstraintsError) as e:
+        check_solver_result(root, provider, error=error)
+
+    assert str(e.value) == error
 
 
 def test_disjoint_root_constraints_path_dependencies(
@@ -106,12 +114,15 @@ def test_disjoint_root_constraints_path_dependencies(
     dependency2 = Factory.create_dependency("demo", {"path": project_dir / "demo_two"})
     root.add_dependency(dependency2)
 
-    error = (
-        f"Because myapp depends on both {str(dependency1).replace('*', '1.2.3')} "
-        f"and {str(dependency2).replace('*', '1.2.3')}, version solving failed."
-    )
+    error = f"""\
+Incompatible constraints in requirements of myapp (0.0.0):
+demo @ {project_dir.as_uri()}/demo_two (1.2.3)
+demo @ {project_dir.as_uri()}/demo_one (1.2.3)"""
 
-    check_solver_result(root, provider, error=error)
+    with pytest.raises(IncompatibleConstraintsError) as e:
+        check_solver_result(root, provider, error=error)
+
+    assert str(e.value) == error
 
 
 def test_no_valid_solution(

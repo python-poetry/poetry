@@ -108,6 +108,8 @@ class Shell:
         if self._name == "zsh":
             # Under ZSH the source command should be invoked in zsh's bash emulator
             c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
+        elif self._name == "xonsh":
+            c.sendline(f"vox activate {shlex.quote(str(env.path))}")
         else:
             cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
             if self._name in ["fish", "nu"]:

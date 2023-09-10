@@ -625,8 +625,9 @@ As such, `exit` should be used to properly exit the shell and the virtual enviro
 
 ## check
 
-The `check` command validates the structure of the `pyproject.toml` file
-and returns a detailed report if there are any errors.
+The `check` command validates the content of the `pyproject.toml` file
+and its consistency with the `poetry.lock` file.
+It returns a detailed report if there are any errors.
 
 {{% note %}}
 This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
@@ -635,6 +636,10 @@ This command is also available as a pre-commit hook. See [pre-commit hooks]({{< 
 ```bash
 poetry check
 ```
+
+### Options
+
+* `--lock`: Verifies that `poetry.lock` exists for the current `pyproject.toml`.
 
 ## search
 
@@ -659,7 +664,7 @@ poetry lock
 
 ### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ## version
@@ -953,7 +958,7 @@ poetry self lock
 
 #### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**)
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ### self show

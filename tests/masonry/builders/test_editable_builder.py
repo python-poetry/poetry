@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import locale
 import os
 import shutil
 
@@ -14,6 +15,7 @@ import pytest
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
 from poetry.core.constraints.version import Version
+from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
@@ -124,8 +126,14 @@ def test_builder_installs_proper_files_for_standard_packages(
         == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n"
         "fox=fuz.foo:bar.baz\n\n"
     )
-
-    metadata = """\
+    python_classifiers = "\n".join(
+        f"Classifier: Programming Language :: Python :: {version}"
+        for version in sorted(
+            Package.AVAILABLE_PYTHONS,
+            key=lambda x: tuple(map(int, x.split("."))),
+        )
+    )
+    metadata = f"""\
 Metadata-Version: 2.1
 Name: simple-project
 Version: 1.2.3
@@ -137,17 +145,7 @@ Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
 Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
 Classifier: License :: OSI Approved :: MIT License
-Classifier: Programming Language :: Python :: 2
-Classifier: Programming Language :: Python :: 2.7
-Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.4
-Classifier: Programming Language :: Python :: 3.5
-Classifier: Programming Language :: Python :: 3.6
-Classifier: Programming Language :: Python :: 3.7
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Classifier: Programming Language :: Python :: 3.11
+{python_classifiers}
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
@@ -275,7 +273,7 @@ def test_builder_installs_proper_files_when_packages_configured(
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
 
     paths = set()
-    with pth_file.open() as f:
+    with pth_file.open(encoding=locale.getpreferredencoding()) as f:
         for line in f.readlines():
             line = line.strip(os.linesep)
             if line:
