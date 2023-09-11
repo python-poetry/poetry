@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import platform
 import sys
 
@@ -14,6 +15,8 @@ from installer.sources import _WheelFileValidationError
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
 
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -45,7 +48,7 @@ class WheelDestination(SchemeDictionaryDestination):
         if target_path.exists():
             # Contrary to the base library we don't raise an error here since it can
             # break pkgutil-style and pkg_resource-style namespace packages.
-            pass
+            logger.warning(f"Installing {target_path} over existing file")
 
         parent_folder = target_path.parent
         if not parent_folder.exists():
