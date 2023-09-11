@@ -52,6 +52,7 @@ def tmp_repo(current_repo_path: Path, tmp_path: Path, current_sha: str) -> Path:
             "commit",
             "--allow-empty",
             "--message=test commit",
+            "--no-gpg-sign",  # avoid user interaction in case signing is turned on
         ],
         cwd=target_dir,
         text=True,
@@ -74,8 +75,10 @@ class TestSystemGit:
         assert re.search(r"Cloning into '.+[\\/]poetry-test'...", stdout)
         assert (target_dir / ".git").is_dir()
 
-    def test_clone_code_execution(self, tmp_path: Path) -> None:
-        with pytest.raises(RuntimeError):
+    def test_clone_invalid_parameter(self, tmp_path: Path) -> None:
+        with pytest.raises(
+            RuntimeError, match=re.escape("Invalid Git parameter: --upload-pack")
+        ):
             SystemGit.clone("--upload-pack=touch ./HELL", tmp_path)
 
     def test_checkout_1(self, tmp_repo: Path, current_sha: str) -> None:

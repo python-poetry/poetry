@@ -23,13 +23,7 @@ class SystemGit:
     @classmethod
     def checkout(cls, rev: str, target: Path | None = None) -> str:
         cls._check_parameter(rev)
-
-        args = ("checkout", rev)
-
-        if target:
-            return cls.run(*args, folder=target)
-        else:
-            return cls.run(*args)
+        return cls.run("checkout", rev, folder=target)
 
     @staticmethod
     def run(*args: Any, **kwargs: Any) -> str:
