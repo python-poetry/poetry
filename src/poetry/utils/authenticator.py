@@ -136,11 +136,11 @@ class Authenticator:
             self._get_repository_config_for_url
         )
         self._pool_size = pool_size
-        self.user_agent = user_agent("poetry", __version__)
+        self._user_agent = user_agent("poetry", __version__)
 
     def create_session(self) -> requests.Session:
         session = requests.Session()
-        session.headers["User-Agent"] = self.user_agent
+        session.headers["User-Agent"] = self._user_agent
 
         if self._cache_control is None:
             return session
