@@ -35,8 +35,7 @@ class CachedRepository(Repository, ABC):
     @abstractmethod
     def _get_release_info(
         self, name: NormalizedName, version: Version
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
     def get_release_info(self, name: NormalizedName, version: Version) -> PackageInfo:
         """
