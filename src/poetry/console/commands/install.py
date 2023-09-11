@@ -155,14 +155,6 @@ dependencies and not including the current project, run the command with the
         if self.option("no-root"):
             return 0
 
-        try:
-            builder = EditableBuilder(self.poetry, self.env, self.io)
-        except ModuleOrPackageNotFound:
-            # This is likely due to the fact that the project is an application
-            # not following the structure expected by Poetry
-            # If this is a true error it will be picked up later by build anyway.
-            return 0
-
         log_install = (
             "<b>Installing</> the current project:"
             f" <c1>{self.poetry.package.pretty_name}</c1>"
@@ -178,7 +170,26 @@ dependencies and not including the current project, run the command with the
             self.line("")
             return 0
 
-        builder.build()
+        # Prior to https://github.com/python-poetry/poetry-core/pull/629
+        # the existence of a module/package was checked when creating the
+        # EditableBuilder. Afterwards, the existence is checked after
+        # executing the build script (if there is one),
+        # i.e. during EditableBuilder.build().
+        try:
+            builder = EditableBuilder(self.poetry, self.env, self.io)
+            builder.build()
+        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
+            # This is likely due to the fact that the project is an application
+            # not following the structure expected by Poetry.
+            # No need for an editable install in this case.
+            self.line("")
+            self.line_error(
+                f"The current project could not be installed: <error>{e}</error>\n"
+                "If you do not want to install the current project"
+                " use <c1>--no-root</c1>",
+                style="warning",
+            )
+            return 0
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))
