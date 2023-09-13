@@ -20,12 +20,10 @@ class AbstractRepository(ABC):
         return self._name
 
     @abstractmethod
-    def find_packages(self, dependency: Dependency) -> list[Package]:
-        ...
+    def find_packages(self, dependency: Dependency) -> list[Package]: ...
 
     @abstractmethod
-    def search(self, query: str) -> list[Package]:
-        ...
+    def search(self, query: str) -> list[Package]: ...
 
     @abstractmethod
     def package(
@@ -33,5 +31,4 @@ class AbstractRepository(ABC):
         name: str,
         version: Version,
         extras: list[str] | None = None,
-    ) -> Package:
-        ...
+    ) -> Package: ...

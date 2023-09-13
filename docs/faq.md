@@ -163,7 +163,7 @@ In this case, you can disable this feature by setting the `virtualenvs.create` s
 poetry config virtualenvs.create false
 ```
 
-### Why is Poetry telling me that the current project's Python requirement is not compatible with one or more packages' Python requirements?
+### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
 Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
 is resolvable within the given Python version range in `pyproject.toml`.
@@ -179,18 +179,18 @@ This means your project aims to be compatible with any Python version >=3.7,<4.0
 whose Python requirement doesn't match the whole range Poetry will tell you this, e.g.:
 
 ```
-The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
+The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
     - scipy requires Python >=3.7,<3.11, so it will not be satisfied for Python >=3.11,<4.0.0
 ```
 
-Usually you will want to match the Python requirement of your project with the upper bound of the failing dependency.
-Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
+Usually you will want to match the supported Python range of your project with the upper bound of the failing dependency.
+Alternatively you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
 
 
 ### Why does Poetry enforce PEP 440 versions?
 
-This is done so to be compliant with the broader Python ecosystem.
+This is done to be compliant with the broader Python ecosystem.
 
 For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
