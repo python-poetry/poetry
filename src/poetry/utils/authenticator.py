@@ -18,7 +18,9 @@ import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import FileCache
+from requests_toolbelt import user_agent
 
+from poetry.__version__ import __version__
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.utils.constants import REQUESTS_TIMEOUT
@@ -134,9 +136,11 @@ class Authenticator:
             self._get_repository_config_for_url
         )
         self._pool_size = pool_size
+        self._user_agent = user_agent("poetry", __version__)
 
     def create_session(self) -> requests.Session:
         session = requests.Session()
+        session.headers["User-Agent"] = self._user_agent
 
         if self._cache_control is None:
             return session

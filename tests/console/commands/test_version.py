@@ -55,6 +55,25 @@ def test_increment_version(
     assert command.increment_version(version, rule).text == expected
 
 
+@pytest.mark.parametrize(
+    "version, rule, expected",
+    [
+        ("1.2.3", "prerelease", "1.2.4a0"),
+        ("1.2.3a0", "prerelease", "1.2.3b0"),
+        ("1.2.3a1", "prerelease", "1.2.3b0"),
+        ("1.2.3b1", "prerelease", "1.2.3rc0"),
+        ("1.2.3rc0", "prerelease", "1.2.3"),
+        ("1.2.3-beta.1", "prerelease", "1.2.3rc0"),
+        ("1.2.3-beta1", "prerelease", "1.2.3rc0"),
+        ("1.2.3beta1", "prerelease", "1.2.3rc0"),
+    ],
+)
+def test_next_phase_version(
+    version: str, rule: str, expected: str, command: VersionCommand
+) -> None:
+    assert command.increment_version(version, rule, True).text == expected
+
+
 def test_version_show(tester: CommandTester) -> None:
     tester.execute()
     assert tester.io.fetch_output() == "simple-project 1.2.3\n"
@@ -73,6 +92,13 @@ def test_version_update(tester: CommandTester) -> None:
 def test_short_version_update(tester: CommandTester) -> None:
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"
+
+
+def test_phase_version_update(tester: CommandTester) -> None:
+    assert isinstance(tester.command, VersionCommand)
+    tester.command.poetry.package._set_version("1.2.4a0")
+    tester.execute("prerelease --next-phase")
+    assert tester.io.fetch_output() == "Bumping version from 1.2.4a0 to 1.2.4b0\n"
 
 
 def test_dry_run(tester: CommandTester) -> None:

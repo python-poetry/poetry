@@ -17,6 +17,7 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
@@ -363,16 +364,21 @@ class Git:
                 url_str = urlpathjoin(f"{cls.get_remote_url(repo)}/", url_str)
 
             with repo:
+                index = repo.open_index()
+
                 try:
-                    revision = repo.open_index()[path].sha.decode("utf-8")
+                    entry = index[path]
                 except KeyError:
                     logger.debug(
                         "Skip submodule %s in %s, path %s not found",
-                        name_str,
+                        name,
                         repo.path,
-                        path_str,
+                        path,
                     )
                     continue
+
+                assert isinstance(entry, IndexEntry)
+                revision = entry.sha.decode("utf-8")
 
             submodules.append(
                 SubmoduleInfo(

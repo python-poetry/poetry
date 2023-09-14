@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tarfile
 import tempfile
 import zipfile
@@ -29,12 +30,10 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-class ChefError(Exception):
-    ...
+class ChefError(Exception): ...
 
 
-class ChefBuildError(ChefError):
-    ...
+class ChefBuildError(ChefError): ...
 
 
 class IsolatedEnv(BaseIsolatedEnv):
@@ -43,12 +42,19 @@ class IsolatedEnv(BaseIsolatedEnv):
         self._pool = pool
 
     @property
-    def executable(self) -> str:
+    def python_executable(self) -> str:
         return str(self._env.python)
 
-    @property
-    def scripts_dir(self) -> str:
-        return str(self._env._bin_dir)
+    def make_extra_environ(self) -> dict[str, str]:
+        path = os.environ.get("PATH")
+        scripts_dir = str(self._env._bin_dir)
+        return {
+            "PATH": (
+                os.pathsep.join([scripts_dir, path])
+                if path is not None
+                else scripts_dir
+            )
+        }
 
     def install(self, requirements: Collection[str]) -> None:
         from cleo.io.null_io import NullIO
@@ -109,8 +115,7 @@ class Chef:
             env = IsolatedEnv(venv, self._pool)
             builder = ProjectBuilder(
                 directory,
-                python_executable=env.executable,
-                scripts_dir=env.scripts_dir,
+                python_executable=env.python_executable,
                 runner=quiet_subprocess_runner,
             )
             env.install(builder.build_system_requires)
