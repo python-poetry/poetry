@@ -39,10 +39,9 @@ cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
 cleo = "^2.0.0"
 crashtest = "^0.4.1"
 dulwich = "^0.21.2"
+fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-# jsonschema 4.18 uses Rust-based libraries which causes issues when building from source
-jsonschema = ">=4.10.0,<4.18.0"
 keyring = "^24.0.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=20.4"
@@ -74,7 +73,6 @@ pytest-xdist = { version = "^3.1", extras = ["psutil"] }
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.0"
-types-jsonschema = ">=4.9.0"
 types-requests = ">=2.28.8"
 
 # only used in github actions
@@ -181,6 +179,7 @@ warn_unused_ignores = false
 [[tool.mypy.overrides]]
 module = [
     'deepdiff.*',
+    'fastjsonschema.*',
     'httpretty.*',
     'keyring.*',
     'pexpect.*',

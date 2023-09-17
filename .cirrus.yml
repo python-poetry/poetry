@@ -23,8 +23,7 @@ test_task:
     - POETRY_HOME=/opt/poetry
     - $PYTHON -m venv $POETRY_HOME
     - $POETRY_HOME/bin/pip install --upgrade pip setuptools wheel
-    # jsonschema 4.18 uses Rust-based libraries which causes issues when building from source
-    - $POETRY_HOME/bin/pip install poetry "jsonschema<4.18.0"
+    - $POETRY_HOME/bin/pip install poetry
     - echo "PATH=$POETRY_HOME/bin:$PATH" >> $CIRRUS_ENV
   install_and_test_script:
     - poetry install
