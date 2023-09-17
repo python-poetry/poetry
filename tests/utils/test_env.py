@@ -1489,18 +1489,21 @@ def test_env_system_packages_are_relative_to_lib(
 @pytest.mark.parametrize(
     ("flags", "packages"),
     [
-        ({"no-pip": False}, {"pip", "wheel"}),
+        ({"no-pip": False}, {"pip"}),
         ({"no-pip": False, "no-wheel": True}, {"pip"}),
+        ({"no-pip": False, "no-wheel": False}, {"pip", "wheel"}),
         ({"no-pip": True}, set()),
         ({"no-setuptools": False}, {"setuptools"}),
         ({"no-setuptools": True}, set()),
+        ({"setuptools": "bundle"}, {"setuptools"}),
         ({"no-pip": True, "no-setuptools": False}, {"setuptools"}),
         ({"no-wheel": False}, {"wheel"}),
+        ({"wheel": "bundle"}, {"wheel"}),
         ({}, set()),
     ],
 )
 def test_env_no_pip(
-    tmp_path: Path, poetry: Poetry, flags: dict[str, bool], packages: set[str]
+    tmp_path: Path, poetry: Poetry, flags: dict[str, str | bool], packages: set[str]
 ) -> None:
     venv_path = tmp_path / "venv"
     EnvManager(poetry).build_venv(path=venv_path, flags=flags)
@@ -1512,6 +1515,14 @@ def test_env_no_pip(
         # workaround for BSD test environments
         if package.name != "sqlite3"
     }
+
+    # For python >= 3.12, virtualenv defaults to "--no-setuptools" and "--no-wheel"
+    # behaviour, so setting these values to False becomes meaningless.
+    if sys.version_info >= (3, 12):
+        if not flags.get("no-setuptools", True):
+            packages.discard("setuptools")
+        if not flags.get("no-wheel", True):
+            packages.discard("wheel")
 
     assert installed_packages == packages
 

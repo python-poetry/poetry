@@ -612,35 +612,40 @@ class EnvManager:
         cls,
         path: Path,
         executable: Path | None = None,
-        flags: dict[str, bool] | None = None,
+        flags: dict[str, str | bool] | None = None,
         with_pip: bool | None = None,
         with_wheel: bool | None = None,
         with_setuptools: bool | None = None,
         prompt: str | None = None,
     ) -> virtualenv.run.session.Session:
+        flags = flags or {}
+
+        if with_pip is not None:
+            flags["no-pip"] = not with_pip
+
+        if with_wheel is not None:
+            wheel_flags: dict[str, str | bool] = (
+                {"wheel": "bundle"} if with_wheel else {"no-wheel": True}
+            )
+            flags.update(wheel_flags)
+
+        if with_setuptools is not None:
+            setuptools_flags: dict[str, str | bool] = (
+                {"setuptools": "bundle"} if with_setuptools else {"no-setuptools": True}
+            )
+            flags.update(setuptools_flags)
+
+        flags.setdefault("no-pip", True)
+
+        if "setuptools" not in flags and "no-setuptools" not in flags:
+            flags["no-setuptools"] = True
+
+        if "wheel" not in flags and "no-wheel" not in flags:
+            flags["no-wheel"] = True
+
         if WINDOWS:
             path = get_real_windows_path(path)
             executable = get_real_windows_path(executable) if executable else None
-
-        flags = flags or {}
-
-        flags["no-pip"] = (
-            not with_pip if with_pip is not None else flags.pop("no-pip", True)
-        )
-
-        flags["no-setuptools"] = (
-            not with_setuptools
-            if with_setuptools is not None
-            else flags.pop("no-setuptools", True)
-        )
-
-        # we want wheels to be enabled when pip is required and it has not been
-        # explicitly disabled
-        flags["no-wheel"] = (
-            not with_wheel
-            if with_wheel is not None
-            else flags.pop("no-wheel", flags["no-pip"])
-        )
 
         executable_str = None if executable is None else executable.resolve().as_posix()
 
@@ -657,6 +662,9 @@ class EnvManager:
         for flag, value in flags.items():
             if value is True:
                 args.append(f"--{flag}")
+
+            elif value is not False:
+                args.append(f"--{flag}={value}")
 
         args.append(str(path))
 

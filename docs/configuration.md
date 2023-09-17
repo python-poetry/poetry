@@ -375,6 +375,12 @@ If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on cr
 means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
 internal operations, does not require `setuptools` and this can safely be set to `true`.
 
+For environments using python 3.12 or later, `virtualenv` defaults to not
+installing `setuptools` when creating a virtual environment.
+In such environments this poetry configuration option therefore has no effect:
+`setuptools` is not installed either way.
+If your project relies on `setuptools`, you should declare it as a dependency.
+
 {{% warning %}}
 Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
 available within a virtual environment. This can cause some features in these tools to not work as expected.
