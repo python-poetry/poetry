@@ -77,8 +77,10 @@ def test_check_invalid(
 
     tester.execute("--lock")
 
-    expected = """\
-Error: 'description' is a required property
+    jsonschema_error = "'description' is a required property"
+    fastjsonschema_error = "data must contain ['description'] properties"
+    expected_template = """\
+Error: {schema_error}
 Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Error: Declared README file does not exist: never/exists.md
@@ -93,8 +95,12 @@ Warning: Deprecated classifier\
  'Topic :: Communications :: Chat :: AOL Instant Messenger'.\
  Must be removed.
 """
+    expected = {
+        expected_template.format(schema_error=schema_error)
+        for schema_error in (jsonschema_error, fastjsonschema_error)
+    }
 
-    assert tester.io.fetch_error() == expected
+    assert tester.io.fetch_error() in expected
 
 
 def test_check_private(

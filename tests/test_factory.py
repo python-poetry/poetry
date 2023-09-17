@@ -524,12 +524,20 @@ def test_create_poetry_fails_on_invalid_configuration(
     with pytest.raises(RuntimeError) as e:
         Factory().create_poetry(fixture_dir("invalid_pyproject") / "pyproject.toml")
 
-    expected = """\
+    jsonschema_error = "'description' is a required property"
+    fastjsonschema_error = "data must contain ['description'] properties"
+
+    expected_template = """\
 The Poetry configuration is invalid:
-  - 'description' is a required property
+  - {schema_error}
   - Project name (invalid) is same as one of its dependencies
 """
-    assert str(e.value) == expected
+    expected = {
+        expected_template.format(schema_error=schema_error)
+        for schema_error in (jsonschema_error, fastjsonschema_error)
+    }
+
+    assert str(e.value) in expected
 
 
 def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter) -> None:
