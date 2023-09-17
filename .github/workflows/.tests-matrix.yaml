@@ -78,25 +78,41 @@ jobs:
     if: inputs.run-pytest-export
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          path: poetry
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: ./poetry/.github/actions/bootstrap-poetry
         with:
           python-version: ${{ inputs.python-version }}
 
-      - uses: ./.github/actions/poetry-install
-        with:
-          args: --with github-actions
+      - name: Get poetry-plugin-export version
+        run: |
+          PLUGIN_VERSION=$(curl -s https://pypi.org/pypi/poetry-plugin-export/json | jq -r ".info.version")
+          echo "Found version ${PLUGIN_VERSION}"
+          echo version=${PLUGIN_VERSION} >> $GITHUB_OUTPUT
+        id: poetry-plugin-export-version
 
-      - run: poetry run pip list --format json | jq -r '.[] | "\(.name)=\(.version)"' >> $GITHUB_OUTPUT
-        id: package-versions
-
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - name: Check out poetry-plugin-export
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
-          ref: refs/tags/${{ steps.package-versions.outputs.poetry-plugin-export }}
+          ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
-      - run: poetry run -C .. pytest -v
-        working-directory: ./poetry-plugin-export
+      - name: Use local poetry
+        working-directory: poetry-plugin-export
+        run: poetry add --lock --group dev ../poetry
 
-      - run: git -C poetry-plugin-export diff --exit-code --stat HEAD
+      - name: Install
+        working-directory: poetry-plugin-export
+        run: poetry install
+
+      - name: Run tests
+        working-directory: poetry-plugin-export
+        run: poetry run python -m pytest -p no:sugar -q tests
+
+      - name: Check for clean working tree
+        working-directory: poetry-plugin-export
+        run: |
+          git checkout -- pyproject.toml poetry.lock
+          git diff --exit-code --stat HEAD
