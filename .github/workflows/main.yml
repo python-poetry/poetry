@@ -41,7 +41,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -110,7 +110,7 @@ jobs:
           echo version=$(poetry show poetry-plugin-export | grep version | cut -d : -f 2 | xargs) >> $GITHUB_OUTPUT
 
       - name: Checkout Plugin Source (poetry-plugin-export)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
