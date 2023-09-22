@@ -1299,7 +1299,8 @@ Package operations: 1 install, 0 updates, 0 removals
     expected_end = f"""
 Note: This error originates from the build backend, and is likely not a problem with \
 poetry but with {package_name} ({package_version} {package_url}) not supporting \
-PEP 517 builds. You can verify this by running '{pip_command} --no-cache-dir "{requirement}"'.
+PEP 517 builds. You can verify this by running \
+'{pip_command} --no-cache-dir "{requirement}"'.
 
 """
 
