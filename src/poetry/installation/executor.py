@@ -316,7 +316,7 @@ class Executor:
                     trace.render(io)
                     if isinstance(e, ChefBuildError):
                         pkg = operation.package
-                        pip_command = "pip wheel --use-pep517"
+                        pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
                             requirement = pkg.source_url
                             pip_command += " --editable"
