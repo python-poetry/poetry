@@ -316,7 +316,7 @@ class Executor:
                     trace.render(io)
                     if isinstance(e, ChefBuildError):
                         pkg = operation.package
-                        pip_command = "pip wheel --use-pep517"
+                        pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
                             requirement = pkg.source_url
                             pip_command += " --editable"
@@ -331,7 +331,7 @@ class Executor:
                             " and is likely not a problem with poetry"
                             f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
                             " not supporting PEP 517 builds. You can verify this by"
-                            f" running '{pip_command} --no-cache-dir \"{requirement}\"'."
+                            f" running '{pip_command} \"{requirement}\"'."
                             "</info>"
                         )
                     elif isinstance(e, SolverProblemError):

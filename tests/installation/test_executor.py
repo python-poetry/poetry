@@ -1290,17 +1290,17 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert directory_package.source_url is not None
     if editable:
-        pip_command = "pip wheel --use-pep517 --editable"
+        pip_command = "pip wheel --no-cache-dir --use-pep517 --editable"
         requirement = directory_package.source_url
         assert Path(requirement).exists()
     else:
-        pip_command = "pip wheel --use-pep517"
+        pip_command = "pip wheel --no-cache-dir --use-pep517"
         requirement = f"{package_name} @ {path_to_url(directory_package.source_url)}"
     expected_end = f"""
 Note: This error originates from the build backend, and is likely not a problem with \
 poetry but with {package_name} ({package_version} {package_url}) not supporting \
 PEP 517 builds. You can verify this by running \
-'{pip_command} --no-cache-dir "{requirement}"'.
+'{pip_command} "{requirement}"'.
 
 """
 
