@@ -137,14 +137,12 @@ class Chef:
                     )
             except BuildBackendException as e:
                 message_parts = [str(e)]
-                if isinstance(e.exception, CalledProcessError) and (
-                    e.exception.stdout is not None or e.exception.stderr is not None
-                ):
-                    message_parts.append(
-                        decode(e.exception.stderr)
-                        if e.exception.stderr is not None
-                        else decode(e.exception.stdout)
-                    )
+                if isinstance(e.exception, CalledProcessError):
+                    text = e.exception.stderr or e.exception.stdout
+                    if text is not None:
+                        message_parts.append(decode(text))
+                else:
+                    message_parts.append(str(e.exception))
 
                 error = ChefBuildError("\n\n".join(message_parts))
 
