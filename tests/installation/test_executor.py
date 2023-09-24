@@ -1238,9 +1238,17 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 @pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
+@pytest.mark.parametrize(
+    "exception",
+    [
+        CalledProcessError(1, ["pip"], output=b"original error"),
+        Exception("original error"),
+    ],
+)
 @pytest.mark.parametrize("editable", [False, True])
 def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     failing_method: str,
+    exception: Exception,
     editable: bool,
     mocker: MockerFixture,
     config: Config,
@@ -1250,9 +1258,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
-    error = BuildBackendException(
-        CalledProcessError(1, ["pip"], output=b"Error on stdout")
-    )
+    error = BuildBackendException(exception, description="hide the original error")
     mocker.patch.object(ProjectBuilder, failing_method, side_effect=error)
     io.set_verbosity(Verbosity.NORMAL)
 
@@ -1282,10 +1288,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
   ChefBuildError
 
-  Backend operation failed: CalledProcessError(1, ['pip'])
+  hide the original error
   \
 
-  Error on stdout
+  original error
 """
 
     assert directory_package.source_url is not None
