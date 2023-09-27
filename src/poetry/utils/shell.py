@@ -97,12 +97,16 @@ class Shell:
         import shlex
 
         terminal = shutil.get_terminal_size()
+        cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+
         with env.temp_environ():
+            args = ["-e", cmd] if self._name == "nu" else ["-i"]
+
             c = pexpect.spawn(
-                self._path, ["-i"], dimensions=(terminal.lines, terminal.columns)
+                self._path, args, dimensions=(terminal.lines, terminal.columns)
             )
 
-        if self._name in ["zsh", "nu"]:
+        if self._name in ["zsh"]:
             c.setecho(False)
 
         if self._name == "zsh":
@@ -110,10 +114,14 @@ class Shell:
             c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
         elif self._name == "xonsh":
             c.sendline(f"vox activate {shlex.quote(str(env.path))}")
+
+        # if this is nu, we don't want to send the activation command to the
+        # command line since we already ran it via the shell's invocation
+        elif self._name == "nu":
+            pass
         else:
-            cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
-            if self._name in ["fish", "nu"]:
-                # Under fish and nu "\r" should be sent explicitly
+            if self._name in ["fish"]:
+                # Under fish, "\r" should be sent explicitly
                 cmd += "\r"
             c.sendline(cmd)
 
