@@ -36,6 +36,23 @@ class ChefError(Exception): ...
 class ChefBuildError(ChefError): ...
 
 
+class ChefInstallError(ChefError):
+    def __init__(self, requirements: Collection[str], output: str, error: str) -> None:
+        message = "\n\n".join(
+            (
+                f"Failed to install {', '.join(requirements)}.",
+                f"Output:\n{output}",
+                f"Error:\n{error}",
+            )
+        )
+        super().__init__(message)
+        self._requirements = requirements
+
+    @property
+    def requirements(self) -> Collection[str]:
+        return self._requirements
+
+
 class IsolatedEnv(BaseIsolatedEnv):
     def __init__(self, env: Env, pool: RepositoryPool) -> None:
         self._env = env
@@ -57,7 +74,7 @@ class IsolatedEnv(BaseIsolatedEnv):
         }
 
     def install(self, requirements: Collection[str]) -> None:
-        from cleo.io.null_io import NullIO
+        from cleo.io.buffered_io import BufferedIO
         from poetry.core.packages.dependency import Dependency
         from poetry.core.packages.project_package import ProjectPackage
 
@@ -73,8 +90,9 @@ class IsolatedEnv(BaseIsolatedEnv):
             dependency = Dependency.create_from_pep_508(requirement)
             package.add_dependency(dependency)
 
+        io = BufferedIO()
         installer = Installer(
-            NullIO(),
+            io,
             self._env,
             package,
             Locker(self._env.path.joinpath("poetry.lock"), {}),
@@ -83,7 +101,8 @@ class IsolatedEnv(BaseIsolatedEnv):
             InstalledRepository.load(self._env),
         )
         installer.update(True)
-        installer.run()
+        if installer.run() != 0:
+            raise ChefInstallError(requirements, io.fetch_output(), io.fetch_error())
 
 
 class Chef:
