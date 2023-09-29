@@ -441,7 +441,7 @@ The variables `project_name` and `python_version` are available for formatting.
 
 **Type**: `string`
 
-**Environment Variable**: `POETRY_REPOSITORIES_<NAME>`
+**Environment Variable**: `POETRY_REPOSITORIES_<NAME>_URL`
 
 Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
 
