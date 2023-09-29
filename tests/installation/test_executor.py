@@ -1378,11 +1378,7 @@ def test_build_system_requires_not_available(
         .as_posix(),
     )
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([Install(directory_package)])
 
     assert return_code == 1
 
@@ -1398,6 +1394,102 @@ Package operations: 1 install, 0 updates, 0 removals
  version solving failed.
 """
     expected_end = "Cannot resolve build-system.requires for simple-project."
+
+    output = io.fetch_output().strip()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)
+
+
+def test_build_system_requires_install_failure(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    mocker.patch("poetry.installation.installer.Installer.run", return_value=1)
+    mocker.patch("cleo.io.buffered_io.BufferedIO.fetch_output", return_value="output")
+    mocker.patch("cleo.io.buffered_io.BufferedIO.fetch_error", return_value="error")
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    return_code = executor.execute([Install(directory_package)])
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""\
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing {package_name} ({package_version} {package_url})
+
+  ChefInstallError
+
+  Failed to install poetry-core>=1.1.0a7.
+  \
+
+  Output:
+  output
+  \
+
+  Error:
+  error
+
+"""
+    expected_end = "Cannot install build-system.requires for simple-project."
+
+    mocker.stopall()  # to get real output
+    output = io.fetch_output().strip()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)
+
+
+def test_other_error(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=fixture_dir("non-existing").resolve().as_posix(),
+    )
+
+    return_code = executor.execute([Install(directory_package)])
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""\
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing {package_name} ({package_version} {package_url})
+
+  FileNotFoundError
+"""
+    expected_end = "Cannot install simple-project."
 
     output = io.fetch_output().strip()
     assert output.startswith(expected_start)

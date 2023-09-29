@@ -20,6 +20,7 @@ from requests.utils import atomic_open
 
 from poetry.installation.chef import Chef
 from poetry.installation.chef import ChefBuildError
+from poetry.installation.chef import ChefInstallError
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -314,8 +315,8 @@ class Executor:
                 with self._lock:
                     trace = ExceptionTrace(e)
                     trace.render(io)
+                    pkg = operation.package
                     if isinstance(e, ChefBuildError):
-                        pkg = operation.package
                         pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
                             requirement = pkg.source_url
@@ -324,8 +325,7 @@ class Executor:
                             requirement = (
                                 pkg.to_dependency().to_pep_508().split(";")[0].strip()
                             )
-                        io.write_line("")
-                        io.write_line(
+                        message = (
                             "<info>"
                             "Note: This error originates from the build backend,"
                             " and is likely not a problem with poetry"
@@ -334,19 +334,30 @@ class Executor:
                             f" running '{pip_command} \"{requirement}\"'."
                             "</info>"
                         )
+                    elif isinstance(e, ChefInstallError):
+                        message = (
+                            "<error>"
+                            "Cannot install build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
+                        )
                     elif isinstance(e, SolverProblemError):
-                        pkg = operation.package
-                        io.write_line("")
-                        io.write_line(
+                        message = (
                             "<error>"
                             "Cannot resolve build-system.requires"
                             f" for {pkg.pretty_name}."
                             "</error>"
                         )
+                    else:
+                        message = f"<error>Cannot install {pkg.pretty_name}.</error>"
+
+                    io.write_line("")
+                    io.write_line(message)
                     io.write_line("")
             finally:
                 with self._lock:
                     self._shutdown = True
+
         except KeyboardInterrupt:
             try:
                 message = (
