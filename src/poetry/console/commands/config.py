@@ -138,6 +138,8 @@ To remove a repository (repo is a short alias for repositories):
 
                 self.line(str(value))
             else:
+                if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+                    raise ValueError(f"Expected a value for {setting_key} setting.")
                 if setting_key not in self.unique_config_values:
                     raise ValueError(f"There is no {setting_key} setting.")
 
