@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import logging
 import re
 import uuid
 
@@ -20,6 +21,7 @@ from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
 if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
     from _pytest.monkeypatch import MonkeyPatch
     from pytest_mock import MockerFixture
 
@@ -65,8 +67,8 @@ def test_authenticator_uses_url_provided_credentials(
     authenticator.request("get", "https://foo001:bar002@foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic Zm9vMDAxOmJhcjAwMg=="
+    basic_auth = base64.b64encode(b"foo001:bar002").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_uses_credentials_from_config_if_not_provided(
@@ -76,8 +78,8 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
+    basic_auth = base64.b64encode(b"bar:baz").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_uses_username_only_credentials(
@@ -90,8 +92,38 @@ def test_authenticator_uses_username_only_credentials(
     authenticator.request("get", "https://foo001@foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
+    basic_auth = base64.b64encode(b"foo001:").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
-    assert request.headers["Authorization"] == "Basic Zm9vMDAxOg=="
+
+def test_authenticator_ignores_locked_keyring(
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_locked_keyring: None,
+    caplog: LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    authenticator = Authenticator()
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+    assert request.headers["Authorization"] is None
+    assert "Keyring foo.bar is locked" in caplog.messages
+
+
+def test_authenticator_ignores_failing_keyring(
+    mock_remote: None,
+    http: type[httpretty.httpretty],
+    with_erroneous_keyring: None,
+    caplog: LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    authenticator = Authenticator()
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+    assert request.headers["Authorization"] is None
+    assert "Accessing keyring foo.bar failed" in caplog.messages
 
 
 def test_authenticator_uses_password_only_credentials(
@@ -101,8 +133,8 @@ def test_authenticator_uses_password_only_credentials(
     authenticator.request("get", "https://:bar002@foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic OmJhcjAwMg=="
+    basic_auth = base64.b64encode(b":bar002").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_uses_empty_strings_as_default_password(
@@ -123,8 +155,8 @@ def test_authenticator_uses_empty_strings_as_default_password(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic YmFyOg=="
+    basic_auth = base64.b64encode(b"bar:").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_uses_empty_strings_as_default_username(
@@ -144,8 +176,8 @@ def test_authenticator_uses_empty_strings_as_default_username(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic OmJhcg=="
+    basic_auth = base64.b64encode(b":bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_falls_back_to_keyring_url(
@@ -170,8 +202,8 @@ def test_authenticator_falls_back_to_keyring_url(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic Zm9vOmJhcg=="
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_falls_back_to_keyring_netloc(
@@ -194,8 +226,8 @@ def test_authenticator_falls_back_to_keyring_netloc(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-
-    assert request.headers["Authorization"] == "Basic Zm9vOmJhcg=="
+    basic_auth = base64.b64encode(b"foo:bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
@@ -330,7 +362,8 @@ def test_authenticator_uses_env_provided_credentials(
 
     request = http.last_request()
 
-    assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
+    basic_auth = base64.b64encode(b"bar:baz").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 @pytest.mark.parametrize(
