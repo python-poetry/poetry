@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 
 from typing import TYPE_CHECKING
@@ -13,6 +14,7 @@ from poetry.utils.password_manager import PoetryKeyringError
 
 
 if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
@@ -190,11 +192,30 @@ def test_keyring_raises_errors_on_keyring_errors(
         key_ring.delete_password("foo", "bar")
 
 
-def test_keyring_returns_none_on_locked_keyring(with_locked_keyring: None) -> None:
+def test_keyring_returns_none_on_locked_keyring(
+    with_locked_keyring: None,
+    caplog: LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
     key_ring = PoetryKeyring("poetry")
 
-    cred = key_ring.get_credential("any password", "any name")
+    cred = key_ring.get_credential("foo")
+
     assert cred.password is None
+    assert "Keyring foo is locked" in caplog.messages
+
+
+def test_keyring_returns_none_on_erroneous_keyring(
+    with_erroneous_keyring: None,
+    caplog: LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    key_ring = PoetryKeyring("poetry")
+
+    cred = key_ring.get_credential("foo")
+
+    assert cred.password is None
+    assert "Accessing keyring foo failed" in caplog.messages
 
 
 def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
