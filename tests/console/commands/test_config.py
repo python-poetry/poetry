@@ -405,7 +405,6 @@ def test_set_pypi_token_unsuccessful_multiple_values(
 def test_set_pypi_token_no_values(
     tester: CommandTester,
 ) -> None:
-    print("Running this test")
     with pytest.raises(ValueError) as e:
         tester.execute("pypi-token.pypi")
 
