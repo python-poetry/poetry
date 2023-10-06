@@ -114,10 +114,9 @@ class Shell:
             c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
         elif self._name == "xonsh":
             c.sendline(f"vox activate {shlex.quote(str(env.path))}")
-
-        # if this is nu, we don't want to send the activation command to the
-        # command line since we already ran it via the shell's invocation
         elif self._name == "nu":
+            # If this is nu, we don't want to send the activation command to the
+            # command line since we already ran it via the shell's invocation.
             pass
         else:
             if self._name in ["fish"]:
