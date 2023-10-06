@@ -402,6 +402,15 @@ def test_set_pypi_token_unsuccessful_multiple_values(
     assert str(e.value) == "Expected only one argument (token), got 2"
 
 
+def test_set_pypi_token_no_values(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("pypi-token.pypi")
+
+    assert str(e.value) == "Expected a value for pypi-token.pypi setting."
+
+
 def test_set_client_cert(
     tester: CommandTester,
     auth_config_source: DictConfigSource,

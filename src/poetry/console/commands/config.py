@@ -122,6 +122,9 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
+            if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+                raise ValueError(f"Expected a value for {setting_key} setting.")
+
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
             value: str | dict[str, Any]
             if m:
