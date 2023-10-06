@@ -15,7 +15,6 @@ from typing import Any
 
 from cleo.io.null_io import NullIO
 from poetry.core.packages.utils.link import Link
-from requests.utils import atomic_open
 
 from poetry.installation.chef import Chef
 from poetry.installation.chef import ChefBuildError
@@ -30,6 +29,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
@@ -816,10 +816,14 @@ class Executor:
         return archive_hash
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
-        response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
+        archive = (
+            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
         )
-        wheel_size = response.headers.get("content-length")
+        archive.parent.mkdir(parents=True, exist_ok=True)
+
+        downloader = Downloader(link.url, archive, self._authenticator)
+        wheel_size = downloader.total_size
+
         operation_message = self.get_operation_message(operation)
         message = (
             f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>"
@@ -841,23 +845,10 @@ class Executor:
                 self._sections[id(operation)].clear()
                 progress.start()
 
-        done = 0
-        archive = (
-            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
-        )
-        archive.parent.mkdir(parents=True, exist_ok=True)
-        with atomic_open(archive) as f:
-            for chunk in response.iter_content(chunk_size=4096):
-                if not chunk:
-                    break
-
-                done += len(chunk)
-
-                if progress:
-                    with self._lock:
-                        progress.set_progress(done)
-
-                f.write(chunk)
+        for fetched_size in downloader.download_with_progress(chunk_size=4096):
+            if progress:
+                with self._lock:
+                    progress.set_progress(fetched_size)
 
         if progress:
             with self._lock:

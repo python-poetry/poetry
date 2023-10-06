@@ -12,10 +12,14 @@ import zipfile
 
 from collections.abc import Mapping
 from contextlib import contextmanager
+from contextlib import suppress
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import overload
+
+import requests
 
 from requests.utils import atomic_open
 
@@ -100,25 +104,16 @@ def download_file(
     session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
 ) -> None:
-    import requests
-
     from poetry.puzzle.provider import Indicator
 
-    get = requests.get if not session else session.get
-
-    response = get(url, stream=True, timeout=REQUESTS_TIMEOUT)
-    response.raise_for_status()
+    downloader = Downloader(url, dest, session)
 
     set_indicator = False
     with Indicator.context() as update_context:
         update_context(f"Downloading {url}")
 
-        if "Content-Length" in response.headers:
-            try:
-                total_size = int(response.headers["Content-Length"])
-            except ValueError:
-                total_size = 0
-
+        total_size = downloader.total_size
+        if total_size > 0:
             fetched_size = 0
             last_percent = 0
 
@@ -126,17 +121,44 @@ def download_file(
             # but skip the updating
             set_indicator = total_size > 1024 * 1024
 
-        with atomic_open(dest) as f:
-            for chunk in response.iter_content(chunk_size=chunk_size):
+        for fetched_size in downloader.download_with_progress(chunk_size):
+            if set_indicator:
+                percent = (fetched_size * 100) // total_size
+                if percent > last_percent:
+                    last_percent = percent
+                    update_context(f"Downloading {url} {percent:3}%")
+
+
+class Downloader:
+    def __init__(
+        self,
+        url: str,
+        dest: Path,
+        session: Authenticator | Session | None = None,
+    ):
+        self._dest = dest
+
+        get = requests.get if not session else session.get
+
+        self._response = get(url, stream=True, timeout=REQUESTS_TIMEOUT)
+        self._response.raise_for_status()
+
+    @cached_property
+    def total_size(self) -> int:
+        total_size = 0
+        if "Content-Length" in self._response.headers:
+            with suppress(ValueError):
+                total_size = int(self._response.headers["Content-Length"])
+        return total_size
+
+    def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
+        fetched_size = 0
+        with atomic_open(self._dest) as f:
+            for chunk in self._response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
-
-                    if set_indicator:
-                        fetched_size += len(chunk)
-                        percent = (fetched_size * 100) // total_size
-                        if percent > last_percent:
-                            last_percent = percent
-                            update_context(f"Downloading {url} {percent:3}%")
+                    fetched_size += len(chunk)
+                    yield fetched_size
 
 
 def get_package_version_display_string(
