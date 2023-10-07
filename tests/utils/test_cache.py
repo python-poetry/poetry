@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import concurrent.futures
 import shutil
+import traceback
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -320,6 +322,41 @@ def test_get_found_cached_archive_for_link(
     archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
+
+
+def test_get_cached_archive_for_link_no_race_condition(
+    tmp_path: Path, mocker: MockerFixture
+) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    link = Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+
+    def replace_file(_: str, dest: Path) -> None:
+        dest.unlink(missing_ok=True)
+        # write some data (so it takes a while) to provoke possible race conditions
+        dest.write_text("a" * 2**20)
+
+    download_mock = mocker.Mock(side_effect=replace_file)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        tasks = []
+        for _ in range(4):
+            tasks.append(
+                executor.submit(
+                    cache.get_cached_archive_for_link,  # type: ignore[arg-type]
+                    link,
+                    strict=True,
+                    download_func=download_mock,
+                )
+            )
+        concurrent.futures.wait(tasks)
+        results = set()
+        for task in tasks:
+            try:
+                results.add(task.result())
+            except Exception:
+                pytest.fail(traceback.format_exc())
+        assert results == {cache.get_cache_directory_for_link(link) / link.filename}
+        download_mock.assert_called_once()
 
 
 def test_get_cached_archive_for_git() -> None:

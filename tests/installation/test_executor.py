@@ -582,14 +582,16 @@ def test_executor_should_delete_incomplete_downloads(
     pool: RepositoryPool,
     mock_file_downloads: None,
     env: MockEnv,
-    fixture_dir: FixtureDirGetter,
 ) -> None:
-    fixture = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    destination_fixture = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
-    shutil.copyfile(str(fixture), str(destination_fixture))
+    cached_archive = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
+
+    def download_fail(*_: Any) -> None:
+        cached_archive.touch()  # broken archive
+        raise Exception("Download error")
+
     mocker.patch(
         "poetry.installation.executor.Executor._download_archive",
-        side_effect=Exception("Download error"),
+        side_effect=download_fail,
     )
     mocker.patch(
         "poetry.utils.cache.ArtifactCache._get_cached_archive",
@@ -607,7 +609,7 @@ def test_executor_should_delete_incomplete_downloads(
     with pytest.raises(Exception, match="Download error"):
         executor._download(Install(Package("tomlkit", "0.5.3")))
 
-    assert not destination_fixture.exists()
+    assert not cached_archive.exists()
 
 
 def verify_installed_distribution(
