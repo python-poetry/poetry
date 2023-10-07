@@ -21,7 +21,6 @@ from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
-from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import path_to_url
 
 from poetry.factory import Factory
@@ -593,11 +592,11 @@ def test_executor_should_delete_incomplete_downloads(
         side_effect=Exception("Download error"),
     )
     mocker.patch(
-        "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
+        "poetry.utils.cache.ArtifactCache._get_cached_archive",
         return_value=None,
     )
     mocker.patch(
-        "poetry.installation.executor.ArtifactCache.get_cache_directory_for_link",
+        "poetry.utils.cache.ArtifactCache.get_cache_directory_for_link",
         return_value=tmp_path,
     )
 
@@ -823,7 +822,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
         mocker.patch(
-            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
+            "poetry.utils.cache.ArtifactCache.get_cached_archive_for_link",
             return_value=link_cached,
         )
     download_spy = mocker.spy(Executor, "_download_archive")
@@ -861,9 +860,13 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     else:
         assert package.source_url is not None
         download_spy.assert_called_once_with(
-            mocker.ANY, operation, Link(package.source_url)
+            mocker.ANY,
+            operation,
+            package.source_url,
+            dest=mocker.ANY,
         )
-        assert download_spy.spy_return.exists(), "cached file should not be deleted"
+        dest = download_spy.call_args.args[3]
+        assert dest.exists(), "cached file should not be deleted"
 
 
 @pytest.mark.parametrize(
@@ -900,12 +903,12 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     )
     download_spy = mocker.spy(Executor, "_download_archive")
 
-    if is_sdist_cached | is_wheel_cached:
+    if is_sdist_cached or is_wheel_cached:
         cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
-        def mock_get_cached_archive_for_link_func(
-            _: Link, *, strict: bool, **__: Any
+        def mock_get_cached_archive_func(
+            _cache_dir: Path, *, strict: bool, **__: Any
         ) -> Path | None:
             if is_wheel_cached and not strict:
                 return cached_wheel
@@ -914,8 +917,8 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
             return None
 
         mocker.patch(
-            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
-            side_effect=mock_get_cached_archive_for_link_func,
+            "poetry.utils.cache.ArtifactCache._get_cached_archive",
+            side_effect=mock_get_cached_archive_func,
         )
 
     package = Package(
@@ -955,9 +958,10 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     if expect_artifact_download:
         assert package.source_url is not None
         download_spy.assert_called_once_with(
-            mocker.ANY, operation, Link(package.source_url)
+            mocker.ANY, operation, package.source_url, dest=mocker.ANY
         )
-        assert download_spy.spy_return.exists(), "cached file should not be deleted"
+        dest = download_spy.call_args.args[3]
+        assert dest.exists(), "cached file should not be deleted"
     else:
         download_spy.assert_not_called()
 
@@ -978,7 +982,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
         mocker.patch(
-            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_git",
+            "poetry.utils.cache.ArtifactCache.get_cached_archive_for_git",
             return_value=link_cached,
         )
     clone_spy = mocker.spy(Git, "clone")

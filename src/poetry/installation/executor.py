@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import functools
 import itertools
 import json
 import threading
@@ -27,7 +28,6 @@ from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
-from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
@@ -76,7 +76,7 @@ class Executor:
         else:
             self._max_workers = 1
 
-        self._artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
+        self._artifact_cache = pool.artifact_cache
         self._authenticator = Authenticator(
             config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
         )
@@ -748,23 +748,11 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        output_dir = self._artifact_cache.get_cache_directory_for_link(link)
-        # Try to get cached original package for the link provided
+        # Get original package for the link provided
+        download_func = functools.partial(self._download_archive, operation)
         original_archive = self._artifact_cache.get_cached_archive_for_link(
-            link, strict=True
+            link, strict=True, download_func=download_func
         )
-        if original_archive is None:
-            # No cached original distributions was found, so we download and prepare it
-            try:
-                original_archive = self._download_archive(operation, link)
-            except BaseException:
-                cache_directory = self._artifact_cache.get_cache_directory_for_link(
-                    link
-                )
-                cached_file = cache_directory.joinpath(link.filename)
-                cached_file.unlink(missing_ok=True)
-
-                raise
 
         # Get potential higher prioritized cached archive, otherwise it will fall back
         # to the original archive.
@@ -790,7 +778,7 @@ class Executor:
             )
             self._write(operation, message)
 
-            archive = self._chef.prepare(archive, output_dir=output_dir)
+            archive = self._chef.prepare(archive, output_dir=original_archive.parent)
 
         # Use the original archive to provide the correct hash.
         self._populate_hashes_dict(original_archive, package)
@@ -815,13 +803,13 @@ class Executor:
 
         return archive_hash
 
-    def _download_archive(self, operation: Install | Update, link: Link) -> Path:
-        archive = (
-            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
-        )
-        archive.parent.mkdir(parents=True, exist_ok=True)
-
-        downloader = Downloader(link.url, archive, self._authenticator)
+    def _download_archive(
+        self,
+        operation: Install | Update,
+        url: str,
+        dest: Path,
+    ) -> None:
+        downloader = Downloader(url, dest, self._authenticator)
         wheel_size = downloader.total_size
 
         operation_message = self.get_operation_message(operation)
@@ -853,8 +841,6 @@ class Executor:
         if progress:
             with self._lock:
                 progress.finish()
-
-        return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
         return (
