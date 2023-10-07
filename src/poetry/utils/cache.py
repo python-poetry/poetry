@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import TypeVar
+from typing import overload
 
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
@@ -218,18 +219,49 @@ class ArtifactCache:
 
         return self._get_directory_from_hash(key_parts)
 
+    @overload
+    def get_cached_archive_for_link(
+        self,
+        link: Link,
+        *,
+        strict: bool,
+        env: Env | None = ...,
+        download_func: Callable[[str, Path], None],
+    ) -> Path: ...
+
+    @overload
+    def get_cached_archive_for_link(
+        self,
+        link: Link,
+        *,
+        strict: bool,
+        env: Env | None = ...,
+        download_func: None = ...,
+    ) -> Path | None: ...
+
     def get_cached_archive_for_link(
         self,
         link: Link,
         *,
         strict: bool,
         env: Env | None = None,
+        download_func: Callable[[str, Path], None] | None = None,
     ) -> Path | None:
         cache_dir = self.get_cache_directory_for_link(link)
 
-        return self._get_cached_archive(
+        cached_archive = self._get_cached_archive(
             cache_dir, strict=strict, filename=link.filename, env=env
         )
+        if cached_archive is None and strict and download_func is not None:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cached_archive = cache_dir / link.filename
+            try:
+                download_func(link.url, cached_archive)
+            except BaseException:
+                cached_archive.unlink(missing_ok=True)
+                raise
+
+        return cached_archive
 
     def get_cached_archive_for_git(
         self, url: str, reference: str, subdirectory: str | None, env: Env
@@ -246,8 +278,9 @@ class ArtifactCache:
         filename: str | None = None,
         env: Env | None = None,
     ) -> Path | None:
+        # implication "not strict -> env must not be None"
         assert strict or env is not None
-        # implication "strict -> filename should not be None"
+        # implication "strict -> filename must not be None"
         assert not strict or filename is not None
 
         archives = self._get_cached_archives(cache_dir)
