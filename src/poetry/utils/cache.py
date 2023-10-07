@@ -5,8 +5,10 @@ import hashlib
 import json
 import logging
 import shutil
+import threading
 import time
 
+from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -188,6 +190,9 @@ class FileCache(Generic[T]):
 class ArtifactCache:
     def __init__(self, *, cache_dir: Path) -> None:
         self._cache_dir = cache_dir
+        self._archive_locks: defaultdict[Path, threading.Lock] = defaultdict(
+            threading.Lock
+        )
 
     def get_cache_directory_for_link(self, link: Link) -> Path:
         key_parts = {"url": link.url_without_fragment}
@@ -253,13 +258,18 @@ class ArtifactCache:
             cache_dir, strict=strict, filename=link.filename, env=env
         )
         if cached_archive is None and strict and download_func is not None:
-            cache_dir.mkdir(parents=True, exist_ok=True)
             cached_archive = cache_dir / link.filename
-            try:
-                download_func(link.url, cached_archive)
-            except BaseException:
-                cached_archive.unlink(missing_ok=True)
-                raise
+            with self._archive_locks[cached_archive]:
+                # Check again if the archive exists (under the lock) to avoid
+                # duplicate downloads because it may have already been downloaded
+                # by another thread in the meantime
+                if not cached_archive.exists():
+                    cache_dir.mkdir(parents=True, exist_ok=True)
+                    try:
+                        download_func(link.url, cached_archive)
+                    except BaseException:
+                        cached_archive.unlink(missing_ok=True)
+                        raise
 
         return cached_archive
 
