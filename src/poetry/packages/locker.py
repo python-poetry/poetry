@@ -323,8 +323,9 @@ class Locker:
             except tomllib.TOMLDecodeError as e:
                 raise RuntimeError(f"Unable to read the lock file ({e}).")
 
-        # if the lockfile doesn't contain a metadata section at all, it probably needs to be rebuilt completely
-        if not "metadata" in lock_data:
+        # if the lockfile doesn't contain a metadata section at all,
+        # it probably needs to be rebuilt completely
+        if "metadata" not in lock_data:
             raise RuntimeError(
                 "The lock file does not have a metadata entry.\n"
                 "Regenerate the lock file with the `poetry lock` command."
