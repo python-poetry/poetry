@@ -115,15 +115,23 @@ class Uploader:
 
         blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
 
-        md5_hash = hashlib.md5()
+        md5_hash = None
+        try:
+            md5_hash = hashlib.md5()
+        except ValueError:
+            md5_hash = None
+
+        md5_update = getattr(md5_hash, "update", lambda *args: None)
+        md5_hexdigest = getattr(md5_hash, "hexdigest", lambda: None)
         sha256_hash = hashlib.sha256()
+
         with file.open("rb") as fp:
             for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
-                md5_hash.update(content)
+                md5_update(content)
                 sha256_hash.update(content)
                 blake2_256_hash.update(content)
 
-        md5_digest = md5_hash.hexdigest()
+        md5_digest = md5_hexdigest()
         sha2_digest = sha256_hash.hexdigest()
         blake2_256_digest = blake2_256_hash.hexdigest()
 
