@@ -51,8 +51,6 @@ if TYPE_CHECKING:
     from poetry.utils.env import VirtualEnv
     from tests.types import FixtureDirGetter
 
-pytestmark = pytest.mark.network
-
 
 class Chef(BaseChef):
     _directory_wheels: list[Path] | None = None
