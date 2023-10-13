@@ -83,6 +83,7 @@ def test_isolated_env_install_failure(
         assert e.value.requirements == {"a", "b>1"}
 
 
+@pytest.mark.network
 def test_prepare_sdist(
     config: Config,
     config_cache_dir: Path,
@@ -101,6 +102,7 @@ def test_prepare_sdist(
     assert wheel.name == "demo-0.1.0-py3-none-any.whl"
 
 
+@pytest.mark.network
 def test_prepare_directory(
     config: Config,
     config_cache_dir: Path,
@@ -121,6 +123,7 @@ def test_prepare_directory(
     os.unlink(wheel)
 
 
+@pytest.mark.network
 def test_prepare_directory_with_extensions(
     config: Config,
     config_cache_dir: Path,
@@ -140,6 +143,7 @@ def test_prepare_directory_with_extensions(
     os.unlink(wheel)
 
 
+@pytest.mark.network
 def test_prepare_directory_editable(
     config: Config,
     config_cache_dir: Path,

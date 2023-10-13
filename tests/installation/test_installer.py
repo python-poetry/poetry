@@ -1152,6 +1152,7 @@ def test_run_installs_extras_with_deps_if_requested_locked(
     assert installer.executor.installations_count == 4  # A, B, C, D
 
 
+@pytest.mark.network
 def test_installer_with_pypi_repository(
     package: ProjectPackage,
     locker: Locker,
