@@ -682,7 +682,6 @@ class Provider:
                 if python_constraint_intersection.is_empty():
                     # This dependency is not needed under current python constraint.
                     continue
-                dep.transitive_python_versions = str(python_constraint_intersection)
 
             clean_dependencies.append(dep)
 
