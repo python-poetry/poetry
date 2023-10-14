@@ -647,11 +647,11 @@ reference = "legacy"
     with pytest.raises(RuntimeError) as e:
         _ = locker.lock_data
 
-        assert (
-            "The lock file does not have a metadata entry.\nRegenerate the lock file with"
-            " the `poetry lock` command."
-            in str(e.value)
-        )
+    assert (
+        "The lock file does not have a metadata entry.\nRegenerate the lock file with"
+        " the `poetry lock` command."
+        in str(e.value)
+    )
 
 
 def test_locking_legacy_repository_package_should_include_source_section(
