@@ -338,6 +338,7 @@ def test_authenticator_request_retries_on_status_code(
     with pytest.raises(requests.exceptions.HTTPError) as excinfo:
         authenticator.request("get", sdist_uri)
 
+    assert excinfo.value.response is not None
     assert excinfo.value.response.status_code == status
     assert excinfo.value.response.text == content
 
