@@ -622,6 +622,38 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert "Unable to read the lock file" in str(e.value)
 
 
+def test_reading_lock_file_should_raise_an_error_on_missing_metadata(
+    locker: Locker,
+) -> None:
+    content = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+files = []
+
+[package.source]
+type = "legacy"
+url = "https://foo.bar"
+reference = "legacy"
+"""
+    with locker.lock.open("w", encoding="utf-8") as f:
+        f.write(content)
+
+    with pytest.raises(RuntimeError) as e:
+        _ = locker.lock_data
+
+    assert (
+        "The lock file does not have a metadata entry.\nRegenerate the lock file with"
+        " the `poetry lock` command."
+        in str(e.value)
+    )
+
+
 def test_locking_legacy_repository_package_should_include_source_section(
     root: ProjectPackage, locker: Locker
 ) -> None:
