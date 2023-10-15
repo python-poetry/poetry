@@ -31,17 +31,20 @@ if TYPE_CHECKING:
 class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
-            message = (
-                f"HTTP Error {error.response.status_code}: {error.response.reason} |"
-                f" {error.response.content!r}"
-            )
+            if error.response is None:
+                message = "HTTP Error connecting to the repository"
+            else:
+                message = (
+                    f"HTTP Error {error.response.status_code}: "
+                    f"{error.response.reason} | {error.response.content!r}"
+                )
         elif isinstance(error, ConnectionError):
             message = (
                 "Connection Error: We were unable to connect to the repository, "
                 "ensure the url is correct and can be reached."
             )
         else:
-            message = str(error)
+            message = error
         super().__init__(message)
 
 
