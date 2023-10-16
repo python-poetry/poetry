@@ -6,13 +6,16 @@ import os
 import shutil
 import stat
 import sys
+import tarfile
 import tempfile
+import zipfile
 
 from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import overload
 
 from requests.utils import atomic_open
 
@@ -22,6 +25,7 @@ from poetry.utils.constants import REQUESTS_TIMEOUT
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
+    from types import TracebackType
 
     from poetry.core.packages.package import Package
     from requests import Session
@@ -39,7 +43,23 @@ def directory(path: Path) -> Iterator[Path]:
         os.chdir(cwd)
 
 
-def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) -> None:
+# Correct type signature when used as `shutil.rmtree(..., onexc=_on_rm_error)`.
+@overload
+def _on_rm_error(
+    func: Callable[[str], None], path: str, exc_info: Exception
+) -> None: ...
+
+
+# Correct type signature when used as `shutil.rmtree(..., onerror=_on_rm_error)`.
+@overload
+def _on_rm_error(
+    func: Callable[[str], None],
+    path: str,
+    exc_info: tuple[type[BaseException], BaseException, TracebackType],
+) -> None: ...
+
+
+def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Any) -> None:
     if not os.path.exists(path):
         return
 
@@ -47,9 +67,7 @@ def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Exception) ->
     func(path)
 
 
-def remove_directory(
-    path: Path, *args: Any, force: bool = False, **kwargs: Any
-) -> None:
+def remove_directory(path: Path, force: bool = False) -> None:
     """
     Helper function handle safe removal, and optionally forces stubborn file removal.
     This is particularly useful when dist files are read-only or git writes read-only
@@ -60,8 +78,12 @@ def remove_directory(
     if path.is_symlink():
         return os.unlink(path)
 
-    kwargs["onerror"] = kwargs.pop("onerror", _on_rm_error if force else None)
-    shutil.rmtree(path, *args, **kwargs)
+    kwargs: dict[str, Any] = {}
+    if force:
+        onexc = "onexc" if sys.version_info >= (3, 12) else "onerror"
+        kwargs[onexc] = _on_rm_error
+
+    shutil.rmtree(path, **kwargs)
 
 
 def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
@@ -246,3 +268,16 @@ def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
             h.update(content)
 
     return h.hexdigest()
+
+
+def extractall(source: Path, dest: Path, zip: bool) -> None:
+    """Extract all members from either a zip or tar archive."""
+    if zip:
+        with zipfile.ZipFile(source) as archive:
+            archive.extractall(dest)
+    else:
+        with tarfile.open(source) as archive:
+            if hasattr(tarfile, "data_filter"):
+                archive.extractall(dest, filter="data")
+            else:
+                archive.extractall(dest)

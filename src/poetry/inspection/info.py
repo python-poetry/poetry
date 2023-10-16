@@ -5,8 +5,6 @@ import functools
 import glob
 import logging
 import os
-import tarfile
-import zipfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,13 +23,12 @@ from poetry.core.version.requirements import InvalidRequirement
 from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
+from poetry.utils.helpers import extractall
 from poetry.utils.setup_reader import SetupReader
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from collections.abc import Iterator
-    from contextlib import AbstractContextManager
 
     from poetry.core.packages.project_package import ProjectPackage
 
@@ -291,26 +288,18 @@ class PackageInfo:
         # Still not dependencies found
         # So, we unpack and introspect
         suffix = path.suffix
+        zip = suffix == ".zip"
 
-        context: Callable[
-            [str], AbstractContextManager[zipfile.ZipFile | tarfile.TarFile]
-        ]
-        if suffix == ".zip":
-            context = zipfile.ZipFile
-        else:
-            if suffix == ".bz2":
-                suffixes = path.suffixes
-                if len(suffixes) > 1 and suffixes[-2] == ".tar":
-                    suffix = ".tar.bz2"
-            else:
-                suffix = ".tar.gz"
-
-            context = tarfile.open
+        if suffix == ".bz2":
+            suffixes = path.suffixes
+            if len(suffixes) > 1 and suffixes[-2] == ".tar":
+                suffix = ".tar.bz2"
+        elif not zip:
+            suffix = ".tar.gz"
 
         with temporary_directory() as tmp_str:
             tmp = Path(tmp_str)
-            with context(path.as_posix()) as archive:
-                archive.extractall(tmp.as_posix())
+            extractall(source=path, dest=tmp, zip=zip)
 
             # a little bit of guess work to determine the directory we care about
             elements = list(tmp.glob("*"))
