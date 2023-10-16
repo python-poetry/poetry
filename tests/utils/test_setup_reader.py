@@ -28,8 +28,8 @@ def test_setup_reader_read_minimal_setup_py(setup: Callable[[str], Path]) -> Non
     expected_name = None
     expected_version = None
     expected_description = None
-    expected_install_requires = []
-    expected_extras_require = {}
+    expected_install_requires: list[str] = []
+    expected_extras_require: dict[str, list[str]] = {}
     expected_python_requires = None
 
     assert result["name"] == expected_name
@@ -160,8 +160,8 @@ def test_setup_reader_read_minimal_setup_cfg(setup: Callable[[str], Path]) -> No
     expected_name = None
     expected_version = None
     expected_description = None
-    expected_install_requires = []
-    expected_extras_require = {}
+    expected_install_requires: list[str] = []
+    expected_extras_require: dict[str, list[str]] = {}
     expected_python_requires = None
 
     assert result["name"] == expected_name
