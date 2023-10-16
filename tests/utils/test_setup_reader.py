@@ -22,6 +22,24 @@ def setup() -> Callable[[str], Path]:
     return _setup
 
 
+def test_setup_reader_read_minimal_setup_py(setup: Callable[[str], Path]) -> None:
+    result = SetupReader.read_from_directory(setup("minimal"))
+
+    expected_name = None
+    expected_version = None
+    expected_description = None
+    expected_install_requires = []
+    expected_extras_require = {}
+    expected_python_requires = None
+
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["description"] == expected_description
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
+
+
 def test_setup_reader_read_first_level_setup_call_with_direct_types(
     setup: Callable[[str], Path]
 ) -> None:
@@ -127,6 +145,24 @@ def test_setup_reader_read_setup_cfg(setup: Callable[[str], Path]) -> None:
         "tests": ["pytest", "pytest-xdist", "pytest-cov"],
     }
     expected_python_requires = ">=2.6,!=3.0,!=3.1,!=3.2,!=3.3"
+
+    assert result["name"] == expected_name
+    assert result["version"] == expected_version
+    assert result["description"] == expected_description
+    assert result["install_requires"] == expected_install_requires
+    assert result["extras_require"] == expected_extras_require
+    assert result["python_requires"] == expected_python_requires
+
+
+def test_setup_reader_read_minimal_setup_cfg(setup: Callable[[str], Path]) -> None:
+    result = SetupReader.read_from_directory(setup("with-setup-cfg-minimal"))
+
+    expected_name = None
+    expected_version = None
+    expected_description = None
+    expected_install_requires = []
+    expected_extras_require = {}
+    expected_python_requires = None
 
     assert result["name"] == expected_name
     assert result["version"] == expected_version
