@@ -22,6 +22,7 @@ class SetupReader:
     DEFAULT: ClassVar[dict[str, Any]] = {
         "name": None,
         "version": None,
+        "description": None,
         "install_requires": [],
         "extras_require": {},
         "python_requires": None,
@@ -62,6 +63,7 @@ class SetupReader:
         call, body = setup_call
         result["name"] = self._find_single_string(call, body, "name")
         result["version"] = self._find_single_string(call, body, "version")
+        result["description"] = self._find_single_string(call, body, "description")
         result["install_requires"] = self._find_install_requires(call, body)
         result["extras_require"] = self._find_extras_require(call, body)
         result["python_requires"] = self._find_single_string(
@@ -77,11 +79,15 @@ class SetupReader:
 
         name = None
         version = None
+        description = None
         if parser.has_option("metadata", "name"):
             name = parser.get("metadata", "name")
 
         if parser.has_option("metadata", "version"):
             version = Version.parse(parser.get("metadata", "version")).text
+
+        if parser.has_option("metadata", "description"):
+            description = parser.get("metadata", "description")
 
         install_requires = []
         extras_require: dict[str, list[str]] = {}
@@ -112,6 +118,7 @@ class SetupReader:
         return {
             "name": name,
             "version": version,
+            "description": description,
             "install_requires": install_requires,
             "extras_require": extras_require,
             "python_requires": python_requires,
