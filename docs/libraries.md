@@ -52,7 +52,17 @@ poetry build
 This command will package your library in two different formats: `sdist` which is
 the source format, and `wheel` which is a `compiled` package.
 
-Once that's done you are ready to publish your library
+If present in the project root directory, Poetry will automatically include the following files:
+- in the `.dist-info` directory of a `wheel`:
+  - `LICENSE`
+  - `LICENSE.*`
+  - `COPYING`
+  - `COPYING.*`
+  - `LICENSES/**`
+- in the root of a `sdist`:
+  - `LICENSE*`
+
+Once this is done you are ready to publish your library.
 
 ## Publishing to PyPI
 
