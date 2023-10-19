@@ -77,7 +77,7 @@ class Uploader:
         self._password = password
 
     def make_session(self) -> requests.Session:
-        session = requests.session()
+        session = requests.Session()
         auth = self.get_auth()
         if auth is not None:
             session.auth = auth
