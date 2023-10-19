@@ -11,6 +11,7 @@ from typing import Any
 from typing import Iterator
 
 import requests
+import requests.adapters
 
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
@@ -44,6 +45,7 @@ class HTTPRepository(CachedRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         super().__init__(name, disable_cache, config)
         self._url = url
@@ -51,6 +53,7 @@ class HTTPRepository(CachedRepository):
             config=config,
             cache_id=name,
             disable_cache=disable_cache,
+            pool_size=pool_size,
         )
         self._authenticator.add_repository(name, url)
         self.get_page = functools.lru_cache(maxsize=None)(self._get_page)

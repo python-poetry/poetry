@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import requests
+import requests.adapters
 
 from cachecontrol.controller import logger as cache_control_logger
 from poetry.core.packages.package import Package
@@ -38,9 +39,13 @@ class PyPiRepository(HTTPRepository):
         url: str = "https://pypi.org/",
         disable_cache: bool = False,
         fallback: bool = True,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         super().__init__(
-            "PyPI", url.rstrip("/") + "/simple/", disable_cache=disable_cache
+            "PyPI",
+            url.rstrip("/") + "/simple/",
+            disable_cache=disable_cache,
+            pool_size=pool_size,
         )
 
         self._base_url = url
