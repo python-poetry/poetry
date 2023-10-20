@@ -327,6 +327,8 @@ class Env:
             "-I",
             "-W",
             "ignore",
+            "-X",
+            "utf8",
             "-",
             input_=content,
             stderr=subprocess.PIPE,
@@ -352,6 +354,7 @@ class Env:
                     check=True,
                     env=env,
                     text=True,
+                    encoding="utf-8",
                     **kwargs,
                 ).stdout
             elif call:
