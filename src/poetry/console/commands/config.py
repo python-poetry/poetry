@@ -77,6 +77,7 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
             ),
+            "warnings.export": (boolean_validator, boolean_normalizer),
         }
 
         return unique_config_values

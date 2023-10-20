@@ -720,9 +720,17 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
+{{% warning %}}
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
+In a future version of Poetry this plugin will not be installed by default anymore.
+In order to avoid a breaking change and make your automation forward-compatible,
+please install poetry-plugin-export explicitly.
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) for details on how to install a plugin.
+{{% /warning %}}
+
 {{% note %}}
-This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
-and is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
+This command is also available as a pre-commit hook.
+See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
 {{% note %}}
