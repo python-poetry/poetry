@@ -77,7 +77,7 @@ class Uploader:
         self._password = password
 
     def make_session(self) -> requests.Session:
-        session = requests.session()
+        session = requests.Session()
         auth = self.get_auth()
         if auth is not None:
             session.auth = auth
@@ -106,10 +106,8 @@ class Uploader:
         if client_cert:
             session.cert = str(client_cert)
 
-        try:
+        with session:
             self._upload(session, url, dry_run, skip_existing)
-        finally:
-            session.close()
 
     def post_data(self, file: Path) -> dict[str, Any]:
         meta = Metadata.from_package(self._package)
