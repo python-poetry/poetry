@@ -327,8 +327,8 @@ class Env:
             "-I",
             "-W",
             "ignore",
-            "-",
-            input_=content,
+            "-c",
+            content,
             stderr=subprocess.PIPE,
             **kwargs,
         )
@@ -338,23 +338,11 @@ class Env:
         Run a command inside the Python environment.
         """
         call = kwargs.pop("call", False)
-        input_ = kwargs.pop("input_", None)
         env = kwargs.pop("env", dict(os.environ))
         stderr = kwargs.pop("stderr", subprocess.STDOUT)
 
         try:
-            if input_:
-                output: str = subprocess.run(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=stderr,
-                    input=input_,
-                    check=True,
-                    env=env,
-                    text=True,
-                    **kwargs,
-                ).stdout
-            elif call:
+            if call:
                 assert stderr != subprocess.PIPE
                 subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
                 output = ""
@@ -363,7 +351,7 @@ class Env:
                     cmd, stderr=stderr, env=env, text=True, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e, input=input_)
+            raise EnvCommandError(e)
 
         return output
 
