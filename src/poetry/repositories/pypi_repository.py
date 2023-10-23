@@ -49,7 +49,7 @@ class PyPiRepository(HTTPRepository):
     def search(self, query: str) -> list[Package]:
         results = []
 
-        response = requests.session().get(
+        response = requests.get(
             self._base_url + "search", params={"q": query}, timeout=REQUESTS_TIMEOUT
         )
         parser = SearchResultParser()
