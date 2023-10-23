@@ -53,7 +53,7 @@ This command will package your library in two different formats: `sdist` which i
 the source format, and `wheel` which is a `compiled` package.
 
 Poetry will automatically include some metadata files when building a package. When building
-a wheel, the following files are included in the `.dist-info` directory:
+a `wheel`, the following files are included in the `.dist-info` directory:
 - `LICENSE`
 - `LICENSE.*`
 - `COPYING`
