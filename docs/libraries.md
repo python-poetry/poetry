@@ -60,7 +60,7 @@ a `wheel`, the following files are included in the `.dist-info` directory:
 - `COPYING.*`
 - `LICENSES/**`
 
-When building a sdist, the following files will be included in the root folder:
+When building an `sdist`, the following files will be included in the root folder:
   - `LICENSE*`
 
 Once building is done you are ready to publish your library.
