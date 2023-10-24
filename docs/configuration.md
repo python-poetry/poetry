@@ -445,7 +445,7 @@ The variables `project_name` and `python_version` are available for formatting.
 
 Set the repository URL for `<name>`.
 
-See [Repositories]({{< relref "repositories" >}}) for more information.
+See [Publishable Repositories]({{< relref "repositories#publishable-repositories" >}}) for more information.
 
 ### `http-basic.<name>.[username|password]`:
 
