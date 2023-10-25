@@ -437,19 +437,21 @@ If set to `false`, Python version used during Poetry installation is used.
 Format string defining the prompt to be displayed when the virtual environment is activated.
 The variables `project_name` and `python_version` are available for formatting.
 
-### `repositories.<name>`
+### `repositories.<name>.url`
 
 **Type**: `string`
 
-**Environment Variable**: `POETRY_REPOSITORIES_<NAME>`
+**Environment Variable**: `POETRY_REPOSITORIES_<NAME>_URL`
 
-Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
+Set the repository URL for `<name>`.
 
-### `http-basic.<name>`:
+See [Publishable Repositories]({{< relref "repositories#publishable-repositories" >}}) for more information.
 
-**Type**: `(string, string)`
+### `http-basic.<name>.[username|password]`:
 
-**Environment Variable**: `POETRY_HTTP_BASIC_<NAME>`
+**Type**: `string`
+
+**Environment Variables**: `POETRY_HTTP_BASIC_<NAME>_USERNAME`, `POETRY_HTTP_BASIC_<NAME>_PASSWORD`
 
 Set repository credentials (`username` and `password`) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
