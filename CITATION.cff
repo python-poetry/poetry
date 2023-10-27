@@ -1,10 +1,15 @@
 cff-version: 1.2.0
-title: 'python-poetry/poetry: Poetry'
-message: 'If you use this software, please cite it as below.'
+title: "Poetry: Python packaging and dependency management made easy"
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
 authors:
-  - name: "Sébastien Eustace"
+  - family-names: Eustace
+    given-names: Sébastien
   - name: "The Poetry contributors"
-abstract: "Python packaging and dependency management made easy."
+abstract:  >-
+  Poetry helps you declare, manage and install dependencies of Python projects, ensuring you have the right stack everywhere.
+  Poetry replaces setup.py, requirements.txt, setup.cfg, MANIFEST.in and Pipfile with a simple pyproject.toml based project format.
 license: MIT
 license-url: "https://github.com/python-poetry/poetry/blob/master/LICENSE"
 repository-code: "https://github.com/python-poetry/poetry"
