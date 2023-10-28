@@ -20,7 +20,7 @@ class IncorrectEnvError(EnvError):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e: CalledProcessError, input: str | None = None) -> None:
+    def __init__(self, e: CalledProcessError) -> None:
         self.e = e
 
         message_parts = [
@@ -30,8 +30,6 @@ class EnvCommandError(EnvError):
             message_parts.append(f"Output:\n{decode(e.output)}")
         if e.stderr:
             message_parts.append(f"Error output:\n{decode(e.stderr)}")
-        if input:
-            message_parts.append(f"Input:\n{input}")
         super().__init__("\n\n".join(message_parts))
 
 

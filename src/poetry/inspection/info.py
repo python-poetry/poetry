@@ -586,11 +586,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 "--no-input",
                 *PEP517_META_BUILD_DEPS,
             )
-            venv.run(
-                "python",
-                "-",
-                input_=pep517_meta_build_script,
-            )
+            venv.run_python_script(pep517_meta_build_script)
             info = PackageInfo.from_metadata(dest_dir)
         except EnvCommandError as e:
             # something went wrong while attempting pep517 metadata build
