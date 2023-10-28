@@ -4,7 +4,6 @@ import contextlib
 import csv
 import itertools
 import json
-import os
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -73,9 +72,7 @@ class Executor:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            self._max_workers = self._get_max_workers(
-                desired_max_workers=config.get("installer.max-workers")
-            )
+            self._max_workers = config.installer_max_workers
         else:
             self._max_workers = 1
 
@@ -222,21 +219,6 @@ class Executor:
             self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
         return 1 if self._shutdown else 0
-
-    @staticmethod
-    def _get_max_workers(desired_max_workers: int | None = None) -> int:
-        # This should be directly handled by ThreadPoolExecutor
-        # however, on some systems the number of CPUs cannot be determined
-        # (it raises a NotImplementedError), so, in this case, we assume
-        # that the system only has one CPU.
-        try:
-            default_max_workers = (os.cpu_count() or 1) + 4
-        except NotImplementedError:
-            default_max_workers = 5
-
-        if desired_max_workers is None:
-            return default_max_workers
-        return min(default_max_workers, desired_max_workers)
 
     def _write(self, operation: Operation, line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(

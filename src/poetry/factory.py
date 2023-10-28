@@ -224,12 +224,14 @@ class Factory(BaseFactory):
         except KeyError:
             raise InvalidSourceError("Missing [name] in source.")
 
+        pool_size = config.installer_max_workers
+
         if name.lower() == "pypi":
             if "url" in source:
                 raise InvalidSourceError(
                     "The PyPI repository cannot be configured with a custom url."
                 )
-            return PyPiRepository(disable_cache=disable_cache)
+            return PyPiRepository(disable_cache=disable_cache, pool_size=pool_size)
 
         try:
             url = source["url"]
@@ -246,6 +248,7 @@ class Factory(BaseFactory):
             url,
             config=config,
             disable_cache=disable_cache,
+            pool_size=pool_size,
         )
 
     @classmethod

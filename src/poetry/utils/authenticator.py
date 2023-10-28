@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import requests
+import requests.adapters
 import requests.auth
 import requests.exceptions
 
@@ -110,7 +111,7 @@ class Authenticator:
         io: IO | None = None,
         cache_id: str | None = None,
         disable_cache: bool = False,
-        pool_size: int = 10,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         self._config = config or Config.create()
         self._io = io
