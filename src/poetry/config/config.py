@@ -133,6 +133,9 @@ class Config:
             "max-workers": None,
             "no-binary": None,
         },
+        "warnings": {
+            "export": True,
+        },
     }
 
     def __init__(
@@ -279,6 +282,7 @@ class Config:
             "experimental.system-git-client",
             "installer.modern-installation",
             "installer.parallel",
+            "warnings.export",
         }:
             return boolean_normalizer
 
