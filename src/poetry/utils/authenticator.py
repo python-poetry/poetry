@@ -117,9 +117,9 @@ class Authenticator:
         self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, HTTPAuthCredential] = {}
         self._certs: dict[str, RepositoryCertificateConfig] = {}
-        self._configured_repositories: dict[
-            str, AuthenticatorRepositoryConfig
-        ] | None = None
+        self._configured_repositories: (
+            dict[str, AuthenticatorRepositoryConfig] | None
+        ) = None
         self._password_manager = PasswordManager(self._config)
         self._cache_control = (
             FileCache(

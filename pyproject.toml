@@ -142,10 +142,7 @@ required-imports = ["from __future__ import annotations"]
 [tool.black]
 target-version = ['py38']
 preview = true
-force-exclude = '''
-.*/setup\.py$
-'''
-
+extend-exclude = "tests/([^/]*/)*fixtures/"
 
 [tool.mypy]
 files = "src, tests"
