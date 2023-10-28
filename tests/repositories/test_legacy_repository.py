@@ -130,11 +130,11 @@ def test_page_filters_out_invalid_package_names() -> None:
     assert package.files == [
         {
             "file": "pytest-3.5.0-py2.py3-none-any.whl",
-            "hash": "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c",  # noqa: E501
+            "hash": "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c",
         },
         {
             "file": "pytest-3.5.0.tar.gz",
-            "hash": "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1",  # noqa: E501
+            "hash": "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1",
         },
     ]
 
@@ -383,11 +383,11 @@ def test_get_package_retrieves_non_sha256_hashes() -> None:
     expected = [
         {
             "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",  # noqa: E501
+            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",
         },
         {
             "file": "ipython-7.5.0.tar.gz",
-            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",  # noqa: E501
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
         },
     ]
 
@@ -406,11 +406,11 @@ def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash() -> Non
         },
         {
             "file": "ipython-5.7.0-py3-none-any.whl",
-            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",  # noqa: E501
+            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",
         },
         {
             "file": "ipython-5.7.0.tar.gz",
-            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",  # noqa: E501
+            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",
         },
     ]
 
@@ -425,7 +425,7 @@ def test_get_package_retrieves_packages_with_no_hashes() -> None:
     assert [
         {
             "file": "jupyter-1.0.0.tar.gz",
-            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
+            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",
         }
     ] == package.files
 

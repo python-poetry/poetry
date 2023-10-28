@@ -394,7 +394,7 @@ class VersionSolver:
             # details.
             #
             # .. _algorithm documentation:
-            # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
+            # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
             if difference is not None:
                 inverse = difference.inverse
                 if inverse.dependency != most_recent_satisfier.dependency:
