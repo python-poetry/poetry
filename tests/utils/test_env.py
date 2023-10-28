@@ -1124,7 +1124,7 @@ def test_run_python_script_only_stdout(tmp_path: Path, tmp_venv: VirtualEnv) -> 
     assert "some warning" not in output
 
 
-def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(  # noqa: E501
+def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,

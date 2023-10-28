@@ -322,7 +322,7 @@ class Uploader:
         raise ValueError("Unknown distribution format " + "".join(exts))
 
     def _is_file_exists_error(self, response: requests.Response) -> bool:
-        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32  # noqa: E501
+        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32
         status = response.status_code
         reason = response.reason.lower()
         text = response.text.lower()

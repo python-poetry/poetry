@@ -121,7 +121,7 @@ def test_missing_cache_file(poetry_file_cache: FileCache[Any]) -> None:
 
     key1_path = (
         poetry_file_cache.path
-        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
+        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"
     )
     assert key1_path.exists()
     key1_path.unlink()  # corrupt cache by removing a key file
@@ -159,7 +159,7 @@ def test_detect_corrupted_cache_key_file(
 
     key1_path = (
         poetry_file_cache.path
-        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
+        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"
     )
     assert key1_path.exists()
 

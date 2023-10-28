@@ -819,7 +819,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
+def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
     locker: Locker, caplog: LogCaptureFixture
 ) -> None:
     older_version = "1.1"
