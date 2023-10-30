@@ -22,3 +22,12 @@ def test_python_get_version_on_the_fly() -> None:
     assert python.minor_version == Version.parse(
         ".".join([str(s) for s in sys.version_info[:2]])
     )
+
+
+def test_python_get_system_python() -> None:
+    python = Python.get_system_python()
+
+    assert python.executable == Path(sys.executable)
+    assert python.version == Version.parse(
+        ".".join(str(v) for v in sys.version_info[:3])
+    )
