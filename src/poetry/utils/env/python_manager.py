@@ -46,3 +46,7 @@ class Python:
     @cached_property
     def minor_version(self) -> Version:
         return Version.from_parts(major=self.version.major, minor=self.version.minor)
+
+    @classmethod
+    def get_system_python(cls) -> Python:
+        return cls(executable=sys.executable)
