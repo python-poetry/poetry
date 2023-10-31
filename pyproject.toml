@@ -32,11 +32,11 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.7.0"
-poetry-plugin-export = "^1.5.0"
+poetry-core = "1.8.1"
+poetry-plugin-export = "^1.6.0"
 build = "^1.0.3"
 cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
-cleo = "^2.0.0"
+cleo = "^2.1.0"
 crashtest = "^0.4.1"
 dulwich = "^0.21.2"
 fastjsonschema = "^2.18.0"
@@ -44,7 +44,7 @@ importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
 keyring = "^24.0.0"
 # packaging uses calver, so version is unclamped
-packaging = ">=20.4"
+packaging = ">=20.5"
 pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = "^3.0.0"
@@ -60,11 +60,11 @@ virtualenv = "^20.23.0"
 xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = ">=2.6"
+pre-commit = ">=2.10"
 
 [tool.poetry.group.test.dependencies]
 deepdiff = "^6.3"
-httpretty = "^1.0"
+httpretty = "^1.1"
 pytest = "^7.1"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
