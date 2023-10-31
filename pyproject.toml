@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.7.0.dev0"
+version = "1.7.0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -23,6 +23,8 @@ keywords = ["packaging", "dependency", "poetry"]
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    # Classifiers for Python 3.12 can be removed after Poetry 1.7.0 has been released.
+    "Programming Language :: Python :: 3.12",
 ]
 
 [tool.poetry.urls]
