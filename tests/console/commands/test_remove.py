@@ -327,7 +327,7 @@ Resolving dependencies...
 
 Package operations: 0 installs, 0 updates, 1 removal
 
-  • Removing docker (4.3.1)
+  - Removing docker (4.3.1)
 
 Writing lock file
 """

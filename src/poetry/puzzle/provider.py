@@ -580,18 +580,18 @@ class Provider:
         # the requirements will be merged.
         #
         # For instance:
-        #   • enum34; python_version=="2.7"
-        #   • enum34; python_version=="3.3"
+        #   - enum34; python_version=="2.7"
+        #   - enum34; python_version=="3.3"
         #
         # will become:
-        #   • enum34; python_version=="2.7" or python_version=="3.3"
+        #   - enum34; python_version=="2.7" or python_version=="3.3"
         #
         # If the duplicate dependencies have different constraints
         # we have to split the dependency graph.
         #
         # An example of this is:
-        #   • pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
-        #   • pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
+        #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
+        #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates: dict[str, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
             duplicates[dep.complete_name].append(dep)
@@ -617,13 +617,13 @@ class Provider:
             # tell the solver to make new resolutions with specific overrides.
             #
             # For instance, if the foo (1.2.3) package has the following dependencies:
-            #   • bar (>=2.0) ; python_version >= "3.6"
-            #   • bar (<2.0) ; python_version < "3.6"
+            #   - bar (>=2.0) ; python_version >= "3.6"
+            #   - bar (<2.0) ; python_version < "3.6"
             #
             # then the solver will need to make two new resolutions
             # with the following overrides:
-            #   • {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
-            #   • {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
+            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
+            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
 
             def fmt_warning(d: Dependency) -> str:
                 dependency_marker = d.marker if not d.marker.is_any() else "*"
@@ -915,10 +915,10 @@ class Provider:
                 # This is an edge case where the dependency is not required
                 # for the resulting marker. However, we have to consider it anyway
                 #  in order to not miss other dependencies later, for instance:
-                #   • foo (1.0) ; python == 3.7
-                #   • foo (2.0) ; python == 3.8
-                #   • bar (2.0) ; python == 3.8
-                #   • bar (3.0) ; python == 3.9
+                #   - foo (1.0) ; python == 3.7
+                #   - foo (2.0) ; python == 3.8
+                #   - bar (2.0) ; python == 3.8
+                #   - bar (3.0) ; python == 3.9
                 # the last dependency would be missed without this,
                 # because the intersection with both foo dependencies is empty.
 

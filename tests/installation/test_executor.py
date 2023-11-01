@@ -256,13 +256,13 @@ def test_execute_executes_a_batch_of_operations(
     expected = f"""
 Package operations: 4 installs, 2 updates, 1 removal
 
-  • Installing pytest (3.5.1)
-  • Removing attrs (17.4.0)
-  • Updating requests (2.18.3 -> 2.18.4)
-  • Downgrading pytest (3.5.1 -> 3.5.0)
-  • Installing demo (0.1.0 {file_package.source_url})
-  • Installing simple-project (1.2.3 {directory_package.source_url})
-  • Installing demo (0.1.0 master)
+  - Installing pytest (3.5.1)
+  - Removing attrs (17.4.0)
+  - Updating requests (2.18.3 -> 2.18.4)
+  - Downgrading pytest (3.5.1 -> 3.5.0)
+  - Installing demo (0.1.0 {file_package.source_url})
+  - Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing demo (0.1.0 master)
 """
 
     expected_lines = set(expected.splitlines())
@@ -419,7 +419,7 @@ def test_execute_shows_skipped_operations_if_verbose(
     expected = """
 Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 
-  • Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
+  - Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
 """
     assert io.fetch_output() == expected
     assert len(env.executed) == 0
@@ -442,7 +442,7 @@ def test_execute_should_show_errors(
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing clikit (0.2.3)
+  - Installing clikit (0.2.3)
 
   Exception
 
@@ -473,10 +473,10 @@ def test_execute_works_with_ansi_output(
     # fmt: off
     expected = [
         "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
+        "\x1b[32;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished
     ]
     # fmt: on
 
@@ -510,7 +510,7 @@ def test_execute_works_with_no_ansi_output(
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cleo (1.0.0a5)
+  - Installing cleo (1.0.0a5)
 """
     expected_lines = set(expected.splitlines())
     output_lines = set(io_not_decorated.fetch_output().splitlines())
@@ -536,8 +536,8 @@ def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_inter
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing clikit (0.2.3)
-  • Installing clikit (0.2.3): Cancelled
+  - Installing clikit (0.2.3)
+  - Installing clikit (0.2.3): Cancelled
 """
 
     assert io.fetch_output() == expected
@@ -557,6 +557,7 @@ def test_execute_should_gracefully_handle_io_error(
 
     def write_line(string: str, **kwargs: Any) -> None:
         # Simulate UnicodeEncodeError
+        string = string.replace("-", "•")
         string.encode("ascii")
         original_write_line(string, **kwargs)
 
@@ -1228,7 +1229,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     expected = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing simple-project (1.2.3 {directory_package.source_url})
 """
 
     expected_lines = set(expected.splitlines())
@@ -1290,7 +1291,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     expected_start = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   ChefBuildError
 
@@ -1392,7 +1393,7 @@ def test_build_system_requires_not_available(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   SolveFailure
 
@@ -1439,7 +1440,7 @@ def test_build_system_requires_install_failure(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   ChefInstallError
 
@@ -1491,7 +1492,7 @@ def test_other_error(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   FileNotFoundError
 """
