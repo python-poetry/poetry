@@ -348,6 +348,11 @@ In addition, the isolated virtual environment in which poetry is installed shoul
 ## Enable tab completion for Bash, Fish, or Zsh
 
 `poetry` supports generating completion scripts for Bash, Fish, and Zsh.
+
+{{% note %}}
+You may need to restart your shell in order for these changes to take effect.
+{{% /note %}}
+
 See `poetry help completions` for full details, but the gist is as simple as using one of the following:
 
 ### Bash
@@ -398,12 +403,10 @@ plugins(
 	)
 ```
 
-#### prezto
+#### Prezto
 
 ```zsh
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 ```
 
-{{% note %}}
-You may need to restart your shell in order for these changes to take effect.
-{{% /note %}}
+If completions still don't work, try removing `~/.cache/prezto/zcompcache` and starting a new shell.
