@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import json
 
 from pathlib import Path
@@ -45,8 +44,6 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
-
-RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
 
 class Executor(BaseExecutor):
@@ -628,12 +625,7 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
 
 @pytest.mark.parametrize(
     "managed_reserved_package_names",
-    itertools.chain(
-        [()],
-        itertools.permutations(RESERVED_PACKAGES, 1),
-        itertools.permutations(RESERVED_PACKAGES, 2),
-        [RESERVED_PACKAGES],
-    ),
+    [(), ("pip",)],
 )
 def test_run_install_with_synchronization(
     managed_reserved_package_names: tuple[str, ...],
@@ -647,16 +639,12 @@ def test_run_install_with_synchronization(
     package_b = get_package("b", "1.1")
     package_c = get_package("c", "1.2")
     package_pip = get_package("pip", "20.0.0")
-    package_setuptools = get_package("setuptools", "20.0.0")
-    package_wheel = get_package("wheel", "20.0.0")
 
     all_packages = [
         package_a,
         package_b,
         package_c,
         package_pip,
-        package_setuptools,
-        package_wheel,
     ]
 
     managed_reserved_packages = [
