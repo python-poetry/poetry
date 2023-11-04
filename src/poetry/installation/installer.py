@@ -267,7 +267,7 @@ class Installer:
             ops = self._get_operations_from_lock(locked_repository)
 
         lockfile_repo = LockfileRepository()
-        self._populate_lockfile_repo(lockfile_repo, ops)
+        uninstalls = self._populate_lockfile_repo(lockfile_repo, ops)
 
         if not self.executor.enabled:
             # If we are only in lock mode, no need to go any further
@@ -324,6 +324,8 @@ class Installer:
                 for op in transaction.calculate_operations(with_uninstalls=True)
                 if op.job_type == "uninstall"
             ] + ops
+        else:
+            ops = uninstalls + ops
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -359,17 +361,18 @@ class Installer:
 
     def _populate_lockfile_repo(
         self, repo: LockfileRepository, ops: Iterable[Operation]
-    ) -> None:
+    ) -> list[Uninstall]:
+        uninstalls = []
         for op in ops:
             if isinstance(op, Uninstall):
+                uninstalls.append(op)
                 continue
-            elif isinstance(op, Update):
-                package = op.target_package
-            else:
-                package = op.package
 
+            package = op.target_package if isinstance(op, Update) else op.package
             if not repo.has_package(package):
                 repo.add_package(package)
+
+        return uninstalls
 
     def _get_operations_from_lock(
         self, locked_repository: Repository
