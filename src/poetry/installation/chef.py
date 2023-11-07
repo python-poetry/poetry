@@ -129,10 +129,8 @@ class Chef:
 
         with ephemeral_environment(self._env.python) as venv:
             env = IsolatedEnv(venv, self._pool)
-            builder = ProjectBuilder(
-                directory,
-                python_executable=env.python_executable,
-                runner=quiet_subprocess_runner,
+            builder = ProjectBuilder.from_isolated_env(
+                env, directory, runner=quiet_subprocess_runner
             )
             env.install(builder.build_system_requires)
 
