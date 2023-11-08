@@ -2843,10 +2843,11 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
 def test_dependency_validation_skipped_for_skipped_operations(
     installer: Installer,
     locker: Locker,
+    config: Config,
     repo: Repository,
     package: ProjectPackage,
     mocker: MockerFixture,
-):
+) -> None:
     # Mock a package with a file dependency that is invalid
     package.add_dependency(
         Factory.create_dependency(
