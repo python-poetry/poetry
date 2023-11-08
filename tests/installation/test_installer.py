@@ -2838,3 +2838,59 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
                 source_reference="repo",
             )
         ]
+
+
+def test_dependency_validation_skipped_for_skipped_operations(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
+):
+    # Mock a package with a file dependency that is invalid
+    package.add_dependency(
+        Factory.create_dependency(
+            "invalid-dep", {"file": "non-existent-file.whl"}
+        )
+    )
+
+    # Mock the repository to return the package
+    invalid_dep_package = get_package("invalid-dep", "1.0.0")
+    repo.add_package(invalid_dep_package)
+
+    # Mock the locker to indicate that the package is locked
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "invalid-dep",
+                    "version": "1.0.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"invalid-dep": []},
+            },
+        }
+    )
+
+    # Mock the executor to skip the operation
+    executor = Executor(MockEnv(), repo, config, NullIO())
+    mocker.patch.object(executor, "_do_execute_operation", return_value=0)
+    mocker.patch.object(executor, "execute", return_value=0)
+    installer.executor = executor
+
+    result = installer.run()
+
+    assert result == 0
+    assert not any(
+        op.package.name == "invalid-dep" and not op.skipped
+        for op in executor._operations
+    )
