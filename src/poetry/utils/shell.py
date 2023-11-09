@@ -72,7 +72,8 @@ class Shell:
         activate_script = self._get_activate_script()
         if WINDOWS:
             bin_dir = "Scripts"
-            if os.path.exists(str(env.path / bin_dir)) {
+            bin_path = os.path.join(env.path, bin_dir)
+            if os.path.exists(bin_path) {
                 return bin_dir
             }
             # Python innstalled via msys2 on Windows might produce a POSIX-like venv
