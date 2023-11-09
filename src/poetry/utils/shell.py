@@ -73,9 +73,8 @@ class Shell:
         if WINDOWS:
             bin_dir = "Scripts"
             bin_path = os.path.join(env.path, bin_dir)
-            if os.path.exists(bin_path) {
+            if os.path.exists(bin_path):
                 return bin_dir
-            }
             # Python innstalled via msys2 on Windows might produce a POSIX-like venv
             # See https://github.com/python-poetry/poetry/issues/8638
             bin_dir = "bin"
