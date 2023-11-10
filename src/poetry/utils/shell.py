@@ -71,10 +71,10 @@ class Shell:
     def activate(self, env: VirtualEnv) -> int | None:
         activate_script = self._get_activate_script()
         if WINDOWS:
-            bin_path = os.path.join(env.path, "Scripts")
+            bin_path = Path(env.path, "Scripts")
             # Python innstalled via msys2 on Windows might produce a POSIX-like venv
             # See https://github.com/python-poetry/poetry/issues/8638
-            bin_dir = "Scripts" if os.path.exists(bin_path) else "bin"
+            bin_dir = "Scripts" if bin_path.exists() else "bin"
         else:
             bin_dir = "bin"
         activate_path = env.path / bin_dir / activate_script
