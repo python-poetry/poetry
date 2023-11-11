@@ -7,12 +7,12 @@
 [![Download Stats](https://img.shields.io/pypi/dm/poetry)](https://pypistats.org/packages/poetry)
 [![Discord](https://img.shields.io/discord/487711540787675139?logo=discord)][Discord]
 
-Poetry helps you declare, manage and install dependencies of Python projects,
+Poetry helps you declare, manage, and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile` with a simple `pyproject.toml`
+Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in`, and `Pipfile` with a simple `pyproject.toml`
 based project format.
 
 ```toml
@@ -39,7 +39,7 @@ keywords = ["packaging", "poetry"]
 [tool.poetry.dependencies]
 # Compatible Python versions
 python = ">=3.8"
-# Standard dependency with semver constraints
+# Standard dependency with server constraints
 aiohttp = "^3.8.1"
 # Dependency with extras
 requests = { version = "^2.28", extras = ["security"] }
@@ -61,7 +61,7 @@ optional = true
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^5.1.1"
 
-# Python-style entrypoints and scripts are easily expressed
+# Python-style entry points and scripts are easily expressed
 [tool.poetry.scripts]
 my-script = "my_package:main"
 ```
