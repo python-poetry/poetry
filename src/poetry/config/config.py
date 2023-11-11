@@ -136,9 +136,6 @@ class Config:
         "solver": {
             "lazy-wheel": True,
         },
-        "warnings": {
-            "export": True,
-        },
         "keyring": {
             "enabled": True,
         },
@@ -308,7 +305,6 @@ class Config:
             "experimental.system-git-client",
             "installer.parallel",
             "solver.lazy-wheel",
-            "warnings.export",
             "keyring.enabled",
         }:
             return boolean_normalizer
