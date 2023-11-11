@@ -76,8 +76,8 @@ def test_check_invalid(
 
     tester.execute("--lock")
 
-    jsonschema_error = "'description' is a required property"
     fastjsonschema_error = "data must contain ['description'] properties"
+    custom_error = "The fields ['description'] are required in package mode."
     expected_template = """\
 Error: {schema_error}
 Error: Project name (invalid) is same as one of its dependencies
@@ -96,7 +96,7 @@ Warning: Deprecated classifier\
 """
     expected = {
         expected_template.format(schema_error=schema_error)
-        for schema_error in (jsonschema_error, fastjsonschema_error)
+        for schema_error in (fastjsonschema_error, custom_error)
     }
 
     assert tester.io.fetch_error() in expected
