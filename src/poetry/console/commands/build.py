@@ -49,6 +49,10 @@ class BuildCommand(EnvCommand):
             builder(self.poetry, executable=executable).build(target_dir)
 
     def handle(self) -> int:
+        if not self.poetry.is_package_mode:
+            self.line_error("Building a package is not possible in non-package mode.")
+            return 1
+
         with build_environment(poetry=self.poetry, env=self.env, io=self.io) as env:
             fmt = self.option("format") or "all"
             dist_dir = Path(self.option("output"))

@@ -13,9 +13,19 @@ menu:
 
 The `tool.poetry` section of the `pyproject.toml` file is composed of multiple sections.
 
+## mode
+
+The mode of the project, either `"package"` (default) or `"non-package"`. **Optional**
+
+See [basic usage]({{< relref "basic-usage#operating-modes" >}}) for more information.
+
+```toml
+mode = "non-package"
+```
+
 ## name
 
-The name of the package. **Required**
+The name of the package. **Required in package mode**
 
 This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-0508/#names).
 
@@ -26,7 +36,7 @@ name = "my-package"
 
 ## version
 
-The version of the package. **Required**
+The version of the package. **Required in package mode**
 
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
@@ -43,7 +53,7 @@ If you would like to use semantic versioning for your project, please see
 
 ## description
 
-A short description of the package. **Required**
+A short description of the package. **Required in package mode**
 
 ```toml
 description = "A short description of the package."
@@ -81,7 +91,7 @@ If your project is proprietary and does not use a specific licence, you can set 
 
 ## authors
 
-The authors of the package. **Required**
+The authors of the package. **Required in package mode**
 
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 

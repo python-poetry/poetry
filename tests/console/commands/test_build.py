@@ -62,6 +62,22 @@ def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
     assert all(archive.exists() for archive in build_artifacts)
 
 
+def test_build_not_possible_in_non_package_mode(
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    source_dir = fixture_dir("non_package_mode")
+
+    poetry = Factory().create_poetry(source_dir)
+    tester = command_tester_factory("build", poetry)
+
+    assert tester.execute() == 1
+    assert (
+        tester.io.fetch_error()
+        == "Building a package is not possible in non-package mode.\n"
+    )
+
+
 def test_build_with_multiple_readme_files(
     fixture_dir: FixtureDirGetter,
     tmp_path: Path,
