@@ -416,7 +416,7 @@ def test_install_logs_output_decorated(
     assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize("with_root", [True])
+@pytest.mark.parametrize("with_root", [True, False])
 @pytest.mark.parametrize("error", ["module", "readme", ""])
 def test_install_warning_corrupt_root(
     command_tester_factory: CommandTesterFactory,
