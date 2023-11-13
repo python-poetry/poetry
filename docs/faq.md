@@ -83,8 +83,8 @@ If your package will be used as an application, it might be worth to define an u
 
 ### Is tox supported?
 
-**Yes**. By using the [isolated builds](https://tox.readthedocs.io/en/latest/config.html#conf-isolated_build) `tox` provides,
-you can use it in combination with the PEP 517 compliant build system provided by Poetry.
+**Yes**. Provided that you are using `tox` > 4, you can use it in combination with the PEP 517 compliant build system
+provided by Poetry.
 
 So, in your `pyproject.toml` file, add this section if it does not already exist:
 
@@ -100,7 +100,6 @@ should be installed.
 #### Usecase #1
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 deps =
@@ -115,7 +114,6 @@ Thus, dependencies are resolved by `pip`.
 #### Usecase #2
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 allowlist_externals = poetry
@@ -132,7 +130,6 @@ Thus, dependencies are resolved by `pip` in the first place. But afterwards we r
 #### Usecase #3
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 skip_install = true
