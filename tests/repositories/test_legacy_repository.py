@@ -569,15 +569,13 @@ def test_authenticator_with_implicit_repository_configuration(
         re.compile("^https?://foo.bar/(.+?)$"),
     )
 
-    config.merge(
-        {
-            "repositories": repositories,
-            "http-basic": {
-                "source": {"username": "foo", "password": "bar"},
-                "publish": {"username": "baz", "password": "qux"},
-            },
-        }
-    )
+    config.merge({
+        "repositories": repositories,
+        "http-basic": {
+            "source": {"username": "foo", "password": "bar"},
+            "publish": {"username": "baz", "password": "qux"},
+        },
+    })
 
     repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
     repo.get_page("/foo")

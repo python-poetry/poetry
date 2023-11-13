@@ -310,17 +310,15 @@ def test_configured_repository_http_auth(
     spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
     spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
 
-    config.merge(
-        {
-            "repositories": {"git-repo": {"url": source_url}},
-            "http-basic": {
-                "git-repo": {
-                    "username": GIT_USERNAME,
-                    "password": GIT_PASSWORD,
-                }
-            },
-        }
-    )
+    config.merge({
+        "repositories": {"git-repo": {"url": source_url}},
+        "http-basic": {
+            "git-repo": {
+                "username": GIT_USERNAME,
+                "password": GIT_PASSWORD,
+            }
+        },
+    })
 
     dummy_git_config = ConfigFile()
     mocker.patch(
@@ -406,9 +404,9 @@ def test_relative_submodules_with_ssh(
     )
 
     # construct fake git config
-    fake_config = ConfigFile(
-        {(b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}}
-    )
+    fake_config = ConfigFile({
+        (b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}
+    })
     # trick Git into thinking remote.origin is an ssh url
     mock_get_config = mocker.patch.object(repo_with_unresolved_submodules, "get_config")
     mock_get_config.return_value = fake_config
