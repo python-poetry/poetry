@@ -338,7 +338,7 @@ class EnvManager:
                 if venv.path.name == python:
                     # Exact virtualenv name
                     if not envs_file.exists():
-                        self.remove_venv(venv.path)
+                        self.remove_venv_dir(venv.path)
 
                         return venv
 
@@ -348,7 +348,7 @@ class EnvManager:
 
                     current_env = envs.get(base_env_name)
                     if not current_env:
-                        self.remove_venv(venv.path)
+                        self.remove_venv_dir(venv.path)
 
                         return venv
 
@@ -356,7 +356,7 @@ class EnvManager:
                         del envs[base_env_name]
                         envs_file.write(envs)
 
-                    self.remove_venv(venv.path)
+                    self.remove_venv_dir(venv.path)
 
                     return venv
 
@@ -405,9 +405,33 @@ class EnvManager:
                     del envs[base_env_name]
                     envs_file.write(envs)
 
-        self.remove_venv(venv_path)
+        self.remove_venv_dir(venv_path)
 
         return VirtualEnv(venv_path, venv_path)
+
+    def remove_venv(self, venv: VirtualEnv) -> Env:
+        venv_path = self._poetry.config.virtualenvs_path
+        cwd = self._poetry.file.path.parent
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
+        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
+
+        env_path = venv.path
+        _, minor, _ = venv.get_version_info()
+
+        name = f"{base_env_name}-py{minor}"
+
+        if not env_path.exists():
+            raise ValueError(f'<warning>Environment "{name}" does not exist.</warning>')
+
+        if envs_file.exists():
+            envs = envs_file.read()
+            if base_env_name in envs:
+                del envs[base_env_name]
+                envs_file.write(envs)
+
+        self.remove_venv_dir(env_path)
+
+        return VirtualEnv(env_path, env_path)
 
     def use_in_project_venv(self) -> bool:
         in_project: bool | None = self._poetry.config.get("virtualenvs.in-project")
@@ -576,7 +600,7 @@ class EnvManager:
                 self._io.write_error_line(
                     f"Recreating virtualenv <c1>{name}</> in {venv!s}"
                 )
-                self.remove_venv(venv)
+                self.remove_venv_dir(venv)
                 create_venv = True
             elif self._io.is_very_verbose():
                 self._io.write_error_line(f"Virtualenv <c1>{name}</> already exists.")
@@ -684,7 +708,7 @@ class EnvManager:
         return cli_result
 
     @classmethod
-    def remove_venv(cls, path: Path) -> None:
+    def remove_venv_dir(cls, path: Path) -> None:
         assert path.is_dir()
         try:
             remove_directory(path)

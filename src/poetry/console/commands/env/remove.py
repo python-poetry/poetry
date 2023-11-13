@@ -43,7 +43,7 @@ class EnvRemoveCommand(Command):
             self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
         if all:
             for venv in manager.list():
-                manager.remove_venv(venv.path)
+                manager.remove_venv(venv)
                 self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
 
         return 0

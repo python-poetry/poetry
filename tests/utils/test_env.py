@@ -463,7 +463,8 @@ def test_activate_activates_recreates_for_different_patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
     remove_venv_m = mocker.patch(
-        "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
+        "poetry.utils.env.EnvManager.remove_venv",
+        side_effect=EnvManager.remove_venv_dir,
     )
 
     env = manager.activate("python3.7")
@@ -516,7 +517,8 @@ def test_activate_does_not_recreate_when_switching_minor(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
     remove_venv_m = mocker.patch(
-        "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
+        "poetry.utils.env.EnvManager.remove_venv",
+        side_effect=EnvManager.remove_venv_dir,
     )
 
     env = manager.activate("python3.6")
@@ -997,11 +999,13 @@ def test_call_does_not_block_on_full_pipe(
 ) -> None:
     """see https://github.com/python-poetry/poetry/issues/7698"""
     script = tmp_path / "script.py"
-    script.write_text(f"""\
+    script.write_text(
+        f"""\
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-""")
+"""
+    )
 
     def target(result: list[int]) -> None:
         tmp_venv.run("python", str(script), call=True)
