@@ -463,7 +463,7 @@ def test_activate_activates_recreates_for_different_patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
     remove_venv_m = mocker.patch(
-        "poetry.utils.env.EnvManager.remove_venv",
+        "poetry.utils.env.EnvManager.remove_venv_dir",
         side_effect=EnvManager.remove_venv_dir,
     )
 
