@@ -606,10 +606,11 @@ class Provider:
 
             # For dependency resolution, markers of duplicate dependencies must be
             # mutually exclusive.
-            deps = self._resolve_overlapping_markers(package, deps)
+            active_extras = None if package.is_root() else dependency.extras
+            deps = self._resolve_overlapping_markers(package, deps, active_extras)
 
             if len(deps) == 1:
-                self.debug(f"<debug>Merging requirements for {deps[0]!s}</debug>")
+                self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
                 dependencies.append(deps[0])
                 continue
 
@@ -838,11 +839,14 @@ class Provider:
 
         return merged_dependencies
 
-    def _is_relevant_marker(self, marker: BaseMarker) -> bool:
+    def _is_relevant_marker(
+        self, marker: BaseMarker, active_extras: Collection[NormalizedName] | None
+    ) -> bool:
         """
         A marker is relevant if
         - it is not empty
         - allowed by the project's python constraint
+        - allowed by active extras of the dependency (not relevant for root package)
         - allowed by the environment (only during installation)
         """
         return (
@@ -850,11 +854,15 @@ class Provider:
             and self._python_constraint.allows_any(
                 get_python_constraint_from_marker(marker)
             )
+            and (active_extras is None or marker.validate({"extra": active_extras}))
             and (not self._env or marker.validate(self._env.marker_env))
         )
 
     def _resolve_overlapping_markers(
-        self, package: Package, dependencies: list[Dependency]
+        self,
+        package: Package,
+        dependencies: list[Dependency],
+        active_extras: Collection[NormalizedName] | None,
     ) -> list[Dependency]:
         """
         Convert duplicate dependencies with potentially overlapping markers
@@ -887,7 +895,7 @@ class Provider:
             used_marker_intersection: BaseMarker = AnyMarker()
             for m in markers:
                 used_marker_intersection = used_marker_intersection.intersect(m)
-            if not self._is_relevant_marker(used_marker_intersection):
+            if not self._is_relevant_marker(used_marker_intersection, active_extras):
                 continue
 
             # intersection of constraints

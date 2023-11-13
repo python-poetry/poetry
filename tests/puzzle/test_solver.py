@@ -4322,3 +4322,91 @@ def test_update_with_use_latest_vs_lock(
             {"job": "install", "package": package_a1},
         ],
     )
+
+
+@pytest.mark.parametrize("with_extra", [False, True])
+def test_solver_resolves_duplicate_dependency_in_extra(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+    with_extra: bool,
+) -> None:
+    """
+    Without extras, a newer version of B can be chosen than with extras.
+    See https://github.com/python-poetry/poetry/issues/8380.
+    """
+    constraint: dict[str, Any] = {"version": "*"}
+    if with_extra:
+        constraint["extras"] = ["foo"]
+    package.add_dependency(Factory.create_dependency("A", constraint))
+
+    package_a = get_package("A", "1.0")
+    package_b1 = get_package("B", "1.0")
+    package_b2 = get_package("B", "2.0")
+
+    dep = get_dependency("B", ">=1.0")
+    package_a.add_dependency(dep)
+
+    dep_extra = get_dependency("B", "^1.0", optional=True)
+    dep_extra.marker = parse_marker("extra == 'foo'")
+    package_a.extras = {canonicalize_name("foo"): [dep_extra]}
+    package_a.add_dependency(dep_extra)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b1)
+    repo.add_package(package_b2)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_b1 if with_extra else package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
+    )
+
+
+def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b1 = get_package("B", "1.0")
+    package_b2 = get_package("B", "2.0")
+
+    dep1 = get_dependency("B", "^1.0", optional=True)
+    dep1.marker = parse_marker("sys_platform == 'win32' and extra == 'foo'")
+    dep2 = get_dependency("B", "^2.0", optional=True)
+    dep2.marker = parse_marker("sys_platform == 'linux' and extra == 'foo'")
+    package_a.extras = {canonicalize_name("foo"): [dep1, dep2]}
+    package_a.add_dependency(dep1)
+    package_a.add_dependency(dep2)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b1)
+    repo.add_package(package_b2)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_b1},
+                {"job": "install", "package": package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
+    )

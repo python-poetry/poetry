@@ -298,8 +298,14 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
         with zipfile.ZipFile(source) as archive:
             archive.extractall(dest)
     else:
+        # These versions of python shipped with a broken tarfile data_filter, per
+        # https://github.com/python/cpython/issues/107845.
+        broken_tarfile_filter = {(3, 8, 17), (3, 9, 17), (3, 10, 12), (3, 11, 4)}
         with tarfile.open(source) as archive:
-            if hasattr(tarfile, "data_filter"):
+            if (
+                hasattr(tarfile, "data_filter")
+                and sys.version_info[:3] not in broken_tarfile_filter
+            ):
                 archive.extractall(dest, filter="data")
             else:
                 archive.extractall(dest)
