@@ -85,7 +85,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -117,7 +117,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -138,7 +138,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.1.0)
+  - Installing cachy (0.1.0)
 
 Writing lock file
 """
@@ -189,7 +189,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.1.0)
+  - Installing cachy (0.1.0)
 
 Writing lock file
 """
@@ -212,7 +212,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -246,8 +246,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing msgpack-python (0.5.3)
-  • Installing cachy (0.1.0)
+  - Installing msgpack-python (0.5.3)
+  - Installing cachy (0.1.0)
 
 Writing lock file
 """
@@ -277,8 +277,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing msgpack-python (0.5.3)
-  • Installing cachy (0.2.0)
+  - Installing msgpack-python (0.5.3)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -309,8 +309,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 9cf87a2)
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -346,8 +346,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 9cf87a2)
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -380,10 +380,10 @@ Resolving dependencies...
 
 Package operations: 4 installs, 0 updates, 0 removals
 
-  • Installing cleo (0.6.5)
-  • Installing pendulum (1.4.4)
-  • Installing tomlkit (0.5.5)
-  • Installing demo (0.1.2 9cf87a2)
+  - Installing cleo (0.6.5)
+  - Installing pendulum (1.4.4)
+  - Installing tomlkit (0.5.5)
+  - Installing demo (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -425,7 +425,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing two (2.0.0 9cf87a2)
+  - Installing two (2.0.0 9cf87a2)
 
 Writing lock file
 """
@@ -472,8 +472,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 9cf87a2)
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -521,8 +521,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 {demo_path})
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 {demo_path})
 
 Writing lock file
 """
@@ -565,8 +565,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 {demo_path})
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 {demo_path})
 
 Writing lock file
 """
@@ -598,8 +598,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 {demo_path})
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.0 {demo_path})
 
 Writing lock file
 """
@@ -637,8 +637,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 {demo_path})
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.0 {demo_path})
 
 Writing lock file
 """
@@ -679,8 +679,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing msgpack-python (0.5.3)
-  • Installing cachy (0.2.0)
+  - Installing msgpack-python (0.5.3)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -721,8 +721,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (1.4.4)
-  • Installing demo\
+  - Installing pendulum (1.4.4)
+  - Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 
 Writing lock file
@@ -764,10 +764,10 @@ Resolving dependencies...
 
 Package operations: 4 installs, 0 updates, 0 removals
 
-  • Installing cleo (0.6.5)
-  • Installing pendulum (1.4.4)
-  • Installing tomlkit (0.5.5)
-  • Installing demo\
+  - Installing cleo (0.6.5)
+  - Installing pendulum (1.4.4)
+  - Installing tomlkit (0.5.5)
+  - Installing demo\
  (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 
 Writing lock file
@@ -837,7 +837,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -876,7 +876,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -924,7 +924,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -985,7 +985,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -1034,7 +1034,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -1067,7 +1067,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing pyyaml (3.13)
+  - Installing pyyaml (3.13)
 
 Writing lock file
 """
@@ -1097,7 +1097,7 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     expected = """\
 The following packages are already present in the pyproject.toml and will be skipped:
 
-  • foo
+  - foo
 
 If you want to update it to the latest compatible version,\
  you can use `poetry update package`.
@@ -1122,7 +1122,7 @@ def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_cons
     expected = """\
 The following packages are already present in the pyproject.toml and will be skipped:
 
-  • Foo_Bar
+  - Foo_Bar
 
 If you want to update it to the latest compatible version,\
  you can use `poetry update package`.
@@ -1203,7 +1203,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing foo (1.1.2)
+  - Installing foo (1.1.2)
 
 Writing lock file
 """
@@ -1233,7 +1233,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing foo (1.2.3b1)
+  - Installing foo (1.2.3b1)
 
 Writing lock file
 """
@@ -1256,7 +1256,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing foo (1.2.3)
+  - Installing foo (1.2.3)
 
 Writing lock file
 """
@@ -1303,7 +1303,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cachy (0.2.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """
@@ -1462,9 +1462,9 @@ Resolving dependencies...
 
 Package operations: 3 installs, 0 updates, 0 removals
 
-  • Installing msgpack-python (0.5.1)
-  • Installing redis (3.4.0)
-  • Installing cachy (0.2.0)
+  - Installing msgpack-python (0.5.1)
+  - Installing redis (3.4.0)
+  - Installing cachy (0.2.0)
 
 Writing lock file
 """

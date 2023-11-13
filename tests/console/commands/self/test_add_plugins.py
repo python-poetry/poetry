@@ -57,7 +57,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing poetry-plugin (0.1.0)
+  - Installing poetry-plugin (0.1.0)
 
 Writing lock file
 """
@@ -79,7 +79,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing poetry-plugin (0.2.0)
+  - Installing poetry-plugin (0.2.0)
 
 Writing lock file
 """
@@ -101,8 +101,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (2.0.5)
-  • Installing poetry-plugin (0.1.2 9cf87a2)
+  - Installing pendulum (2.0.5)
+  - Installing poetry-plugin (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -127,9 +127,9 @@ Resolving dependencies...
 
 Package operations: 3 installs, 0 updates, 0 removals
 
-  • Installing pendulum (2.0.5)
-  • Installing tomlkit (0.7.0)
-  • Installing poetry-plugin (0.1.2 9cf87a2)
+  - Installing pendulum (2.0.5)
+  - Installing tomlkit (0.7.0)
+  - Installing poetry-plugin (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -167,8 +167,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (2.0.5)
-  • Installing poetry-plugin (0.1.2 9cf87a2)
+  - Installing pendulum (2.0.5)
+  - Installing poetry-plugin (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -220,7 +220,7 @@ poetry-plugin = "^1.2.3"
 The following packages are already present in the pyproject.toml and will be\
  skipped:
 
-  • poetry-plugin
+  - poetry-plugin
 {tester.command._hint_update_packages}
 Nothing to add.
 """
@@ -264,7 +264,7 @@ Resolving dependencies...
 
 Package operations: 0 installs, 1 update, 0 removals
 
-  • Updating poetry-plugin (1.2.3 -> 2.3.4)
+  - Updating poetry-plugin (1.2.3 -> 2.3.4)
 
 Writing lock file
 """
@@ -300,8 +300,8 @@ Resolving dependencies...
 
 Package operations: 1 install, 1 update, 0 removals
 
-  • Updating tomlkit (0.7.1 -> 0.7.2)
-  • Installing poetry-plugin (1.2.3)
+  - Updating tomlkit (0.7.1 -> 0.7.2)
+  - Installing poetry-plugin (1.2.3)
 
 Writing lock file
 """
