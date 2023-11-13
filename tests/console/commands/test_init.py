@@ -1087,3 +1087,17 @@ python = "^{python}"
 """
 
     assert expected in pyproject_file.read_text()
+
+
+def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
+    """
+    Since we are mocking _get_pool() in the other tests, we at least should make
+    sure it works in general. See https://github.com/python-poetry/poetry/issues/8634.
+    """
+    mocker.patch("pathlib.Path.cwd", return_value=source_dir)
+
+    app = Application()
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    pool = command._get_pool()
+    assert pool.repositories

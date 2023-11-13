@@ -481,6 +481,7 @@ You can specify a package in the following forms:
         return package
 
     def _get_pool(self) -> RepositoryPool:
+        from poetry.config.config import Config
         from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
 
@@ -489,7 +490,7 @@ You can specify a package in the following forms:
 
         if self._pool is None:
             self._pool = RepositoryPool()
-            pool_size = self.poetry.config.installer_max_workers
+            pool_size = Config.create().installer_max_workers
             self._pool.add_repository(PyPiRepository(pool_size=pool_size))
 
         return self._pool
