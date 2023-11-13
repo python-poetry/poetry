@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.packages import Locker
+from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -67,8 +68,6 @@ All set!
 def test_check_invalid(
     mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
 ) -> None:
-    from poetry.toml import TOMLFile
-
     mocker.patch(
         "poetry.poetry.Poetry.file",
         return_value=TOMLFile(fixture_dir("invalid_pyproject") / "pyproject.toml"),
@@ -107,8 +106,9 @@ def test_check_private(
     mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
 ) -> None:
     mocker.patch(
-        "poetry.factory.Factory.locate",
-        return_value=fixture_dir("private_pyproject") / "pyproject.toml",
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(fixture_dir("private_pyproject") / "pyproject.toml"),
+        new_callable=mocker.PropertyMock,
     )
 
     tester.execute()
@@ -135,8 +135,6 @@ def test_check_lock_missing(
     expected: str,
     expected_status: int,
 ) -> None:
-    from poetry.toml import TOMLFile
-
     mocker.patch(
         "poetry.poetry.Poetry.file",
         return_value=TOMLFile(fixture_dir("private_pyproject") / "pyproject.toml"),
