@@ -231,12 +231,10 @@ class EditableBuilder(Builder):
         # write PEP 610 metadata
         direct_url_json = dist_info.joinpath("direct_url.json")
         direct_url_json.write_text(
-            json.dumps(
-                {
-                    "dir_info": {"editable": True},
-                    "url": self._poetry.file.path.parent.absolute().as_uri(),
-                }
-            )
+            json.dumps({
+                "dir_info": {"editable": True},
+                "url": self._poetry.file.path.parent.absolute().as_uri(),
+            })
         )
         added_files.append(direct_url_json)
 

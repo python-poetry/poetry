@@ -22,14 +22,12 @@ def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> No
     for op in ops:
         if op.job_type == "update":
             assert isinstance(op, Update)
-            result.append(
-                {
-                    "job": "update",
-                    "from": op.initial_package,
-                    "to": op.target_package,
-                    "skipped": op.skipped,
-                }
-            )
+            result.append({
+                "job": "update",
+                "from": op.initial_package,
+                "to": op.target_package,
+                "skipped": op.skipped,
+            })
         else:
             job = "install"
             if op.job_type == "uninstall":

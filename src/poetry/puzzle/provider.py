@@ -780,12 +780,10 @@ class Provider:
         if self.is_debugging():
             debug_info = str(message)
             debug_info = (
-                "\n".join(
-                    [
-                        f"<debug>{str(depth).rjust(4)}:</debug> {s}"
-                        for s in debug_info.split("\n")
-                    ]
-                )
+                "\n".join([
+                    f"<debug>{str(depth).rjust(4)}:</debug> {s}"
+                    for s in debug_info.split("\n")
+                ])
                 + "\n"
             )
 

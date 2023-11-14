@@ -75,13 +75,11 @@ class EnvInfoCommand(Command):
         python = ".".join(str(v) for v in system_env.version_info[:3])
         self.line("<b>System</b>")
         self.line(
-            "\n".join(
-                [
-                    f"<info>Platform</info>:   <comment>{env.platform}</>",
-                    f"<info>OS</info>:         <comment>{env.os}</>",
-                    f"<info>Python</info>:     <comment>{python}</>",
-                    f"<info>Path</info>:       <comment>{system_env.path}</>",
-                    f"<info>Executable</info>: <comment>{system_env.python}</>",
-                ]
-            )
+            "\n".join([
+                f"<info>Platform</info>:   <comment>{env.platform}</>",
+                f"<info>OS</info>:         <comment>{env.os}</>",
+                f"<info>Python</info>:     <comment>{python}</>",
+                f"<info>Path</info>:       <comment>{system_env.path}</>",
+                f"<info>Executable</info>: <comment>{system_env.python}</>",
+            ])
         )

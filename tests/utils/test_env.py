@@ -1308,14 +1308,12 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    config.merge(
-        {
-            "virtualenvs": {
-                "path": str(tmp_path / "virtualenvs"),
-                "in-project": True,
-            }
+    config.merge({
+        "virtualenvs": {
+            "path": str(tmp_path / "virtualenvs"),
+            "in-project": True,
         }
-    )
+    })
 
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(

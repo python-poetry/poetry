@@ -95,14 +95,12 @@ def check_solver_result(
     for op in ops:
         if op.job_type == "update":
             assert isinstance(op, Update)
-            result.append(
-                {
-                    "job": "update",
-                    "from": op.initial_package,
-                    "to": op.target_package,
-                    "skipped": op.skipped,
-                }
-            )
+            result.append({
+                "job": "update",
+                "from": op.initial_package,
+                "to": op.target_package,
+                "skipped": op.skipped,
+            })
         else:
             job = "install"
             if op.job_type == "uninstall":
@@ -4362,12 +4360,10 @@ def test_solver_resolves_duplicate_dependency_in_extra(
 
     check_solver_result(
         transaction,
-        (
-            [
-                {"job": "install", "package": package_b1 if with_extra else package_b2},
-                {"job": "install", "package": package_a},
-            ]
-        ),
+        ([
+            {"job": "install", "package": package_b1 if with_extra else package_b2},
+            {"job": "install", "package": package_a},
+        ]),
     )
 
 
@@ -4402,11 +4398,9 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
 
     check_solver_result(
         transaction,
-        (
-            [
-                {"job": "install", "package": package_b1},
-                {"job": "install", "package": package_b2},
-                {"job": "install", "package": package_a},
-            ]
-        ),
+        ([
+            {"job": "install", "package": package_b1},
+            {"job": "install", "package": package_b2},
+            {"job": "install", "package": package_a},
+        ]),
     )

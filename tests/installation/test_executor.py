@@ -240,18 +240,16 @@ def test_execute_executes_a_batch_of_operations(
         develop=True,
     )
 
-    return_code = executor.execute(
-        [
-            Install(Package("pytest", "3.5.1")),
-            Uninstall(Package("attrs", "17.4.0")),
-            Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
-            Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
-            Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
-            Install(file_package),
-            Install(directory_package),
-            Install(git_package),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("pytest", "3.5.1")),
+        Uninstall(Package("attrs", "17.4.0")),
+        Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
+        Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
+        Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
+        Install(file_package),
+        Install(directory_package),
+        Install(git_package),
+    ])
 
     expected = f"""
 Package operations: 4 installs, 2 updates, 1 removal
@@ -352,26 +350,24 @@ def test_execute_prints_warning_for_invalid_wheels(
     base_url = "https://files.pythonhosted.org/"
     wheel1 = "demo_invalid_record-0.1.0-py2.py3-none-any.whl"
     wheel2 = "demo_invalid_record2-0.1.0-py2.py3-none-any.whl"
-    return_code = executor.execute(
-        [
-            Install(
-                Package(
-                    "demo-invalid-record",
-                    "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel1}",
-                )
-            ),
-            Install(
-                Package(
-                    "demo-invalid-record2",
-                    "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel2}",
-                )
-            ),
-        ]
-    )
+    return_code = executor.execute([
+        Install(
+            Package(
+                "demo-invalid-record",
+                "0.1.0",
+                source_type="url",
+                source_url=f"{base_url}/{wheel1}",
+            )
+        ),
+        Install(
+            Package(
+                "demo-invalid-record2",
+                "0.1.0",
+                source_type="url",
+                source_url=f"{base_url}/{wheel2}",
+            )
+        ),
+    ])
 
     warning1 = f"""\
 <warning>Warning: Validation of the RECORD file of {wheel1} failed.\
@@ -410,9 +406,9 @@ def test_execute_shows_skipped_operations_if_verbose(
     executor.verbose()
 
     assert (
-        executor.execute(
-            [Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed")]
-        )
+        executor.execute([
+            Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed")
+        ])
         == 0
     )
 
@@ -464,11 +460,9 @@ def test_execute_works_with_ansi_output(
 
     executor = Executor(env, pool, config, io_decorated)
 
-    return_code = executor.execute(
-        [
-            Install(Package("cleo", "1.0.0a5")),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("cleo", "1.0.0a5")),
+    ])
 
     # fmt: off
     expected = [
@@ -501,11 +495,9 @@ def test_execute_works_with_no_ansi_output(
 
     executor = Executor(env, pool, config, io_not_decorated)
 
-    return_code = executor.execute(
-        [
-            Install(Package("cleo", "1.0.0a5")),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("cleo", "1.0.0a5")),
+    ])
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
@@ -1204,12 +1196,10 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge(
-        {
-            "cache-dir": str(tmp_path),
-            "installer": {"modern-installation": False},
-        }
-    )
+    config.merge({
+        "cache-dir": str(tmp_path),
+        "installer": {"modern-installation": False},
+    })
 
     executor = Executor(env, pool, config, io)
 
@@ -1220,11 +1210,9 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([
+        Install(directory_package),
+    ])
 
     expected = f"""
 Package operations: 1 install, 0 updates, 0 removals
