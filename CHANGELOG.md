@@ -1,5 +1,16 @@
 # Change Log
 
+
+## [1.7.1] - 2023-11-16
+
+### Fixed
+
+- Fix an issue where sdists that call CLI tools of their build requirements could not be installed ([#8630](https://github.com/python-poetry/poetry/pull/8630)).
+- Fix an issue where sdists with symlinks could not be installed due to a broken tarfile datafilter ([#8649](https://github.com/python-poetry/poetry/pull/8649)).
+- Fix an issue where `poetry init` failed when trying to add dependencies ([#8655](https://github.com/python-poetry/poetry/pull/8655)).
+- Fix an issue where `poetry install` failed if `virtualenvs.create` was set to `false` ([#8672](https://github.com/python-poetry/poetry/pull/8672)).
+
+
 ## [1.7.0] - 2023-11-03
 
 ### Added
@@ -2024,7 +2035,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.7.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.7.1...master
+[1.7.1]: https://github.com/python-poetry/poetry/releases/tag/1.7.1
 [1.7.0]: https://github.com/python-poetry/poetry/releases/tag/1.7.0
 [1.6.1]: https://github.com/python-poetry/poetry/releases/tag/1.6.1
 [1.6.0]: https://github.com/python-poetry/poetry/releases/tag/1.6.0
