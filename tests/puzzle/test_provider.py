@@ -770,7 +770,7 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
     )
     package = Package("A", "1.0", features=["foo"] if with_extra else [])
     package.add_dependency(optional_vcs_dependency)
-    package.extras[canonicalize_name("foo")] = [optional_vcs_dependency]
+    package.extras = {canonicalize_name("foo"): [optional_vcs_dependency]}
     repository.add_package(package)
 
     spy = mocker.spy(provider, "_search_for_vcs")
