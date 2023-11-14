@@ -140,7 +140,7 @@ class VirtualEnv(Env):
     @cached_property
     def includes_system_site_packages(self) -> bool:
         pyvenv_cfg = self._path / "pyvenv.cfg"
-        return (
+        return pyvenv_cfg.exists() and (
             re.search(
                 r"^\s*include-system-site-packages\s*=\s*true\s*$",
                 pyvenv_cfg.read_text(),
