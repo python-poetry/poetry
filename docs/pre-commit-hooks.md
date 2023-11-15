@@ -58,7 +58,7 @@ This hook is provided by the [Export Poetry Plugin](https://github.com/python-po
 {{% /warning %}}
 
 {{% note %}}
-It is recommended to run the [`poetry-lock`](#poetry-lock) hook prior to this one.
+It is recommended to run the [`poetry-lock`](#poetry-lock) or [`poetry-check`](#poetry-check) with argument `--lock` hook prior to this one.
 {{% /note %}}
 
 ### Arguments
