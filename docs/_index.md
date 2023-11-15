@@ -25,7 +25,7 @@ on Linux, macOS and Windows.
 
 {{% warning %}}
 Poetry should always be installed in a dedicated virtual environment to isolate it from the rest of your system.
-In no case, it should be installed in the environment of the project that is to be managed by Poetry.
+It should in no case be installed in the environment of the project that is to be managed by Poetry.
 This ensures that Poetry's own dependencies will not be accidentally upgraded or uninstalled.
 (Each of the following installation methods ensures that Poetry is installed into an isolated environment.)
 {{% /warning %}}
