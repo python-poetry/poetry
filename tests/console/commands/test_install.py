@@ -471,14 +471,13 @@ def test_install_path_dependency_does_not_exist(
 
 
 @pytest.mark.parametrize("options", ["", "--extras notinstallable"])
-@pytest.mark.parametrize("project", ["missing_extra_directory_dependency"])
 def test_install_extra_path_dependency_does_not_exist(
     command_tester_factory: CommandTesterFactory,
     project_factory: ProjectFactory,
     fixture_dir: FixtureDirGetter,
-    project: str,
     options: str,
 ) -> None:
+    project = "missing_extra_directory_dependency"
     poetry = _project_factory(project, project_factory, fixture_dir)
     assert isinstance(poetry.locker, TestLocker)
     poetry.locker.locked(True)
