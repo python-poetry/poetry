@@ -1373,22 +1373,39 @@ def test_venv_has_correct_paths(tmp_venv: VirtualEnv) -> None:
     )
 
 
-def test_env_system_packages(tmp_path: Path, poetry: Poetry) -> None:
+@pytest.mark.parametrize("with_system_site_packages", [True, False])
+def test_env_system_packages(
+    tmp_path: Path, poetry: Poetry, with_system_site_packages: bool
+) -> None:
     venv_path = tmp_path / "venv"
     pyvenv_cfg = venv_path / "pyvenv.cfg"
 
-    EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
+    EnvManager(poetry).build_venv(
+        path=venv_path, flags={"system-site-packages": with_system_site_packages}
+    )
     env = VirtualEnv(venv_path)
 
-    assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
-    assert env.includes_system_site_packages
+    assert (
+        f"include-system-site-packages = {str(with_system_site_packages).lower()}"
+        in pyvenv_cfg.read_text()
+    )
+    assert env.includes_system_site_packages is with_system_site_packages
 
 
+def test_generic_env_system_packages(poetry: Poetry) -> None:
+    """https://github.com/python-poetry/poetry/issues/8646"""
+    env = GenericEnv(Path(sys.base_prefix))
+    assert not env.includes_system_site_packages
+
+
+@pytest.mark.parametrize("with_system_site_packages", [True, False])
 def test_env_system_packages_are_relative_to_lib(
-    tmp_path: Path, poetry: Poetry
+    tmp_path: Path, poetry: Poetry, with_system_site_packages: bool
 ) -> None:
     venv_path = tmp_path / "venv"
-    EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
+    EnvManager(poetry).build_venv(
+        path=venv_path, flags={"system-site-packages": with_system_site_packages}
+    )
     env = VirtualEnv(venv_path)
     site_dir = Path(site.getsitepackages()[-1])
     for dist in metadata.distributions():
@@ -1396,7 +1413,10 @@ def test_env_system_packages_are_relative_to_lib(
         with contextlib.suppress(ValueError):
             dist._path.relative_to(site_dir)  # type: ignore[attr-defined]
             break
-    assert env.is_path_relative_to_lib(dist._path)  # type: ignore[attr-defined]
+    assert (
+        env.is_path_relative_to_lib(dist._path)  # type: ignore[attr-defined]
+        is with_system_site_packages
+    )
 
 
 @pytest.mark.parametrize(
