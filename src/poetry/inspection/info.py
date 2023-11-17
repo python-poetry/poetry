@@ -313,6 +313,8 @@ class PackageInfo:
 
             # now this is an unpacked directory we know how to deal with
             new_info = cls.from_directory(path=sdist_dir)
+            new_info._source_type = "file"
+            new_info._source_url = path.resolve().as_posix()
 
         if not info:
             return new_info
