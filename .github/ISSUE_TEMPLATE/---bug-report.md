@@ -22,7 +22,7 @@ assignees: ''
 - **pyproject.toml**: <!-- Replace with a link to a Gist (https://gist.github.com/) containing your sanitized pyproject.toml -->
 
 <!-- All the below steps should be completed before submitting your issue. Checked checkbox should look like this: [x] -->
-- [ ] I am on the [latest](https://github.com/python-poetry/poetry/releases/latest) stable Poetry version, installed using a recommended method.
+- [ ] I am on the [latest](https://github.com/python-poetry/poetry/releases/latest) stable Poetry version, installed using a [recommended method](https://python-poetry.org/docs/#installation).
 - [ ] I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.
 - [ ] I have consulted the [FAQ](https://python-poetry.org/docs/faq/) and [blog](https://python-poetry.org/blog/) for any relevant entries or release notes.
 - [ ] If an exception occurs when executing a command, I executed it again in debug mode (`-vvv` option) and have included the output below.
