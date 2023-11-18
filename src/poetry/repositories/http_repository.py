@@ -302,7 +302,7 @@ class HTTPRepository(CachedRepository):
                 f' "{data.version}"'
             )
         urls = defaultdict(list)
-        metadata = {}
+        metadata: dict[str, pkginfo.Distribution] = {}
         files: list[dict[str, Any]] = []
         for link in links:
             if link.yanked and not data.yanked:
@@ -313,24 +313,26 @@ class HTTPRepository(CachedRepository):
                     assert link.metadata_url is not None
                     response = self.session.get(link.metadata_url)
                     distribution = pkginfo.Distribution()
-                    assert link.metadata_hash_name is not None
-                    metadata_hash = getattr(hashlib, link.metadata_hash_name)(
-                        response.text.encode()
-                    ).hexdigest()
+                    if link.metadata_hash_name is not None:
+                        metadata_hash = getattr(hashlib, link.metadata_hash_name)(
+                            response.text.encode()
+                        ).hexdigest()
 
-                    if metadata_hash != link.metadata_hash:
-                        self._log(
-                            f"Metadata file hash ({metadata_hash}) does not match"
-                            f" expected hash ({link.metadata_hash}).",
-                            level="warning",
-                        )
+                        if metadata_hash != link.metadata_hash:
+                            self._log(
+                                f"Metadata file hash ({metadata_hash}) does not match"
+                                f" expected hash ({link.metadata_hash})."
+                                f" Metadata file for {link.filename} will be ignored.",
+                                level="warning",
+                            )
+                            continue
 
                     distribution.parse(response.content)
                     metadata[link.url] = distribution
                 except requests.HTTPError:
                     self._log(
                         f"Failed to retrieve metadata at {link.metadata_url}",
-                        level="debug",
+                        level="warning",
                     )
 
             if link.is_wheel:

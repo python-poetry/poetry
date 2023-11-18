@@ -186,7 +186,7 @@ def _get_mock(url: str, **__: Any) -> requests.Response:
         response.encoding = "application/text"
         response._content = MockRepository.FIXTURES.joinpath(
             "metadata", posixpath.basename(url)
-        ).read_bytes()
+        ).read_text().encode()
         return response
     raise requests.HTTPError()
 
@@ -209,6 +209,14 @@ def test_get_package_information_pep_658(mocker: MockerFixture) -> None:
         assert package.name == "isort-metadata"
         assert package.version.text == isort_package.version.text == "4.3.4"
         assert package.description == isort_package.description
+        assert (
+            package.requires == isort_package.requires == [Dependency("futures", "*")]
+        )
+        assert (
+            str(package.python_constraint)
+            == str(isort_package.python_constraint)
+            == ">=2.7,<3.0.dev0 || >=3.4.dev0"
+        )
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints() -> None:
