@@ -247,8 +247,8 @@ class PackageInfo:
         else:
             requires = Path(dist.filename) / "requires.txt"
             if requires.exists():
-                with requires.open(encoding="utf-8") as f:
-                    requirements = parse_requires(f.read())
+                text = requires.read_text(encoding="utf-8")
+                requirements = parse_requires(text)
 
         info = cls(
             name=dist.name,
@@ -274,16 +274,13 @@ class PackageInfo:
         """
         info = None
 
-        try:
-            info = cls._from_distribution(pkginfo.SDist(str(path)))
-        except ValueError:
-            # Unable to determine dependencies
-            # We pass and go deeper
-            pass
-        else:
-            if info.requires_dist is not None:
-                # we successfully retrieved dependencies from sdist metadata
-                return info
+        with contextlib.suppress(ValueError):
+            sdist = pkginfo.SDist(str(path))
+            info = cls._from_distribution(sdist)
+
+        if info is not None and info.requires_dist is not None:
+            # we successfully retrieved dependencies from sdist metadata
+            return info
 
         # Still not dependencies found
         # So, we unpack and introspect
@@ -520,7 +517,8 @@ class PackageInfo:
         :param path: Path to wheel.
         """
         try:
-            return cls._from_distribution(pkginfo.Wheel(str(path)))
+            wheel = pkginfo.Wheel(str(path))
+            return cls._from_distribution(wheel)
         except ValueError:
             return PackageInfo()
 
@@ -531,14 +529,12 @@ class PackageInfo:
 
         :param path: Path to bdist.
         """
-        if isinstance(path, (pkginfo.BDist, pkginfo.Wheel)):
-            cls._from_distribution(dist=path)
-
         if path.suffix == ".whl":
             return cls.from_wheel(path=path)
 
         try:
-            return cls._from_distribution(pkginfo.BDist(str(path)))
+            bdist = pkginfo.BDist(str(path))
+            return cls._from_distribution(bdist)
         except ValueError as e:
             raise PackageInfoError(path, e)
 
