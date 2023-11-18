@@ -205,13 +205,11 @@ class Uploader:
             raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
-        data.update(
-            {
-                # action
-                ":action": "file_upload",
-                "protocol_version": "1",
-            }
-        )
+        data.update({
+            # action
+            ":action": "file_upload",
+            "protocol_version": "1",
+        })
 
         data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 

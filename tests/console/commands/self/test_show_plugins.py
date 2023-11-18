@@ -68,16 +68,14 @@ def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribut
     class MockDistribution(metadata.Distribution):
         def read_text(self, filename: str) -> str | None:
             if filename == "METADATA":
-                return "\n".join(
-                    [
-                        f"Name: {plugin_package.name}",
-                        f"Version: {plugin_package.version}",
-                        *[
-                            f"Requires-Dist: {dep.to_pep_508()}"
-                            for dep in plugin_package.requires
-                        ],
-                    ]
-                )
+                return "\n".join([
+                    f"Name: {plugin_package.name}",
+                    f"Version: {plugin_package.version}",
+                    *[
+                        f"Requires-Dist: {dep.to_pep_508()}"
+                        for dep in plugin_package.requires
+                    ],
+                ])
             return None
 
         def locate_file(self, path: str | PathLike[str]) -> Path:

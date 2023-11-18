@@ -72,13 +72,11 @@ class PackageFilterPolicy:
             else:
                 return [":none:"]
 
-        return list(
-            {
-                name.strip() if cls.is_reserved(name) else canonicalize_name(name)
-                for name in policy.strip().split(",")
-                if name
-            }
-        )
+        return list({
+            name.strip() if cls.is_reserved(name) else canonicalize_name(name)
+            for name in policy.strip().split(",")
+            if name
+        })
 
     @classmethod
     def validator(cls, policy: str) -> bool:
