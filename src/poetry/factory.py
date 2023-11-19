@@ -370,9 +370,10 @@ class Factory(BaseFactory):
 
         dependencies = {canonicalize_name(d) for d in dependencies}
 
-        if canonicalize_name(config["name"]) in dependencies:
+        project_name = config.get("name")
+        if project_name is not None and canonicalize_name(project_name) in dependencies:
             results["errors"].append(
-                f"Project name ({config['name']}) is same as one of its dependencies"
+                f"Project name ({project_name}) is same as one of its dependencies"
             )
 
         return results
