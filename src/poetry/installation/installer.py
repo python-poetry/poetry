@@ -335,7 +335,7 @@ class Installer:
             dep = op.package.to_dependency()
             if dep.is_file() or dep.is_directory():
                 dep = cast("PathDependency", dep)
-                dep.validate(raise_error=True)
+                dep.validate(raise_error=not op.skipped)
 
         # Execute operations
         status = self._execute(ops)
