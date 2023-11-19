@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import posixpath
 import re
 import shutil
 
@@ -24,8 +23,6 @@ from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
 
 if TYPE_CHECKING:
-    from typing import Any
-
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
@@ -33,6 +30,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.types import RequestsSessionGet
 
 
 @pytest.fixture(autouse=True)
@@ -180,29 +178,24 @@ def test_get_package_information_fallback_read_setup() -> None:
     )
 
 
-def _get_mock(url: str, **__: Any) -> requests.Response:
-    if url.endswith(".metadata"):
-        response = requests.Response()
-        response.encoding = "application/text"
-        response._content = MockRepository.FIXTURES.joinpath(
-            "metadata", posixpath.basename(url)
-        ).read_text().encode()
-        return response
-    raise requests.HTTPError()
-
-
-def test_get_package_information_pep_658(mocker: MockerFixture) -> None:
+def test_get_package_information_pep_658(
+    mocker: MockerFixture, get_metadata_mock: RequestsSessionGet
+) -> None:
     repo = MockRepository()
 
     isort_package = repo.package("isort", Version.parse("4.3.4"))
 
-    mocker.patch.object(repo.session, "get", _get_mock)
+    mocker.patch.object(repo.session, "get", get_metadata_mock)
+    spy = mocker.spy(repo, "_get_info_from_metadata")
 
     try:
         package = repo.package("isort-metadata", Version.parse("4.3.4"))
     except FileNotFoundError:
         pytest.fail("Metadata was not successfully retrieved")
     else:
+        assert spy.call_count > 0
+        assert spy.spy_return is not None
+
         assert package.source_type == isort_package.source_type == "legacy"
         assert package.source_reference == isort_package.source_reference == repo.name
         assert package.source_url == isort_package.source_url == repo.url

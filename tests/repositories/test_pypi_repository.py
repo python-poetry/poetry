@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
+    from tests.types import RequestsSessionGet
+
 
 @pytest.fixture(autouse=True)
 def _use_simple_keyring(with_simple_keyring: None) -> None:
@@ -245,6 +247,30 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> N
     dep = package.requires[0]
     assert dep.name == "futures"
     assert dep.python_versions == "~2.7"
+
+
+def test_fallback_pep_658_metadata(
+    mocker: MockerFixture, get_metadata_mock: RequestsSessionGet
+) -> None:
+    repo = MockRepository(fallback=True)
+
+    mocker.patch.object(repo.session, "get", get_metadata_mock)
+    spy = mocker.spy(repo, "_get_info_from_metadata")
+
+    try:
+        package = repo.package("isort-metadata", Version.parse("4.3.4"))
+    except FileNotFoundError:
+        pytest.fail("Metadata was not successfully retrieved")
+    else:
+        assert spy.call_count > 0
+        assert spy.spy_return is not None
+
+        assert package.name == "isort-metadata"
+        assert len(package.requires) == 1
+
+        dep = package.requires[0]
+        assert dep.name == "futures"
+        assert dep.python_versions == "~2.7"
 
 
 def test_fallback_can_read_setup_to_get_dependencies() -> None:

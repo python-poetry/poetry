@@ -295,17 +295,16 @@ class HTTPRepository(CachedRepository):
             urls["sdist"][0], metadata
         ) or self._get_info_from_sdist(urls["sdist"][0])
 
-    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
-        if not links:
-            raise PackageNotFound(
-                f'No valid distribution links found for package: "{data.name}" version:'
-                f' "{data.version}"'
-            )
+    def _get_info_from_links(
+        self,
+        links: list[Link],
+        *,
+        ignore_yanked: bool = True,
+    ) -> PackageInfo:
         urls = defaultdict(list)
         metadata: dict[str, pkginfo.Distribution] = {}
-        files: list[dict[str, Any]] = []
         for link in links:
-            if link.yanked and not data.yanked:
+            if link.yanked and ignore_yanked:
                 # drop yanked files unless the entire release is yanked
                 continue
             if link.has_metadata:
@@ -342,6 +341,21 @@ class HTTPRepository(CachedRepository):
             ):
                 urls["sdist"].append(link.url)
 
+        return self._get_info_from_urls(urls, metadata)
+
+    def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
+        if not links:
+            raise PackageNotFound(
+                f'No valid distribution links found for package: "{data.name}" version:'
+                f' "{data.version}"'
+            )
+
+        files: list[dict[str, Any]] = []
+        for link in links:
+            if link.yanked and not data.yanked:
+                # drop yanked files unless the entire release is yanked
+                continue
+
             file_hash: str | None
             for hash_name in ("sha512", "sha384", "sha256"):
                 if hash_name in link.hashes:
@@ -361,7 +375,8 @@ class HTTPRepository(CachedRepository):
 
         data.files = files
 
-        info = self._get_info_from_urls(urls, metadata)
+        # drop yanked files unless the entire release is yanked
+        info = self._get_info_from_links(links, ignore_yanked=not data.yanked)
 
         data.summary = info.summary
         data.requires_dist = info.requires_dist

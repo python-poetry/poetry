@@ -1,0 +1,35 @@
+{
+  "name": "isort-metadata",
+  "files": [
+    {
+      "filename": "isort-metadata-4.3.4-py2-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/41/d8/a945da414f2adc1d9e2f7d6e7445b27f2be42766879062a2e63616ad4199/isort-metadata-4.3.4-py2-none-any.whl",
+      "core-metadata": true,
+      "hashes": {
+        "md5": "f0ad7704b6dc947073398ba290c3517f",
+        "sha256": "ec9ef8f4a9bc6f71eec99e1806bfa2de401650d996c59330782b89a5555c1497"
+      }
+    },
+    {
+      "filename": "isort-metadata-4.3.4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/1f/2c/22eee714d7199ae0464beda6ad5fedec8fee6a2f7ffd1e8f1840928fe318/isort-metadata-4.3.4-py3-none-any.whl",
+      "core-metadata": true,
+      "hashes": {
+        "md5": "fbaac4cd669ac21ea9e21ab1ea3180db",
+        "sha256": "1153601da39a25b14ddc54955dbbacbb6b2d19135386699e2ad58517953b34af"
+      }
+    },
+    {
+      "filename": "isort-metadata-4.3.4.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/b1/de/a628d16fdba0d38cafb3d7e34d4830f2c9cb3881384ce5c08c44762e1846/isort-metadata-4.3.4.tar.gz",
+      "hashes": {
+        "md5": "fb554e9c8f9aa76e333a03d470a5cf52",
+        "sha256": "b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8"
+      }
+    }
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3575149
+  }
+}

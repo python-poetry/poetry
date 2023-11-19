@@ -8,6 +8,8 @@ from typing import Protocol
 if TYPE_CHECKING:
     from pathlib import Path
 
+    import requests
+
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
 
@@ -61,3 +63,7 @@ class FixtureCopier(Protocol):
 
 class HTMLPageGetter(Protocol):
     def __call__(self, content: str, base_url: str | None = None) -> str: ...
+
+
+class RequestsSessionGet(Protocol):
+    def __call__(self, url: str, **__: Any) -> requests.Response: ...
