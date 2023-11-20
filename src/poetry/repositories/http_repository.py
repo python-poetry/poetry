@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import hashlib
 
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -16,7 +15,6 @@ import requests.adapters
 
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.utils.link import Link
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
@@ -38,6 +36,7 @@ from poetry.utils.patterns import wheel_file_re
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.packages.utils.link import Link
 
     from poetry.repositories.link_sources.base import LinkSource
     from poetry.utils.authenticator import RepositoryCertificateConfig
@@ -110,10 +109,9 @@ class HTTPRepository(CachedRepository):
             )
             yield filepath
 
-    def _get_info_from_wheel(self, url: str) -> PackageInfo:
+    def _get_info_from_wheel(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        link = Link(url)
         netloc = link.netloc
 
         # If "lazy-wheel" is enabled and the domain supports range requests
@@ -148,37 +146,73 @@ class HTTPRepository(CachedRepository):
                 level="debug",
             )
             self._supports_range_requests[netloc] = True
-            return self._get_info_from_wheel(link.url)
+            return self._get_info_from_wheel(link)
 
-    def _get_info_from_sdist(self, url: str) -> PackageInfo:
+    def _get_info_from_sdist(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        with self._cached_or_downloaded_file(Link(url)) as filepath:
+        with self._cached_or_downloaded_file(link) as filepath:
             return PackageInfo.from_sdist(filepath)
 
-    @staticmethod
-    def _get_info_from_metadata(
-        url: str, metadata: dict[str, pkginfo.Distribution]
-    ) -> PackageInfo | None:
-        if url in metadata:
-            dist = metadata[url]
-            return PackageInfo(
-                name=dist.name,
-                version=dist.version,
-                summary=dist.summary,
-                requires_dist=list(dist.requires_dist),
-                requires_python=dist.requires_python,
-            )
+    def _get_info_from_metadata(self, link: Link) -> PackageInfo | None:
+        if link.has_metadata:
+            try:
+                assert link.metadata_url is not None
+                response = self.session.get(link.metadata_url)
+                distribution = pkginfo.Distribution()
+                if link.metadata_hash_name is not None:
+                    metadata_hash = getattr(hashlib, link.metadata_hash_name)(
+                        response.text.encode()
+                    ).hexdigest()
+
+                    if metadata_hash != link.metadata_hash:
+                        self._log(
+                            f"Metadata file hash ({metadata_hash}) does not match"
+                            f" expected hash ({link.metadata_hash})."
+                            f" Metadata file for {link.filename} will be ignored.",
+                            level="warning",
+                        )
+                        return None
+
+                distribution.parse(response.content)
+                return PackageInfo(
+                    name=distribution.name,
+                    version=distribution.version,
+                    summary=distribution.summary,
+                    requires_dist=list(distribution.requires_dist),
+                    requires_python=distribution.requires_python,
+                )
+
+            except requests.HTTPError:
+                self._log(
+                    f"Failed to retrieve metadata at {link.metadata_url}",
+                    level="warning",
+                )
+
         return None
 
-    def _get_info_from_urls(
+    def _get_info_from_links(
         self,
-        urls: dict[str, list[str]],
-        metadata: dict[str, pkginfo.Distribution] | None = None,
+        links: list[Link],
+        *,
+        ignore_yanked: bool = True,
     ) -> PackageInfo:
-        metadata = metadata or {}
+        # Sort links by distribution type
+        wheels: list[Link] = []
+        sdists: list[Link] = []
+        for link in links:
+            if link.yanked and ignore_yanked:
+                # drop yanked files unless the entire release is yanked
+                continue
+            if link.is_wheel:
+                wheels.append(link)
+            elif link.filename.endswith(
+                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
+            ):
+                sdists.append(link)
+
         # Prefer to read data from wheels: this is faster and more reliable
-        if wheels := urls.get("bdist_wheel"):
+        if wheels:
             # We ought just to be able to look at any of the available wheels to read
             # metadata, they all should give the same answer.
             #
@@ -193,8 +227,7 @@ class HTTPRepository(CachedRepository):
             universal_python3_wheel = None
             platform_specific_wheels = []
             for wheel in wheels:
-                link = Link(wheel)
-                m = wheel_file_re.match(link.filename)
+                m = wheel_file_re.match(wheel.filename)
                 if not m:
                     continue
 
@@ -215,17 +248,17 @@ class HTTPRepository(CachedRepository):
 
             if universal_wheel is not None:
                 return self._get_info_from_metadata(
-                    universal_wheel, metadata
+                    universal_wheel
                 ) or self._get_info_from_wheel(universal_wheel)
 
             info = None
             if universal_python2_wheel and universal_python3_wheel:
                 info = self._get_info_from_metadata(
-                    universal_python2_wheel, metadata
+                    universal_python2_wheel
                 ) or self._get_info_from_wheel(universal_python2_wheel)
 
                 py3_info = self._get_info_from_metadata(
-                    universal_python3_wheel, metadata
+                    universal_python3_wheel
                 ) or self._get_info_from_wheel(universal_python3_wheel)
 
                 if info.requires_python or py3_info.requires_python:
@@ -277,71 +310,23 @@ class HTTPRepository(CachedRepository):
             # Prefer non platform specific wheels
             if universal_python3_wheel:
                 return self._get_info_from_metadata(
-                    universal_python3_wheel, metadata
+                    universal_python3_wheel
                 ) or self._get_info_from_wheel(universal_python3_wheel)
 
             if universal_python2_wheel:
                 return self._get_info_from_metadata(
-                    universal_python2_wheel, metadata
+                    universal_python2_wheel
                 ) or self._get_info_from_wheel(universal_python2_wheel)
 
             if platform_specific_wheels:
                 first_wheel = platform_specific_wheels[0]
                 return self._get_info_from_metadata(
-                    first_wheel, metadata
+                    first_wheel
                 ) or self._get_info_from_wheel(first_wheel)
 
-        return self._get_info_from_metadata(
-            urls["sdist"][0], metadata
-        ) or self._get_info_from_sdist(urls["sdist"][0])
-
-    def _get_info_from_links(
-        self,
-        links: list[Link],
-        *,
-        ignore_yanked: bool = True,
-    ) -> PackageInfo:
-        urls = defaultdict(list)
-        metadata: dict[str, pkginfo.Distribution] = {}
-        for link in links:
-            if link.yanked and ignore_yanked:
-                # drop yanked files unless the entire release is yanked
-                continue
-            if link.has_metadata:
-                try:
-                    assert link.metadata_url is not None
-                    response = self.session.get(link.metadata_url)
-                    distribution = pkginfo.Distribution()
-                    if link.metadata_hash_name is not None:
-                        metadata_hash = getattr(hashlib, link.metadata_hash_name)(
-                            response.text.encode()
-                        ).hexdigest()
-
-                        if metadata_hash != link.metadata_hash:
-                            self._log(
-                                f"Metadata file hash ({metadata_hash}) does not match"
-                                f" expected hash ({link.metadata_hash})."
-                                f" Metadata file for {link.filename} will be ignored.",
-                                level="warning",
-                            )
-                            continue
-
-                    distribution.parse(response.content)
-                    metadata[link.url] = distribution
-                except requests.HTTPError:
-                    self._log(
-                        f"Failed to retrieve metadata at {link.metadata_url}",
-                        level="warning",
-                    )
-
-            if link.is_wheel:
-                urls["bdist_wheel"].append(link.url)
-            elif link.filename.endswith(
-                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
-            ):
-                urls["sdist"].append(link.url)
-
-        return self._get_info_from_urls(urls, metadata)
+        return self._get_info_from_metadata(sdists[0]) or self._get_info_from_sdist(
+            sdists[0]
+        )
 
     def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
         if not links:

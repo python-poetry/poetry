@@ -10,6 +10,7 @@ from zipfile import ZipFile
 import pytest
 
 from packaging.metadata import parse_email
+from poetry.core.packages.utils.link import Link
 
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
 from poetry.repositories.http_repository import HTTPRepository
@@ -61,7 +62,7 @@ def test_get_info_from_wheel(
     if lazy_wheel and supports_range_requests is not None:
         repo._supports_range_requests[domain] = supports_range_requests
 
-    info = repo._get_info_from_wheel(url)
+    info = repo._get_info_from_wheel(Link(url))
     assert info.name == "poetry-core"
     assert info.version == "1.5.0"
     assert info.requires_dist == [
@@ -110,18 +111,18 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
 
     filename = "poetry_core-1.5.0-py3-none-any.whl"
     domain = "foo.com"
-    url = f"https://{domain}/{filename}"
+    link = Link(f"https://{domain}/{filename}")
     repo = MockRepository()
 
     # 1. range request and download
     mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
-    repo._get_info_from_wheel(url)
+    repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 1
     assert mock_download.call_args[1]["raise_accepts_ranges"] is False
 
     # 2. only download
-    repo._get_info_from_wheel(url)
+    repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 2
     assert mock_download.call_args[1]["raise_accepts_ranges"] is True
@@ -129,26 +130,26 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     # 3. download and range request
     mock_metadata_from_wheel_url.side_effect = None
     mock_download.side_effect = HTTPRangeRequestSupported
-    repo._get_info_from_wheel(url)
+    repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 2
     assert mock_download.call_count == 3
     assert mock_download.call_args[1]["raise_accepts_ranges"] is True
 
     # 4. only range request
-    repo._get_info_from_wheel(url)
+    repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 3
     assert mock_download.call_count == 3
 
     # 5. range request and download
     mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
     mock_download.side_effect = None
-    repo._get_info_from_wheel(url)
+    repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 4
     assert mock_download.call_count == 4
     assert mock_download.call_args[1]["raise_accepts_ranges"] is False
 
     # 6. only range request
     mock_metadata_from_wheel_url.side_effect = None
-    repo._get_info_from_wheel(url)
+    repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 5
     assert mock_download.call_count == 4
