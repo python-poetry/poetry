@@ -134,8 +134,13 @@ Note: On some systems, `python` may still refer to Python 2 instead of Python 3.
 ```
 
 {{% note %}}
-If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
-above.
+If you have installed Python through the Microsoft Store,
+replace `py` with `python` in the command above.
+In this case, you might also want to declare the `POETRY_HOME` environment variable
+by running `$env:POETRY_HOME="$env:userprofile\poetry"` before the command above
+to make Poetry be installed in a directory that can be easily added to PATH.
+Since Python from the Microsoft Store is installed in a sandboxed environment,
+Poetry cannot be installed in a normal app data directory (`%APPDATA%`).
 {{% /note %}}
 
 {{< /step >}}
@@ -146,7 +151,7 @@ By default, Poetry is installed into a platform and user-specific directory:
 
 - `~/Library/Application Support/pypoetry` on MacOS.
 - `~/.local/share/pypoetry` on Linux/Unix.
-- `%APPDATA%\pypoetry` on Windows.
+- `%APPDATA%\pypoetry` on Windows (If Python is installed via web installer).
 
 If you wish to change this, you may define the `$POETRY_HOME` environment variable:
 
@@ -179,10 +184,25 @@ curl -sSL https://install.python-poetry.org | python3 - --git https://github.com
 {{< step >}}
 **Add Poetry to your PATH**
 
+System PATH enables running commands like `poetry` in the CLI conveniently
+without typing in the full path to that executable.
+The way to add Poetry to your PATH differs by platform.
+For the changes in PATH to take effect, you should always restart the terminal or re-open the window.
+
+- On Linux and macOS, open (or create) the shell file.
+  For example, if Bash is your default shell, you should be editing `$HOME/.bashrc` file.
+  The filepath and filename will be different depending on the default shell.
+  Typing `echo $SHELL` in your Terminal will tell you which shell you’re using.
+  Add `export PATH="$PATH:[PATH_OF_POETRY_DIRECTORY]/bin"` to the shell file,
+  changing `[PATH_OF_FLUTTER_GIT_DIRECTORY]` into the path of your Poetry directory.
+- On Windows, From the Start search bar, enter `env` and open `Edit environment variables for your account`.
+  Under `User variables`, Find (or create) an entry called `Path`
+  and append the full path to Poetry binary using `;` as a separator from existing values.
+
 The installer creates a `poetry` wrapper in a well-known, platform-specific directory:
 
 - `$HOME/.local/bin` on Unix.
-- `%APPDATA%\Python\Scripts` on Windows.
+- `%APPDATA%\Python\Scripts` on Windows (If Python is installed via web installer).
 - `$POETRY_HOME/bin` if `$POETRY_HOME` is set.
 
 If this directory is not present in your `$PATH`, you can add it in order to invoke Poetry
@@ -192,7 +212,7 @@ Alternatively, the full path to the `poetry` binary can always be used:
 
 - `~/Library/Application Support/pypoetry/venv/bin/poetry` on MacOS.
 - `~/.local/share/pypoetry/venv/bin/poetry` on Linux/Unix.
-- `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows.
+- `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows (If Python is installed via web installer).
 - `$POETRY_HOME/venv/bin/poetry` if `$POETRY_HOME` is set.
 
 {{< /step >}}
@@ -246,11 +266,24 @@ using the [methods above]({{< ref "#installation" >}} "Installation").
 If you decide Poetry isn't your thing, you can completely remove it from your system
 by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
+If you have installed Poetry somewhere other than the default location,
+declare the `POETRY_HOME` environment variable once again before uninstallation.
+
+**Linux, macOS, Windows (WSL)**
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 - --uninstall
-curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
+
+**Windows (Powershell)**
+```powershell
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py - --uninstall
+```
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
+above.
+{{% /note %}}
 
 {{% warning %}}
 If you installed using the deprecated `get-poetry.py` script, you should remove the path it uses manually, e.g.
