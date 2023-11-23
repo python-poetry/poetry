@@ -154,7 +154,7 @@ class Downloader:
     def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
         fetched_size = 0
         with atomic_open(self._dest) as f:
-            for chunk in self._response.iter_content(chunk_size=chunk_size):
+            for chunk in self._response.raw.stream(chunk_size, decode_content=False):
                 if chunk:
                     f.write(chunk)
                     fetched_size += len(chunk)
