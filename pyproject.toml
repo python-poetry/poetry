@@ -61,6 +61,7 @@ xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
+pytest-httpserver = "^1.0.8"
 
 [tool.poetry.group.test.dependencies]
 deepdiff = "^6.3"
