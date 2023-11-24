@@ -289,8 +289,7 @@ poetry update requests toml
 
 Note that this will not update versions for dependencies outside their (SemVer) version constraints specified
 in the `pyproject.toml` file.
-In other terms, a constraint of `^2.3` only allows updates to `minor` and `patch` versions within v2 (equivalent to `>=2.3, <3.0`). Similarly, constraints of `~2.3` is equivalent to `>=2.3,<2.4`, etc.
-`poetry update foo` will be a no-op if the only latest version for `foo` lies outside the constraint specified for `foo` in the `pyproject.toml` file. More info can be found in our (caret requirements)[https://python-poetry.org/docs/dependency-specification#caret-requirements]
+In other terms, `poetry update foo` will be a no-op if the only latest version for `foo` lies outside the constraint specified for `foo` in the `pyproject.toml` file. (More info on constraints can be found in our (Version Requirements)[https://python-poetry.org/docs/dependency-specification/#version-constraints].)
 In order for `foo` to be updated, you must update the constraint. You can do this using the `add` command.
 
 ### Options
