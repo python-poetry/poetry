@@ -73,7 +73,7 @@ pytest-randomly = "^3.12"
 pytest-xdist = { version = "^3.1", extras = ["psutil"] }
 
 [tool.poetry.group.typing.dependencies]
-mypy = ">=1.6.0"
+mypy = ">=1.8.0"
 types-requests = ">=2.28.8"
 
 # only used in github actions
