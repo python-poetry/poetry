@@ -416,9 +416,9 @@ class EnvManager:
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
         env_path = venv.path
-        _, minor, _ = venv.get_version_info()
+        major, minor, _ = venv.get_version_info()
 
-        name = f"{base_env_name}-py{minor}"
+        name = f"{base_env_name}-py{major}.{minor}"
 
         if not env_path.exists():
             raise ValueError(f'<warning>Environment "{name}" does not exist.</warning>')
