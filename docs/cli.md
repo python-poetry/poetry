@@ -675,7 +675,7 @@ bump rule is provided.
 
 The new version should be a valid [PEP 440](https://peps.python.org/pep-0440/)
 string or a valid bump rule: `patch`, `minor`, `major`, `prepatch`, `preminor`,
-`premajor`, `prerelease`.
+`premajor`, `prerelease`, `dev`.
 
 {{% note %}}
 
@@ -697,6 +697,9 @@ The table below illustrates the effect of these rules with concrete examples.
 | prerelease | 1.0.2   | 1.0.3a0 |
 | prerelease | 1.0.3a0 | 1.0.3a1 |
 | prerelease | 1.0.3b0 | 1.0.3b1 |
+| dev        | 1.0.2   | 1.0.2.dev0 |
+| dev        | 1.0.2.dev0 | 1.0.2.dev1 |
+| dev        | 1.0.2a0 | 1.0.2a0.dev0 |
 
 The option `--next-phase` allows the increment of prerelease phase versions.
 

@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 class VersionCommand(Command):
     name = "version"
     description = (
-        "Shows the version of the project or bumps it when a valid "
-        "bump rule is provided."
+        "Shows the version of the project or bumps it when a valid bump rule is"
+        " provided."
     )
 
     arguments = [
@@ -45,7 +45,7 @@ the project and writes the new version back to <comment>pyproject.toml</> if a v
 bump rule is provided.
 
 The new version should ideally be a valid semver string or a valid bump rule:
-patch, minor, major, prepatch, preminor, premajor, prerelease.
+patch, minor, major, prepatch, preminor, premajor, prerelease, dev.
 """
 
     RESERVED = {
@@ -56,6 +56,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         "preminor",
         "prepatch",
         "prerelease",
+        "dev",
     }
 
     def handle(self) -> int:
@@ -122,6 +123,11 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 new = Version(parsed.epoch, parsed.release, pre)
             else:
                 new = parsed.next_patch().first_prerelease()
+        elif rule == "dev":
+            if parsed.is_devrelease():
+                new = parsed.next_devrelease()
+            else:
+                new = parsed.first_devrelease()
         else:
             new = Version.parse(rule)
 
