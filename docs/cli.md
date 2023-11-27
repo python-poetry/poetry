@@ -684,6 +684,10 @@ If you would like to use semantic versioning for your project, please see
 
 {{% /note %}}
 
+If you use the `dev` rule on a stable version, it will first be updated to a
+prerelease version to increment the version numbers before appending the
+`.dev0` suffix.
+
 The table below illustrates the effect of these rules with concrete examples.
 
 | rule       | before  | after   |
@@ -697,8 +701,8 @@ The table below illustrates the effect of these rules with concrete examples.
 | prerelease | 1.0.2   | 1.0.3a0 |
 | prerelease | 1.0.3a0 | 1.0.3a1 |
 | prerelease | 1.0.3b0 | 1.0.3b1 |
-| dev        | 1.0.2   | 1.0.2.dev0 |
-| dev        | 1.0.2.dev0 | 1.0.2.dev1 |
+| dev        | 1.0.2   | 1.0.3a0.dev0 |
+| dev        | 1.1.0a0 | 1.1.0a0.dev0 |
 | dev        | 1.0.2a0 | 1.0.2a0.dev0 |
 
 The option `--next-phase` allows the increment of prerelease phase versions.

@@ -124,7 +124,11 @@ patch, minor, major, prepatch, preminor, premajor, prerelease, dev.
             else:
                 new = parsed.next_patch().first_prerelease()
         elif rule == "dev":
-            if parsed.is_devrelease():
+            if parsed.is_stable():
+                new = self.increment_version(
+                    version, "prerelease", next_phase
+                ).first_devrelease()
+            elif parsed.is_devrelease():
                 new = parsed.next_devrelease()
             else:
                 new = parsed.first_devrelease()

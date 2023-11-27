@@ -46,9 +46,9 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
         ("1.2.3beta1", "prerelease", "1.2.3b2"),
         ("1.2.3b1", "prerelease", "1.2.3b2"),
         ("1.2.3", "prerelease", "1.2.4a0"),
-        ("1.2.3", "dev", "1.2.3.dev0"),
-        ("1.2.3.dev0", "dev", "1.2.3.dev1"),
+        ("1.2.3", "dev", "1.2.4a0.dev0"),
         ("1.2.3a0", "dev", "1.2.3a0.dev0"),
+        ("1.2.3a0.dev0", "dev", "1.2.3a0.dev1"),
         ("0.0.0", "1.2.3", "1.2.3"),
     ],
 )
