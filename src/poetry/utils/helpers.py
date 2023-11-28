@@ -139,8 +139,9 @@ class Downloader:
         self._dest = dest
 
         get = requests.get if not session else session.get
+        headers = {"Accept-Encoding": "Identity"}
 
-        self._response = get(url, stream=True, timeout=REQUESTS_TIMEOUT)
+        self._response = get(url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT)
         self._response.raise_for_status()
 
     @cached_property
@@ -154,7 +155,7 @@ class Downloader:
     def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
         fetched_size = 0
         with atomic_open(self._dest) as f:
-            for chunk in self._response.raw.stream(chunk_size, decode_content=False):
+            for chunk in self._response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
                     fetched_size += len(chunk)

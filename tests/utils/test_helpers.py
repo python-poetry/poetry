@@ -125,9 +125,9 @@ def test_guaranteed_hash(
 
 def test_download_file(httpserver: HTTPServer, fixture_dir: FixtureDirGetter, tmp_path: pathlib.Path) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-    httpserver.expect_request("/demo-0.1.0.tar.gz").respond_with_data(
-        open(file_path, "rb").read(),
-        headers={'Content-Encoding': 'gzip'}
+    httpserver.expect_request("/demo-0.1.0.tar.gz", headers={"Accept-Encoding": "Identity"}).respond_with_data(
+        response_data=open(file_path, "rb").read(),
+        content_type="application/octet-stream",
     )
     dest = tmp_path / "demo-0.1.0.tar.gz"
     download_file(httpserver.url_for("/demo-0.1.0.tar.gz"), dest)
