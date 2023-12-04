@@ -710,6 +710,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
     assert url.exists(), "source file should not be deleted"
 
 
+@pytest.mark.network
 def test_executor_should_write_pep610_url_references_for_non_wheel_files(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,

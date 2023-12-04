@@ -50,6 +50,7 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
     mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
+@pytest.mark.network
 def test_isolated_env_install_success(pool: RepositoryPool) -> None:
     with ephemeral_environment(Path(sys.executable)) as venv:
         env = IsolatedEnv(venv, pool)
