@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -97,6 +98,7 @@ class Locker(BaseLocker):
         self._lock = lock_path / "poetry.lock"
         self._written_data = None
         self._locked = False
+        self._fresh = True
         self._lock_data = None
         self._content_hash = self._get_content_hash()
 
@@ -121,8 +123,13 @@ class Locker(BaseLocker):
     def is_locked(self) -> bool:
         return self._locked
 
+    def fresh(self, is_fresh: bool = True) -> Locker:
+        self._fresh = is_fresh
+
+        return self
+
     def is_fresh(self) -> bool:
-        return True
+        return self._fresh
 
     def _get_content_hash(self) -> str:
         return "123456789"
@@ -206,6 +213,18 @@ def test_run_no_dependencies(installer: Installer, locker: Locker) -> None:
 
     expected = fixture("no-dependencies")
     assert locker.written_data == expected
+
+
+def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
+    locker.locked().fresh(False)
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "poetry.lock is not consistent with pyproject.toml. "
+            "Run `poetry lock [--no-update]` to fix it."
+        ),
+    ):
+        installer.run()
 
 
 def test_run_with_dependencies(
