@@ -232,6 +232,14 @@ poetry source add --priority=supplemental https://foo.bar/simple/
 
 There can be more than one supplemental package source.
 
+{{% warning %}}
+
+Take into account that someone could publish a new package to a primary source
+which matches a package in your supplemental source. They could coincidentally
+or intentionally replace your dependency with something you did not expect.
+
+{{% /warning %}}
+
 
 #### Explicit Package Sources
 
