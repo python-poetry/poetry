@@ -200,7 +200,6 @@ markers = [
 
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
+exclude_also = [
     "if TYPE_CHECKING:"
 ]
