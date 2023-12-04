@@ -63,6 +63,7 @@ xattr = { version = "^0.10.0", markers = "sys_platform == 'darwin'" }
 pre-commit = ">=2.10"
 
 [tool.poetry.group.test.dependencies]
+coverage = ">=7.2.0"
 deepdiff = "^6.3"
 httpretty = "^1.1"
 pytest = "^7.1"
