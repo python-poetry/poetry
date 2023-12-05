@@ -125,6 +125,19 @@ any Poetry commands that expect to manipulate an environment.
 
 ### Using `poetry run`
 
+{{% note %}}
+If managing your own virtual environment externally, you do not need to use `poetry run` or `poetry shell` since
+you will, presumably, already have activated that virtual environment and made available the correct python instance.
+For example, these commands should output the same python path:
+```shell
+conda activate your_env_name
+which python
+poetry run which python
+poetry shell
+which python
+```
+{{% /note %}}
+
 To run your script simply use `poetry run python your_script.py`.
 Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`.
 
