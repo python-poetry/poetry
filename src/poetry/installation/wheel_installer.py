@@ -40,6 +40,8 @@ class WheelDestination(SchemeDictionaryDestination):
         from installer.utils import copyfileobj_with_hashing
         from installer.utils import make_file_executable
 
+        if scheme in ["platlib", "purelib"] and "usersite" in self.scheme_dict:
+            scheme = "usersite"
         target_path = Path(self.scheme_dict[scheme]) / path
         if target_path.exists():
             # Contrary to the base library we don't raise an error
