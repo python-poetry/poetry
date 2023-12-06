@@ -199,6 +199,10 @@ if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
     paths["userbase"] = site.getuserbase()
 
+    paths["platlib"] = paths["usersite"]
+    paths["purelib"] = paths["usersite"]
+    paths["scripts"] = paths["userbase"] + "/bin"
+
 print(json.dumps(paths))
 """
 
@@ -1614,6 +1618,10 @@ class SystemEnv(Env):
         if site.check_enableusersite():
             paths["usersite"] = site.getusersitepackages()
             paths["userbase"] = site.getuserbase()
+
+            paths["platlib"] = paths["usersite"]
+            paths["purelib"] = paths["usersite"]
+            paths["scripts"] = paths["userbase"] + "/bin"
 
         return paths
 
