@@ -199,13 +199,26 @@ if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
     paths["userbase"] = site.getuserbase()
 
+print(json.dumps(paths))
+"""
+
+GET_PATHS_FOR_GENERIC_ENVS_USE_USERSITE = """\
+import json
+import site
+import sysconfig
+
+paths = sysconfig.get_paths().copy()
+
+if site.check_enableusersite():
+    paths["usersite"] = site.getusersitepackages()
+    paths["userbase"] = site.getuserbase()
+
     paths["platlib"] = paths["usersite"]
     paths["purelib"] = paths["usersite"]
     paths["scripts"] = paths["userbase"] + "/bin"
 
 print(json.dumps(paths))
 """
-
 
 class SitePackages:
     def __init__(
@@ -1619,9 +1632,10 @@ class SystemEnv(Env):
             paths["usersite"] = site.getusersitepackages()
             paths["userbase"] = site.getuserbase()
 
-            paths["platlib"] = paths["usersite"]
-            paths["purelib"] = paths["usersite"]
-            paths["scripts"] = paths["userbase"] + "/bin"
+            if os.getenv("POETRY_USE_USER_SITE") == "1":
+                paths["platlib"] = paths["usersite"]
+                paths["purelib"] = paths["usersite"]
+                paths["scripts"] = paths["userbase"] + "/bin"
 
         return paths
 
@@ -1836,7 +1850,10 @@ class GenericEnv(VirtualEnv):
                 self._pip_executable = pip_executable
 
     def get_paths(self) -> dict[str, str]:
-        output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS, isolate=False)
+        if os.getenv("POETRY_USE_USER_SITE") == "1":
+            output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS_USE_USERSITE, isolate=False)
+        else:
+            output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS, isolate=False)
 
         paths: dict[str, str] = json.loads(output)
         return paths

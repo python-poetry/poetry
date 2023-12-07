@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import contextlib
 import csv
 import itertools
@@ -608,7 +609,7 @@ class Executor:
         )
         self._write(operation, message)
         return self.pip_install(req, upgrade=operation.job_type == "update")
-        
+
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
@@ -783,7 +784,7 @@ class Executor:
             if link.yanked_reason:
                 message += f" Reason for being yanked: {link.yanked_reason}"
             self._yanked_warnings.append(message)
-                    
+
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
         self._maybe_add_yanked_warning(link, operation)
@@ -863,54 +864,62 @@ class Executor:
         return archive_hash
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
-        response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
-        )
-        wheel_size = response.headers.get("content-length")
-        operation_message = self.get_operation_message(operation)
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>"
-        )
-        progress = None
-        if self.supports_fancy_output():
-            if wheel_size is None:
-                self._write(operation, message)
-            else:
-                from cleo.ui.progress_bar import ProgressBar
-
-                progress = ProgressBar(
-                    self._sections[id(operation)], max=int(wheel_size)
-                )
-                progress.set_format(message + " <b>%percent%%</b>")
-
-        if progress:
-            with self._lock:
-                self._sections[id(operation)].clear()
-                progress.start()
-
-        done = 0
         archive = (
             self._artifact_cache.get_cache_directory_for_link(link) / link.filename
         )
         archive.parent.mkdir(parents=True, exist_ok=True)
-        with atomic_open(archive) as f:
-            for chunk in response.iter_content(chunk_size=4096):
-                if not chunk:
-                    break
-
-                done += len(chunk)
-
-                if progress:
-                    with self._lock:
-                        progress.set_progress(done)
-
-                f.write(chunk)
-
-        if progress:
-            with self._lock:
-                progress.finish()
+        curlcmd = 'curl %s --silent --output %s; exit 0' % (str(link), str(archive))
+        output = subprocess.check_output(
+            curlcmd,
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
 
         return archive
+
+        # response = self._authenticator.request(
+        #     "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
+        # )
+        # wheel_size = response.headers.get("content-length")
+        # operation_message = self.get_operation_message(operation)
+        # message = (
+        #     f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>"
+        # )
+        # progress = None
+        # if self.supports_fancy_output():
+        #     if wheel_size is None:
+        #         self._write(operation, message)
+        #     else:
+        #         from cleo.ui.progress_bar import ProgressBar
+
+        #         progress = ProgressBar(
+        #             self._sections[id(operation)], max=int(wheel_size)
+        #         )
+        #         progress.set_format(message + " <b>%percent%%</b>")
+
+        # if progress:
+        #     with self._lock:
+        #         self._sections[id(operation)].clear()
+        #         progress.start()
+
+        # done = 0
+        # with atomic_open(archive) as f:
+        #     for chunk in response.iter_content(chunk_size=4096):
+        #         if not chunk:
+        #             break
+
+        #         done += len(chunk)
+
+        #         if progress:
+        #             with self._lock:
+        #                 progress.set_progress(done)
+        #         f.write(chunk)
+
+        # if progress:
+        #     with self._lock:
+        #         progress.finish()
+
+        # return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
         return (
