@@ -82,10 +82,10 @@ def build_environment(
 
                 io.overwrite_error(
                     "<b>Preparing</b> build environment with build-system requirements"
-                    f" {', '.join(requires)}"
+                    f" {', '.join(requires)}\n"
                 )
 
-            venv.run_pip(
+            output = venv.run_pip(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
@@ -93,7 +93,10 @@ def build_environment(
                 *poetry.pyproject.build_system.requires,
             )
 
-            if overwrite:
+            if io and io.is_debug() and output:
+                io.write_error(output)
+
+            if not overwrite:
                 assert io is not None
                 io.write_error_line("")
 
