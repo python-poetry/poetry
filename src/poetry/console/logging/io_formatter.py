@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-import sys
 import os
+import sys
 import textwrap
 
 from typing import TYPE_CHECKING
@@ -39,30 +39,31 @@ class IOFormatter(logging.Formatter):
 
         if not POETRY_FILTER.filter(record):
             # prefix all lines from third-party packages for easier debugging
-            formatted = textwrap.indent(formatted, f"[{_log_prefix(record)}] ", lambda line: True)
+            formatted = textwrap.indent(
+                formatted, f"[{_log_prefix(record)}] ", lambda line: True
+            )
 
         return formatted
 
 
 def _log_prefix(record: LogRecord) -> str:
     prefix = _path_to_package(record.pathname) or record.module
-    if record.name != 'root':
+    if record.name != "root":
         prefix = ":".join([prefix, record.name])
     return prefix
 
 
 def _path_to_package(pathname: str) -> str | None:
-    """Return main package name of the LogRecord.pathname."""
+    """Return main package name from the LogRecord.pathname."""
     # strip any file extension
     module = os.path.splitext(pathname)[0]
     # strip first matching python path from the pathname
     for syspath in sys.path:
         if pathname.startswith(syspath):
-            module = module[len(syspath):].lstrip(os.sep)
+            module = module[len(syspath) :].lstrip(os.sep)
             break
     else:
         # this is unexpected, but let's play it safe
         return None
-    # module = module.replace(os.sep, '.')  # full relative module path (quite verbose)
-    module = module.partition(os.sep)[0]  # main package name (just about right)
+    module = module.partition(os.sep)[0]  # main package name
     return module
