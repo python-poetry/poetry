@@ -126,9 +126,9 @@ priority = "primary"
 If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
 
 Package sources are considered in the following order:
-1. [default source](#default-package-source),
+1. [default source](#default-package-source-deprecated) (DEPRECATED),
 2. [primary sources](#primary-package-sources),
-3. implicit PyPI (unless disabled by another [primary source](#primary-package-sources), [default source](#default-package-source) or configured explicitly),
+3. implicit PyPI (unless disabled by another [primary source](#primary-package-sources), [default source](#default-package-source-deprecated) or configured explicitly),
 4. [secondary sources](#secondary-package-sources-deprecated) (DEPRECATED),
 5. [supplemental sources](#supplemental-package-sources).
 
@@ -145,20 +145,29 @@ poetry source add --priority=primary PyPI
 ```
 
 If you prefer to disable PyPI completely,
-you may choose to set one of your package sources to be the [default](#default-package-source),
 just add a [primary source](#primary-package-sources)
 or configure PyPI as [explicit source](#explicit-package-sources).
 
 {{% /note %}}
 
 
-#### Default Package Source
+#### Default Package Source (DEPRECATED)
+
+*Deprecated in 1.8.0*
+
+{{% warning %}}
+
+Configuring a default package source is deprecated because it is the same
+as the topmost [primary source](#primary-package-sources).
+Just configure a primary package source and put it first in the list of package sources.
+
+{{% /warning %}}
 
 By default, if you have not configured any primary source,
 Poetry will configure [PyPI](https://pypi.org) as the package source for your project.
 You can alter this behaviour and exclusively look up packages only from the configured
-package sources by adding at least one primary source
-or a **single** source with `priority = "default"`.
+package sources by adding at least one primary source (recommended)
+or a **single** source with `priority = "default"` (deprecated).
 
 ```bash
 poetry source add --priority=default foo https://foo.bar/simple/

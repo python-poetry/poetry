@@ -22,27 +22,34 @@ def tester(
     return command_tester_factory("source add", poetry=poetry_with_source)
 
 
+def _get_source_warning(priority: Priority) -> str:
+    if priority is Priority.SECONDARY:
+        return (
+            "Warning: Priority 'secondary' is deprecated. Consider changing the"
+            " priority to one of the non-deprecated values: 'primary',"
+            " 'supplemental', 'explicit'."
+        )
+    elif priority is Priority.DEFAULT:
+        return (
+            "Warning: Priority 'default' is deprecated. You can achieve"
+            " the same effect by changing the priority to 'primary' and putting"
+            " the source first."
+        )
+    return ""
+
+
 def assert_source_added_legacy(
     tester: CommandTester,
     poetry: Poetry,
     source_existing: Source,
     source_added: Source,
 ) -> None:
-    secondary_deprecated_str = (
-        ""
-        if source_added.priority is not Priority.SECONDARY
-        else (
-            "\nWarning: Priority 'secondary' is deprecated. Consider changing the"
-            " priority to one of the non-deprecated values: 'default', 'primary',"
-            " 'supplemental', 'explicit'."
-        )
+    warning = (
+        "Warning: Priority was set through a deprecated flag (--default or"
+        " --secondary). Consider using --priority next time.\n"
+        + _get_source_warning(source_added.priority)
     )
-    assert (
-        tester.io.fetch_error().strip()
-        == "Warning: Priority was set through a deprecated flag (--default or"
-        " --secondary). Consider using --priority next time."
-        + secondary_deprecated_str
-    )
+    assert tester.io.fetch_error().strip() == warning
     assert (
         tester.io.fetch_output().strip()
         == f"Adding source with name {source_added.name}."
@@ -59,6 +66,7 @@ def assert_source_added(
     source_existing: Source,
     source_added: Source,
 ) -> None:
+    assert tester.io.fetch_error().strip() == _get_source_warning(source_added.priority)
     assert (
         tester.io.fetch_output().strip()
         == f"Adding source with name {source_added.name}."
@@ -126,9 +134,9 @@ def test_source_add_second_default_fails(
     tester.execute(f"--priority=default {source_default.name}1 {source_default.url}")
     assert (
         tester.io.fetch_error().strip()
-        == f"Source with name {source_default.name} is already set to"
-        " default. Only one default source can be configured at a"
-        " time."
+        == f"{_get_source_warning(source_default.priority)}\n"
+        f"Source with name {source_default.name} is already set to default."
+        " Only one default source can be configured at a time."
     )
     assert tester.status_code == 1
 
@@ -238,7 +246,7 @@ def test_source_add_existing_legacy(
         tester.io.fetch_error().strip()
         == "Warning: Priority was set through a deprecated flag"
         " (--default or --secondary). Consider using --priority next"
-        " time."
+        f" time.\n{_get_source_warning(Priority.DEFAULT)}"
     )
     assert (
         tester.io.fetch_output().strip()
@@ -313,6 +321,7 @@ def test_source_add_existing_fails_due_to_other_default(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(f"--priority=default {source_default.name} {source_default.url}")
+    tester.io.fetch_error()
     tester.io.fetch_output()
 
     name = getattr(source_existing.name, modifier)()
@@ -320,9 +329,9 @@ def test_source_add_existing_fails_due_to_other_default(
 
     assert (
         tester.io.fetch_error().strip()
-        == f"Source with name {source_default.name} is already set to"
-        " default. Only one default source can be configured at a"
-        " time."
+        == f"{_get_source_warning(source_default.priority)}\n"
+        f"Source with name {source_default.name} is already set to default."
+        " Only one default source can be configured at a time."
     )
     assert tester.io.fetch_output().strip() == ""
     assert tester.status_code == 1

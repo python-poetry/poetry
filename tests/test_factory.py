@@ -241,7 +241,12 @@ def test_poetry_with_default_source(
     poetry = Factory().create_poetry(fixture_dir("with_default_source"), io=io)
 
     assert len(poetry.pool.repositories) == 1
-    assert io.fetch_error() == ""
+    assert (
+        io.fetch_error().strip()
+        == "<warning>Warning: Found deprecated priority 'default' for source 'foo' in"
+        " pyproject.toml. You can achieve the same effect by changing the priority"
+        " to 'primary' and putting the source first."
+    )
 
 
 def test_poetry_with_default_source_and_pypi(
