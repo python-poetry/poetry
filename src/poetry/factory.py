@@ -175,32 +175,15 @@ class Factory(BaseFactory):
 
         # Only add PyPI if no default repository is configured
         if not explicit_pypi:
-            if pool.has_default():
+            if pool.has_default() or pool.has_primary_repositories():
                 if io.is_debug():
                     io.write_line("Deactivating the PyPI repository")
             else:
                 from poetry.repositories.pypi_repository import PyPiRepository
 
-                if pool.has_primary_repositories():
-                    io.write_error_line(
-                        "<warning>"
-                        "Warning: In a future version of Poetry, PyPI will be disabled"
-                        " automatically if at least one custom primary source is"
-                        " configured. In order to avoid"
-                        " a breaking change and make your pyproject.toml forward"
-                        " compatible, add PyPI explicitly via 'poetry source add pypi'."
-                        " By the way, this has the advantage that you can set the"
-                        " priority of PyPI as with any other source."
-                        "</warning>"
-                    )
-
-                if pool.has_primary_repositories():
-                    pypi_priority = Priority.SECONDARY
-                else:
-                    pypi_priority = Priority.DEFAULT
-
                 pool.add_repository(
-                    PyPiRepository(disable_cache=disable_cache), priority=pypi_priority
+                    PyPiRepository(disable_cache=disable_cache),
+                    priority=Priority.PRIMARY,
                 )
 
         if not pool.repositories:
