@@ -159,6 +159,14 @@ class Factory(BaseFactory):
                     f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
                 )
                 io.write_error_line(f"<warning>Warning: {warning}</warning>")
+            elif priority is Priority.DEFAULT:
+                warning = (
+                    "Found deprecated priority 'default' for source"
+                    f" '{source.get('name')}' in pyproject.toml. You can achieve"
+                    " the same effect by changing the priority to 'primary' and putting"
+                    " the source first."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
