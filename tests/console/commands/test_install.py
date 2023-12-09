@@ -514,7 +514,7 @@ def test_non_package_mode_does_not_try_to_install_root(
 ) -> None:
     content = """\
 [tool.poetry]
-mode = "non-package"
+package-mode = false
 """
     poetry = project_factory(name="non-package-mode", pyproject_content=content)
 

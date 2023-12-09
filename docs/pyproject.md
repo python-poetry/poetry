@@ -13,14 +13,14 @@ menu:
 
 The `tool.poetry` section of the `pyproject.toml` file is composed of multiple sections.
 
-## mode
+## package-mode
 
-The mode of the project, either `"package"` (default) or `"non-package"`. **Optional**
+Whether Poetry operates in package mode (default) or not. **Optional**
 
 See [basic usage]({{< relref "basic-usage#operating-modes" >}}) for more information.
 
 ```toml
-mode = "non-package"
+package-mode = false
 ```
 
 ## name

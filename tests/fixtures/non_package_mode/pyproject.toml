@@ -1,5 +1,5 @@
 [tool.poetry]
-mode = "non-package"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.8"

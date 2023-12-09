@@ -87,7 +87,7 @@ If you want to use Poetry only for dependency management but not for packaging, 
 
 ```toml
 [tool.poetry]
-mode = "non-package"
+package-mode = false
 ```
 
 In this mode, metadata such as `name` and `version` are optional.

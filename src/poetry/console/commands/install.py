@@ -79,7 +79,7 @@ dependencies and not including the current project, run the command with the
 <info> poetry install --no-root</info>
 
 If you want to use Poetry only for dependency management but not for packaging,
-you can set the operating mode to "non-package" in your pyproject.toml file.
+you can set the "package-mode" to false in your pyproject.toml file.
 """
 
     _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
