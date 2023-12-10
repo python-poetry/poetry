@@ -232,6 +232,14 @@ poetry source add --priority=supplemental https://foo.bar/simple/
 
 There can be more than one supplemental package source.
 
+{{% warning %}}
+
+Take into account that someone could publish a new package to a primary source
+which matches a package in your supplemental source. They could coincidentally
+or intentionally replace your dependency with something you did not expect.
+
+{{% /warning %}}
+
 
 #### Explicit Package Sources
 
@@ -430,7 +438,7 @@ poetry config repositories.testpypi https://test.pypi.org/legacy/
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
-well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
+well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
 
