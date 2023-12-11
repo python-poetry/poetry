@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+logger = logging.getLogger(__name__)
 import subprocess
 import contextlib
 import csv
@@ -874,8 +876,12 @@ class Executor:
             if self.supports_fancy_output():
                 operation_message = self.get_operation_message(operation)
                 self._write(operation, f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>")
-            download_file_with_curl(url, str(archive))
-            return archive
+            try:
+                download_file_with_curl(url, str(archive))
+                return archive
+            except:
+                # If we failed to download with curl, give it another try with the local implementation
+                logger.warn('Failed to download archive with curl. trying again')
 
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
