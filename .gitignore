@@ -43,3 +43,6 @@ poetry/core/*
 .pythonlibs
 
 poetry-*-bundle.tgz
+
+poetry_env
+proj

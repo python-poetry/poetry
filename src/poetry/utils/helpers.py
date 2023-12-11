@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+logger = logging.getLogger(__name__)
+import subprocess
 import hashlib
 import io
 import os
@@ -95,6 +98,14 @@ def download_file(
     session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
 ) -> None:
+    if os.getenv("POETRY_DOWNLOAD_WITH_CURL") == "1" and url.startswith("https://files.pythonhosted.org/"):
+        try:
+            download_file_with_curl(url, str(dest))
+            return
+        except:
+            # If we failed to download with curl, give it another try with the local implementation
+            logger.warn('Failed to download archive with curl. trying again')
+
     import requests
 
     from poetry.puzzle.provider import Indicator
@@ -133,6 +144,15 @@ def download_file(
                             last_percent = percent
                             update_context(f"Downloading {url} {percent:3}%")
 
+def download_file_with_curl(
+    url: str,
+    dest: str,
+) -> None:
+    """
+    Based on benchmarks done with tensorflow==2.15.0 and torch, using curl for downloading
+    large files gives ~30% faster than requests for the overall installation time.
+    """
+    subprocess.run(['curl', url, '--silent', '--output', dest], check=True)
 
 def get_package_version_display_string(
     package: Package, root: Path | None = None

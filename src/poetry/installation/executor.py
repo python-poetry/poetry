@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import contextlib
 import csv
 import itertools
@@ -29,7 +30,7 @@ from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import atomic_open
+from poetry.utils.helpers import atomic_open, download_file_with_curl
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
@@ -608,7 +609,7 @@ class Executor:
         )
         self._write(operation, message)
         return self.pip_install(req, upgrade=operation.job_type == "update")
-        
+
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
@@ -783,7 +784,7 @@ class Executor:
             if link.yanked_reason:
                 message += f" Reason for being yanked: {link.yanked_reason}"
             self._yanked_warnings.append(message)
-                    
+
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
         self._maybe_add_yanked_warning(link, operation)
@@ -863,6 +864,19 @@ class Executor:
         return archive_hash
 
     def _download_archive(self, operation: Install | Update, link: Link) -> Path:
+        archive = (
+            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
+        )
+        archive.parent.mkdir(parents=True, exist_ok=True)
+
+        url = str(link)
+        if os.getenv("POETRY_DOWNLOAD_WITH_CURL") == "1" and url.startswith("https://files.pythonhosted.org/"):
+            if self.supports_fancy_output():
+                operation_message = self.get_operation_message(operation)
+                self._write(operation, f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>")
+            download_file_with_curl(url, str(archive))
+            return archive
+
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
@@ -889,26 +903,24 @@ class Executor:
                 progress.start()
 
         done = 0
-        archive = (
-            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
-        )
-        archive.parent.mkdir(parents=True, exist_ok=True)
+
         with atomic_open(archive) as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if not chunk:
                     break
-
+        
                 done += len(chunk)
-
+        
                 if progress:
                     with self._lock:
                         progress.set_progress(done)
-
+        
                 f.write(chunk)
-
+        
         if progress:
             with self._lock:
                 progress.finish()
+
 
         return archive
 

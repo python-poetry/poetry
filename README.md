@@ -113,6 +113,46 @@ external formats like virtual environments
 installation script
 * [website](https://github.com/python-poetry/website): The official Poetry website and blog
 
+## How to test in a Repl
+
+There are 2 ways to test poetry in a Repl.
+
+## Method 1
+
+1. Uncomment `PYTHONPATH = "$PYTHONPATH:$REPL_HOME/src"` in `.replit`
+2. create a test project via:
+    * mkdir proj
+    * cd proj
+    * poetry init # and go through the prompts
+3. Run `python -m poetry ...`
+
+This will install libs into `.pythonlibs`, but has the shortcoming that poetry won't distinguish its
+own dependencies from the test project's.
+
+## Method 2
+
+1. Comment out `PYTHONPATH = "$PYTHONPATH:$REPL_HOME/src"` in `.replit`
+2. create a test project via:
+    * mkdir proj
+    * cd proj
+    * poetry init # and go through the prompts
+3. cd ..
+4. ./install_poetry_in_venv.sh
+5. cd proj
+6. Run `../poetry_env/bin/poetry ...`
+
+This will also install libs into `.pythonlibs`, which will belong solely to the test project. Poetry's
+dependencies live inside poetry_env.
+
+If you want to "reset" the libs you can:
+
+1. cd proj
+2. rm poetry.lock
+3. rm -fr ../.pythonlibs
+4. rm -fr ../.cache/pypoetry
+5. rid pyproject.toml of previously installed libraries
+6. Now you can test installing stuff as if starting from scratch
+
 ## Bundle
 
 For the Replit [Python Nix modules](https://github.com/replit/nixmodules/tree/main/pkgs/modules/python), we build a separate Poetry bundle for each supported version of Python 
