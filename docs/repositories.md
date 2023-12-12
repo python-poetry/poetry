@@ -498,7 +498,7 @@ if it exists for you use case instead of doing it yourself.
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
-export POETRY_FOO_TOKEN_PYPI=my-token
+export POETRY_PYPI_TOKEN_FOO=my-token
 export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
 export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
 ```
