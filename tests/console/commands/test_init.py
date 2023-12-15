@@ -994,6 +994,24 @@ def test_validate_package_invalid(name: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "author",
+    [
+        # As MacOS saves "é" — 65 CC 81
+        "José Duarte",
+        # As written by a MacOS keyboard — C3 A9
+        "José Duarte",
+    ],
+)
+def test_validate_author(author: str) -> None:
+    """
+    This test was added following issue #8779, hence, we're looking to see if the test
+    no longer throws an exception, hence the seemingly "useless" test of just running
+    the method.
+    """
+    InitCommand._validate_author(author, "")
+
+
+@pytest.mark.parametrize(
     "package_name, include",
     (
         ("mypackage", None),

@@ -142,7 +142,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question = self.create_question(
             f"Author [<comment>{author}</comment>, n to skip]: ", default=author
         )
-        question.set_validator(lambda v: self._validate_author(v, author))
+        question.set_validator(lambda v: InitCommand._validate_author(v, author))
         author = self.ask(question)
 
         authors = [author] if author else []
@@ -456,7 +456,8 @@ You can specify a package in the following forms:
 
         return requires
 
-    def _validate_author(self, author: str, default: str) -> str | None:
+    @staticmethod
+    def _validate_author(author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
         from poetry.core.utils.helpers import combine_unicode
 
