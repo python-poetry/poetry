@@ -11,10 +11,11 @@ from installer import install
 from installer.destinations import SchemeDictionaryDestination
 from installer.sources import WheelFile
 from installer.sources import _WheelFileValidationError
+import installer.scripts
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
-
+import installer.scripts
 
 if TYPE_CHECKING:
     from typing import BinaryIO
@@ -25,6 +26,13 @@ if TYPE_CHECKING:
 
     from poetry.utils.env import Env
 
+shebang = '#!/usr/bin/env python'.encode("utf-8")
+
+def _build_shebang(executable: str, forlauncher: bool) -> bytes:
+    return shebang
+
+# monkey patch _build_shebang implementation
+installer.scripts._build_shebang = _build_shebang
 
 class WheelDestination(SchemeDictionaryDestination):
     """ """
@@ -84,6 +92,14 @@ class WheelDestination(SchemeDictionaryDestination):
                 basepath = self.scheme_dict["userbase"]
             elif scheme == "scripts" and "userbase" in self.scheme_dict:
                 basepath = self.scheme_dict["userbase"] + "/bin"
+            elif scheme == "headers" and "userbase" in self.scheme_dict:
+                headers_path = "%s/include/python-%s.%s" % (
+                  self.scheme_dict["userbase"], 
+                  sys.version_info.major, 
+                  sys.version_info.minor
+                )
+                source_distribution = self.scheme_dict["headers"].split("/")[-1]
+                basepath = "%s/%s" % (headers_path, source_distribution)
         if basepath is None:
              basepath = self.scheme_dict[scheme]
         return basepath
