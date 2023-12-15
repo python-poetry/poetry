@@ -498,11 +498,12 @@ if it exists for you use case instead of doing it yourself.
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
-export POETRY_PYPI_TOKEN_PYPI=my-token
-export POETRY_HTTP_BASIC_PYPI_USERNAME=<username>
-export POETRY_HTTP_BASIC_PYPI_PASSWORD=<password>
+export POETRY_PYPI_TOKEN_FOO=my-token
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
 ```
 
+where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
