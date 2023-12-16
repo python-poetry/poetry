@@ -6,9 +6,12 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
 import pytest
+import requests
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
+from poetry.inspection.lazy_wheel import MemoryWheel
+from poetry.inspection.lazy_wheel import memory_wheel_from_url
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
 
@@ -16,8 +19,10 @@ from poetry.utils.env import VirtualEnv
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from httpretty import httpretty
     from pytest_mock import MockerFixture
 
+    from tests.inspection.conftest import RequestCallbackFactory
     from tests.types import FixtureDirGetter
 
 
@@ -34,6 +39,18 @@ def demo_sdist(fixture_dir: FixtureDirGetter) -> Path:
 @pytest.fixture
 def demo_wheel(fixture_dir: FixtureDirGetter) -> Path:
     return fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
+
+@pytest.fixture
+def demo_memory_wheel(
+    http: type[httpretty],
+    handle_request_factory: RequestCallbackFactory,
+) -> MemoryWheel:
+    url = "https://foo.com/demo-0.1.0-py2.py3-none-any.whl"
+    request_callback = handle_request_factory()
+    http.register_uri(http.GET, url, body=request_callback)
+
+    return memory_wheel_from_url("demo", url, requests.Session())
 
 
 @pytest.fixture
@@ -160,6 +177,13 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     demo_check_info(info)
     assert info._source_type == "file"
     assert info._source_url == demo_wheel.resolve().as_posix()
+
+
+def test_info_from_memory_wheel(demo_memory_wheel: MemoryWheel) -> None:
+    info = PackageInfo.from_memory_wheel(demo_memory_wheel)
+    demo_check_info(info)
+    assert info._source_type is None
+    assert info._source_url is None
 
 
 def test_info_from_bdist(demo_wheel: Path) -> None:

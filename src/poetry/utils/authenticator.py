@@ -270,6 +270,10 @@ class Authenticator:
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         return self.request("get", url, **kwargs)
 
+    def head(self, url: str, **kwargs: Any) -> requests.Response:
+        kwargs.setdefault("allow_redirects", False)
+        return self.request("head", url, **kwargs)
+
     def post(self, url: str, **kwargs: Any) -> requests.Response:
         return self.request("post", url, **kwargs)
 

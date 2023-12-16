@@ -131,6 +131,9 @@ class Config:
             "max-workers": None,
             "no-binary": None,
         },
+        "solver": {
+            "lazy-wheel": True,
+        },
         "warnings": {
             "export": True,
         },
@@ -296,6 +299,7 @@ class Config:
             "experimental.system-git-client",
             "installer.modern-installation",
             "installer.parallel",
+            "solver.lazy-wheel",
             "warnings.export",
         }:
             return boolean_normalizer
