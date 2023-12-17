@@ -232,6 +232,14 @@ poetry source add --priority=supplemental https://foo.bar/simple/
 
 There can be more than one supplemental package source.
 
+{{% warning %}}
+
+Take into account that someone could publish a new package to a primary source
+which matches a package in your supplemental source. They could coincidentally
+or intentionally replace your dependency with something you did not expect.
+
+{{% /warning %}}
+
 
 #### Explicit Package Sources
 
@@ -430,7 +438,7 @@ poetry config repositories.testpypi https://test.pypi.org/legacy/
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
-well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
+well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
 
@@ -490,11 +498,12 @@ if it exists for you use case instead of doing it yourself.
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
-export POETRY_PYPI_TOKEN_PYPI=my-token
-export POETRY_HTTP_BASIC_PYPI_USERNAME=<username>
-export POETRY_HTTP_BASIC_PYPI_PASSWORD=<password>
+export POETRY_PYPI_TOKEN_FOO=my-token
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
 ```
 
+where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 

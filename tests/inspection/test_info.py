@@ -114,16 +114,30 @@ def demo_check_info(info: PackageInfo, requires_dist: set[str] | None = None) ->
 def test_info_from_sdist(demo_sdist: Path) -> None:
     info = PackageInfo.from_sdist(demo_sdist)
     demo_check_info(info)
+    assert info._source_type == "file"
+    assert info._source_url == demo_sdist.resolve().as_posix()
+
+
+def test_info_from_sdist_no_pkg_info(fixture_dir: FixtureDirGetter) -> None:
+    path = fixture_dir("distributions") / "demo_no_pkg_info-0.1.0.tar.gz"
+    info = PackageInfo.from_sdist(path)
+    demo_check_info(info)
+    assert info._source_type == "file"
+    assert info._source_url == path.resolve().as_posix()
 
 
 def test_info_from_wheel(demo_wheel: Path) -> None:
     info = PackageInfo.from_wheel(demo_wheel)
     demo_check_info(info)
+    assert info._source_type == "file"
+    assert info._source_url == demo_wheel.resolve().as_posix()
 
 
 def test_info_from_bdist(demo_wheel: Path) -> None:
     info = PackageInfo.from_bdist(demo_wheel)
     demo_check_info(info)
+    assert info._source_type == "file"
+    assert info._source_url == demo_wheel.resolve().as_posix()
 
 
 def test_info_from_poetry_directory(fixture_dir: FixtureDirGetter) -> None:

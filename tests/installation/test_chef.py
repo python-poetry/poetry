@@ -50,7 +50,9 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
     mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
-def test_isolated_env_install_success(pool: RepositoryPool) -> None:
+def test_isolated_env_install_success(
+    pool: RepositoryPool, mock_file_downloads: None
+) -> None:
     with ephemeral_environment(Path(sys.executable)) as venv:
         env = IsolatedEnv(venv, pool)
         assert "poetry-core" not in venv.run("pip", "freeze")
@@ -85,12 +87,12 @@ def test_isolated_env_install_failure(
         assert e.value.requirements == {"a", "b>1"}
 
 
-@pytest.mark.network
 def test_prepare_sdist(
     config: Config,
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
@@ -104,12 +106,12 @@ def test_prepare_sdist(
     assert wheel.name == "demo-0.1.0-py3-none-any.whl"
 
 
-@pytest.mark.network
 def test_prepare_directory(
     config: Config,
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
@@ -145,12 +147,12 @@ def test_prepare_directory_with_extensions(
     os.unlink(wheel)
 
 
-@pytest.mark.network
 def test_prepare_directory_editable(
     config: Config,
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
