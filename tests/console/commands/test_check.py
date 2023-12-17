@@ -83,6 +83,8 @@ Error: {schema_error}
 Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Error: Declared README file does not exist: never/exists.md
+Error: Invalid source "not-exists" referenced in dependencies.
+Error: Invalid source "not-exists2" referenced in dependencies.
 Error: poetry.lock was not found.
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.
