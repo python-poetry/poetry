@@ -142,7 +142,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question = self.create_question(
             f"Author [<comment>{author}</comment>, n to skip]: ", default=author
         )
-        question.set_validator(lambda v: InitCommand._validate_author(v, author))
+        question.set_validator(lambda v: self._validate_author(v, author))
         author = self.ask(question)
 
         authors = [author] if author else []

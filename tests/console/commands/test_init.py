@@ -996,10 +996,8 @@ def test_validate_package_invalid(name: str) -> None:
 @pytest.mark.parametrize(
     "author",
     [
-        # As MacOS saves "é" — 65 CC 81
-        "José Duarte",
-        # As written by a MacOS keyboard — C3 A9
-        "José Duarte",
+        str(b"Jos\x65\xcc\x81 Duarte", "utf-8"),
+        str(b"Jos\xc3\xa9 Duarte", "utf-8"),
     ],
 )
 def test_validate_author(author: str) -> None:
