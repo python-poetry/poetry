@@ -333,6 +333,23 @@ def test_pool_find_packages_in_specified_repository() -> None:
     assert returned_packages_unavailable == []
 
 
+def test_pool_find_packages_with_dependency_source_mapping() -> None:
+    package_foo1 = get_package("foo1", "1.1.1")
+    package_foo2 = get_package("foo2", "1.1.1")
+
+    bar = Repository("bar", [package_foo1, package_foo2])
+    pool = RepositoryPool(dependency_source_mapping={"foo1": "bar"})
+    pool.add_repository(bar, priority=Priority.EXPLICIT)
+
+    available_dependency = get_dependency("foo1", "^1.0.0")
+    returned_packages_available = pool.find_packages(available_dependency)
+    unavailable_dependency = get_dependency("foo2", "^1.0.0")
+    returned_unavailable_dependency = pool.find_packages(unavailable_dependency)
+
+    assert returned_packages_available == [package_foo1]
+    assert returned_unavailable_dependency == []
+
+
 def test_search_no_legacy_repositories() -> None:
     package_foo1 = get_package("foo", "1.0.0")
     package_foo2 = get_package("foo", "2.0.0")

@@ -45,6 +45,7 @@ class RepositoryPool(AbstractRepository):
         repositories: list[Repository] | None = None,
         ignore_repository_names: object = _SENTINEL,
         *,
+        dependency_source_mapping: dict[str, str] | None = None,
         config: Config | None = None,
     ) -> None:
         super().__init__("poetry-repository-pool")
@@ -57,6 +58,10 @@ class RepositoryPool(AbstractRepository):
 
         self._artifact_cache = ArtifactCache(
             cache_dir=(config or Config.create()).artifacts_cache_directory
+        )
+
+        self._dependency_source_mapping: dict[str, str] = (
+            dependency_source_mapping or {}
         )
 
         if ignore_repository_names is not _SENTINEL:
@@ -210,6 +215,11 @@ class RepositoryPool(AbstractRepository):
         repository_name = dependency.source_name
         if repository_name:
             return self.repository(repository_name).find_packages(dependency)
+
+        if dependency.name in self._dependency_source_mapping:
+            return self.repository(
+                self._dependency_source_mapping[dependency.name]
+            ).find_packages(dependency)
 
         packages: list[Package] = []
         for repo in self.repositories:

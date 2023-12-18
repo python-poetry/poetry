@@ -41,7 +41,18 @@ class Poetry(BasePoetry):
 
         self._locker = locker
         self._config = config
-        self._pool = RepositoryPool(config=config)
+
+        local_config = local_config or {}
+        dependency_source_cache = {}
+
+        for group in [*local_config.get("group", {}).values(), local_config]:
+            for name, dependency in group.get("dependencies", {}).items():
+                if isinstance(dependency, dict) and "source" in dependency:
+                    dependency_source_cache[name] = dependency["source"]
+
+        self._pool = RepositoryPool(
+            config=config, dependency_source_mapping=dependency_source_cache
+        )
         self._plugin_manager: PluginManager | None = None
         self._disable_cache = disable_cache
 
