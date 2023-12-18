@@ -1308,12 +1308,14 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    config.merge({
-        "virtualenvs": {
-            "path": str(tmp_path / "virtualenvs"),
-            "in-project": True,
+    config.merge(
+        {
+            "virtualenvs": {
+                "path": str(tmp_path / "virtualenvs"),
+                "in-project": True,
+            }
         }
-    })
+    )
 
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
@@ -1665,17 +1667,15 @@ def test_build_environment_called_build_script_specified(
 
     with build_environment(extended_without_setup_poetry, project_env) as env:
         assert env == ephemeral_env
-        assert env.executed == [  # type: ignore[attr-defined]
-            [
-                str(sys.executable),
-                str(env.pip_embedded),
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *extended_without_setup_poetry.pyproject.build_system.requires,
-            ]
-        ]
+        assert env.executed == [[  # type: ignore[attr-defined]
+            str(sys.executable),
+            str(env.pip_embedded),
+            "install",
+            "--disable-pip-version-check",
+            "--ignore-installed",
+            "--no-input",
+            *extended_without_setup_poetry.pyproject.build_system.requires,
+        ]]
 
 
 def test_build_environment_not_called_without_build_script_specified(
