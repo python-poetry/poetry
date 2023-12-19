@@ -2026,21 +2026,19 @@ def test_url_dependency_is_not_outdated_by_repository_package(
 
     assert isinstance(poetry.locker, TestLocker)
     poetry.locker.mock_lock_data({
-        "package": [
-            {
-                "name": "demo",
-                "version": "0.1.0",
-                "description": "Demo package",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "source": {
-                    "type": "url",
-                    "url": demo_url,
-                },
-            }
-        ],
+        "package": [{
+            "name": "demo",
+            "version": "0.1.0",
+            "description": "Demo package",
+            "optional": False,
+            "platform": "*",
+            "python-versions": "*",
+            "checksum": [],
+            "source": {
+                "type": "url",
+                "url": demo_url,
+            },
+        }],
         "metadata": {
             "python-versions": "*",
             "platform": "*",

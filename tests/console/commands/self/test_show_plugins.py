@@ -147,12 +147,10 @@ def mock_metadata_entry_points(
 @pytest.mark.parametrize("entry_point_name", ["poetry-plugin", "not-package-name"])
 @pytest.mark.parametrize(
     "entry_point_values_by_group",
-    [
-        {
-            ApplicationPlugin.group: ["FirstApplicationPlugin"],
-            Plugin.group: ["FirstPlugin"],
-        }
-    ],
+    [{
+        ApplicationPlugin.group: ["FirstApplicationPlugin"],
+        Plugin.group: ["FirstPlugin"],
+    }],
 )
 def test_show_displays_installed_plugins(
     app: PoetryTestApplication,
@@ -170,15 +168,13 @@ def test_show_displays_installed_plugins(
 
 @pytest.mark.parametrize(
     "entry_point_values_by_group",
-    [
-        {
-            ApplicationPlugin.group: [
-                "FirstApplicationPlugin",
-                "SecondApplicationPlugin",
-            ],
-            Plugin.group: ["FirstPlugin", "SecondPlugin"],
-        }
-    ],
+    [{
+        ApplicationPlugin.group: [
+            "FirstApplicationPlugin",
+            "SecondApplicationPlugin",
+        ],
+        Plugin.group: ["FirstPlugin", "SecondPlugin"],
+    }],
 )
 def test_show_displays_installed_plugins_with_multiple_plugins(
     app: PoetryTestApplication,
@@ -199,12 +195,10 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
 )
 @pytest.mark.parametrize(
     "entry_point_values_by_group",
-    [
-        {
-            ApplicationPlugin.group: ["FirstApplicationPlugin"],
-            Plugin.group: ["FirstPlugin"],
-        }
-    ],
+    [{
+        ApplicationPlugin.group: ["FirstApplicationPlugin"],
+        Plugin.group: ["FirstPlugin"],
+    }],
 )
 def test_show_displays_installed_plugins_with_dependencies(
     app: PoetryTestApplication,
