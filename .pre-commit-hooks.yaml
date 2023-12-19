@@ -21,7 +21,7 @@
   language: python
   pass_filenames: false
   files: ^(.*/)?poetry\.lock$
-  args: ["-f", "requirements.txt", "-o", "requirements.txt"]
+  args: ["-f", "requirements.txt", "-o", "requirements.txt", "--check-change"]
 
 - id: poetry-install
   name: poetry-install
