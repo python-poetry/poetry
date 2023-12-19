@@ -27,11 +27,11 @@ repos:
         exclude: tests/([^/]*/)*fixtures/
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v3.5.0
+    rev: v3.6.0
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.1.7
     hooks:
     -   id: ruff
