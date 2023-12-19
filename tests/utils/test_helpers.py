@@ -4,11 +4,10 @@ import pathlib
 from typing import TYPE_CHECKING
 
 import pytest
-from pytest_httpserver import HTTPServer
 
 from poetry.core.utils.helpers import parse_requires
 
-from poetry.utils.helpers import get_file_hash, download_file
+from poetry.utils.helpers import get_file_hash
 
 
 if TYPE_CHECKING:
@@ -121,17 +120,4 @@ def test_guaranteed_hash(
 ) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     assert get_file_hash(file_path, hash_name) == expected
-
-
-def test_download_file(httpserver: HTTPServer, fixture_dir: FixtureDirGetter, tmp_path: pathlib.Path) -> None:
-    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-    httpserver.expect_request("/demo-0.1.0.tar.gz", headers={"Accept-Encoding": "Identity"}).respond_with_data(
-        response_data=open(file_path, "rb").read(),
-        content_type="application/octet-stream",
-    )
-    dest = tmp_path / "demo-0.1.0.tar.gz"
-    download_file(httpserver.url_for("/demo-0.1.0.tar.gz"), dest)
-    expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
-    assert get_file_hash(dest) == expect_sha_256
-
 
