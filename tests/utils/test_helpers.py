@@ -6,10 +6,15 @@ import pytest
 
 from poetry.core.utils.helpers import parse_requires
 
+from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from httpretty import httpretty
+
     from tests.types import FixtureDirGetter
 
 
@@ -119,3 +124,18 @@ def test_guaranteed_hash(
 ) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     assert get_file_hash(file_path, hash_name) == expected
+
+
+def test_download_file(
+    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
+    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    url = "https://foo.com/demo-0.1.0.tar.gz"
+    http.register_uri(http.GET, url, body=file_path.read_bytes())
+    dest = tmp_path / "demo-0.1.0.tar.gz"
+
+    download_file(url, dest)
+
+    expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+    assert get_file_hash(dest) == expect_sha_256
+    assert http.last_request().headers["Accept-Encoding"] == "Identity"
