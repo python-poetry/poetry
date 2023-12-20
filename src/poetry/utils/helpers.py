@@ -141,7 +141,9 @@ class Downloader:
         get = requests.get if not session else session.get
         headers = {"Accept-Encoding": "Identity"}
 
-        self._response = get(url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT)
+        self._response = get(
+            url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
+        )
         self._response.raise_for_status()
 
     @cached_property
