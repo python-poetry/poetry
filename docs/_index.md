@@ -42,6 +42,10 @@ See the **advanced** installation instructions to use a preview or alternate ver
 [`pipx`](https://github.com/pypa/pipx) is used to install Python CLI applications globally while still isolating them in virtual environments.
 `pipx` will manage upgrades and uninstalls when used to install Poetry.
 
+{{% note %}}
+pipx is the installation approach which the user should choose to install multiple versions of pipx. 
+{{% /note %}}
+
 {{< steps >}}
 {{< step >}}
 **Install Poetry**
