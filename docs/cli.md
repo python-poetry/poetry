@@ -503,7 +503,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
-* `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
+* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are direct dependency or required by other packages.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
