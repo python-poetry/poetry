@@ -21,7 +21,7 @@ from poetry.core.version.markers import parse_marker
 
 from poetry.config.config import Config
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
-from poetry.inspection.lazy_wheel import memory_wheel_from_url
+from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
@@ -118,8 +118,8 @@ class HTTPRepository(CachedRepository):
         # or we don't know yet, we try range requests.
         if self._lazy_wheel and self._supports_range_requests.get(netloc, True):
             try:
-                package_info = PackageInfo.from_memory_wheel(
-                    memory_wheel_from_url(link.filename, link.url, self.session)
+                package_info = PackageInfo.from_wheel_metadata(
+                    metadata_from_wheel_url(link.filename, link.url, self.session)
                 )
             except HTTPRangeRequestUnsupported:
                 # Do not set to False if we already know that the domain supports

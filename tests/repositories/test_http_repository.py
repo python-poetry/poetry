@@ -5,11 +5,13 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from zipfile import ZipFile
 
 import pytest
 
+from packaging.metadata import parse_email
+
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
-from poetry.inspection.lazy_wheel import MemoryWheel
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils.helpers import HTTPRangeRequestSupported
 
@@ -40,10 +42,12 @@ def test_get_info_from_wheel(
 ) -> None:
     filename = "poetry_core-1.5.0-py3-none-any.whl"
     filepath = MockRepository.DIST_FIXTURES / filename
+    with ZipFile(filepath) as zf:
+        metadata, _ = parse_email(zf.read("poetry_core-1.5.0.dist-info/METADATA"))
 
-    mock_memory_wheel_from_url = mocker.patch(
-        "poetry.repositories.http_repository.memory_wheel_from_url",
-        return_value=MemoryWheel(filepath),  # type: ignore[arg-type]
+    mock_metadata_from_wheel_url = mocker.patch(
+        "poetry.repositories.http_repository.metadata_from_wheel_url",
+        return_value=metadata,
     )
     mock_download = mocker.patch(
         "poetry.repositories.http_repository.download_file",
@@ -65,11 +69,13 @@ def test_get_info_from_wheel(
     ]
 
     if lazy_wheel and (supports_range_requests or supports_range_requests is None):
-        mock_memory_wheel_from_url.assert_called_once_with(filename, url, repo.session)
+        mock_metadata_from_wheel_url.assert_called_once_with(
+            filename, url, repo.session
+        )
         mock_download.assert_not_called()
         assert repo._supports_range_requests[domain] is True
     else:
-        mock_memory_wheel_from_url.assert_not_called()
+        mock_metadata_from_wheel_url.assert_not_called()
         mock_download.assert_called_once_with(
             url, mocker.ANY, session=repo.session, raise_accepts_ranges=lazy_wheel
         )
@@ -97,8 +103,8 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     6. Range requests are supported for some files:
        We try range requests (success).
     """
-    mock_memory_wheel_from_url = mocker.patch(
-        "poetry.repositories.http_repository.memory_wheel_from_url"
+    mock_metadata_from_wheel_url = mocker.patch(
+        "poetry.repositories.http_repository.metadata_from_wheel_url"
     )
     mock_download = mocker.patch("poetry.repositories.http_repository.download_file")
 
@@ -108,37 +114,37 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     repo = MockRepository()
 
     # 1. range request and download
-    mock_memory_wheel_from_url.side_effect = HTTPRangeRequestUnsupported
+    mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
     repo._get_info_from_wheel(url)
-    assert mock_memory_wheel_from_url.call_count == 1
+    assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 1
 
     # 2. only download
     repo._get_info_from_wheel(url)
-    assert mock_memory_wheel_from_url.call_count == 1
+    assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 2
 
     # 3. range request and download
-    mock_memory_wheel_from_url.side_effect = None
+    mock_metadata_from_wheel_url.side_effect = None
     mock_download.side_effect = HTTPRangeRequestSupported
     repo._get_info_from_wheel(url)
-    assert mock_memory_wheel_from_url.call_count == 2
+    assert mock_metadata_from_wheel_url.call_count == 2
     assert mock_download.call_count == 3
 
     # 4. only range request
     repo._get_info_from_wheel(url)
-    assert mock_memory_wheel_from_url.call_count == 3
+    assert mock_metadata_from_wheel_url.call_count == 3
     assert mock_download.call_count == 3
 
     # 5. range request and download
-    mock_memory_wheel_from_url.side_effect = HTTPRangeRequestUnsupported
+    mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
     mock_download.side_effect = None
     repo._get_info_from_wheel(url)
-    assert mock_memory_wheel_from_url.call_count == 4
+    assert mock_metadata_from_wheel_url.call_count == 4
     assert mock_download.call_count == 4
 
     # 6. only range request
-    mock_memory_wheel_from_url.side_effect = None
+    mock_metadata_from_wheel_url.side_effect = None
     repo._get_info_from_wheel(url)
-    assert mock_memory_wheel_from_url.call_count == 5
+    assert mock_metadata_from_wheel_url.call_count == 5
     assert mock_download.call_count == 4

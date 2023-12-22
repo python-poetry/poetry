@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from zipfile import BadZipFile
 from zipfile import ZipFile
 
-from pkginfo import Distribution
+from packaging.metadata import parse_email
 from requests.models import CONTENT_CHUNK_SIZE
 from requests.models import HTTPError
 from requests.models import Response
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
 
+    from packaging.metadata import RawMetadata
     from requests import Session
 
     from poetry.utils.authenticator import Authenticator
@@ -58,29 +59,10 @@ class InvalidWheel(Exception):
         return f"Wheel '{self.name}' located at {self.location} is invalid."
 
 
-class MemoryWheel(Distribution):
-    def __init__(self, lazy_file: LazyWheelOverHTTP) -> None:
-        self.lazy_file = lazy_file
-        self.extractMetadata()
-
-    def read(self) -> bytes:
-        with ZipFile(self.lazy_file) as archive:
-            tuples = [x.split("/") for x in archive.namelist() if "METADATA" in x]
-            schwarz = sorted([(len(x), x) for x in tuples])
-            for path in [x[1] for x in schwarz]:
-                candidate = "/".join(path)
-                logger.debug(f"read {candidate}")
-                data = archive.read(candidate)
-                if b"Metadata-Version" in data:
-                    return data
-            else:
-                raise ValueError(f"No METADATA in archive: {self.lazy_file.name}")
-
-
-def memory_wheel_from_url(
+def metadata_from_wheel_url(
     name: str, url: str, session: Session | Authenticator
-) -> MemoryWheel:
-    """Return a MemoryWheel (compatible to pkginfo.Wheel) from the given wheel URL.
+) -> RawMetadata:
+    """Fetch metadata from the given wheel URL.
 
     This uses HTTP range requests to only fetch the portion of the wheel
     containing metadata, just enough for the object to be constructed.
@@ -92,10 +74,10 @@ def memory_wheel_from_url(
         # After context manager exit, wheel.name will point to a deleted file path.
         # Add `delete_backing_file=False` to disable this for debugging.
         with LazyWheelOverHTTP(url, session) as lazy_file:
-            # prefetch metadata to reduce the number of range requests
-            # (we know that METADATA is the only file from the wheel we need)
-            lazy_file.prefetch_metadata(name)
-            return MemoryWheel(lazy_file)
+            metadata_bytes = lazy_file.read_metadata(name)
+
+        metadata, _ = parse_email(metadata_bytes)
+        return metadata
 
     except (BadZipFile, UnsupportedWheel):
         # We assume that these errors have occurred because the wheel contents
@@ -720,7 +702,7 @@ class LazyWheelOverHTTP(LazyHTTPFile):
             self._domains_without_negative_range.add(domain)
         return file_length, tail
 
-    def prefetch_metadata(self, name: str) -> None:
+    def _prefetch_metadata(self, name: str) -> str:
         """Locate the *.dist-info/METADATA entry from a temporary ``ZipFile`` wrapper,
         and download it.
 
@@ -729,7 +711,7 @@ class LazyWheelOverHTTP(LazyHTTPFile):
         can be downloaded in a single ranged GET request."""
         logger.debug("begin prefetching METADATA for %s", name)
 
-        dist_info_prefix = re.compile(r"^[^/]*\.dist-info/METADATA")
+        metadata_regex = re.compile(r"^[^/]*\.dist-info/METADATA$")
         start: int | None = None
         end: int | None = None
 
@@ -738,25 +720,36 @@ class LazyWheelOverHTTP(LazyHTTPFile):
         # should be set large enough to avoid this).
         zf = ZipFile(self)
 
+        filename = ""
         for info in zf.infolist():
             if start is None:
-                if dist_info_prefix.search(info.filename):
+                if metadata_regex.search(info.filename):
+                    filename = info.filename
                     start = info.header_offset
                     continue
             else:
                 # The last .dist-info/ entry may be before the end of the file if the
                 # wheel's entries are sorted lexicographically (which is unusual).
-                if not dist_info_prefix.search(info.filename):
+                if not metadata_regex.search(info.filename):
                     end = info.header_offset
                     break
         if start is None:
             raise UnsupportedWheel(
-                f"no {dist_info_prefix!r} found for {name} in {self.name}"
+                f"no {metadata_regex!r} found for {name} in {self.name}"
             )
         # If it is the last entry of the zip, then give us everything
         # until the start of the central directory.
         if end is None:
             end = zf.start_dir
-        logger.debug("fetch METADATA")
+        logger.debug(f"fetch {filename}")
         self.ensure_downloaded(start, end)
         logger.debug("done prefetching METADATA for %s", name)
+
+        return filename
+
+    def read_metadata(self, name: str) -> bytes:
+        """Download and read the METADATA file from the remote wheel."""
+        with ZipFile(self) as zf:
+            # prefetch metadata to reduce the number of range requests
+            filename = self._prefetch_metadata(name)
+            return zf.read(filename)

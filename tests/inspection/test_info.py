@@ -4,14 +4,14 @@ import shutil
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from zipfile import ZipFile
 
 import pytest
-import requests
+
+from packaging.metadata import parse_email
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
-from poetry.inspection.lazy_wheel import MemoryWheel
-from poetry.inspection.lazy_wheel import memory_wheel_from_url
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
 
@@ -19,10 +19,9 @@ from poetry.utils.env import VirtualEnv
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from httpretty import httpretty
+    from packaging.metadata import RawMetadata
     from pytest_mock import MockerFixture
 
-    from tests.inspection.conftest import RequestCallbackFactory
     from tests.types import FixtureDirGetter
 
 
@@ -42,15 +41,10 @@ def demo_wheel(fixture_dir: FixtureDirGetter) -> Path:
 
 
 @pytest.fixture
-def demo_memory_wheel(
-    http: type[httpretty],
-    handle_request_factory: RequestCallbackFactory,
-) -> MemoryWheel:
-    url = "https://foo.com/demo-0.1.0-py2.py3-none-any.whl"
-    request_callback = handle_request_factory()
-    http.register_uri(http.GET, url, body=request_callback)
-
-    return memory_wheel_from_url("demo", url, requests.Session())
+def demo_wheel_metadata(demo_wheel: Path) -> RawMetadata:
+    with ZipFile(demo_wheel) as zf:
+        metadata, _ = parse_email(zf.read("demo-0.1.0.dist-info/METADATA"))
+    return metadata
 
 
 @pytest.fixture
@@ -179,11 +173,26 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
-def test_info_from_memory_wheel(demo_memory_wheel: MemoryWheel) -> None:
-    info = PackageInfo.from_memory_wheel(demo_memory_wheel)
+def test_info_from_wheel_metadata(demo_wheel_metadata: RawMetadata) -> None:
+    info = PackageInfo.from_wheel_metadata(demo_wheel_metadata)
     demo_check_info(info)
+    assert info.requires_python == ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
     assert info._source_type is None
     assert info._source_url is None
+
+
+def test_info_from_wheel_metadata_incomplete() -> None:
+    """
+    To avoid differences in cached metadata,
+    it is important that the representation of missing fields does not change!
+    """
+    metadata, _ = parse_email(b"Metadata-Version: 2.1\nName: demo\nVersion: 0.1.0\n")
+    info = PackageInfo.from_wheel_metadata(metadata)
+    assert info.name == "demo"
+    assert info.version == "0.1.0"
+    assert info.summary is None
+    assert info.requires_dist is None
+    assert info.requires_python is None
 
 
 def test_info_from_bdist(demo_wheel: Path) -> None:
