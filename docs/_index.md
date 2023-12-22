@@ -42,10 +42,6 @@ See the **advanced** installation instructions to use a preview or alternate ver
 [`pipx`](https://github.com/pypa/pipx) is used to install Python CLI applications globally while still isolating them in virtual environments.
 `pipx` will manage upgrades and uninstalls when used to install Poetry.
 
-{{% note %}}
-pipx is the installation approach which the user should choose to install multiple versions of pipx. 
-{{% /note %}}
-
 {{< steps >}}
 {{< step >}}
 **Install Poetry**
@@ -179,6 +175,8 @@ You can also install Poetry from a `git` repository by using the `--git` option:
 ```bash
 curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
 ````
+If you want to install different versions of poetry in parallel, a good approach is the installation with pipx and suffix.
+
 {{< /step >}}
 {{< step >}}
 **Add Poetry to your PATH**
