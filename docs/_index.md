@@ -175,7 +175,7 @@ You can also install Poetry from a `git` repository by using the `--git` option:
 ```bash
 curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
 ````
-If you want to install different versions of poetry in parallel, a good approach is the installation with pipx and suffix.
+If you want to install different versions of Poetry in parallel, a good approach is the installation with pipx and suffix.
 
 {{< /step >}}
 {{< step >}}
