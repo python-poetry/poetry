@@ -45,5 +45,10 @@ class EnvRemoveCommand(Command):
             for venv in manager.list():
                 manager.remove_venv(venv.path)
                 self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
+            # Since we remove all the virtualenvs, we can also remove the entry
+            # in the envs file. (Strictly speaking, we should do this explicitly,
+            # in case it points to a virtualenv that had been removed manually before.)
+            if manager.envs_file.exists():
+                manager.envs_file.remove_section(manager.base_env_name)
 
         return 0

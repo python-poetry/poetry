@@ -19,6 +19,7 @@ from poetry.utils.env import IncorrectEnvError
 from poetry.utils.env import InvalidCurrentPythonVersionError
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import PythonVersionNotFound
+from poetry.utils.env.env_manager import EnvsFile
 from poetry.utils.helpers import remove_directory
 
 
@@ -82,6 +83,41 @@ def in_project_venv_dir(poetry: Poetry) -> Iterator[Path]:
         yield venv_dir
     finally:
         venv_dir.rmdir()
+
+
+@pytest.mark.parametrize(
+    ("section", "version", "expected"),
+    [
+        ("foo", None, "3.10"),
+        ("bar", None, "3.11"),
+        ("baz", None, "3.12"),
+        ("bar", "3.11", "3.11"),
+        ("bar", "3.10", None),
+    ],
+)
+def test_envs_file_remove_section(
+    tmp_path: Path, section: str, version: str | None, expected: str | None
+) -> None:
+    envs_file_path = tmp_path / "envs.toml"
+
+    envs_file = TOMLFile(envs_file_path)
+    doc = tomlkit.document()
+    doc["foo"] = {"minor": "3.10", "patch": "3.10.13"}
+    doc["bar"] = {"minor": "3.11", "patch": "3.11.7"}
+    doc["baz"] = {"minor": "3.12", "patch": "3.12.1"}
+    envs_file.write(doc)
+
+    minor = EnvsFile(envs_file_path).remove_section(section, version)
+
+    assert minor == expected
+
+    envs = TOMLFile(envs_file_path).read()
+    if expected is None:
+        assert section in envs
+    else:
+        assert section not in envs
+    for other_section in {"foo", "bar", "baz"} - {section}:
+        assert other_section in envs
 
 
 def test_activate_in_project_venv_no_explicit_config(
