@@ -189,7 +189,7 @@ The `--sync` can be combined with group-related options:
 ```bash
 poetry install --without dev --sync
 poetry install --with docs --sync
-poetry install --only dev
+poetry install --only dev --sync
 ```
 
 You can also specify the extras you want installed
