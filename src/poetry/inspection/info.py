@@ -393,7 +393,22 @@ class PackageInfo:
             yield Path(d)
 
     @classmethod
-    def from_metadata(cls, path: Path) -> PackageInfo | None:
+    def from_metadata(cls, metadata: RawMetadata) -> PackageInfo:
+        """
+        Create package information from core metadata.
+
+        :param metadata: raw metadata
+        """
+        return cls(
+            name=metadata.get("name"),
+            version=metadata.get("version"),
+            summary=metadata.get("summary"),
+            requires_dist=metadata.get("requires_dist"),
+            requires_python=metadata.get("requires_python"),
+        )
+
+    @classmethod
+    def from_metadata_directory(cls, path: Path) -> PackageInfo | None:
         """
         Helper method to parse package information from an unpacked metadata directory.
 
@@ -475,7 +490,7 @@ class PackageInfo:
         if project_package:
             info = cls.from_package(project_package)
         else:
-            info = cls.from_metadata(path)
+            info = cls.from_metadata_directory(path)
 
             if not info or info.requires_dist is None:
                 try:
@@ -520,21 +535,6 @@ class PackageInfo:
             return cls._from_distribution(wheel)
         except ValueError:
             return PackageInfo()
-
-    @classmethod
-    def from_wheel_metadata(cls, metadata: RawMetadata) -> PackageInfo:
-        """
-        Gather package information from metadata of a remote wheel.
-
-        :param metadata: metadata of the wheel.
-        """
-        return cls(
-            name=metadata.get("name"),
-            version=metadata.get("version"),
-            summary=metadata.get("summary"),
-            requires_dist=metadata.get("requires_dist"),
-            requires_python=metadata.get("requires_python"),
-        )
 
     @classmethod
     def from_bdist(cls, path: Path) -> PackageInfo:
@@ -599,7 +599,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 *PEP517_META_BUILD_DEPS,
             )
             venv.run_python_script(pep517_meta_build_script)
-            info = PackageInfo.from_metadata(dest_dir)
+            info = PackageInfo.from_metadata_directory(dest_dir)
         except EnvCommandError as e:
             # something went wrong while attempting pep517 metadata build
             # fallback to egg_info if setup.py available
@@ -616,7 +616,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
             os.chdir(path)
             try:
                 venv.run("python", "setup.py", "egg_info")
-                info = PackageInfo.from_metadata(path)
+                info = PackageInfo.from_metadata_directory(path)
             except EnvCommandError as fbe:
                 raise PackageInfoError(
                     path, e, "Fallback egg_info generation failed.", fbe

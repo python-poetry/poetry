@@ -174,7 +174,7 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
 
 
 def test_info_from_wheel_metadata(demo_wheel_metadata: RawMetadata) -> None:
-    info = PackageInfo.from_wheel_metadata(demo_wheel_metadata)
+    info = PackageInfo.from_metadata(demo_wheel_metadata)
     demo_check_info(info)
     assert info.requires_python == ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
     assert info._source_type is None
@@ -187,7 +187,7 @@ def test_info_from_wheel_metadata_incomplete() -> None:
     it is important that the representation of missing fields does not change!
     """
     metadata, _ = parse_email(b"Metadata-Version: 2.1\nName: demo\nVersion: 0.1.0\n")
-    info = PackageInfo.from_wheel_metadata(metadata)
+    info = PackageInfo.from_metadata(metadata)
     assert info.name == "demo"
     assert info.version == "0.1.0"
     assert info.summary is None
@@ -228,7 +228,7 @@ def test_info_from_poetry_directory_fallback_on_poetry_create_error(
 
 
 def test_info_from_requires_txt(fixture_dir: FixtureDirGetter) -> None:
-    info = PackageInfo.from_metadata(
+    info = PackageInfo.from_metadata_directory(
         fixture_dir("inspection") / "demo_only_requires_txt.egg-info"
     )
     assert info is not None

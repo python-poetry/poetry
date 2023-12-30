@@ -118,7 +118,7 @@ class HTTPRepository(CachedRepository):
         # or we don't know yet, we try range requests.
         if self._lazy_wheel and self._supports_range_requests.get(netloc, True):
             try:
-                package_info = PackageInfo.from_wheel_metadata(
+                package_info = PackageInfo.from_metadata(
                     metadata_from_wheel_url(link.filename, link.url, self.session)
                 )
             except HTTPRangeRequestUnsupported:
