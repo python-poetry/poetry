@@ -3263,6 +3263,159 @@ def test_solver_ignores_explicit_repo_for_transient_dependencies(
         solver.solve()
 
 
+@pytest.mark.parametrize(
+    ("lib_versions", "other_versions"),
+    [
+        # number of versions influences which dependency is resolved first
+        (["1.0", "2.0"], ["1.0", "1.1", "2.0"]),  # more other than lib
+        (["1.0", "1.1", "2.0"], ["1.0", "2.0"]),  # more lib than other
+    ],
+)
+def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    lib_versions: list[str],
+    other_versions: list[str],
+) -> None:
+    """
+    The root package depends on "lib[extra]" and "other", both with an explicit source.
+    "other" depends on "lib" (without an extra and of course without an explicit source
+    because explicit sources can only be defined in the root package).
+
+    If "other" is resolved before "lib[extra]", the solver must not try to fetch "lib"
+    from the default source but from the explicit source defined for "lib[extra]".
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "lib", {"version": ">=1.0", "extras": ["extra"], "source": "explicit"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency("other", {"version": ">=1.0", "source": "explicit"})
+    )
+
+    explicit_repo = Repository("explicit")
+    pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    package_extra = get_package("extra", "1.0")
+    repo.add_package(package_extra)  # extra only in default repo
+
+    for version in lib_versions:
+        package_lib = get_package("lib", version)
+
+        dep_extra = get_dependency("extra", ">=1.0")
+        package_lib.add_dependency(
+            Factory.create_dependency("extra", {"version": ">=1.0", "optional": True})
+        )
+        package_lib.extras[canonicalize_name("extra")] = [dep_extra]
+
+        explicit_repo.add_package(package_lib)  # lib only in explicit repo
+
+    for version in other_versions:
+        package_other = get_package("other", version)
+        package_other.add_dependency(Factory.create_dependency("lib", ">=1.0"))
+        explicit_repo.add_package(package_other)  # other only in explicit repo
+
+    solver = Solver(package, pool, [], [], io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": get_package("extra", "1.0")},
+            {"job": "install", "package": get_package("lib", "2.0")},
+            {"job": "install", "package": get_package("other", "2.0")},
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("lib_versions", "other_versions"),
+    [
+        # number of versions influences which dependency is resolved first
+        (["1.0", "2.0"], ["1.0", "1.1", "2.0"]),  # more other than lib
+        (["1.0", "1.1", "2.0"], ["1.0", "2.0"]),  # more lib than other
+    ],
+)
+def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    lib_versions: list[str],
+    other_versions: list[str],
+) -> None:
+    """
+    The root package depends on "lib[extra]" and "other", both with an explicit source.
+    "other" depends on "lib[other-extra]" (with another extra and of course without an
+    explicit source because explicit sources can only be defined in the root package).
+
+    The solver must not try to fetch "lib[other-extra]" from the default source
+    but from the explicit source defined for "lib[extra]".
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "lib", {"version": ">=1.0", "extras": ["extra"], "source": "explicit"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency("other", {"version": ">=1.0", "source": "explicit"})
+    )
+
+    explicit_repo = Repository("explicit")
+    pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    package_extra = get_package("extra", "1.0")
+    repo.add_package(package_extra)  # extra only in default repo
+    package_other_extra = get_package("other-extra", "1.0")
+    repo.add_package(package_other_extra)  # extra only in default repo
+
+    for version in lib_versions:
+        package_lib = get_package("lib", version)
+
+        dep_extra = get_dependency("extra", ">=1.0")
+        package_lib.add_dependency(
+            Factory.create_dependency("extra", {"version": ">=1.0", "optional": True})
+        )
+        package_lib.extras[canonicalize_name("extra")] = [dep_extra]
+
+        dep_other_extra = get_dependency("other-extra", ">=1.0")
+        package_lib.add_dependency(
+            Factory.create_dependency(
+                "other-extra", {"version": ">=1.0", "optional": True}
+            )
+        )
+        package_lib.extras[canonicalize_name("other-extra")] = [dep_other_extra]
+
+        explicit_repo.add_package(package_lib)  # lib only in explicit repo
+
+    for version in other_versions:
+        package_other = get_package("other", version)
+        package_other.add_dependency(
+            Factory.create_dependency(
+                "lib", {"version": ">=1.0", "extras": ["other-extra"]}
+            )
+        )
+        explicit_repo.add_package(package_other)  # other only in explicit repo
+
+    solver = Solver(package, pool, [], [], io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": get_package("other-extra", "1.0")},
+            {"job": "install", "package": get_package("extra", "1.0")},
+            {"job": "install", "package": get_package("lib", "2.0")},
+            {"job": "install", "package": get_package("other", "2.0")},
+        ],
+    )
+
+
 def test_solver_discards_packages_with_empty_markers(
     package: ProjectPackage,
     repo: Repository,
