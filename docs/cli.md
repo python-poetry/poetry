@@ -287,10 +287,13 @@ If you just want to update a few packages and not all, you can list them as such
 poetry update requests toml
 ```
 
-Note that this will not update versions for dependencies outside their version constraints specified
-in the `pyproject.toml` file. In other terms, `poetry update foo` will be a no-op if the version constraint
-specified for `foo` is `~2.3` or `2.3` and `2.4` is available. In order for `foo` to be updated, you must
-update the constraint, for example `^2.3`. You can do this using the `add` command.
+Note that this will not update versions for dependencies outside their
+[version constraints]({{< relref "dependency-specification#version-constraints" >}})
+specified in the `pyproject.toml` file.
+In other terms, `poetry update foo` will be a no-op if the version constraint
+specified for `foo` is `~2.3` or `2.3` and `2.4` is available.
+In order for `foo` to be updated, you must update the constraint, for example `^2.3`.
+You can do this using the `add` command.
 
 ### Options
 
