@@ -88,13 +88,13 @@ poetry env info
 will output something similar to this:
 
 ```text
-Virtual environment
+Virtualenv
 Python:         3.7.1
 Implementation: CPython
 Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
 Valid:          True
 
-System
+Base
 Platform: darwin
 OS:       posix
 Python:   /path/to/main/python
