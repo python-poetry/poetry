@@ -2959,18 +2959,16 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
 
     check_solver_result(
         transaction,
-        [
-            {
-                "job": "install",
-                "package": Package(
-                    "isort",
-                    "4.3.4",
-                    source_type="legacy",
-                    source_url=repo.url,
-                    source_reference=repo.name,
-                ),
-            }
-        ],
+        [{
+            "job": "install",
+            "package": Package(
+                "isort",
+                "4.3.4",
+                source_type="legacy",
+                source_url=repo.url,
+                source_reference=repo.name,
+            ),
+        }],
     )
 
 
@@ -3053,18 +3051,16 @@ def test_solver_chooses_from_correct_repository_if_forced(
 
     ops = check_solver_result(
         transaction,
-        [
-            {
-                "job": "install",
-                "package": Package(
-                    "tomlkit",
-                    "0.5.2",
-                    source_type="legacy",
-                    source_url=repo.url,
-                    source_reference=repo.name,
-                ),
-            }
-        ],
+        [{
+            "job": "install",
+            "package": Package(
+                "tomlkit",
+                "0.5.2",
+                source_type="legacy",
+                source_url=repo.url,
+                source_reference=repo.name,
+            ),
+        }],
     )
 
     assert ops[0].package.source_url == "http://legacy.foo.bar"

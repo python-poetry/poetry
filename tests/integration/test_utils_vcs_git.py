@@ -404,9 +404,9 @@ def test_relative_submodules_with_ssh(
     )
 
     # construct fake git config
-    fake_config = ConfigFile({
-        (b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}
-    })
+    fake_config = ConfigFile(
+        {(b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}}
+    )
     # trick Git into thinking remote.origin is an ssh url
     mock_get_config = mocker.patch.object(repo_with_unresolved_submodules, "get_config")
     mock_get_config.return_value = fake_config

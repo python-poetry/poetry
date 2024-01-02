@@ -16,6 +16,10 @@ on:
       - "**"
       - "!docs/**"
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   deploy:
     name: Build & Deploy

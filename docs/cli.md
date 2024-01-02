@@ -189,7 +189,7 @@ The `--sync` can be combined with group-related options:
 ```bash
 poetry install --without dev --sync
 poetry install --with docs --sync
-poetry install --only dev
+poetry install --only dev --sync
 ```
 
 You can also specify the extras you want installed
@@ -287,10 +287,13 @@ If you just want to update a few packages and not all, you can list them as such
 poetry update requests toml
 ```
 
-Note that this will not update versions for dependencies outside their version constraints specified
-in the `pyproject.toml` file. In other terms, `poetry update foo` will be a no-op if the version constraint
-specified for `foo` is `~2.3` or `2.3` and `2.4` is available. In order for `foo` to be updated, you must
-update the constraint, for example `^2.3`. You can do this using the `add` command.
+Note that this will not update versions for dependencies outside their
+[version constraints]({{< relref "dependency-specification#version-constraints" >}})
+specified in the `pyproject.toml` file.
+In other terms, `poetry update foo` will be a no-op if the version constraint
+specified for `foo` is `~2.3` or `2.3` and `2.4` is available.
+In order for `foo` to be updated, you must update the constraint, for example `^2.3`.
+You can do this using the `add` command.
 
 ### Options
 
@@ -503,7 +506,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
-* `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
+* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)

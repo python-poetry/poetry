@@ -44,10 +44,8 @@ source = '{source}'
 dest = '{dest}'
 
 with build.env.DefaultIsolatedEnv() as env:
-    builder = build.ProjectBuilder(
-        source_dir=source,
-        python_executable=env.python_executable,
-        runner=pyproject_hooks.quiet_subprocess_runner,
+    builder = build.ProjectBuilder.from_isolated_env(
+        env, source, runner=pyproject_hooks.quiet_subprocess_runner
     )
     env.install(builder.build_system_requires)
     env.install(builder.get_requires_for_build('wheel'))

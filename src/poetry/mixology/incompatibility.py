@@ -255,13 +255,13 @@ class Incompatibility:
         if this_positive.dependency != other_positive.dependency:
             return None
 
-        this_negatives = " or ".join([
-            self._terse(term) for term in self._terms if not term.is_positive()
-        ])
+        this_negatives = " or ".join(
+            [self._terse(term) for term in self._terms if not term.is_positive()]
+        )
 
-        other_negatives = " or ".join([
-            self._terse(term) for term in other.terms if not term.is_positive()
-        ])
+        other_negatives = " or ".join(
+            [self._terse(term) for term in other.terms if not term.is_positive()]
+        )
 
         buffer = [self._terse(this_positive, allow_every=True) + " "]
         is_dependency = isinstance(self.cause, DependencyCause) and isinstance(
@@ -355,9 +355,9 @@ class Incompatibility:
             buffer.append("requires ")
 
         buffer.append(
-            " or ".join([
-                self._terse(term) for term in latter.terms if not term.is_positive()
-            ])
+            " or ".join(
+                [self._terse(term) for term in latter.terms if not term.is_positive()]
+            )
         )
 
         if latter_line is not None:

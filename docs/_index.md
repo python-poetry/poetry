@@ -25,7 +25,7 @@ on Linux, macOS and Windows.
 
 {{% warning %}}
 Poetry should always be installed in a dedicated virtual environment to isolate it from the rest of your system.
-In no case, it should be installed in the environment of the project that is to be managed by Poetry.
+It should in no case be installed in the environment of the project that is to be managed by Poetry.
 This ensures that Poetry's own dependencies will not be accidentally upgraded or uninstalled.
 (Each of the following installation methods ensures that Poetry is installed into an isolated environment.)
 {{% /warning %}}
@@ -175,6 +175,8 @@ You can also install Poetry from a `git` repository by using the `--git` option:
 ```bash
 curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
 ````
+If you want to install different versions of Poetry in parallel, a good approach is the installation with pipx and suffix.
+
 {{< /step >}}
 {{< step >}}
 **Add Poetry to your PATH**

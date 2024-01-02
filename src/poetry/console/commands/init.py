@@ -456,10 +456,12 @@ You can specify a package in the following forms:
 
         return requires
 
-    def _validate_author(self, author: str, default: str) -> str | None:
+    @staticmethod
+    def _validate_author(author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
+        from poetry.core.utils.helpers import combine_unicode
 
-        author = author or default
+        author = combine_unicode(author or default)
 
         if author in ["n", "no"]:
             return None

@@ -347,12 +347,10 @@ class Provider:
         if dependency.base is not None:
             package.root_dir = dependency.base
 
-        package.files = [
-            {
-                "file": dependency.path.name,
-                "hash": "sha256:" + get_file_hash(dependency.full_path),
-            }
-        ]
+        package.files = [{
+            "file": dependency.path.name,
+            "hash": "sha256:" + get_file_hash(dependency.full_path),
+        }]
 
         return package
 

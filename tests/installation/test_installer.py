@@ -696,16 +696,14 @@ def test_run_whitelist_add(
 ) -> None:
     locker.locked(True)
     locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            }
-        ],
+        "package": [{
+            "name": "A",
+            "version": "1.0",
+            "optional": False,
+            "platform": "*",
+            "python-versions": "*",
+            "checksum": [],
+        }],
         "metadata": {
             "python-versions": "*",
             "platform": "*",
@@ -1295,16 +1293,14 @@ def test_run_with_prereleases(
 ) -> None:
     locker.locked(True)
     locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0a2",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            }
-        ],
+        "package": [{
+            "name": "A",
+            "version": "1.0a2",
+            "optional": False,
+            "platform": "*",
+            "python-versions": "*",
+            "checksum": [],
+        }],
         "metadata": {
             "python-versions": "*",
             "platform": "*",
@@ -1337,16 +1333,14 @@ def test_run_update_all_with_lock(
 ) -> None:
     locker.locked(True)
     locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": True,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            }
-        ],
+        "package": [{
+            "name": "A",
+            "version": "1.0",
+            "optional": True,
+            "platform": "*",
+            "python-versions": "*",
+            "checksum": [],
+        }],
         "metadata": {
             "python-versions": "*",
             "platform": "*",
