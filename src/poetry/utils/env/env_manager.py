@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 
+from functools import cached_property
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -43,6 +44,44 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from poetry.utils.env.base_env import Env
+
+
+class EnvsFile(TOMLFile):
+    """
+    This file contains one section per project with the project's base env name
+    as section name. Each section contains the minor and patch version of the
+    python executable used to create the currently active virtualenv.
+
+    Example:
+
+    [poetry-QRErDmmj]
+    minor = "3.9"
+    patch = "3.9.13"
+
+    [poetry-core-m5r7DkRA]
+    minor = "3.11"
+    patch = "3.11.6"
+    """
+
+    def remove_section(self, name: str, minor: str | None = None) -> str | None:
+        """
+        Remove a section from the envs file.
+
+        If "minor" is given, the section is only removed if its minor value
+        matches "minor".
+
+        Returns the "minor" value of the removed section.
+        """
+        envs = self.read()
+        current_env = envs.get(name)
+        if current_env is not None and (not minor or current_env["minor"] == minor):
+            del envs[name]
+            self.write(envs)
+            minor = current_env["minor"]
+            assert isinstance(minor, str)
+            return minor
+
+        return None
 
 
 class EnvManager:
@@ -121,11 +160,19 @@ class EnvManager:
         venv: Path = self._poetry.file.path.parent / ".venv"
         return venv
 
+    @cached_property
+    def envs_file(self) -> EnvsFile:
+        return EnvsFile(self._poetry.config.virtualenvs_path / self.ENVS_FILE)
+
+    @cached_property
+    def base_env_name(self) -> str:
+        return self.generate_env_name(
+            self._poetry.package.name,
+            str(self._poetry.file.path.parent),
+        )
+
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
-        cwd = self._poetry.file.path.parent
-
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
 
         try:
             python_version = Version.parse(python)
@@ -170,10 +217,9 @@ class EnvManager:
             return self.get(reload=True)
 
         envs = tomlkit.document()
-        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
-        if envs_file.exists():
-            envs = envs_file.read()
-            current_env = envs.get(base_env_name)
+        if self.envs_file.exists():
+            envs = self.envs_file.read()
+            current_env = envs.get(self.base_env_name)
             if current_env is not None:
                 current_minor = current_env["minor"]
                 current_patch = current_env["patch"]
@@ -182,7 +228,7 @@ class EnvManager:
                     # We need to recreate
                     create = True
 
-        name = f"{base_env_name}-py{minor}"
+        name = f"{self.base_env_name}-py{minor}"
         venv = venv_path / name
 
         # Create if needed
@@ -202,29 +248,21 @@ class EnvManager:
             self.create_venv(executable=python_path, force=create)
 
         # Activate
-        envs[base_env_name] = {"minor": minor, "patch": patch}
-        envs_file.write(envs)
+        envs[self.base_env_name] = {"minor": minor, "patch": patch}
+        self.envs_file.write(envs)
 
         return self.get(reload=True)
 
     def deactivate(self) -> None:
         venv_path = self._poetry.config.virtualenvs_path
-        name = self.generate_env_name(
-            self._poetry.package.name, str(self._poetry.file.path.parent)
-        )
 
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
-        if envs_file.exists():
-            envs = envs_file.read()
-            env = envs.get(name)
-            if env is not None:
-                venv = venv_path / f"{name}-py{env['minor']}"
-                self._io.write_error_line(
-                    f"Deactivating virtualenv: <comment>{venv}</comment>"
-                )
-                del envs[name]
-
-                envs_file.write(envs)
+        if self.envs_file.exists() and (
+            minor := self.envs_file.remove_section(self.base_env_name)
+        ):
+            venv = venv_path / f"{self.base_env_name}-py{minor}"
+            self._io.write_error_line(
+                f"Deactivating virtualenv: <comment>{venv}</comment>"
+            )
 
     def get(self, reload: bool = False) -> Env:
         if self._env is not None and not reload:
@@ -237,15 +275,10 @@ class EnvManager:
             precision=2, prefer_active_python=prefer_active_python, io=self._io
         ).to_string()
 
-        venv_path = self._poetry.config.virtualenvs_path
-
-        cwd = self._poetry.file.path.parent
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         env = None
-        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
-        if envs_file.exists():
-            envs = envs_file.read()
-            env = envs.get(base_env_name)
+        if self.envs_file.exists():
+            envs = self.envs_file.read()
+            env = envs.get(self.base_env_name)
             if env:
                 python_minor = env["minor"]
 
@@ -272,7 +305,7 @@ class EnvManager:
 
             venv_path = self._poetry.config.virtualenvs_path
 
-            name = f"{base_env_name}-py{python_minor.strip()}"
+            name = f"{self.base_env_name}-py{python_minor.strip()}"
 
             venv = venv_path / name
 
@@ -313,12 +346,6 @@ class EnvManager:
         return env.startswith(base_env_name)
 
     def remove(self, python: str) -> Env:
-        venv_path = self._poetry.config.virtualenvs_path
-
-        cwd = self._poetry.file.path.parent
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
-        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
-
         python_path = Path(python)
         if python_path.is_file():
             # Validate env name if provided env is a full path to python
@@ -327,34 +354,21 @@ class EnvManager:
                     [python, "-c", GET_ENV_PATH_ONELINER], text=True
                 ).strip("\n")
                 env_name = Path(env_dir).name
-                if not self.check_env_is_for_current_project(env_name, base_env_name):
+                if not self.check_env_is_for_current_project(
+                    env_name, self.base_env_name
+                ):
                     raise IncorrectEnvError(env_name)
             except CalledProcessError as e:
                 raise EnvCommandError(e)
 
-        if self.check_env_is_for_current_project(python, base_env_name):
+        if self.check_env_is_for_current_project(python, self.base_env_name):
             venvs = self.list()
             for venv in venvs:
                 if venv.path.name == python:
                     # Exact virtualenv name
-                    if not envs_file.exists():
-                        self.remove_venv(venv.path)
-
-                        return venv
-
-                    venv_minor = ".".join(str(v) for v in venv.version_info[:2])
-                    base_env_name = self.generate_env_name(cwd.name, str(cwd))
-                    envs = envs_file.read()
-
-                    current_env = envs.get(base_env_name)
-                    if not current_env:
-                        self.remove_venv(venv.path)
-
-                        return venv
-
-                    if current_env["minor"] == venv_minor:
-                        del envs[base_env_name]
-                        envs_file.write(envs)
+                    if self.envs_file.exists():
+                        venv_minor = ".".join(str(v) for v in venv.version_info[:2])
+                        self.envs_file.remove_section(self.base_env_name, venv_minor)
 
                     self.remove_venv(venv.path)
 
@@ -389,21 +403,14 @@ class EnvManager:
         python_version = Version.parse(python_version_string.strip())
         minor = f"{python_version.major}.{python_version.minor}"
 
-        name = f"{base_env_name}-py{minor}"
+        name = f"{self.base_env_name}-py{minor}"
         venv_path = venv_path / name
 
         if not venv_path.exists():
             raise ValueError(f'<warning>Environment "{name}" does not exist.</warning>')
 
-        if envs_file.exists():
-            envs = envs_file.read()
-            current_env = envs.get(base_env_name)
-            if current_env is not None:
-                current_minor = current_env["minor"]
-
-                if current_minor == minor:
-                    del envs[base_env_name]
-                    envs_file.write(envs)
+        if self.envs_file.exists():
+            self.envs_file.remove_section(self.base_env_name, minor)
 
         self.remove_venv(venv_path)
 
