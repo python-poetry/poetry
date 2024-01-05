@@ -580,6 +580,14 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
 See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
+{{% warning %}}
+Use `--` to terminate option parsing if your values may start with a hyphen (`-`), e.g.
+```bash
+poetry config http-basic.custom-repo gitlab-ci-token -- ${GITLAB_JOB_TOKEN}
+```
+Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphen.
+{{% /warning%}}
+
 ### Options
 
 * `--unset`: Remove the configuration element named by `setting-key`.

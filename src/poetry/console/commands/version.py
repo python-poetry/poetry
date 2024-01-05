@@ -86,7 +86,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.line(self.poetry.package.pretty_version)
             else:
                 self.line(
-                    f"<comment>{self.poetry.package.name}</>"
+                    f"<comment>{self.poetry.package.pretty_name}</>"
                     f" <info>{self.poetry.package.pretty_version}</>"
                 )
 
