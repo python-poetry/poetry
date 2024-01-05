@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import csv
 import functools
+import hashlib
 import itertools
 import json
 import threading
@@ -792,16 +793,22 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
+        hash_types = {
+            t.split(":")[0]
+            for t in known_hashes
+            if t.split(":")[0] in hashlib.algorithms_available
+        }
+        archive_hashes = {f"{t}:{get_file_hash(archive, t)}" for t in hash_types}
+        matching_hashes = known_hashes.intersection(archive_hashes)
 
-        if archive_hash not in known_hashes:
+        if len(matching_hashes) < 1:
             raise RuntimeError(
                 f"Hash for {package} from archive {archive.name} not found in"
-                f" known hashes (was: {archive_hash})"
+                f" known hashes (was: {archive_hashes!s})"
             )
 
-        return archive_hash
+        return matching_hashes.pop()
 
     def _download_archive(
         self,

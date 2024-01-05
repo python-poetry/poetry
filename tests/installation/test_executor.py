@@ -1456,3 +1456,88 @@ Package operations: 1 install, 0 updates, 0 removals
     output = io.fetch_output().strip()
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
+
+
+def test_executor_known_hash_sha512(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
+) -> None:
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+    }]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference = {
+        "archive_info": {
+            "hashes": {
+                "sha512": "766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad"
+            },
+        },
+        "url": url.as_uri(),
+    }
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_known_hash_md5(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
+) -> None:
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+    }]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference = {
+        "archive_info": {
+            "hashes": {"md5": "d1912c917363a64e127318655f7d1fe7"},
+        },
+        "url": url.as_uri(),
+    }
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_known_hash_sha3_512(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
+) -> None:
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
+    }]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference = {
+        "archive_info": {
+            "hashes": {
+                "sha3_512": "196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728"
+            },
+        },
+        "url": url.as_uri(),
+    }
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
