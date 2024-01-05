@@ -16,4 +16,4 @@ version: Callable[[str], str] = metadata.version
 try:
   __version__ = version("poetry")
 except:
-  __version__ = "1.5.3"
+  __version__ = "1.5.4"
