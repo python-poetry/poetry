@@ -793,10 +793,10 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        known_hashes: set = {
+        known_hashes: set[str] = {
             f["hash"] for f in package.files if f["file"] == archive.name
         }
-        hash_types: set = {t.split(":")[0] for t in known_hashes}
+        hash_types: set[str] = {t.split(":")[0] for t in known_hashes}
         hash_type: str | None = get_highest_priority_hash_type(hash_types)
 
         if hash_type is None:

@@ -318,8 +318,14 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                 archive.extractall(dest)
 
 
-def get_highest_priority_hash_type(hash_types: set) -> str | None:
-    highest_priority: list = [0, None]  # list containing [priority, hash_type]
+class PriorityHashTypePair:
+    def __init__(self) -> None:
+        self.priority: int = 0
+        self.hash_type: str | None = None
+
+
+def get_highest_priority_hash_type(hash_types: set[str]) -> str | None:
+    highest_priority = PriorityHashTypePair()
 
     for hash_type in hash_types:
         if hash_type == "sha3_512":
@@ -353,10 +359,15 @@ def get_highest_priority_hash_type(hash_types: set) -> str | None:
         else:
             logger.debug("Hash type '%s' not in priority list", hash_type)
 
-    return highest_priority[1]
+    return highest_priority.hash_type
 
 
-def _process_hash_type(priority: int, hash_type: str, highest_priority: list):
-    if priority > highest_priority[0] and hash_type in hashlib.algorithms_available:
-        highest_priority[0] = priority
-        highest_priority[1] = hash_type
+def _process_hash_type(
+    priority: int, hash_type: str, highest_priority: PriorityHashTypePair
+) -> None:
+    if (
+        priority > highest_priority.priority
+        and hash_type in hashlib.algorithms_available
+    ):
+        highest_priority.priority = priority
+        highest_priority.hash_type = hash_type
