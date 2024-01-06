@@ -1469,10 +1469,20 @@ def test_executor_known_hash_sha512(
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [{
-        "file": "demo-0.1.0.tar.gz",
-        "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+        },
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+        },
+        {
+            "file": "demo-0.1.0.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        },
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -1525,13 +1535,28 @@ def test_executor_known_hash_sha3_512(
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [{
-        "file": "demo-0.1.0.tar.gz",
-        "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
+        },
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+        },
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+        },
+        {
+            "file": "demo-0.1.0.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        },
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
+
     expected_url_reference = {
         "archive_info": {
             "hashes": {
@@ -1540,4 +1565,40 @@ def test_executor_known_hash_sha3_512(
         },
         "url": url.as_uri(),
     }
+
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_no_supported_hash_types(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
+) -> None:
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz",
+        },
+        {
+            "file": "demo-0.1.0.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        },
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    return_code = executor.execute([Install(package)])
+    distributions = list(tmp_venv.site_packages.distributions(name=package.name))
+    assert len(distributions) == 0
+
+    output = io.fetch_output()
+    error = io.fetch_error()
+    assert return_code == 1, f"\noutput: {output}\nerror: {error}\n"
+    assert "pytest" not in error
+    assert "No usable hash type(s) for demo" in output
+    assert "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz" in output

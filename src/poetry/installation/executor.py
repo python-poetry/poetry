@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import csv
 import functools
-import hashlib
 import itertools
 import json
 import threading
@@ -32,6 +31,7 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -793,22 +793,27 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
-        hash_types = {
-            t.split(":")[0]
-            for t in known_hashes
-            if t.split(":")[0] in hashlib.algorithms_available
+        known_hashes: set = {
+            f["hash"] for f in package.files if f["file"] == archive.name
         }
-        archive_hashes = {f"{t}:{get_file_hash(archive, t)}" for t in hash_types}
-        matching_hashes = known_hashes.intersection(archive_hashes)
+        hash_types: set = {t.split(":")[0] for t in known_hashes}
+        hash_type: str | None = get_highest_priority_hash_type(hash_types)
 
-        if len(matching_hashes) < 1:
+        if hash_type is None:
             raise RuntimeError(
-                f"Hash for {package} from archive {archive.name} not found in"
-                f" known hashes (was: {archive_hashes!s})"
+                f"No usable hash type(s) for {package} from archive"
+                f" {archive.name} found (known hashes: {known_hashes!s})"
             )
 
-        return matching_hashes.pop()
+        archive_hash: str = f"{hash_type}:{get_file_hash(archive, hash_type)}"
+
+        if archive_hash not in known_hashes:
+            raise RuntimeError(
+                f"Hash for {package} from archive {archive.name} not found in"
+                f" known hashes (was: {archive_hash})"
+            )
+
+        return archive_hash
 
     def _download_archive(
         self,

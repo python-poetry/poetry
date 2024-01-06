@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import logging
 import os
 import shutil
 import stat
@@ -35,6 +36,9 @@ if TYPE_CHECKING:
     from requests import Session
 
     from poetry.utils.authenticator import Authenticator
+
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -312,3 +316,47 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                 archive.extractall(dest, filter="data")
             else:
                 archive.extractall(dest)
+
+
+def get_highest_priority_hash_type(hash_types: set) -> str | None:
+    highest_priority: list = [0, None]  # list containing [priority, hash_type]
+
+    for hash_type in hash_types:
+        if hash_type == "sha3_512":
+            _process_hash_type(14, hash_type, highest_priority)
+        elif hash_type == "sha3_384":
+            _process_hash_type(13, hash_type, highest_priority)
+        elif hash_type == "sha3_256":
+            _process_hash_type(12, hash_type, highest_priority)
+        elif hash_type == "sha3_224":
+            _process_hash_type(11, hash_type, highest_priority)
+        elif hash_type == "sha512":
+            _process_hash_type(10, hash_type, highest_priority)
+        elif hash_type == "sha384":
+            _process_hash_type(9, hash_type, highest_priority)
+        elif hash_type == "sha256":
+            _process_hash_type(8, hash_type, highest_priority)
+        elif hash_type == "sha224":
+            _process_hash_type(7, hash_type, highest_priority)
+        elif hash_type == "shake_256":
+            _process_hash_type(6, hash_type, highest_priority)
+        elif hash_type == "shake_128":
+            _process_hash_type(5, hash_type, highest_priority)
+        elif hash_type == "blake2s":
+            _process_hash_type(4, hash_type, highest_priority)
+        elif hash_type == "blake2b":
+            _process_hash_type(3, hash_type, highest_priority)
+        elif hash_type == "sha1":
+            _process_hash_type(2, hash_type, highest_priority)
+        elif hash_type == "md5":
+            _process_hash_type(1, hash_type, highest_priority)
+        else:
+            logger.debug("Hash type '%s' not in priority list", hash_type)
+
+    return highest_priority[1]
+
+
+def _process_hash_type(priority: int, hash_type: str, highest_priority: list):
+    if priority > highest_priority[0] and hash_type in hashlib.algorithms_available:
+        highest_priority[0] = priority
+        highest_priority[1] = hash_type
