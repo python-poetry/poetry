@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import io
-import logging
 import os
 import shutil
 import stat
@@ -38,7 +37,26 @@ if TYPE_CHECKING:
     from poetry.utils.authenticator import Authenticator
 
 
-logger = logging.getLogger(__name__)
+prioritised_hash_types: list[str] = [
+    t
+    for t in [
+        "sha3_512",
+        "sha3_384",
+        "sha3_256",
+        "sha3_224",
+        "sha512",
+        "sha384",
+        "sha256",
+        "sha224",
+        "shake_256",
+        "shake_128",
+        "blake2s",
+        "blake2b",
+        "sha1",
+        "md5",
+    ]
+    if t in hashlib.algorithms_available
+]
 
 
 @contextmanager
@@ -318,56 +336,12 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                 archive.extractall(dest)
 
 
-class PriorityHashTypePair:
-    def __init__(self) -> None:
-        self.priority: int = 0
-        self.hash_type: str | None = None
-
-
 def get_highest_priority_hash_type(hash_types: set[str]) -> str | None:
-    highest_priority = PriorityHashTypePair()
+    if not hash_types:
+        return None
 
-    for hash_type in hash_types:
-        if hash_type == "sha3_512":
-            _process_hash_type(14, hash_type, highest_priority)
-        elif hash_type == "sha3_384":
-            _process_hash_type(13, hash_type, highest_priority)
-        elif hash_type == "sha3_256":
-            _process_hash_type(12, hash_type, highest_priority)
-        elif hash_type == "sha3_224":
-            _process_hash_type(11, hash_type, highest_priority)
-        elif hash_type == "sha512":
-            _process_hash_type(10, hash_type, highest_priority)
-        elif hash_type == "sha384":
-            _process_hash_type(9, hash_type, highest_priority)
-        elif hash_type == "sha256":
-            _process_hash_type(8, hash_type, highest_priority)
-        elif hash_type == "sha224":
-            _process_hash_type(7, hash_type, highest_priority)
-        elif hash_type == "shake_256":
-            _process_hash_type(6, hash_type, highest_priority)
-        elif hash_type == "shake_128":
-            _process_hash_type(5, hash_type, highest_priority)
-        elif hash_type == "blake2s":
-            _process_hash_type(4, hash_type, highest_priority)
-        elif hash_type == "blake2b":
-            _process_hash_type(3, hash_type, highest_priority)
-        elif hash_type == "sha1":
-            _process_hash_type(2, hash_type, highest_priority)
-        elif hash_type == "md5":
-            _process_hash_type(1, hash_type, highest_priority)
-        else:
-            logger.debug("Hash type '%s' not in priority list", hash_type)
+    for prioritised_hash_type in prioritised_hash_types:
+        if prioritised_hash_type in hash_types:
+            return prioritised_hash_type
 
-    return highest_priority.hash_type
-
-
-def _process_hash_type(
-    priority: int, hash_type: str, highest_priority: PriorityHashTypePair
-) -> None:
-    if (
-        priority > highest_priority.priority
-        and hash_type in hashlib.algorithms_available
-    ):
-        highest_priority.priority = priority
-        highest_priority.hash_type = hash_type
+    return None
