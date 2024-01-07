@@ -797,7 +797,7 @@ class Executor:
             f["hash"] for f in package.files if f["file"] == archive.name
         }
         hash_types: set[str] = {t.split(":")[0] for t in known_hashes}
-        hash_type: str | None = get_highest_priority_hash_type(hash_types)
+        hash_type: str | None = get_highest_priority_hash_type(hash_types, archive.name)
 
         if hash_type is None:
             raise RuntimeError(
