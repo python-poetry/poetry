@@ -416,7 +416,7 @@ def test_install_logs_output_decorated(
     assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize("with_root", [True])
+@pytest.mark.parametrize("with_root", [True, False])
 @pytest.mark.parametrize("error", ["module", "readme", ""])
 def test_install_warning_corrupt_root(
     command_tester_factory: CommandTesterFactory,
@@ -464,6 +464,25 @@ def test_install_path_dependency_does_not_exist(
     poetry.locker.locked(True)
     tester = command_tester_factory("install", poetry=poetry)
     if options:
+        tester.execute(options)
+    else:
+        with pytest.raises(ValueError, match="does not exist"):
+            tester.execute(options)
+
+
+@pytest.mark.parametrize("options", ["", "--extras notinstallable"])
+def test_install_extra_path_dependency_does_not_exist(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    options: str,
+) -> None:
+    project = "missing_extra_directory_dependency"
+    poetry = _project_factory(project, project_factory, fixture_dir)
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.locked(True)
+    tester = command_tester_factory("install", poetry=poetry)
+    if not options:
         tester.execute(options)
     else:
         with pytest.raises(ValueError, match="does not exist"):

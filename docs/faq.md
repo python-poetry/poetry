@@ -204,7 +204,7 @@ For example, you might have a Dockerfile that looks something like this:
 FROM python
 COPY pyproject.toml poetry.lock .
 COPY src/ ./src
-RUN pip install poetry && poetry install --no-dev
+RUN pip install poetry && poetry install --without dev
 ```
 
 As soon as *any* source file changes, the cache for the `RUN` layer will be invalidated, which forces all 3rd party dependencies (likely the slowest step out of these) to be installed again if you changed any files in `src/`.
@@ -221,7 +221,7 @@ FROM python
 COPY pyproject.toml poetry.lock .
 RUN pip install poetry && poetry install --no-root --no-directory
 COPY src/ ./src
-RUN poetry install --no-dev
+RUN poetry install --without dev
 ```
 
 The two key options we are using here are `--no-root` (skips installing the project source) and `--no-directory` (skips installing any local directory path dependencies, you can omit this if you don't have any).

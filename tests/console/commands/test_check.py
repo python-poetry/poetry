@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.packages import Locker
+from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -67,8 +68,6 @@ All set!
 def test_check_invalid(
     mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
 ) -> None:
-    from poetry.toml import TOMLFile
-
     mocker.patch(
         "poetry.poetry.Poetry.file",
         return_value=TOMLFile(fixture_dir("invalid_pyproject") / "pyproject.toml"),
@@ -77,13 +76,15 @@ def test_check_invalid(
 
     tester.execute("--lock")
 
-    jsonschema_error = "'description' is a required property"
     fastjsonschema_error = "data must contain ['description'] properties"
+    custom_error = "The fields ['description'] are required in package mode."
     expected_template = """\
 Error: {schema_error}
 Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Error: Declared README file does not exist: never/exists.md
+Error: Invalid source "not-exists" referenced in dependencies.
+Error: Invalid source "not-exists2" referenced in dependencies.
 Error: poetry.lock was not found.
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.
@@ -97,7 +98,7 @@ Warning: Deprecated classifier\
 """
     expected = {
         expected_template.format(schema_error=schema_error)
-        for schema_error in (jsonschema_error, fastjsonschema_error)
+        for schema_error in (fastjsonschema_error, custom_error)
     }
 
     assert tester.io.fetch_error() in expected
@@ -107,8 +108,9 @@ def test_check_private(
     mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
 ) -> None:
     mocker.patch(
-        "poetry.factory.Factory.locate",
-        return_value=fixture_dir("private_pyproject") / "pyproject.toml",
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(fixture_dir("private_pyproject") / "pyproject.toml"),
+        new_callable=mocker.PropertyMock,
     )
 
     tester.execute()
@@ -135,8 +137,6 @@ def test_check_lock_missing(
     expected: str,
     expected_status: int,
 ) -> None:
-    from poetry.toml import TOMLFile
-
     mocker.patch(
         "poetry.poetry.Poetry.file",
         return_value=TOMLFile(fixture_dir("private_pyproject") / "pyproject.toml"),

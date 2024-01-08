@@ -50,12 +50,10 @@ def repo() -> dict[str, dict[str, str]]:
 
 @pytest.fixture
 def mock_config(config: Config, repo: dict[str, dict[str, str]]) -> Config:
-    config.merge(
-        {
-            "repositories": repo,
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
-        }
-    )
+    config.merge({
+        "repositories": repo,
+        "http-basic": {"foo": {"username": "bar", "password": "baz"}},
+    })
 
     return config
 
@@ -144,12 +142,10 @@ def test_authenticator_uses_empty_strings_as_default_password(
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
 ) -> None:
-    config.merge(
-        {
-            "repositories": repo,
-            "http-basic": {"foo": {"username": "bar"}},
-        }
-    )
+    config.merge({
+        "repositories": repo,
+        "http-basic": {"foo": {"username": "bar"}},
+    })
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
@@ -165,12 +161,10 @@ def test_authenticator_uses_empty_strings_as_default_username(
     repo: dict[str, dict[str, str]],
     http: type[httpretty.httpretty],
 ) -> None:
-    config.merge(
-        {
-            "repositories": repo,
-            "http-basic": {"foo": {"username": None, "password": "bar"}},
-        }
-    )
+    config.merge({
+        "repositories": repo,
+        "http-basic": {"foo": {"username": None, "password": "bar"}},
+    })
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
@@ -188,11 +182,9 @@ def test_authenticator_falls_back_to_keyring_url(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    config.merge(
-        {
-            "repositories": repo,
-        }
-    )
+    config.merge({
+        "repositories": repo,
+    })
 
     dummy_keyring.set_password(
         "https://foo.bar/simple/", None, SimpleCredential("foo", "bar")
@@ -214,11 +206,9 @@ def test_authenticator_falls_back_to_keyring_netloc(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    config.merge(
-        {
-            "repositories": repo,
-        }
-    )
+    config.merge({
+        "repositories": repo,
+    })
 
     dummy_keyring.set_password("foo.bar", None, SimpleCredential("foo", "bar"))
 
@@ -388,13 +378,11 @@ def test_authenticator_uses_certs_from_config_if_not_provided(
     configured_cert = "/path/to/cert"
     configured_client_cert = "/path/to/client-cert"
 
-    mock_config.merge(
-        {
-            "certificates": {
-                "foo": {"cert": configured_cert, "client-cert": configured_client_cert}
-            },
-        }
-    )
+    mock_config.merge({
+        "certificates": {
+            "foo": {"cert": configured_cert, "client-cert": configured_client_cert}
+        },
+    })
 
     authenticator = Authenticator(mock_config, NullIO())
     url = "https://foo.bar/files/foo-0.1.0.tar.gz"
@@ -415,18 +403,16 @@ def test_authenticator_uses_certs_from_config_if_not_provided(
 def test_authenticator_uses_credentials_from_config_matched_by_url_path(
     config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ) -> None:
-    config.merge(
-        {
-            "repositories": {
-                "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
-                "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
-            },
-            "http-basic": {
-                "foo-alpha": {"username": "bar", "password": "alpha"},
-                "foo-beta": {"username": "baz", "password": "beta"},
-            },
-        }
-    )
+    config.merge({
+        "repositories": {
+            "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
+            "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
+        },
+        "http-basic": {
+            "foo-alpha": {"username": "bar", "password": "alpha"},
+            "foo-beta": {"username": "baz", "password": "beta"},
+        },
+    })
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/alpha/files/simple/foo-0.1.0.tar.gz")
@@ -448,16 +434,14 @@ def test_authenticator_uses_credentials_from_config_matched_by_url_path(
 def test_authenticator_uses_credentials_from_config_with_at_sign_in_path(
     config: Config, mock_remote: None, http: type[httpretty.httpretty]
 ) -> None:
-    config.merge(
-        {
-            "repositories": {
-                "foo": {"url": "https://foo.bar/beta/files/simple/"},
-            },
-            "http-basic": {
-                "foo": {"username": "bar", "password": "baz"},
-            },
-        }
-    )
+    config.merge({
+        "repositories": {
+            "foo": {"url": "https://foo.bar/beta/files/simple/"},
+        },
+        "http-basic": {
+            "foo": {"username": "bar", "password": "baz"},
+        },
+    })
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/beta/files/simple/f@@-0.1.0.tar.gz")
 
@@ -474,14 +458,12 @@ def test_authenticator_falls_back_to_keyring_url_matched_by_path(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    config.merge(
-        {
-            "repositories": {
-                "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
-                "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
-            }
+    config.merge({
+        "repositories": {
+            "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
+            "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
         }
-    )
+    })
 
     dummy_keyring.set_password(
         "https://foo.bar/alpha/files/simple/", None, SimpleCredential("foo", "bar")
@@ -517,14 +499,12 @@ def test_authenticator_uses_env_provided_credentials_matched_by_url_path(
     monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_BETA_USERNAME", "baz")
     monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_BETA_PASSWORD", "beta")
 
-    config.merge(
-        {
-            "repositories": {
-                "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
-                "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
-            }
+    config.merge({
+        "repositories": {
+            "foo-alpha": {"url": "https://foo.bar/alpha/files/simple/"},
+            "foo-beta": {"url": "https://foo.bar/beta/files/simple/"},
         }
-    )
+    })
 
     authenticator = Authenticator(config, NullIO())
 
@@ -548,22 +528,16 @@ def test_authenticator_azure_feed_guid_credentials(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    config.merge(
-        {
-            "repositories": {
-                "alpha": {
-                    "url": "https://foo.bar/org-alpha/_packaging/feed/pypi/simple/"
-                },
-                "beta": {
-                    "url": "https://foo.bar/org-beta/_packaging/feed/pypi/simple/"
-                },
-            },
-            "http-basic": {
-                "alpha": {"username": "foo", "password": "bar"},
-                "beta": {"username": "baz", "password": "qux"},
-            },
-        }
-    )
+    config.merge({
+        "repositories": {
+            "alpha": {"url": "https://foo.bar/org-alpha/_packaging/feed/pypi/simple/"},
+            "beta": {"url": "https://foo.bar/org-beta/_packaging/feed/pypi/simple/"},
+        },
+        "http-basic": {
+            "alpha": {"username": "foo", "password": "bar"},
+            "beta": {"username": "baz", "password": "qux"},
+        },
+    })
 
     authenticator = Authenticator(config, NullIO())
 
@@ -593,13 +567,11 @@ def test_authenticator_add_repository(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    config.merge(
-        {
-            "http-basic": {
-                "source": {"username": "foo", "password": "bar"},
-            },
-        }
-    )
+    config.merge({
+        "http-basic": {
+            "source": {"username": "foo", "password": "bar"},
+        },
+    })
 
     authenticator = Authenticator(config, NullIO())
 
@@ -629,18 +601,16 @@ def test_authenticator_git_repositories(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    config.merge(
-        {
-            "repositories": {
-                "one": {"url": "https://foo.bar/org/one.git"},
-                "two": {"url": "https://foo.bar/org/two.git"},
-            },
-            "http-basic": {
-                "one": {"username": "foo", "password": "bar"},
-                "two": {"username": "baz", "password": "qux"},
-            },
-        }
-    )
+    config.merge({
+        "repositories": {
+            "one": {"url": "https://foo.bar/org/one.git"},
+            "two": {"url": "https://foo.bar/org/two.git"},
+        },
+        "http-basic": {
+            "one": {"username": "foo", "password": "bar"},
+            "two": {"username": "baz", "password": "qux"},
+        },
+    })
 
     authenticator = Authenticator(config, NullIO())
 

@@ -310,17 +310,15 @@ def test_configured_repository_http_auth(
     spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
     spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
 
-    config.merge(
-        {
-            "repositories": {"git-repo": {"url": source_url}},
-            "http-basic": {
-                "git-repo": {
-                    "username": GIT_USERNAME,
-                    "password": GIT_PASSWORD,
-                }
-            },
-        }
-    )
+    config.merge({
+        "repositories": {"git-repo": {"url": source_url}},
+        "http-basic": {
+            "git-repo": {
+                "username": GIT_USERNAME,
+                "password": GIT_PASSWORD,
+            }
+        },
+    })
 
     dummy_git_config = ConfigFile()
     mocker.patch(

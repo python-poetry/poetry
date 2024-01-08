@@ -11,7 +11,6 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from urllib.parse import urlparse
 
 import pytest
 
@@ -40,9 +39,6 @@ from tests.repositories.test_pypi_repository import MockRepository
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    import httpretty
-
-    from httpretty.core import HTTPrettyRequest
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
@@ -135,36 +131,6 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture
-def mock_file_downloads(
-    http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
-) -> None:
-    def callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> list[int | dict[str, Any] | bytes]:
-        name = Path(urlparse(uri).path).name
-
-        fixture = Path(__file__).parent.parent.joinpath(
-            "repositories/fixtures/pypi.org/dists/" + name
-        )
-
-        if not fixture.exists():
-            fixture = fixture_dir("distributions") / name
-
-            if not fixture.exists():
-                fixture = (
-                    fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-                )
-
-        return [200, headers, fixture.read_bytes()]
-
-    http.register_uri(
-        http.GET,
-        re.compile("^https://files.pythonhosted.org/.*$"),
-        body=callback,
-    )
-
-
-@pytest.fixture
 def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
@@ -240,29 +206,27 @@ def test_execute_executes_a_batch_of_operations(
         develop=True,
     )
 
-    return_code = executor.execute(
-        [
-            Install(Package("pytest", "3.5.1")),
-            Uninstall(Package("attrs", "17.4.0")),
-            Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
-            Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
-            Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
-            Install(file_package),
-            Install(directory_package),
-            Install(git_package),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("pytest", "3.5.1")),
+        Uninstall(Package("attrs", "17.4.0")),
+        Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
+        Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
+        Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
+        Install(file_package),
+        Install(directory_package),
+        Install(git_package),
+    ])
 
     expected = f"""
 Package operations: 4 installs, 2 updates, 1 removal
 
-  • Installing pytest (3.5.1)
-  • Removing attrs (17.4.0)
-  • Updating requests (2.18.3 -> 2.18.4)
-  • Downgrading pytest (3.5.1 -> 3.5.0)
-  • Installing demo (0.1.0 {file_package.source_url})
-  • Installing simple-project (1.2.3 {directory_package.source_url})
-  • Installing demo (0.1.0 master)
+  - Installing pytest (3.5.1)
+  - Removing attrs (17.4.0)
+  - Updating requests (2.18.3 -> 2.18.4)
+  - Downgrading pytest (3.5.1 -> 3.5.0)
+  - Installing demo (0.1.0 {file_package.source_url})
+  - Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing demo (0.1.0 master)
 """
 
     expected_lines = set(expected.splitlines())
@@ -352,26 +316,24 @@ def test_execute_prints_warning_for_invalid_wheels(
     base_url = "https://files.pythonhosted.org/"
     wheel1 = "demo_invalid_record-0.1.0-py2.py3-none-any.whl"
     wheel2 = "demo_invalid_record2-0.1.0-py2.py3-none-any.whl"
-    return_code = executor.execute(
-        [
-            Install(
-                Package(
-                    "demo-invalid-record",
-                    "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel1}",
-                )
-            ),
-            Install(
-                Package(
-                    "demo-invalid-record2",
-                    "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel2}",
-                )
-            ),
-        ]
-    )
+    return_code = executor.execute([
+        Install(
+            Package(
+                "demo-invalid-record",
+                "0.1.0",
+                source_type="url",
+                source_url=f"{base_url}/{wheel1}",
+            )
+        ),
+        Install(
+            Package(
+                "demo-invalid-record2",
+                "0.1.0",
+                source_type="url",
+                source_url=f"{base_url}/{wheel2}",
+            )
+        ),
+    ])
 
     warning1 = f"""\
 <warning>Warning: Validation of the RECORD file of {wheel1} failed.\
@@ -419,7 +381,7 @@ def test_execute_shows_skipped_operations_if_verbose(
     expected = """
 Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 
-  • Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
+  - Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
 """
     assert io.fetch_output() == expected
     assert len(env.executed) == 0
@@ -442,7 +404,7 @@ def test_execute_should_show_errors(
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing clikit (0.2.3)
+  - Installing clikit (0.2.3)
 
   Exception
 
@@ -464,19 +426,17 @@ def test_execute_works_with_ansi_output(
 
     executor = Executor(env, pool, config, io_decorated)
 
-    return_code = executor.execute(
-        [
-            Install(Package("cleo", "1.0.0a5")),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("cleo", "1.0.0a5")),
+    ])
 
     # fmt: off
     expected = [
         "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
+        "\x1b[32;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished
     ]
     # fmt: on
 
@@ -501,16 +461,14 @@ def test_execute_works_with_no_ansi_output(
 
     executor = Executor(env, pool, config, io_not_decorated)
 
-    return_code = executor.execute(
-        [
-            Install(Package("cleo", "1.0.0a5")),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("cleo", "1.0.0a5")),
+    ])
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cleo (1.0.0a5)
+  - Installing cleo (1.0.0a5)
 """
     expected_lines = set(expected.splitlines())
     output_lines = set(io_not_decorated.fetch_output().splitlines())
@@ -536,8 +494,8 @@ def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_inter
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing clikit (0.2.3)
-  • Installing clikit (0.2.3): Cancelled
+  - Installing clikit (0.2.3)
+  - Installing clikit (0.2.3): Cancelled
 """
 
     assert io.fetch_output() == expected
@@ -557,6 +515,7 @@ def test_execute_should_gracefully_handle_io_error(
 
     def write_line(string: str, **kwargs: Any) -> None:
         # Simulate UnicodeEncodeError
+        string = string.replace("-", "•")
         string.encode("ascii")
         original_write_line(string, **kwargs)
 
@@ -667,12 +626,12 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     io: BufferedIO,
 ) -> None:
     link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0-py2.py3-none-any.whl",
+        "hash": (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ),
+    }]
 
     mocker.patch(
         "poetry.installation.executor.Executor._download", return_value=link_cached
@@ -694,12 +653,12 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
     url = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0-py2.py3-none-any.whl",
+        "hash": (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -723,16 +682,17 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_files(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
 ) -> None:
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": (
+            "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -836,12 +796,12 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
     )
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0-py2.py3-none-any.whl",
+        "hash": (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     operation = Install(package)
@@ -930,12 +890,12 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         source_url="https://files.pythonhosted.org/demo-0.1.0.tar.gz",
     )
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": (
+            "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     operation = Install(package)
@@ -1203,12 +1163,10 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge(
-        {
-            "cache-dir": str(tmp_path),
-            "installer": {"modern-installation": False},
-        }
-    )
+    config.merge({
+        "cache-dir": str(tmp_path),
+        "installer": {"modern-installation": False},
+    })
 
     executor = Executor(env, pool, config, io)
 
@@ -1219,16 +1177,14 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([
+        Install(directory_package),
+    ])
 
     expected = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing simple-project (1.2.3 {directory_package.source_url})
 """
 
     expected_lines = set(expected.splitlines())
@@ -1290,7 +1246,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     expected_start = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   ChefBuildError
 
@@ -1392,7 +1348,7 @@ def test_build_system_requires_not_available(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   SolveFailure
 
@@ -1439,7 +1395,7 @@ def test_build_system_requires_install_failure(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   ChefInstallError
 
@@ -1491,7 +1447,7 @@ def test_other_error(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   FileNotFoundError
 """

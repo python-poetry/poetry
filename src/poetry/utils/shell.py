@@ -70,7 +70,13 @@ class Shell:
 
     def activate(self, env: VirtualEnv) -> int | None:
         activate_script = self._get_activate_script()
-        bin_dir = "Scripts" if WINDOWS else "bin"
+        if WINDOWS:
+            bin_path = env.path / "Scripts"
+            # Python innstalled via msys2 on Windows might produce a POSIX-like venv
+            # See https://github.com/python-poetry/poetry/issues/8638
+            bin_dir = "Scripts" if bin_path.exists() else "bin"
+        else:
+            bin_dir = "bin"
         activate_path = env.path / bin_dir / activate_script
 
         # mypy requires using sys.platform instead of WINDOWS constant
@@ -100,7 +106,12 @@ class Shell:
         cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
 
         with env.temp_environ():
-            args = ["-e", cmd] if self._name == "nu" else ["-i"]
+            if self._name == "nu":
+                args = ["-e", cmd]
+            elif self._name == "fish":
+                args = ["-i", "--init-command", cmd]
+            else:
+                args = ["-i"]
 
             c = pexpect.spawn(
                 self._path, args, dimensions=(terminal.lines, terminal.columns)
@@ -114,14 +125,11 @@ class Shell:
             c.sendline(f"emulate bash -c '. {shlex.quote(str(activate_path))}'")
         elif self._name == "xonsh":
             c.sendline(f"vox activate {shlex.quote(str(env.path))}")
-        elif self._name == "nu":
-            # If this is nu, we don't want to send the activation command to the
+        elif self._name in ["nu", "fish"]:
+            # If this is nu or fish, we don't want to send the activation command to the
             # command line since we already ran it via the shell's invocation.
             pass
         else:
-            if self._name in ["fish"]:
-                # Under fish, "\r" should be sent explicitly
-                cmd += "\r"
             c.sendline(cmd)
 
         def resize(sig: Any, data: Any) -> None:

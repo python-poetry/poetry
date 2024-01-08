@@ -22,14 +22,12 @@ def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> No
     for op in ops:
         if op.job_type == "update":
             assert isinstance(op, Update)
-            result.append(
-                {
-                    "job": "update",
-                    "from": op.initial_package,
-                    "to": op.target_package,
-                    "skipped": op.skipped,
-                }
-            )
+            result.append({
+                "job": "update",
+                "from": op.initial_package,
+                "to": op.target_package,
+                "skipped": op.skipped,
+            })
         else:
             job = "install"
             if op.job_type == "uninstall":
@@ -151,36 +149,32 @@ def test_it_should_not_remove_installed_packages_that_are_in_result() -> None:
 def test_it_should_update_installed_packages_if_sources_are_different() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0")],
-        [
-            (
-                Package(
-                    "a",
-                    "1.0.0",
-                    source_url="https://github.com/demo/demo.git",
-                    source_type="git",
-                    source_reference="main",
-                    source_resolved_reference="123456",
-                ),
-                1,
-            )
-        ],
+        [(
+            Package(
+                "a",
+                "1.0.0",
+                source_url="https://github.com/demo/demo.git",
+                source_type="git",
+                source_reference="main",
+                source_resolved_reference="123456",
+            ),
+            1,
+        )],
         installed_packages=[Package("a", "1.0.0")],
     )
 
     check_operations(
         transaction.calculate_operations(synchronize=True),
-        [
-            {
-                "job": "update",
-                "from": Package("a", "1.0.0"),
-                "to": Package(
-                    "a",
-                    "1.0.0",
-                    source_url="https://github.com/demo/demo.git",
-                    source_type="git",
-                    source_reference="main",
-                    source_resolved_reference="123456",
-                ),
-            }
-        ],
+        [{
+            "job": "update",
+            "from": Package("a", "1.0.0"),
+            "to": Package(
+                "a",
+                "1.0.0",
+                source_url="https://github.com/demo/demo.git",
+                source_type="git",
+                source_reference="main",
+                source_resolved_reference="123456",
+            ),
+        }],
     )

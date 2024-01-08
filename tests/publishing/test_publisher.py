@@ -53,12 +53,10 @@ def test_publish_can_publish_to_given_repository(
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
 
-    config.merge(
-        {
-            "repositories": {"foo": {"url": "http://foo.bar"}},
-            "http-basic": {"foo": {"username": "foo", "password": "bar"}},
-        }
-    )
+    config.merge({
+        "repositories": {"foo": {"url": "http://foo.bar"}},
+        "http-basic": {"foo": {"username": "foo", "password": "bar"}},
+    })
 
     mocker.patch("poetry.config.config.Config.create", return_value=config)
     poetry = Factory().create_poetry(fixture_dir(fixture_name))
@@ -118,13 +116,11 @@ def test_publish_uses_cert(
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
-    poetry.config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar"}},
-            "http-basic": {"foo": {"username": "foo", "password": "bar"}},
-            "certificates": {"foo": {"cert": cert}},
-        }
-    )
+    poetry.config.merge({
+        "repositories": {"foo": {"url": "https://foo.bar"}},
+        "http-basic": {"foo": {"username": "foo", "password": "bar"}},
+        "certificates": {"foo": {"cert": cert}},
+    })
     publisher = Publisher(poetry, NullIO())
 
     publisher.publish("foo", None, None)
@@ -148,12 +144,10 @@ def test_publish_uses_client_cert(
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
-    poetry.config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar"}},
-            "certificates": {"foo": {"client-cert": client_cert}},
-        }
-    )
+    poetry.config.merge({
+        "repositories": {"foo": {"url": "https://foo.bar"}},
+        "certificates": {"foo": {"client-cert": client_cert}},
+    })
     publisher = Publisher(poetry, NullIO())
 
     publisher.publish("foo", None, None)

@@ -524,8 +524,8 @@ def test_create_poetry_fails_on_invalid_configuration(
     with pytest.raises(RuntimeError) as e:
         Factory().create_poetry(fixture_dir("invalid_pyproject") / "pyproject.toml")
 
-    jsonschema_error = "'description' is a required property"
     fastjsonschema_error = "data must contain ['description'] properties"
+    custom_error = "The fields ['description'] are required in package mode."
 
     expected_template = """\
 The Poetry configuration is invalid:
@@ -534,7 +534,28 @@ The Poetry configuration is invalid:
 """
     expected = {
         expected_template.format(schema_error=schema_error)
-        for schema_error in (jsonschema_error, fastjsonschema_error)
+        for schema_error in (fastjsonschema_error, custom_error)
+    }
+
+    assert str(e.value) in expected
+
+
+def test_create_poetry_fails_on_nameless_project(
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    with pytest.raises(RuntimeError) as e:
+        Factory().create_poetry(fixture_dir("nameless_pyproject") / "pyproject.toml")
+
+    fastjsonschema_error = "data must contain ['name'] properties"
+    custom_error = "The fields ['name'] are required in package mode."
+
+    expected_template = """\
+The Poetry configuration is invalid:
+  - {schema_error}
+"""
+    expected = {
+        expected_template.format(schema_error=schema_error)
+        for schema_error in (fastjsonschema_error, custom_error)
     }
 
     assert str(e.value) in expected

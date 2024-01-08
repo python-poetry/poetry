@@ -62,19 +62,17 @@ def tester(patches: None) -> CommandTester:
 
 @pytest.fixture
 def init_basic_inputs() -> str:
-    return "\n".join(
-        [
-            "my-package",  # Package name
-            "1.2.3",  # Version
-            "This is a description",  # Description
-            "n",  # Author
-            "MIT",  # License
-            "~2.7 || ^3.6",  # Python
-            "n",  # Interactive packages
-            "n",  # Interactive dev packages
-            "\n",  # Generate
-        ]
-    )
+    return "\n".join([
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ])
 
 
 @pytest.fixture()
@@ -996,6 +994,22 @@ def test_validate_package_invalid(name: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "author",
+    [
+        str(b"Jos\x65\xcc\x81 Duarte", "utf-8"),
+        str(b"Jos\xc3\xa9 Duarte", "utf-8"),
+    ],
+)
+def test_validate_author(author: str) -> None:
+    """
+    This test was added following issue #8779, hence, we're looking to see if the test
+    no longer throws an exception, hence the seemingly "useless" test of just running
+    the method.
+    """
+    InitCommand._validate_author(author, "")
+
+
+@pytest.mark.parametrize(
     "package_name, include",
     (
         ("mypackage", None),
@@ -1087,3 +1101,17 @@ python = "^{python}"
 """
 
     assert expected in pyproject_file.read_text()
+
+
+def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
+    """
+    Since we are mocking _get_pool() in the other tests, we at least should make
+    sure it works in general. See https://github.com/python-poetry/poetry/issues/8634.
+    """
+    mocker.patch("pathlib.Path.cwd", return_value=source_dir)
+
+    app = Application()
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    pool = command._get_pool()
+    assert pool.repositories
