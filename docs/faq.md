@@ -84,7 +84,7 @@ If your package will be used as an application, it might be worth to define an u
 ### Is tox supported?
 
 **Yes**. Provided that you are using `tox` >= 4, you can use it in combination with
-the PEP 517 compliant build system provided by Poetry. (With tox 3, you have to set the 
+the PEP 517 compliant build system provided by Poetry. (With tox 3, you have to set the
 [isolated build](https://tox.wiki/en/3.27.1/config.html#conf-isolated_build) option.)
 
 So, in your `pyproject.toml` file, add this section if it does not already exist:
