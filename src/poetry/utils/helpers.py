@@ -56,7 +56,7 @@ prioritised_hash_types: tuple[str, ...] = tuple([
     ]
     if t in hashlib.algorithms_available
 ])
-non_prioritized_available_hash_types: frozenset[str] = frozenset(
+non_prioritised_available_hash_types: frozenset[str] = frozenset(
     set(hashlib.algorithms_available).difference(prioritised_hash_types)
 )
 
@@ -353,7 +353,7 @@ def get_highest_priority_hash_type(
         f" hash types: {hash_types!s})"
     )
 
-    for available_hash_type in non_prioritized_available_hash_types:
+    for available_hash_type in non_prioritised_available_hash_types:
         if available_hash_type in hash_types:
             return available_hash_type
 
