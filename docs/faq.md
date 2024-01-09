@@ -83,8 +83,9 @@ If your package will be used as an application, it might be worth to define an u
 
 ### Is tox supported?
 
-**Yes**. By using the [isolated builds](https://tox.readthedocs.io/en/latest/config.html#conf-isolated_build) `tox` provides,
-you can use it in combination with the PEP 517 compliant build system provided by Poetry.
+**Yes**. Provided that you are using `tox` >= 4, you can use it in combination with
+the PEP 517 compliant build system provided by Poetry. (With tox 3, you have to set the
+[isolated build](https://tox.wiki/en/3.27.1/config.html#conf-isolated_build) option.)
 
 So, in your `pyproject.toml` file, add this section if it does not already exist:
 
@@ -97,10 +98,9 @@ build-backend = "poetry.core.masonry.api"
 `tox` can be configured in multiple ways. It depends on what should be the code under test and which dependencies
 should be installed.
 
-#### Usecase #1
+#### Use case #1
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 deps =
@@ -112,10 +112,9 @@ commands =
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
 Thus, dependencies are resolved by `pip`.
 
-#### Usecase #2
+#### Use case #2
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 allowlist_externals = poetry
@@ -126,13 +125,12 @@ commands =
 ```
 
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
-Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry,
+Thus, dependencies are resolved by `pip` in the first place. But afterward we run Poetry,
  which will install the locked dependencies into the environment.
 
-#### Usecase #3
+#### Use case #3
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 skip_install = true
@@ -198,7 +196,7 @@ For example, if Poetry builds a distribution for a project that uses a version t
 
 ### Poetry busts my Docker cache because it requires me to COPY my source files in before installing 3rd party dependencies
 
-By default running `poetry install ...` requires you to have your source files present (both the "root" package and any directory path dependencies you might have).
+By default, running `poetry install ...` requires you to have your source files present (both the "root" package and any directory path dependencies you might have).
 This interacts poorly with Docker's caching mechanisms because any change to a source file will make any layers (subsequent commands in your Dockerfile) re-run.
 For example, you might have a Dockerfile that looks something like this:
 
