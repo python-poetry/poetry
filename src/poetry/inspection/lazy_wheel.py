@@ -30,6 +30,7 @@ from requests.status_codes import codes
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
+    from types import TracebackType
 
     from packaging.metadata import RawMetadata
     from requests import Session
@@ -51,12 +52,12 @@ class UnsupportedWheel(Exception):
 class InvalidWheel(Exception):
     """Invalid (e.g. corrupt) wheel."""
 
-    def __init__(self, location: str, name: str):
+    def __init__(self, location: str, name: str) -> None:
         self.location = location
         self.name = name
 
     def __str__(self) -> str:
-        return f"Wheel '{self.name}' located at {self.location} is invalid."
+        return f"Wheel {self.name} located at {self.location} is invalid."
 
 
 def metadata_from_wheel_url(
@@ -240,8 +241,13 @@ class ReadOnlyIOWrapper(BinaryIO):
         self._file.__enter__()
         return self
 
-    def __exit__(self, *exc: Any) -> None:
-        self._file.__exit__(*exc)
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._file.__exit__(exc_type, exc_value, traceback)
 
     def __iter__(self) -> Iterator[bytes]:
         raise NotImplementedError
@@ -298,10 +304,15 @@ class LazyRemoteResource(ReadOnlyIOWrapper):
         self._setup_content()
         return self
 
-    def __exit__(self, *exc: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         """Call ``self._reset_content()``."""
         self._reset_content()
-        super().__exit__(*exc)
+        super().__exit__(exc_type, exc_value, traceback)
 
     @contextmanager
     def _stay(self) -> Iterator[None]:
@@ -455,10 +466,15 @@ class LazyHTTPFile(FixedSizeLazyResource):
         super().__enter__()
         return self
 
-    def __exit__(self, *exc: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         """Logs request count to quickly identify any pathological cases in log data."""
         logger.debug("%d requests for url %s", self._request_count, self._url)
-        super().__exit__(*exc)
+        super().__exit__(exc_type, exc_value, traceback)
 
     def _content_length_from_head(self) -> int:
         """Performs a HEAD request to extract the Content-Length.
@@ -513,6 +529,8 @@ class LazyWheelOverHTTP(LazyHTTPFile):
     # Cache this on the type to avoid trying and failing our initial lazy wheel request
     # multiple times in the same invocation against an index without this support.
     _domains_without_negative_range: ClassVar[set[str]] = set()
+
+    _metadata_regex = re.compile(r"^[^/]*\.dist-info/METADATA$")
 
     # This override is needed for mypy so we can call ``.prefetch_metadata()``
     # within a ``with`` block.
@@ -711,7 +729,6 @@ class LazyWheelOverHTTP(LazyHTTPFile):
         can be downloaded in a single ranged GET request."""
         logger.debug("begin prefetching METADATA for %s", name)
 
-        metadata_regex = re.compile(r"^[^/]*\.dist-info/METADATA$")
         start: int | None = None
         end: int | None = None
 
@@ -723,19 +740,19 @@ class LazyWheelOverHTTP(LazyHTTPFile):
         filename = ""
         for info in zf.infolist():
             if start is None:
-                if metadata_regex.search(info.filename):
+                if self._metadata_regex.search(info.filename):
                     filename = info.filename
                     start = info.header_offset
                     continue
             else:
                 # The last .dist-info/ entry may be before the end of the file if the
                 # wheel's entries are sorted lexicographically (which is unusual).
-                if not metadata_regex.search(info.filename):
+                if not self._metadata_regex.search(info.filename):
                     end = info.header_offset
                     break
         if start is None:
             raise UnsupportedWheel(
-                f"no {metadata_regex!r} found for {name} in {self.name}"
+                f"no {self._metadata_regex!r} found for {name} in {self.name}"
             )
         # If it is the last entry of the zip, then give us everything
         # until the start of the central directory.

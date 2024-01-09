@@ -68,7 +68,7 @@ def test_get_info_from_wheel(
         'importlib-metadata (>=1.7.0) ; python_version < "3.8"'
     ]
 
-    if lazy_wheel and (supports_range_requests or supports_range_requests is None):
+    if lazy_wheel and supports_range_requests is not False:
         mock_metadata_from_wheel_url.assert_called_once_with(
             filename, url, repo.session
         )

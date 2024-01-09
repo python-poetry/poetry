@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 
     from tests.types import FixtureDirGetter
 
-    HttPrettyResponse = Tuple[int, Dict[str, Any], bytes]  # status code, headers, body
-    HttPrettyRequestCallback = Callable[
-        [HTTPrettyRequest, str, Dict[str, Any]], HttPrettyResponse
+    HTTPrettyResponse = Tuple[int, Dict[str, Any], bytes]  # status code, headers, body
+    HTTPrettyRequestCallback = Callable[
+        [HTTPrettyRequest, str, Dict[str, Any]], HTTPrettyResponse
     ]
 
     class RequestCallbackFactory(Protocol):
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
             *,
             accept_ranges: str | None = "bytes",
             negative_offset_error: tuple[int, bytes] | None = None,
-        ) -> HttPrettyRequestCallback: ...
+        ) -> HTTPrettyRequestCallback: ...
 
 
 NEGATIVE_OFFSET_AS_POSITIVE = -1
@@ -47,7 +47,7 @@ NEGATIVE_OFFSET_AS_POSITIVE = -1
 
 def build_head_response(
     accept_ranges: str | None, content_length: int, response_headers: dict[str, Any]
-) -> HttPrettyResponse:
+) -> HTTPrettyResponse:
     response_headers["Content-Length"] = content_length
     if accept_ranges:
         response_headers["Accept-Ranges"] = accept_ranges
@@ -60,7 +60,7 @@ def build_partial_response(
     response_headers: dict[str, Any],
     *,
     negative_offset_as_positive: bool = False,
-) -> HttPrettyResponse:
+) -> HTTPrettyResponse:
     status_code = 206
     response_headers["Accept-Ranges"] = "bytes"
     total_length = len(wheel_bytes)
@@ -81,9 +81,7 @@ def build_partial_response(
             body = wheel_bytes[offset:]
     else:
         # range with start and end
-        rng_parts = rng.split("-")
-        start = int(rng_parts[0])
-        end = int(rng_parts[1])
+        start, end = map(int, rng.split("-"))
         body = wheel_bytes[start : end + 1]
     response_headers["Content-Range"] = f"bytes {start}-{end}/{total_length}"
     return status_code, response_headers, body
@@ -95,13 +93,13 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
         *,
         accept_ranges: str | None = "bytes",
         negative_offset_error: tuple[int, bytes] | None = None,
-    ) -> HttPrettyRequestCallback:
+    ) -> HTTPrettyRequestCallback:
         def handle_request(
             request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-        ) -> HttPrettyResponse:
+        ) -> HTTPrettyResponse:
             name = Path(urlparse(uri).path).name
 
-            wheel = Path(__file__).parent.parent.joinpath(
+            wheel = Path(__file__).parents[1] / (
                 "repositories/fixtures/pypi.org/dists/" + name
             )
 
@@ -122,9 +120,7 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
                     accept_ranges, len(wheel_bytes), response_headers
                 )
 
-            rng = request.headers.get("Range", "")
-            if rng:
-                rng = rng.split("=")[1]
+            rng = request.headers.get("Range", "=").split("=")[1]
 
             negative_offset_as_positive = False
             if negative_offset_error and rng.startswith("-"):
@@ -226,7 +222,7 @@ def test_metadata_from_wheel_url_smaller_than_initial_chunk_size(
     handle_request_factory: RequestCallbackFactory,
     negative_offset_as_positive: bool,
 ) -> None:
-    domain = f"tiny-wheel-{str(negative_offset_as_positive).lower()}.com"
+    domain = f"tiny-wheel-{str(negative_offset_as_positive).casefold()}.com"
     uri_regex = re.compile(f"^https://{domain}/.*$")
     request_callback = handle_request_factory(
         negative_offset_error=(
