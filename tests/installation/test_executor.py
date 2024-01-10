@@ -1458,25 +1458,75 @@ Package operations: 1 install, 0 updates, 0 removals
     assert output.endswith(expected_end)
 
 
-def verify_known_hash(
-    package_source_url: Path,
-    package_files: list[dict[str, str]],
-    expected_url_reference: dict[str, Any],
-    tmp_venv: VirtualEnv,
-    pool: RepositoryPool,
-    config: Config,
-    io: BufferedIO,
-) -> None:
-    package = Package(
-        "demo", "0.1.0", source_type="file", source_url=package_source_url.as_posix()
-    )
-    package.files = package_files
-    executor = Executor(tmp_venv, pool, config, io)
-    executor.execute([Install(package)])
-    verify_installed_distribution(tmp_venv, package, expected_url_reference)
-
-
+@pytest.mark.parametrize(
+    "package_files,archive_info",
+    [
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                },
+                {
+                    "file": "demo-0.1.0.whl",
+                    "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+                },
+            ],
+            {
+                "archive_info": {
+                    "hashes": {
+                        "sha512": "766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad"
+                    },
+                },
+            },
+        ),
+        (
+            [{
+                "file": "demo-0.1.0.tar.gz",
+                "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+            }],
+            {
+                "archive_info": {
+                    "hashes": {"md5": "d1912c917363a64e127318655f7d1fe7"},
+                },
+            },
+        ),
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                },
+                {
+                    "file": "demo-0.1.0.whl",
+                    "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+                },
+            ],
+            {
+                "archive_info": {
+                    "hashes": {
+                        "sha3_512": "196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728"
+                    },
+                },
+            },
+        ),
+    ],
+)
 def test_executor_known_hashes(
+    package_files: list[dict[str, str]],
+    archive_info: dict[str, Any],
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
@@ -1486,97 +1536,15 @@ def test_executor_known_hashes(
     package_source_url: Path = (
         fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     ).resolve()
-
-    # sha512 check
-    package_files: list[dict[str, str]] = [
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
-        },
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "md5:d1912c917363a64e127318655f7d1fe7",
-        },
-        {
-            "file": "demo-0.1.0.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
-        },
-    ]
-    expected_url_reference = {
-        "archive_info": {
-            "hashes": {
-                "sha512": "766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad"
-            },
-        },
-        "url": package_source_url.as_uri(),
-    }
-    verify_known_hash(
-        package_source_url,
-        package_files,
-        expected_url_reference,
-        tmp_venv,
-        pool,
-        config,
-        io,
+    package = Package(
+        "demo", "0.1.0", source_type="file", source_url=package_source_url.as_posix()
     )
-
-    # md5 check
-    package_files = [{
-        "file": "demo-0.1.0.tar.gz",
-        "hash": "md5:d1912c917363a64e127318655f7d1fe7",
-    }]
-    expected_url_reference = {
-        "archive_info": {
-            "hashes": {"md5": "d1912c917363a64e127318655f7d1fe7"},
-        },
-        "url": package_source_url.as_uri(),
-    }
-    verify_known_hash(
-        package_source_url,
-        package_files,
-        expected_url_reference,
-        tmp_venv,
-        pool,
-        config,
-        io,
-    )
-
-    # sha3_512
-    package_files = [
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
-        },
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
-        },
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "md5:d1912c917363a64e127318655f7d1fe7",
-        },
-        {
-            "file": "demo-0.1.0.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
-        },
-    ]
-    expected_url_reference = {
-        "archive_info": {
-            "hashes": {
-                "sha3_512": "196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728"
-            },
-        },
-        "url": package_source_url.as_uri(),
-    }
-    verify_known_hash(
-        package_source_url,
-        package_files,
-        expected_url_reference,
-        tmp_venv,
-        pool,
-        config,
-        io,
-    )
+    package.files = package_files
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference: dict[str, Any] = dict(archive_info)
+    expected_url_reference["url"] = package_source_url.as_uri()
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
 def test_executor_no_supported_hash_types(
