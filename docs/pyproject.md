@@ -279,7 +279,9 @@ include = [
 ]
 ```
 
-If no format is specified, it will default to include both `sdist` and `wheel`.
+If no format is specified, `include` defaults to only `sdist`.
+
+In contrast, `exclude` defaults to both `sdist` and `wheel`.
 
 ```toml
 exclude = ["my_package/excluded.py"]
