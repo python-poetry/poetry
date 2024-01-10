@@ -1459,7 +1459,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 @pytest.mark.parametrize(
-    "package_files,archive_info",
+    "package_files,expected_url_reference",
     [
         (
             [
@@ -1526,7 +1526,7 @@ Package operations: 1 install, 0 updates, 0 removals
 )
 def test_executor_known_hashes(
     package_files: list[dict[str, str]],
-    archive_info: dict[str, Any],
+    expected_url_reference: dict[str, Any],
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
     config: Config,
@@ -1542,7 +1542,6 @@ def test_executor_known_hashes(
     package.files = package_files
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-    expected_url_reference: dict[str, Any] = dict(archive_info)
     expected_url_reference["url"] = package_source_url.as_uri()
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
