@@ -8,6 +8,7 @@ from poetry.core.utils.helpers import parse_requires
 
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 
 
 if TYPE_CHECKING:
@@ -139,3 +140,16 @@ def test_download_file(
     expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(dest) == expect_sha_256
     assert http.last_request().headers["Accept-Encoding"] == "Identity"
+
+
+@pytest.mark.parametrize(
+    "hash_types,expected",
+    [
+        (("sha512", "sha3_512", "md5"), "sha3_512"),
+        ("md5", "md5"),
+        (("blah", "blah_blah"), None),
+        ((), None),
+    ],
+)
+def test_highest_priority_hash_type(hash_types: set[str], expected: str | None) -> None:
+    assert get_highest_priority_hash_type(hash_types, "Blah") == expected
