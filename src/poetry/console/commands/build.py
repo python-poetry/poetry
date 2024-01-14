@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from cleo.helpers import option
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.env import build_environment
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class BuildCommand(EnvCommand):
@@ -20,9 +26,26 @@ class BuildCommand(EnvCommand):
         "poetry.core.masonry.builders.wheel",
     ]
 
-    def handle(self) -> int:
-        from poetry.core.masonry.builder import Builder
+    def _build(
+        self,
+        fmt: str,
+        executable: str | Path | None = None,
+        *,
+        target_dir: Path | None = None,
+    ) -> None:
+        from poetry.masonry.builders import BUILD_FORMATS
 
+        if fmt in BUILD_FORMATS:
+            builders = [BUILD_FORMATS[fmt]]
+        elif fmt == "all":
+            builders = list(BUILD_FORMATS.values())
+        else:
+            raise ValueError(f"Invalid format: {fmt}")
+
+        for builder in builders:
+            builder(self.poetry, executable=executable).build(target_dir)
+
+    def handle(self) -> int:
         with build_environment(poetry=self.poetry, env=self.env, io=self.io) as env:
             fmt = self.option("format") or "all"
             package = self.poetry.package
@@ -30,7 +53,6 @@ class BuildCommand(EnvCommand):
                 f"Building <c1>{package.pretty_name}</c1> (<c2>{package.version}</c2>)"
             )
 
-            builder = Builder(self.poetry)
-            builder.build(fmt, executable=env.python)
+            self._build(fmt, executable=env.python)
 
         return 0
