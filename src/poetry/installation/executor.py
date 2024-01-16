@@ -793,11 +793,9 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        known_hashes: set[str] = {
-            f["hash"] for f in package.files if f["file"] == archive.name
-        }
-        hash_types: set[str] = {t.split(":")[0] for t in known_hashes}
-        hash_type: str | None = get_highest_priority_hash_type(hash_types, archive.name)
+        known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
+        hash_types = {t.split(":")[0] for t in known_hashes}
+        hash_type = get_highest_priority_hash_type(hash_types, archive.name)
 
         if hash_type is None:
             raise RuntimeError(
@@ -805,7 +803,7 @@ class Executor:
                 f" {archive.name} found (known hashes: {known_hashes!s})"
             )
 
-        archive_hash: str = f"{hash_type}:{get_file_hash(archive, hash_type)}"
+        archive_hash = f"{hash_type}:{get_file_hash(archive, hash_type)}"
 
         if archive_hash not in known_hashes:
             raise RuntimeError(

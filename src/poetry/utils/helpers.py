@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from poetry.utils.authenticator import Authenticator
 
 logger = logging.getLogger(__name__)
-prioritised_hash_types: tuple[str, ...] = tuple([
+prioritised_hash_types: tuple[str, ...] = tuple(
     t
     for t in [
         "sha3_512",
@@ -55,7 +55,7 @@ prioritised_hash_types: tuple[str, ...] = tuple([
         "blake2b",
     ]
     if t in hashlib.algorithms_available
-])
+)
 non_prioritised_available_hash_types: frozenset[str] = frozenset(
     set(hashlib.algorithms_available).difference(prioritised_hash_types)
 )
@@ -319,25 +319,6 @@ def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
     return h.hexdigest()
 
 
-def extractall(source: Path, dest: Path, zip: bool) -> None:
-    """Extract all members from either a zip or tar archive."""
-    if zip:
-        with zipfile.ZipFile(source) as archive:
-            archive.extractall(dest)
-    else:
-        # These versions of python shipped with a broken tarfile data_filter, per
-        # https://github.com/python/cpython/issues/107845.
-        broken_tarfile_filter = {(3, 8, 17), (3, 9, 17), (3, 10, 12), (3, 11, 4)}
-        with tarfile.open(source) as archive:
-            if (
-                hasattr(tarfile, "data_filter")
-                and sys.version_info[:3] not in broken_tarfile_filter
-            ):
-                archive.extractall(dest, filter="data")
-            else:
-                archive.extractall(dest)
-
-
 def get_highest_priority_hash_type(
     hash_types: set[str], archive_name: str
 ) -> str | None:
@@ -358,3 +339,22 @@ def get_highest_priority_hash_type(
             return available_hash_type
 
     return None
+
+
+def extractall(source: Path, dest: Path, zip: bool) -> None:
+    """Extract all members from either a zip or tar archive."""
+    if zip:
+        with zipfile.ZipFile(source) as archive:
+            archive.extractall(dest)
+    else:
+        # These versions of python shipped with a broken tarfile data_filter, per
+        # https://github.com/python/cpython/issues/107845.
+        broken_tarfile_filter = {(3, 8, 17), (3, 9, 17), (3, 10, 12), (3, 11, 4)}
+        with tarfile.open(source) as archive:
+            if (
+                hasattr(tarfile, "data_filter")
+                and sys.version_info[:3] not in broken_tarfile_filter
+            ):
+                archive.extractall(dest, filter="data")
+            else:
+                archive.extractall(dest)
