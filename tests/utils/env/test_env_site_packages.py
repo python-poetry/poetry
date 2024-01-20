@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-def test_env_site_simple(tmp_path: Path, mocker: MockerFixture):
+def test_env_site_simple(tmp_path: Path, mocker: MockerFixture) -> None:
     # emulate permission error when creating directory
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError())
     site_packages = SitePackages(Path("/non-existent"), fallbacks=[tmp_path])
@@ -30,7 +30,7 @@ def test_env_site_simple(tmp_path: Path, mocker: MockerFixture):
     assert not (site_packages.path / "hello.txt").exists()
 
 
-def test_env_site_select_first(tmp_path: Path):
+def test_env_site_select_first(tmp_path: Path) -> None:
     fallback = tmp_path / "fallback"
     fallback.mkdir(parents=True)
 

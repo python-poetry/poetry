@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import csv
 import json
+import locale
 import os
 import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
 from poetry.core.constraints.version import Version
+from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
@@ -26,9 +29,9 @@ from poetry.utils.env import ephemeral_environment
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+    from tests.types import FixtureDirGetter
 
     from poetry.poetry import Poetry
-    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -72,7 +75,7 @@ def env_manager(simple_poetry: Poetry) -> EnvManager:
 
 
 @pytest.fixture
-def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> VirtualEnv:
+def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> Iterator[VirtualEnv]:
     venv_path = tmp_path / "venv"
 
     env_manager.build_venv(venv_path)
@@ -94,7 +97,7 @@ def test_builder_installs_proper_files_for_standard_packages(
     pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
-        simple_poetry.file.parent.resolve().as_posix()
+        simple_poetry.file.path.parent.resolve().as_posix()
         == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
     )
 
@@ -123,8 +126,14 @@ def test_builder_installs_proper_files_for_standard_packages(
         == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n"
         "fox=fuz.foo:bar.baz\n\n"
     )
-
-    metadata = """\
+    python_classifiers = "\n".join(
+        f"Classifier: Programming Language :: Python :: {version}"
+        for version in sorted(
+            Package.AVAILABLE_PYTHONS,
+            key=lambda x: tuple(map(int, x.split("."))),
+        )
+    )
+    metadata = f"""\
 Metadata-Version: 2.1
 Name: simple-project
 Version: 1.2.3
@@ -136,17 +145,7 @@ Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
 Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
 Classifier: License :: OSI Approved :: MIT License
-Classifier: Programming Language :: Python :: 2
-Classifier: Programming Language :: Python :: 2.7
-Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.4
-Classifier: Programming Language :: Python :: 3.5
-Classifier: Programming Language :: Python :: 3.6
-Classifier: Programming Language :: Python :: 3.7
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Classifier: Programming Language :: Python :: 3.11
+{python_classifiers}
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
@@ -224,6 +223,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     assert [] == env.executed
 
 
+@pytest.mark.network
 def test_builder_setup_generation_runs_with_pip_editable(
     fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
@@ -236,8 +236,8 @@ def test_builder_setup_generation_runs_with_pip_editable(
 
     poetry = Factory().create_poetry(extended_project)
 
-    # we need a venv with setuptools since we are verifying setup.py builds
-    with ephemeral_environment(flags={"no-setuptools": False}) as venv:
+    # we need a venv with pip and setuptools since we are verifying setup.py builds
+    with ephemeral_environment(flags={"no-setuptools": False, "no-pip": False}) as venv:
         builder = EditableBuilder(poetry, venv, NullIO())
         builder.build()
 
@@ -274,13 +274,13 @@ def test_builder_installs_proper_files_when_packages_configured(
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
 
     paths = set()
-    with pth_file.open() as f:
+    with pth_file.open(encoding=locale.getpreferredencoding()) as f:
         for line in f.readlines():
             line = line.strip(os.linesep)
             if line:
                 paths.add(line)
 
-    project_root = project_with_include.file.parent.resolve()
+    project_root = project_with_include.file.path.parent.resolve()
     expected = {project_root.as_posix(), project_root.joinpath("src").as_posix()}
 
     assert paths.issubset(expected)
@@ -338,5 +338,5 @@ def test_builder_should_execute_build_scripts(
     builder.build()
 
     assert [
-        ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
+        ["python", str(extended_without_setup_poetry.file.path.parent / "build.py")]
     ] == env.executed

@@ -24,17 +24,28 @@ def check_output_wrapper(
 ) -> Callable[[list[str], Any, Any], str]:
     def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
         # cmd is a list, like ["python", "-c", "do stuff"]
-        python_cmd = cmd[2]
+        python_cmd = cmd[-1]
+        if "print(json.dumps(env))" in python_cmd:
+            return (
+                f'{{"version_info": [{version.major}, {version.minor},'
+                f" {version.patch}]}}"
+            )
+
         if "sys.version_info[:3]" in python_cmd:
             return version.text
-        elif "sys.version_info[:2]" in python_cmd:
+
+        if "sys.version_info[:2]" in python_cmd:
             return f"{version.major}.{version.minor}"
-        elif "import sys; print(sys.executable)" in python_cmd:
+
+        if "import sys; print(sys.executable)" in python_cmd:
             executable = cmd[0]
             basename = os.path.basename(executable)
             return f"/usr/bin/{basename}"
-        else:
-            assert "import sys; print(sys.prefix)" in python_cmd
-            return "/prefix"
+
+        if "print(sys.base_prefix)" in python_cmd:
+            return "/usr"
+
+        assert "import sys; print(sys.prefix)" in python_cmd
+        return "/prefix"
 
     return check_output

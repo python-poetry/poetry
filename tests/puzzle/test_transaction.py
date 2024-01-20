@@ -5,6 +5,7 @@ from typing import Any
 
 from poetry.core.packages.package import Package
 
+from poetry.installation.operations.update import Update
 from poetry.puzzle.transaction import Transaction
 
 
@@ -20,14 +21,13 @@ def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> No
     result = []
     for op in ops:
         if op.job_type == "update":
-            result.append(
-                {
-                    "job": "update",
-                    "from": op.initial_package,
-                    "to": op.target_package,
-                    "skipped": op.skipped,
-                }
-            )
+            assert isinstance(op, Update)
+            result.append({
+                "job": "update",
+                "from": op.initial_package,
+                "to": op.target_package,
+                "skipped": op.skipped,
+            })
         else:
             job = "install"
             if op.job_type == "uninstall":
@@ -38,7 +38,7 @@ def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> No
     assert result == expected
 
 
-def test_it_should_calculate_operations_in_correct_order():
+def test_it_should_calculate_operations_in_correct_order() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
         [
@@ -58,7 +58,7 @@ def test_it_should_calculate_operations_in_correct_order():
     )
 
 
-def test_it_should_calculate_operations_for_installed_packages():
+def test_it_should_calculate_operations_for_installed_packages() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
         [
@@ -89,7 +89,7 @@ def test_it_should_calculate_operations_for_installed_packages():
     )
 
 
-def test_it_should_remove_installed_packages_if_required():
+def test_it_should_remove_installed_packages_if_required() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
         [
@@ -121,7 +121,7 @@ def test_it_should_remove_installed_packages_if_required():
     )
 
 
-def test_it_should_not_remove_installed_packages_that_are_in_result():
+def test_it_should_not_remove_installed_packages_that_are_in_result() -> None:
     transaction = Transaction(
         [],
         [
@@ -146,39 +146,35 @@ def test_it_should_not_remove_installed_packages_that_are_in_result():
     )
 
 
-def test_it_should_update_installed_packages_if_sources_are_different():
+def test_it_should_update_installed_packages_if_sources_are_different() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0")],
-        [
-            (
-                Package(
-                    "a",
-                    "1.0.0",
-                    source_url="https://github.com/demo/demo.git",
-                    source_type="git",
-                    source_reference="main",
-                    source_resolved_reference="123456",
-                ),
-                1,
-            )
-        ],
+        [(
+            Package(
+                "a",
+                "1.0.0",
+                source_url="https://github.com/demo/demo.git",
+                source_type="git",
+                source_reference="main",
+                source_resolved_reference="123456",
+            ),
+            1,
+        )],
         installed_packages=[Package("a", "1.0.0")],
     )
 
     check_operations(
         transaction.calculate_operations(synchronize=True),
-        [
-            {
-                "job": "update",
-                "from": Package("a", "1.0.0"),
-                "to": Package(
-                    "a",
-                    "1.0.0",
-                    source_url="https://github.com/demo/demo.git",
-                    source_type="git",
-                    source_reference="main",
-                    source_resolved_reference="123456",
-                ),
-            }
-        ],
+        [{
+            "job": "update",
+            "from": Package("a", "1.0.0"),
+            "to": Package(
+                "a",
+                "1.0.0",
+                source_url="https://github.com/demo/demo.git",
+                source_type="git",
+                source_reference="main",
+                source_resolved_reference="123456",
+            ),
+        }],
     )

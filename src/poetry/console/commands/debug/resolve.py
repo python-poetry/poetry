@@ -113,7 +113,7 @@ class DebugResolveCommand(InitCommand):
 
         if self.option("install"):
             env = EnvManager(self.poetry).get()
-            pool = RepositoryPool()
+            pool = RepositoryPool(config=self.poetry.config)
             locked_repository = Repository("poetry-locked")
             for op in ops:
                 locked_repository.add_package(op.package)

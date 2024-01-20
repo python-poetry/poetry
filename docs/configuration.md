@@ -15,7 +15,7 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Preferences/pypoetry`
+- macOS:   `~/Library/Application Support/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
@@ -123,7 +123,7 @@ Poetry uses the following default directories:
 
 - Linux: `$XDG_CONFIG_HOME/pypoetry` or `~/.config/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Preferences/pypoetry`
+- MacOS: `~/Library/Application Support/pypoetry`
 
 You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
@@ -202,6 +202,8 @@ This configuration is ignored when `installer.parallel` is set to `false`.
 
 **Default**: `true`
 
+**Environment Variable**: `POETRY_INSTALLER_MODERN_INSTALLATION`
+
 *Introduced in 1.4.0*
 
 Use a more modern and faster method for package installation.
@@ -229,9 +231,6 @@ specific packages.
 | `package[,package,..]` | Disallow binary distributions for specified packages only. |
 
 {{% note %}}
-This configuration is only respected when using the new installer. If you have disabled it please
-consider re-enabling it.
-
 As with all configurations described here, this is a user specific configuration. This means that this
 is not taken into consideration when a lockfile is generated or dependencies are resolved. This is
 applied only when selecting which distribution for dependency should be installed into a Poetry managed
@@ -282,9 +281,9 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 
 Create a new virtual environment if one doesn't already exist.
 
-If set to `false`, Poetry will not create a new virtual environment. If it detects a virtual environment
-in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` it will install dependencies into them, otherwise it will install
-dependencies into the systems python environment.
+If set to `false`, Poetry will not create a new virtual environment. If it detects an already enabled virtual
+environment or an existing one in `{cache-dir}/virtualenvs` or `{project-dir}/.venv` it will
+install dependencies into them, otherwise it will install dependencies into the systems python environment.
 
 {{% note %}}
 If Poetry detects it's running within an activated virtual environment, it will never create a new virtual environment,
@@ -310,11 +309,20 @@ might contain additional Python packages as well.
 
 Create the virtualenv inside the project's root directory.
 
-If not set explicitly, `poetry` by default will create virtual environment under
-`{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory when one is available.
+If not set explicitly, `poetry` by default will create a virtual environment under
+`{cache-dir}/virtualenvs` or use the `{project-dir}/.venv` directory if one already exists.
 
 If set to `true`, the virtualenv will be created and expected in a folder named
 `.venv` within the root directory of the project.
+
+{{% note %}}
+If a virtual environment has already been created for the project under `{cache-dir}/virtualenvs`, setting this variable to `true` will not cause `poetry` to create or use a local virtual environment.
+
+In order for this setting to take effect for a project already in that state, you must delete the virtual environment folder located in `{cache-dir}/virtualenvs`.
+
+You can find out where the current project's virtual environment (if there is one) is stored
+with the command `poetry env info --path`.
+{{% /note %}}
 
 If set to `false`, `poetry` will ignore any existing `.venv` directory.
 
@@ -366,6 +374,12 @@ packages. This is desirable for production environments.
 If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the virtual environment. This
 means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
 internal operations, does not require `setuptools` and this can safely be set to `true`.
+
+For environments using python 3.12 or later, `virtualenv` defaults to not
+installing `setuptools` when creating a virtual environment.
+In such environments this poetry configuration option therefore has no effect:
+`setuptools` is not installed either way.
+If your project relies on `setuptools`, you should declare it as a dependency.
 
 {{% warning %}}
 Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
@@ -423,19 +437,21 @@ If set to `false`, Python version used during Poetry installation is used.
 Format string defining the prompt to be displayed when the virtual environment is activated.
 The variables `project_name` and `python_version` are available for formatting.
 
-### `repositories.<name>`
+### `repositories.<name>.url`
 
 **Type**: `string`
 
-**Environment Variable**: `POETRY_REPOSITORIES_<NAME>`
+**Environment Variable**: `POETRY_REPOSITORIES_<NAME>_URL`
 
-Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
+Set the repository URL for `<name>`.
 
-### `http-basic.<name>`:
+See [Publishable Repositories]({{< relref "repositories#publishable-repositories" >}}) for more information.
 
-**Type**: `(string, string)`
+### `http-basic.<name>.[username|password]`:
 
-**Environment Variable**: `POETRY_HTTP_BASIC_<NAME>`
+**Type**: `string`
+
+**Environment Variables**: `POETRY_HTTP_BASIC_<NAME>_USERNAME`, `POETRY_HTTP_BASIC_<NAME>_PASSWORD`
 
 Set repository credentials (`username` and `password`) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})

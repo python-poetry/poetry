@@ -12,9 +12,13 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import httpretty
+import keyring
 import pytest
 
+from keyring import backends
 from keyring.backend import KeyringBackend
+from keyring.errors import KeyringError
+from keyring.errors import KeyringLocked
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
@@ -24,6 +28,7 @@ from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
+from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -64,7 +69,10 @@ def pytest_configure(config: PyTestConfig) -> None:
     config.addinivalue_line("markers", "integration: mark integration tests")
 
     if not config.option.integration:
-        config.option.markexpr = "not integration"
+        if config.option.markexpr:
+            config.option.markexpr += " and not integration"
+        else:
+            config.option.markexpr = "not integration"
 
 
 class Config(BaseConfig):
@@ -112,6 +120,33 @@ class DummyBackend(KeyringBackend):
             del self._passwords[service][username]
 
 
+class LockedBackend(KeyringBackend):
+    @classmethod
+    def priority(cls) -> int:
+        return 42
+
+    def set_password(self, service: str, username: str | None, password: Any) -> None:
+        raise KeyringLocked()
+
+    def get_password(self, service: str, username: str | None) -> Any:
+        raise KeyringLocked()
+
+    def get_credential(self, service: str, username: str | None) -> Any:
+        raise KeyringLocked()
+
+    def delete_password(self, service: str, username: str | None) -> None:
+        raise KeyringLocked()
+
+
+class ErroneousBackend(backends.fail.Keyring):
+    @classmethod
+    def priority(cls) -> int:
+        return 42
+
+    def get_credential(self, service: str, username: str | None) -> Any:
+        raise KeyringError()
+
+
 @pytest.fixture()
 def dummy_keyring() -> DummyBackend:
     return DummyBackend()
@@ -119,51 +154,57 @@ def dummy_keyring() -> DummyBackend:
 
 @pytest.fixture()
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
-    import keyring
-
     keyring.set_keyring(dummy_keyring)
 
 
 @pytest.fixture()
 def with_fail_keyring() -> None:
-    import keyring
-
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
+
+
+@pytest.fixture()
+def with_locked_keyring() -> None:
+    keyring.set_keyring(LockedBackend())  # type: ignore[no-untyped-call]
+
+
+@pytest.fixture()
+def with_erroneous_keyring() -> None:
+    keyring.set_keyring(ErroneousBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_null_keyring() -> None:
-    import keyring
-
     from keyring.backends.null import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.fail import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
-    import keyring
-
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_chained_null_keyring(mocker: MockerFixture) -> None:
     from keyring.backends.null import Keyring
 
-    mocker.patch("keyring.backend.get_all_keyring", lambda: [Keyring()])
-    import keyring
-
+    mocker.patch(
+        "keyring.backend.get_all_keyring",
+        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+    )
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())
+    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -199,11 +240,9 @@ def config(
     auth_config_source: DictConfigSource,
     mocker: MockerFixture,
 ) -> Config:
-    import keyring
-
     from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())
+    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
 
     c = Config()
     c.merge(config_source.config)
@@ -214,6 +253,11 @@ def config(
     mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
+
+
+@pytest.fixture
+def artifact_cache(config: Config) -> ArtifactCache:
+    return ArtifactCache(cache_dir=config.artifacts_cache_directory)
 
 
 @pytest.fixture()
@@ -233,7 +277,7 @@ def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
 def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
-    mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
+    mocker.patch("poetry.packages.direct_origin.download_file", new=mock_download)
     mocker.patch("poetry.repositories.http_repository.download_file", new=mock_download)
 
 
@@ -464,3 +508,13 @@ def load_required_fixtures(
 ) -> None:
     for fixture in required_fixtures:
         fixture_copier(fixture)
+
+
+@pytest.fixture
+def venv_flags_default() -> dict[str, bool]:
+    return {
+        "always-copy": False,
+        "system-site-packages": False,
+        "no-pip": False,
+        "no-setuptools": False,
+    }

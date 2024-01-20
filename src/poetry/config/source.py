@@ -9,7 +9,7 @@ from poetry.repositories.repository_pool import Priority
 @dataclasses.dataclass(order=True, eq=True)
 class Source:
     name: str
-    url: str
+    url: str = ""
     default: dataclasses.InitVar[bool] = False
     secondary: dataclasses.InitVar[bool] = False
     priority: Priority = (
@@ -21,11 +21,9 @@ class Source:
             self.priority = Priority[self.priority.upper()]
         if default or secondary:
             warnings.warn(
-                (
-                    "Parameters 'default' and 'secondary' to"
-                    " 'Source' are deprecated. Please provide"
-                    " 'priority' instead."
-                ),
+                "Parameters 'default' and 'secondary' to"
+                " 'Source' are deprecated. Please provide"
+                " 'priority' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -38,6 +36,8 @@ class Source:
         return dataclasses.asdict(
             self,
             dict_factory=lambda x: {
-                k: v if not isinstance(v, Priority) else v.name.lower() for (k, v) in x
+                k: v if not isinstance(v, Priority) else v.name.lower()
+                for (k, v) in x
+                if v
             },
         )

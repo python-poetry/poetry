@@ -114,6 +114,12 @@ The file(s) can be of any format, but if you intend to publish to PyPI keep the
 https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/) in
 mind. README paths are implicitly relative to `pyproject.toml`.
 
+{{% note %}}
+Whether paths are case-sensitive follows platform defaults, but it is recommended to keep cases.
+
+To be specific, you can set `readme = "rEaDmE.mD"` for `README.md` on macOS and Windows, but Linux users can't `poetry install` after cloning your repo. This is because macOS and Windows are case-insensitive and case-preserving.
+{{% /note %}}
+
 The contents of the README file(s) are used to populate the [Description
 field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
 of your distribution's metadata (similar to `long_description` in setuptools).
@@ -273,7 +279,9 @@ include = [
 ]
 ```
 
-If no format is specified, it will default to include both `sdist` and `wheel`.
+If no format is specified, `include` defaults to only `sdist`.
+
+In contrast, `exclude` defaults to both `sdist` and `wheel`.
 
 ```toml
 exclude = ["my_package/excluded.py"]
@@ -345,7 +353,7 @@ To specify a script that [depends on an extra](#extras), you may provide an entr
 
 ```toml
 [tool.poetry.scripts]
-devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
+devtest = { reference = "mypackage:test.run_tests", extras = ["test"], type = "console" }
 ```
 
 {{% note %}}

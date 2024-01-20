@@ -68,7 +68,6 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.path": (str, lambda val: str(Path(val))),
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
-            "experimental.new-installer": (boolean_validator, boolean_normalizer),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
             "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
@@ -78,6 +77,7 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
             ),
+            "warnings.export": (boolean_validator, boolean_normalizer),
         }
 
         return unique_config_values
@@ -96,7 +96,7 @@ To remove a repository (repo is a short alias for repositories):
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
 
         try:
-            local_config_file = TOMLFile(self.poetry.file.parent / "poetry.toml")
+            local_config_file = TOMLFile(self.poetry.file.path.parent / "poetry.toml")
             if local_config_file.exists():
                 config.merge(local_config_file.read())
         except (RuntimeError, PyProjectException):
@@ -107,7 +107,7 @@ To remove a repository (repo is a short alias for repositories):
 
         if not config_file.exists():
             config_file.path.parent.mkdir(parents=True, exist_ok=True)
-            config_file.touch(mode=0o0600)
+            config_file.path.touch(mode=0o0600)
 
         if self.option("list"):
             self._list_configuration(config.all(), config.raw())
@@ -123,6 +123,9 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
+            if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+                raise ValueError(f"Expected a value for {setting_key} setting.")
+
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
             value: str | dict[str, Any]
             if m:

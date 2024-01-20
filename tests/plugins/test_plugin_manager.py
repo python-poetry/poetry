@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Protocol
 
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
+from poetry.core.constraints.version import Version
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.packages.locker import Locker
@@ -13,7 +16,6 @@ from poetry.plugins import ApplicationPlugin
 from poetry.plugins import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
-from tests.compat import Protocol
 from tests.helpers import mock_metadata_entry_points
 
 
@@ -21,13 +23,13 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
+    from poetry.console.commands.command import Command
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
 
 class ManagerFactory(Protocol):
-    def __call__(self, group: str = Plugin.group) -> PluginManager:
-        ...
+    def __call__(self, group: str = Plugin.group) -> PluginManager: ...
 
 
 class MyPlugin(Plugin):
@@ -37,13 +39,13 @@ class MyPlugin(Plugin):
 
 
 class MyCommandPlugin(ApplicationPlugin):
-    commands = []
+    commands: ClassVar[list[type[Command]]] = []
 
 
 class InvalidPlugin:
     def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Updating version")
-        poetry.package.version = "9.9.9"
+        poetry.package.version = Version.parse("9.9.9")
 
 
 @pytest.fixture

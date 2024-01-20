@@ -14,18 +14,14 @@ class InstallCommand(InstallerCommand):
         option(
             "no-dev",
             None,
-            (
-                "Do not install the development dependencies."
-                " (<warning>Deprecated</warning>)"
-            ),
+            "Do not install the development dependencies."
+            " (<warning>Deprecated</warning>)",
         ),
         option(
             "sync",
             None,
-            (
-                "Synchronize the environment with the locked packages and the specified"
-                " groups."
-            ),
+            "Synchronize the environment with the locked packages and the specified"
+            " groups.",
         ),
         option(
             "no-root", None, "Do not install the root package (the current project)."
@@ -33,28 +29,22 @@ class InstallCommand(InstallerCommand):
         option(
             "no-directory",
             None,
-            (
-                "Do not install any directory path dependencies; useful to install"
-                " dependencies without source code, e.g. for caching of Docker layers)"
-            ),
+            "Do not install any directory path dependencies; useful to install"
+            " dependencies without source code, e.g. for caching of Docker layers)",
             flag=True,
             multiple=False,
         ),
         option(
             "dry-run",
             None,
-            (
-                "Output the operations but do not execute anything "
-                "(implicitly enables --verbose)."
-            ),
+            "Output the operations but do not execute anything "
+            "(implicitly enables --verbose).",
         ),
         option(
             "remove-untracked",
             None,
-            (
-                "Removes packages not present in the lock file."
-                " (<warning>Deprecated</warning>)"
-            ),
+            "Removes packages not present in the lock file."
+            " (<warning>Deprecated</warning>)",
         ),
         option(
             "extras",
@@ -68,11 +58,9 @@ class InstallCommand(InstallerCommand):
         option(
             "compile",
             None,
-            (
-                "Compile Python source files to bytecode."
-                " (This option has no effect if modern-installation is disabled"
-                " because the old installer always compiles.)"
-            ),
+            "Compile Python source files to bytecode."
+            " (This option has no effect if modern-installation is disabled"
+            " because the old installer always compiles.)",
         ),
     ]
 
@@ -104,11 +92,6 @@ dependencies and not including the current project, run the command with the
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
         from poetry.masonry.builders.editable import EditableBuilder
-
-        use_executor = self.poetry.config.get("experimental.new-installer", False)
-        if not use_executor:
-            # only set if false because the method is deprecated
-            self.installer.use_executor(False)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
@@ -172,14 +155,6 @@ dependencies and not including the current project, run the command with the
         if self.option("no-root"):
             return 0
 
-        try:
-            builder = EditableBuilder(self.poetry, self.env, self.io)
-        except ModuleOrPackageNotFound:
-            # This is likely due to the fact that the project is an application
-            # not following the structure expected by Poetry
-            # If this is a true error it will be picked up later by build anyway.
-            return 0
-
         log_install = (
             "<b>Installing</> the current project:"
             f" <c1>{self.poetry.package.pretty_name}</c1>"
@@ -195,7 +170,26 @@ dependencies and not including the current project, run the command with the
             self.line("")
             return 0
 
-        builder.build()
+        # Prior to https://github.com/python-poetry/poetry-core/pull/629
+        # the existence of a module/package was checked when creating the
+        # EditableBuilder. Afterwards, the existence is checked after
+        # executing the build script (if there is one),
+        # i.e. during EditableBuilder.build().
+        try:
+            builder = EditableBuilder(self.poetry, self.env, self.io)
+            builder.build()
+        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
+            # This is likely due to the fact that the project is an application
+            # not following the structure expected by Poetry.
+            # No need for an editable install in this case.
+            self.line("")
+            self.line_error(
+                f"The current project could not be installed: <error>{e}</error>\n"
+                "If you do not want to install the current project"
+                " use <c1>--no-root</c1>",
+                style="warning",
+            )
+            return 0
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))

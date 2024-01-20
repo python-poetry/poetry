@@ -247,9 +247,7 @@ class InstalledRepository(Repository):
                 continue
 
             for distribution in sorted(
-                metadata.distributions(  # type: ignore[no-untyped-call]
-                    path=[entry],
-                ),
+                metadata.distributions(path=[entry]),
                 key=lambda d: str(d._path),  # type: ignore[attr-defined]
             ):
                 path = Path(str(distribution._path))  # type: ignore[attr-defined]
@@ -260,11 +258,9 @@ class InstalledRepository(Repository):
                 name = distribution.metadata.get("name")  # type: ignore[attr-defined]
                 if name is None:
                     logger.warning(
-                        (
-                            "Project environment contains an invalid distribution"
-                            " (<c1>%s</>). Consider removing it manually or recreate"
-                            " the environment."
-                        ),
+                        "Project environment contains an invalid distribution"
+                        " (<c1>%s</>). Consider removing it manually or recreate"
+                        " the environment.",
                         path,
                     )
                     skipped.add(path)

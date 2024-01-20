@@ -13,7 +13,7 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.dependency_specification import parse_dependency_specification
+from poetry.utils.dependency_specification import RequirementsParser
 
 
 if TYPE_CHECKING:
@@ -40,20 +40,16 @@ class InitCommand(Command):
         option(
             "dependency",
             None,
-            (
-                "Package to require, with an optional version constraint, "
-                "e.g. requests:^2.10.0 or requests=2.11.1."
-            ),
+            "Package to require, with an optional version constraint, "
+            "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
         ),
         option(
             "dev-dependency",
             None,
-            (
-                "Package to require for development, with an optional version"
-                " constraint, e.g. requests:^2.10.0 or requests=2.11.1."
-            ),
+            "Package to require for development, with an optional version"
+            " constraint, e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
         ),
@@ -330,10 +326,8 @@ You can specify a package in the following forms:
                     choices.append("")
 
                     package = self.choice(
-                        (
-                            "\nEnter package # to add, or the complete package name if"
-                            " it is not listed"
-                        ),
+                        "\nEnter package # to add, or the complete package name if"
+                        " it is not listed",
                         choices,
                         attempts=3,
                         default=len(choices) - 1,
@@ -433,18 +427,18 @@ You can specify a package in the following forms:
         from poetry.core.pyproject.exceptions import PyProjectException
 
         try:
-            cwd = self.poetry.file.parent
+            cwd = self.poetry.file.path.parent
+            artifact_cache = self.poetry.pool.artifact_cache
         except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
+            artifact_cache = self._get_pool().artifact_cache
 
-        return [
-            parse_dependency_specification(
-                requirement=requirement,
-                env=self.env if isinstance(self, EnvCommand) else None,
-                cwd=cwd,
-            )
-            for requirement in requirements
-        ]
+        parser = RequirementsParser(
+            artifact_cache=artifact_cache,
+            env=self.env if isinstance(self, EnvCommand) else None,
+            cwd=cwd,
+        )
+        return [parser.parse(requirement) for requirement in requirements]
 
     def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
         requires: Requirements = {}
@@ -462,10 +456,12 @@ You can specify a package in the following forms:
 
         return requires
 
-    def _validate_author(self, author: str, default: str) -> str | None:
+    @staticmethod
+    def _validate_author(author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
+        from poetry.core.utils.helpers import combine_unicode
 
-        author = author or default
+        author = combine_unicode(author or default)
 
         if author in ["n", "no"]:
             return None
@@ -487,6 +483,7 @@ You can specify a package in the following forms:
         return package
 
     def _get_pool(self) -> RepositoryPool:
+        from poetry.config.config import Config
         from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
 
@@ -495,6 +492,7 @@ You can specify a package in the following forms:
 
         if self._pool is None:
             self._pool = RepositoryPool()
-            self._pool.add_repository(PyPiRepository())
+            pool_size = Config.create().installer_max_workers
+            self._pool.add_repository(PyPiRepository(pool_size=pool_size))
 
         return self._pool

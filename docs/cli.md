@@ -189,7 +189,7 @@ The `--sync` can be combined with group-related options:
 ```bash
 poetry install --without dev --sync
 poetry install --with docs --sync
-poetry install --only dev
+poetry install --only dev --sync
 ```
 
 You can also specify the extras you want installed
@@ -287,10 +287,13 @@ If you just want to update a few packages and not all, you can list them as such
 poetry update requests toml
 ```
 
-Note that this will not update versions for dependencies outside their version constraints specified
-in the `pyproject.toml` file. In other terms, `poetry update foo` will be a no-op if the version constraint
-specified for `foo` is `~2.3` or `2.3` and `2.4` is available. In order for `foo` to be updated, you must
-update the constraint, for example `^2.3`. You can do this using the `add` command.
+Note that this will not update versions for dependencies outside their
+[version constraints]({{< relref "dependency-specification#version-constraints" >}})
+specified in the `pyproject.toml` file.
+In other terms, `poetry update foo` will be a no-op if the version constraint
+specified for `foo` is `~2.3` or `2.3` and `2.4` is available.
+In order for `foo` to be updated, you must update the constraint, for example `^2.3`.
+You can do this using the `add` command.
 
 ### Options
 
@@ -471,6 +474,7 @@ about dependency groups.
 * `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock`: Do not perform operations (only update the lockfile).
 
 
 ## show
@@ -502,7 +506,7 @@ required by
 ### Options
 
 * `--without`: The dependency groups to ignore.
-* `--why`: When showing the full list, or a `--tree` for a single package, display why a package is included.
+* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
@@ -510,6 +514,7 @@ required by
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 * `--all (-a)`: Show all packages (even those not compatible with current system).
+* `--top-level (-T)`: Only show explicitly defined packages.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -575,6 +580,14 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
 See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
+{{% warning %}}
+Use `--` to terminate option parsing if your values may start with a hyphen (`-`), e.g.
+```bash
+poetry config http-basic.custom-repo gitlab-ci-token -- ${GITLAB_JOB_TOKEN}
+```
+Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphen.
+{{% /warning%}}
+
 ### Options
 
 * `--unset`: Remove the configuration element named by `setting-key`.
@@ -623,8 +636,9 @@ As such, `exit` should be used to properly exit the shell and the virtual enviro
 
 ## check
 
-The `check` command validates the structure of the `pyproject.toml` file
-and returns a detailed report if there are any errors.
+The `check` command validates the content of the `pyproject.toml` file
+and its consistency with the `poetry.lock` file.
+It returns a detailed report if there are any errors.
 
 {{% note %}}
 This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
@@ -633,6 +647,10 @@ This command is also available as a pre-commit hook. See [pre-commit hooks]({{< 
 ```bash
 poetry check
 ```
+
+### Options
+
+* `--lock`: Verifies that `poetry.lock` exists for the current `pyproject.toml`.
 
 ## search
 
@@ -657,7 +675,7 @@ poetry lock
 
 ### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ## version
@@ -691,8 +709,17 @@ The table below illustrates the effect of these rules with concrete examples.
 | prerelease | 1.0.3a0 | 1.0.3a1 |
 | prerelease | 1.0.3b0 | 1.0.3b1 |
 
+The option `--next-phase` allows the increment of prerelease phase versions.
+
+| rule                    | before   | after    |
+|-------------------------|----------|----------|
+| prerelease --next-phase | 1.0.3a0  | 1.0.3b0  |
+| prerelease --next-phase | 1.0.3b0  | 1.0.3rc0 |
+| prerelease --next-phase | 1.0.3rc0 | 1.0.3    |
+
 ### Options
 
+* `--next-phase`: Increment the phase of the current version.
 * `--short (-s)`: Output the version number only.
 * `--dry-run`: Do not update pyproject.toml file.
 
@@ -704,9 +731,17 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
+{{% warning %}}
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
+In a future version of Poetry this plugin will not be installed by default anymore.
+In order to avoid a breaking change and make your automation forward-compatible,
+please install poetry-plugin-export explicitly.
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) for details on how to install a plugin.
+{{% /warning %}}
+
 {{% note %}}
-This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
-and is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
+This command is also available as a pre-commit hook.
+See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
 {{% note %}}
@@ -778,15 +813,18 @@ For example, to add the `pypi-test` source, you can run:
 poetry source add pypi-test https://test.pypi.org/simple/
 ```
 
-{{% note %}}
-You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
-{{% /note %}}
+You cannot use the name `pypi` for a custom repository as it is reserved for use by
+the default PyPI source. However, you can set the priority of PyPI:
+
+```bash
+poetry source add --priority=explicit pypi
+```
 
 #### Options
 
 * `--default`: Set this source as the [default]({{< relref "repositories#default-package-source" >}}) (disable PyPI). Deprecated in favor of `--priority`.
 * `--secondary`: Set this source as a [secondary]({{< relref "repositories#secondary-package-sources" >}}) source. Deprecated in favor of `--priority`.
-* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
+* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 {{% note %}}
 At most one of the options above can be provided. See [package sources]({{< relref "repositories#package-sources" >}}) for more information.
@@ -807,7 +845,8 @@ poetry source show pypi-test
 ```
 
 {{% note %}}
-This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+This command will only show sources configured via the `pyproject.toml`
+and does not include the implicit default PyPI.
 {{% /note %}}
 
 ### source remove
@@ -868,6 +907,13 @@ The `self` namespace regroups sub commands to manage the Poetry installation its
 Use of these commands will create the required `pyproject.toml` and `poetry.lock` files in your
 [configuration directory]({{< relref "configuration" >}}).
 {{% /note %}}
+
+{{% warning %}}
+Especially on Windows, `self` commands that update or remove packages may be problematic
+so that other methods for installing plugins and updating Poetry are recommended.
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) and
+[Installing Poetry]({{< relref "docs#installation" >}}) for more information.
+{{% /warning %}}
 
 ### self add
 
@@ -938,7 +984,7 @@ poetry self lock
 
 #### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**)
 * `--no-update`: Do not update locked versions, only refresh lock file.
 
 ### self show

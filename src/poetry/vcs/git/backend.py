@@ -8,6 +8,8 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
@@ -15,6 +17,7 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
@@ -29,6 +32,9 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# A relative URL by definition starts with ../ or ./
+RELATIVE_SUBMODULE_REGEX = re.compile(r"^\.{1,2}/")
 
 
 def is_revision_sha(revision: str | None) -> bool:
@@ -296,10 +302,8 @@ class Git:
             if isinstance(e, KeyError):
                 # the local copy is at a bad state, lets remove it
                 logger.debug(
-                    (
-                        "Removing local clone (<c1>%s</>) of repository as it is in a"
-                        " broken state."
-                    ),
+                    "Removing local clone (<c1>%s</>) of repository as it is in a"
+                    " broken state.",
                     local.path,
                 )
                 remove_directory(Path(local.path), force=True)
@@ -308,11 +312,9 @@ class Git:
                 raise
 
             logger.debug(
-                (
-                    "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
-                    " cannot be used. The following error was"
-                    " raised:\n\n\t<warning>%s</>"
-                ),
+                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                " cannot be used. The following error was"
+                " raised:\n\n\t<warning>%s</>",
                 refspec.key,
                 e,
             )
@@ -330,49 +332,64 @@ class Git:
         Helper method to identify configured submodules and clone them recursively.
         """
         repo_root = Path(repo.path)
-        modules_config = repo_root.joinpath(".gitmodules")
+        for submodule in cls._get_submodules(repo):
+            path_absolute = repo_root / submodule.path
+            source_root = path_absolute.parent
+            source_root.mkdir(parents=True, exist_ok=True)
+            cls.clone(
+                url=submodule.url,
+                source_root=source_root,
+                name=path_absolute.name,
+                revision=submodule.revision,
+                clean=path_absolute.exists()
+                and not path_absolute.joinpath(".git").is_dir(),
+            )
 
-        # A relative URL by definition starts with ../ or ./
-        relative_submodule_regex = re.compile(r"^\.{1,2}/")
+    @classmethod
+    def _get_submodules(cls, repo: Repo) -> list[SubmoduleInfo]:
+        modules_config = Path(repo.path, ".gitmodules")
 
-        if modules_config.exists():
-            config = ConfigFile.from_path(str(modules_config))
+        if not modules_config.exists():
+            return []
 
-            url: bytes
-            path: bytes
-            submodules = parse_submodules(config)
+        config = ConfigFile.from_path(str(modules_config))
 
-            for path, url, name in submodules:
-                path_relative = Path(path.decode("utf-8"))
-                path_absolute = repo_root.joinpath(path_relative)
+        submodules: list[SubmoduleInfo] = []
+        for path, url, name in parse_submodules(config):
+            url_str = url.decode("utf-8")
+            path_str = path.decode("utf-8")
+            name_str = name.decode("utf-8")
 
-                url_string = url.decode("utf-8")
-                if relative_submodule_regex.search(url_string):
-                    url_string = urljoin(f"{Git.get_remote_url(repo)}/", url_string)
+            if RELATIVE_SUBMODULE_REGEX.search(url_str):
+                url_str = urlpathjoin(f"{cls.get_remote_url(repo)}/", url_str)
 
-                source_root = path_absolute.parent
-                source_root.mkdir(parents=True, exist_ok=True)
+            with repo:
+                index = repo.open_index()
 
-                with repo:
-                    try:
-                        revision = repo.open_index()[path].sha.decode("utf-8")
-                    except KeyError:
-                        logger.debug(
-                            "Skip submodule %s in %s, path %s not found",
-                            name,
-                            repo.path,
-                            path,
-                        )
-                        continue
+                try:
+                    entry = index[path]
+                except KeyError:
+                    logger.debug(
+                        "Skip submodule %s in %s, path %s not found",
+                        name,
+                        repo.path,
+                        path,
+                    )
+                    continue
 
-                cls.clone(
-                    url=url_string,
-                    source_root=source_root,
-                    name=path_relative.name,
+                assert isinstance(entry, IndexEntry)
+                revision = entry.sha.decode("utf-8")
+
+            submodules.append(
+                SubmoduleInfo(
+                    path=path_str,
+                    url=url_str,
+                    name=name_str,
                     revision=revision,
-                    clean=path_absolute.exists()
-                    and not path_absolute.joinpath(".git").is_dir(),
                 )
+            )
+
+        return submodules
 
     @staticmethod
     def is_using_legacy_client() -> bool:
@@ -447,12 +464,38 @@ class Git:
             # without additional configuration or changes for existing projects that
             # use http basic auth credentials.
             logger.debug(
-                (
-                    "Unable to fetch from private repository '%s', falling back to"
-                    " system git"
-                ),
+                "Unable to fetch from private repository '%s', falling back to"
+                " system git",
                 url,
             )
 
         # fallback to legacy git client
         return cls._clone_legacy(url=url, refspec=refspec, target=target)
+
+
+def urlpathjoin(base: str, path: str) -> str:
+    """
+    Allow any URL to be joined with a path
+
+    This works around an issue with urllib.parse.urljoin where it only handles
+    relative URLs for protocols contained in urllib.parse.uses_relative. As it
+    happens common protocols used with git, like ssh or git+ssh are not in that
+    list.
+
+    Thus we need to implement our own version of urljoin that handles all URLs
+    protocols. This is accomplished by using urlparse and urlunparse to split
+    the URL into its components, join the path, and then reassemble the URL.
+
+    See: https://github.com/python-poetry/poetry/issues/6499#issuecomment-1564712609
+    """
+    parsed_base = urlparse(base)
+    new = parsed_base._replace(path=urljoin(parsed_base.path, path))
+    return urlunparse(new)
+
+
+@dataclasses.dataclass
+class SubmoduleInfo:
+    path: str
+    url: str
+    name: str
+    revision: str

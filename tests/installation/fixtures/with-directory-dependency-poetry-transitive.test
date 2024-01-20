@@ -1,5 +1,4 @@
 [[package]]
-category = "main"
 description = ""
 name = "demo"
 optional = false
@@ -22,7 +21,6 @@ type = "file"
 url = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [[package]]
-category = "main"
 description = "This is a description"
 develop = false
 name = "inner-directory-project"
@@ -36,7 +34,6 @@ type = "directory"
 url = "project_with_transitive_file_dependencies/inner-directory-project"
 
 [[package]]
-category = "main"
 description = ""
 name = "pendulum"
 optional = false
@@ -45,7 +42,6 @@ files = []
 version = "1.4.4"
 
 [[package]]
-category = "main"
 description = "This is a description"
 develop = false
 name = "project-with-extras"
@@ -63,7 +59,6 @@ type = "directory"
 url = "../project_with_extras"
 
 [[package]]
-category = "main"
 description = "This is a description"
 develop = false
 name = "project-with-transitive-directory-dependencies"
@@ -81,7 +76,6 @@ type = "directory"
 url = "project_with_transitive_directory_dependencies"
 
 [[package]]
-category = "main"
 description = "This is a description"
 develop = false
 name = "project-with-transitive-file-dependencies"

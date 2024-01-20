@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 def test_pip_install_successful(
     tmp_path: Path, tmp_venv: VirtualEnv, fixture_dir: FixtureDirGetter
-):
+) -> None:
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     result = pip_install(file_path, tmp_venv)
 
@@ -32,9 +32,9 @@ def test_pip_install_with_keyboard_interrupt(
     tmp_venv: VirtualEnv,
     fixture_dir: FixtureDirGetter,
     mocker: MockerFixture,
-):
+) -> None:
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
     with pytest.raises(KeyboardInterrupt):
         pip_install(file_path, tmp_venv)
-    subprocess.run.assert_called_once()
+    subprocess.run.assert_called_once()  # type: ignore[attr-defined]

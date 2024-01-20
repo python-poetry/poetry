@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 import pytest
 
@@ -11,6 +12,7 @@ from cleo.testers.application_tester import ApplicationTester
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.utils.authenticator import Authenticator
 from tests.helpers import mock_metadata_entry_points
 
@@ -31,7 +33,7 @@ class FooCommand(Command):
 
 
 class AddCommandPlugin(ApplicationPlugin):
-    commands = [FooCommand]
+    commands: ClassVar[list[type[Command]]] = [FooCommand]
 
 
 @pytest.fixture
@@ -99,6 +101,7 @@ def test_application_verify_source_cache_flag(disable_cache: bool) -> None:
     assert app.poetry.pool.repositories
 
     for repo in app.poetry.pool.repositories:
+        assert isinstance(repo, CachedRepository)
         assert repo._disable_cache == disable_cache
 
 

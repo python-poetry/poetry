@@ -11,17 +11,14 @@ import requests
 
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import distribution_name
-from requests import adapters
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
-from urllib3 import util
 
 from poetry.__version__ import __version__
 from poetry.utils.constants import REQUESTS_TIMEOUT
-from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -30,23 +27,24 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
 
-_has_blake2 = hasattr(hashlib, "blake2b")
-
 
 class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
-            message = (
-                f"HTTP Error {error.response.status_code}: {error.response.reason} |"
-                f" {error.response.content!r}"
-            )
+            if error.response is None:
+                message = "HTTP Error connecting to the repository"
+            else:
+                message = (
+                    f"HTTP Error {error.response.status_code}: "
+                    f"{error.response.reason} | {error.response.content!r}"
+                )
         elif isinstance(error, ConnectionError):
             message = (
                 "Connection Error: We were unable to connect to the repository, "
                 "ensure the url is correct and can be reached."
             )
         else:
-            message = str(error)
+            message = error
         super().__init__(message)
 
 
@@ -64,20 +62,8 @@ class Uploader:
         return agent
 
     @property
-    def adapter(self) -> adapters.HTTPAdapter:
-        retry = util.Retry(
-            connect=5,
-            total=10,
-            allowed_methods=["GET"],
-            respect_retry_after_header=True,
-            status_forcelist=STATUS_FORCELIST,
-        )
-
-        return adapters.HTTPAdapter(max_retries=retry)
-
-    @property
     def files(self) -> list[Path]:
-        dist = self._poetry.file.parent / "dist"
+        dist = self._poetry.file.path.parent / "dist"
         version = self._package.version.to_string()
         escaped_name = distribution_name(self._package.name)
 
@@ -91,15 +77,12 @@ class Uploader:
         self._password = password
 
     def make_session(self) -> requests.Session:
-        session = requests.session()
+        session = requests.Session()
         auth = self.get_auth()
         if auth is not None:
             session.auth = auth
 
         session.headers["User-Agent"] = self.user_agent
-        for scheme in ("http://", "https://"):
-            session.mount(scheme, self.adapter)
-
         return session
 
     def get_auth(self) -> tuple[str, str] | None:
@@ -123,18 +106,15 @@ class Uploader:
         if client_cert:
             session.cert = str(client_cert)
 
-        try:
+        with session:
             self._upload(session, url, dry_run, skip_existing)
-        finally:
-            session.close()
 
     def post_data(self, file: Path) -> dict[str, Any]:
         meta = Metadata.from_package(self._package)
 
         file_type = self._get_type(file)
 
-        if _has_blake2:
-            blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
+        blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
 
         md5_hash = hashlib.md5()
         sha256_hash = hashlib.sha256()
@@ -142,15 +122,11 @@ class Uploader:
             for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
                 md5_hash.update(content)
                 sha256_hash.update(content)
-
-                if _has_blake2:
-                    blake2_256_hash.update(content)
+                blake2_256_hash.update(content)
 
         md5_digest = md5_hash.hexdigest()
         sha2_digest = sha256_hash.hexdigest()
-        blake2_256_digest: str | None = None
-        if _has_blake2:
-            blake2_256_digest = blake2_256_hash.hexdigest()
+        blake2_256_digest = blake2_256_hash.hexdigest()
 
         py_version: str | None = None
         if file_type == "bdist_wheel":
@@ -229,13 +205,11 @@ class Uploader:
             raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
-        data.update(
-            {
-                # action
-                ":action": "file_upload",
-                "protocol_version": "1",
-            }
-        )
+        data.update({
+            # action
+            ":action": "file_upload",
+            "protocol_version": "1",
+        })
 
         data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 
@@ -301,7 +275,7 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self._poetry.file.parent / "dist"
+        dist = self._poetry.file.path.parent / "dist"
         escaped_name = distribution_name(self._package.name)
         file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 
@@ -346,7 +320,7 @@ class Uploader:
         raise ValueError("Unknown distribution format " + "".join(exts))
 
     def _is_file_exists_error(self, response: requests.Response) -> bool:
-        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32  # noqa: E501
+        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32
         status = response.status_code
         reason = response.reason.lower()
         text = response.text.lower()

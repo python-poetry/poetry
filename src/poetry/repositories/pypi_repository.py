@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import requests
+import requests.adapters
 
 from cachecontrol.controller import logger as cache_control_logger
-from html5lib.html5parser import parse
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersion
@@ -17,7 +17,7 @@ from poetry.core.version.exceptions import InvalidVersion
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
-from poetry.utils._compat import decode
+from poetry.repositories.parsers.pypi_search_parser import SearchResultParser
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
@@ -39,9 +39,13 @@ class PyPiRepository(HTTPRepository):
         url: str = "https://pypi.org/",
         disable_cache: bool = False,
         fallback: bool = True,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         super().__init__(
-            "PyPI", url.rstrip("/") + "/simple/", disable_cache=disable_cache
+            "PyPI",
+            url.rstrip("/") + "/simple/",
+            disable_cache=disable_cache,
+            pool_size=pool_size,
         )
 
         self._base_url = url
@@ -50,46 +54,21 @@ class PyPiRepository(HTTPRepository):
     def search(self, query: str) -> list[Package]:
         results = []
 
-        search = {"q": query}
-
-        response = requests.session().get(
-            self._base_url + "search", params=search, timeout=REQUESTS_TIMEOUT
+        response = requests.get(
+            self._base_url + "search", params={"q": query}, timeout=REQUESTS_TIMEOUT
         )
-        content = parse(response.content, namespaceHTMLElements=False)
-        for result in content.findall(".//*[@class='package-snippet']"):
-            name_element = result.find("h3/*[@class='package-snippet__name']")
-            version_element = result.find("h3/*[@class='package-snippet__version']")
+        parser = SearchResultParser()
+        parser.feed(response.text)
 
-            if (
-                name_element is None
-                or version_element is None
-                or not name_element.text
-                or not version_element.text
-            ):
-                continue
-
-            name = name_element.text
-            version = version_element.text
-
-            description_element = result.find(
-                "p[@class='package-snippet__description']"
-            )
-            description = (
-                description_element.text
-                if description_element is not None and description_element.text
-                else ""
-            )
-
+        for result in parser.results:
             try:
-                package = Package(name, version)
-                package.description = decode(description.strip())
+                package = Package(result.name, result.version)
+                package.description = result.description.strip()
                 results.append(package)
             except InvalidVersion:
                 self._log(
-                    (
-                        f'Unable to parse version "{version}" for the {name} package,'
-                        " skipping"
-                    ),
+                    f'Unable to parse version "{result.version}" for the'
+                    f" {result.name} package, skipping",
                     level="debug",
                 )
 
@@ -124,7 +103,7 @@ class PyPiRepository(HTTPRepository):
 
         return [Package(name, version, yanked=yanked) for version, yanked in versions]
 
-    def _get_package_info(self, name: str) -> dict[str, Any]:
+    def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
         info = self._get(f"simple/{name}/", headers=headers)
         if info is None:
@@ -147,7 +126,7 @@ class PyPiRepository(HTTPRepository):
 
     def _get_release_info(
         self, name: NormalizedName, version: Version
-    ) -> dict[str, str | list[str] | None]:
+    ) -> dict[str, Any]:
         from poetry.inspection.info import PackageInfo
 
         self._log(f"Getting info for {name} ({version}) from PyPI", "debug")
@@ -176,12 +155,10 @@ class PyPiRepository(HTTPRepository):
 
         for file_info in version_info:
             if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                data.files.append(
-                    {
-                        "file": file_info["filename"],
-                        "hash": "sha256:" + file_info["digests"]["sha256"],
-                    }
-                )
+                data.files.append({
+                    "file": file_info["filename"],
+                    "hash": "sha256:" + file_info["digests"]["sha256"],
+                })
 
         if self._fallback and data.requires_dist is None:
             self._log("No dependencies found, downloading archives", level="debug")
@@ -246,5 +223,5 @@ class PyPiRepository(HTTPRepository):
     @staticmethod
     def _get_yanked(json_data: dict[str, Any]) -> str | bool:
         if json_data.get("yanked", False):
-            return json_data.get("yanked_reason") or True  # noqa: SIM222
+            return json_data.get("yanked_reason") or True
         return False

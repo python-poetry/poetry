@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 import os
 
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,6 +14,7 @@ from poetry.utils.password_manager import PoetryKeyringError
 
 
 if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
@@ -189,6 +192,32 @@ def test_keyring_raises_errors_on_keyring_errors(
         key_ring.delete_password("foo", "bar")
 
 
+def test_keyring_returns_none_on_locked_keyring(
+    with_locked_keyring: None,
+    caplog: LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    key_ring = PoetryKeyring("poetry")
+
+    cred = key_ring.get_credential("foo")
+
+    assert cred.password is None
+    assert "Keyring foo is locked" in caplog.messages
+
+
+def test_keyring_returns_none_on_erroneous_keyring(
+    with_erroneous_keyring: None,
+    caplog: LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    key_ring = PoetryKeyring("poetry")
+
+    cred = key_ring.get_credential("foo")
+
+    assert cred.password is None
+    assert "Accessing keyring foo failed" in caplog.messages
+
+
 def test_keyring_with_chainer_backend_and_fail_keyring_should_be_unavailable(
     with_chained_fail_keyring: None,
 ) -> None:
@@ -221,8 +250,20 @@ def test_fail_keyring_should_be_unavailable(
     assert not key_ring.is_available()
 
 
+def test_locked_keyring_should_be_available(with_locked_keyring: None) -> None:
+    key_ring = PoetryKeyring("poetry")
+
+    assert key_ring.is_available()
+
+
+def test_erroneous_keyring_should_be_available(with_erroneous_keyring: None) -> None:
+    key_ring = PoetryKeyring("poetry")
+
+    assert key_ring.is_available()
+
+
 def test_get_http_auth_from_environment_variables(
-    environ: None, config: Config, with_simple_keyring: None
+    environ: None, config: Config
 ) -> None:
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
@@ -230,10 +271,37 @@ def test_get_http_auth_from_environment_variables(
     manager = PasswordManager(config)
 
     auth = manager.get_http_auth("foo")
-    assert auth is not None
+    assert auth == {"username": "bar", "password": "baz"}
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+
+def test_get_http_auth_does_not_call_keyring_when_credentials_in_environment_variables(
+    environ: None, config: Config
+) -> None:
+    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+    manager._keyring = MagicMock()
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
+    manager._keyring.get_password.assert_not_called()
+
+
+def test_get_http_auth_does_not_call_keyring_when_password_in_environment_variables(
+    environ: None, config: Config
+) -> None:
+    config.merge({
+        "http-basic": {"foo": {"username": "bar"}},
+    })
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+    manager._keyring = MagicMock()
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
+    manager._keyring.get_password.assert_not_called()
 
 
 def test_get_pypi_token_with_env_var_positive(

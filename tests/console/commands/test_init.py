@@ -13,10 +13,11 @@ import pytest
 
 from cleo.testers.command_tester import CommandTester
 from packaging.utils import canonicalize_name
+from poetry.core.utils.helpers import module_name
 
+from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
 from poetry.repositories import RepositoryPool
-from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
+    from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
 
@@ -54,26 +56,23 @@ def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> No
 
 @pytest.fixture
 def tester(patches: None) -> CommandTester:
-    # we need a test application without poetry here.
-    app = PoetryTestApplication(None)
+    app = Application()
     return CommandTester(app.find("init"))
 
 
 @pytest.fixture
 def init_basic_inputs() -> str:
-    return "\n".join(
-        [
-            "my-package",  # Package name
-            "1.2.3",  # Version
-            "This is a description",  # Description
-            "n",  # Author
-            "MIT",  # License
-            "~2.7 || ^3.6",  # Python
-            "n",  # Interactive packages
-            "n",  # Interactive dev packages
-            "\n",  # Generate
-        ]
-    )
+    return "\n".join([
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ])
 
 
 @pytest.fixture()
@@ -86,7 +85,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -108,6 +106,7 @@ def test_noninteractive(
     tmp_path: Path,
 ) -> None:
     command = app.find("init")
+    assert isinstance(command, InitCommand)
     command._pool = poetry.pool
 
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -168,7 +167,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -217,7 +215,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -248,7 +245,6 @@ version = "1.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
@@ -289,7 +285,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -328,7 +323,8 @@ _generate_choice_list_packages_params: list[list[Package]] = [
 
 @pytest.fixture(params=_generate_choice_list_packages_params)
 def _generate_choice_list_packages(request: FixtureRequest) -> list[Package]:
-    return request.param
+    packages: list[Package] = request.param
+    return packages
 
 
 @pytest.mark.parametrize("package_name", ["flask", "Flask", "flAsK"])
@@ -338,6 +334,7 @@ def test_generate_choice_list(
     _generate_choice_list_packages: list[Package],
 ) -> None:
     init_command = tester.command
+    assert isinstance(init_command, InitCommand)
 
     packages = _generate_choice_list_packages
     choices = init_command._generate_choice_list(
@@ -380,7 +377,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -426,7 +422,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -478,7 +473,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -529,7 +523,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -581,7 +574,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -626,7 +618,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -661,7 +652,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -694,7 +684,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -736,7 +725,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -772,7 +760,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -816,7 +803,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -845,15 +831,13 @@ def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> 
     ]
 
     tester.execute(
-        (
-            "--name my-package "
-            "--description 'This is a description' "
-            "--author 'Foo Bar <foo@example.com>' "
-            "--python '^3.8' "
-            "--license MIT "
-            "--dependency pendulum "
-            "--dev-dependency pytest"
-        ),
+        "--name my-package "
+        "--description 'This is a description' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--python '^3.8' "
+        "--license MIT "
+        "--dependency pendulum "
+        "--dev-dependency pytest",
         inputs="\n".join(inputs),
     )
 
@@ -865,7 +849,6 @@ description = "This is a description"
 authors = ["Foo Bar <foo@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -880,7 +863,9 @@ pytest = "^3.6.0"
 
 
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
-    result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
+    command = tester.command
+    assert isinstance(command, InitCommand)
+    result = command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2
@@ -916,9 +901,7 @@ def test_init_existing_pyproject_consistent_linesep(
     existing_section = """
 [tool.black]
 line-length = 88
-""".replace(
-        "\n", linesep
-    )
+""".replace("\n", linesep)
     with open(pyproject_file, "w", newline="") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)
@@ -944,12 +927,10 @@ line-length = 88
     repo.add_package(get_package("foo", "1.19.2"))
 
     tester.execute(
-        (
-            "--author 'Your Name <you@example.com>' "
-            "--name 'my-package' "
-            "--python '^3.6' "
-            "--dependency foo"
-        ),
+        "--author 'Your Name <you@example.com>' "
+        "--name 'my-package' "
+        "--python '^3.6' "
+        "--dependency foo",
         interactive=False,
     )
 
@@ -960,7 +941,6 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -1014,6 +994,22 @@ def test_validate_package_invalid(name: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "author",
+    [
+        str(b"Jos\x65\xcc\x81 Duarte", "utf-8"),
+        str(b"Jos\xc3\xa9 Duarte", "utf-8"),
+    ],
+)
+def test_validate_author(author: str) -> None:
+    """
+    This test was added following issue #8779, hence, we're looking to see if the test
+    no longer throws an exception, hence the seemingly "useless" test of just running
+    the method.
+    """
+    InitCommand._validate_author(author, "")
+
+
+@pytest.mark.parametrize(
     "package_name, include",
     (
         ("mypackage", None),
@@ -1044,9 +1040,8 @@ def test_package_include(
         ),
     )
 
-    if include is None:
-        packages = ""
-    else:
+    packages = ""
+    if include and module_name(package_name) != include:
         packages = f'packages = [{{include = "{include}"}}]\n'
 
     expected = (
@@ -1087,7 +1082,8 @@ def test_respect_prefer_active_on_init(
         if GET_PYTHON_VERSION_ONELINER in cmd:
             return "1.1.1"
 
-        return orig_check_output(cmd, *_, **__)
+        result: str = orig_check_output(cmd, *_, **__)
+        return result
 
     mocker.patch("subprocess.check_output", side_effect=mock_check_output)
 
@@ -1105,3 +1101,17 @@ python = "^{python}"
 """
 
     assert expected in pyproject_file.read_text()
+
+
+def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
+    """
+    Since we are mocking _get_pool() in the other tests, we at least should make
+    sure it works in general. See https://github.com/python-poetry/poetry/issues/8634.
+    """
+    mocker.patch("pathlib.Path.cwd", return_value=source_dir)
+
+    app = Application()
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    pool = command._get_pool()
+    assert pool.repositories

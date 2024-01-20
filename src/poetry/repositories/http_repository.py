@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import functools
 import hashlib
-import os
-import urllib
-import urllib.parse
 
 from collections import defaultdict
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 
 import requests
+import requests.adapters
 
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
@@ -45,6 +45,7 @@ class HTTPRepository(CachedRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         super().__init__(name, disable_cache, config)
         self._url = url
@@ -52,6 +53,7 @@ class HTTPRepository(CachedRepository):
             config=config,
             cache_id=name,
             disable_cache=disable_cache,
+            pool_size=pool_size,
         )
         self._authenticator.add_repository(name, url)
         self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
@@ -75,34 +77,24 @@ class HTTPRepository(CachedRepository):
     def _download(self, url: str, dest: Path) -> None:
         return download_file(url, dest, session=self.session)
 
+    @contextmanager
+    def _cached_or_downloaded_file(self, link: Link) -> Iterator[Path]:
+        self._log(f"Downloading: {link.url}", level="debug")
+        with temporary_directory() as temp_dir:
+            filepath = Path(temp_dir) / link.filename
+            self._download(link.url, filepath)
+            yield filepath
+
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        wheel_name = urllib.parse.urlparse(url).path.rsplit("/")[-1]
-        self._log(f"Downloading wheel: {wheel_name}", level="debug")
-
-        filename = os.path.basename(wheel_name)
-
-        with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, filepath)
-
+        with self._cached_or_downloaded_file(Link(url)) as filepath:
             return PackageInfo.from_wheel(filepath)
 
     def _get_info_from_sdist(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        sdist_name = urllib.parse.urlparse(url).path
-        sdist_name_log = sdist_name.rsplit("/")[-1]
-
-        self._log(f"Downloading sdist: {sdist_name_log}", level="debug")
-
-        filename = os.path.basename(sdist_name)
-
-        with temporary_directory() as temp_dir:
-            filepath = Path(temp_dir) / filename
-            self._download(url, filepath)
-
+        with self._cached_or_downloaded_file(Link(url)) as filepath:
             return PackageInfo.from_sdist(filepath)
 
     def _get_info_from_urls(self, urls: dict[str, list[str]]) -> PackageInfo:
@@ -237,27 +229,7 @@ class HTTPRepository(CachedRepository):
                 and link.hash_name not in ("sha256", "sha384", "sha512")
                 and hasattr(hashlib, link.hash_name)
             ):
-                with temporary_directory() as temp_dir:
-                    filepath = Path(temp_dir) / link.filename
-                    self._download(link.url, filepath)
-
-                    known_hash = (
-                        getattr(hashlib, link.hash_name)() if link.hash_name else None
-                    )
-                    required_hash = hashlib.sha256()
-
-                    chunksize = 4096
-                    with filepath.open("rb") as f:
-                        while True:
-                            chunk = f.read(chunksize)
-                            if not chunk:
-                                break
-                            if known_hash:
-                                known_hash.update(chunk)
-                            required_hash.update(chunk)
-
-                    if not known_hash or known_hash.hexdigest() == link.hash:
-                        file_hash = f"{required_hash.name}:{required_hash.hexdigest()}"
+                file_hash = self.calculate_sha256(link) or file_hash
 
             files.append({"file": link.filename, "hash": file_hash})
 
@@ -270,6 +242,25 @@ class HTTPRepository(CachedRepository):
         data.requires_python = info.requires_python
 
         return data.asdict()
+
+    def calculate_sha256(self, link: Link) -> str | None:
+        with self._cached_or_downloaded_file(link) as filepath:
+            known_hash = getattr(hashlib, link.hash_name)() if link.hash_name else None
+            required_hash = hashlib.sha256()
+
+            chunksize = 4096
+            with filepath.open("rb") as f:
+                while True:
+                    chunk = f.read(chunksize)
+                    if not chunk:
+                        break
+                    if known_hash:
+                        known_hash.update(chunk)
+                    required_hash.update(chunk)
+
+            if not known_hash or known_hash.hexdigest() == link.hash:
+                return f"{required_hash.name}:{required_hash.hexdigest()}"
+        return None
 
     def _get_response(self, endpoint: str) -> requests.Response | None:
         url = self._url + endpoint

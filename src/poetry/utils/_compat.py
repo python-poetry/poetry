@@ -21,12 +21,6 @@ if sys.version_info < (3, 10):
 else:
     from importlib import metadata
 
-if sys.version_info < (3, 8):
-    # compatibility for python <3.8
-    from backports.cached_property import cached_property
-else:
-    from functools import cached_property
-
 WINDOWS = sys.platform == "win32"
 
 
@@ -58,7 +52,6 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
 
 __all__ = [
     "WINDOWS",
-    "cached_property",
     "decode",
     "encode",
     "metadata",

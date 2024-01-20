@@ -30,10 +30,8 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dev",
             "D",
-            (
-                "Add as a development dependency. (<warning>Deprecated</warning>) Use"
-                " --group=dev instead."
-            ),
+            "Add as a development dependency. (<warning>Deprecated</warning>) Use"
+            " --group=dev instead.",
         ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
@@ -66,10 +64,8 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dry-run",
             None,
-            (
-                "Output the operations but do not execute anything (implicitly enables"
-                " --verbose)."
-            ),
+            "Output the operations but do not execute anything (implicitly enables"
+            " --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
@@ -126,6 +122,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
+        project_name = canonicalize_name(poetry_content["name"])
 
         if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
@@ -191,7 +188,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 for extra in self.option("extras"):
                     extras += extra.split()
 
-                constraint["extras"] = self.option("extras")
+                constraint["extras"] = extras
 
             if self.option("editable"):
                 if "git" in _constraint or "path" in _constraint:
@@ -223,6 +220,14 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             canonical_constraint_name = canonicalize_name(constraint_name)
 
+            if canonical_constraint_name == project_name:
+                self.line_error(
+                    f"<error>Cannot add dependency on <c1>{constraint_name}</c1> to"
+                    " project with the same name."
+                )
+                self.line_error("\nNo changes were applied.")
+                return 1
+
             for key in section:
                 if canonicalize_name(key) == canonical_constraint_name:
                     section[key] = constraint
@@ -240,14 +245,12 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     constraint_name,
                     constraint,
                     groups=[group],
-                    root_dir=self.poetry.file.parent,
+                    root_dir=self.poetry.file.path.parent,
                 )
             )
 
         # Refresh the locker
-        self.poetry.set_locker(
-            self.poetry.locker.__class__(self.poetry.locker.lock, poetry_content)
-        )
+        self.poetry.locker.set_local_config(poetry_content)
         self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line
@@ -257,8 +260,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self.installer.dry_run(self.option("dry-run"))
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
-        if self.option("lock"):
-            self.installer.lock()
+        self.installer.execute_operations(not self.option("lock"))
 
         self.installer.whitelist([r["name"] for r in requirements])
 
@@ -296,5 +298,5 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             " be skipped:\n"
         )
         for name in existing_packages:
-            self.line(f"  • <c1>{name}</c1>")
+            self.line(f"  - <c1>{name}</c1>")
         self.line(self._hint_update_packages)

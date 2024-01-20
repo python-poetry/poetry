@@ -9,6 +9,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from packaging.utils import canonicalize_name
 
@@ -71,13 +72,11 @@ class PackageFilterPolicy:
             else:
                 return [":none:"]
 
-        return list(
-            {
-                name.strip() if cls.is_reserved(name) else canonicalize_name(name)
-                for name in policy.strip().split(",")
-                if name
-            }
-        )
+        return list({
+            name.strip() if cls.is_reserved(name) else canonicalize_name(name)
+            for name in policy.strip().split(",")
+            if name
+        })
 
     @classmethod
     def validator(cls, policy: str) -> bool:
@@ -104,7 +103,7 @@ _default_config: Config | None = None
 
 
 class Config:
-    default_config: dict[str, Any] = {
+    default_config: ClassVar[dict[str, Any]] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
             "create": True,
@@ -124,7 +123,6 @@ class Config:
             "prompt": "{project_name}-py{python_version}",
         },
         "experimental": {
-            "new-installer": True,
             "system-git-client": False,
         },
         "installer": {
@@ -132,6 +130,9 @@ class Config:
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
+        },
+        "warnings": {
+            "export": True,
         },
     }
 
@@ -223,6 +224,22 @@ class Config:
             path = Path(self.get("cache-dir")) / "virtualenvs"
         return Path(path).expanduser()
 
+    @property
+    def installer_max_workers(self) -> int:
+        # This should be directly handled by ThreadPoolExecutor
+        # however, on some systems the number of CPUs cannot be determined
+        # (it raises a NotImplementedError), so, in this case, we assume
+        # that the system only has one CPU.
+        try:
+            default_max_workers = (os.cpu_count() or 1) + 4
+        except NotImplementedError:
+            default_max_workers = 5
+
+        desired_max_workers = self.get("installer.max-workers")
+        if desired_max_workers is None:
+            return default_max_workers
+        return min(default_max_workers, int(desired_max_workers))
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
         Retrieve a setting value.
@@ -276,10 +293,10 @@ class Config:
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
-            "experimental.new-installer",
             "experimental.system-git-client",
             "installer.modern-installation",
             "installer.parallel",
+            "warnings.export",
         }:
             return boolean_normalizer
 

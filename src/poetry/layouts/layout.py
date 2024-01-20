@@ -91,15 +91,12 @@ class Layout:
             return None
 
         include = parts[0]
-        package.append("include", include)  # type: ignore[no-untyped-call]
+        package.append("include", include)
 
         if self.basedir != Path():
-            package.append(  # type: ignore[no-untyped-call]
-                "from",
-                self.basedir.as_posix(),
-            )
+            package.append("from", self.basedir.as_posix())
         else:
-            if include == self._project:
+            if module_name(self._project) == include:
                 # package include and package name are the same,
                 # packages table is redundant here.
                 return None

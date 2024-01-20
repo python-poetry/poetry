@@ -9,6 +9,8 @@ from typing import Any
 
 import pytest
 
+from poetry.core.utils.helpers import module_name
+
 from poetry.factory import Factory
 
 
@@ -27,7 +29,10 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 def verify_project_directory(
-    path: Path, package_name: str, package_path: str, include_from: str | None = None
+    path: Path,
+    package_name: str,
+    package_path: str | Path,
+    include_from: str | None = None,
 ) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
@@ -52,10 +57,11 @@ def verify_project_directory(
     else:
         package_include = {"include": package_path.parts[0]}
 
+    name = poetry.local_config.get("name", "")
     packages = poetry.local_config.get("packages")
 
     if not packages:
-        assert poetry.local_config.get("name") == package_include.get("include")
+        assert module_name(name) == package_include.get("include")
     else:
         assert len(packages) == 1
         assert packages[0] == package_include
@@ -203,7 +209,8 @@ def test_respect_prefer_active_on_new(
         if GET_PYTHON_VERSION_ONELINER in cmd:
             return "1.1.1"
 
-        return orig_check_output(cmd, *_, **__)
+        output: str = orig_check_output(cmd, *_, **__)
+        return output
 
     mocker.patch("subprocess.check_output", side_effect=mock_check_output)
 

@@ -29,11 +29,11 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) as a [secondary package source](#secondary-package-sources) to your
+First, [configure](#project-configuration) the [package source](#package-sources) as a [supplemental](#supplemental-package-sources) (or [explicit](#explicit-package-sources)) package source to your
 project.
 
 ```bash
-poetry source add --priority=secondary foo https://pypi.example.org/simple/
+poetry source add --priority=supplemental foo https://pypi.example.org/simple/
 ```
 
 Then, assuming the repository requires authentication, configure credentials for it.
@@ -123,13 +123,14 @@ url = "https://foo.bar/simple/"
 priority = "primary"
 ```
 
-If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary and explicit sources.
+If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
 
 Package sources are considered in the following order:
 1. [default source](#default-package-source),
 2. primary sources,
-3. PyPI (unless disabled by another default source),
-4. [secondary sources](#secondary-package-sources),
+3. implicit PyPI (unless disabled by another [default source](#default-package-source) or configured explicitly),
+4. [secondary sources](#secondary-package-sources) (DEPRECATED),
+5. [supplemental sources](#supplemental-package-sources).
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
 
@@ -137,19 +138,17 @@ Within each priority class, package sources are considered in order of appearanc
 
 {{% note %}}
 
-If you prefer to disable [PyPI](https://pypi.org) completely, you may choose to set one of your package sources to be the [default](#default-package-source).
+If you want to change the priority of [PyPI](https://pypi.org), you can set it explicitly, e.g.
 
-If you prefer to specify a package source for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
+```bash
+poetry source add --priority=primary PyPI
+```
+
+If you prefer to disable PyPI completely,
+you may choose to set one of your package sources to be the [default](#default-package-source)
+or configure PyPI as [explicit source](#explicit-package-sources).
 
 {{% /note %}}
-
-
-{{% warning %}}
-
-If you do not want any of the custom sources to take precedence over [PyPI](https://pypi.org),
-you must declare **all** package sources to be [secondary](#secondary-package-sources).
-
-{{% /warning %}}
 
 
 #### Default Package Source
@@ -164,15 +163,44 @@ poetry source add --priority=default foo https://foo.bar/simple/
 
 {{% warning %}}
 
+In a future version of Poetry, PyPI will be disabled automatically
+if at least one custom primary source is configured.
+If you are using custom sources in addition to PyPI, you should configure PyPI explicitly
+with a certain priority, e.g.
+
+```bash
+poetry source add --priority=primary PyPI
+```
+
+This way, the priority of PyPI can be set in a fine-granular way.
+
+The equivalent specification in `pyproject.toml` is:
+
+```toml
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+```
+
+**Omit the `url` when specifying PyPI explicitly.** Because PyPI is internally configured
+with Poetry, the PyPI repository cannot be configured with a given URL. Remember, you can always use
+`poetry check` to ensure the validity of the `pyproject.toml` file.
+
+{{% /warning %}}
+
+{{% warning %}}
+
 Configuring a custom package source as default, will effectively disable [PyPI](https://pypi.org)
 as a package source for your project.
 
 {{% /warning %}}
 
-#### Secondary Package Sources
+#### Secondary Package Sources (DEPRECATED)
+
+*Deprecated in 1.5.0*
 
 If package sources are configured as secondary, all it means is that these will be given a lower
-priority when selecting compatible package distribution that also exists in your default and primary package sources.
+priority when selecting compatible package distribution that also exists in your default and primary package sources. If the package source should instead be searched only if higher-priority repositories did not return results, please consider a [supplemental source](#supplemental-package-sources) instead.
 
 You can configure a package source as a secondary source with `priority = "secondary"` in your package
 source configuration.
@@ -183,13 +211,43 @@ poetry source add --priority=secondary https://foo.bar/simple/
 
 There can be more than one secondary package source.
 
+{{% warning %}}
+
+Secondary package sources are deprecated in favor of supplemental package sources.
+
+{{% /warning %}}
+
+#### Supplemental Package Sources
+
+*Introduced in 1.5.0*
+
+Package sources configured as supplemental are only searched if no other (higher-priority) source yields a compatible package distribution. This is particularly convenient if the response time of the source is high and relatively few package distributions are to be fetched from this source.
+
+You can configure a package source as a supplemental source with `priority = "supplemental"` in your package
+source configuration.
+
+```bash
+poetry source add --priority=supplemental https://foo.bar/simple/
+```
+
+There can be more than one supplemental package source.
+
+{{% warning %}}
+
+Take into account that someone could publish a new package to a primary source
+which matches a package in your supplemental source. They could coincidentally
+or intentionally replace your dependency with something you did not expect.
+
+{{% /warning %}}
+
+
 #### Explicit Package Sources
 
 *Introduced in 1.5.0*
 
 If package sources are configured as explicit, these sources are only searched when a package configuration [explicitly indicates](#package-source-constraint) that it should be found on this package source.
 
-You can configure a package source as an explicit source with `priority = "explicit` in your package source configuration.
+You can configure a package source as an explicit source with `priority = "explicit"` in your package source configuration.
 
 ```bash
 poetry source add --priority=explicit foo https://foo.bar/simple/
@@ -199,7 +257,7 @@ There can be more than one explicit package source.
 
 #### Package Source Constraint
 
-All package sources (including secondary sources) will be searched during the package lookup
+All package sources (including secondary and possibly supplemental sources) will be searched during the package lookup
 process. These network requests will occur for all sources, regardless of if the package is
 found at one or more sources.
 
@@ -380,7 +438,7 @@ poetry config repositories.testpypi https://test.pypi.org/legacy/
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
-well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
+well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
 
@@ -440,11 +498,12 @@ if it exists for you use case instead of doing it yourself.
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
-export POETRY_PYPI_TOKEN_PYPI=my-token
-export POETRY_HTTP_BASIC_PYPI_USERNAME=<username>
-export POETRY_HTTP_BASIC_PYPI_PASSWORD=<password>
+export POETRY_PYPI_TOKEN_FOO=my-token
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
 ```
 
+where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 

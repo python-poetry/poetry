@@ -1,17 +1,15 @@
 from __future__ import annotations
 
+import concurrent.futures
 import shutil
+import traceback
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import TypeVar
-from typing import Union
-from unittest.mock import Mock
 
 import pytest
 
-from cachy import CacheManager
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
 
@@ -21,74 +19,25 @@ from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
-    from _pytest.monkeypatch import MonkeyPatch
-    from pytest import FixtureRequest
+    from typing import Any
+
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
 
-FILE_CACHE = Union[FileCache, CacheManager]
 T = TypeVar("T")
 
 
 @pytest.fixture
-def repository_cache_dir(monkeypatch: MonkeyPatch, config: Config) -> Path:
+def repository_cache_dir(config: Config) -> Path:
     return config.repository_cache_directory
 
 
-def patch_cachy(cache: CacheManager) -> CacheManager:
-    old_put = cache.put
-    old_remember = cache.remember
-
-    def new_put(key: str, value: Any, minutes: int | None = None) -> Any:
-        if minutes is not None:
-            return old_put(key, value, minutes=minutes)
-        else:
-            return cache.forever(key, value)
-
-    cache.put = new_put
-
-    def new_remember(key: str, value: Any, minutes: int | None = None) -> Any:
-        if minutes is not None:
-            return old_remember(key, value, minutes=minutes)
-        else:
-            return cache.remember_forever(key, value)
-
-    cache.remember = new_remember
-    return cache
-
-
 @pytest.fixture
-def cachy_file_cache(repository_cache_dir: Path) -> CacheManager:
-    cache = CacheManager(
-        {
-            "default": "cache",
-            "serializer": "json",
-            "stores": {
-                "cache": {"driver": "file", "path": str(repository_cache_dir / "cache")}
-            },
-        }
-    )
-    return patch_cachy(cache)
-
-
-@pytest.fixture
-def poetry_file_cache(repository_cache_dir: Path) -> FileCache[T]:
+def poetry_file_cache(repository_cache_dir: Path) -> FileCache[Any]:
     return FileCache(repository_cache_dir / "cache")
-
-
-@pytest.fixture
-def cachy_dict_cache() -> CacheManager:
-    cache = CacheManager(
-        {
-            "default": "cache",
-            "serializer": "json",
-            "stores": {"cache": {"driver": "dict"}},
-        }
-    )
-    return patch_cachy(cache)
 
 
 def test_cache_validates(repository_cache_dir: Path) -> None:
@@ -97,9 +46,8 @@ def test_cache_validates(repository_cache_dir: Path) -> None:
     assert str(e.value) == "FileCache.hash_type is unknown value: 'unknown'."
 
 
-@pytest.mark.parametrize("cache_name", ["cachy_file_cache", "poetry_file_cache"])
-def test_cache_get_put_has(cache_name: str, request: FixtureRequest) -> None:
-    cache = request.getfixturevalue(cache_name)
+def test_cache_get_put_has(repository_cache_dir: Path) -> None:
+    cache: FileCache[Any] = FileCache(repository_cache_dir / "cache")
     cache.put("key1", "value")
     cache.put("key2", {"a": ["json-encoded", "value"]})
 
@@ -110,9 +58,8 @@ def test_cache_get_put_has(cache_name: str, request: FixtureRequest) -> None:
     assert not cache.has("key3")
 
 
-@pytest.mark.parametrize("cache_name", ["cachy_file_cache", "poetry_file_cache"])
-def test_cache_forget(cache_name: str, request: FixtureRequest) -> None:
-    cache = request.getfixturevalue(cache_name)
+def test_cache_forget(repository_cache_dir: Path) -> None:
+    cache: FileCache[Any] = FileCache(repository_cache_dir / "cache")
     cache.put("key1", "value")
     cache.put("key2", "value")
 
@@ -125,9 +72,8 @@ def test_cache_forget(cache_name: str, request: FixtureRequest) -> None:
     assert cache.has("key2")
 
 
-@pytest.mark.parametrize("cache_name", ["cachy_file_cache", "poetry_file_cache"])
-def test_cache_flush(cache_name: str, request: FixtureRequest) -> None:
-    cache = request.getfixturevalue(cache_name)
+def test_cache_flush(repository_cache_dir: Path) -> None:
+    cache: FileCache[Any] = FileCache(repository_cache_dir / "cache")
     cache.put("key1", "value")
     cache.put("key2", "value")
 
@@ -140,13 +86,10 @@ def test_cache_flush(cache_name: str, request: FixtureRequest) -> None:
     assert not cache.has("key2")
 
 
-@pytest.mark.parametrize("cache_name", ["cachy_file_cache", "poetry_file_cache"])
-def test_cache_remember(
-    cache_name: str, request: FixtureRequest, mocker: MockerFixture
-) -> None:
-    cache = request.getfixturevalue(cache_name)
+def test_cache_remember(repository_cache_dir: Path, mocker: MockerFixture) -> None:
+    cache: FileCache[Any] = FileCache(repository_cache_dir / "cache")
 
-    method = Mock(return_value="value2")
+    method = mocker.Mock(return_value="value2")
     cache.put("key1", "value1")
     assert cache.remember("key1", method) == "value1"
     method.assert_not_called()
@@ -155,15 +98,11 @@ def test_cache_remember(
     method.assert_called()
 
 
-@pytest.mark.parametrize("cache_name", ["cachy_file_cache", "poetry_file_cache"])
 def test_cache_get_limited_minutes(
-    mocker: MockerFixture,
-    cache_name: str,
-    request: FixtureRequest,
+    repository_cache_dir: Path, mocker: MockerFixture
 ) -> None:
-    cache = request.getfixturevalue(cache_name)
+    cache: FileCache[Any] = FileCache(repository_cache_dir / "cache")
 
-    # needs to be 10 digits because cachy assumes it's a 10-digit int.
     start_time = 1111111111
 
     mocker.patch("time.time", return_value=start_time)
@@ -179,33 +118,12 @@ def test_cache_get_limited_minutes(
     assert cache.get("key2") is None
 
 
-def test_cachy_compatibility(
-    cachy_file_cache: CacheManager, poetry_file_cache: FileCache[T]
-) -> None:
-    """
-    The new file cache should be able to support reading legacy caches.
-    """
-    test_str = "value"
-    test_obj = {"a": ["json", "object"]}
-    cachy_file_cache.put("key1", test_str)
-    cachy_file_cache.put("key2", test_obj)
-
-    assert poetry_file_cache.get("key1") == test_str
-    assert poetry_file_cache.get("key2") == test_obj
-
-    poetry_file_cache.put("key3", test_str)
-    poetry_file_cache.put("key4", test_obj)
-
-    assert cachy_file_cache.get("key3") == test_str
-    assert cachy_file_cache.get("key4") == test_obj
-
-
-def test_missing_cache_file(poetry_file_cache: FileCache) -> None:
+def test_missing_cache_file(poetry_file_cache: FileCache[Any]) -> None:
     poetry_file_cache.put("key1", "value")
 
     key1_path = (
         poetry_file_cache.path
-        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
+        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"
     )
     assert key1_path.exists()
     key1_path.unlink()  # corrupt cache by removing a key file
@@ -213,7 +131,7 @@ def test_missing_cache_file(poetry_file_cache: FileCache) -> None:
     assert poetry_file_cache.get("key1") is None
 
 
-def test_missing_cache_path(poetry_file_cache: FileCache) -> None:
+def test_missing_cache_path(poetry_file_cache: FileCache[Any]) -> None:
     poetry_file_cache.put("key1", "value")
 
     key1_partial_path = poetry_file_cache.path / "81/74/09/96/87/a2/"
@@ -237,13 +155,13 @@ def test_missing_cache_path(poetry_file_cache: FileCache) -> None:
     ],
 )
 def test_detect_corrupted_cache_key_file(
-    corrupt_payload: str | bytes, poetry_file_cache: FileCache
+    corrupt_payload: str | bytes, poetry_file_cache: FileCache[Any]
 ) -> None:
     poetry_file_cache.put("key1", "value")
 
     key1_path = (
         poetry_file_cache.path
-        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"  # noqa: E501
+        / "81/74/09/96/87/a2/66/21/8174099687a26621f4e2cdd7cc03b3dacedb3fb962255b1aafd033cabe831530"
     )
     assert key1_path.exists()
 
@@ -404,6 +322,41 @@ def test_get_found_cached_archive_for_link(
     archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
+
+
+def test_get_cached_archive_for_link_no_race_condition(
+    tmp_path: Path, mocker: MockerFixture
+) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    link = Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+
+    def replace_file(_: str, dest: Path) -> None:
+        dest.unlink(missing_ok=True)
+        # write some data (so it takes a while) to provoke possible race conditions
+        dest.write_text("a" * 2**20)
+
+    download_mock = mocker.Mock(side_effect=replace_file)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        tasks = []
+        for _ in range(4):
+            tasks.append(
+                executor.submit(
+                    cache.get_cached_archive_for_link,  # type: ignore[arg-type]
+                    link,
+                    strict=True,
+                    download_func=download_mock,
+                )
+            )
+        concurrent.futures.wait(tasks)
+        results = set()
+        for task in tasks:
+            try:
+                results.add(task.result())
+            except Exception:
+                pytest.fail(traceback.format_exc())
+        assert results == {cache.get_cache_directory_for_link(link) / link.filename}
+        download_mock.assert_called_once()
 
 
 def test_get_cached_archive_for_git() -> None:

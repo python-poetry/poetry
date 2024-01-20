@@ -179,7 +179,7 @@ poetry run pre-commit run --all-files
 * Fill out the pull request body completely and describe your changes as accurately as possible. The pull request body
 should be kept up to date as it will usually form the base for the final merge commit and the changelog entry.
 * Be sure that your pull request contains tests that cover the changed or added code. Tests are generally required for
-code be to be considered mergable, and code without passing tests will not be merged.
+code be to be considered mergeable, and code without passing tests will not be merged.
 * Ensure your pull request passes the mypy and pre-commit checks. Remember that you can run these tools locally
 instead of relying on remote CI.
 * If your changes warrant a documentation change, the pull request must also update the documentation. Make sure to

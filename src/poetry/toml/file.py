@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -35,6 +37,13 @@ class TOMLFile(BaseTOMLFile):
             raise TOMLError(f"Invalid TOML file {self.path.as_posix()}: {e}")
 
     def __getattr__(self, item: str) -> Any:
+        warnings.warn(
+            "`__getattr__` will be removed from the `TOMLFile` in a future release."
+            "\n\nInstead of accessing properties of the underlying `Path` as "
+            "`tomlfile.whatever`, prefer `tomlfile.path.whatever`.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return getattr(self.__path, item)
 
     def __str__(self) -> str:

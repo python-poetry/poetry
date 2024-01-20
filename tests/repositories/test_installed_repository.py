@@ -1,21 +1,29 @@
 from __future__ import annotations
 
-from collections import namedtuple
+import shutil
+import zipfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import NamedTuple
 
 import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
+from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv as BaseMockEnv
-from tests.compat import zipfile
+from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
     from _pytest.logging import LogCaptureFixture
     from poetry.core.packages.package import Package
     from pytest_mock.plugin import MockerFixture
+
+    from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 ENV_DIR = (FIXTURES_DIR / "installed").resolve()
@@ -26,7 +34,10 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "cleo-0.7.6.dist-info"),
     metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
     metadata.PathDistribution(
-        zipfile.Path(str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
+        zipfile.Path(  # type: ignore[arg-type]
+            str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"),
+            "EGG-INFO",
+        )
     ),
     metadata.PathDistribution(SITE_PURELIB / "standard-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-2.3.4.dist-info"),
@@ -69,9 +80,13 @@ def env() -> MockEnv:
 
 @pytest.fixture(autouse=True)
 def mock_git_info(mocker: MockerFixture) -> None:
+    class GitRepoLocalInfo(NamedTuple):
+        origin: str
+        revision: str
+
     mocker.patch(
         "poetry.vcs.git.Git.info",
-        return_value=namedtuple("GitRepoLocalInfo", "origin revision")(
+        return_value=GitRepoLocalInfo(
             origin="https://github.com/sdispater/pendulum.git",
             revision="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
         ),
@@ -96,6 +111,11 @@ def get_package_from_repository(
     return None
 
 
+@pytest.fixture
+def poetry(project_factory: ProjectFactory, fixture_dir: FixtureDirGetter) -> Poetry:
+    return project_factory("simple", source=fixture_dir("simple_project"))
+
+
 def test_load_successful(repository: InstalledRepository) -> None:
     assert len(repository.packages) == len(INSTALLED_RESULTS)
 
@@ -107,7 +127,7 @@ def test_load_successful_with_invalid_distribution(
     invalid_dist_info.mkdir(parents=True)
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
-        return_value=INSTALLED_RESULTS + [metadata.PathDistribution(invalid_dist_info)],
+        return_value=[*INSTALLED_RESULTS, metadata.PathDistribution(invalid_dist_info)],
     )
     repository_with_invalid_distribution = InstalledRepository.load(env)
 
@@ -293,3 +313,27 @@ def test_load_pep_610_compliant_editable_directory_packages(
     assert package.source_type == "directory"
     assert package.source_url == "/path/to/distributions/directory-pep-610"
     assert package.develop
+
+
+def test_system_site_packages_source_type(
+    tmp_path: Path, mocker: MockerFixture, poetry: Poetry
+) -> None:
+    """
+    The source type of system site packages
+    must not be falsely identified as "directory".
+    """
+    venv_path = tmp_path / "venv"
+    site_path = tmp_path / "site"
+    for dist_info in {"cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"}:
+        shutil.copytree(SITE_PURELIB / dist_info, site_path / dist_info)
+    mocker.patch("poetry.utils.env.virtual_env.VirtualEnv.sys_path", [str(site_path)])
+    mocker.patch("site.getsitepackages", return_value=[str(site_path)])
+
+    EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
+    env = VirtualEnv(venv_path)
+    installed_repository = InstalledRepository.load(env)
+
+    source_types = {
+        package.name: package.source_type for package in installed_repository.packages
+    }
+    assert source_types == {"cleo": None, "directory-pep-610": "directory"}
