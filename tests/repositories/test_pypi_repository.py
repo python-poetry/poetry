@@ -38,6 +38,7 @@ class MockRepository(PyPiRepository):
 
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
+        self._lazy_wheel = False
 
     def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
         fixture = self.JSON_FIXTURES / (name + ".json")
@@ -66,7 +67,9 @@ class MockRepository(PyPiRepository):
             data: dict[str, Any] = json.load(f)
             return data
 
-    def _download(self, url: str, dest: Path) -> None:
+    def _download(
+        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
+    ) -> None:
         filename = url.split("/")[-1]
 
         fixture = self.DIST_FIXTURES / filename

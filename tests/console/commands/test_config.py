@@ -13,6 +13,7 @@ from poetry.core.pyproject.exceptions import PyProjectException
 from poetry.config.config_source import ConfigSource
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
+from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
 
 
@@ -58,6 +59,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -88,6 +90,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -139,6 +142,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -168,6 +172,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -296,6 +301,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -334,6 +340,7 @@ installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
 repositories.foo.url = "https://foo.bar/simple/"
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -531,3 +538,21 @@ def test_config_installer_no_binary(
 
     config = Config.create(reload=True)
     assert not DeepDiff(config.get(setting), expected, ignore_order=True)
+
+
+def test_config_solver_lazy_wheel(
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
+) -> None:
+    tester.execute("--local solver.lazy-wheel")
+    assert tester.io.fetch_output().strip() == "true"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert repo._lazy_wheel
+
+    tester.io.clear_output()
+    tester.execute("--local solver.lazy-wheel false")
+    tester.execute("--local solver.lazy-wheel")
+    assert tester.io.fetch_output().strip() == "false"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert not repo._lazy_wheel

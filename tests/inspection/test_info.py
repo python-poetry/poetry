@@ -4,8 +4,11 @@ import shutil
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from zipfile import ZipFile
 
 import pytest
+
+from packaging.metadata import parse_email
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
@@ -16,6 +19,7 @@ from poetry.utils.env import VirtualEnv
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from packaging.metadata import RawMetadata
     from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
@@ -34,6 +38,13 @@ def demo_sdist(fixture_dir: FixtureDirGetter) -> Path:
 @pytest.fixture
 def demo_wheel(fixture_dir: FixtureDirGetter) -> Path:
     return fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
+
+@pytest.fixture
+def demo_wheel_metadata(demo_wheel: Path) -> RawMetadata:
+    with ZipFile(demo_wheel) as zf:
+        metadata, _ = parse_email(zf.read("demo-0.1.0.dist-info/METADATA"))
+    return metadata
 
 
 @pytest.fixture
@@ -162,6 +173,28 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
+def test_info_from_wheel_metadata(demo_wheel_metadata: RawMetadata) -> None:
+    info = PackageInfo.from_metadata(demo_wheel_metadata)
+    demo_check_info(info)
+    assert info.requires_python == ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+    assert info._source_type is None
+    assert info._source_url is None
+
+
+def test_info_from_wheel_metadata_incomplete() -> None:
+    """
+    To avoid differences in cached metadata,
+    it is important that the representation of missing fields does not change!
+    """
+    metadata, _ = parse_email(b"Metadata-Version: 2.1\nName: demo\nVersion: 0.1.0\n")
+    info = PackageInfo.from_metadata(metadata)
+    assert info.name == "demo"
+    assert info.version == "0.1.0"
+    assert info.summary is None
+    assert info.requires_dist is None
+    assert info.requires_python is None
+
+
 def test_info_from_bdist(demo_wheel: Path) -> None:
     info = PackageInfo.from_bdist(demo_wheel)
     demo_check_info(info)
@@ -195,7 +228,7 @@ def test_info_from_poetry_directory_fallback_on_poetry_create_error(
 
 
 def test_info_from_requires_txt(fixture_dir: FixtureDirGetter) -> None:
-    info = PackageInfo.from_metadata(
+    info = PackageInfo.from_metadata_directory(
         fixture_dir("inspection") / "demo_only_requires_txt.egg-info"
     )
     assert info is not None

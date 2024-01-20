@@ -122,15 +122,24 @@ def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
             d1[k] = d2[k]
 
 
+class HTTPRangeRequestSupported(Exception):
+    """Raised when server unexpectedly supports byte ranges."""
+
+
 def download_file(
     url: str,
     dest: Path,
+    *,
     session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
+    raise_accepts_ranges: bool = False,
 ) -> None:
     from poetry.puzzle.provider import Indicator
 
     downloader = Downloader(url, dest, session)
+
+    if raise_accepts_ranges and downloader.accepts_ranges:
+        raise HTTPRangeRequestSupported(f"URL {url} supports range requests.")
 
     set_indicator = False
     with Indicator.context() as update_context:
@@ -169,6 +178,10 @@ class Downloader:
             url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
         )
         self._response.raise_for_status()
+
+    @cached_property
+    def accepts_ranges(self) -> bool:
+        return self._response.headers.get("Accept-Ranges") == "bytes"
 
     @cached_property
     def total_size(self) -> int:

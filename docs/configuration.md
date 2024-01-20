@@ -271,6 +271,23 @@ across all your projects if incorrectly set.
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
 
+### `solver.lazy-wheel`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_SOLVER_LAZY_WHEEL`
+
+*Introduced in 1.8.0*
+
+Do not download entire wheels to extract metadata but use
+[HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
+to only download the METADATA files of wheels.
+Especially with slow network connections this setting can speed up dependency resolution significantly.
+If the cache has already been filled or the server does not support HTTP range requests,
+this setting makes no difference.
+
 ### `virtualenvs.create`
 
 **Type**: `boolean`

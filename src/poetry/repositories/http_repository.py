@@ -19,12 +19,16 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
+from poetry.config.config import Config
+from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
+from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
 from poetry.utils.patterns import wheel_file_re
 
@@ -32,7 +36,6 @@ from poetry.utils.patterns import wheel_file_re
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
 
-    from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
     from poetry.repositories.link_sources.base import LinkSource
     from poetry.utils.authenticator import RepositoryCertificateConfig
@@ -49,6 +52,8 @@ class HTTPRepository(CachedRepository):
     ) -> None:
         super().__init__(name, disable_cache, config)
         self._url = url
+        if config is None:
+            config = Config.create()
         self._authenticator = Authenticator(
             config=config,
             cache_id=name,
@@ -57,6 +62,16 @@ class HTTPRepository(CachedRepository):
         )
         self._authenticator.add_repository(name, url)
         self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
+
+        self._lazy_wheel = config.get("solver.lazy-wheel", True)
+        # We are tracking if a domain supports range requests or not to avoid
+        # unnecessary requests.
+        # ATTENTION: A domain might support range requests only for some files, so the
+        # meaning is as follows:
+        # - Domain not in dict: We don't know anything.
+        # - True: The domain supports range requests for at least some files.
+        # - False: The domain does not support range requests for the files we tried.
+        self._supports_range_requests: dict[str, bool] = {}
 
     @property
     def session(self) -> Authenticator:
@@ -74,22 +89,63 @@ class HTTPRepository(CachedRepository):
     def authenticated_url(self) -> str:
         return self._authenticator.authenticated_url(url=self.url)
 
-    def _download(self, url: str, dest: Path) -> None:
-        return download_file(url, dest, session=self.session)
+    def _download(
+        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
+    ) -> None:
+        return download_file(
+            url, dest, session=self.session, raise_accepts_ranges=raise_accepts_ranges
+        )
 
     @contextmanager
-    def _cached_or_downloaded_file(self, link: Link) -> Iterator[Path]:
+    def _cached_or_downloaded_file(
+        self, link: Link, *, raise_accepts_ranges: bool = False
+    ) -> Iterator[Path]:
         self._log(f"Downloading: {link.url}", level="debug")
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / link.filename
-            self._download(link.url, filepath)
+            self._download(
+                link.url, filepath, raise_accepts_ranges=raise_accepts_ranges
+            )
             yield filepath
 
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        with self._cached_or_downloaded_file(Link(url)) as filepath:
-            return PackageInfo.from_wheel(filepath)
+        link = Link(url)
+        netloc = link.netloc
+
+        # If "lazy-wheel" is enabled and the domain supports range requests
+        # or we don't know yet, we try range requests.
+        if self._lazy_wheel and self._supports_range_requests.get(netloc, True):
+            try:
+                package_info = PackageInfo.from_metadata(
+                    metadata_from_wheel_url(link.filename, link.url, self.session)
+                )
+            except HTTPRangeRequestUnsupported:
+                # Do not set to False if we already know that the domain supports
+                # range requests for some URLs!
+                if netloc not in self._supports_range_requests:
+                    self._supports_range_requests[netloc] = False
+            else:
+                self._supports_range_requests[netloc] = True
+                return package_info
+
+        try:
+            with self._cached_or_downloaded_file(
+                link, raise_accepts_ranges=self._lazy_wheel
+            ) as filepath:
+                return PackageInfo.from_wheel(filepath)
+        except HTTPRangeRequestSupported:
+            # The domain did not support range requests for the first URL(s) we tried,
+            # but supports it for some URLs (especially the current URL),
+            # so we abort the download, update _supports_range_requests to try
+            # range requests for all files and use it for the current URL.
+            self._log(
+                f"Abort downloading {link.url} because server supports range requests",
+                level="debug",
+            )
+            self._supports_range_requests[netloc] = True
+            return self._get_info_from_wheel(link.url)
 
     def _get_info_from_sdist(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
