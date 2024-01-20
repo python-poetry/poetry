@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import BinaryIO
 from typing import ClassVar
+from typing import TypeVar
 from typing import cast
 from urllib.parse import urlparse
 from zipfile import BadZipFile
@@ -140,6 +141,9 @@ class MergeIntervals:
         yield from self._merge(start, end, left, right)
 
 
+T = TypeVar("T", bound="ReadOnlyIOWrapper")
+
+
 class ReadOnlyIOWrapper(BinaryIO):
     """Implement read-side ``BinaryIO`` methods wrapping an inner ``BinaryIO``.
 
@@ -150,7 +154,7 @@ class ReadOnlyIOWrapper(BinaryIO):
     def __init__(self, inner: BinaryIO) -> None:
         self._file = inner
 
-    def __enter__(self) -> ReadOnlyIOWrapper:
+    def __enter__(self: T) -> T:
         self._file.__enter__()
         return self
 
@@ -255,6 +259,9 @@ class ReadOnlyIOWrapper(BinaryIO):
         raise NotImplementedError
 
 
+U = TypeVar("U", bound="LazyFileOverHTTP")
+
+
 class LazyFileOverHTTP(ReadOnlyIOWrapper):
     """File-like object representing a fixed-length file over HTTP.
 
@@ -277,7 +284,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         self._session = session
         self._url = url
 
-    def __enter__(self) -> LazyFileOverHTTP:
+    def __enter__(self: U) -> U:
         super().__enter__()
         self._setup_content()
         return self
@@ -456,16 +463,6 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
     _domains_without_negative_range: ClassVar[set[str]] = set()
 
     _metadata_regex = re.compile(r"^[^/]*\.dist-info/METADATA$")
-
-    # This override is needed for mypy so we can call ``.prefetch_metadata()``
-    # within a ``with`` block.
-    def __enter__(self) -> LazyWheelOverHTTP:
-        """Fetch the remote file length and reset the log of downloaded intervals.
-
-        This method must be called before ``.read()`` or ``.prefetch_metadata()``.
-        """
-        super().__enter__()
-        return self
 
     def read_metadata(self, name: str) -> bytes:
         """Download and read the METADATA file from the remote wheel."""
