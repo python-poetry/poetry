@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import logging
 import os
 import shutil
 import stat
@@ -35,6 +36,29 @@ if TYPE_CHECKING:
     from requests import Session
 
     from poetry.utils.authenticator import Authenticator
+
+logger = logging.getLogger(__name__)
+prioritised_hash_types: tuple[str, ...] = tuple(
+    t
+    for t in [
+        "sha3_512",
+        "sha3_384",
+        "sha3_256",
+        "sha3_224",
+        "sha512",
+        "sha384",
+        "sha256",
+        "sha224",
+        "shake_256",
+        "shake_128",
+        "blake2s",
+        "blake2b",
+    ]
+    if t in hashlib.algorithms_available
+)
+non_prioritised_available_hash_types: frozenset[str] = frozenset(
+    set(hashlib.algorithms_available).difference(prioritised_hash_types)
+)
 
 
 @contextmanager
@@ -293,6 +317,28 @@ def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
             h.update(content)
 
     return h.hexdigest()
+
+
+def get_highest_priority_hash_type(
+    hash_types: set[str], archive_name: str
+) -> str | None:
+    if not hash_types:
+        return None
+
+    for prioritised_hash_type in prioritised_hash_types:
+        if prioritised_hash_type in hash_types:
+            return prioritised_hash_type
+
+    logger.debug(
+        f"There are no known hash types for {archive_name} that are prioritised (known"
+        f" hash types: {hash_types!s})"
+    )
+
+    for available_hash_type in non_prioritised_available_hash_types:
+        if available_hash_type in hash_types:
+            return available_hash_type
+
+    return None
 
 
 def extractall(source: Path, dest: Path, zip: bool) -> None:
