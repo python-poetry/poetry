@@ -256,7 +256,7 @@ class ReadOnlyIOWrapper(BinaryIO):
         raise NotImplementedError
 
 
-class LazyRemoteResource(ReadOnlyIOWrapper):
+class LazyRemoteFile(ReadOnlyIOWrapper):
     """Abstract class for a binary file object that lazily downloads its contents.
 
     This class uses a ``MergeIntervals`` instance to keep track of what it's downloaded.
@@ -265,41 +265,9 @@ class LazyRemoteResource(ReadOnlyIOWrapper):
     def __init__(self, inner: BinaryIO) -> None:
         super().__init__(inner)
         self._merge_intervals: MergeIntervals | None = None
+        self._length: int | None = None
 
-    @abc.abstractmethod
-    def fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
-        """Call to the remote backend to provide this byte range in one or more chunks.
-
-        NB: For compatibility with HTTP range requests, the range provided to this
-        method must *include* the byte indexed at argument ``end`` (so e.g. ``0-1`` is 2
-        bytes long, and the range can never be empty).
-
-        :raises Exception: implementations may raise an exception for e.g. intermittent
-                           errors accessing the remote resource.
-        """
-        ...
-
-    def _setup_content(self) -> None:
-        """Ensure ``self._merge_intervals`` is initialized.
-
-        Called in ``__enter__``, and should make recursive invocations into a no-op.
-        Subclasses may override this method."""
-        if self._merge_intervals is None:
-            self._merge_intervals = MergeIntervals()
-
-    def _reset_content(self) -> None:
-        """Unset ``self._merge_intervals``.
-
-        Called in ``__exit__``, and should make recursive invocations into a no-op.
-        Subclasses may override this method."""
-        if self._merge_intervals is not None:
-            logger.debug(
-                "unsetting merge intervals (were: %s)", repr(self._merge_intervals)
-            )
-            self._merge_intervals = None
-
-    def __enter__(self) -> LazyRemoteResource:
-        """Call ``self._setup_content()``, then return self."""
+    def __enter__(self) -> LazyRemoteFile:
         super().__enter__()
         self._setup_content()
         return self
@@ -310,96 +278,8 @@ class LazyRemoteResource(ReadOnlyIOWrapper):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """Call ``self._reset_content()``."""
         self._reset_content()
         super().__exit__(exc_type, exc_value, traceback)
-
-    @contextmanager
-    def _stay(self) -> Iterator[None]:
-        """Return a context manager keeping the position.
-
-        At the end of the block, seek back to original position.
-        """
-        pos = self.tell()
-        try:
-            yield
-        finally:
-            self.seek(pos)
-
-    def ensure_downloaded(self, start: int, end: int) -> None:
-        """Ensures bytes start to end (inclusive) have been downloaded and written to
-        the backing file.
-
-        :raises ValueError: if ``__enter__`` was not called beforehand.
-        """
-        if self._merge_intervals is None:
-            raise ValueError(".__enter__() must be called to set up merge intervals")
-        # Reducing by 1 to get an inclusive end range.
-        end -= 1
-        with self._stay():
-            for (
-                range_start,
-                range_end,
-            ) in self._merge_intervals.minimal_intervals_covering(start, end):
-                self.seek(start)
-                for chunk in self.fetch_content_range(range_start, range_end):
-                    self._file.write(chunk)
-
-
-class FixedSizeLazyResource(LazyRemoteResource):
-    """Fetches a fixed content length from the remote server when initialized in order
-    to support ``.read(-1)`` and seek calls against ``io.SEEK_END``."""
-
-    def __init__(self, inner: BinaryIO) -> None:
-        super().__init__(inner)
-        self._length: int | None = None
-
-    @abc.abstractmethod
-    def _fetch_content_length(self) -> int:
-        """Query the remote resource for the total length of the file.
-
-        This method may also mutate internal state, such as writing to the backing
-        file. It's marked private because it will only be called within this class's
-        ``__enter__`` implementation to populate an internal length field.
-
-        :raises Exception: implementations may raise any type of exception if the length
-                           value could not be parsed, or any other issue which might
-                           cause valid calls to ``self.fetch_content_range()`` to fail.
-        """
-        raise NotImplementedError
-
-    def _setup_content(self) -> None:
-        """Initialize the internal length field and other bookkeeping.
-
-        After parsing the remote file length with ``self._fetch_content_length()``,
-        this method will truncate the underlying file from parent abstract class
-        ``ReadOnlyIOWrapper`` to that size in order to support seek operations against
-        ``io.SEEK_END`` in ``self.read()``.
-
-        This method is called in ``__enter__``.
-        """
-        super()._setup_content()
-
-        if self._length is None:
-            logger.debug("begin fetching content length")
-            self._length = self._fetch_content_length()
-            logger.debug("done fetching content length (is: %d)", self._length)
-        else:
-            logger.debug("content length already fetched (is: %d)", self._length)
-
-        # Enable us to seek and write anywhere in the backing file up to this
-        # known length.
-        self.truncate(self._length)
-
-    def _reset_content(self) -> None:
-        """Unset the internal length field and other bookkeeping.
-
-        This method is called in ``__exit__``."""
-        super()._reset_content()
-
-        if self._length is not None:
-            logger.debug("unsetting content length (was: %d)", self._length)
-            self._length = None
 
     def read(self, size: int = -1) -> bytes:
         """Read up to size bytes from the object and return them.
@@ -422,11 +302,109 @@ class FixedSizeLazyResource(LazyRemoteResource):
         else:
             download_size = size
         stop = min(cur + download_size, self._length)
-        self.ensure_downloaded(cur, stop)
+        self._ensure_downloaded(cur, stop)
         return super().read(download_size)
 
+    @abc.abstractmethod
+    def _fetch_content_length(self) -> int:
+        """Query the remote resource for the total length of the file.
 
-class LazyHTTPFile(FixedSizeLazyResource):
+        This method may also mutate internal state, such as writing to the backing
+        file. It's marked private because it will only be called within this class's
+        ``__enter__`` implementation to populate an internal length field.
+
+        :raises Exception: implementations may raise any type of exception if the length
+                           value could not be parsed, or any other issue which might
+                           cause valid calls to ``self._fetch_content_range()`` to fail.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
+        """Call to the remote backend to provide this byte range in one or more chunks.
+
+        NB: For compatibility with HTTP range requests, the range provided to this
+        method must *include* the byte indexed at argument ``end`` (so e.g. ``0-1`` is 2
+        bytes long, and the range can never be empty).
+
+        :raises Exception: implementations may raise an exception for e.g. intermittent
+                           errors accessing the remote resource.
+        """
+        raise NotImplementedError
+
+    def _setup_content(self) -> None:
+        """Initialize the internal length field and other bookkeeping.
+
+        Ensure ``self._merge_intervals`` is initialized.
+
+        After parsing the remote file length with ``self._fetch_content_length()``,
+        this method will truncate the underlying file from parent abstract class
+        ``ReadOnlyIOWrapper`` to that size in order to support seek operations against
+        ``io.SEEK_END`` in ``self.read()``.
+
+        Called in ``__enter__``, and should make recursive invocations into a no-op.
+        Subclasses may override this method."""
+        if self._merge_intervals is None:
+            self._merge_intervals = MergeIntervals()
+
+        if self._length is None:
+            logger.debug("begin fetching content length")
+            self._length = self._fetch_content_length()
+            logger.debug("done fetching content length (is: %d)", self._length)
+            # Enable us to seek and write anywhere in the backing file up to this
+            # known length.
+            self.truncate(self._length)
+        else:
+            logger.debug("content length already fetched (is: %d)", self._length)
+
+    def _reset_content(self) -> None:
+        """Unset the internal length field and merge intervals.
+
+        Called in ``__exit__``, and should make recursive invocations into a no-op.
+        Subclasses may override this method."""
+        if self._merge_intervals is not None:
+            logger.debug(
+                "unsetting merge intervals (were: %s)", repr(self._merge_intervals)
+            )
+            self._merge_intervals = None
+
+        if self._length is not None:
+            logger.debug("unsetting content length (was: %d)", self._length)
+            self._length = None
+
+    @contextmanager
+    def _stay(self) -> Iterator[None]:
+        """Return a context manager keeping the position.
+
+        At the end of the block, seek back to original position.
+        """
+        pos = self.tell()
+        try:
+            yield
+        finally:
+            self.seek(pos)
+
+    def _ensure_downloaded(self, start: int, end: int) -> None:
+        """Ensures bytes start to end (inclusive) have been downloaded and written to
+        the backing file.
+
+        :raises ValueError: if ``__enter__`` was not called beforehand.
+        """
+        if self._merge_intervals is None:
+            raise ValueError(".__enter__() must be called to set up merge intervals")
+        # Reducing by 1 to get an inclusive end range.
+        end -= 1
+        with self._stay():
+            for (
+                range_start,
+                range_end,
+            ) in self._merge_intervals.minimal_intervals_covering(start, end):
+                self.seek(start)
+                for chunk in self._fetch_content_range(range_start, range_end):
+                    self._file.write(chunk)
+
+
+class LazyHTTPFile(LazyRemoteFile):
     """File-like object representing a fixed-length file over HTTP.
 
     This uses HTTP range requests to lazily fetch the file's content into a temporary
@@ -451,7 +429,7 @@ class LazyHTTPFile(FixedSizeLazyResource):
         #     again in LazyWheelOverHTTP.
         return self._content_length_from_head()
 
-    def fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
+    def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
         """Perform a series of HTTP range requests to cover the specified byte range."""
         yield from self._stream_response(start, end).iter_content(CONTENT_CHUNK_SIZE)
 
@@ -588,7 +566,7 @@ class LazyWheelOverHTTP(LazyHTTPFile):
             # size), then download all of this at once, hopefully pulling in the entire
             # central directory.
             initial_start = max(0, ret_length - initial_chunk_size)
-            self.ensure_downloaded(initial_start, ret_length)
+            self._ensure_downloaded(initial_start, ret_length)
         else:
             # If we *could* download some file contents, then write them to the end of
             # the file and set up our bisect boundaries by hand.
@@ -759,7 +737,7 @@ class LazyWheelOverHTTP(LazyHTTPFile):
         if end is None:
             end = zf.start_dir
         logger.debug(f"fetch {filename}")
-        self.ensure_downloaded(start, end)
+        self._ensure_downloaded(start, end)
         logger.debug("done prefetching METADATA for %s", name)
 
         return filename
