@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import abc
 import io
 import logging
 import re
@@ -256,18 +255,29 @@ class ReadOnlyIOWrapper(BinaryIO):
         raise NotImplementedError
 
 
-class LazyRemoteFile(ReadOnlyIOWrapper):
-    """Abstract class for a binary file object that lazily downloads its contents.
+class LazyFileOverHTTP(ReadOnlyIOWrapper):
+    """File-like object representing a fixed-length file over HTTP.
 
-    This class uses a ``MergeIntervals`` instance to keep track of what it's downloaded.
-    """
+    This uses HTTP range requests to lazily fetch the file's content into a temporary
+    file. If such requests are not supported by the server, raises
+    ``HTTPRangeRequestUnsupported`` in the ``__enter__`` method."""
 
-    def __init__(self, inner: BinaryIO) -> None:
-        super().__init__(inner)
+    def __init__(
+        self,
+        url: str,
+        session: Session | Authenticator,
+        delete_backing_file: bool = True,
+    ) -> None:
+        super().__init__(cast(BinaryIO, NamedTemporaryFile(delete=delete_backing_file)))
+
         self._merge_intervals: MergeIntervals | None = None
         self._length: int | None = None
 
-    def __enter__(self) -> LazyRemoteFile:
+        self._request_count = 0
+        self._session = session
+        self._url = url
+
+    def __enter__(self) -> LazyFileOverHTTP:
         super().__enter__()
         self._setup_content()
         return self
@@ -305,32 +315,20 @@ class LazyRemoteFile(ReadOnlyIOWrapper):
         self._ensure_downloaded(cur, stop)
         return super().read(download_size)
 
-    @abc.abstractmethod
-    def _fetch_content_length(self) -> int:
-        """Query the remote resource for the total length of the file.
+    @classmethod
+    def _uncached_headers(cls) -> dict[str, str]:
+        """HTTP headers to bypass any HTTP caching.
 
-        This method may also mutate internal state, such as writing to the backing
-        file. It's marked private because it will only be called within this class's
-        ``__enter__`` implementation to populate an internal length field.
+        The requests we perform in this file are intentionally small, and any caching
+        should be done at a higher level.
 
-        :raises Exception: implementations may raise any type of exception if the length
-                           value could not be parsed, or any other issue which might
-                           cause valid calls to ``self._fetch_content_range()`` to fail.
+        Further, caching partial requests might cause issues:
+        https://github.com/pypa/pip/pull/8716
         """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
-        """Call to the remote backend to provide this byte range in one or more chunks.
-
-        NB: For compatibility with HTTP range requests, the range provided to this
-        method must *include* the byte indexed at argument ``end`` (so e.g. ``0-1`` is 2
-        bytes long, and the range can never be empty).
-
-        :raises Exception: implementations may raise an exception for e.g. intermittent
-                           errors accessing the remote resource.
-        """
-        raise NotImplementedError
+        # "no-cache" is the correct value for "up to date every time", so this will also
+        # ensure we get the most recent value from the server:
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#provide_up-to-date_content_every_time
+        return {"Accept-Encoding": "identity", "Cache-Control": "no-cache"}
 
     def _setup_content(self) -> None:
         """Initialize the internal length field and other bookkeeping.
@@ -372,6 +370,48 @@ class LazyRemoteFile(ReadOnlyIOWrapper):
             logger.debug("unsetting content length (was: %d)", self._length)
             self._length = None
 
+    def _content_length_from_head(self) -> int:
+        """Performs a HEAD request to extract the Content-Length.
+
+        :raises HTTPRangeRequestUnsupported: if the response fails to indicate support
+                                             for "bytes" ranges."""
+        self._request_count += 1
+        head = self._session.head(self._url, headers=self._uncached_headers())
+        head.raise_for_status()
+        assert head.status_code == codes.ok
+        accepted_range = head.headers.get("Accept-Ranges", None)
+        if accepted_range != "bytes":
+            raise HTTPRangeRequestUnsupported(
+                f"server does not support byte ranges: header was '{accepted_range}'"
+            )
+        return int(head.headers["Content-Length"])
+
+    def _fetch_content_length(self) -> int:
+        """Get the remote file's length."""
+        # NB: This is currently dead code, as _fetch_content_length() is overridden
+        #     again in LazyWheelOverHTTP.
+        return self._content_length_from_head()
+
+    def _stream_response(self, start: int, end: int) -> Response:
+        """Return streaming HTTP response to a range request from start to end."""
+        headers = self._uncached_headers()
+        headers["Range"] = f"bytes={start}-{end}"
+        logger.debug("streamed bytes request: %s", headers["Range"])
+        self._request_count += 1
+        response = self._session.get(self._url, headers=headers, stream=True)
+        response.raise_for_status()
+        assert int(response.headers["Content-Length"]) == (end - start + 1)
+        return response
+
+    def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
+        """Perform a series of HTTP range requests to cover the specified byte range.
+
+        NB: For compatibility with HTTP range requests, the range provided to this
+        method must *include* the byte indexed at argument ``end`` (so e.g. ``0-1`` is 2
+        bytes long, and the range can never be empty).
+        """
+        yield from self._stream_response(start, end).iter_content(CONTENT_CHUNK_SIZE)
+
     @contextmanager
     def _stay(self) -> Iterator[None]:
         """Return a context manager keeping the position.
@@ -404,100 +444,7 @@ class LazyRemoteFile(ReadOnlyIOWrapper):
                     self._file.write(chunk)
 
 
-class LazyHTTPFile(LazyRemoteFile):
-    """File-like object representing a fixed-length file over HTTP.
-
-    This uses HTTP range requests to lazily fetch the file's content into a temporary
-    file. If such requests are not supported by the server, raises
-    ``HTTPRangeRequestUnsupported`` in the ``__enter__`` method."""
-
-    def __init__(
-        self,
-        url: str,
-        session: Session | Authenticator,
-        delete_backing_file: bool = True,
-    ) -> None:
-        super().__init__(cast(BinaryIO, NamedTemporaryFile(delete=delete_backing_file)))
-
-        self._request_count = 0
-        self._session = session
-        self._url = url
-
-    def _fetch_content_length(self) -> int:
-        """Get the remote file's length from a HEAD request."""
-        # NB: This is currently dead code, as _fetch_content_length() is overridden
-        #     again in LazyWheelOverHTTP.
-        return self._content_length_from_head()
-
-    def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
-        """Perform a series of HTTP range requests to cover the specified byte range."""
-        yield from self._stream_response(start, end).iter_content(CONTENT_CHUNK_SIZE)
-
-    def __enter__(self) -> LazyHTTPFile:
-        """Fetch the remote file length and reset the log of downloaded intervals.
-
-        This method must be called before ``.read()``.
-
-        :raises HTTPRangeRequestUnsupported: if the remote server fails to indicate
-                                             support for "bytes" ranges.
-        """
-        super().__enter__()
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        """Logs request count to quickly identify any pathological cases in log data."""
-        logger.debug("%d requests for url %s", self._request_count, self._url)
-        super().__exit__(exc_type, exc_value, traceback)
-
-    def _content_length_from_head(self) -> int:
-        """Performs a HEAD request to extract the Content-Length.
-
-        :raises HTTPRangeRequestUnsupported: if the response fails to indicate support
-                                             for "bytes" ranges."""
-        self._request_count += 1
-        head = self._session.head(self._url, headers=self._uncached_headers())
-        head.raise_for_status()
-        assert head.status_code == codes.ok
-        accepted_range = head.headers.get("Accept-Ranges", None)
-        if accepted_range != "bytes":
-            raise HTTPRangeRequestUnsupported(
-                f"server does not support byte ranges: header was '{accepted_range}'"
-            )
-        return int(head.headers["Content-Length"])
-
-    def _stream_response(self, start: int, end: int) -> Response:
-        """Return streaming HTTP response to a range request from start to end."""
-        headers = self._uncached_headers()
-        headers["Range"] = f"bytes={start}-{end}"
-        logger.debug("streamed bytes request: %s", headers["Range"])
-        self._request_count += 1
-        response = self._session.get(self._url, headers=headers, stream=True)
-        response.raise_for_status()
-        assert int(response.headers["Content-Length"]) == (end - start + 1)
-        return response
-
-    @classmethod
-    def _uncached_headers(cls) -> dict[str, str]:
-        """HTTP headers to bypass any HTTP caching.
-
-        The requests we perform in this file are intentionally small, and any caching
-        should be done at a higher level.
-
-        Further, caching partial requests might cause issues:
-        https://github.com/pypa/pip/pull/8716
-        """
-        # "no-cache" is the correct value for "up to date every time", so this will also
-        # ensure we get the most recent value from the server:
-        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#provide_up-to-date_content_every_time
-        return {"Accept-Encoding": "identity", "Cache-Control": "no-cache"}
-
-
-class LazyWheelOverHTTP(LazyHTTPFile):
+class LazyWheelOverHTTP(LazyFileOverHTTP):
     """File-like object mapped to a ZIP file over HTTP.
 
     This uses HTTP range requests to lazily fetch the file's content, which should be
