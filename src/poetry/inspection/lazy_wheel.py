@@ -106,10 +106,10 @@ class MergeIntervals:
         """Return an iterator of intervals to be fetched.
 
         Args:
-            start (int): Start of needed interval
-            end (int): End of needed interval
-            left (int): Index of first overlapping downloaded data
-            right (int): Index after last overlapping downloaded data
+            start: Start of needed interval
+            end: End of needed interval
+            left: Index of first overlapping downloaded data
+            right: Index after last overlapping downloaded data
         """
         lslice, rslice = self._left[left:right], self._right[left:right]
         i = start = min([start] + lslice[:1])
