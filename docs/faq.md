@@ -144,6 +144,16 @@ commands =
 `tox` will not do any install. Poetry installs all the dependencies and the current package in editable mode.
 Thus, tests are running against the local files and not the built and installed package.
 
+#### Note about credentials
+
+Note that `tox` does not forward the environment variables of your current shell session by default.
+This may cause Poetry to not be able to install dependencies in the `tox` environments if you have configured
+credentials using the system keyring on Linux systems or using environment variables in general.
+You can use the `passenv` [configuration option](https://tox.wiki/en/latest/config.html#passenv) to forward the
+required variables explicitly or `passenv = "*"` to forward all of them.
+Linux systems may require forwarding the `DBUS_SESSION_BUS_ADDRESS` variable to allow access to the system keyring,
+though this may vary between desktop environments.
+
 ### Is Nox supported?
 
 Use the [`nox-poetry`](https://github.com/cjolowicz/nox-poetry) package to install locked versions of
