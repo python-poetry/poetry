@@ -150,6 +150,24 @@ class ReadOnlyIOWrapper(BinaryIO):
     def __init__(self, inner: BinaryIO) -> None:
         self._file = inner
 
+    def __enter__(self) -> ReadOnlyIOWrapper:
+        self._file.__enter__()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._file.__exit__(exc_type, exc_value, traceback)
+
+    def __iter__(self) -> Iterator[bytes]:
+        raise NotImplementedError
+
+    def __next__(self) -> bytes:
+        raise NotImplementedError
+
     @property
     def mode(self) -> str:
         """Opening mode, which is always rb."""
@@ -234,24 +252,6 @@ class ReadOnlyIOWrapper(BinaryIO):
         raise NotImplementedError
 
     def writelines(self, lines: Iterable[Any]) -> None:
-        raise NotImplementedError
-
-    def __enter__(self) -> ReadOnlyIOWrapper:
-        self._file.__enter__()
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        self._file.__exit__(exc_type, exc_value, traceback)
-
-    def __iter__(self) -> Iterator[bytes]:
-        raise NotImplementedError
-
-    def __next__(self) -> bytes:
         raise NotImplementedError
 
 
@@ -466,6 +466,13 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         """
         super().__enter__()
         return self
+
+    def read_metadata(self, name: str) -> bytes:
+        """Download and read the METADATA file from the remote wheel."""
+        with ZipFile(self) as zf:
+            # prefetch metadata to reduce the number of range requests
+            filename = self._prefetch_metadata(name)
+            return zf.read(filename)
 
     @classmethod
     def _initial_chunk_length(cls) -> int:
@@ -688,10 +695,3 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         logger.debug("done prefetching METADATA for %s", name)
 
         return filename
-
-    def read_metadata(self, name: str) -> bytes:
-        """Download and read the METADATA file from the remote wheel."""
-        with ZipFile(self) as zf:
-            # prefetch metadata to reduce the number of range requests
-            filename = self._prefetch_metadata(name)
-            return zf.read(filename)
