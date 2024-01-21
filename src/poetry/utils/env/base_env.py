@@ -330,8 +330,9 @@ class Env:
                 subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
                 output = ""
             else:
+                encoding = "locale" if sys.version_info >= (3, 10) else None
                 output = subprocess.check_output(
-                    cmd, stderr=stderr, env=env, text=True, **kwargs
+                    cmd, stderr=stderr, env=env, text=True, encoding=encoding, **kwargs
                 )
         except CalledProcessError as e:
             raise EnvCommandError(e)

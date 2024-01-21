@@ -186,7 +186,8 @@ def test_call_does_not_block_on_full_pipe(
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-"""
+""",
+        encoding="utf-8",
     )
 
     def target(result: list[int]) -> None:
@@ -276,7 +277,7 @@ def test_env_system_packages(
 
     assert (
         f"include-system-site-packages = {str(with_system_site_packages).lower()}"
-        in pyvenv_cfg.read_text()
+        in pyvenv_cfg.read_text(encoding="utf-8")
     )
     assert env.includes_system_site_packages is with_system_site_packages
 

@@ -13,6 +13,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  PYTHONWARNDEFAULTENCODING: 'true'
+
 jobs:
   changes:
     name: Detect changed files

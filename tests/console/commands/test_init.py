@@ -91,7 +91,7 @@ def test_noninteractive(
     assert tester.io.fetch_output() == expected
     assert tester.io.fetch_error() == ""
 
-    toml_content = (tmp_path / "pyproject.toml").read_text()
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert 'name = "my-package"' in toml_content
     assert 'pytest = "^3.6.0"' in toml_content
 
@@ -853,9 +853,11 @@ def test_init_existing_pyproject_simple(
 [tool.black]
 line-length = 88
 """
-    pyproject_file.write_text(existing_section)
+    pyproject_file.write_text(existing_section, encoding="utf-8")
     tester.execute(inputs=init_basic_inputs)
-    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
+    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text(
+        encoding="utf-8"
+    )
 
 
 @pytest.mark.parametrize("linesep", ["\n", "\r\n"])
@@ -871,10 +873,10 @@ def test_init_existing_pyproject_consistent_linesep(
 [tool.black]
 line-length = 88
 """.replace("\n", linesep)
-    with open(pyproject_file, "w", newline="") as f:
+    with open(pyproject_file, "w", newline="", encoding="utf-8") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)
-    with open(pyproject_file, newline="") as f:
+    with open(pyproject_file, newline="", encoding="utf-8") as f:
         content = f.read()
     init_basic_toml = init_basic_toml.replace("\n", linesep)
     assert f"{existing_section}{linesep}{init_basic_toml}" in content
@@ -891,7 +893,7 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
 [tool.black]
 line-length = 88
 """
-    pyproject_file.write_text(existing_section)
+    pyproject_file.write_text(existing_section, encoding="utf-8")
 
     repo.add_package(get_package("foo", "1.19.2"))
 
@@ -915,7 +917,9 @@ readme = "README.md"
 python = "^3.6"
 foo = "^1.19.2"
 """
-    assert f"{existing_section}\n{expected}" in pyproject_file.read_text()
+    assert f"{existing_section}\n{expected}" in pyproject_file.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_init_existing_pyproject_with_build_system_fails(
@@ -927,13 +931,13 @@ def test_init_existing_pyproject_with_build_system_fails(
 requires = ["setuptools >= 40.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 """
-    pyproject_file.write_text(existing_section)
+    pyproject_file.write_text(existing_section, encoding="utf-8")
     tester.execute(inputs=init_basic_inputs)
     assert (
         tester.io.fetch_error().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
-    assert existing_section in pyproject_file.read_text()
+    assert existing_section in pyproject_file.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize(
@@ -1069,7 +1073,7 @@ def test_respect_prefer_active_on_init(
 python = ">={python}"
 """
 
-    assert expected in pyproject_file.read_text()
+    assert expected in pyproject_file.read_text(encoding="utf-8")
 
 
 def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:

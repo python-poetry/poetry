@@ -126,9 +126,9 @@ def test_phase_version_update(tester: CommandTester) -> None:
 
 def test_dry_run(tester: CommandTester) -> None:
     assert isinstance(tester.command, VersionCommand)
-    old_pyproject = tester.command.poetry.file.path.read_text()
+    old_pyproject = tester.command.poetry.file.path.read_text(encoding="utf-8")
     tester.execute("--dry-run major")
 
-    new_pyproject = tester.command.poetry.file.path.read_text()
+    new_pyproject = tester.command.poetry.file.path.read_text(encoding="utf-8")
     assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
     assert old_pyproject == new_pyproject
