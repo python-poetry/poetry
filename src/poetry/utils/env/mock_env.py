@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
-from poetry.core.constraints.version import Version
-
 from poetry.utils.env.null_env import NullEnv
 
 
@@ -22,7 +20,6 @@ class MockEnv(NullEnv):
         platform_machine: str = "amd64",
         os_name: str = "posix",
         is_venv: bool = False,
-        pip_version: str = "19.1",
         sys_path: list[str] | None = None,
         marker_env: dict[str, Any] | None = None,
         supported_tags: list[Tag] | None = None,
@@ -36,7 +33,6 @@ class MockEnv(NullEnv):
         self._platform_machine = platform_machine
         self._os_name = os_name
         self._is_venv = is_venv
-        self._pip_version: Version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
         self._supported_tags = supported_tags
@@ -52,10 +48,6 @@ class MockEnv(NullEnv):
     @property
     def os(self) -> str:
         return self._os_name
-
-    @property
-    def pip_version(self) -> Version:
-        return self._pip_version
 
     @property
     def sys_path(self) -> list[str]:
