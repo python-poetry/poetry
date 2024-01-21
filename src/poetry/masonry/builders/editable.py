@@ -253,7 +253,8 @@ class EditableBuilder(Builder):
             json.dumps({
                 "dir_info": {"editable": True},
                 "url": self._poetry.file.path.parent.absolute().as_uri(),
-            })
+            }),
+            encoding="utf-8",
         )
         added_files.append(direct_url_json)
 

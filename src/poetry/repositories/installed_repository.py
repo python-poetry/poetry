@@ -58,7 +58,7 @@ class InstalledRepository(Repository):
             if not pth_file.exists():
                 continue
 
-            with pth_file.open() as f:
+            with pth_file.open(encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith(("#", "import ", "import\t")):

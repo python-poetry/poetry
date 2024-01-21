@@ -75,7 +75,7 @@ class SetupReader:
     def read_setup_cfg(self, filepath: Path) -> dict[str, Any]:
         parser = ConfigParser()
 
-        parser.read(str(filepath))
+        parser.read(str(filepath), encoding="utf-8")
 
         name = None
         version = None
