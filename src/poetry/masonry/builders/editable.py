@@ -164,18 +164,17 @@ class EditableBuilder(Builder):
                 module, callable_ = script_without_extras.split(":")
             except ValueError as exc:
                 msg = (
-                    f"Bad script ({name}): script needs to specify a function within a module like: "
-                    "module(.submodule):function\n"
-                    f"Instead got: {script}"
+                    f"Bad script ({name}): script needs to specify a function within a"
+                    f" module like: module(.submodule):function\nInstead got: {script}"
                 )
                 if "not enough values" in str(exc):
                     msg += (
-                        "\nHint: If the script depends on module-level code, try wrapping it in a main() "
-                        "function and modifying your script like:\n"
-                        f"{name} = \"{script}:main\""
+                        "\nHint: If the script depends on module-level code, try"
+                        " wrapping it in a main() function and modifying your script"
+                        f' like:\n{name} = "{script}:main"'
                     )
                 elif "too many values" in str(exc):
-                    msg += "\nToo many \":\" found!"
+                    msg += '\nToo many ":" found!'
 
                 raise ValueError(msg)
 

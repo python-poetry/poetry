@@ -89,15 +89,22 @@ def tmp_venv(tmp_path: Path, env_manager: EnvManager) -> Iterator[VirtualEnv]:
 @pytest.fixture()
 def bad_scripts_no_colon() -> Poetry:
     poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "bad_scripts_project" / "no_colon"
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "bad_scripts_project"
+        / "no_colon"
     )
 
     return poetry
 
+
 @pytest.fixture()
 def bad_scripts_too_many_colon() -> Poetry:
     poetry = Factory().create_poetry(
-        Path(__file__).parent.parent.parent / "fixtures" / "bad_scripts_project" / "too_many_colon"
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "bad_scripts_project"
+        / "too_many_colon"
     )
 
     return poetry
@@ -359,7 +366,6 @@ def test_builder_should_execute_build_scripts(
     ] == env.executed
 
 
-
 def test_builder_catches_bad_scripts_no_colon(
     bad_scripts_no_colon: Poetry, tmp_venv: VirtualEnv
 ) -> None:
@@ -371,7 +377,8 @@ def test_builder_catches_bad_scripts_no_colon(
         # and some hint about what to do
         assert "Hint:" in str(exc)
 
-def test_builder_catches_bad_scripts_no_colon(
+
+def test_builder_catches_bad_scripts_too_many_colon(
     bad_scripts_too_many_colon: Poetry, tmp_venv: VirtualEnv
 ) -> None:
     builder = EditableBuilder(bad_scripts_too_many_colon, tmp_venv, NullIO())
