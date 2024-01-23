@@ -163,9 +163,22 @@ class EditableBuilder(Builder):
             try:
                 module, callable_ = script_without_extras.split(":")
             except ValueError as exc:
-                raise ValueError(
-                    f"{exc.args}  - Failed to parse script entry point '{script}'"
-                ) from exc
+                msg = (
+                    f"Bad script ({name}): script needs to specify a function within a module like: "
+                    "module(.submodule):function\n"
+                    f"Instead got: {script}"
+                )
+                if "not enough values" in str(exc):
+                    msg += (
+                        "\nHint: If the script depends on module-level code, try wrapping it in a main() "
+                        "function and modifying your script like:\n"
+                        f"{name} = \"{script}:main\""
+                    )
+                elif "too many values" in str(exc):
+                    msg += "\nToo many \":\" found!"
+
+                raise ValueError(msg)
+
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)
