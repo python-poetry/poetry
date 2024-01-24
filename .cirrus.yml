@@ -1,5 +1,5 @@
 freebsd_instance:
-  image_family: freebsd-13-1
+  image_family: freebsd-13-2
   cpu: 2
   memory: 4G
 
