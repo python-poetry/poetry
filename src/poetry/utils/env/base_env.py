@@ -21,7 +21,6 @@ from poetry.utils.helpers import get_real_windows_path
 
 if TYPE_CHECKING:
     from packaging.tags import Tag
-    from poetry.core.constraints.version import Version
     from poetry.core.version.markers import BaseMarker
     from virtualenv.seed.wheels.util import Wheel
 
@@ -54,7 +53,6 @@ class Env:
         self._base = base or path
 
         self._marker_env: dict[str, Any] | None = None
-        self._pip_version: Version | None = None
         self._site_packages: SitePackages | None = None
         self._paths: dict[str, str] | None = None
         self._supported_tags: list[Tag] | None = None
@@ -171,13 +169,6 @@ class Env:
         return os.name
 
     @property
-    def pip_version(self) -> Version:
-        if self._pip_version is None:
-            self._pip_version = self.get_pip_version()
-
-        return self._pip_version
-
-    @property
     def site_packages(self) -> SitePackages:
         if self._site_packages is None:
             # we disable write checks if no user site exist
@@ -286,9 +277,6 @@ class Env:
         return [str(self.python), "-m", "pip"]
 
     def get_supported_tags(self) -> list[Tag]:
-        raise NotImplementedError()
-
-    def get_pip_version(self) -> Version:
         raise NotImplementedError()
 
     def get_paths(self) -> dict[str, str]:
