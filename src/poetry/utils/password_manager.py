@@ -145,7 +145,7 @@ class PasswordManager:
 
     @functools.cached_property
     def use_keyring(self) -> bool:
-        return PoetryKeyring.is_available()
+        return self._config.get("keyring.enabled") and PoetryKeyring.is_available()
 
     @functools.cached_property
     def keyring(self) -> PoetryKeyring:

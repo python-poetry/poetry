@@ -330,3 +330,40 @@ def test_get_pypi_token_with_env_var_not_available(
     result_token = manager.get_pypi_token(repo_name)
 
     assert result_token is None
+
+
+def test_disabled_keyring_never_called(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+) -> None:
+    config.config["keyring"]["enabled"] = False
+    config.config["http-basic"] = {"onlyuser": {"username": "user"}}
+
+    manager = PasswordManager(config)
+    num_public_functions = len([f for f in dir(manager) if not f.startswith("_")])
+    if num_public_functions != 10:
+        pytest.fail(
+            f"A function was added to or removed from the {PasswordManager.__name__} "
+            "class without reflecting this change in this test."
+        )
+
+    with pytest.raises(PoetryKeyringError) as e:
+        _ = manager.keyring
+
+    assert str(e.value) == "Access to keyring was requested, but it is not available"
+
+    # We made sure that accessing a disabled keyring raises an exception.
+    # Now we call the PasswordManager functions that do access the keyring to
+    # make sure that they never do so when the keyring is disabled.
+    manager.set_pypi_token(repo_name="exists", token="token")
+    manager.get_pypi_token(repo_name="exists")
+    manager.get_pypi_token(repo_name="doesn't exist")
+    manager.delete_pypi_token(repo_name="exists")
+    manager.delete_pypi_token(repo_name="doesn't exist")
+    manager.set_http_password(repo_name="exists", username="user", password="password")
+    manager.get_http_auth(repo_name="exists")
+    manager.get_http_auth(repo_name="doesn't exist")
+    manager.get_http_auth(repo_name="onlyuser")
+    manager.delete_http_password(repo_name="exits")
+    manager.delete_http_password(repo_name="doesn't exist")
+    manager.delete_http_password(repo_name="onlyuser")
+    manager.get_credential("a", "b", "c", username="user")

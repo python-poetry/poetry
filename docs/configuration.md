@@ -506,3 +506,15 @@ repository.
 Set client certificate for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
 for more information.
+
+### `keyring.enabled`:
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_KEYRING_ENABLED`
+
+Enable the system keyring for storing credentials.
+See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
+for more information.

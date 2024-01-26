@@ -500,6 +500,12 @@ If a system keyring is available and supported, the password is stored to and re
 
 Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
 
+If you do not want to use the keyring, you can tell Poetry to disable it and store the credentials in plaintext config files:
+
+```bash
+poetry config keyring.enabled false
+```
+
 {{% note %}}
 
 Poetry will fallback to Pip style use of keyring so that backends like
