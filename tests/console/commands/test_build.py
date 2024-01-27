@@ -5,15 +5,61 @@ import tarfile
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from poetry.factory import Factory
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from cleo.testers.command_tester import CommandTester
+
+    from poetry.poetry import Poetry
     from poetry.utils.env import VirtualEnv
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
+
+
+@pytest.fixture
+def tmp_project_path(tmp_path: Path) -> Path:
+    return tmp_path / "project"
+
+
+@pytest.fixture
+def tmp_poetry(tmp_project_path: Path, fixture_dir: FixtureDirGetter) -> Poetry:
+    # copy project so that we start with a clean directory
+    shutil.copytree(fixture_dir("simple_project"), tmp_project_path)
+    poetry = Factory().create_poetry(tmp_project_path)
+    return poetry
+
+
+@pytest.fixture
+def tmp_tester(
+    tmp_poetry: Poetry, command_tester_factory: CommandTesterFactory
+) -> CommandTester:
+    return command_tester_factory("build", tmp_poetry)
+
+
+def get_package_glob(poetry: Poetry) -> str:
+    return f"{poetry.package.name.replace('-', '_')}-{poetry.package.version}*"
+
+
+def test_build_format_is_not_valid(tmp_tester: CommandTester) -> None:
+    with pytest.raises(ValueError, match=r"Invalid format.*"):
+        tmp_tester.execute("--format not_valid")
+
+
+@pytest.mark.parametrize("format", ["sdist", "wheel", "all"])
+def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, format: str
+) -> None:
+    tmp_tester.execute(f"--format {format}")
+    build_artifacts = tuple(
+        (tmp_project_path / "dist").glob(get_package_glob(tmp_poetry))
+    )
+    assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
 
 
 def test_build_with_multiple_readme_files(

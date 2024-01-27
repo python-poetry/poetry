@@ -696,15 +696,6 @@ class Executor:
                 package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
         if package_poetry is not None:
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = (
-                self._env.pip_version
-                < self._env.pip_version.__class__.from_parts(19, 0, 0)
-            )
-
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
@@ -716,13 +707,10 @@ class Executor:
                 builder.build()
 
                 return 0
-            elif legacy_pip or package_poetry.package.build_script:
+
+            if package_poetry.package.build_script:
                 from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
                 builder = SdistBuilder(package_poetry)
                 with builder.setup_py():
                     return self.pip_install(req, upgrade=True, editable=package.develop)
