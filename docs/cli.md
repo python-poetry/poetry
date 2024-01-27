@@ -377,8 +377,8 @@ poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 
 # or using SSH instead:
-poetry add git+ssh://github.com/sdispater/pendulum.git#develop
-poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
+poetry add git+ssh://git@github.com:sdispater/pendulum.git#develop
+poetry add git+ssh://git@github.com:sdispater/pendulum.git#2.0.5
 ```
 
 or reference a subdirectory:
