@@ -153,7 +153,7 @@ poetry install --without test,docs
 ```
 
 {{% note %}}
-The `--no-dev` option is now deprecated. You should use the `--without dev` notation instead.
+The `--no-dev` option is now deprecated. You should use the `--without dev` or `--only main` notation instead.
 {{% /note %}}
 
 You can also select optional dependency groups with the `--with` option.
