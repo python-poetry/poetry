@@ -264,8 +264,7 @@ def test_set_malformed_repositories_setting(
         tester.execute("repositories.foo bar baz")
 
     assert (
-        str(e.value)
-        == "You must pass the url. Example: poetry config repositories.foo"
+        str(e.value) == "You must pass the url. Example: poetry config repositories.foo"
         " https://bar.com"
     )
 

@@ -901,7 +901,9 @@ def test_init_existing_pyproject_consistent_linesep(
     existing_section = """
 [tool.black]
 line-length = 88
-""".replace("\n", linesep)
+""".replace(
+        "\n", linesep
+    )
     with open(pyproject_file, "w", newline="") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)
