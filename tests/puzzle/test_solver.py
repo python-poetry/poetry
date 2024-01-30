@@ -4393,8 +4393,7 @@ def test_solver_yanked_warning(
     assert "The locked version 2 for bar is a yanked version." in error
     assert (
         "The locked version 3 for baz is a yanked version. Reason for being yanked:"
-        " just wrong"
-        in error
+        " just wrong" in error
     )
     assert error.count("is a yanked version") == 2
     assert error.count("Reason for being yanked") == 1

@@ -109,20 +109,24 @@ def demo_setup_complex_calls_script(
     shutil.copytree(fixture_dir("scripts"), scripts_dir)
 
     pyproject = source_dir / "pyproject.toml"
-    pyproject.write_text(f"""\
+    pyproject.write_text(
+        f"""\
     [build-system]
     requires = ["setuptools", "scripts @ {scripts_dir.as_uri()}"]
     build-backend = "setuptools.build_meta:__legacy__"
-""")
+"""
+    )
 
     setup_py = source_dir / "setup.py"
-    setup_py.write_text("""\
+    setup_py.write_text(
+        """\
 import subprocess
 from setuptools import setup
 if subprocess.call(["exit-code"]) != 42:
     raise RuntimeError("Wrong exit code.")
 setup(name="demo", version="0.1.0", install_requires=[i for i in ["package"]])
-""")
+"""
+    )
 
     return source_dir
 

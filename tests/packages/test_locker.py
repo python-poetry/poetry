@@ -649,8 +649,7 @@ reference = "legacy"
 
     assert (
         "The lock file does not have a metadata entry.\nRegenerate the lock file with"
-        " the `poetry lock` command."
-        in str(e.value)
+        " the `poetry lock` command." in str(e.value)
     )
 
 

@@ -348,8 +348,7 @@ def test_remove_untracked_outputs_deprecation_warning(
     assert tester.status_code == 0
     assert (
         "The `--remove-untracked` option is deprecated, use the `--sync` option"
-        " instead.\n"
-        in tester.io.fetch_error()
+        " instead.\n" in tester.io.fetch_error()
     )
 
 
