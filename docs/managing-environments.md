@@ -37,6 +37,7 @@ your system, a standard workflow would be:
 ```bash
 pyenv install 3.9.8
 pyenv local 3.9.8  # Activate Python 3.9 for the current project
+poetry init -q  # Initiate poetry, in case you haven't already
 poetry install
 ```
 
