@@ -153,7 +153,7 @@ poetry install --without test,docs
 ```
 
 {{% note %}}
-The `--no-dev` option is now deprecated. You should use the `--without dev` or `--only main` notation instead.
+The `--no-dev` option is now deprecated. You should use the `--only main` or `--without dev` notation instead.
 {{% /note %}}
 
 You can also select optional dependency groups with the `--with` option.
@@ -262,7 +262,7 @@ is set to `false` because the old installer always compiles source files to byte
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
 * `--compile`: Compile Python source files to bytecode.
-* `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
@@ -301,7 +301,7 @@ You can do this using the `add` command.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
+* `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--lock` : Do not perform install (only update the lockfile).
 
 {{% note %}}
@@ -509,7 +509,7 @@ required by
 * `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--without dev` or `--only main` instead)
+* `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
