@@ -137,6 +137,8 @@ readme = "README.md"
 readme = ["docs/README1.md", "docs/README2.md"]
 ```
 
+Even though setting the README file(s) for the package is optional, you may encounter a non-fatal error when running `poetry install`. This error notifies you that Poetry cannot install the current project.
+
 ## homepage
 
 An URL to the website of the project. **Optional**
