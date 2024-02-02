@@ -32,7 +32,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.8.1"
+poetry-core = "1.9.0"
 poetry-plugin-export = "^1.6.0"
 build = "^1.0.3"
 cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
