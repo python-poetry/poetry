@@ -214,7 +214,9 @@ packages = [
 ]
 ```
 
-The `to` parameter is designed to specify the relative destination path where the package will be located upon installation. This allows for greater control over the organization of packages within your project's structure.
+The `to` parameter is designed to specify the relative destination path
+where the package will be located upon installation. This allows for
+greater control over the organization of packages within your project's structure.
 
 ```toml
 [tool.poetry]
