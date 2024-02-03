@@ -384,8 +384,7 @@ class Locker:
             package.requires,
             key=lambda d: d.name,
         ):
-            if dependency.pretty_name not in dependencies:
-                dependencies[dependency.pretty_name] = []
+            dependencies.setdefault(dependency.pretty_name, [])
 
             constraint = inline_table()
 
