@@ -116,6 +116,7 @@ class HTTPRepository(CachedRepository):
 
         # If "lazy-wheel" is enabled and the domain supports range requests
         # or we don't know yet, we try range requests.
+        raise_accepts_ranges = self._lazy_wheel
         if self._lazy_wheel and self._supports_range_requests.get(netloc, True):
             try:
                 package_info = PackageInfo.from_metadata(
@@ -124,6 +125,7 @@ class HTTPRepository(CachedRepository):
             except HTTPRangeRequestUnsupported:
                 # Do not set to False if we already know that the domain supports
                 # range requests for some URLs!
+                raise_accepts_ranges = False
                 if netloc not in self._supports_range_requests:
                     self._supports_range_requests[netloc] = False
             else:
@@ -132,7 +134,7 @@ class HTTPRepository(CachedRepository):
 
         try:
             with self._cached_or_downloaded_file(
-                link, raise_accepts_ranges=self._lazy_wheel
+                link, raise_accepts_ranges=raise_accepts_ranges
             ) as filepath:
                 return PackageInfo.from_wheel(filepath)
         except HTTPRangeRequestSupported:
