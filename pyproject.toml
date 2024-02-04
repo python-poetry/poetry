@@ -14,7 +14,6 @@ maintainers = [
 ]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "poetry", from = "src" }]
 include = [{ path = "tests", format = "sdist" }]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
