@@ -3826,7 +3826,7 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
         "1.0.0",
         source_type="legacy",
         source_url="https://foo.bar",
-        source_reference="custom",
+        source_reference="repo",
     )
     repo.add_package(foo)
 

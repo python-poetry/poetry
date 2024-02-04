@@ -487,7 +487,9 @@ class Provider:
                         package.pretty_name,
                         package.version,
                         extras=list(dependency.extras),
-                        repository_name=dependency.source_name,
+                        repository_name=(
+                            dependency.source_name or package.source_reference
+                        ),
                     ),
                 )
             except PackageNotFound as e:

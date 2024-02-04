@@ -22,6 +22,7 @@ from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.puzzle.provider import Provider
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
@@ -781,6 +782,24 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
         spy.assert_called()
     else:
         spy.assert_not_called()
+
+
+def test_complete_package_finds_locked_package_in_explicit_source(
+    pool: RepositoryPool, provider: Provider
+) -> None:
+    package = Package("a", "1.0", source_reference="explicit")
+    explicit_repo = Repository("explicit")
+    explicit_repo.add_package(package)
+    pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    dependency = package.to_dependency()
+    # complete_package() must succeed even if the dependency does not have an explicit
+    # source. This can be the case if the dependency is a transitive dependency and
+    # there is a direct dependency with an explicit source.
+    dependency.source_name = None
+
+    # must not fail
+    provider.complete_package(DependencyPackage(dependency, package))
 
 
 def test_source_dependency_is_satisfied_by_direct_origin(
