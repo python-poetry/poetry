@@ -30,6 +30,7 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.patterns import wheel_file_re
 
 
@@ -280,14 +281,20 @@ class HTTPRepository(CachedRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
+            file_hash: str | None
+            for hash_name in ("sha512", "sha384", "sha256"):
+                if hash_name in link.hashes:
+                    file_hash = f"{hash_name}:{link.hashes[hash_name]}"
+                    break
+            else:
+                file_hash = self.calculate_sha256(link)
 
-            if not link.hash or (
-                link.hash_name is not None
-                and link.hash_name not in ("sha256", "sha384", "sha512")
-                and hasattr(hashlib, link.hash_name)
+            if file_hash is None and (
+                hash_type := get_highest_priority_hash_type(
+                    set(link.hashes.keys()), link.filename
+                )
             ):
-                file_hash = self.calculate_sha256(link) or file_hash
+                file_hash = f"{hash_type}:{link.hashes[hash_type]}"
 
             files.append({"file": link.filename, "hash": file_hash})
 
@@ -303,7 +310,10 @@ class HTTPRepository(CachedRepository):
 
     def calculate_sha256(self, link: Link) -> str | None:
         with self._cached_or_downloaded_file(link) as filepath:
-            known_hash = getattr(hashlib, link.hash_name)() if link.hash_name else None
+            hash_name = get_highest_priority_hash_type(
+                set(link.hashes.keys()), link.filename
+            )
+            known_hash = getattr(hashlib, hash_name)() if hash_name else None
             required_hash = hashlib.sha256()
 
             chunksize = 4096
@@ -316,7 +326,11 @@ class HTTPRepository(CachedRepository):
                         known_hash.update(chunk)
                     required_hash.update(chunk)
 
-            if not known_hash or known_hash.hexdigest() == link.hash:
+            if (
+                not hash_name
+                or not known_hash
+                or known_hash.hexdigest() == link.hashes[hash_name]
+            ):
                 return f"{required_hash.name}:{required_hash.hexdigest()}"
         return None
 
