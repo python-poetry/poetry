@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterator
 
-import pkginfo
 import requests
 import requests.adapters
 
+from packaging.metadata import parse_email
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.utils.helpers import temporary_directory
@@ -159,7 +159,6 @@ class HTTPRepository(CachedRepository):
             try:
                 assert link.metadata_url is not None
                 response = self.session.get(link.metadata_url)
-                distribution = pkginfo.Distribution()
                 if link.metadata_hashes and (
                     hash_name := get_highest_priority_hash_type(
                         set(link.metadata_hashes.keys()), f"{link.filename}.metadata"
@@ -177,14 +176,8 @@ class HTTPRepository(CachedRepository):
                         )
                         return None
 
-                distribution.parse(response.content)
-                return PackageInfo(
-                    name=distribution.name,
-                    version=distribution.version,
-                    summary=distribution.summary,
-                    requires_dist=list(distribution.requires_dist),
-                    requires_python=distribution.requires_python,
-                )
+                metadata, _ = parse_email(response.content)
+                return PackageInfo.from_metadata(metadata)
 
             except requests.HTTPError:
                 self._log(
