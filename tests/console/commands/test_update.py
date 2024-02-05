@@ -4,13 +4,14 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.helpers import get_package
 from poetry.console.commands.update import UpdateCommand
+from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    from poetry.poetry import Poetry
     from pytest_mock import MockerFixture
+
+    from poetry.poetry import Poetry
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
