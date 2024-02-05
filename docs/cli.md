@@ -303,6 +303,7 @@ You can do this using the `add` command.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--lock` : Do not perform install (only update the lockfile).
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
