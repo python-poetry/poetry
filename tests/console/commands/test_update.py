@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tests.helpers import get_package
+from poetry.console.commands.update import UpdateCommand
 
 
 if TYPE_CHECKING:
@@ -92,6 +93,7 @@ def test_update_sync_option_is_passed_to_the_installer(
     The --sync option is passed properly to the installer from update.
     """
     tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+    assert isinstance(tester.command, UpdateCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
 
     tester.execute("--sync")
