@@ -82,10 +82,10 @@ def test_update_prints_operations(
     assert ("Package operations:" in output) is expected
     assert ("Installing docker (4.3.1)" in output) is expected
 
+
 @pytest.fixture()
 def test_update_sync_option_is_passed_to_the_installer(
-    command_tester_factory: CommandTesterFactory,
-    mocker: MockerFixture
+    command_tester_factory: CommandTesterFactory, mocker: MockerFixture
 ) -> None:
     """
     The --sync option is passed properly to the installer from update.
