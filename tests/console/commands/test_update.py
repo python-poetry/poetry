@@ -84,6 +84,7 @@ def test_update_prints_operations(
 
 @pytest.fixture()
 def test_update_sync_option_is_passed_to_the_installer(
+    command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture
 ) -> None:
     """
