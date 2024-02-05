@@ -160,15 +160,18 @@ class HTTPRepository(CachedRepository):
                 assert link.metadata_url is not None
                 response = self.session.get(link.metadata_url)
                 distribution = pkginfo.Distribution()
-                if link.metadata_hash_name is not None:
-                    metadata_hash = getattr(hashlib, link.metadata_hash_name)(
+                if link.metadata_hashes and (
+                    hash_name := get_highest_priority_hash_type(
+                        set(link.metadata_hashes.keys()), f"{link.filename}.metadata"
+                    )
+                ):
+                    metadata_hash = getattr(hashlib, hash_name)(
                         response.text.encode()
                     ).hexdigest()
-
-                    if metadata_hash != link.metadata_hash:
+                    if metadata_hash != link.metadata_hashes[hash_name]:
                         self._log(
                             f"Metadata file hash ({metadata_hash}) does not match"
-                            f" expected hash ({link.metadata_hash})."
+                            f" expected hash ({link.metadata_hashes[hash_name]})."
                             f" Metadata file for {link.filename} will be ignored.",
                             level="warning",
                         )
