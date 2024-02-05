@@ -9,6 +9,7 @@ from tests.helpers import get_package
 
 if TYPE_CHECKING:
     from poetry.poetry import Poetry
+    from pytest_mock import MockerFixture
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
@@ -80,3 +81,17 @@ def test_update_prints_operations(
 
     assert ("Package operations:" in output) is expected
     assert ("Installing docker (4.3.1)" in output) is expected
+
+@pytest.fixture()
+def test_update_sync_option_is_passed_to_the_installer(
+    mocker: MockerFixture
+) -> None:
+    """
+    The --sync option is passed properly to the installer from update.
+    """
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+
+    tester.execute("--sync")
+
+    assert tester.command.installer._requires_synchronization
