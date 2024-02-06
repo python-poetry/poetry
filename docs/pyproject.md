@@ -214,6 +214,18 @@ packages = [
 ]
 ```
 
+The `to` parameter is designed to specify the relative destination path
+where the package will be located upon installation. This allows for
+greater control over the organization of packages within your project's structure.
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package", from = "lib", to = "target_package" },
+]
+```
+
 If you want to restrict a package to a specific build format you can specify
 it by using `format`:
 
@@ -348,13 +360,6 @@ my_package_cli = 'my_package.console:run'
 ```
 
 Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
-
-To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
-
-```toml
-[tool.poetry.scripts]
-devtest = { reference = "mypackage:test.run_tests", extras = ["test"], type = "console" }
-```
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.

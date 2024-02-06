@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
 from poetry.core.utils.helpers import parse_requires
 
+from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from httpretty import httpretty
+    from httpretty.core import HTTPrettyRequest
 
     from tests.types import FixtureDirGetter
 
@@ -139,3 +143,48 @@ def test_download_file(
     expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(dest) == expect_sha_256
     assert http.last_request().headers["Accept-Encoding"] == "Identity"
+
+
+@pytest.mark.parametrize(
+    "hash_types,expected",
+    [
+        (("sha512", "sha3_512", "md5"), "sha3_512"),
+        ("md5", "md5"),
+        (("blah", "blah_blah"), None),
+        ((), None),
+    ],
+)
+def test_highest_priority_hash_type(hash_types: set[str], expected: str | None) -> None:
+    assert get_highest_priority_hash_type(hash_types, "Blah") == expected
+
+
+@pytest.mark.parametrize("accepts_ranges", [False, True])
+@pytest.mark.parametrize("raise_accepts_ranges", [False, True])
+def test_download_file_raise_accepts_ranges(
+    http: type[httpretty],
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    accepts_ranges: bool,
+    raise_accepts_ranges: bool,
+) -> None:
+    filename = "demo-0.1.0-py2.py3-none-any.whl"
+
+    def handle_request(
+        request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
+    ) -> tuple[int, dict[str, Any], bytes]:
+        file_path = fixture_dir("distributions") / filename
+        if accepts_ranges:
+            response_headers["Accept-Ranges"] = "bytes"
+        return 200, response_headers, file_path.read_bytes()
+
+    url = f"https://foo.com/{filename}"
+    http.register_uri(http.GET, url, body=handle_request)
+    dest = tmp_path / filename
+
+    if accepts_ranges and raise_accepts_ranges:
+        with pytest.raises(HTTPRangeRequestSupported):
+            download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
+        assert not dest.exists()
+    else:
+        download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
+        assert dest.is_file()

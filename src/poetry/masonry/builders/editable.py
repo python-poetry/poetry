@@ -158,8 +158,9 @@ class EditableBuilder(Builder):
 
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
-            name, script = script.split(" = ")
-            module, callable_ = script.split(":")
+            name, script_with_extras = script.split(" = ")
+            script_without_extras = script_with_extras.split("[")[0]
+            module, callable_ = script_without_extras.split(":")
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)

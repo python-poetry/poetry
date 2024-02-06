@@ -19,20 +19,24 @@ from poetry.core.packages.utils.link import Link
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
+from poetry.config.config import Config
+from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
+from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
 
-    from poetry.config.config import Config
     from poetry.inspection.info import PackageInfo
     from poetry.repositories.link_sources.base import LinkSource
     from poetry.utils.authenticator import RepositoryCertificateConfig
@@ -49,6 +53,8 @@ class HTTPRepository(CachedRepository):
     ) -> None:
         super().__init__(name, disable_cache, config)
         self._url = url
+        if config is None:
+            config = Config.create()
         self._authenticator = Authenticator(
             config=config,
             cache_id=name,
@@ -57,6 +63,16 @@ class HTTPRepository(CachedRepository):
         )
         self._authenticator.add_repository(name, url)
         self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
+
+        self._lazy_wheel = config.get("solver.lazy-wheel", True)
+        # We are tracking if a domain supports range requests or not to avoid
+        # unnecessary requests.
+        # ATTENTION: A domain might support range requests only for some files, so the
+        # meaning is as follows:
+        # - Domain not in dict: We don't know anything.
+        # - True: The domain supports range requests for at least some files.
+        # - False: The domain does not support range requests for the files we tried.
+        self._supports_range_requests: dict[str, bool] = {}
 
     @property
     def session(self) -> Authenticator:
@@ -74,22 +90,65 @@ class HTTPRepository(CachedRepository):
     def authenticated_url(self) -> str:
         return self._authenticator.authenticated_url(url=self.url)
 
-    def _download(self, url: str, dest: Path) -> None:
-        return download_file(url, dest, session=self.session)
+    def _download(
+        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
+    ) -> None:
+        return download_file(
+            url, dest, session=self.session, raise_accepts_ranges=raise_accepts_ranges
+        )
 
     @contextmanager
-    def _cached_or_downloaded_file(self, link: Link) -> Iterator[Path]:
+    def _cached_or_downloaded_file(
+        self, link: Link, *, raise_accepts_ranges: bool = False
+    ) -> Iterator[Path]:
         self._log(f"Downloading: {link.url}", level="debug")
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / link.filename
-            self._download(link.url, filepath)
+            self._download(
+                link.url, filepath, raise_accepts_ranges=raise_accepts_ranges
+            )
             yield filepath
 
     def _get_info_from_wheel(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        with self._cached_or_downloaded_file(Link(url)) as filepath:
-            return PackageInfo.from_wheel(filepath)
+        link = Link(url)
+        netloc = link.netloc
+
+        # If "lazy-wheel" is enabled and the domain supports range requests
+        # or we don't know yet, we try range requests.
+        raise_accepts_ranges = self._lazy_wheel
+        if self._lazy_wheel and self._supports_range_requests.get(netloc, True):
+            try:
+                package_info = PackageInfo.from_metadata(
+                    metadata_from_wheel_url(link.filename, link.url, self.session)
+                )
+            except HTTPRangeRequestUnsupported:
+                # Do not set to False if we already know that the domain supports
+                # range requests for some URLs!
+                raise_accepts_ranges = False
+                if netloc not in self._supports_range_requests:
+                    self._supports_range_requests[netloc] = False
+            else:
+                self._supports_range_requests[netloc] = True
+                return package_info
+
+        try:
+            with self._cached_or_downloaded_file(
+                link, raise_accepts_ranges=raise_accepts_ranges
+            ) as filepath:
+                return PackageInfo.from_wheel(filepath)
+        except HTTPRangeRequestSupported:
+            # The domain did not support range requests for the first URL(s) we tried,
+            # but supports it for some URLs (especially the current URL),
+            # so we abort the download, update _supports_range_requests to try
+            # range requests for all files and use it for the current URL.
+            self._log(
+                f"Abort downloading {link.url} because server supports range requests",
+                level="debug",
+            )
+            self._supports_range_requests[netloc] = True
+            return self._get_info_from_wheel(link.url)
 
     def _get_info_from_sdist(self, url: str) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
@@ -222,14 +281,20 @@ class HTTPRepository(CachedRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
+            file_hash: str | None
+            for hash_name in ("sha512", "sha384", "sha256"):
+                if hash_name in link.hashes:
+                    file_hash = f"{hash_name}:{link.hashes[hash_name]}"
+                    break
+            else:
+                file_hash = self.calculate_sha256(link)
 
-            if not link.hash or (
-                link.hash_name is not None
-                and link.hash_name not in ("sha256", "sha384", "sha512")
-                and hasattr(hashlib, link.hash_name)
+            if file_hash is None and (
+                hash_type := get_highest_priority_hash_type(
+                    set(link.hashes.keys()), link.filename
+                )
             ):
-                file_hash = self.calculate_sha256(link) or file_hash
+                file_hash = f"{hash_type}:{link.hashes[hash_type]}"
 
             files.append({"file": link.filename, "hash": file_hash})
 
@@ -245,7 +310,10 @@ class HTTPRepository(CachedRepository):
 
     def calculate_sha256(self, link: Link) -> str | None:
         with self._cached_or_downloaded_file(link) as filepath:
-            known_hash = getattr(hashlib, link.hash_name)() if link.hash_name else None
+            hash_name = get_highest_priority_hash_type(
+                set(link.hashes.keys()), link.filename
+            )
+            known_hash = getattr(hashlib, hash_name)() if hash_name else None
             required_hash = hashlib.sha256()
 
             chunksize = 4096
@@ -258,7 +326,11 @@ class HTTPRepository(CachedRepository):
                         known_hash.update(chunk)
                     required_hash.update(chunk)
 
-            if not known_hash or known_hash.hexdigest() == link.hash:
+            if (
+                not hash_name
+                or not known_hash
+                or known_hash.hexdigest() == link.hashes[hash_name]
+            ):
                 return f"{required_hash.name}:{required_hash.hexdigest()}"
         return None
 

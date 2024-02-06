@@ -143,7 +143,6 @@ class PyPiRepository(HTTPRepository):
             summary=info["summary"],
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
-            files=info.get("files", []),
             yanked=self._get_yanked(info),
             cache_version=str(self.CACHE_VERSION),
         )
@@ -153,12 +152,14 @@ class PyPiRepository(HTTPRepository):
         except KeyError:
             version_info = []
 
+        files = info.get("files", [])
         for file_info in version_info:
             if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                data.files.append({
+                files.append({
                     "file": file_info["filename"],
                     "hash": "sha256:" + file_info["digests"]["sha256"],
                 })
+        data.files = files
 
         if self._fallback and data.requires_dist is None:
             self._log("No dependencies found, downloading archives", level="debug")

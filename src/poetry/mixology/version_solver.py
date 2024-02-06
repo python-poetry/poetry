@@ -19,6 +19,7 @@ from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
 from poetry.mixology.term import Term
+from poetry.packages import PackageCollection
 
 
 if TYPE_CHECKING:
@@ -99,17 +100,27 @@ class DependencyCache:
         decision_level: int,
     ) -> list[DependencyPackage]:
         key = (
-            dependency.complete_name,
+            dependency.name,
             dependency.source_type,
             dependency.source_url,
             dependency.source_reference,
             dependency.source_subdirectory,
         )
 
-        packages = self._search_for_cached(dependency, key)
+        # We could always use dependency.without_features() here,
+        # but for performance reasons we only do it if necessary.
+        packages = self._search_for_cached(
+            dependency.without_features() if dependency.features else dependency, key
+        )
         if not self._cache[key] or self._cache[key][-1] is not packages:
             self._cache[key].append(packages)
             self._cached_dependencies_by_level[decision_level].append(key)
+
+        if dependency.features and packages:
+            # Use the cached dependency so that a possible explicit source is set.
+            return PackageCollection(
+                packages[0].dependency.with_features(dependency.features), packages
+            )
 
         return packages
 

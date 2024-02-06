@@ -1025,7 +1025,7 @@ def test_run_installs_extras_with_deps_if_requested(
     with_extras: bool,
     do_sync: bool,
 ) -> None:
-    package.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package.extras = {canonicalize_name("foo"): [get_dependency("C")]}
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -1423,9 +1423,9 @@ def test_run_update_with_locked_extras(
         },
     })
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("B")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("B")]}
     b_dependency = get_dependency("B", "^1.0", optional=True)
-    b_dependency.in_extras.append(canonicalize_name("foo"))
+    b_dependency._in_extras = [canonicalize_name("foo")]
     c_dependency = get_dependency("C", "^1.0")
     c_dependency.python_versions = "~2.7"
     package_a.add_dependency(b_dependency)

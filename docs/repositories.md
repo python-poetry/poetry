@@ -126,10 +126,10 @@ priority = "primary"
 If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
 
 Package sources are considered in the following order:
-1. [default source](#default-package-source),
-2. primary sources,
-3. implicit PyPI (unless disabled by another [default source](#default-package-source) or configured explicitly),
-4. [secondary sources](#secondary-package-sources) (DEPRECATED),
+1. [default source](#default-package-source-deprecated) (DEPRECATED),
+2. [primary sources](#primary-package-sources),
+3. implicit PyPI (unless disabled by another [primary source](#primary-package-sources), [default source](#default-package-source-deprecated) or configured explicitly),
+4. [secondary sources](#secondary-package-sources-deprecated) (DEPRECATED),
 5. [supplemental sources](#supplemental-package-sources).
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
@@ -145,27 +145,54 @@ poetry source add --priority=primary PyPI
 ```
 
 If you prefer to disable PyPI completely,
-you may choose to set one of your package sources to be the [default](#default-package-source)
+just add a [primary source](#primary-package-sources)
 or configure PyPI as [explicit source](#explicit-package-sources).
 
 {{% /note %}}
 
 
-#### Default Package Source
+#### Default Package Source (DEPRECATED)
 
-By default, Poetry configures [PyPI](https://pypi.org) as the default package source for your
-project. You can alter this behaviour and exclusively look up packages only from the configured
-package sources by adding a **single** source with `priority = "default"`.
+*Deprecated in 1.8.0*
+
+{{% warning %}}
+
+Configuring a default package source is deprecated because it is the same
+as the topmost [primary source](#primary-package-sources).
+Just configure a primary package source and put it first in the list of package sources.
+
+{{% /warning %}}
+
+By default, if you have not configured any primary source,
+Poetry will configure [PyPI](https://pypi.org) as the package source for your project.
+You can alter this behaviour and exclusively look up packages only from the configured
+package sources by adding at least one primary source (recommended)
+or a **single** source with `priority = "default"` (deprecated).
 
 ```bash
 poetry source add --priority=default foo https://foo.bar/simple/
 ```
 
+
+#### Primary Package Sources
+
+All primary package sources are searched for each dependency without a [source constraint](#package-source-constraint).
+If you configure at least one primary source, the implicit PyPI source is disabled.
+
+```bash
+poetry source add --priority=primary foo https://foo.bar/simple/
+```
+
+Sources without a priority are considered primary sources, too.
+
+```bash
+poetry source add foo https://foo.bar/simple/
+```
+
 {{% warning %}}
 
-In a future version of Poetry, PyPI will be disabled automatically
-if at least one custom primary source is configured.
-If you are using custom sources in addition to PyPI, you should configure PyPI explicitly
+The implicit PyPI source is disabled automatically if at least one primary source is configured.
+If you want to use PyPI in addition to a primary source, configure it explicitly
 with a certain priority, e.g.
 
 ```bash
@@ -185,13 +212,6 @@ priority = "primary"
 **Omit the `url` when specifying PyPI explicitly.** Because PyPI is internally configured
 with Poetry, the PyPI repository cannot be configured with a given URL. Remember, you can always use
 `poetry check` to ensure the validity of the `pyproject.toml` file.
-
-{{% /warning %}}
-
-{{% warning %}}
-
-Configuring a custom package source as default, will effectively disable [PyPI](https://pypi.org)
-as a package source for your project.
 
 {{% /warning %}}
 
@@ -479,6 +499,12 @@ with the `--username` and `--password` options.
 If a system keyring is available and supported, the password is stored to and retrieved from the keyring. In the above example, the credential will be stored using the name `poetry-repository-pypi`. If access to keyring fails or is unsupported, this will fall back to writing the password to the `auth.toml` file along with the username.
 
 Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
+
+If you do not want to use the keyring, you can tell Poetry to disable it and store the credentials in plaintext config files:
+
+```bash
+poetry config keyring.enabled false
+```
 
 {{% note %}}
 

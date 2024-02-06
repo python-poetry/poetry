@@ -31,6 +31,7 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -695,15 +696,6 @@ class Executor:
                 package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
         if package_poetry is not None:
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = (
-                self._env.pip_version
-                < self._env.pip_version.__class__.from_parts(19, 0, 0)
-            )
-
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
@@ -715,13 +707,10 @@ class Executor:
                 builder.build()
 
                 return 0
-            elif legacy_pip or package_poetry.package.build_script:
+
+            if package_poetry.package.build_script:
                 from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
                 builder = SdistBuilder(package_poetry)
                 with builder.setup_py():
                     return self.pip_install(req, upgrade=True, editable=package.develop)
@@ -792,8 +781,17 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
+        hash_types = {t.split(":")[0] for t in known_hashes}
+        hash_type = get_highest_priority_hash_type(hash_types, archive.name)
+
+        if hash_type is None:
+            raise RuntimeError(
+                f"No usable hash type(s) for {package} from archive"
+                f" {archive.name} found (known hashes: {known_hashes!s})"
+            )
+
+        archive_hash = f"{hash_type}:{get_file_hash(archive, hash_type)}"
 
         if archive_hash not in known_hashes:
             raise RuntimeError(

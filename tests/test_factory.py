@@ -241,7 +241,12 @@ def test_poetry_with_default_source(
     poetry = Factory().create_poetry(fixture_dir("with_default_source"), io=io)
 
     assert len(poetry.pool.repositories) == 1
-    assert io.fetch_error() == ""
+    assert (
+        io.fetch_error().strip()
+        == "<warning>Warning: Found deprecated priority 'default' for source 'foo' in"
+        " pyproject.toml. You can achieve the same effect by changing the priority"
+        " to 'primary' and putting the source first."
+    )
 
 
 def test_poetry_with_default_source_and_pypi(
@@ -280,15 +285,11 @@ def test_poetry_with_non_default_source(
     poetry = Factory().create_poetry(fixture_dir(project), io=io)
 
     assert not poetry.pool.has_default()
-    assert poetry.pool.has_repository("PyPI")
-    assert poetry.pool.get_priority("PyPI") is Priority.SECONDARY
-    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
+    assert not poetry.pool.has_repository("PyPI")
     assert poetry.pool.has_repository("foo")
     assert poetry.pool.get_priority("foo") is Priority.PRIMARY
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
-    assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "foo"}
-    error = io.fetch_error()
-    assert "Warning: In a future version of Poetry, PyPI will be disabled" in error
+    assert {repo.name for repo in poetry.pool.repositories} == {"foo"}
 
 
 def test_poetry_with_non_default_secondary_source_legacy(
@@ -300,7 +301,7 @@ def test_poetry_with_non_default_secondary_source_legacy(
 
     assert poetry.pool.has_repository("PyPI")
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert poetry.pool.has_repository("foo")
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "foo"}
@@ -313,7 +314,7 @@ def test_poetry_with_non_default_secondary_source(
 
     assert poetry.pool.has_repository("PyPI")
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert poetry.pool.has_repository("foo")
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "foo"}
@@ -329,7 +330,7 @@ def test_poetry_with_non_default_multiple_secondary_sources_legacy(
 
     assert poetry.pool.has_repository("PyPI")
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert poetry.pool.has_repository("foo")
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
     assert poetry.pool.has_repository("bar")
@@ -346,7 +347,7 @@ def test_poetry_with_non_default_multiple_secondary_sources(
 
     assert poetry.pool.has_repository("PyPI")
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert poetry.pool.has_repository("foo")
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
     assert poetry.pool.has_repository("bar")
@@ -364,12 +365,10 @@ def test_poetry_with_non_default_multiple_sources_legacy(
     assert not poetry.pool.has_default()
     assert poetry.pool.has_repository("bar")
     assert isinstance(poetry.pool.repository("bar"), LegacyRepository)
-    assert poetry.pool.has_repository("PyPI")
-    assert poetry.pool.get_priority("PyPI") is Priority.SECONDARY
-    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
+    assert not poetry.pool.has_repository("PyPI")
     assert poetry.pool.has_repository("foo")
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
-    assert {repo.name for repo in poetry.pool.repositories} == {"bar", "PyPI", "foo"}
+    assert {repo.name for repo in poetry.pool.repositories} == {"bar", "foo"}
 
 
 def test_poetry_with_non_default_multiple_sources(
@@ -378,14 +377,12 @@ def test_poetry_with_non_default_multiple_sources(
     poetry = Factory().create_poetry(fixture_dir("with_non_default_multiple_sources"))
 
     assert not poetry.pool.has_default()
-    assert poetry.pool.has_repository("PyPI")
-    assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
-    assert poetry.pool.get_priority("PyPI") is Priority.SECONDARY
+    assert not poetry.pool.has_repository("PyPI")
     assert poetry.pool.has_repository("bar")
     assert isinstance(poetry.pool.repository("bar"), LegacyRepository)
     assert poetry.pool.has_repository("foo")
     assert isinstance(poetry.pool.repository("foo"), LegacyRepository)
-    assert {repo.name for repo in poetry.pool.repositories} == {"PyPI", "bar", "foo"}
+    assert {repo.name for repo in poetry.pool.repositories} == {"bar", "foo"}
 
 
 def test_poetry_with_non_default_multiple_sources_pypi(
@@ -417,7 +414,7 @@ def test_poetry_with_no_default_source(fixture_dir: FixtureDirGetter) -> None:
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
 
     assert poetry.pool.has_repository("PyPI")
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
     assert {repo.name for repo in poetry.pool.repositories} == {"PyPI"}
 
@@ -429,7 +426,7 @@ def test_poetry_with_supplemental_source(
     poetry = Factory().create_poetry(fixture_dir("with_supplemental_source"), io=io)
 
     assert poetry.pool.has_repository("PyPI")
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
     assert poetry.pool.has_repository("supplemental")
     assert poetry.pool.get_priority("supplemental") is Priority.SUPPLEMENTAL
@@ -447,7 +444,7 @@ def test_poetry_with_explicit_source(
     assert len(poetry.pool.repositories) == 1
     assert len(poetry.pool.all_repositories) == 2
     assert poetry.pool.has_repository("PyPI")
-    assert poetry.pool.get_priority("PyPI") is Priority.DEFAULT
+    assert poetry.pool.get_priority("PyPI") is Priority.PRIMARY
     assert isinstance(poetry.pool.repository("PyPI"), PyPiRepository)
     assert poetry.pool.has_repository("explicit")
     assert isinstance(poetry.pool.repository("explicit"), LegacyRepository)

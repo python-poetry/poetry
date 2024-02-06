@@ -72,8 +72,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
 class TestSystemGit:
     def test_clone_success(self, tmp_path: Path, temp_repo: TempRepoFixture) -> None:
         target_dir = tmp_path / "test-repo"
-        stdout = SystemGit.clone(temp_repo.path.as_uri(), target_dir)
-        assert re.search(r"Cloning into '.+[\\/]test-repo'...", stdout)
+        SystemGit.clone(temp_repo.path.as_uri(), target_dir)
         assert (target_dir / ".git").is_dir()
 
     def test_clone_invalid_parameter(self, tmp_path: Path) -> None:

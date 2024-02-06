@@ -41,6 +41,7 @@ class MockRepository(LegacyRepository):
 
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
+        self._lazy_wheel = False
 
     def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
         fixture = self.FIXTURES / (name + ".html")
@@ -50,7 +51,9 @@ class MockRepository(LegacyRepository):
         with fixture.open(encoding="utf-8") as f:
             return SimpleRepositoryPage(self._url + f"/{name}/", f.read())
 
-    def _download(self, url: str, dest: Path) -> None:
+    def _download(
+        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
+    ) -> None:
         filename = Link(url).filename
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 

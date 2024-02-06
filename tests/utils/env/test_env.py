@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import site
 import subprocess
 import sys
@@ -82,9 +83,8 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     venv_path = tmp_path / "Virtual Env"
     manager.build_venv(venv_path)
     venv = VirtualEnv(venv_path)
-    assert venv.run("python", str(venv.pip), "--version").startswith(
-        f"pip {venv.pip_version} from "
-    )
+    output = venv.run("python", str(venv.pip), "--version")
+    assert re.match(r"pip \S+ from", output)
 
 
 def test_env_get_supported_tags_matches_inside_virtualenv(
@@ -178,11 +178,13 @@ def test_call_does_not_block_on_full_pipe(
 ) -> None:
     """see https://github.com/python-poetry/poetry/issues/7698"""
     script = tmp_path / "script.py"
-    script.write_text(f"""\
+    script.write_text(
+        f"""\
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-""")
+"""
+    )
 
     def target(result: list[int]) -> None:
         tmp_venv.run("python", str(script), call=True)

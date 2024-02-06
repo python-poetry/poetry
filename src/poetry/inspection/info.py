@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Mapping
+from typing import Sequence
 
 import pkginfo
 
@@ -30,6 +32,8 @@ from poetry.utils.setup_reader import SetupReader
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from packaging.metadata import RawMetadata
+    from packaging.utils import NormalizedName
     from poetry.core.packages.project_package import ProjectPackage
 
 
@@ -70,7 +74,7 @@ class PackageInfo:
         summary: str | None = None,
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
-        files: list[dict[str, str]] | None = None,
+        files: Sequence[Mapping[str, str]] | None = None,
         yanked: str | bool = False,
         cache_version: str | None = None,
     ) -> None:
@@ -186,6 +190,7 @@ class PackageInfo:
 
         seen_requirements = set()
 
+        package_extras: dict[NormalizedName, list[Dependency]] = {}
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string
@@ -213,18 +218,20 @@ class PackageInfo:
             if dependency.in_extras:
                 # this dependency is required by an extra package
                 for extra in dependency.in_extras:
-                    if extra not in package.extras:
+                    if extra not in package_extras:
                         # this is the first time we encounter this extra for this
                         # package
-                        package.extras[extra] = []
+                        package_extras[extra] = []
 
-                    package.extras[extra].append(dependency)
+                    package_extras[extra].append(dependency)
 
             req = dependency.to_pep_508(with_extras=True)
 
             if req not in seen_requirements:
                 package.add_dependency(dependency)
                 seen_requirements.add(req)
+
+        package.extras = package_extras
 
         return package
 
@@ -392,7 +399,22 @@ class PackageInfo:
             yield Path(d)
 
     @classmethod
-    def from_metadata(cls, path: Path) -> PackageInfo | None:
+    def from_metadata(cls, metadata: RawMetadata) -> PackageInfo:
+        """
+        Create package information from core metadata.
+
+        :param metadata: raw metadata
+        """
+        return cls(
+            name=metadata.get("name"),
+            version=metadata.get("version"),
+            summary=metadata.get("summary"),
+            requires_dist=metadata.get("requires_dist"),
+            requires_python=metadata.get("requires_python"),
+        )
+
+    @classmethod
+    def from_metadata_directory(cls, path: Path) -> PackageInfo | None:
         """
         Helper method to parse package information from an unpacked metadata directory.
 
@@ -474,7 +496,7 @@ class PackageInfo:
         if project_package:
             info = cls.from_package(project_package)
         else:
-            info = cls.from_metadata(path)
+            info = cls.from_metadata_directory(path)
 
             if not info or info.requires_dist is None:
                 try:
@@ -583,7 +605,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 *PEP517_META_BUILD_DEPS,
             )
             venv.run_python_script(pep517_meta_build_script)
-            info = PackageInfo.from_metadata(dest_dir)
+            info = PackageInfo.from_metadata_directory(dest_dir)
         except EnvCommandError as e:
             # something went wrong while attempting pep517 metadata build
             # fallback to egg_info if setup.py available
@@ -600,7 +622,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
             os.chdir(path)
             try:
                 venv.run("python", "setup.py", "egg_info")
-                info = PackageInfo.from_metadata(path)
+                info = PackageInfo.from_metadata_directory(path)
             except EnvCommandError as fbe:
                 raise PackageInfoError(
                     path, e, "Fallback egg_info generation failed.", fbe

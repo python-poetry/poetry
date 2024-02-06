@@ -41,7 +41,7 @@ def test_setup_reader_read_minimal_setup_py(setup: Callable[[str], Path]) -> Non
 
 
 def test_setup_reader_read_first_level_setup_call_with_direct_types(
-    setup: Callable[[str], Path]
+    setup: Callable[[str], Path],
 ) -> None:
     result = SetupReader.read_from_directory(setup("flask"))
 
@@ -77,7 +77,7 @@ def test_setup_reader_read_first_level_setup_call_with_direct_types(
 
 
 def test_setup_reader_read_first_level_setup_call_with_variables(
-    setup: Callable[[str], Path]
+    setup: Callable[[str], Path],
 ) -> None:
     result = SetupReader.read_from_directory(setup("requests"))
 
@@ -106,7 +106,7 @@ def test_setup_reader_read_first_level_setup_call_with_variables(
 
 
 def test_setup_reader_read_sub_level_setup_call_with_direct_types(
-    setup: Callable[[str], Path]
+    setup: Callable[[str], Path],
 ) -> None:
     result = SetupReader.read_from_directory(setup("sqlalchemy"))
 
@@ -214,7 +214,7 @@ def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], Path]) -> N
 
 
 def test_setup_reader_read_extras_require_with_variables(
-    setup: Callable[[str], Path]
+    setup: Callable[[str], Path],
 ) -> None:
     result = SetupReader.read_from_directory(setup("extras_require_with_vars"))
 
