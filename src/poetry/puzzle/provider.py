@@ -134,6 +134,7 @@ class Provider:
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
 
+        self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
             self._locked[package.name].append(
                 DependencyPackage(package.to_dependency(), package)
@@ -487,9 +488,7 @@ class Provider:
                         package.pretty_name,
                         package.version,
                         extras=list(dependency.extras),
-                        repository_name=(
-                            dependency.source_name or package.source_reference
-                        ),
+                        repository_name=dependency.source_name,
                     ),
                 )
             except PackageNotFound as e:
@@ -684,6 +683,16 @@ class Provider:
         for dep in clean_dependencies:
             package.add_dependency(dep)
 
+        if self._locked and package.is_root():
+            # At this point all duplicates have been eliminated via overrides
+            # so that explicit sources are unambiguous.
+            # Clear _explicit_sources because it might be filled
+            # from a previous override.
+            self._explicit_sources.clear()
+            for dep in clean_dependencies:
+                if dep.source_name:
+                    self._explicit_sources[dep.name] = dep.source_name
+
         return dependency_package
 
     def get_locked(self, dependency: Dependency) -> DependencyPackage | None:
@@ -694,6 +703,8 @@ class Provider:
         for dependency_package in locked:
             package = dependency_package.package
             if package.satisfies(dependency):
+                if explicit_source := self._explicit_sources.get(dependency.name):
+                    dependency.source_name = explicit_source
                 return DependencyPackage(dependency, package)
         return None
 
