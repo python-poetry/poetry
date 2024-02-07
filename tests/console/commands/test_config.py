@@ -234,7 +234,7 @@ def test_display_empty_repositories_setting(
 ) -> None:
     tester = command_tester_factory(
         "config",
-        poetry=Factory().create_poetry(fixture_dir("with_empty_repositories_key")),
+        poetry=Factory().create_poetry(fixture_dir("with_local_config")),
     )
     tester.execute("repositories")
 
