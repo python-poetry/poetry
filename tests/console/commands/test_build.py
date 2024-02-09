@@ -67,6 +67,7 @@ def test_build_with_multiple_readme_files(
     tmp_path: Path,
     tmp_venv: VirtualEnv,
     command_tester_factory: CommandTesterFactory,
+    output_dir: str,
 ) -> None:
     source_dir = fixture_dir("with_multiple_readme_files")
     target_dir = tmp_path / "project"
@@ -75,9 +76,16 @@ def test_build_with_multiple_readme_files(
     poetry = Factory().create_poetry(target_dir)
     tester = command_tester_factory("build", poetry, environment=tmp_venv)
 
-    tester.execute()
+    if output_dir is None:
+        tester.execute()
+        build_dir = target_dir / "dist"
+    elif output_dir == "absolute":
+        tester.execute(f"--output {target_dir / 'tmp/dist'}")
+        build_dir = target_dir / "tmp/dist"
+    else:
+        tester.execute(f"--output {output_dir}")
+        build_dir = target_dir / output_dir
 
-    build_dir = target_dir / "dist"
     assert build_dir.exists()
 
     sdist_file = build_dir / "my_package-0.1.tar.gz"
