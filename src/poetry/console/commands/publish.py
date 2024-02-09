@@ -26,6 +26,13 @@ class PublishCommand(Command):
             "Client certificate to access the repository.",
             flag=False,
         ),
+        option(
+            "dist-dir",
+            None,
+            "Dist directory where built artifact is stored. Default is `dist`.",
+            default="dist",
+            flag=False,
+        ),
         option("build", None, "Build the package before publishing."),
         option("dry-run", None, "Perform all actions except upload the package."),
         option(
@@ -61,7 +68,8 @@ the config command.
 
                 return 1
 
-            self.call("build")
+            output_dir = self.io.input.options["dist-dir"]
+            self.call("build", args=f"--output {output_dir}")
 
         files = publisher.files
         if not files:

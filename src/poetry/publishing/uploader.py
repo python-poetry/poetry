@@ -62,8 +62,17 @@ class Uploader:
         return agent
 
     @property
+    def dist_dir(self) -> Path:
+        dist_dir = Path(self._io.input.options["dist-dir"])
+
+        if not dist_dir.is_absolute():
+            dist_dir = self._poetry.file.path.parent / dist_dir
+
+        return dist_dir
+
+    @property
     def files(self) -> list[Path]:
-        dist = self._poetry.file.path.parent / "dist"
+        dist = self.dist_dir
         version = self._package.version.to_string()
         escaped_name = distribution_name(self._package.name)
 
@@ -275,7 +284,7 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self._poetry.file.path.parent / "dist"
+        dist = self.dist_dir
         escaped_name = distribution_name(self._package.name)
         file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 
