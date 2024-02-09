@@ -56,7 +56,9 @@ the config command.
     def handle(self) -> int:
         from poetry.publishing.publisher import Publisher
 
-        publisher = Publisher(self.poetry, self.io)
+        dist_dir = self.option("dist-dir")
+
+        publisher = Publisher(self.poetry, self.io, Path(dist_dir))
 
         # Building package first, if told
         if self.option("build"):
@@ -68,8 +70,7 @@ the config command.
 
                 return 1
 
-            output_dir = self.io.input.options["dist-dir"]
-            self.call("build", args=f"--output {output_dir}")
+            self.call("build", args=f"--output {dist_dir}")
 
         files = publisher.files
         if not files:
