@@ -184,9 +184,12 @@ def test_publish_dist_dir_and_build_options(
     command_tester_factory: CommandTesterFactory,
     dist_dir: str | None,
 ) -> None:
-    source_dir = fixture_dir("with_multiple_dist_dir")
+    source_dir = fixture_dir("simple_project")
     target_dir = tmp_path / "project"
     shutil.copytree(str(source_dir), str(target_dir))
+    
+    # Remove dist dir because as it will be built again
+    shutil.rmtree(target_dir / "dist")
 
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=409, body="Conflict"
