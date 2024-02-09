@@ -187,7 +187,7 @@ def test_publish_dist_dir_and_build_options(
     source_dir = fixture_dir("simple_project")
     target_dir = tmp_path / "project"
     shutil.copytree(str(source_dir), str(target_dir))
-    
+
     # Remove dist dir because as it will be built again
     shutil.rmtree(target_dir / "dist")
 
