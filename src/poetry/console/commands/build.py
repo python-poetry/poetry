@@ -2,16 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typing import TYPE_CHECKING
-
 from cleo.helpers import option
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.env import build_environment
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class BuildCommand(EnvCommand):
