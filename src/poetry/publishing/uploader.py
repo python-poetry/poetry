@@ -63,7 +63,10 @@ class Uploader:
 
     @property
     def dist_dir(self) -> Path:
-        dist_dir = Path(self._io.input.options["dist-dir"])
+        io_dist_dir = "dist"
+        if "dist-dir" in self._io.input.options:  # Option comes with publish command.
+            io_dist_dir = self._io.input.options["dist-dir"]
+        dist_dir = Path(io_dist_dir)
 
         if not dist_dir.is_absolute():
             dist_dir = self._poetry.file.path.parent / dist_dir

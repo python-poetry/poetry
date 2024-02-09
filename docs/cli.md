@@ -561,7 +561,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--password (-p)`: The password to access the repository.
 * `--cert`: Certificate authority to access the repository.
 * `--client-cert`: Client certificate to access the repository.
-* `--dist-dir`: Dist directory where built artifact is stored. Default is `dist`.
+* `--dist-dir`: Dist directory where built artifact are stored. Default is `dist`.
 * `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.

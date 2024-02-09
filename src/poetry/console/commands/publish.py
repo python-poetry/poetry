@@ -29,7 +29,7 @@ class PublishCommand(Command):
         option(
             "dist-dir",
             None,
-            "Dist directory where built artifact is stored. Default is `dist`.",
+            "Dist directory where built artifact are stored. Default is `dist`.",
             default="dist",
             flag=False,
         ),
