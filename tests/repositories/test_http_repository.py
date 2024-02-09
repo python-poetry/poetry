@@ -118,18 +118,21 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     repo._get_info_from_wheel(url)
     assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 1
+    assert mock_download.call_args[1]["raise_accepts_ranges"] is False
 
     # 2. only download
     repo._get_info_from_wheel(url)
     assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 2
+    assert mock_download.call_args[1]["raise_accepts_ranges"] is True
 
-    # 3. range request and download
+    # 3. download and range request
     mock_metadata_from_wheel_url.side_effect = None
     mock_download.side_effect = HTTPRangeRequestSupported
     repo._get_info_from_wheel(url)
     assert mock_metadata_from_wheel_url.call_count == 2
     assert mock_download.call_count == 3
+    assert mock_download.call_args[1]["raise_accepts_ranges"] is True
 
     # 4. only range request
     repo._get_info_from_wheel(url)
@@ -142,6 +145,7 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     repo._get_info_from_wheel(url)
     assert mock_metadata_from_wheel_url.call_count == 4
     assert mock_download.call_count == 4
+    assert mock_download.call_args[1]["raise_accepts_ranges"] is False
 
     # 6. only range request
     mock_metadata_from_wheel_url.side_effect = None

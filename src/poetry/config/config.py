@@ -137,6 +137,9 @@ class Config:
         "warnings": {
             "export": True,
         },
+        "keyring": {
+            "enabled": True,
+        },
     }
 
     def __init__(
@@ -301,6 +304,7 @@ class Config:
             "installer.parallel",
             "solver.lazy-wheel",
             "warnings.export",
+            "keyring.enabled",
         }:
             return boolean_normalizer
 

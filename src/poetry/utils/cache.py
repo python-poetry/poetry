@@ -18,6 +18,7 @@ from typing import overload
 
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.wheel import InvalidWheelName
 from poetry.utils.wheel import Wheel
 
@@ -197,8 +198,10 @@ class ArtifactCache:
     def get_cache_directory_for_link(self, link: Link) -> Path:
         key_parts = {"url": link.url_without_fragment}
 
-        if link.hash_name is not None and link.hash is not None:
-            key_parts[link.hash_name] = link.hash
+        if hash_name := get_highest_priority_hash_type(
+            set(link.hashes.keys()), link.filename
+        ):
+            key_parts[hash_name] = link.hashes[hash_name]
 
         if link.subdirectory_fragment:
             key_parts["subdirectory"] = link.subdirectory_fragment

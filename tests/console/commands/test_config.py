@@ -59,6 +59,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -90,6 +91,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -142,6 +144,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -172,6 +175,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -230,7 +234,7 @@ def test_display_empty_repositories_setting(
 ) -> None:
     tester = command_tester_factory(
         "config",
-        poetry=Factory().create_poetry(fixture_dir("with_empty_repositories_key")),
+        poetry=Factory().create_poetry(fixture_dir("with_local_config")),
     )
     tester.execute("repositories")
 
@@ -300,6 +304,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -338,6 +343,7 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 repositories.foo.url = "https://foo.bar/simple/"
 solver.lazy-wheel = true
 virtualenvs.create = true

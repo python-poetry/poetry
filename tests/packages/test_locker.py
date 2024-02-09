@@ -552,7 +552,7 @@ def test_lock_file_should_not_have_mixed_types(
         Factory.create_dependency("B", {"version": ">=1.0.0", "optional": True})
     )
     package_a.requires[-1].activate()
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("B", ">=1.0.0")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("B", ">=1.0.0")]}
 
     locker.set_lock_data(root, [package_a])
 

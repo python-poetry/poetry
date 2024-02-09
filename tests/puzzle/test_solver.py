@@ -449,7 +449,7 @@ def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
     set_package_python_versions(solver.provider, "~3.4")
-    package.extras[canonicalize_name("foo")] = [get_dependency("B")]
+    package.extras = {canonicalize_name("foo"): [get_dependency("B")]}
     package.add_dependency(
         Factory.create_dependency("A", {"version": "*", "python": "^3.4"})
     )
@@ -563,11 +563,11 @@ def test_solver_returns_extras_only_requested(
     package_c20 = get_package("C", "2.0")
 
     dep10 = get_dependency("C", "1.0", optional=True)
-    dep10._in_extras.append(canonicalize_name("one"))
+    dep10._in_extras = [canonicalize_name("one")]
     dep10.marker = parse_marker("extra == 'one'")
 
     dep20 = get_dependency("C", "2.0", optional=True)
-    dep20._in_extras.append(canonicalize_name("two"))
+    dep20._in_extras = [canonicalize_name("two")]
     dep20.marker = parse_marker("extra == 'two'")
 
     package_b.extras = {
@@ -622,8 +622,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     package_c = get_package("C", "1.0")
 
     dep = get_dependency("C", "*", optional=True)
-    dep._in_extras.append(canonicalize_name("one"))
-    dep._in_extras.append(canonicalize_name("two"))
+    dep._in_extras = [canonicalize_name("one"), canonicalize_name("two")]
 
     package_b.extras = {
         canonicalize_name("one"): [dep],
@@ -675,11 +674,11 @@ def test_solver_returns_extras_only_requested_nested(
     package_c20 = get_package("C", "2.0")
 
     dep10 = get_dependency("C", "1.0", optional=True)
-    dep10._in_extras.append(canonicalize_name("one"))
+    dep10._in_extras = [canonicalize_name("one")]
     dep10.marker = parse_marker("extra == 'one'")
 
     dep20 = get_dependency("C", "2.0", optional=True)
-    dep20._in_extras.append(canonicalize_name("two"))
+    dep20._in_extras = [canonicalize_name("two")]
     dep20.marker = parse_marker("extra == 'two'")
 
     package_b.extras = {
@@ -1075,7 +1074,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     )
 
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("C")]}
     package_a.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -1118,7 +1117,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     )
 
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("C")]}
     package_a.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -3309,7 +3308,7 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency(
         package_lib.add_dependency(
             Factory.create_dependency("extra", {"version": ">=1.0", "optional": True})
         )
-        package_lib.extras[canonicalize_name("extra")] = [dep_extra]
+        package_lib.extras = {canonicalize_name("extra"): [dep_extra]}
 
         explicit_repo.add_package(package_lib)  # lib only in explicit repo
 
@@ -3380,7 +3379,6 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
         package_lib.add_dependency(
             Factory.create_dependency("extra", {"version": ">=1.0", "optional": True})
         )
-        package_lib.extras[canonicalize_name("extra")] = [dep_extra]
 
         dep_other_extra = get_dependency("other-extra", ">=1.0")
         package_lib.add_dependency(
@@ -3388,7 +3386,10 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
                 "other-extra", {"version": ">=1.0", "optional": True}
             )
         )
-        package_lib.extras[canonicalize_name("other-extra")] = [dep_other_extra]
+        package_lib.extras = {
+            canonicalize_name("extra"): [dep_extra],
+            canonicalize_name("other-extra"): [dep_other_extra],
+        }
 
         explicit_repo.add_package(package_lib)  # lib only in explicit repo
 
@@ -3504,7 +3505,9 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
             "idna", {"version": ">=2.0.0", "markers": "extra == 'security'"}
         )
     )
-    requests.extras[canonicalize_name("security")] = [get_dependency("idna", ">=2.0.0")]
+    requests.extras = {
+        canonicalize_name("security"): [get_dependency("idna", ">=2.0.0")]
+    }
     idna = get_package("idna", "2.8")
 
     repo.add_package(requests)
@@ -3940,7 +3943,7 @@ def test_solver_can_resolve_transitive_extras(
     requests.add_dependency(
         Factory.create_dependency("PyOpenSSL", {"version": ">=0.14", "optional": True})
     )
-    requests.extras[canonicalize_name("security")] = [dep]
+    requests.extras = {canonicalize_name("security"): [dep]}
     pyota = get_package("PyOTA", "2.1.0")
     pyota.add_dependency(
         Factory.create_dependency(
@@ -3981,9 +3984,9 @@ def test_solver_can_resolve_for_packages_with_missing_extras(
     django_anymail.add_dependency(
         Factory.create_dependency("boto3", {"version": "*", "optional": True})
     )
-    django_anymail.extras[canonicalize_name("amazon_ses")] = [
-        Factory.create_dependency("boto3", "*")
-    ]
+    django_anymail.extras = {
+        canonicalize_name("amazon_ses"): [Factory.create_dependency("boto3", "*")]
+    }
     django = get_package("django", "2.2.0")
     boto3 = get_package("boto3", "1.0.0")
     requests = get_package("requests", "2.24.0")
