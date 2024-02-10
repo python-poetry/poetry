@@ -16,8 +16,8 @@ import httpretty
 import keyring
 import pytest
 
+from jaraco.classes import properties
 from keyring.backend import KeyringBackend
-from keyring.backend import properties  # type: ignore[attr-defined]
 from keyring.backends.fail import Keyring as FailKeyring
 from keyring.errors import KeyringError
 from keyring.errors import KeyringLocked
@@ -110,7 +110,7 @@ class DummyBackend(KeyringBackend):
         self._passwords: dict[str, dict[str | None, str | None]] = {}
 
     @properties.classproperty
-    def priority(self) -> int | float:
+    def priority(self) -> float:
         return 42
 
     def set_password(self, service: str, username: str | None, password: Any) -> None:
@@ -129,7 +129,7 @@ class DummyBackend(KeyringBackend):
 
 class LockedBackend(KeyringBackend):
     @properties.classproperty
-    def priority(self) -> int | float:
+    def priority(self) -> float:
         return 42
 
     def set_password(self, service: str, username: str | None, password: Any) -> None:
@@ -147,7 +147,7 @@ class LockedBackend(KeyringBackend):
 
 class ErroneousBackend(FailKeyring):
     @properties.classproperty
-    def priority(self) -> int | float:  # type: ignore[override]
+    def priority(self) -> float:
         return 42
 
     def get_credential(self, service: str, username: str | None) -> Any:
