@@ -119,8 +119,7 @@ def demo_setup_complex_calls_script(
     [build-system]
     requires = ["setuptools", "scripts @ {scripts_dir.as_uri()}"]
     build-backend = "setuptools.build_meta:__legacy__"
-"""
-    ,
+""",
         encoding="utf-8",
     )
 
@@ -132,8 +131,7 @@ from setuptools import setup
 if subprocess.call(["exit-code"]) != 42:
     raise RuntimeError("Wrong exit code.")
 setup(name="demo", version="0.1.0", install_requires=[i for i in ["package"]])
-"""
-    ,
+""",
         encoding="utf-8",
     )
 

@@ -183,8 +183,7 @@ def test_call_does_not_block_on_full_pipe(
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-"""
-    ,
+""",
         encoding="utf-8",
     )
 
