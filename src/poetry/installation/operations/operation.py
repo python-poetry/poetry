@@ -11,7 +11,7 @@ T = TypeVar("T", bound="Operation")
 
 
 class Operation:
-    def __init__(self, reason: str | None = None, priority: int | float = 0) -> None:
+    def __init__(self, reason: str | None = None, priority: float = 0) -> None:
         self._reason = reason
 
         self._skipped = False
@@ -35,7 +35,7 @@ class Operation:
         return self._skip_reason
 
     @property
-    def priority(self) -> float | int:
+    def priority(self) -> float:
         return self._priority
 
     @property
