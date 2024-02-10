@@ -31,6 +31,7 @@ MANIFEST.in
 /docs/site/*
 /tests/fixtures/simple_project/setup.py
 /tests/fixtures/project_with_extras/setup.py
+/tests/fixtures/project_with_setup_calls_script/project_with_setup_calls_script.egg-info/
 .mypy_cache
 
 .venv
