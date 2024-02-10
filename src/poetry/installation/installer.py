@@ -245,12 +245,9 @@ class Installer:
             locked_repository = self._locker.locked_repository()
 
             if not self._locker.is_fresh():
-                self._io.write_error_line(
-                    "<warning>"
-                    "Warning: poetry.lock is not consistent with pyproject.toml. "
-                    "You may be getting improper dependencies. "
+                raise ValueError(
+                    "poetry.lock is not consistent with pyproject.toml. "
                     "Run `poetry lock [--no-update]` to fix it."
-                    "</warning>"
                 )
 
             locker_extras = {
