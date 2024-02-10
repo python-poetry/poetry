@@ -337,17 +337,17 @@ def test_get_cached_archive_for_link_no_race_condition(
 
     download_mock = mocker.Mock(side_effect=replace_file)
 
+    def get_archive(link: Link) -> Path:
+        path: Path = cache.get_cached_archive_for_link(
+            link, strict=True, download_func=download_mock
+        )
+        return path
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         tasks = []
         for _ in range(4):
-            tasks.append(
-                executor.submit(
-                    cache.get_cached_archive_for_link,
-                    link,
-                    strict=True,
-                    download_func=download_mock,
-                )
-            )
+            tasks.append(executor.submit(get_archive, link))
+
         concurrent.futures.wait(tasks)
         results = set()
         for task in tasks:

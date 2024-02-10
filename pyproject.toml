@@ -174,7 +174,6 @@ module = [
     'deepdiff.*',
     'fastjsonschema.*',
     'httpretty.*',
-    'keyring.*',
     'pexpect.*',
     'requests_toolbelt.*',
     'shellingham.*',
