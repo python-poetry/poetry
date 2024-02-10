@@ -23,11 +23,11 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry: Poetry, io: IO) -> None:
+    def __init__(self, poetry: Poetry, io: IO, dist_dir: Path | None = None) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
-        self._uploader = Uploader(poetry, io)
+        self._uploader = Uploader(poetry, io, dist_dir)
         self._authenticator = Authenticator(poetry.config, self._io)
 
     @property

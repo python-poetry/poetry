@@ -74,7 +74,6 @@ def test_build_with_multiple_readme_files(
 
     poetry = Factory().create_poetry(target_dir)
     tester = command_tester_factory("build", poetry, environment=tmp_venv)
-
     tester.execute()
 
     build_dir = target_dir / "dist"
@@ -93,3 +92,27 @@ def test_build_with_multiple_readme_files(
 
     assert "my_package-0.1/README-1.rst" in sdist_content
     assert "my_package-0.1/README-2.rst" in sdist_content
+
+
+@pytest.mark.parametrize(
+    "output_dir", [None, "dist", "test/dir", "../dist", "absolute"]
+)
+def test_build_output_option(
+    tmp_tester: CommandTester,
+    tmp_project_path: Path,
+    tmp_poetry: Poetry,
+    output_dir: str,
+) -> None:
+    if output_dir is None:
+        tmp_tester.execute()
+        build_dir = tmp_project_path / "dist"
+    elif output_dir == "absolute":
+        tmp_tester.execute(f"--output {tmp_project_path / 'tmp/dist'}")
+        build_dir = tmp_project_path / "tmp/dist"
+    else:
+        tmp_tester.execute(f"--output {output_dir}")
+        build_dir = tmp_project_path / output_dir
+
+    build_artifacts = tuple(build_dir.glob(get_package_glob(tmp_poetry)))
+    assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
