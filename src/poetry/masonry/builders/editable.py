@@ -160,7 +160,25 @@ class EditableBuilder(Builder):
         for script in scripts:
             name, script_with_extras = script.split(" = ")
             script_without_extras = script_with_extras.split("[")[0]
-            module, callable_ = script_without_extras.split(":")
+            try:
+                module, callable_ = script_without_extras.split(":")
+            except ValueError as exc:
+                msg = (
+                    f"Bad script ({name}): script needs to specify a function within a"
+                    " module like: module(.submodule):function\nInstead got:"
+                    f" {script_with_extras}"
+                )
+                if "not enough values" in str(exc):
+                    msg += (
+                        "\nHint: If the script depends on module-level code, try"
+                        " wrapping it in a main() function and modifying your script"
+                        f' like:\n{name} = "{script_with_extras}:main"'
+                    )
+                elif "too many values" in str(exc):
+                    msg += '\nToo many ":" found!'
+
+                raise ValueError(msg)
+
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)
