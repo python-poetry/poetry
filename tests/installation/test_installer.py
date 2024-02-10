@@ -220,8 +220,8 @@ def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "poetry.lock is not consistent with pyproject.toml. "
-            "Run `poetry lock [--no-update]` to fix it."
+            "pyproject.toml changed significantly since poetry.lock was last generated. "
+            "Run `poetry lock [--no-update]` to fix the lock file."
         ),
     ):
         installer.run()

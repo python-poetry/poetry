@@ -171,8 +171,8 @@ def test_check_lock_outdated(
     tester = command_tester_factory("check", poetry=poetry_with_outdated_lockfile)
     status_code = tester.execute(options)
     expected = (
-        "Error: poetry.lock is not consistent with pyproject.toml. "
-        "Run `poetry lock [--no-update]` to fix it.\n"
+        "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
+        "Run `poetry lock [--no-update]` to fix the lock file.\n"
     )
 
     assert tester.io.fetch_error() == expected
