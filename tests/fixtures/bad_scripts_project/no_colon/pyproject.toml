@@ -26,8 +26,6 @@ python = "~2.7 || ^3.4"
 
 [tool.poetry.scripts]
 foo = "bar.bin.foo"
-baz = "bar.bin.baz"
-
 
 [build-system]
 requires = ["poetry-core>=1.1.0a7"]
