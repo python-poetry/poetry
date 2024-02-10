@@ -303,6 +303,7 @@ You can do this using the `add` command.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--lock` : Do not perform install (only update the lockfile).
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -534,6 +535,7 @@ Note that, at the moment, only pure python wheels are supported.
 ### Options
 
 * `--format (-f)`: Limit the format to either `wheel` or `sdist`.
+* `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
 
 ## publish
 
@@ -559,6 +561,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--password (-p)`: The password to access the repository.
 * `--cert`: Certificate authority to access the repository.
 * `--client-cert`: Client certificate to access the repository.
+* `--dist-dir`: Dist directory where built artifact are stored. Default is `dist`.
 * `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.

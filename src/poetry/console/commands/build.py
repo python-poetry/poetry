@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from cleo.helpers import option
 
@@ -8,16 +8,19 @@ from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.env import build_environment
 
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-
 class BuildCommand(EnvCommand):
     name = "build"
     description = "Builds a package, as a tarball and a wheel by default."
 
     options = [
-        option("format", "f", "Limit the format to either sdist or wheel.", flag=False)
+        option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
+        option(
+            "output",
+            "o",
+            "Set output directory for build artifacts. Default is `dist`.",
+            default="dist",
+            flag=False,
+        ),
     ]
 
     loggers = [
@@ -48,11 +51,14 @@ class BuildCommand(EnvCommand):
     def handle(self) -> int:
         with build_environment(poetry=self.poetry, env=self.env, io=self.io) as env:
             fmt = self.option("format") or "all"
+            dist_dir = Path(self.option("output"))
             package = self.poetry.package
             self.line(
                 f"Building <c1>{package.pretty_name}</c1> (<c2>{package.version}</c2>)"
             )
 
-            self._build(fmt, executable=env.python)
+            if not dist_dir.is_absolute():
+                dist_dir = self.poetry.pyproject_path.parent / dist_dir
+            self._build(fmt, executable=env.python, target_dir=dist_dir)
 
         return 0
