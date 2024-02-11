@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING
 
 from dulwich.client import find_git_command
 
-from poetry.utils._compat import getencoding
-
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -48,7 +46,6 @@ class SystemGit:
             stdout=subprocess.DEVNULL,
             env=env,
             text=True,
-            encoding=getencoding(),
         )
 
     @staticmethod

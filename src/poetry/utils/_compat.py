@@ -51,7 +51,7 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
     return string.encode(encodings[0], errors="ignore")
 
 
-def getencoding():
+def getencoding() -> str:
     if sys.version_info < (3, 11):
         return locale.getpreferredencoding()
     else:
