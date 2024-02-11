@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-import locale
 import os
 
 from base64 import urlsafe_b64encode
@@ -16,6 +15,7 @@ from poetry.core.masonry.utils.package_include import PackageInclude
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
+from poetry.utils._compat import getencoding
 from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install
@@ -127,7 +127,7 @@ class EditableBuilder(Builder):
 
         try:
             pth_file = self._env.site_packages.write_text(
-                pth_file, content, encoding=locale.getpreferredencoding()
+                pth_file, content, encoding=getencoding()
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"

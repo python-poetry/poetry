@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import json
-import locale
 import os
 import shutil
 
@@ -20,6 +19,7 @@ from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -290,7 +290,7 @@ def test_builder_installs_proper_files_when_packages_configured(
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
 
     paths = set()
-    with pth_file.open(encoding=locale.getpreferredencoding()) as f:
+    with pth_file.open(encoding=getencoding()) as f:
         for line in f.readlines():
             line = line.strip(os.linesep)
             if line:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import locale
 import sys
 
 from contextlib import suppress
@@ -50,10 +51,18 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
     return string.encode(encodings[0], errors="ignore")
 
 
+def getencoding():
+    if sys.version_info < (3, 11):
+        return locale.getpreferredencoding()
+    else:
+        return locale.getencoding()
+
+
 __all__ = [
     "WINDOWS",
     "decode",
     "encode",
+    "getencoding",
     "metadata",
     "tomllib",
 ]
