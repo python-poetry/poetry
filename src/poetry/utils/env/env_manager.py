@@ -675,7 +675,7 @@ class EnvManager:
 
         args.append(str(path))
 
-        cli_result = virtualenv.cli_run(args)
+        cli_result = virtualenv.cli_run(args, setup_logging=False)
 
         # Exclude the venv folder from from macOS Time Machine backups
         # TODO: Add backup-ignore markers for other platforms too

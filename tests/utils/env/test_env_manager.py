@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import sys
 
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
 
+    from _pytest.logging import LogCaptureFixture
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -1229,6 +1231,16 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
         },
         prompt="simple-project-py3.5",
     )
+
+
+def test_build_venv_does_not_change_loglevel(
+    tmp_path: Path, manager: EnvManager, caplog: LogCaptureFixture
+) -> None:
+    # see https://github.com/python-poetry/poetry/pull/8760
+    venv_path = tmp_path / "venv"
+    caplog.set_level(logging.DEBUG)
+    manager.build_venv(venv_path)
+    assert logging.root.level == logging.DEBUG
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="requires darwin")
