@@ -432,7 +432,8 @@ class Incompatibility:
 
         if term.dependency.source_type:
             return str(term.dependency)
-        return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
+        pretty_name = term.dependency.complete_pretty_name
+        return f"{pretty_name} ({term.dependency.pretty_constraint})"
 
     def _single_term_where(self, callable: Callable[[Term], bool]) -> Term | None:
         found = None
