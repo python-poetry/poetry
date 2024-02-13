@@ -568,6 +568,9 @@ class Provider:
                         continue
                     self.search_for_direct_origin_dependency(dep)
 
+        active_extras = None if package.is_root() else dependency.extras
+        _dependencies = self._add_implicit_dependencies(_dependencies, active_extras)
+
         dependencies = self._get_dependencies_with_overrides(
             _dependencies, dependency_package
         )
@@ -604,7 +607,6 @@ class Provider:
 
             # For dependency resolution, markers of duplicate dependencies must be
             # mutually exclusive.
-            active_extras = None if package.is_root() else dependency.extras
             deps = self._resolve_overlapping_markers(package, deps, active_extras)
 
             if len(deps) == 1:
@@ -854,6 +856,42 @@ class Provider:
             and (not self._env or marker.validate(self._env.marker_env))
         )
 
+    def _add_implicit_dependencies(
+        self,
+        dependencies: Iterable[Dependency],
+        active_extras: Collection[NormalizedName] | None,
+    ) -> list[Dependency]:
+        """
+        This handles an edge case where the dependency is not required for a subset
+        of possible environments. We have to create such an implicit "not required"
+        dependency in order to not miss other dependencies later.
+        For instance:
+            • foo (1.0) ; python == 3.7
+            • foo (2.0) ; python == 3.8
+            • bar (2.0) ; python == 3.8
+            • bar (3.0) ; python == 3.9
+        the last dependency would be missed without this,
+        because the intersection with both foo dependencies is empty.
+
+        A special case of this edge case is a restricted dependency with a single
+        constraint, see https://github.com/python-poetry/poetry/issues/5506
+        for details.
+        """
+        by_name: dict[str, list[Dependency]] = defaultdict(list)
+        for dep in dependencies:
+            by_name[dep.name].append(dep)
+        for _name, deps in by_name.items():
+            marker = marker_union(*[d.marker for d in deps])
+            if marker.is_any():
+                continue
+            inverted_marker = marker.invert()
+            if self._is_relevant_marker(inverted_marker, active_extras):
+                # Set constraint to empty to mark dependency as "not required".
+                inverted_marker_dep = deps[0].with_constraint(EmptyConstraint())
+                inverted_marker_dep.marker = inverted_marker
+                deps.append(inverted_marker_dep)
+        return [dep for deps in by_name.values() for dep in deps]
+
     def _resolve_overlapping_markers(
         self,
         package: Package,
@@ -876,7 +914,20 @@ class Provider:
         dependencies = self._merge_dependencies_by_constraint(dependencies)
 
         new_dependencies = []
+
+        # We have can sort out the implicit "not required" dependency determined
+        # in _add_implicit_dependencies, because it does not overlap with
+        # any other dependency for sure.
+        for i, dep in enumerate(dependencies):
+            if dep.constraint.is_empty():
+                new_dependencies.append(dependencies.pop(i))
+                break
+
         for uses in itertools.product([True, False], repeat=len(dependencies)):
+            if not any(uses):
+                # handled by the implicit "not required" dependency
+                continue
+
             # intersection of markers
             # For performance optimization, we don't just intersect all markers at once,
             # but intersect them one after the other to get empty markers early.
@@ -914,21 +965,6 @@ class Provider:
             if constraint.is_empty():
                 # conflict in overlapping area
                 raise IncompatibleConstraintsError(package, *used_dependencies)
-
-            if not any(uses):
-                # This is an edge case where the dependency is not required
-                # for the resulting marker. However, we have to consider it anyway
-                #  in order to not miss other dependencies later, for instance:
-                #   • foo (1.0) ; python == 3.7
-                #   • foo (2.0) ; python == 3.8
-                #   • bar (2.0) ; python == 3.8
-                #   • bar (3.0) ; python == 3.9
-                # the last dependency would be missed without this,
-                # because the intersection with both foo dependencies is empty.
-
-                # Set constraint to empty to mark dependency as "not required".
-                constraint = EmptyConstraint()
-                used_dependencies = dependencies
 
             # build new dependency with intersected constraint and marker
             # (and correct source)
