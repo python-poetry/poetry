@@ -14,6 +14,7 @@ import tomlkit
 from poetry.core.constraints.version import Version
 
 from poetry.toml.file import TOMLFile
+from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env import EnvManager
 from poetry.utils.env import IncorrectEnvError
@@ -966,6 +967,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     mocker.patch(
         "subprocess.check_output",
         side_effect=[
+            "/usr",
             "/usr/bin/python3",
             "3.5.3",
             "/usr/bin/python3.9",
@@ -995,7 +997,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("subprocess.check_output", side_effect=["", "", "", ""])
+    mocker.patch("subprocess.check_output", side_effect=["/usr"])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -1021,7 +1023,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("subprocess.check_output", side_effect=["3.8.0"])
+    mocker.patch("subprocess.check_output", side_effect=["/usr", "3.8.0"])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -1203,10 +1205,12 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
             executable = cmd[0]
             if "python3.5" in str(executable):
                 return "3.5.12"
-            else:
-                return "3.7.1"
-        else:
-            return "/usr/bin/python3.5"
+            return "3.7.1"
+
+        if GET_BASE_PREFIX in cmd:
+            return "/usr"
+
+        return "/usr/bin/python3.5"
 
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     check_output = mocker.patch(
