@@ -246,8 +246,8 @@ class Installer:
 
             if not self._locker.is_fresh():
                 raise ValueError(
-                    "poetry.lock is not consistent with pyproject.toml. "
-                    "Run `poetry lock [--no-update]` to fix it."
+                    "pyproject.toml changed significantly since poetry.lock was last generated. "
+                    "Run `poetry lock [--no-update]` to fix the lock file."
                 )
 
             locker_extras = {
