@@ -69,7 +69,7 @@ def check_output_wrapper(
             return f"/usr/bin/{basename}"
 
         if "print(sys.base_prefix)" in python_cmd:
-            return "/usr"
+            return sys.base_prefix
 
         assert "import sys; print(sys.prefix)" in python_cmd
         return "/prefix"
@@ -141,7 +141,7 @@ def test_activate_in_project_venv_no_explicit_config(
     env = manager.activate("python3.7")
 
     assert env.path == tmp_path / "poetry-fixture-simple" / ".venv"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
 
     m.assert_called_with(
         tmp_path / "poetry-fixture-simple" / ".venv",
@@ -197,7 +197,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert envs[venv_name]["patch"] == "3.7.1"
 
     assert env.path == tmp_path / f"{venv_name}-py3.7"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
 
 
 def test_activate_fails_when_python_cannot_be_found(
@@ -257,7 +257,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     assert envs[venv_name]["patch"] == "3.7.1"
 
     assert env.path == tmp_path / f"{venv_name}-py3.7"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
 
 
 def test_activate_activates_same_virtualenv_with_envs_file(
@@ -297,7 +297,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     assert envs[venv_name]["patch"] == "3.7.1"
 
     assert env.path == tmp_path / f"{venv_name}-py3.7"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
 
 
 def test_activate_activates_different_virtualenv_with_envs_file(
@@ -343,7 +343,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     assert envs[venv_name]["patch"] == "3.6.6"
 
     assert env.path == tmp_path / f"{venv_name}-py3.6"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
 
 
 def test_activate_activates_recreates_for_different_patch(
@@ -395,7 +395,7 @@ def test_activate_activates_recreates_for_different_patch(
     assert envs[venv_name]["patch"] == "3.7.1"
 
     assert env.path == tmp_path / f"{venv_name}-py3.7"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
     assert (tmp_path / f"{venv_name}-py3.7").exists()
 
 
@@ -443,7 +443,7 @@ def test_activate_does_not_recreate_when_switching_minor(
     assert envs[venv_name]["patch"] == "3.6.6"
 
     assert env.path == tmp_path / f"{venv_name}-py3.6"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
     assert (tmp_path / f"{venv_name}-py3.6").exists()
 
 
@@ -595,7 +595,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     env = manager.get()
 
     assert env.path == tmp_path / f"{venv_name}-py3.7"
-    assert env.base == Path("/usr")
+    assert env.base == Path(sys.base_prefix)
 
 
 def test_list(
@@ -967,12 +967,12 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     mocker.patch(
         "subprocess.check_output",
         side_effect=[
-            "/usr",
+            sys.base_prefix,
             "/usr/bin/python3",
             "3.5.3",
             "/usr/bin/python3.9",
             "3.9.0",
-            "/usr",
+            sys.base_prefix,
         ],
     )
     m = mocker.patch(
@@ -997,7 +997,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("subprocess.check_output", side_effect=["/usr"])
+    mocker.patch("subprocess.check_output", side_effect=[sys.base_prefix])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -1023,7 +1023,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("subprocess.check_output", side_effect=["/usr", "3.8.0"])
+    mocker.patch("subprocess.check_output", side_effect=[sys.base_prefix, "3.8.0"])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -1208,7 +1208,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
             return "3.7.1"
 
         if GET_BASE_PREFIX in cmd:
-            return "/usr"
+            return sys.base_prefix
 
         return "/usr/bin/python3.5"
 
