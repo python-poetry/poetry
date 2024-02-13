@@ -125,7 +125,7 @@ class Provider:
         self._env: Env | None = None
         self._python_constraint = package.python_constraint
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
-        self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
+        self._overrides: dict[Package, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
@@ -155,9 +155,7 @@ class Provider:
     def is_debugging(self) -> bool:
         return self._is_debugging
 
-    def set_overrides(
-        self, overrides: dict[DependencyPackage, dict[str, Dependency]]
-    ) -> None:
+    def set_overrides(self, overrides: dict[Package, dict[str, Dependency]]) -> None:
         self._overrides = overrides
 
     def load_deferred(self, load_deferred: bool) -> None:
@@ -383,7 +381,7 @@ class Provider:
         return package
 
     def _get_dependencies_with_overrides(
-        self, dependencies: list[Dependency], package: DependencyPackage
+        self, dependencies: list[Dependency], package: Package
     ) -> list[Dependency]:
         overrides = self._overrides.get(package, {})
         _dependencies = []
@@ -458,9 +456,7 @@ class Provider:
             and self._python_constraint.allows_any(dep.python_constraint)
             and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
-        dependencies = self._get_dependencies_with_overrides(
-            _dependencies, dependency_package
-        )
+        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
 
         return [
             Incompatibility(
@@ -568,9 +564,7 @@ class Provider:
                         continue
                     self.search_for_direct_origin_dependency(dep)
 
-        dependencies = self._get_dependencies_with_overrides(
-            _dependencies, dependency_package
-        )
+        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
 
         # Searching for duplicate dependencies
         #
@@ -647,11 +641,9 @@ class Provider:
             for dep in deps:
                 if not overrides_marker_intersection.intersect(dep.marker).is_empty():
                     current_overrides = self._overrides.copy()
-                    package_overrides = current_overrides.get(
-                        dependency_package, {}
-                    ).copy()
+                    package_overrides = current_overrides.get(package, {}).copy()
                     package_overrides.update({dep.name: dep})
-                    current_overrides.update({dependency_package: package_overrides})
+                    current_overrides.update({package: package_overrides})
                     overrides.append(current_overrides)
 
             if overrides:
