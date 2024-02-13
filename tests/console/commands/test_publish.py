@@ -25,6 +25,22 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
 
 
+def test_publish_not_possible_in_non_package_mode(
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    source_dir = fixture_dir("non_package_mode")
+
+    poetry = Factory().create_poetry(source_dir)
+    tester = command_tester_factory("publish", poetry)
+
+    assert tester.execute() == 1
+    assert (
+        tester.io.fetch_error()
+        == "Publishing a package is not possible in non-package mode.\n"
+    )
+
+
 def test_publish_returns_non_zero_code_for_upload_errors(
     app: PoetryTestApplication,
     app_tester: ApplicationTester,

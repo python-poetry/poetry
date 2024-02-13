@@ -122,6 +122,24 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
+def test_check_non_package_mode(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
+) -> None:
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(fixture_dir("non_package_mode") / "pyproject.toml"),
+        new_callable=mocker.PropertyMock,
+    )
+
+    tester.execute()
+
+    expected = """\
+All set!
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
 @pytest.mark.parametrize(
     ("options", "expected", "expected_status"),
     [

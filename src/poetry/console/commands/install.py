@@ -77,6 +77,9 @@ dependencies and not including the current project, run the command with the
 <info>--no-root</info> option like below:
 
 <info> poetry install --no-root</info>
+
+If you want to use Poetry only for dependency management but not for packaging,
+you can set the "package-mode" to false in your pyproject.toml file.
 """
 
     _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
@@ -152,7 +155,7 @@ dependencies and not including the current project, run the command with the
         if return_code != 0:
             return return_code
 
-        if self.option("no-root"):
+        if self.option("no-root") or not self.poetry.is_package_mode:
             return 0
 
         log_install = (
@@ -184,9 +187,13 @@ dependencies and not including the current project, run the command with the
             # No need for an editable install in this case.
             self.line("")
             self.line_error(
-                f"The current project could not be installed: <error>{e}</error>\n"
+                f"Warning: The current project could not be installed: {e}\n"
                 "If you do not want to install the current project"
-                " use <c1>--no-root</c1>",
+                " use <c1>--no-root</c1>.\n"
+                "If you want to use Poetry only for dependency management"
+                " but not for packaging, you can set the operating mode to "
+                '"non-package" in your pyproject.toml file.\n'
+                "In a future version of Poetry this warning will become an error!",
                 style="warning",
             )
             return 0

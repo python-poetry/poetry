@@ -224,6 +224,12 @@ def test_create_poetry_with_multi_constraints_dependency(
     assert len(package.requires) == 2
 
 
+def test_create_poetry_non_package_mode(fixture_dir: FixtureDirGetter) -> None:
+    poetry = Factory().create_poetry(fixture_dir("non_package_mode"))
+
+    assert not poetry.is_package_mode
+
+
 def test_poetry_with_default_source_legacy(
     fixture_dir: FixtureDirGetter, with_simple_keyring: None
 ) -> None:

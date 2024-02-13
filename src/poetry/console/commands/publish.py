@@ -56,6 +56,10 @@ the config command.
     def handle(self) -> int:
         from poetry.publishing.publisher import Publisher
 
+        if not self.poetry.is_package_mode:
+            self.line_error("Publishing a package is not possible in non-package mode.")
+            return 1
+
         dist_dir = self.option("dist-dir")
 
         publisher = Publisher(self.poetry, self.io, Path(dist_dir))
