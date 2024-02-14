@@ -403,7 +403,7 @@ poetry add --editable ./my-package/
 poetry add --editable git+ssh://github.com/sdispater/pendulum.git#develop
 ```
 
-Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
+Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment. (This is not supported by Poetry Core.)
 
 ```toml
 [tool.poetry.dependencies]
