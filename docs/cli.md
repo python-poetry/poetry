@@ -403,7 +403,7 @@ poetry add --editable ./my-package/
 poetry add --editable git+ssh://github.com/sdispater/pendulum.git#develop
 ```
 
-Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment. (This is not supported by Poetry Core.)
+Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
 
 ```toml
 [tool.poetry.dependencies]
@@ -413,6 +413,10 @@ my-package = {path = "../my/path", develop = true}
 {{% note %}}
 Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicitly,
 to make sure the behavior is the same for all poetry versions.
+{{% /note %}}
+
+{{% note %}}
+The `develop` attribute is understood only when using `poetry install`.
 {{% /note %}}
 
 If the package(s) you want to install provide extras, you can specify them
