@@ -415,6 +415,11 @@ Before poetry 1.1 path dependencies were installed in editable mode by default. 
 to make sure the behavior is the same for all poetry versions.
 {{% /note %}}
 
+{{% note %}}
+The `develop` attribute is a Poetry-specific feature, so it is not included in the package distribution metadata.
+In other words, it is only considered when using Poetry to install the project.
+{{% /note %}}
+
 If the package(s) you want to install provide extras, you can specify them
 when adding the package:
 
