@@ -226,7 +226,7 @@ You can configure a package source as a secondary source with `priority = "secon
 source configuration.
 
 ```bash
-poetry source add --priority=secondary https://foo.bar/simple/
+poetry source add --priority=secondary foo https://foo.bar/simple/
 ```
 
 There can be more than one secondary package source.
@@ -247,7 +247,7 @@ You can configure a package source as a supplemental source with `priority = "su
 source configuration.
 
 ```bash
-poetry source add --priority=supplemental https://foo.bar/simple/
+poetry source add --priority=supplemental foo https://foo.bar/simple/
 ```
 
 There can be more than one supplemental package source.
