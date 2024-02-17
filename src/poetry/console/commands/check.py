@@ -121,8 +121,9 @@ class CheckCommand(Command):
         ]
 
     def handle(self) -> int:
+        from poetry.core.pyproject.toml import PyProjectTOML
+
         from poetry.factory import Factory
-        from poetry.pyproject.toml import PyProjectTOML
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path

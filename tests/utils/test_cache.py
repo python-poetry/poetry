@@ -342,7 +342,7 @@ def test_get_cached_archive_for_link_no_race_condition(
         for _ in range(4):
             tasks.append(
                 executor.submit(
-                    cache.get_cached_archive_for_link,  # type: ignore[arg-type]
+                    cache.get_cached_archive_for_link,
                     link,
                     strict=True,
                     download_func=download_mock,

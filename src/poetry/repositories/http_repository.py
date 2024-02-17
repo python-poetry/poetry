@@ -127,8 +127,7 @@ class HTTPRepository(CachedRepository):
                 # Do not set to False if we already know that the domain supports
                 # range requests for some URLs!
                 raise_accepts_ranges = False
-                if netloc not in self._supports_range_requests:
-                    self._supports_range_requests[netloc] = False
+                self._supports_range_requests.setdefault(netloc, False)
             else:
                 self._supports_range_requests[netloc] = True
                 return package_info

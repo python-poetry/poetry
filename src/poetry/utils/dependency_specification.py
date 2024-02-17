@@ -92,8 +92,8 @@ class RequirementsParser:
         )
 
         if specification:
-            if extras and "extras" not in specification:
-                specification["extras"] = extras
+            if extras:
+                specification.setdefault("extras", extras)
             return specification
 
         raise ValueError(f"Invalid dependency specification: {requirement}")

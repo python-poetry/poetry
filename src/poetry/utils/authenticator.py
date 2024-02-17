@@ -122,11 +122,9 @@ class Authenticator:
         self._password_manager = PasswordManager(self._config)
         self._cache_control = (
             FileCache(
-                str(
-                    self._config.repository_cache_directory
-                    / (cache_id or "_default_cache")
-                    / "_http"
-                ),
+                self._config.repository_cache_directory
+                / (cache_id or "_default_cache")
+                / "_http"
             )
             if not disable_cache
             else None
