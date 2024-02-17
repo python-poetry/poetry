@@ -112,19 +112,6 @@ class SitePackages:
             return distribution
         return None
 
-    def find_distribution_files_with_suffix(
-        self, distribution_name: str, suffix: str, writable_only: bool = False
-    ) -> Iterable[Path]:
-        for distribution in self.distributions(
-            name=distribution_name, writable_only=writable_only
-        ):
-            files = [] if distribution.files is None else distribution.files
-            for file in files:
-                if file.name.endswith(suffix):
-                    path = distribution.locate_file(file)
-                    assert isinstance(path, Path)
-                    yield path
-
     def find_distribution_files_with_name(
         self, distribution_name: str, name: str, writable_only: bool = False
     ) -> Iterable[Path]:
