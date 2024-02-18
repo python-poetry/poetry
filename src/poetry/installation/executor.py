@@ -68,6 +68,17 @@ class Executor:
         self._use_modern_installation = config.get(
             "installer.modern-installation", True
         )
+        if not self._use_modern_installation:
+            self._io.write_line(
+                "<warning>Setting `installer.modern-installation` to `false` "
+                "is deprecated.</>"
+            )
+            self._io.write_line(
+                "<warning>The pip-based installer will be removed in a future release.</>"
+            )
+            self._io.write_line(
+                "<warning>See https://github.com/python-poetry/poetry/issues/8987.</>"
+            )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
