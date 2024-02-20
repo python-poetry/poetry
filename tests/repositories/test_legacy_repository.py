@@ -27,8 +27,10 @@ if TYPE_CHECKING:
 
     from _pytest.monkeypatch import MonkeyPatch
     from packaging.utils import NormalizedName
+    from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.types import RequestsSessionGet
 
 
 @pytest.fixture(autouse=True)
@@ -174,6 +176,40 @@ def test_get_package_information_fallback_read_setup() -> None:
         package.description
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
+
+
+def test_get_package_information_pep_658(
+    mocker: MockerFixture, get_metadata_mock: RequestsSessionGet
+) -> None:
+    repo = MockRepository()
+
+    isort_package = repo.package("isort", Version.parse("4.3.4"))
+
+    mocker.patch.object(repo.session, "get", get_metadata_mock)
+    spy = mocker.spy(repo, "_get_info_from_metadata")
+
+    try:
+        package = repo.package("isort-metadata", Version.parse("4.3.4"))
+    except FileNotFoundError:
+        pytest.fail("Metadata was not successfully retrieved")
+    else:
+        assert spy.call_count > 0
+        assert spy.spy_return is not None
+
+        assert package.source_type == isort_package.source_type == "legacy"
+        assert package.source_reference == isort_package.source_reference == repo.name
+        assert package.source_url == isort_package.source_url == repo.url
+        assert package.name == "isort-metadata"
+        assert package.version.text == isort_package.version.text == "4.3.4"
+        assert package.description == isort_package.description
+        assert (
+            package.requires == isort_package.requires == [Dependency("futures", "*")]
+        )
+        assert (
+            str(package.python_constraint)
+            == str(isort_package.python_constraint)
+            == ">=2.7,<3.0.dev0 || >=3.4.dev0"
+        )
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints() -> None:

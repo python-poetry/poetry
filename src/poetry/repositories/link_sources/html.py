@@ -42,7 +42,21 @@ class HTMLPage(LinkSource):
                     yanked = unescape(yanked_value)
                 else:
                     yanked = "data-yanked" in anchor
-                link = Link(url, requires_python=pyrequire, yanked=yanked)
+
+                # see https://peps.python.org/pep-0714/#clients
+                # and https://peps.python.org/pep-0658/#specification
+                metadata: str | bool
+                for metadata_key in ("data-core-metadata", "data-dist-info-metadata"):
+                    metadata_value = anchor.get(metadata_key)
+                    if metadata_value:
+                        metadata = unescape(metadata_value)
+                    else:
+                        metadata = metadata_key in anchor
+                    if metadata:
+                        break
+                link = Link(
+                    url, requires_python=pyrequire, yanked=yanked, metadata=metadata
+                )
 
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue

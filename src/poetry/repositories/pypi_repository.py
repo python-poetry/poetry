@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 
-from collections import defaultdict
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -162,25 +161,18 @@ class PyPiRepository(HTTPRepository):
         data.files = files
 
         if self._fallback and data.requires_dist is None:
-            self._log("No dependencies found, downloading archives", level="debug")
+            self._log(
+                "No dependencies found, downloading metadata and/or archives",
+                level="debug",
+            )
             # No dependencies set (along with other information)
             # This might be due to actually no dependencies
-            # or badly set metadata when uploading
+            # or badly set metadata when uploading.
             # So, we need to make sure there is actually no
-            # dependencies by introspecting packages
-            urls = defaultdict(list)
-            for url in json_data["urls"]:
-                # Only get sdist and wheels if they exist
-                dist_type = url["packagetype"]
-                if dist_type not in SUPPORTED_PACKAGE_TYPES:
-                    continue
-
-                urls[dist_type].append(url["url"])
-
-            if not urls:
-                return data.asdict()
-
-            info = self._get_info_from_urls(urls)
+            # dependencies by introspecting packages.
+            page = self.get_page(name)
+            links = list(page.links_for_version(name, version))
+            info = self._get_info_from_links(links)
 
             data.requires_dist = info.requires_dist
 
