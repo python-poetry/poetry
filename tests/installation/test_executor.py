@@ -1171,7 +1171,7 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     executor = Executor(env, pool, config, io)
     warning_lines = io.fetch_output().splitlines()
     assert warning_lines == [
-        "Setting `installer.modern-installation` to `false` is deprecated.",
+        "Warning: Setting `installer.modern-installation` to `false` is deprecated.",
         "The pip-based installer will be removed in a future release.",
         "See https://github.com/python-poetry/poetry/issues/8987.",
     ]

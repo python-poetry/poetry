@@ -70,7 +70,7 @@ class Executor:
         )
         if not self._use_modern_installation:
             self._io.write_line(
-                "<warning>Setting `installer.modern-installation` to `false` "
+                "<warning>Warning: Setting `installer.modern-installation` to `false` "
                 "is deprecated.</>"
             )
             self._io.write_line(
