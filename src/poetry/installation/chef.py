@@ -35,11 +35,13 @@ class ChefBuildError(ChefError): ...
 
 class ChefInstallError(ChefError):
     def __init__(self, requirements: Collection[str], output: str, error: str) -> None:
-        message = "\n\n".join((
-            f"Failed to install {', '.join(requirements)}.",
-            f"Output:\n{output}",
-            f"Error:\n{error}",
-        ))
+        message = "\n\n".join(
+            (
+                f"Failed to install {', '.join(requirements)}.",
+                f"Output:\n{output}",
+                f"Error:\n{error}",
+            )
+        )
         super().__init__(message)
         self._requirements = requirements
 

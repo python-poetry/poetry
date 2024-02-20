@@ -95,12 +95,14 @@ def check_solver_result(
     for op in ops:
         if op.job_type == "update":
             assert isinstance(op, Update)
-            result.append({
-                "job": "update",
-                "from": op.initial_package,
-                "to": op.target_package,
-                "skipped": op.skipped,
-            })
+            result.append(
+                {
+                    "job": "update",
+                    "from": op.initial_package,
+                    "to": op.target_package,
+                    "skipped": op.skipped,
+                }
+            )
         else:
             job = "install"
             if op.job_type == "uninstall":
@@ -2958,16 +2960,18 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
 
     check_solver_result(
         transaction,
-        [{
-            "job": "install",
-            "package": Package(
-                "isort",
-                "4.3.4",
-                source_type="legacy",
-                source_url=repo.url,
-                source_reference=repo.name,
-            ),
-        }],
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "isort",
+                    "4.3.4",
+                    source_type="legacy",
+                    source_url=repo.url,
+                    source_reference=repo.name,
+                ),
+            }
+        ],
     )
 
 
@@ -3050,16 +3054,18 @@ def test_solver_chooses_from_correct_repository_if_forced(
 
     ops = check_solver_result(
         transaction,
-        [{
-            "job": "install",
-            "package": Package(
-                "tomlkit",
-                "0.5.2",
-                source_type="legacy",
-                source_url=repo.url,
-                source_reference=repo.name,
-            ),
-        }],
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "tomlkit",
+                    "0.5.2",
+                    source_type="legacy",
+                    source_url=repo.url,
+                    source_reference=repo.name,
+                ),
+            }
+        ],
     )
 
     assert ops[0].package.source_url == "http://legacy.foo.bar"
@@ -4609,10 +4615,12 @@ def test_solver_resolves_duplicate_dependency_in_extra(
 
     check_solver_result(
         transaction,
-        ([
-            {"job": "install", "package": package_b1 if with_extra else package_b2},
-            {"job": "install", "package": package_a},
-        ]),
+        (
+            [
+                {"job": "install", "package": package_b1 if with_extra else package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
     )
 
 
@@ -4647,9 +4655,11 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
 
     check_solver_result(
         transaction,
-        ([
-            {"job": "install", "package": package_b1},
-            {"job": "install", "package": package_b2},
-            {"job": "install", "package": package_a},
-        ]),
+        (
+            [
+                {"job": "install", "package": package_b1},
+                {"job": "install", "package": package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
     )

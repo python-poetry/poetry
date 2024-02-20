@@ -154,10 +154,12 @@ class PyPiRepository(HTTPRepository):
         files = info.get("files", [])
         for file_info in version_info:
             if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                files.append({
-                    "file": file_info["filename"],
-                    "hash": "sha256:" + file_info["digests"]["sha256"],
-                })
+                files.append(
+                    {
+                        "file": file_info["filename"],
+                        "hash": "sha256:" + file_info["digests"]["sha256"],
+                    }
+                )
         data.files = files
 
         if self._fallback and data.requires_dist is None:
