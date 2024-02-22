@@ -452,7 +452,7 @@ The syntax for registering a plugin is:
 [tool.poetry.plugins] # Optional super table
 
 [tool.poetry.plugins."A"]
-"B" = "C:D"
+B = "C:D"
 ```
 Which are:
 
