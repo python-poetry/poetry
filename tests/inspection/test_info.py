@@ -303,12 +303,9 @@ def test_info_setup_complex_pep517_legacy(
 def test_info_setup_complex_disable_build(
     mocker: MockerFixture, demo_setup_complex: Path
 ) -> None:
-    spy = mocker.spy(VirtualEnv, "run")
-    info = PackageInfo.from_directory(demo_setup_complex, disable_build=True)
-    assert spy.call_count == 0
-    assert info.name == "demo"
-    assert info.version == "0.1.0"
-    assert info.requires_dist is None
+    # Cannot extract install_requires from list comprehension.
+    with pytest.raises(PackageInfoError):
+        PackageInfo.from_directory(demo_setup_complex, disable_build=True)
 
 
 @pytest.mark.network
