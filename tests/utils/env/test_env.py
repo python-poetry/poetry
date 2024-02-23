@@ -482,8 +482,8 @@ def test_build_environment_called_build_script_specified(
 
     with build_environment(extended_without_setup_poetry, project_env) as env:
         assert env == ephemeral_env
-        assert env.executed == [
-            [  # type: ignore[attr-defined]
+        assert env.executed == [  # type: ignore[attr-defined]
+            [
                 str(sys.executable),
                 str(env.pip_embedded),
                 "install",
