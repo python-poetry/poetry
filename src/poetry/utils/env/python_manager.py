@@ -11,8 +11,10 @@ from typing import TYPE_CHECKING
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 
 from poetry.utils._compat import decode
+from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
 
 
@@ -20,6 +22,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
 
     from poetry.config.config import Config
+    from poetry.poetry import Poetry
 
 
 class Python:
@@ -119,3 +122,46 @@ class Python:
             return cls(executable=active_python)
 
         return cls.get_system_python()
+
+    @classmethod
+    def get_compatible_python(cls, poetry: Poetry, io: IO | None = None) -> Python:
+        io = io or NullIO()
+        supported_python = poetry.package.python_constraint
+        python = None
+
+        for suffix in [
+            *sorted(
+                poetry.package.AVAILABLE_PYTHONS,
+                key=lambda v: (v.startswith("3"), -len(v), v),
+                reverse=True,
+            ),
+            "",
+        ]:
+            if len(suffix) == 1:
+                if not parse_constraint(f"^{suffix}.0").allows_any(supported_python):
+                    continue
+            elif suffix and not supported_python.allows_any(
+                parse_constraint(suffix + ".*")
+            ):
+                continue
+
+            python_name = f"python{suffix}"
+            if io.is_debug():
+                io.write_error_line(f"<debug>Trying {python_name}</debug>")
+
+            executable = cls._full_python_path(python_name)
+            if executable is None:
+                continue
+
+            candidate = cls(executable)
+            if supported_python.allows(candidate.patch_version):
+                python = candidate
+                io.write_error_line(
+                    f"Using <c1>{python_name}</c1> ({python.patch_version})"
+                )
+                break
+
+        if not python:
+            raise NoCompatiblePythonVersionFound(poetry.package.python_versions)
+
+        return python

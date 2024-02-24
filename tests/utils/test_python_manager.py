@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.types import ProjectFactory
 
 
 def test_python_get_version_on_the_fly() -> None:
@@ -105,3 +106,16 @@ def test_detect_active_python_with_bat(tmp_path: Path) -> None:
     active_python = Python._detect_active_python(NullIO())
 
     assert active_python == wrapped_python
+
+
+def test_python_find_compatible(project_factory: ProjectFactory) -> None:
+    # Note: This test may fail on Windows systems using Python from the Microsoft Store,
+    # as the executable is named `py.exe`, which is not currently recognized by
+    # Python.get_compatible_python. This issue will be resolved in #2117.
+    # However, this does not cause problems in our case because Poetry's own
+    # Python interpreter is used before attempting to find another compatible version.
+    fixture = Path(__file__).parent.parent / "fixtures" / "simple_project"
+    poetry = project_factory("simple-project", source=fixture)
+    python = Python.get_compatible_python(poetry)
+
+    assert Version.from_parts(3, 4) <= python.version <= Version.from_parts(4, 0)
