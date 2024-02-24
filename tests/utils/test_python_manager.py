@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.types import ProjectFactory
 
 
 def test_python_get_version_on_the_fly() -> None:
@@ -104,3 +105,12 @@ def test_detect_active_python_with_bat(tmp_path: Path) -> None:
     active_python = Python._detect_active_python(NullIO())
 
     assert active_python == wrapped_python
+
+
+def test_python_find_compatible(
+    project_factory: ProjectFactory, mocker: MockerFixture
+) -> None:
+    fixture = Path(__file__).parent.parent / "fixtures" / "simple_project"
+    poetry = project_factory("simple-project", source=fixture)
+    python = Python.get_compatible_python(poetry)
+    assert python.executable  # type: ignore[truthy-bool]
