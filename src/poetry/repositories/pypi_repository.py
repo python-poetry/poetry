@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import logging
 
-from collections import defaultdict
 from typing import TYPE_CHECKING
 from typing import Any
 
 import requests
+import requests.adapters
 
 from cachecontrol.controller import logger as cache_control_logger
 from poetry.core.packages.package import Package
@@ -38,9 +38,13 @@ class PyPiRepository(HTTPRepository):
         url: str = "https://pypi.org/",
         disable_cache: bool = False,
         fallback: bool = True,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         super().__init__(
-            "PyPI", url.rstrip("/") + "/simple/", disable_cache=disable_cache
+            "PyPI",
+            url.rstrip("/") + "/simple/",
+            disable_cache=disable_cache,
+            pool_size=pool_size,
         )
 
         self._base_url = url
@@ -49,7 +53,7 @@ class PyPiRepository(HTTPRepository):
     def search(self, query: str) -> list[Package]:
         results = []
 
-        response = requests.session().get(
+        response = requests.get(
             self._base_url + "search", params={"q": query}, timeout=REQUESTS_TIMEOUT
         )
         parser = SearchResultParser()
@@ -98,7 +102,7 @@ class PyPiRepository(HTTPRepository):
 
         return [Package(name, version, yanked=yanked) for version, yanked in versions]
 
-    def _get_package_info(self, name: str) -> dict[str, Any]:
+    def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
         info = self._get(f"simple/{name}/", headers=headers)
         if info is None:
@@ -138,7 +142,6 @@ class PyPiRepository(HTTPRepository):
             summary=info["summary"],
             requires_dist=info["requires_dist"],
             requires_python=info["requires_python"],
-            files=info.get("files", []),
             yanked=self._get_yanked(info),
             cache_version=str(self.CACHE_VERSION),
         )
@@ -148,35 +151,28 @@ class PyPiRepository(HTTPRepository):
         except KeyError:
             version_info = []
 
+        files = info.get("files", [])
         for file_info in version_info:
             if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                data.files.append(
-                    {
-                        "file": file_info["filename"],
-                        "hash": "sha256:" + file_info["digests"]["sha256"],
-                    }
-                )
+                files.append({
+                    "file": file_info["filename"],
+                    "hash": "sha256:" + file_info["digests"]["sha256"],
+                })
+        data.files = files
 
         if self._fallback and data.requires_dist is None:
-            self._log("No dependencies found, downloading archives", level="debug")
+            self._log(
+                "No dependencies found, downloading metadata and/or archives",
+                level="debug",
+            )
             # No dependencies set (along with other information)
             # This might be due to actually no dependencies
-            # or badly set metadata when uploading
+            # or badly set metadata when uploading.
             # So, we need to make sure there is actually no
-            # dependencies by introspecting packages
-            urls = defaultdict(list)
-            for url in json_data["urls"]:
-                # Only get sdist and wheels if they exist
-                dist_type = url["packagetype"]
-                if dist_type not in SUPPORTED_PACKAGE_TYPES:
-                    continue
-
-                urls[dist_type].append(url["url"])
-
-            if not urls:
-                return data.asdict()
-
-            info = self._get_info_from_urls(urls)
+            # dependencies by introspecting packages.
+            page = self.get_page(name)
+            links = list(page.links_for_version(name, version))
+            info = self._get_info_from_links(links)
 
             data.requires_dist = info.requires_dist
 

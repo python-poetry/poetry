@@ -68,15 +68,18 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.path": (str, lambda val: str(Path(val))),
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
+            "virtualenvs.prompt": (str, str),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
             "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
             "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
-            "virtualenvs.prompt": (str, lambda val: str(val)),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
             ),
+            "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
+            "warnings.export": (boolean_validator, boolean_normalizer),
+            "keyring.enabled": (boolean_validator, boolean_normalizer),
         }
 
         return unique_config_values
@@ -122,6 +125,9 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
+            if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+                raise ValueError(f"Expected a value for {setting_key} setting.")
+
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
             value: str | dict[str, Any]
             if m:

@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 @contextmanager
 def ephemeral_environment(
     executable: Path | None = None,
-    flags: dict[str, bool] | None = None,
+    flags: dict[str, str | bool] | None = None,
 ) -> Iterator[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
@@ -67,25 +67,18 @@ def build_environment(
     """
     if not env or poetry.package.build_script:
         with ephemeral_environment(executable=env.python if env else None) as venv:
-            overwrite = (
-                io is not None and io.output.is_decorated() and not io.is_debug()
-            )
-
             if io:
-                if not overwrite:
-                    io.write_error_line("")
-
                 requires = [
                     f"<c1>{requirement}</c1>"
                     for requirement in poetry.pyproject.build_system.requires
                 ]
 
-                io.overwrite_error(
+                io.write_error_line(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
 
-            venv.run_pip(
+            output = venv.run_pip(
                 "install",
                 "--disable-pip-version-check",
                 "--ignore-installed",
@@ -93,9 +86,8 @@ def build_environment(
                 *poetry.pyproject.build_system.requires,
             )
 
-            if overwrite:
-                assert io is not None
-                io.write_error_line("")
+            if io and io.is_debug() and output:
+                io.write_error(output)
 
             yield venv
     else:

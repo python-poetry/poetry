@@ -13,6 +13,7 @@ from poetry.core.pyproject.exceptions import PyProjectException
 from poetry.config.config_source import ConfigSource
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
+from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
 
 
@@ -58,6 +59,8 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -67,6 +70,7 @@ virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+warnings.export = true
 """
 
     assert tester.io.fetch_output() == expected
@@ -87,6 +91,8 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
+solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -96,6 +102,7 @@ virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+warnings.export = true
 """
 
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
@@ -137,6 +144,8 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -146,6 +155,7 @@ virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+warnings.export = true
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
@@ -165,6 +175,8 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -174,6 +186,7 @@ virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+warnings.export = true
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
@@ -221,7 +234,7 @@ def test_display_empty_repositories_setting(
 ) -> None:
     tester = command_tester_factory(
         "config",
-        poetry=Factory().create_poetry(fixture_dir("with_empty_repositories_key")),
+        poetry=Factory().create_poetry(fixture_dir("with_local_config")),
     )
     tester.execute("repositories")
 
@@ -255,8 +268,7 @@ def test_set_malformed_repositories_setting(
         tester.execute("repositories.foo bar baz")
 
     assert (
-        str(e.value)
-        == "You must pass the url. Example: poetry config repositories.foo"
+        str(e.value) == "You must pass the url. Example: poetry config repositories.foo"
         " https://bar.com"
     )
 
@@ -292,6 +304,8 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
+solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -301,6 +315,7 @@ virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+warnings.export = true
 """
 
     assert config.set_config_source.call_count == 1  # type: ignore[attr-defined]
@@ -328,7 +343,9 @@ installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
 installer.parallel = true
+keyring.enabled = true
 repositories.foo.url = "https://foo.bar/simple/"
+solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -338,6 +355,7 @@ virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
 virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+warnings.export = true
 """
 
     assert tester.io.fetch_output() == expected
@@ -400,6 +418,15 @@ def test_set_pypi_token_unsuccessful_multiple_values(
         tester.execute("pypi-token.pypi mytoken mytoken")
 
     assert str(e.value) == "Expected only one argument (token), got 2"
+
+
+def test_set_pypi_token_no_values(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("pypi-token.pypi")
+
+    assert str(e.value) == "Expected a value for pypi-token.pypi setting."
 
 
 def test_set_client_cert(
@@ -516,3 +543,21 @@ def test_config_installer_no_binary(
 
     config = Config.create(reload=True)
     assert not DeepDiff(config.get(setting), expected, ignore_order=True)
+
+
+def test_config_solver_lazy_wheel(
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
+) -> None:
+    tester.execute("--local solver.lazy-wheel")
+    assert tester.io.fetch_output().strip() == "true"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert repo._lazy_wheel
+
+    tester.io.clear_output()
+    tester.execute("--local solver.lazy-wheel false")
+    tester.execute("--local solver.lazy-wheel")
+    assert tester.io.fetch_output().strip() == "false"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert not repo._lazy_wheel

@@ -31,25 +31,29 @@ if TYPE_CHECKING:
 class UploadError(Exception):
     def __init__(self, error: ConnectionError | HTTPError | str) -> None:
         if isinstance(error, HTTPError):
-            message = (
-                f"HTTP Error {error.response.status_code}: {error.response.reason} |"
-                f" {error.response.content!r}"
-            )
+            if error.response is None:
+                message = "HTTP Error connecting to the repository"
+            else:
+                message = (
+                    f"HTTP Error {error.response.status_code}: "
+                    f"{error.response.reason} | {error.response.content!r}"
+                )
         elif isinstance(error, ConnectionError):
             message = (
                 "Connection Error: We were unable to connect to the repository, "
                 "ensure the url is correct and can be reached."
             )
         else:
-            message = str(error)
+            message = error
         super().__init__(message)
 
 
 class Uploader:
-    def __init__(self, poetry: Poetry, io: IO) -> None:
+    def __init__(self, poetry: Poetry, io: IO, dist_dir: Path | None = None) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
+        self._dist_dir = dist_dir or self.default_dist_dir
         self._username: str | None = None
         self._password: str | None = None
 
@@ -59,8 +63,19 @@ class Uploader:
         return agent
 
     @property
+    def default_dist_dir(self) -> Path:
+        return self._poetry.file.path.parent / "dist"
+
+    @property
+    def dist_dir(self) -> Path:
+        if not self._dist_dir.is_absolute():
+            return self._poetry.file.path.parent / self._dist_dir
+
+        return self._dist_dir
+
+    @property
     def files(self) -> list[Path]:
-        dist = self._poetry.file.path.parent / "dist"
+        dist = self.dist_dir
         version = self._package.version.to_string()
         escaped_name = distribution_name(self._package.name)
 
@@ -74,7 +89,7 @@ class Uploader:
         self._password = password
 
     def make_session(self) -> requests.Session:
-        session = requests.session()
+        session = requests.Session()
         auth = self.get_auth()
         if auth is not None:
             session.auth = auth
@@ -103,10 +118,8 @@ class Uploader:
         if client_cert:
             session.cert = str(client_cert)
 
-        try:
+        with session:
             self._upload(session, url, dry_run, skip_existing)
-        finally:
-            session.close()
 
     def post_data(self, file: Path) -> dict[str, Any]:
         meta = Metadata.from_package(self._package)
@@ -204,13 +217,11 @@ class Uploader:
             raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
-        data.update(
-            {
-                # action
-                ":action": "file_upload",
-                "protocol_version": "1",
-            }
-        )
+        data.update({
+            # action
+            ":action": "file_upload",
+            "protocol_version": "1",
+        })
 
         data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 
@@ -276,7 +287,7 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self._poetry.file.path.parent / "dist"
+        dist = self.dist_dir
         escaped_name = distribution_name(self._package.name)
         file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 
@@ -321,7 +332,7 @@ class Uploader:
         raise ValueError("Unknown distribution format " + "".join(exts))
 
     def _is_file_exists_error(self, response: requests.Response) -> bool:
-        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32  # noqa: E501
+        # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32
         status = response.status_code
         reason = response.reason.lower()
         text = response.text.lower()

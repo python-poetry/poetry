@@ -19,6 +19,7 @@ from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
 from poetry.mixology.term import Term
+from poetry.packages import PackageCollection
 
 
 if TYPE_CHECKING:
@@ -99,17 +100,27 @@ class DependencyCache:
         decision_level: int,
     ) -> list[DependencyPackage]:
         key = (
-            dependency.complete_name,
+            dependency.name,
             dependency.source_type,
             dependency.source_url,
             dependency.source_reference,
             dependency.source_subdirectory,
         )
 
-        packages = self._search_for_cached(dependency, key)
+        # We could always use dependency.without_features() here,
+        # but for performance reasons we only do it if necessary.
+        packages = self._search_for_cached(
+            dependency.without_features() if dependency.features else dependency, key
+        )
         if not self._cache[key] or self._cache[key][-1] is not packages:
             self._cache[key].append(packages)
             self._cached_dependencies_by_level[decision_level].append(key)
+
+        if dependency.features and packages:
+            # Use the cached dependency so that a possible explicit source is set.
+            return PackageCollection(
+                packages[0].dependency.with_features(dependency.features), packages
+            )
 
         return packages
 
@@ -394,7 +405,7 @@ class VersionSolver:
             # details.
             #
             # .. _algorithm documentation:
-            # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution  # noqa: E501
+            # https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
             if difference is not None:
                 inverse = difference.inverse
                 if inverse.dependency != most_recent_satisfier.dependency:
@@ -440,8 +451,13 @@ class VersionSolver:
             LOCKED = 3
             DEFAULT = 4
 
-        # Prefer packages with as few remaining versions as possible,
-        # so that if a conflict is necessary it's forced quickly.
+        # The original algorithm proposes to prefer packages with as few remaining
+        # versions as possible, so that if a conflict is necessary it's forced quickly.
+        # https://github.com/dart-lang/pub/blob/master/doc/solver.md#decision-making
+        # However, this leads to the famous boto3 vs. urllib3 issue, so we prefer
+        # packages with more remaining versions (see
+        # https://github.com/python-poetry/poetry/pull/8255#issuecomment-1657198242
+        # for more details).
         # In order to provide results that are as deterministic as possible
         # and consistent between `poetry lock` and `poetry update`, the return value
         # of two different dependencies should not be equal if possible.
@@ -450,7 +466,7 @@ class VersionSolver:
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, Preference.DIRECT_ORIGIN, 1
+                return False, Preference.DIRECT_ORIGIN, -1
 
             is_specific_marker = not dependency.marker.is_any()
 
@@ -458,7 +474,7 @@ class VersionSolver:
             if not use_latest:
                 locked = self._provider.get_locked(dependency)
                 if locked:
-                    return is_specific_marker, Preference.LOCKED, 1
+                    return is_specific_marker, Preference.LOCKED, -1
 
             num_packages = len(
                 self._dependency_cache.search_for(
@@ -472,12 +488,9 @@ class VersionSolver:
                 preference = Preference.USE_LATEST
             else:
                 preference = Preference.DEFAULT
-            return is_specific_marker, preference, num_packages
+            return is_specific_marker, preference, -num_packages
 
-        if len(unsatisfied) == 1:
-            dependency = unsatisfied[0]
-        else:
-            dependency = min(*unsatisfied, key=_get_min)
+        dependency = min(unsatisfied, key=_get_min)
 
         locked = self._provider.get_locked(dependency)
         if locked is None:

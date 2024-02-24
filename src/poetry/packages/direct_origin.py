@@ -76,14 +76,9 @@ class DirectOrigin:
 
     def get_package_from_url(self, url: str) -> Package:
         link = Link(url)
-        artifact = self._artifact_cache.get_cached_archive_for_link(link, strict=True)
-
-        if not artifact:
-            artifact = (
-                self._artifact_cache.get_cache_directory_for_link(link) / link.filename
-            )
-            artifact.parent.mkdir(parents=True, exist_ok=True)
-            download_file(url, artifact)
+        artifact = self._artifact_cache.get_cached_archive_for_link(
+            link, strict=True, download_func=download_file
+        )
 
         package = self.get_package_from_file(artifact)
         package.files = [

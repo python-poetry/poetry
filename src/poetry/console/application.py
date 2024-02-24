@@ -354,6 +354,12 @@ class Application(BaseApplication):
             manager.load_plugins()
             manager.activate(self)
 
+            # We have to override the command from poetry-plugin-export
+            # with the wrapper.
+            if self.command_loader.has("export"):
+                del self.command_loader._factories["export"]
+            self.command_loader._factories["export"] = load_command("export")
+
         self._plugins_loaded = True
 
     @property
@@ -391,7 +397,7 @@ class Application(BaseApplication):
             SolutionProviderRepository,
         )
 
-        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (  # noqa: E501
+        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (
             PythonRequirementSolutionProvider,
         )
 

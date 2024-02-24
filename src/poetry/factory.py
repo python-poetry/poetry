@@ -159,6 +159,14 @@ class Factory(BaseFactory):
                     f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
                 )
                 io.write_error_line(f"<warning>Warning: {warning}</warning>")
+            elif priority is Priority.DEFAULT:
+                warning = (
+                    "Found deprecated priority 'default' for source"
+                    f" '{source.get('name')}' in pyproject.toml. You can achieve"
+                    " the same effect by changing the priority to 'primary' and putting"
+                    " the source first."
+                )
+                io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
             if io.is_debug():
                 message = f"Adding repository {repository.name} ({repository.url})"
@@ -175,32 +183,15 @@ class Factory(BaseFactory):
 
         # Only add PyPI if no default repository is configured
         if not explicit_pypi:
-            if pool.has_default():
+            if pool.has_default() or pool.has_primary_repositories():
                 if io.is_debug():
                     io.write_line("Deactivating the PyPI repository")
             else:
                 from poetry.repositories.pypi_repository import PyPiRepository
 
-                if pool.has_primary_repositories():
-                    io.write_error_line(
-                        "<warning>"
-                        "Warning: In a future version of Poetry, PyPI will be disabled"
-                        " automatically if at least one custom primary source is"
-                        " configured. In order to avoid"
-                        " a breaking change and make your pyproject.toml forward"
-                        " compatible, add PyPI explicitly via 'poetry source add pypi'."
-                        " By the way, this has the advantage that you can set the"
-                        " priority of PyPI as with any other source."
-                        "</warning>"
-                    )
-
-                if pool.has_primary_repositories():
-                    pypi_priority = Priority.SECONDARY
-                else:
-                    pypi_priority = Priority.DEFAULT
-
                 pool.add_repository(
-                    PyPiRepository(disable_cache=disable_cache), priority=pypi_priority
+                    PyPiRepository(disable_cache=disable_cache),
+                    priority=Priority.PRIMARY,
                 )
 
         if not pool.repositories:
@@ -224,12 +215,14 @@ class Factory(BaseFactory):
         except KeyError:
             raise InvalidSourceError("Missing [name] in source.")
 
+        pool_size = config.installer_max_workers
+
         if name.lower() == "pypi":
             if "url" in source:
                 raise InvalidSourceError(
                     "The PyPI repository cannot be configured with a custom url."
                 )
-            return PyPiRepository(disable_cache=disable_cache)
+            return PyPiRepository(disable_cache=disable_cache, pool_size=pool_size)
 
         try:
             url = source["url"]
@@ -246,6 +239,7 @@ class Factory(BaseFactory):
             url,
             config=config,
             disable_cache=disable_cache,
+            pool_size=pool_size,
         )
 
     @classmethod
@@ -367,9 +361,10 @@ class Factory(BaseFactory):
 
         dependencies = {canonicalize_name(d) for d in dependencies}
 
-        if canonicalize_name(config["name"]) in dependencies:
+        project_name = config.get("name")
+        if project_name is not None and canonicalize_name(project_name) in dependencies:
             results["errors"].append(
-                f"Project name ({config['name']}) is same as one of its dependencies"
+                f"Project name ({project_name}) is same as one of its dependencies"
             )
 
         return results

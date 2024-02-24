@@ -8,6 +8,8 @@ from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 import pytest
 
@@ -276,7 +278,7 @@ def test_system_git_fallback_on_http_401(
     mocker.patch.object(
         Git,
         "_clone",
-        side_effect=HTTPUnauthorized(None, None),  # type: ignore[no-untyped-call]
+        side_effect=HTTPUnauthorized(None, None),
     )
 
     with Git.clone(url=source_url, branch="0.1") as repo:
@@ -308,17 +310,15 @@ def test_configured_repository_http_auth(
     spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
     spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
 
-    config.merge(
-        {
-            "repositories": {"git-repo": {"url": source_url}},
-            "http-basic": {
-                "git-repo": {
-                    "username": GIT_USERNAME,
-                    "password": GIT_PASSWORD,
-                }
-            },
-        }
-    )
+    config.merge({
+        "repositories": {"git-repo": {"url": source_url}},
+        "http-basic": {
+            "git-repo": {
+                "username": GIT_USERNAME,
+                "password": GIT_PASSWORD,
+            }
+        },
+    })
 
     dummy_git_config = ConfigFile()
     mocker.patch(
@@ -389,3 +389,32 @@ def test_system_git_called_when_configured(
         target=path,
         refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
     )
+
+
+def test_relative_submodules_with_ssh(
+    source_url: str, tmpdir: Path, mocker: MockerFixture
+) -> None:
+    target = tmpdir / "temp"
+    ssh_source_url = urlunparse(urlparse(source_url)._replace(scheme="ssh"))
+
+    repo_with_unresolved_submodules = Git._clone(
+        url=source_url,
+        refspec=GitRefSpec(branch="relative_submodule"),
+        target=target,
+    )
+
+    # construct fake git config
+    fake_config = ConfigFile(
+        {(b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}}
+    )
+    # trick Git into thinking remote.origin is an ssh url
+    mock_get_config = mocker.patch.object(repo_with_unresolved_submodules, "get_config")
+    mock_get_config.return_value = fake_config
+
+    submodules = Git._get_submodules(repo_with_unresolved_submodules)
+
+    assert [s.url for s in submodules] == [
+        "https://github.com/pypa/sample-namespace-packages.git",
+        "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
+        "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
+    ]

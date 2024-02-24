@@ -76,6 +76,29 @@ cd pre-existing-project
 poetry init
 ```
 
+### Operating modes
+
+Poetry can be operated in two different modes. The default mode is the **package mode**, which is the right mode
+if you want to package your project into an sdist or a wheel and perhaps publish it to a package index.
+In this mode, some metadata such as `name` and `version`, which are required for packaging, are mandatory.
+Further, the project itself will be installed in editable mode when running `poetry install`.
+
+If you want to use Poetry only for dependency management but not for packaging, you can use the **non-package mode**:
+
+```toml
+[tool.poetry]
+package-mode = false
+```
+
+In this mode, metadata such as `name` and `version` are optional.
+Therefore, it is not possible to build a distribution or publish the project to a package index.
+Further, when running `poetry install`, Poetry does not try to install the project itself,
+but only its dependencies (same as `poetry install --no-root`).
+
+{{% note %}}
+In the [pyproject section]({{< relref "pyproject" >}}) you can see which fields are required in package mode.
+{{% /note %}}
+
 ### Specifying dependencies
 
 If you want to add dependencies to your project, you can specify them in the `tool.poetry.dependencies` section.
@@ -127,6 +150,19 @@ any Poetry commands that expect to manipulate an environment.
 
 To run your script simply use `poetry run python your_script.py`.
 Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`.
+
+{{% note %}}
+If managing your own virtual environment externally, you do not need to use `poetry run` or `poetry shell` since
+you will, presumably, already have activated that virtual environment and made available the correct python instance.
+For example, these commands should output the same python path:
+```shell
+conda activate your_env_name
+which python
+poetry run which python
+poetry shell
+which python
+```
+{{% /note %}}
 
 ### Activating the virtual environment
 

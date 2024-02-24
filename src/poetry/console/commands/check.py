@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from cleo.helpers import option
 
@@ -88,9 +89,41 @@ class CheckCommand(Command):
                 errors.append(f"Declared README file does not exist: {name}")
         return errors
 
+    def _validate_dependencies_source(self, config: dict[str, Any]) -> list[str]:
+        """Check dependencies's source are valid"""
+        sources = {k["name"] for k in config.get("source", [])}
+
+        dependency_declarations: list[
+            dict[str, str | dict[str, str] | list[dict[str, str]]]
+        ] = []
+        # scan dependencies and group dependencies settings in pyproject.toml
+        if "dependencies" in config:
+            dependency_declarations.append(config["dependencies"])
+
+        for group in config.get("group", {}).values():
+            if "dependencies" in group:
+                dependency_declarations.append(group["dependencies"])
+
+        all_referenced_sources: set[str] = set()
+
+        for dependency_declaration in dependency_declarations:
+            for declaration in dependency_declaration.values():
+                if isinstance(declaration, list):
+                    for item in declaration:
+                        if "source" in item:
+                            all_referenced_sources.add(item["source"])
+                elif isinstance(declaration, dict) and "source" in declaration:
+                    all_referenced_sources.add(declaration["source"])
+
+        return [
+            f'Invalid source "{source}" referenced in dependencies.'
+            for source in sorted(all_referenced_sources - sources)
+        ]
+
     def handle(self) -> int:
+        from poetry.core.pyproject.toml import PyProjectTOML
+
         from poetry.factory import Factory
-        from poetry.pyproject.toml import PyProjectTOML
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path
@@ -108,13 +141,15 @@ class CheckCommand(Command):
             errors = self._validate_readme(config["readme"], poetry_file)
             check_result["errors"].extend(errors)
 
+        check_result["errors"] += self._validate_dependencies_source(config)
+
         # Verify that lock file is consistent
         if self.option("lock") and not self.poetry.locker.is_locked():
             check_result["errors"] += ["poetry.lock was not found."]
         if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
             check_result["errors"] += [
-                "poetry.lock is not consistent with pyproject.toml. Run `poetry"
-                " lock [--no-update]` to fix it."
+                "pyproject.toml changed significantly since poetry.lock was last generated. "
+                "Run `poetry lock [--no-update]` to fix the lock file."
             ]
 
         if not check_result["errors"] and not check_result["warnings"]:

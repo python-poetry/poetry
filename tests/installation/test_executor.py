@@ -11,7 +11,6 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from urllib.parse import urlparse
 
 import pytest
 
@@ -21,7 +20,6 @@ from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.packages.package import Package
-from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import path_to_url
 
 from poetry.factory import Factory
@@ -41,9 +39,6 @@ from tests.repositories.test_pypi_repository import MockRepository
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    import httpretty
-
-    from httpretty.core import HTTPrettyRequest
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
@@ -136,36 +131,6 @@ def pool() -> RepositoryPool:
 
 
 @pytest.fixture
-def mock_file_downloads(
-    http: type[httpretty.httpretty], fixture_dir: FixtureDirGetter
-) -> None:
-    def callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> list[int | dict[str, Any] | bytes]:
-        name = Path(urlparse(uri).path).name
-
-        fixture = Path(__file__).parent.parent.joinpath(
-            "repositories/fixtures/pypi.org/dists/" + name
-        )
-
-        if not fixture.exists():
-            fixture = fixture_dir("distributions") / name
-
-            if not fixture.exists():
-                fixture = (
-                    fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-                )
-
-        return [200, headers, fixture.read_bytes()]
-
-    http.register_uri(
-        http.GET,
-        re.compile("^https://files.pythonhosted.org/.*$"),
-        body=callback,
-    )
-
-
-@pytest.fixture
 def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
@@ -241,29 +206,27 @@ def test_execute_executes_a_batch_of_operations(
         develop=True,
     )
 
-    return_code = executor.execute(
-        [
-            Install(Package("pytest", "3.5.1")),
-            Uninstall(Package("attrs", "17.4.0")),
-            Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
-            Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
-            Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
-            Install(file_package),
-            Install(directory_package),
-            Install(git_package),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("pytest", "3.5.1")),
+        Uninstall(Package("attrs", "17.4.0")),
+        Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
+        Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
+        Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
+        Install(file_package),
+        Install(directory_package),
+        Install(git_package),
+    ])
 
     expected = f"""
 Package operations: 4 installs, 2 updates, 1 removal
 
-  • Installing pytest (3.5.1)
-  • Removing attrs (17.4.0)
-  • Updating requests (2.18.3 -> 2.18.4)
-  • Downgrading pytest (3.5.1 -> 3.5.0)
-  • Installing demo (0.1.0 {file_package.source_url})
-  • Installing simple-project (1.2.3 {directory_package.source_url})
-  • Installing demo (0.1.0 master)
+  - Installing pytest (3.5.1)
+  - Removing attrs (17.4.0)
+  - Updating requests (2.18.3 -> 2.18.4)
+  - Downgrading pytest (3.5.1 -> 3.5.0)
+  - Installing demo (0.1.0 {file_package.source_url})
+  - Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing demo (0.1.0 master)
 """
 
     expected_lines = set(expected.splitlines())
@@ -353,26 +316,24 @@ def test_execute_prints_warning_for_invalid_wheels(
     base_url = "https://files.pythonhosted.org/"
     wheel1 = "demo_invalid_record-0.1.0-py2.py3-none-any.whl"
     wheel2 = "demo_invalid_record2-0.1.0-py2.py3-none-any.whl"
-    return_code = executor.execute(
-        [
-            Install(
-                Package(
-                    "demo-invalid-record",
-                    "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel1}",
-                )
-            ),
-            Install(
-                Package(
-                    "demo-invalid-record2",
-                    "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel2}",
-                )
-            ),
-        ]
-    )
+    return_code = executor.execute([
+        Install(
+            Package(
+                "demo-invalid-record",
+                "0.1.0",
+                source_type="url",
+                source_url=f"{base_url}/{wheel1}",
+            )
+        ),
+        Install(
+            Package(
+                "demo-invalid-record2",
+                "0.1.0",
+                source_type="url",
+                source_url=f"{base_url}/{wheel2}",
+            )
+        ),
+    ])
 
     warning1 = f"""\
 <warning>Warning: Validation of the RECORD file of {wheel1} failed.\
@@ -420,7 +381,7 @@ def test_execute_shows_skipped_operations_if_verbose(
     expected = """
 Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 
-  • Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
+  - Removing clikit (0.2.3): Skipped for the following reason: Not currently installed
 """
     assert io.fetch_output() == expected
     assert len(env.executed) == 0
@@ -443,7 +404,7 @@ def test_execute_should_show_errors(
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing clikit (0.2.3)
+  - Installing clikit (0.2.3)
 
   Exception
 
@@ -465,19 +426,17 @@ def test_execute_works_with_ansi_output(
 
     executor = Executor(env, pool, config, io_decorated)
 
-    return_code = executor.execute(
-        [
-            Install(Package("cleo", "1.0.0a5")),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("cleo", "1.0.0a5")),
+    ])
 
     # fmt: off
     expected = [
-        "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",  # noqa: E501
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",  # noqa: E501
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished  # noqa: E501
+        "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
+        "\x1b[34;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.0.0a5\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
+        "\x1b[32;1m-\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mcleo\x1b[39m\x1b[39m (\x1b[39m\x1b[32m1.0.0a5\x1b[39m\x1b[39m)\x1b[39m",  # finished
     ]
     # fmt: on
 
@@ -502,16 +461,14 @@ def test_execute_works_with_no_ansi_output(
 
     executor = Executor(env, pool, config, io_not_decorated)
 
-    return_code = executor.execute(
-        [
-            Install(Package("cleo", "1.0.0a5")),
-        ]
-    )
+    return_code = executor.execute([
+        Install(Package("cleo", "1.0.0a5")),
+    ])
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing cleo (1.0.0a5)
+  - Installing cleo (1.0.0a5)
 """
     expected_lines = set(expected.splitlines())
     output_lines = set(io_not_decorated.fetch_output().splitlines())
@@ -537,8 +494,8 @@ def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_inter
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing clikit (0.2.3)
-  • Installing clikit (0.2.3): Cancelled
+  - Installing clikit (0.2.3)
+  - Installing clikit (0.2.3): Cancelled
 """
 
     assert io.fetch_output() == expected
@@ -558,6 +515,7 @@ def test_execute_should_gracefully_handle_io_error(
 
     def write_line(string: str, **kwargs: Any) -> None:
         # Simulate UnicodeEncodeError
+        string = string.replace("-", "•")
         string.encode("ascii")
         original_write_line(string, **kwargs)
 
@@ -583,21 +541,23 @@ def test_executor_should_delete_incomplete_downloads(
     pool: RepositoryPool,
     mock_file_downloads: None,
     env: MockEnv,
-    fixture_dir: FixtureDirGetter,
 ) -> None:
-    fixture = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    destination_fixture = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
-    shutil.copyfile(str(fixture), str(destination_fixture))
+    cached_archive = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
+
+    def download_fail(*_: Any) -> None:
+        cached_archive.touch()  # broken archive
+        raise Exception("Download error")
+
     mocker.patch(
         "poetry.installation.executor.Executor._download_archive",
-        side_effect=Exception("Download error"),
+        side_effect=download_fail,
     )
     mocker.patch(
-        "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
+        "poetry.utils.cache.ArtifactCache._get_cached_archive",
         return_value=None,
     )
     mocker.patch(
-        "poetry.installation.executor.ArtifactCache.get_cache_directory_for_link",
+        "poetry.utils.cache.ArtifactCache.get_cache_directory_for_link",
         return_value=tmp_path,
     )
 
@@ -608,7 +568,7 @@ def test_executor_should_delete_incomplete_downloads(
     with pytest.raises(Exception, match="Download error"):
         executor._download(Install(Package("tomlkit", "0.5.3")))
 
-    assert not destination_fixture.exists()
+    assert not cached_archive.exists()
 
 
 def verify_installed_distribution(
@@ -666,12 +626,12 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     io: BufferedIO,
 ) -> None:
     link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0-py2.py3-none-any.whl",
+        "hash": (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ),
+    }]
 
     mocker.patch(
         "poetry.installation.executor.Executor._download", return_value=link_cached
@@ -693,12 +653,12 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
     url = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0-py2.py3-none-any.whl",
+        "hash": (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -722,16 +682,17 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_files(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
 ) -> None:
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",  # noqa: E501
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": (
+            "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -823,7 +784,7 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
         mocker.patch(
-            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
+            "poetry.utils.cache.ArtifactCache.get_cached_archive_for_link",
             return_value=link_cached,
         )
     download_spy = mocker.spy(Executor, "_download_archive")
@@ -835,12 +796,12 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
     )
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",  # noqa: E501
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0-py2.py3-none-any.whl",
+        "hash": (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     operation = Install(package)
@@ -861,9 +822,13 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     else:
         assert package.source_url is not None
         download_spy.assert_called_once_with(
-            mocker.ANY, operation, Link(package.source_url)
+            mocker.ANY,
+            operation,
+            package.source_url,
+            dest=mocker.ANY,
         )
-        assert download_spy.spy_return.exists(), "cached file should not be deleted"
+        dest = download_spy.call_args.args[3]
+        assert dest.exists(), "cached file should not be deleted"
 
 
 @pytest.mark.parametrize(
@@ -900,12 +865,12 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     )
     download_spy = mocker.spy(Executor, "_download_archive")
 
-    if is_sdist_cached | is_wheel_cached:
+    if is_sdist_cached or is_wheel_cached:
         cached_sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
         cached_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
 
-        def mock_get_cached_archive_for_link_func(
-            _: Link, *, strict: bool, **__: Any
+        def mock_get_cached_archive_func(
+            _cache_dir: Path, *, strict: bool, **__: Any
         ) -> Path | None:
             if is_wheel_cached and not strict:
                 return cached_wheel
@@ -914,8 +879,8 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
             return None
 
         mocker.patch(
-            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_link",
-            side_effect=mock_get_cached_archive_for_link_func,
+            "poetry.utils.cache.ArtifactCache._get_cached_archive",
+            side_effect=mock_get_cached_archive_func,
         )
 
     package = Package(
@@ -925,12 +890,12 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         source_url="https://files.pythonhosted.org/demo-0.1.0.tar.gz",
     )
     # Set package.files so the executor will attempt to hash the package
-    package.files = [
-        {
-            "file": "demo-0.1.0.tar.gz",
-            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",  # noqa: E501
-        }
-    ]
+    package.files = [{
+        "file": "demo-0.1.0.tar.gz",
+        "hash": (
+            "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+        ),
+    }]
 
     executor = Executor(tmp_venv, pool, config, io)
     operation = Install(package)
@@ -955,9 +920,10 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     if expect_artifact_download:
         assert package.source_url is not None
         download_spy.assert_called_once_with(
-            mocker.ANY, operation, Link(package.source_url)
+            mocker.ANY, operation, package.source_url, dest=mocker.ANY
         )
-        assert download_spy.spy_return.exists(), "cached file should not be deleted"
+        dest = download_spy.call_args.args[3]
+        assert dest.exists(), "cached file should not be deleted"
     else:
         download_spy.assert_not_called()
 
@@ -978,7 +944,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     if is_artifact_cached:
         link_cached = fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
         mocker.patch(
-            "poetry.installation.executor.ArtifactCache.get_cached_archive_for_git",
+            "poetry.utils.cache.ArtifactCache.get_cached_archive_for_git",
             return_value=link_cached,
         )
     clone_spy = mocker.spy(Git, "clone")
@@ -1197,14 +1163,18 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge(
-        {
-            "cache-dir": str(tmp_path),
-            "installer": {"modern-installation": False},
-        }
-    )
+    config.merge({
+        "cache-dir": str(tmp_path),
+        "installer": {"modern-installation": False},
+    })
 
     executor = Executor(env, pool, config, io)
+    warning_lines = io.fetch_output().splitlines()
+    assert warning_lines == [
+        "Warning: Setting `installer.modern-installation` to `false` is deprecated.",
+        "The pip-based installer will be removed in a future release.",
+        "See https://github.com/python-poetry/poetry/issues/8987.",
+    ]
 
     directory_package = Package(
         "simple-project",
@@ -1213,16 +1183,14 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([
+        Install(directory_package),
+    ])
 
     expected = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing simple-project (1.2.3 {directory_package.source_url})
 """
 
     expected_lines = set(expected.splitlines())
@@ -1238,9 +1206,17 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 @pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
+@pytest.mark.parametrize(
+    "exception",
+    [
+        CalledProcessError(1, ["pip"], output=b"original error"),
+        Exception("original error"),
+    ],
+)
 @pytest.mark.parametrize("editable", [False, True])
 def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     failing_method: str,
+    exception: Exception,
     editable: bool,
     mocker: MockerFixture,
     config: Config,
@@ -1250,9 +1226,7 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
-    error = BuildBackendException(
-        CalledProcessError(1, ["pip"], output=b"Error on stdout")
-    )
+    error = BuildBackendException(exception, description="hide the original error")
     mocker.patch.object(ProjectBuilder, failing_method, side_effect=error)
     io.set_verbosity(Verbosity.NORMAL)
 
@@ -1278,23 +1252,23 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     expected_start = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   ChefBuildError
 
-  Backend operation failed: CalledProcessError(1, ['pip'])
+  hide the original error
   \
 
-  Error on stdout
+  original error
 """
 
     assert directory_package.source_url is not None
     if editable:
-        pip_command = "pip wheel --use-pep517 --editable"
+        pip_command = "pip wheel --no-cache-dir --use-pep517 --editable"
         requirement = directory_package.source_url
         assert Path(requirement).exists()
     else:
-        pip_command = "pip wheel --use-pep517"
+        pip_command = "pip wheel --no-cache-dir --use-pep517"
         requirement = f"{package_name} @ {path_to_url(directory_package.source_url)}"
     expected_end = f"""
 Note: This error originates from the build backend, and is likely not a problem with \
@@ -1372,11 +1346,7 @@ def test_build_system_requires_not_available(
         .as_posix(),
     )
 
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
+    return_code = executor.execute([Install(directory_package)])
 
     assert return_code == 1
 
@@ -1384,7 +1354,7 @@ def test_build_system_requires_not_available(
     expected_start = f"""\
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing {package_name} ({package_version} {package_url})
+  - Installing {package_name} ({package_version} {package_url})
 
   SolveFailure
 
@@ -1396,3 +1366,220 @@ Package operations: 1 install, 0 updates, 0 removals
     output = io.fetch_output().strip()
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
+
+
+def test_build_system_requires_install_failure(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    mocker.patch("poetry.installation.installer.Installer.run", return_value=1)
+    mocker.patch("cleo.io.buffered_io.BufferedIO.fetch_output", return_value="output")
+    mocker.patch("cleo.io.buffered_io.BufferedIO.fetch_error", return_value="error")
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    return_code = executor.execute([Install(directory_package)])
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""\
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing {package_name} ({package_version} {package_url})
+
+  ChefInstallError
+
+  Failed to install poetry-core>=1.1.0a7.
+  \
+
+  Output:
+  output
+  \
+
+  Error:
+  error
+
+"""
+    expected_end = "Cannot install build-system.requires for simple-project."
+
+    mocker.stopall()  # to get real output
+    output = io.fetch_output().strip()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)
+
+
+def test_other_error(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    mock_file_downloads: None,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    io.set_verbosity(Verbosity.NORMAL)
+
+    executor = Executor(env, pool, config, io)
+
+    package_name = "simple-project"
+    package_version = "1.2.3"
+    directory_package = Package(
+        package_name,
+        package_version,
+        source_type="directory",
+        source_url=fixture_dir("non-existing").resolve().as_posix(),
+    )
+
+    return_code = executor.execute([Install(directory_package)])
+
+    assert return_code == 1
+
+    package_url = directory_package.source_url
+    expected_start = f"""\
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing {package_name} ({package_version} {package_url})
+
+  FileNotFoundError
+"""
+    expected_end = "Cannot install simple-project."
+
+    output = io.fetch_output().strip()
+    assert output.startswith(expected_start)
+    assert output.endswith(expected_end)
+
+
+@pytest.mark.parametrize(
+    "package_files,expected_url_reference",
+    [
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                },
+                {
+                    "file": "demo-0.1.0.whl",
+                    "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+                },
+            ],
+            {
+                "archive_info": {
+                    "hashes": {
+                        "sha512": "766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad"
+                    },
+                },
+            },
+        ),
+        (
+            [{
+                "file": "demo-0.1.0.tar.gz",
+                "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+            }],
+            {
+                "archive_info": {
+                    "hashes": {"md5": "d1912c917363a64e127318655f7d1fe7"},
+                },
+            },
+        ),
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                },
+                {
+                    "file": "demo-0.1.0.whl",
+                    "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+                },
+            ],
+            {
+                "archive_info": {
+                    "hashes": {
+                        "sha3_512": "196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728"
+                    },
+                },
+            },
+        ),
+    ],
+)
+def test_executor_known_hashes(
+    package_files: list[dict[str, str]],
+    expected_url_reference: dict[str, Any],
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    package_source_url: Path = (
+        fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    ).resolve()
+    package = Package(
+        "demo", "0.1.0", source_type="file", source_url=package_source_url.as_posix()
+    )
+    package.files = package_files
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference["url"] = package_source_url.as_uri()
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_no_supported_hash_types(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz",
+        },
+        {
+            "file": "demo-0.1.0.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        },
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    return_code = executor.execute([Install(package)])
+    distributions = list(tmp_venv.site_packages.distributions(name=package.name))
+    assert len(distributions) == 0
+
+    output = io.fetch_output()
+    error = io.fetch_error()
+    assert return_code == 1, f"\noutput: {output}\nerror: {error}\n"
+    assert "No usable hash type(s) for demo" in output
+    assert "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz" in output

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import functools
 import itertools
 import json
-import os
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -19,6 +19,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.installation.chef import Chef
 from poetry.installation.chef import ChefBuildError
+from poetry.installation.chef import ChefInstallError
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -27,10 +28,10 @@ from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
-from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import atomic_open
+from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -67,18 +68,27 @@ class Executor:
         self._use_modern_installation = config.get(
             "installer.modern-installation", True
         )
+        if not self._use_modern_installation:
+            self._io.write_line(
+                "<warning>Warning: Setting `installer.modern-installation` to `false` "
+                "is deprecated.</>"
+            )
+            self._io.write_line(
+                "<warning>The pip-based installer will be removed in a future release.</>"
+            )
+            self._io.write_line(
+                "<warning>See https://github.com/python-poetry/poetry/issues/8987.</>"
+            )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            self._max_workers = self._get_max_workers(
-                desired_max_workers=config.get("installer.max-workers")
-            )
+            self._max_workers = config.installer_max_workers
         else:
             self._max_workers = 1
 
-        self._artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
+        self._artifact_cache = pool.artifact_cache
         self._authenticator = Authenticator(
             config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
         )
@@ -222,21 +232,6 @@ class Executor:
 
         return 1 if self._shutdown else 0
 
-    @staticmethod
-    def _get_max_workers(desired_max_workers: int | None = None) -> int:
-        # This should be directly handled by ThreadPoolExecutor
-        # however, on some systems the number of CPUs cannot be determined
-        # (it raises a NotImplementedError), so, in this case, we assume
-        # that the system only has one CPU.
-        try:
-            default_max_workers = (os.cpu_count() or 1) + 4
-        except NotImplementedError:
-            default_max_workers = 5
-
-        if desired_max_workers is None:
-            return default_max_workers
-        return min(default_max_workers, desired_max_workers)
-
     def _write(self, operation: Operation, line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
             operation
@@ -265,18 +260,18 @@ class Executor:
                     with self._lock:
                         self._sections[id(operation)] = self._io.section()
                         self._sections[id(operation)].write_line(
-                            f"  <fg=blue;options=bold>•</> {op_message}:"
+                            f"  <fg=blue;options=bold>-</> {op_message}:"
                             " <fg=blue>Pending...</>"
                         )
             else:
                 if self._should_write_operation(operation):
                     if not operation.skipped:
                         self._io.write_line(
-                            f"  <fg=blue;options=bold>•</> {op_message}"
+                            f"  <fg=blue;options=bold>-</> {op_message}"
                         )
                     else:
                         self._io.write_line(
-                            f"  <fg=default;options=bold,dark>•</> {op_message}: "
+                            f"  <fg=default;options=bold,dark>-</> {op_message}: "
                             "<fg=default;options=bold,dark>Skipped</> "
                             "<fg=default;options=dark>for the following reason:</> "
                             f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
@@ -304,7 +299,7 @@ class Executor:
                     io = self._io
                 else:
                     message = (
-                        "  <error>•</error>"
+                        "  <error>-</error>"
                         f" {self.get_operation_message(operation, error=True)}:"
                         " <error>Failed</error>"
                     )
@@ -314,9 +309,9 @@ class Executor:
                 with self._lock:
                     trace = ExceptionTrace(e)
                     trace.render(io)
+                    pkg = operation.package
                     if isinstance(e, ChefBuildError):
-                        pkg = operation.package
-                        pip_command = "pip wheel --use-pep517"
+                        pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
                             requirement = pkg.source_url
                             pip_command += " --editable"
@@ -324,8 +319,7 @@ class Executor:
                             requirement = (
                                 pkg.to_dependency().to_pep_508().split(";")[0].strip()
                             )
-                        io.write_line("")
-                        io.write_line(
+                        message = (
                             "<info>"
                             "Note: This error originates from the build backend,"
                             " and is likely not a problem with poetry"
@@ -334,23 +328,34 @@ class Executor:
                             f" running '{pip_command} \"{requirement}\"'."
                             "</info>"
                         )
+                    elif isinstance(e, ChefInstallError):
+                        message = (
+                            "<error>"
+                            "Cannot install build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
+                        )
                     elif isinstance(e, SolverProblemError):
-                        pkg = operation.package
-                        io.write_line("")
-                        io.write_line(
+                        message = (
                             "<error>"
                             "Cannot resolve build-system.requires"
                             f" for {pkg.pretty_name}."
                             "</error>"
                         )
+                    else:
+                        message = f"<error>Cannot install {pkg.pretty_name}.</error>"
+
+                    io.write_line("")
+                    io.write_line(message)
                     io.write_line("")
             finally:
                 with self._lock:
                     self._shutdown = True
+
         except KeyboardInterrupt:
             try:
                 message = (
-                    "  <warning>•</warning>"
+                    "  <warning>-</warning>"
                     f" {self.get_operation_message(operation, warning=True)}:"
                     " <warning>Cancelled</warning>"
                 )
@@ -370,7 +375,7 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
+                    f"  <fg=default;options=bold,dark>-</> {operation_message}: "
                     "<fg=default;options=bold,dark>Skipped</> "
                     "<fg=default;options=dark>for the following reason:</> "
                     f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
@@ -389,7 +394,7 @@ class Executor:
             return result
 
         operation_message = self.get_operation_message(operation, done=True)
-        message = f"  <fg=green;options=bold>•</> {operation_message}"
+        message = f"  <fg=green;options=bold>-</> {operation_message}"
         self._write(operation, message)
 
         self._increment_operations_count(operation, True)
@@ -523,7 +528,7 @@ class Executor:
 
     def _execute_uninstall(self, operation: Uninstall) -> int:
         op_msg = self.get_operation_message(operation)
-        message = f"  <fg=blue;options=bold>•</> {op_msg}: <info>Removing...</info>"
+        message = f"  <fg=blue;options=bold>-</> {op_msg}: <info>Removing...</info>"
         self._write(operation, message)
 
         return self._remove(operation.package)
@@ -550,7 +555,7 @@ class Executor:
 
         operation_message = self.get_operation_message(operation)
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            f"  <fg=blue;options=bold>-</> {operation_message}:"
             " <info>Installing...</info>"
         )
         self._write(operation, message)
@@ -598,7 +603,7 @@ class Executor:
         operation_message = self.get_operation_message(operation)
 
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            f"  <fg=blue;options=bold>-</> {operation_message}:"
             " <info>Preparing...</info>"
         )
         self._write(operation, message)
@@ -637,7 +642,7 @@ class Executor:
         operation_message = self.get_operation_message(operation)
 
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
+            f"  <fg=blue;options=bold>-</> {operation_message}: <info>Cloning...</info>"
         )
         self._write(operation, message)
 
@@ -680,7 +685,7 @@ class Executor:
         operation_message = self.get_operation_message(operation)
 
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            f"  <fg=blue;options=bold>-</> {operation_message}:"
             " <info>Building...</info>"
         )
         self._write(operation, message)
@@ -702,15 +707,6 @@ class Executor:
                 package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
         if package_poetry is not None:
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = (
-                self._env.pip_version
-                < self._env.pip_version.__class__.from_parts(19, 0, 0)
-            )
-
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
@@ -722,13 +718,10 @@ class Executor:
                 builder.build()
 
                 return 0
-            elif legacy_pip or package_poetry.package.build_script:
+
+            if package_poetry.package.build_script:
                 from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
                 builder = SdistBuilder(package_poetry)
                 with builder.setup_py():
                     return self.pip_install(req, upgrade=True, editable=package.develop)
@@ -755,23 +748,11 @@ class Executor:
     def _download_link(self, operation: Install | Update, link: Link) -> Path:
         package = operation.package
 
-        output_dir = self._artifact_cache.get_cache_directory_for_link(link)
-        # Try to get cached original package for the link provided
+        # Get original package for the link provided
+        download_func = functools.partial(self._download_archive, operation)
         original_archive = self._artifact_cache.get_cached_archive_for_link(
-            link, strict=True
+            link, strict=True, download_func=download_func
         )
-        if original_archive is None:
-            # No cached original distributions was found, so we download and prepare it
-            try:
-                original_archive = self._download_archive(operation, link)
-            except BaseException:
-                cache_directory = self._artifact_cache.get_cache_directory_for_link(
-                    link
-                )
-                cached_file = cache_directory.joinpath(link.filename)
-                cached_file.unlink(missing_ok=True)
-
-                raise
 
         # Get potential higher prioritized cached archive, otherwise it will fall back
         # to the original archive.
@@ -792,12 +773,12 @@ class Executor:
 
         if archive.suffix != ".whl":
             message = (
-                f"  <fg=blue;options=bold>•</> {self.get_operation_message(operation)}:"
+                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:"
                 " <info>Preparing...</info>"
             )
             self._write(operation, message)
 
-            archive = self._chef.prepare(archive, output_dir=output_dir)
+            archive = self._chef.prepare(archive, output_dir=original_archive.parent)
 
         # Use the original archive to provide the correct hash.
         self._populate_hashes_dict(original_archive, package)
@@ -811,8 +792,17 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
+        hash_types = {t.split(":")[0] for t in known_hashes}
+        hash_type = get_highest_priority_hash_type(hash_types, archive.name)
+
+        if hash_type is None:
+            raise RuntimeError(
+                f"No usable hash type(s) for {package} from archive"
+                f" {archive.name} found (known hashes: {known_hashes!s})"
+            )
+
+        archive_hash = f"{hash_type}:{get_file_hash(archive, hash_type)}"
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
@@ -822,14 +812,18 @@ class Executor:
 
         return archive_hash
 
-    def _download_archive(self, operation: Install | Update, link: Link) -> Path:
-        response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
-        )
-        wheel_size = response.headers.get("content-length")
+    def _download_archive(
+        self,
+        operation: Install | Update,
+        url: str,
+        dest: Path,
+    ) -> None:
+        downloader = Downloader(url, dest, self._authenticator)
+        wheel_size = downloader.total_size
+
         operation_message = self.get_operation_message(operation)
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>"
+            f"  <fg=blue;options=bold>-</> {operation_message}: <info>Downloading...</>"
         )
         progress = None
         if self.supports_fancy_output():
@@ -848,29 +842,14 @@ class Executor:
                 self._sections[id(operation)].clear()
                 progress.start()
 
-        done = 0
-        archive = (
-            self._artifact_cache.get_cache_directory_for_link(link) / link.filename
-        )
-        archive.parent.mkdir(parents=True, exist_ok=True)
-        with atomic_open(archive) as f:
-            for chunk in response.iter_content(chunk_size=4096):
-                if not chunk:
-                    break
-
-                done += len(chunk)
-
-                if progress:
-                    with self._lock:
-                        progress.set_progress(done)
-
-                f.write(chunk)
+        for fetched_size in downloader.download_with_progress(chunk_size=4096):
+            if progress:
+                with self._lock:
+                    progress.set_progress(fetched_size)
 
         if progress:
             with self._lock:
                 progress.finish()
-
-        return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
         return (
@@ -887,17 +866,18 @@ class Executor:
         package = operation.package
 
         if not package.source_url or package.source_type == "legacy":
-            # Since we are installing from our own distribution cache
-            # pip will write a `direct_url.json` file pointing to the cache
-            # distribution.
-            # That's not what we want, so we remove the direct_url.json file,
-            # if it exists.
-            for (
-                direct_url_json
-            ) in self._env.site_packages.find_distribution_direct_url_json_files(
-                distribution_name=package.name, writable_only=True
-            ):
-                direct_url_json.unlink(missing_ok=True)
+            if not self._use_modern_installation:
+                # Since we are installing from our own distribution cache pip will write
+                # a `direct_url.json` file pointing to the cache distribution.
+                #
+                # That's not what we want, so we remove the direct_url.json file, if it
+                # exists.
+                for (
+                    direct_url_json
+                ) in self._env.site_packages.find_distribution_direct_url_json_files(
+                    distribution_name=package.name, writable_only=True
+                ):
+                    direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None

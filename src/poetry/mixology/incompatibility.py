@@ -43,10 +43,7 @@ class Incompatibility:
             # Coalesce multiple terms about the same package if possible.
             by_name: dict[str, dict[str, Term]] = {}
             for term in terms:
-                if term.dependency.complete_name not in by_name:
-                    by_name[term.dependency.complete_name] = {}
-
-                by_ref = by_name[term.dependency.complete_name]
+                by_ref = by_name.setdefault(term.dependency.complete_name, {})
                 ref = term.dependency.complete_name
 
                 if ref in by_ref:
@@ -432,7 +429,8 @@ class Incompatibility:
 
         if term.dependency.source_type:
             return str(term.dependency)
-        return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
+        pretty_name = term.dependency.complete_pretty_name
+        return f"{pretty_name} ({term.dependency.pretty_constraint})"
 
     def _single_term_where(self, callable: Callable[[Term], bool]) -> Term | None:
         found = None

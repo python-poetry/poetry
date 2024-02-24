@@ -26,6 +26,13 @@ class PublishCommand(Command):
             "Client certificate to access the repository.",
             flag=False,
         ),
+        option(
+            "dist-dir",
+            None,
+            "Dist directory where built artifact are stored. Default is `dist`.",
+            default="dist",
+            flag=False,
+        ),
         option("build", None, "Build the package before publishing."),
         option("dry-run", None, "Perform all actions except upload the package."),
         option(
@@ -49,7 +56,13 @@ the config command.
     def handle(self) -> int:
         from poetry.publishing.publisher import Publisher
 
-        publisher = Publisher(self.poetry, self.io)
+        if not self.poetry.is_package_mode:
+            self.line_error("Publishing a package is not possible in non-package mode.")
+            return 1
+
+        dist_dir = self.option("dist-dir")
+
+        publisher = Publisher(self.poetry, self.io, Path(dist_dir))
 
         # Building package first, if told
         if self.option("build"):
@@ -61,7 +74,7 @@ the config command.
 
                 return 1
 
-            self.call("build")
+            self.call("build", args=f"--output {dist_dir}")
 
         files = publisher.files
         if not files:

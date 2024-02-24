@@ -29,8 +29,7 @@ if TYPE_CHECKING:
 
 
 class ManagerFactory(Protocol):
-    def __call__(self, group: str = Plugin.group) -> PluginManager:
-        ...
+    def __call__(self, group: str = Plugin.group) -> PluginManager: ...
 
 
 class MyPlugin(Plugin):

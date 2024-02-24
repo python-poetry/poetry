@@ -27,8 +27,10 @@ if TYPE_CHECKING:
 
     from _pytest.monkeypatch import MonkeyPatch
     from packaging.utils import NormalizedName
+    from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.types import RequestsSessionGet
 
 
 @pytest.fixture(autouse=True)
@@ -41,6 +43,7 @@ class MockRepository(LegacyRepository):
 
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
+        self._lazy_wheel = False
 
     def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
         fixture = self.FIXTURES / (name + ".html")
@@ -50,7 +53,9 @@ class MockRepository(LegacyRepository):
         with fixture.open(encoding="utf-8") as f:
             return SimpleRepositoryPage(self._url + f"/{name}/", f.read())
 
-    def _download(self, url: str, dest: Path) -> None:
+    def _download(
+        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
+    ) -> None:
         filename = Link(url).filename
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
@@ -130,11 +135,11 @@ def test_page_filters_out_invalid_package_names() -> None:
     assert package.files == [
         {
             "file": "pytest-3.5.0-py2.py3-none-any.whl",
-            "hash": "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c",  # noqa: E501
+            "hash": "sha256:6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c",
         },
         {
             "file": "pytest-3.5.0.tar.gz",
-            "hash": "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1",  # noqa: E501
+            "hash": "sha256:fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1",
         },
     ]
 
@@ -171,6 +176,40 @@ def test_get_package_information_fallback_read_setup() -> None:
         package.description
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
+
+
+def test_get_package_information_pep_658(
+    mocker: MockerFixture, get_metadata_mock: RequestsSessionGet
+) -> None:
+    repo = MockRepository()
+
+    isort_package = repo.package("isort", Version.parse("4.3.4"))
+
+    mocker.patch.object(repo.session, "get", get_metadata_mock)
+    spy = mocker.spy(repo, "_get_info_from_metadata")
+
+    try:
+        package = repo.package("isort-metadata", Version.parse("4.3.4"))
+    except FileNotFoundError:
+        pytest.fail("Metadata was not successfully retrieved")
+    else:
+        assert spy.call_count > 0
+        assert spy.spy_return is not None
+
+        assert package.source_type == isort_package.source_type == "legacy"
+        assert package.source_reference == isort_package.source_reference == repo.name
+        assert package.source_url == isort_package.source_url == repo.url
+        assert package.name == "isort-metadata"
+        assert package.version.text == isort_package.version.text == "4.3.4"
+        assert package.description == isort_package.description
+        assert (
+            package.requires == isort_package.requires == [Dependency("futures", "*")]
+        )
+        assert (
+            str(package.python_constraint)
+            == str(isort_package.python_constraint)
+            == ">=2.7,<3.0.dev0 || >=3.4.dev0"
+        )
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints() -> None:
@@ -383,11 +422,11 @@ def test_get_package_retrieves_non_sha256_hashes() -> None:
     expected = [
         {
             "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",  # noqa: E501
+            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",
         },
         {
             "file": "ipython-7.5.0.tar.gz",
-            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",  # noqa: E501
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
         },
     ]
 
@@ -406,11 +445,11 @@ def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash() -> Non
         },
         {
             "file": "ipython-5.7.0-py3-none-any.whl",
-            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",  # noqa: E501
+            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",
         },
         {
             "file": "ipython-5.7.0.tar.gz",
-            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",  # noqa: E501
+            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",
         },
     ]
 
@@ -422,12 +461,12 @@ def test_get_package_retrieves_packages_with_no_hashes() -> None:
 
     package = repo.package("jupyter", Version.parse("1.0.0"))
 
-    assert [
-        {
-            "file": "jupyter-1.0.0.tar.gz",
-            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
-        }
-    ] == package.files
+    assert [{
+        "file": "jupyter-1.0.0.tar.gz",
+        "hash": (
+            "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f"
+        ),
+    }] == package.files
 
 
 @pytest.mark.parametrize(
@@ -569,15 +608,13 @@ def test_authenticator_with_implicit_repository_configuration(
         re.compile("^https?://foo.bar/(.+?)$"),
     )
 
-    config.merge(
-        {
-            "repositories": repositories,
-            "http-basic": {
-                "source": {"username": "foo", "password": "bar"},
-                "publish": {"username": "baz", "password": "qux"},
-            },
-        }
-    )
+    config.merge({
+        "repositories": repositories,
+        "http-basic": {
+            "source": {"username": "foo", "password": "bar"},
+            "publish": {"username": "baz", "password": "qux"},
+        },
+    })
 
     repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
     repo.get_page("/foo")

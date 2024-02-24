@@ -14,7 +14,7 @@ class Uninstall(Operation):
         self,
         package: Package,
         reason: str | None = None,
-        priority: float | int = float("inf"),
+        priority: float = float("inf"),
     ) -> None:
         super().__init__(reason, priority=priority)
 

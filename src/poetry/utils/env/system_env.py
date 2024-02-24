@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import site
 import sys
 import sysconfig
 
@@ -12,7 +13,6 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-from poetry.core.constraints.version import Version
 
 from poetry.utils.env.base_env import Env
 
@@ -80,10 +80,8 @@ class SystemEnv(Env):
             "interpreter_version": interpreter_version(),
         }
 
-    def get_pip_version(self) -> Version:
-        from pip import __version__
-
-        return Version.parse(__version__)
-
     def is_venv(self) -> bool:
         return self._path != self._base
+
+    def _get_lib_dirs(self) -> list[Path]:
+        return super()._get_lib_dirs() + [Path(d) for d in site.getsitepackages()]

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import tarfile
+import os
 import tempfile
-import zipfile
 
 from contextlib import redirect_stdout
 from io import StringIO
@@ -13,28 +12,40 @@ from build import BuildBackendException
 from build import ProjectBuilder
 from build.env import IsolatedEnv as BaseIsolatedEnv
 from poetry.core.utils.helpers import temporary_directory
-from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import]
+from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import-untyped]
 
 from poetry.utils._compat import decode
 from poetry.utils.env import ephemeral_environment
+from poetry.utils.helpers import extractall
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from collections.abc import Collection
-    from contextlib import AbstractContextManager
 
     from poetry.repositories import RepositoryPool
     from poetry.utils.cache import ArtifactCache
     from poetry.utils.env import Env
 
 
-class ChefError(Exception):
-    ...
+class ChefError(Exception): ...
 
 
-class ChefBuildError(ChefError):
-    ...
+class ChefBuildError(ChefError): ...
+
+
+class ChefInstallError(ChefError):
+    def __init__(self, requirements: Collection[str], output: str, error: str) -> None:
+        message = "\n\n".join((
+            f"Failed to install {', '.join(requirements)}.",
+            f"Output:\n{output}",
+            f"Error:\n{error}",
+        ))
+        super().__init__(message)
+        self._requirements = requirements
+
+    @property
+    def requirements(self) -> Collection[str]:
+        return self._requirements
 
 
 class IsolatedEnv(BaseIsolatedEnv):
@@ -43,15 +54,22 @@ class IsolatedEnv(BaseIsolatedEnv):
         self._pool = pool
 
     @property
-    def executable(self) -> str:
+    def python_executable(self) -> str:
         return str(self._env.python)
 
-    @property
-    def scripts_dir(self) -> str:
-        return str(self._env._bin_dir)
+    def make_extra_environ(self) -> dict[str, str]:
+        path = os.environ.get("PATH")
+        scripts_dir = str(self._env._bin_dir)
+        return {
+            "PATH": (
+                os.pathsep.join([scripts_dir, path])
+                if path is not None
+                else scripts_dir
+            )
+        }
 
     def install(self, requirements: Collection[str]) -> None:
-        from cleo.io.null_io import NullIO
+        from cleo.io.buffered_io import BufferedIO
         from poetry.core.packages.dependency import Dependency
         from poetry.core.packages.project_package import ProjectPackage
 
@@ -67,8 +85,9 @@ class IsolatedEnv(BaseIsolatedEnv):
             dependency = Dependency.create_from_pep_508(requirement)
             package.add_dependency(dependency)
 
+        io = BufferedIO()
         installer = Installer(
-            NullIO(),
+            io,
             self._env,
             package,
             Locker(self._env.path.joinpath("poetry.lock"), {}),
@@ -77,7 +96,8 @@ class IsolatedEnv(BaseIsolatedEnv):
             InstalledRepository.load(self._env),
         )
         installer.update(True)
-        installer.run()
+        if installer.run() != 0:
+            raise ChefInstallError(requirements, io.fetch_output(), io.fetch_error())
 
 
 class Chef:
@@ -107,11 +127,8 @@ class Chef:
 
         with ephemeral_environment(self._env.python) as venv:
             env = IsolatedEnv(venv, self._pool)
-            builder = ProjectBuilder(
-                directory,
-                python_executable=env.executable,
-                scripts_dir=env.scripts_dir,
-                runner=quiet_subprocess_runner,
+            builder = ProjectBuilder.from_isolated_env(
+                env, directory, runner=quiet_subprocess_runner
             )
             env.install(builder.build_system_requires)
 
@@ -132,14 +149,12 @@ class Chef:
                     )
             except BuildBackendException as e:
                 message_parts = [str(e)]
-                if isinstance(e.exception, CalledProcessError) and (
-                    e.exception.stdout is not None or e.exception.stderr is not None
-                ):
-                    message_parts.append(
-                        decode(e.exception.stderr)
-                        if e.exception.stderr is not None
-                        else decode(e.exception.stdout)
-                    )
+                if isinstance(e.exception, CalledProcessError):
+                    text = e.exception.stderr or e.exception.stdout
+                    if text is not None:
+                        message_parts.append(decode(text))
+                else:
+                    message_parts.append(str(e.exception))
 
                 error = ChefBuildError("\n\n".join(message_parts))
 
@@ -152,19 +167,11 @@ class Chef:
         from poetry.core.packages.utils.link import Link
 
         suffix = archive.suffix
-        context: Callable[
-            [str], AbstractContextManager[zipfile.ZipFile | tarfile.TarFile]
-        ]
-        if suffix == ".zip":  # noqa: SIM108
-            context = zipfile.ZipFile
-        else:
-            context = tarfile.open
+        zip = suffix == ".zip"
 
         with temporary_directory() as tmp_dir:
-            with context(archive.as_posix()) as archive_archive:
-                archive_archive.extractall(tmp_dir)
-
             archive_dir = Path(tmp_dir)
+            extractall(source=archive, dest=archive_dir, zip=zip)
 
             elements = list(archive_dir.glob("*"))
 

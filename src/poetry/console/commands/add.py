@@ -298,5 +298,5 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             " be skipped:\n"
         )
         for name in existing_packages:
-            self.line(f"  • <c1>{name}</c1>")
+            self.line(f"  - <c1>{name}</c1>")
         self.line(self._hint_update_packages)

@@ -106,8 +106,8 @@ def test_lock_check_outdated_legacy(
     status_code = tester.execute("--check")
     expected = (
         "poetry lock --check is deprecated, use `poetry check --lock` instead.\n"
-        "Error: poetry.lock is not consistent with pyproject.toml. "
-        "Run `poetry lock [--no-update]` to fix it.\n"
+        "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
+        "Run `poetry lock [--no-update]` to fix the lock file.\n"
     )
 
     assert tester.io.fetch_error() == expected

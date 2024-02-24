@@ -72,13 +72,11 @@ class PackageFilterPolicy:
             else:
                 return [":none:"]
 
-        return list(
-            {
-                name.strip() if cls.is_reserved(name) else canonicalize_name(name)
-                for name in policy.strip().split(",")
-                if name
-            }
-        )
+        return list({
+            name.strip() if cls.is_reserved(name) else canonicalize_name(name)
+            for name in policy.strip().split(",")
+            if name
+        })
 
     @classmethod
     def validator(cls, policy: str) -> bool:
@@ -132,6 +130,15 @@ class Config:
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
+        },
+        "solver": {
+            "lazy-wheel": True,
+        },
+        "warnings": {
+            "export": True,
+        },
+        "keyring": {
+            "enabled": True,
         },
     }
 
@@ -223,6 +230,22 @@ class Config:
             path = Path(self.get("cache-dir")) / "virtualenvs"
         return Path(path).expanduser()
 
+    @property
+    def installer_max_workers(self) -> int:
+        # This should be directly handled by ThreadPoolExecutor
+        # however, on some systems the number of CPUs cannot be determined
+        # (it raises a NotImplementedError), so, in this case, we assume
+        # that the system only has one CPU.
+        try:
+            default_max_workers = (os.cpu_count() or 1) + 4
+        except NotImplementedError:
+            default_max_workers = 5
+
+        desired_max_workers = self.get("installer.max-workers")
+        if desired_max_workers is None:
+            return default_max_workers
+        return min(default_max_workers, int(desired_max_workers))
+
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
         Retrieve a setting value.
@@ -279,6 +302,9 @@ class Config:
             "experimental.system-git-client",
             "installer.modern-installation",
             "installer.parallel",
+            "solver.lazy-wheel",
+            "warnings.export",
+            "keyring.enabled",
         }:
             return boolean_normalizer
 

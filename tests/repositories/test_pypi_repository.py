@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
+    from tests.types import RequestsSessionGet
+
 
 @pytest.fixture(autouse=True)
 def _use_simple_keyring(with_simple_keyring: None) -> None:
@@ -38,6 +40,7 @@ class MockRepository(PyPiRepository):
 
     def __init__(self, fallback: bool = False) -> None:
         super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
+        self._lazy_wheel = False
 
     def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
         fixture = self.JSON_FIXTURES / (name + ".json")
@@ -66,7 +69,9 @@ class MockRepository(PyPiRepository):
             data: dict[str, Any] = json.load(f)
             return data
 
-    def _download(self, url: str, dest: Path) -> None:
+    def _download(
+        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
+    ) -> None:
         filename = url.split("/")[-1]
 
         fixture = self.DIST_FIXTURES / filename
@@ -137,11 +142,11 @@ def test_package() -> None:
     assert package.files == [
         {
             "file": "requests-2.18.4-py2.py3-none-any.whl",
-            "hash": "sha256:6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b",  # noqa: E501
+            "hash": "sha256:6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b",
         },
         {
             "file": "requests-2.18.4.tar.gz",
-            "hash": "sha256:9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e",  # noqa: E501
+            "hash": "sha256:9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e",
         },
     ]
 
@@ -242,6 +247,30 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> N
     dep = package.requires[0]
     assert dep.name == "futures"
     assert dep.python_versions == "~2.7"
+
+
+def test_fallback_pep_658_metadata(
+    mocker: MockerFixture, get_metadata_mock: RequestsSessionGet
+) -> None:
+    repo = MockRepository(fallback=True)
+
+    mocker.patch.object(repo.session, "get", get_metadata_mock)
+    spy = mocker.spy(repo, "_get_info_from_metadata")
+
+    try:
+        package = repo.package("isort-metadata", Version.parse("4.3.4"))
+    except FileNotFoundError:
+        pytest.fail("Metadata was not successfully retrieved")
+    else:
+        assert spy.call_count > 0
+        assert spy.spy_return is not None
+
+        assert package.name == "isort-metadata"
+        assert len(package.requires) == 1
+
+        dep = package.requires[0]
+        assert dep.name == "futures"
+        assert dep.python_versions == "~2.7"
 
 
 def test_fallback_can_read_setup_to_get_dependencies() -> None:

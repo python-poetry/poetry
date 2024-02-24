@@ -456,10 +456,12 @@ You can specify a package in the following forms:
 
         return requires
 
-    def _validate_author(self, author: str, default: str) -> str | None:
+    @staticmethod
+    def _validate_author(author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
+        from poetry.core.utils.helpers import combine_unicode
 
-        author = author or default
+        author = combine_unicode(author or default)
 
         if author in ["n", "no"]:
             return None
@@ -481,6 +483,7 @@ You can specify a package in the following forms:
         return package
 
     def _get_pool(self) -> RepositoryPool:
+        from poetry.config.config import Config
         from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
 
@@ -489,6 +492,7 @@ You can specify a package in the following forms:
 
         if self._pool is None:
             self._pool = RepositoryPool()
-            self._pool.add_repository(PyPiRepository())
+            pool_size = Config.create().installer_max_workers
+            self._pool.add_repository(PyPiRepository(pool_size=pool_size))
 
         return self._pool

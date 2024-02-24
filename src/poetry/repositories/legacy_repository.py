@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+import requests.adapters
+
 from poetry.core.packages.package import Package
 
 from poetry.inspection.info import PackageInfo
@@ -27,11 +29,12 @@ class LegacyRepository(HTTPRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        super().__init__(name, url.rstrip("/"), config, disable_cache)
+        super().__init__(name, url.rstrip("/"), config, disable_cache, pool_size)
 
     @property
     def packages(self) -> list[Package]:

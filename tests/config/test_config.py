@@ -12,12 +12,15 @@ import pytest
 from poetry.config.config import Config
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
+from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
+
+    from tests.conftest import DummyBackend
 
     Normalizer = Callable[[str], Any]
 
@@ -81,3 +84,14 @@ def test_config_expands_tilde_for_virtualenvs_path(
 ) -> None:
     config.merge({"virtualenvs": {"path": path_config}})
     assert config.virtualenvs_path == expected
+
+
+def test_disabled_keyring_is_unavailable(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+) -> None:
+    manager = PasswordManager(config)
+    assert manager.use_keyring
+
+    config.config["keyring"]["enabled"] = False
+    manager = PasswordManager(config)
+    assert not manager.use_keyring

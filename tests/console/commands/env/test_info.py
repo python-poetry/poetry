@@ -43,7 +43,7 @@ Path:           {Path('/prefix')}
 Executable:     {sys.executable}
 Valid:          True
 
-System
+Base
 Platform:   darwin
 OS:         posix
 Python:     {'.'.join(str(v) for v in sys.version_info[:3])}
