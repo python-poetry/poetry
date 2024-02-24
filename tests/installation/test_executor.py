@@ -928,6 +928,13 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         download_spy.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "source_url,written_source_url",
+    [
+        ("https://github.com/demo/demo.git", "https://github.com/demo/demo.git"),
+        ("git@github.com:demo/demo.git", "ssh://git@github.com/demo/demo.git"),
+    ],
+)
 @pytest.mark.parametrize("is_artifact_cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_git(
     tmp_venv: VirtualEnv,
@@ -939,6 +946,8 @@ def test_executor_should_write_pep610_url_references_for_git(
     wheel: Path,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
+    source_url: str,
+    written_source_url: str,
     is_artifact_cached: bool,
 ) -> None:
     if is_artifact_cached:
@@ -950,7 +959,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     clone_spy = mocker.spy(Git, "clone")
 
     source_resolved_reference = "123456"
-    source_url = "https://github.com/demo/demo.git"
+    source_url = source_url
 
     package = Package(
         "demo",
@@ -960,6 +969,8 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_resolved_reference=source_resolved_reference,
         source_url=source_url,
     )
+
+    assert package.source_url == written_source_url
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
@@ -986,7 +997,9 @@ def test_executor_should_write_pep610_url_references_for_git(
         prepare_spy.assert_not_called()
     else:
         clone_spy.assert_called_once_with(
-            url=source_url, source_root=mocker.ANY, revision=source_resolved_reference
+            url=package.source_url,
+            source_root=mocker.ANY,
+            revision=source_resolved_reference,
         )
         prepare_spy.assert_called_once()
         assert prepare_spy.spy_return.exists(), "cached file should not be deleted"
