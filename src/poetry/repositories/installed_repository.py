@@ -13,6 +13,7 @@ from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import module_name
 
 from poetry.repositories.repository import Repository
+from poetry.utils._compat import getencoding
 from poetry.utils._compat import metadata
 
 
@@ -58,7 +59,7 @@ class InstalledRepository(Repository):
             if not pth_file.exists():
                 continue
 
-            with pth_file.open() as f:
+            with pth_file.open(encoding=getencoding()) as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith(("#", "import ", "import\t")):
