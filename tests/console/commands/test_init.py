@@ -62,17 +62,19 @@ def tester(patches: None) -> CommandTester:
 
 @pytest.fixture
 def init_basic_inputs() -> str:
-    return "\n".join([
-        "my-package",  # Package name
-        "1.2.3",  # Version
-        "This is a description",  # Description
-        "n",  # Author
-        "MIT",  # License
-        "~2.7 || ^3.6",  # Python
-        "n",  # Interactive packages
-        "n",  # Interactive dev packages
-        "\n",  # Generate
-    ])
+    return "\n".join(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "This is a description",  # Description
+            "n",  # Author
+            "MIT",  # License
+            "~2.7 || ^3.6",  # Python
+            "n",  # Interactive packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
 
 
 @pytest.fixture()

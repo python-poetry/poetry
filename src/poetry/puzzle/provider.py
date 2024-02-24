@@ -346,10 +346,12 @@ class Provider:
         if dependency.base is not None:
             package.root_dir = dependency.base
 
-        package.files = [{
-            "file": dependency.path.name,
-            "hash": "sha256:" + get_file_hash(dependency.full_path),
-        }]
+        package.files = [
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
+        ]
 
         return package
 
@@ -783,10 +785,12 @@ class Provider:
         if self.is_debugging():
             debug_info = str(message)
             debug_info = (
-                "\n".join([
-                    f"<debug>{str(depth).rjust(4)}:</debug> {s}"
-                    for s in debug_info.split("\n")
-                ])
+                "\n".join(
+                    [
+                        f"<debug>{str(depth).rjust(4)}:</debug> {s}"
+                        for s in debug_info.split("\n")
+                    ]
+                )
                 + "\n"
             )
 

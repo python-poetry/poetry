@@ -70,13 +70,15 @@ def demo_setup(source_dir: Path) -> Path:
 def demo_setup_cfg(source_dir: Path) -> Path:
     setup_cfg = source_dir / "setup.cfg"
     setup_cfg.write_text(
-        "\n".join([
-            "[metadata]",
-            "name = demo",
-            "version = 0.1.0",
-            "[options]",
-            "install_requires = package",
-        ])
+        "\n".join(
+            [
+                "[metadata]",
+                "name = demo",
+                "version = 0.1.0",
+                "[options]",
+                "install_requires = package",
+            ]
+        )
     )
     return source_dir
 

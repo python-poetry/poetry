@@ -291,9 +291,11 @@ def test_get_http_auth_does_not_call_keyring_when_credentials_in_environment_var
 def test_get_http_auth_does_not_call_keyring_when_password_in_environment_variables(
     environ: None, config: Config
 ) -> None:
-    config.merge({
-        "http-basic": {"foo": {"username": "bar"}},
-    })
+    config.merge(
+        {
+            "http-basic": {"foo": {"username": "bar"}},
+        }
+    )
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
 
     manager = PasswordManager(config)
