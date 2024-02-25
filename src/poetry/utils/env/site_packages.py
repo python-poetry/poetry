@@ -121,7 +121,9 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 if file.name.endswith(suffix):
-                    yield Path(distribution.locate_file(file))
+                    path = distribution.locate_file(file)
+                    assert isinstance(path, Path)
+                    yield path
 
     def find_distribution_files_with_name(
         self, distribution_name: str, name: str, writable_only: bool = False
@@ -132,7 +134,9 @@ class SitePackages:
             files = [] if distribution.files is None else distribution.files
             for file in files:
                 if file.name == name:
-                    yield Path(distribution.locate_file(file))
+                    path = distribution.locate_file(file)
+                    assert isinstance(path, Path)
+                    yield path
 
     def find_distribution_direct_url_json_files(
         self, distribution_name: str, writable_only: bool = False
@@ -151,7 +155,8 @@ class SitePackages:
         ):
             files = [] if distribution.files is None else distribution.files
             for file in files:
-                path = Path(distribution.locate_file(file))
+                path = distribution.locate_file(file)
+                assert isinstance(path, Path)
                 path.unlink(missing_ok=True)
 
             distribution_path: Path = distribution._path  # type: ignore[attr-defined]
