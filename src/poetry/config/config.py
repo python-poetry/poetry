@@ -299,6 +299,8 @@ class Config:
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "virtualenvs.options.no-pip",
+            "virtualenvs.options.no-setuptools",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.system-git-client",
