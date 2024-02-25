@@ -8,8 +8,7 @@ body:
       value: |
         Thank you for taking the time to file a complete bug report.
 
-        Before submitting your issue, please search [issues](https://github.com/python-poetry/poetry/issues) to ensure
-        this is not a duplicate.
+        Before submitting your issue, please search [issues](https://github.com/python-poetry/poetry/issues) to ensure this is not a duplicate.
 
         If the issue is trivial, why not submit a pull request instead?
 
@@ -40,8 +39,7 @@ body:
     attributes:
       label: Impact
       description: |
-        Please describe the motivation for this issue. Describe, as best you can, how this improves or impacts the users
-        of Poetry and why this is important.
+        Please describe the motivation for this issue. Describe, as best you can, how this improves or impacts the users of Poetry and why this is important.
       render: "Markdown"
     validations:
       required: true

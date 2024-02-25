@@ -8,8 +8,7 @@ body:
       value: |
         Thank you for taking the time to file a complete bug report.
 
-        Before submitting your issue, please review the [Before submitting a bug report](https://python-poetry.org/docs/contributing/#before-submitting-a-bug-report)
-        section of our documentation.
+        Before submitting your issue, please review the [Before submitting a bug report](https://python-poetry.org/docs/contributing/#before-submitting-a-bug-report) section of our documentation.
 
   - type: textarea
     attributes:
@@ -17,8 +16,7 @@ body:
       description: |
         Please describe what happened, with as much pertinent information as you can. Feel free to use markdown syntax.
 
-        Also, ensure that the issue is not already fixed in the [latest](https://github.com/python-poetry/poetry/releases/latest)
-        Poetry release.
+        Also, ensure that the issue is not already fixed in the [latest](https://github.com/python-poetry/poetry/releases/latest) Poetry release.
       render: "Markdown"
     validations:
       required: true
