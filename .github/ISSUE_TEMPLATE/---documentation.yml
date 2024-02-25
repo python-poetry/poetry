@@ -8,11 +8,11 @@ body:
       value: |
         Thank you for taking the time to file a complete bug report.
 
-        Before submitting your issue, please review the [Suggesting enhancements](https://python-poetry.org/docs/contributing/#suggesting-enhancements)
-        section of our documentation.
+        Before submitting your issue, please review the [Suggesting enhancements](https://python-poetry.org/docs/contributing/#suggesting-enhancements) section of our documentation.
 
-        - [ ] I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.
-        - [ ] I have searched the [FAQ](https://python-poetry.org/docs/faq/) and general [documentation](https://python-poetry.org/docs/) and believe that my question is not already covered.
+        Please also confirm the following:
+        - I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.
+        - I have searched the [FAQ](https://python-poetry.org/docs/faq/) and general [documentation](https://python-poetry.org/docs/) and believe that my question is not already covered.
 
   - type: dropdown
     attributes:
