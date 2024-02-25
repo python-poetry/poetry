@@ -320,6 +320,14 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
+{{% note %}}
+A package is looked up, by default, only from the [Default Package Source]({{< relref "repositories/#default-package-source" >}}).
+You can modify the default source (PyPI); or add and use [Supplemental Package Sources]({{< relref "repositories/#supplemental-package-sources" >}})
+or [Explicit Package Sources]({{< relref "repositories/#explicit-package-sources" >}}).
+
+For more information, refer to the [Package Sources]({{< relref "repositories/#package-sources" >}}) documentation.
+{{% /note %}}
+
 You can also specify a constraint when adding a package:
 
 ```bash
