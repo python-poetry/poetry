@@ -9,8 +9,7 @@ on:
       - '!.cirrus.yml'
       - '!.github/workflows/docs.yml'
     branches:
-      - master
-      - develop
+      - main
   pull_request:
     paths-ignore:
       - '**'
