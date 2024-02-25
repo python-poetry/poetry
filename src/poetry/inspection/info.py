@@ -369,16 +369,9 @@ class PackageInfo:
             name=result.get("name"),
             version=result.get("version"),
             summary=result.get("description", ""),
-            requires_dist=requirements or None,
+            requires_dist=requirements,
             requires_python=python_requires,
         )
-
-        if not (info.name and info.version) and not info.requires_dist:
-            # there is nothing useful here
-            raise PackageInfoError(
-                path,
-                "No core metadata (name, version, requires-dist) could be retrieved.",
-            )
 
         return info
 
@@ -582,7 +575,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
 
     with contextlib.suppress(PackageInfoError):
         info = PackageInfo.from_setup_files(path)
-        if all([info.version, info.name, info.requires_dist]):
+        if all(x is not None for x in (info.version, info.name, info.requires_dist)):
             return info
 
     with ephemeral_environment(

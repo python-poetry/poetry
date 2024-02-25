@@ -318,7 +318,7 @@ def test_info_setup_complex_calls_script(demo_setup_complex_calls_script: Path) 
 
 
 @pytest.mark.network
-@pytest.mark.parametrize("missing", ["version", "name", "install_requires"])
+@pytest.mark.parametrize("missing", ["version", "name"])
 def test_info_setup_missing_mandatory_should_trigger_pep517(
     mocker: MockerFixture, source_dir: Path, missing: str
 ) -> None:
@@ -326,7 +326,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup += "setup("
     setup += 'name="demo", ' if missing != "name" else ""
     setup += 'version="0.1.0", ' if missing != "version" else ""
-    setup += 'install_requires=["package"]' if missing != "install_requires" else ""
+    setup += 'install_requires=["package"]'
     setup += ")"
 
     setup_py = source_dir / "setup.py"
@@ -335,6 +335,24 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     spy = mocker.spy(VirtualEnv, "run")
     _ = PackageInfo.from_directory(source_dir)
     assert spy.call_count == 1
+
+
+@pytest.mark.network
+def test_info_setup_missing_install_requires_is_fine(
+    mocker: MockerFixture, source_dir: Path
+) -> None:
+    setup = "from setuptools import setup; "
+    setup += "setup("
+    setup += 'name="demo", '
+    setup += 'version="0.1.0", '
+    setup += ")"
+
+    setup_py = source_dir / "setup.py"
+    setup_py.write_text(setup)
+
+    spy = mocker.spy(VirtualEnv, "run")
+    _ = PackageInfo.from_directory(source_dir)
+    assert spy.call_count == 0
 
 
 def test_info_prefer_poetry_config_over_egg_info(fixture_dir: FixtureDirGetter) -> None:
