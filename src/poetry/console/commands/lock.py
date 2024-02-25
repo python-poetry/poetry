@@ -44,8 +44,8 @@ file.
                 return 0
             self.line_error(
                 "<error>"
-                "Error: poetry.lock is not consistent with pyproject.toml. "
-                "Run `poetry lock [--no-update]` to fix it."
+                "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
+                "Run `poetry lock [--no-update]` to fix the lock file."
                 "</error>"
             )
             return 1

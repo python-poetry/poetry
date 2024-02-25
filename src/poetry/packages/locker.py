@@ -31,6 +31,7 @@ from poetry.utils._compat import tomllib
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
@@ -167,11 +168,13 @@ class Locker:
                     package.files = files
 
             package.python_versions = info["python-versions"]
+
+            package_extras: dict[NormalizedName, list[Dependency]] = {}
             extras = info.get("extras", {})
             if extras:
                 for name, deps in extras.items():
                     name = canonicalize_name(name)
-                    package.extras[name] = []
+                    package_extras[name] = []
 
                     for dep in deps:
                         try:
@@ -187,7 +190,9 @@ class Locker:
                             dependency = Dependency(
                                 dep_name, constraint, extras=extras.split(",")
                             )
-                        package.extras[name].append(dependency)
+                        package_extras[name].append(dependency)
+
+            package.extras = package_extras
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
@@ -379,8 +384,7 @@ class Locker:
             package.requires,
             key=lambda d: d.name,
         ):
-            if dependency.pretty_name not in dependencies:
-                dependencies[dependency.pretty_name] = []
+            dependencies.setdefault(dependency.pretty_name, [])
 
             constraint = inline_table()
 

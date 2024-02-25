@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.8.0.dev0"
+version = "1.9.0.dev0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -14,7 +14,6 @@ maintainers = [
 ]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "poetry", from = "src" }]
 include = [{ path = "tests", format = "sdist" }]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
@@ -32,10 +31,10 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.8.1"
+poetry-core = "1.9.0"
 poetry-plugin-export = "^1.6.0"
 build = "^1.0.3"
-cachecontrol = { version = "^0.13.0", extras = ["filecache"] }
+cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
 cleo = "^2.1.0"
 crashtest = "^0.4.1"
 dulwich = "^0.21.2"
@@ -66,14 +65,14 @@ pre-commit = ">=2.10"
 coverage = ">=7.2.0"
 deepdiff = "^6.3"
 httpretty = "^1.1"
-pytest = "^7.1"
+pytest = "^8.0"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
 pytest-randomly = "^3.12"
 pytest-xdist = { version = "^3.1", extras = ["psutil"] }
 
 [tool.poetry.group.typing.dependencies]
-mypy = ">=1.6.0"
+mypy = ">=1.8.0"
 types-requests = ">=2.28.8"
 
 # only used in github actions
@@ -137,7 +136,7 @@ known-first-party = ["poetry"]
 known-third-party = ["poetry.core"]
 required-imports = ["from __future__ import annotations"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "src/poetry/console/*" = ["RUF012"]  # Can't annotate properly until new version of Cleo
 
 [tool.black]

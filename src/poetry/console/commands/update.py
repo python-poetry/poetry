@@ -24,6 +24,12 @@ class UpdateCommand(InstallerCommand):
             " (<warning>Deprecated</warning>)",
         ),
         option(
+            "sync",
+            None,
+            "Synchronize the environment with the locked packages and the specified"
+            " groups.",
+        ),
+        option(
             "dry-run",
             None,
             "Output the operations but do not execute anything "
@@ -41,6 +47,7 @@ class UpdateCommand(InstallerCommand):
 
         self.installer.only_groups(self.activated_groups)
         self.installer.dry_run(self.option("dry-run"))
+        self.installer.requires_synchronization(self.option("sync"))
         self.installer.execute_operations(not self.option("lock"))
 
         # Force update

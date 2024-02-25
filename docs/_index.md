@@ -85,7 +85,7 @@ Finally, `pipx` can install any valid [pip requirement spec](https://pip.pypa.io
 allows for installations of the development version from `git`, or even for local testing of pull requests:
 
 ```bash
-pipx install --suffix @master git+https://github.com/python-poetry/poetry.git@master
+pipx install --suffix @main git+https://github.com/python-poetry/poetry.git@main
 pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@refs/pull/1234/head
 ```
 
@@ -182,7 +182,7 @@ curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
 You can also install Poetry from a `git` repository by using the `--git` option:
 
 ```bash
-curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
+curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@main
 ````
 If you want to install different versions of Poetry in parallel, a good approach is the installation with pipx and suffix.
 

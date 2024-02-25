@@ -121,8 +121,9 @@ class CheckCommand(Command):
         ]
 
     def handle(self) -> int:
+        from poetry.core.pyproject.toml import PyProjectTOML
+
         from poetry.factory import Factory
-        from poetry.pyproject.toml import PyProjectTOML
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path
@@ -147,8 +148,8 @@ class CheckCommand(Command):
             check_result["errors"] += ["poetry.lock was not found."]
         if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
             check_result["errors"] += [
-                "poetry.lock is not consistent with pyproject.toml. Run `poetry"
-                " lock [--no-update]` to fix it."
+                "pyproject.toml changed significantly since poetry.lock was last generated. "
+                "Run `poetry lock [--no-update]` to fix the lock file."
             ]
 
         if not check_result["errors"] and not check_result["warnings"]:

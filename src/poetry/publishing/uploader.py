@@ -49,10 +49,11 @@ class UploadError(Exception):
 
 
 class Uploader:
-    def __init__(self, poetry: Poetry, io: IO) -> None:
+    def __init__(self, poetry: Poetry, io: IO, dist_dir: Path | None = None) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
+        self._dist_dir = dist_dir or self.default_dist_dir
         self._username: str | None = None
         self._password: str | None = None
 
@@ -62,8 +63,19 @@ class Uploader:
         return agent
 
     @property
+    def default_dist_dir(self) -> Path:
+        return self._poetry.file.path.parent / "dist"
+
+    @property
+    def dist_dir(self) -> Path:
+        if not self._dist_dir.is_absolute():
+            return self._poetry.file.path.parent / self._dist_dir
+
+        return self._dist_dir
+
+    @property
     def files(self) -> list[Path]:
-        dist = self._poetry.file.path.parent / "dist"
+        dist = self.dist_dir
         version = self._package.version.to_string()
         escaped_name = distribution_name(self._package.name)
 
@@ -205,11 +217,13 @@ class Uploader:
             raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
-        data.update({
-            # action
-            ":action": "file_upload",
-            "protocol_version": "1",
-        })
+        data.update(
+            {
+                # action
+                ":action": "file_upload",
+                "protocol_version": "1",
+            }
+        )
 
         data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 
@@ -275,7 +289,7 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self._poetry.file.path.parent / "dist"
+        dist = self.dist_dir
         escaped_name = distribution_name(self._package.name)
         file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
 

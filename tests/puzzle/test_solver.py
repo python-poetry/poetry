@@ -95,12 +95,14 @@ def check_solver_result(
     for op in ops:
         if op.job_type == "update":
             assert isinstance(op, Update)
-            result.append({
-                "job": "update",
-                "from": op.initial_package,
-                "to": op.target_package,
-                "skipped": op.skipped,
-            })
+            result.append(
+                {
+                    "job": "update",
+                    "from": op.initial_package,
+                    "to": op.target_package,
+                    "skipped": op.skipped,
+                }
+            )
         else:
             job = "install"
             if op.job_type == "uninstall":
@@ -449,7 +451,7 @@ def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
     set_package_python_versions(solver.provider, "~3.4")
-    package.extras[canonicalize_name("foo")] = [get_dependency("B")]
+    package.extras = {canonicalize_name("foo"): [get_dependency("B")]}
     package.add_dependency(
         Factory.create_dependency("A", {"version": "*", "python": "^3.4"})
     )
@@ -563,11 +565,11 @@ def test_solver_returns_extras_only_requested(
     package_c20 = get_package("C", "2.0")
 
     dep10 = get_dependency("C", "1.0", optional=True)
-    dep10._in_extras.append(canonicalize_name("one"))
+    dep10._in_extras = [canonicalize_name("one")]
     dep10.marker = parse_marker("extra == 'one'")
 
     dep20 = get_dependency("C", "2.0", optional=True)
-    dep20._in_extras.append(canonicalize_name("two"))
+    dep20._in_extras = [canonicalize_name("two")]
     dep20.marker = parse_marker("extra == 'two'")
 
     package_b.extras = {
@@ -622,8 +624,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     package_c = get_package("C", "1.0")
 
     dep = get_dependency("C", "*", optional=True)
-    dep._in_extras.append(canonicalize_name("one"))
-    dep._in_extras.append(canonicalize_name("two"))
+    dep._in_extras = [canonicalize_name("one"), canonicalize_name("two")]
 
     package_b.extras = {
         canonicalize_name("one"): [dep],
@@ -675,11 +676,11 @@ def test_solver_returns_extras_only_requested_nested(
     package_c20 = get_package("C", "2.0")
 
     dep10 = get_dependency("C", "1.0", optional=True)
-    dep10._in_extras.append(canonicalize_name("one"))
+    dep10._in_extras = [canonicalize_name("one")]
     dep10.marker = parse_marker("extra == 'one'")
 
     dep20 = get_dependency("C", "2.0", optional=True)
-    dep20._in_extras.append(canonicalize_name("two"))
+    dep20._in_extras = [canonicalize_name("two")]
     dep20.marker = parse_marker("extra == 'two'")
 
     package_b.extras = {
@@ -1075,7 +1076,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     )
 
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("C")]}
     package_a.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -1118,7 +1119,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     )
 
     package_a = get_package("A", "1.0")
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("C")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("C")]}
     package_a.add_dependency(
         Factory.create_dependency("C", {"version": "^1.0", "optional": True})
     )
@@ -2959,16 +2960,18 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
 
     check_solver_result(
         transaction,
-        [{
-            "job": "install",
-            "package": Package(
-                "isort",
-                "4.3.4",
-                source_type="legacy",
-                source_url=repo.url,
-                source_reference=repo.name,
-            ),
-        }],
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "isort",
+                    "4.3.4",
+                    source_type="legacy",
+                    source_url=repo.url,
+                    source_reference=repo.name,
+                ),
+            }
+        ],
     )
 
 
@@ -3051,16 +3054,18 @@ def test_solver_chooses_from_correct_repository_if_forced(
 
     ops = check_solver_result(
         transaction,
-        [{
-            "job": "install",
-            "package": Package(
-                "tomlkit",
-                "0.5.2",
-                source_type="legacy",
-                source_url=repo.url,
-                source_reference=repo.name,
-            ),
-        }],
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "tomlkit",
+                    "0.5.2",
+                    source_type="legacy",
+                    source_url=repo.url,
+                    source_reference=repo.name,
+                ),
+            }
+        ],
     )
 
     assert ops[0].package.source_url == "http://legacy.foo.bar"
@@ -3309,7 +3314,7 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency(
         package_lib.add_dependency(
             Factory.create_dependency("extra", {"version": ">=1.0", "optional": True})
         )
-        package_lib.extras[canonicalize_name("extra")] = [dep_extra]
+        package_lib.extras = {canonicalize_name("extra"): [dep_extra]}
 
         explicit_repo.add_package(package_lib)  # lib only in explicit repo
 
@@ -3380,7 +3385,6 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
         package_lib.add_dependency(
             Factory.create_dependency("extra", {"version": ">=1.0", "optional": True})
         )
-        package_lib.extras[canonicalize_name("extra")] = [dep_extra]
 
         dep_other_extra = get_dependency("other-extra", ">=1.0")
         package_lib.add_dependency(
@@ -3388,7 +3392,10 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
                 "other-extra", {"version": ">=1.0", "optional": True}
             )
         )
-        package_lib.extras[canonicalize_name("other-extra")] = [dep_other_extra]
+        package_lib.extras = {
+            canonicalize_name("extra"): [dep_extra],
+            canonicalize_name("other-extra"): [dep_other_extra],
+        }
 
         explicit_repo.add_package(package_lib)  # lib only in explicit repo
 
@@ -3414,6 +3421,104 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
             {"job": "install", "package": get_package("other", "2.0")},
         ],
     )
+
+
+@pytest.mark.parametrize("locked", [False, True])
+def test_multiple_constraints_explicit_source_transitive_locked_use_latest(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    locked: bool,
+) -> None:
+    """
+    The root package depends on
+     * lib[extra] == 1.0; sys_platform != "linux" with source=explicit1
+     * lib[extra] == 2.0; sys_platform == "linux" with source=explicit2
+     * other >= 1.0
+    "other" depends on "lib" (without an extra and of course without an explicit source
+    because explicit sources can only be defined in the root package).
+
+    If only "other" is in use_latest (equivalent to "poetry update other"),
+    the transitive dependency of "other" on "lib" is resolved before
+    the direct dependency on "lib[extra]" (if packages have been locked before).
+    We still have to make sure that the locked package is looked up in the explicit
+    source although the DependencyCache is not used for locked packages,
+    so we can't rely on it to propagate the correct source.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "lib",
+            {
+                "version": "1.0",
+                "extras": ["extra"],
+                "source": "explicit1",
+                "markers": "sys_platform != 'linux'",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "lib",
+            {
+                "version": "2.0",
+                "extras": ["extra"],
+                "source": "explicit2",
+                "markers": "sys_platform == 'linux'",
+            },
+        )
+    )
+    package.add_dependency(Factory.create_dependency("other", {"version": ">=1.0"}))
+
+    explicit_repo1 = Repository("explicit1")
+    pool.add_repository(explicit_repo1, priority=Priority.EXPLICIT)
+    explicit_repo2 = Repository("explicit2")
+    pool.add_repository(explicit_repo2, priority=Priority.EXPLICIT)
+
+    dep_extra = get_dependency("extra", ">=1.0")
+    dep_extra_opt = Factory.create_dependency(
+        "extra", {"version": ">=1.0", "optional": True}
+    )
+    package_lib1 = Package(
+        "lib", "1.0", source_type="legacy", source_reference="explicit1"
+    )
+    package_lib1.extras = {canonicalize_name("extra"): [dep_extra]}
+    package_lib1.add_dependency(dep_extra_opt)
+    explicit_repo1.add_package(package_lib1)
+    package_lib2 = Package(
+        "lib", "2.0", source_type="legacy", source_reference="explicit2"
+    )
+    package_lib2.extras = {canonicalize_name("extra"): [dep_extra]}
+    package_lib2.add_dependency(dep_extra_opt)
+    explicit_repo2.add_package(package_lib2)
+
+    package_extra = Package("extra", "1.0")
+    repo.add_package(package_extra)
+    package_other = Package("other", "1.5")
+    package_other.add_dependency(Factory.create_dependency("lib", ">=1.0"))
+    repo.add_package(package_other)
+
+    if locked:
+        locked_packages = [package_extra, package_lib1, package_lib2, package_other]
+        use_latest = [canonicalize_name("other")]
+    else:
+        locked_packages = []
+        use_latest = None
+    solver = Solver(package, pool, [], locked_packages, io)
+
+    transaction = solver.solve(use_latest=use_latest)
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_extra},
+            {"job": "install", "package": package_lib1},
+            {"job": "install", "package": package_lib2},
+            {"job": "install", "package": package_other},
+        ],
+    )
+    assert ops[1].package.source_reference == "explicit1"
+    assert ops[2].package.source_reference == "explicit2"
 
 
 def test_solver_discards_packages_with_empty_markers(
@@ -3504,7 +3609,9 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
             "idna", {"version": ">=2.0.0", "markers": "extra == 'security'"}
         )
     )
-    requests.extras[canonicalize_name("security")] = [get_dependency("idna", ">=2.0.0")]
+    requests.extras = {
+        canonicalize_name("security"): [get_dependency("idna", ">=2.0.0")]
+    }
     idna = get_package("idna", "2.8")
 
     repo.add_package(requests)
@@ -3940,7 +4047,7 @@ def test_solver_can_resolve_transitive_extras(
     requests.add_dependency(
         Factory.create_dependency("PyOpenSSL", {"version": ">=0.14", "optional": True})
     )
-    requests.extras[canonicalize_name("security")] = [dep]
+    requests.extras = {canonicalize_name("security"): [dep]}
     pyota = get_package("PyOTA", "2.1.0")
     pyota.add_dependency(
         Factory.create_dependency(
@@ -3981,9 +4088,9 @@ def test_solver_can_resolve_for_packages_with_missing_extras(
     django_anymail.add_dependency(
         Factory.create_dependency("boto3", {"version": "*", "optional": True})
     )
-    django_anymail.extras[canonicalize_name("amazon_ses")] = [
-        Factory.create_dependency("boto3", "*")
-    ]
+    django_anymail.extras = {
+        canonicalize_name("amazon_ses"): [Factory.create_dependency("boto3", "*")]
+    }
     django = get_package("django", "2.2.0")
     boto3 = get_package("boto3", "1.0.0")
     requests = get_package("requests", "2.24.0")
@@ -4393,8 +4500,7 @@ def test_solver_yanked_warning(
     assert "The locked version 2 for bar is a yanked version." in error
     assert (
         "The locked version 3 for baz is a yanked version. Reason for being yanked:"
-        " just wrong"
-        in error
+        " just wrong" in error
     )
     assert error.count("is a yanked version") == 2
     assert error.count("Reason for being yanked") == 1
@@ -4509,10 +4615,12 @@ def test_solver_resolves_duplicate_dependency_in_extra(
 
     check_solver_result(
         transaction,
-        ([
-            {"job": "install", "package": package_b1 if with_extra else package_b2},
-            {"job": "install", "package": package_a},
-        ]),
+        (
+            [
+                {"job": "install", "package": package_b1 if with_extra else package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
     )
 
 
@@ -4547,9 +4655,11 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
 
     check_solver_result(
         transaction,
-        ([
-            {"job": "install", "package": package_b1},
-            {"job": "install", "package": package_b2},
-            {"job": "install", "package": package_a},
-        ]),
+        (
+            [
+                {"job": "install", "package": package_b1},
+                {"job": "install", "package": package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
     )

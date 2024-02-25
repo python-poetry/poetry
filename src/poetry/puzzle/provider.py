@@ -125,7 +125,7 @@ class Provider:
         self._env: Env | None = None
         self._python_constraint = package.python_constraint
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
-        self._overrides: dict[DependencyPackage, dict[str, Dependency]] = {}
+        self._overrides: dict[Package, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
@@ -134,6 +134,7 @@ class Provider:
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
 
+        self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
             self._locked[package.name].append(
                 DependencyPackage(package.to_dependency(), package)
@@ -155,9 +156,7 @@ class Provider:
     def is_debugging(self) -> bool:
         return self._is_debugging
 
-    def set_overrides(
-        self, overrides: dict[DependencyPackage, dict[str, Dependency]]
-    ) -> None:
+    def set_overrides(self, overrides: dict[Package, dict[str, Dependency]]) -> None:
         self._overrides = overrides
 
     def load_deferred(self, load_deferred: bool) -> None:
@@ -347,10 +346,12 @@ class Provider:
         if dependency.base is not None:
             package.root_dir = dependency.base
 
-        package.files = [{
-            "file": dependency.path.name,
-            "hash": "sha256:" + get_file_hash(dependency.full_path),
-        }]
+        package.files = [
+            {
+                "file": dependency.path.name,
+                "hash": "sha256:" + get_file_hash(dependency.full_path),
+            }
+        ]
 
         return package
 
@@ -383,7 +384,7 @@ class Provider:
         return package
 
     def _get_dependencies_with_overrides(
-        self, dependencies: list[Dependency], package: DependencyPackage
+        self, dependencies: list[Dependency], package: Package
     ) -> list[Dependency]:
         overrides = self._overrides.get(package, {})
         _dependencies = []
@@ -458,9 +459,7 @@ class Provider:
             and self._python_constraint.allows_any(dep.python_constraint)
             and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
-        dependencies = self._get_dependencies_with_overrides(
-            _dependencies, dependency_package
-        )
+        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
 
         return [
             Incompatibility(
@@ -568,9 +567,7 @@ class Provider:
                         continue
                     self.search_for_direct_origin_dependency(dep)
 
-        dependencies = self._get_dependencies_with_overrides(
-            _dependencies, dependency_package
-        )
+        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
 
         # Searching for duplicate dependencies
         #
@@ -647,11 +644,9 @@ class Provider:
             for dep in deps:
                 if not overrides_marker_intersection.intersect(dep.marker).is_empty():
                     current_overrides = self._overrides.copy()
-                    package_overrides = current_overrides.get(
-                        dependency_package, {}
-                    ).copy()
+                    package_overrides = current_overrides.get(package, {}).copy()
                     package_overrides.update({dep.name: dep})
-                    current_overrides.update({dependency_package: package_overrides})
+                    current_overrides.update({package: package_overrides})
                     overrides.append(current_overrides)
 
             if overrides:
@@ -690,6 +685,16 @@ class Provider:
         for dep in clean_dependencies:
             package.add_dependency(dep)
 
+        if self._locked and package.is_root():
+            # At this point all duplicates have been eliminated via overrides
+            # so that explicit sources are unambiguous.
+            # Clear _explicit_sources because it might be filled
+            # from a previous override.
+            self._explicit_sources.clear()
+            for dep in clean_dependencies:
+                if dep.source_name:
+                    self._explicit_sources[dep.name] = dep.source_name
+
         return dependency_package
 
     def get_locked(self, dependency: Dependency) -> DependencyPackage | None:
@@ -700,6 +705,8 @@ class Provider:
         for dependency_package in locked:
             package = dependency_package.package
             if package.satisfies(dependency):
+                if explicit_source := self._explicit_sources.get(dependency.name):
+                    dependency.source_name = explicit_source
                 return DependencyPackage(dependency, package)
         return None
 
@@ -778,10 +785,12 @@ class Provider:
         if self.is_debugging():
             debug_info = str(message)
             debug_info = (
-                "\n".join([
-                    f"<debug>{str(depth).rjust(4)}:</debug> {s}"
-                    for s in debug_info.split("\n")
-                ])
+                "\n".join(
+                    [
+                        f"<debug>{str(depth).rjust(4)}:</debug> {s}"
+                        for s in debug_info.split("\n")
+                    ]
+                )
                 + "\n"
             )
 

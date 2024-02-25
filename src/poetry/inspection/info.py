@@ -9,18 +9,20 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Mapping
+from typing import Sequence
 
 import pkginfo
 
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
 
-from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.helpers import extractall
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from packaging.metadata import RawMetadata
+    from packaging.utils import NormalizedName
     from poetry.core.packages.project_package import ProjectPackage
 
 
@@ -71,7 +74,7 @@ class PackageInfo:
         summary: str | None = None,
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
-        files: list[dict[str, str]] | None = None,
+        files: Sequence[Mapping[str, str]] | None = None,
         yanked: str | bool = False,
         cache_version: str | None = None,
     ) -> None:
@@ -187,6 +190,7 @@ class PackageInfo:
 
         seen_requirements = set()
 
+        package_extras: dict[NormalizedName, list[Dependency]] = {}
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string
@@ -214,18 +218,20 @@ class PackageInfo:
             if dependency.in_extras:
                 # this dependency is required by an extra package
                 for extra in dependency.in_extras:
-                    if extra not in package.extras:
+                    if extra not in package_extras:
                         # this is the first time we encounter this extra for this
                         # package
-                        package.extras[extra] = []
+                        package_extras[extra] = []
 
-                    package.extras[extra].append(dependency)
+                    package_extras[extra].append(dependency)
 
             req = dependency.to_pep_508(with_extras=True)
 
             if req not in seen_requirements:
                 package.add_dependency(dependency)
                 seen_requirements.add(req)
+
+        package.extras = package_extras
 
         return package
 
@@ -363,16 +369,9 @@ class PackageInfo:
             name=result.get("name"),
             version=result.get("version"),
             summary=result.get("description", ""),
-            requires_dist=requirements or None,
+            requires_dist=requirements,
             requires_python=python_requires,
         )
-
-        if not (info.name and info.version) and not info.requires_dist:
-            # there is nothing useful here
-            raise PackageInfoError(
-                path,
-                "No core metadata (name, version, requires-dist) could be retrieved.",
-            )
 
         return info
 
@@ -576,7 +575,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
 
     with contextlib.suppress(PackageInfoError):
         info = PackageInfo.from_setup_files(path)
-        if all([info.version, info.name, info.requires_dist]):
+        if all(x is not None for x in (info.version, info.name, info.requires_dist)):
             return info
 
     with ephemeral_environment(

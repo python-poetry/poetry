@@ -92,6 +92,60 @@ def test_yanked(
 
 
 @pytest.mark.parametrize(
+    ("metadata", "expected_has_metadata", "expected_metadata_hashes"),
+    [
+        ("", False, {}),
+        # new
+        ("data-core-metadata", True, {}),
+        ("data-core-metadata=''", True, {}),
+        ("data-core-metadata='foo'", True, {}),
+        ("data-core-metadata='sha256=abcd'", True, {"sha256": "abcd"}),
+        # old
+        ("data-dist-info-metadata", True, {}),
+        ("data-dist-info-metadata=''", True, {}),
+        ("data-dist-info-metadata='foo'", True, {}),
+        ("data-dist-info-metadata='sha256=abcd'", True, {"sha256": "abcd"}),
+        # conflicting (new wins)
+        ("data-core-metadata data-dist-info-metadata='sha256=abcd'", True, {}),
+        ("data-dist-info-metadata='sha256=abcd' data-core-metadata", True, {}),
+        (
+            "data-core-metadata='sha256=abcd' data-dist-info-metadata",
+            True,
+            {"sha256": "abcd"},
+        ),
+        (
+            "data-dist-info-metadata data-core-metadata='sha256=abcd'",
+            True,
+            {"sha256": "abcd"},
+        ),
+        (
+            "data-core-metadata='sha256=abcd' data-dist-info-metadata='sha256=1234'",
+            True,
+            {"sha256": "abcd"},
+        ),
+        (
+            "data-dist-info-metadata='sha256=1234' data-core-metadata='sha256=abcd'",
+            True,
+            {"sha256": "abcd"},
+        ),
+    ],
+)
+def test_metadata(
+    html_page_content: HTMLPageGetter,
+    metadata: str,
+    expected_has_metadata: bool,
+    expected_metadata_hashes: dict[str, str],
+) -> None:
+    anchors = f'<a href="https://example.org/demo-0.1.whl" {metadata}>demo-0.1.whl</a>'
+    content = html_page_content(anchors)
+    page = HTMLPage("https://example.org", content)
+
+    link = next(page.links)
+    assert link.has_metadata is expected_has_metadata
+    assert link.metadata_hashes == expected_metadata_hashes
+
+
+@pytest.mark.parametrize(
     "anchor, base_url, expected",
     (
         (

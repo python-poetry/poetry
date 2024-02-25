@@ -224,6 +224,12 @@ def test_create_poetry_with_multi_constraints_dependency(
     assert len(package.requires) == 2
 
 
+def test_create_poetry_non_package_mode(fixture_dir: FixtureDirGetter) -> None:
+    poetry = Factory().create_poetry(fixture_dir("non_package_mode"))
+
+    assert not poetry.is_package_mode
+
+
 def test_poetry_with_default_source_legacy(
     fixture_dir: FixtureDirGetter, with_simple_keyring: None
 ) -> None:
@@ -519,7 +525,7 @@ def test_create_poetry_fails_on_invalid_configuration(
     fixture_dir: FixtureDirGetter,
 ) -> None:
     with pytest.raises(RuntimeError) as e:
-        Factory().create_poetry(fixture_dir("invalid_pyproject") / "pyproject.toml")
+        Factory().create_poetry(fixture_dir("invalid_pyproject"))
 
     fastjsonschema_error = "data must contain ['description'] properties"
     custom_error = "The fields ['description'] are required in package mode."
@@ -541,7 +547,7 @@ def test_create_poetry_fails_on_nameless_project(
     fixture_dir: FixtureDirGetter,
 ) -> None:
     with pytest.raises(RuntimeError) as e:
-        Factory().create_poetry(fixture_dir("nameless_pyproject") / "pyproject.toml")
+        Factory().create_poetry(fixture_dir("nameless_pyproject"))
 
     fastjsonschema_error = "data must contain ['name'] properties"
     custom_error = "The fields ['name'] are required in package mode."

@@ -62,17 +62,19 @@ def tester(patches: None) -> CommandTester:
 
 @pytest.fixture
 def init_basic_inputs() -> str:
-    return "\n".join([
-        "my-package",  # Package name
-        "1.2.3",  # Version
-        "This is a description",  # Description
-        "n",  # Author
-        "MIT",  # License
-        "~2.7 || ^3.6",  # Python
-        "n",  # Interactive packages
-        "n",  # Interactive dev packages
-        "\n",  # Generate
-    ])
+    return "\n".join(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "This is a description",  # Description
+            "n",  # Author
+            "MIT",  # License
+            "~2.7 || ^3.6",  # Python
+            "n",  # Interactive packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
 
 
 @pytest.fixture()
@@ -901,7 +903,9 @@ def test_init_existing_pyproject_consistent_linesep(
     existing_section = """
 [tool.black]
 line-length = 88
-""".replace("\n", linesep)
+""".replace(
+        "\n", linesep
+    )
     with open(pyproject_file, "w", newline="") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)

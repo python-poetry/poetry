@@ -226,7 +226,7 @@ You can configure a package source as a secondary source with `priority = "secon
 source configuration.
 
 ```bash
-poetry source add --priority=secondary https://foo.bar/simple/
+poetry source add --priority=secondary foo https://foo.bar/simple/
 ```
 
 There can be more than one secondary package source.
@@ -247,7 +247,7 @@ You can configure a package source as a supplemental source with `priority = "su
 source configuration.
 
 ```bash
-poetry source add --priority=supplemental https://foo.bar/simple/
+poetry source add --priority=supplemental foo https://foo.bar/simple/
 ```
 
 There can be more than one supplemental package source.
@@ -274,6 +274,15 @@ poetry source add --priority=explicit foo https://foo.bar/simple/
 ```
 
 There can be more than one explicit package source.
+
+{{% note %}}
+A real-world example where an explicit package source is useful, is for PyTorch GPU packages.
+
+```bash
+poetry source add --priority=explicit pytorch-gpu-src https://download.pytorch.org/whl/cu118
+poetry add --source pytorch-gpu-src torch torchvision torchaudio
+```
+{{% /note %}}
 
 #### Package Source Constraint
 
@@ -499,6 +508,12 @@ with the `--username` and `--password` options.
 If a system keyring is available and supported, the password is stored to and retrieved from the keyring. In the above example, the credential will be stored using the name `poetry-repository-pypi`. If access to keyring fails or is unsupported, this will fall back to writing the password to the `auth.toml` file along with the username.
 
 Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
+
+If you do not want to use the keyring, you can tell Poetry to disable it and store the credentials in plaintext config files:
+
+```bash
+poetry config keyring.enabled false
+```
 
 {{% note %}}
 

@@ -122,6 +122,24 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
+def test_check_non_package_mode(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
+) -> None:
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(fixture_dir("non_package_mode") / "pyproject.toml"),
+        new_callable=mocker.PropertyMock,
+    )
+
+    tester.execute()
+
+    expected = """\
+All set!
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
 @pytest.mark.parametrize(
     ("options", "expected", "expected_status"),
     [
@@ -171,8 +189,8 @@ def test_check_lock_outdated(
     tester = command_tester_factory("check", poetry=poetry_with_outdated_lockfile)
     status_code = tester.execute(options)
     expected = (
-        "Error: poetry.lock is not consistent with pyproject.toml. "
-        "Run `poetry lock [--no-update]` to fix it.\n"
+        "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
+        "Run `poetry lock [--no-update]` to fix the lock file.\n"
     )
 
     assert tester.io.fetch_error() == expected

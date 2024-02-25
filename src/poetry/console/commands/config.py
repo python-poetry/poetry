@@ -79,6 +79,7 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
             "warnings.export": (boolean_validator, boolean_normalizer),
+            "keyring.enabled": (boolean_validator, boolean_normalizer),
         }
 
         return unique_config_values

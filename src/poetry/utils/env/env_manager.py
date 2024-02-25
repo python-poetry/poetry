@@ -675,7 +675,7 @@ class EnvManager:
 
         args.append(str(path))
 
-        cli_result = virtualenv.cli_run(args)
+        cli_result = virtualenv.cli_run(args, setup_logging=False)
 
         # Exclude the venv folder from from macOS Time Machine backups
         # TODO: Add backup-ignore markers for other platforms too
@@ -728,17 +728,7 @@ class EnvManager:
         prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
         env: Env = SystemEnv(prefix)
         if not naive:
-            if prefix.joinpath("poetry_env").exists():
-                env = GenericEnv(base_prefix, child_env=env)
-            else:
-                from poetry.locations import data_dir
-
-                try:
-                    prefix.relative_to(data_dir())
-                except ValueError:
-                    pass
-                else:
-                    env = GenericEnv(base_prefix, child_env=env)
+            env = GenericEnv(base_prefix, child_env=env)
 
         return env
 

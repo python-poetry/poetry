@@ -13,9 +13,19 @@ menu:
 
 The `tool.poetry` section of the `pyproject.toml` file is composed of multiple sections.
 
+## package-mode
+
+Whether Poetry operates in package mode (default) or not. **Optional**
+
+See [basic usage]({{< relref "basic-usage#operating-modes" >}}) for more information.
+
+```toml
+package-mode = false
+```
+
 ## name
 
-The name of the package. **Required**
+The name of the package. **Required in package mode**
 
 This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-0508/#names).
 
@@ -26,7 +36,7 @@ name = "my-package"
 
 ## version
 
-The version of the package. **Required**
+The version of the package. **Required in package mode**
 
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
@@ -43,7 +53,7 @@ If you would like to use semantic versioning for your project, please see
 
 ## description
 
-A short description of the package. **Required**
+A short description of the package. **Required in package mode**
 
 ```toml
 description = "A short description of the package."
@@ -81,7 +91,7 @@ If your project is proprietary and does not use a specific licence, you can set 
 
 ## authors
 
-The authors of the package. **Required**
+The authors of the package. **Required in package mode**
 
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
@@ -211,6 +221,18 @@ If your package is stored inside a "lib" directory, you must specify it:
 # ...
 packages = [
     { include = "my_package", from = "lib" },
+]
+```
+
+The `to` parameter is designed to specify the relative destination path
+where the package will be located upon installation. This allows for
+greater control over the organization of packages within your project's structure.
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package", from = "lib", to = "target_package" },
 ]
 ```
 
@@ -349,13 +371,6 @@ my_package_cli = 'my_package.console:run'
 
 Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
 
-To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
-
-```toml
-[tool.poetry.scripts]
-devtest = { reference = "mypackage:test.run_tests", extras = ["test"], type = "console" }
-```
-
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}
@@ -437,7 +452,7 @@ The syntax for registering a plugin is:
 [tool.poetry.plugins] # Optional super table
 
 [tool.poetry.plugins."A"]
-"B" = "C:D"
+B = "C:D"
 ```
 Which are:
 

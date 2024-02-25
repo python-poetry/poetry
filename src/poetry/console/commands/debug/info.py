@@ -15,10 +15,12 @@ class DebugInfoCommand(Command):
         self.line("")
         self.line("<b>Poetry</b>")
         self.line(
-            "\n".join([
-                f"<info>Version</info>: <comment>{self.poetry.VERSION}</>",
-                f"<info>Python</info>:  <comment>{poetry_python_version}</>",
-            ])
+            "\n".join(
+                [
+                    f"<info>Version</info>: <comment>{self.poetry.VERSION}</>",
+                    f"<info>Python</info>:  <comment>{poetry_python_version}</>",
+                ]
+            )
         )
         command = self.get_application().get("env info")
 

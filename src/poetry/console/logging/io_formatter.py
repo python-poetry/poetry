@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import logging
+import sys
+import textwrap
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poetry.console.logging.filters import POETRY_FILTER
@@ -32,8 +35,37 @@ class IOFormatter(logging.Formatter):
 
             record.msg = msg
 
-        if not POETRY_FILTER.filter(record):
-            # prefix third-party packages with name for easier debugging
-            record.msg = f"[{record.name}] {record.msg}"
+        formatted = super().format(record)
 
-        return super().format(record)
+        if not POETRY_FILTER.filter(record):
+            # prefix all lines from third-party packages for easier debugging
+            formatted = textwrap.indent(
+                formatted, f"[{_log_prefix(record)}] ", lambda line: True
+            )
+
+        return formatted
+
+
+def _log_prefix(record: LogRecord) -> str:
+    prefix = _path_to_package(Path(record.pathname)) or record.module
+    if record.name != "root":
+        prefix = ":".join([prefix, record.name])
+    return prefix
+
+
+def _path_to_package(path: Path) -> str | None:
+    """Return main package name from the LogRecord.pathname."""
+    prefix: Path | None = None
+    # Find the most specific prefix in sys.path.
+    # We have to search the entire sys.path because a subsequent path might be
+    # a sub path of the first match and thereby a better match.
+    for syspath in sys.path:
+        if (
+            prefix and prefix in (p := Path(syspath)).parents and p in path.parents
+        ) or (not prefix and (p := Path(syspath)) in path.parents):
+            prefix = p
+    if not prefix:
+        # this is unexpected, but let's play it safe
+        return None
+    path = path.relative_to(prefix)
+    return path.parts[0]  # main package name

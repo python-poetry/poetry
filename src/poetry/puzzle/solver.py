@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.packages import DependencyPackage
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
@@ -51,7 +50,7 @@ class Solver:
         self._provider = Provider(
             self._package, self._pool, self._io, installed=installed, locked=locked
         )
-        self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
+        self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 
     @property
     def provider(self) -> Provider:
@@ -119,7 +118,7 @@ class Solver:
 
     def _solve_in_compatibility_mode(
         self,
-        overrides: tuple[dict[DependencyPackage, dict[str, Dependency]], ...],
+        overrides: tuple[dict[Package, dict[str, Dependency]], ...],
     ) -> tuple[list[Package], list[int]]:
         packages = []
         depths = []

@@ -178,11 +178,13 @@ def test_call_does_not_block_on_full_pipe(
 ) -> None:
     """see https://github.com/python-poetry/poetry/issues/7698"""
     script = tmp_path / "script.py"
-    script.write_text(f"""\
+    script.write_text(
+        f"""\
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-""")
+"""
+    )
 
     def target(result: list[int]) -> None:
         tmp_venv.run("python", str(script), call=True)
@@ -480,15 +482,17 @@ def test_build_environment_called_build_script_specified(
 
     with build_environment(extended_without_setup_poetry, project_env) as env:
         assert env == ephemeral_env
-        assert env.executed == [[  # type: ignore[attr-defined]
-            str(sys.executable),
-            str(env.pip_embedded),
-            "install",
-            "--disable-pip-version-check",
-            "--ignore-installed",
-            "--no-input",
-            *extended_without_setup_poetry.pyproject.build_system.requires,
-        ]]
+        assert env.executed == [  # type: ignore[attr-defined]
+            [
+                str(sys.executable),
+                str(env.pip_embedded),
+                "install",
+                "--disable-pip-version-check",
+                "--ignore-installed",
+                "--no-input",
+                *extended_without_setup_poetry.pyproject.build_system.requires,
+            ]
+        ]
 
 
 def test_build_environment_not_called_without_build_script_specified(

@@ -348,8 +348,7 @@ def test_remove_untracked_outputs_deprecation_warning(
     assert tester.status_code == 0
     assert (
         "The `--remove-untracked` option is deprecated, use the `--sync` option"
-        " instead.\n"
-        in tester.io.fetch_error()
+        " instead.\n" in tester.io.fetch_error()
     )
 
 
@@ -507,3 +506,20 @@ def test_install_missing_directory_dependency_with_no_directory(
     else:
         with pytest.raises(ValueError, match="does not exist"):
             tester.execute(options)
+
+
+def test_non_package_mode_does_not_try_to_install_root(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+) -> None:
+    content = """\
+[tool.poetry]
+package-mode = false
+"""
+    poetry = project_factory(name="non-package-mode", pyproject_content=content)
+
+    tester = command_tester_factory("install", poetry=poetry)
+    tester.execute()
+
+    assert tester.status_code == 0
+    assert tester.io.fetch_error() == ""

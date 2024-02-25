@@ -90,16 +90,14 @@ class AuthenticatorRepositoryConfig:
             **(password_manager.get_http_auth(self.name) or {})
         )
 
-        if credential.password is None:
+        if credential.password is not None:
+            return credential
+
+        if password_manager.use_keyring:
             # fallback to url and netloc based keyring entries
-            credential = password_manager.keyring.get_credential(
+            credential = password_manager.get_credential(
                 self.url, self.netloc, username=credential.username
             )
-
-            if credential.password is not None:
-                return HTTPAuthCredential(
-                    username=credential.username, password=credential.password
-                )
 
         return credential
 
@@ -124,11 +122,9 @@ class Authenticator:
         self._password_manager = PasswordManager(self._config)
         self._cache_control = (
             FileCache(
-                str(
-                    self._config.repository_cache_directory
-                    / (cache_id or "_default_cache")
-                    / "_http"
-                ),
+                self._config.repository_cache_directory
+                / (cache_id or "_default_cache")
+                / "_http"
             )
             if not disable_cache
             else None
@@ -305,7 +301,7 @@ class Authenticator:
         if credential.password is None:
             parsed_url = urllib.parse.urlsplit(url)
             netloc = parsed_url.netloc
-            credential = self._password_manager.keyring.get_credential(
+            credential = self._password_manager.get_credential(
                 url, netloc, username=credential.username
             )
 

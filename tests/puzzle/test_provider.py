@@ -21,7 +21,9 @@ from poetry.inspection.info import PackageInfo
 from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.puzzle.provider import Provider
+from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.repository import Repository
+from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
@@ -770,7 +772,7 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
     )
     package = Package("A", "1.0", features=["foo"] if with_extra else [])
     package.add_dependency(optional_vcs_dependency)
-    package.extras[canonicalize_name("foo")] = [optional_vcs_dependency]
+    package.extras = {canonicalize_name("foo"): [optional_vcs_dependency]}
     repository.add_package(package)
 
     spy = mocker.spy(provider, "_search_for_vcs")
@@ -781,6 +783,67 @@ def test_complete_package_fetches_optional_vcs_dependency_only_if_requested(
         spy.assert_called()
     else:
         spy.assert_not_called()
+
+
+def test_complete_package_finds_locked_package_in_explicit_source(
+    root: ProjectPackage, pool: RepositoryPool
+) -> None:
+    package = Package("a", "1.0", source_reference="explicit")
+    explicit_repo = Repository("explicit")
+    explicit_repo.add_package(package)
+    pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    root_dependency = get_dependency("a", ">0")
+    root_dependency.source_name = "explicit"
+    root.add_dependency(root_dependency)
+    locked_package = Package("a", "1.0", source_reference="explicit")
+    provider = Provider(root, pool, NullIO(), locked=[locked_package])
+    provider.complete_package(DependencyPackage(root.to_dependency(), root))
+
+    # transitive dependency without explicit source
+    dependency = get_dependency("a", ">=1")
+
+    locked = provider.get_locked(dependency)
+    assert locked is not None
+    provider.complete_package(locked)  # must not fail
+
+
+def test_complete_package_finds_locked_package_in_other_source(
+    root: ProjectPackage, repository: Repository, pool: RepositoryPool
+) -> None:
+    package = Package("a", "1.0")
+    repository.add_package(package)
+    explicit_repo = Repository("explicit")
+    pool.add_repository(explicit_repo)
+
+    root_dependency = get_dependency("a", ">0")  # no explicit source
+    root.add_dependency(root_dependency)
+    locked_package = Package("a", "1.0", source_reference="explicit")  # explicit source
+    provider = Provider(root, pool, NullIO(), locked=[locked_package])
+    provider.complete_package(DependencyPackage(root.to_dependency(), root))
+
+    # transitive dependency without explicit source
+    dependency = get_dependency("a", ">=1")
+
+    locked = provider.get_locked(dependency)
+    assert locked is not None
+    provider.complete_package(locked)  # must not fail
+
+
+def test_complete_package_raises_packagenotfound_if_locked_source_not_available(
+    root: ProjectPackage, pool: RepositoryPool, provider: Provider
+) -> None:
+    locked_package = Package("a", "1.0", source_reference="outdated")
+    provider = Provider(root, pool, NullIO(), locked=[locked_package])
+    provider.complete_package(DependencyPackage(root.to_dependency(), root))
+
+    # transitive dependency without explicit source
+    dependency = get_dependency("a", ">=1")
+
+    locked = provider.get_locked(dependency)
+    assert locked is not None
+    with pytest.raises(PackageNotFound):
+        provider.complete_package(locked)
 
 
 def test_source_dependency_is_satisfied_by_direct_origin(

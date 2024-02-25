@@ -154,6 +154,15 @@ required variables explicitly or `passenv = "*"` to forward all of them.
 Linux systems may require forwarding the `DBUS_SESSION_BUS_ADDRESS` variable to allow access to the system keyring,
 though this may vary between desktop environments.
 
+Alternatively, you can disable the keyring completely:
+
+```bash
+poetry config keyring.enabled false
+```
+
+Be aware that this will cause Poetry to write passwords to plaintext config files.
+You will need to set the credentials again after changing this setting.
+
 ### Is Nox supported?
 
 Use the [`nox-poetry`](https://github.com/cjolowicz/nox-poetry) package to install locked versions of
@@ -214,7 +223,7 @@ For example, you might have a Dockerfile that looks something like this:
 FROM python
 COPY pyproject.toml poetry.lock .
 COPY src/ ./src
-RUN pip install poetry && poetry install --without dev
+RUN pip install poetry && poetry install --only main
 ```
 
 As soon as *any* source file changes, the cache for the `RUN` layer will be invalidated, which forces all 3rd party dependencies (likely the slowest step out of these) to be installed again if you changed any files in `src/`.
@@ -229,9 +238,9 @@ This might look something like this:
 ```text
 FROM python
 COPY pyproject.toml poetry.lock .
-RUN pip install poetry && poetry install --no-root --no-directory
+RUN pip install poetry && poetry install --only main --no-root --no-directory
 COPY src/ ./src
-RUN poetry install --without dev
+RUN poetry install --only main
 ```
 
 The two key options we are using here are `--no-root` (skips installing the project source) and `--no-directory` (skips installing any local directory path dependencies, you can omit this if you don't have any).

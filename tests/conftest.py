@@ -15,8 +15,9 @@ import httpretty
 import keyring
 import pytest
 
-from keyring import backends
 from keyring.backend import KeyringBackend
+from keyring.backend import properties  # type: ignore[attr-defined]
+from keyring.backends.fail import Keyring as FailKeyring
 from keyring.errors import KeyringError
 from keyring.errors import KeyringLocked
 
@@ -102,8 +103,8 @@ class DummyBackend(KeyringBackend):
     def __init__(self) -> None:
         self._passwords: dict[str, dict[str | None, str | None]] = {}
 
-    @classmethod
-    def priority(cls) -> int:
+    @properties.classproperty
+    def priority(self) -> int | float:
         return 42
 
     def set_password(self, service: str, username: str | None, password: Any) -> None:
@@ -121,8 +122,8 @@ class DummyBackend(KeyringBackend):
 
 
 class LockedBackend(KeyringBackend):
-    @classmethod
-    def priority(cls) -> int:
+    @properties.classproperty
+    def priority(self) -> int | float:
         return 42
 
     def set_password(self, service: str, username: str | None, password: Any) -> None:
@@ -138,9 +139,9 @@ class LockedBackend(KeyringBackend):
         raise KeyringLocked()
 
 
-class ErroneousBackend(backends.fail.Keyring):
-    @classmethod
-    def priority(cls) -> int:
+class ErroneousBackend(FailKeyring):
+    @properties.classproperty
+    def priority(self) -> int | float:  # type: ignore[override]
         return 42
 
     def get_credential(self, service: str, username: str | None) -> Any:
@@ -159,9 +160,7 @@ def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
 
 @pytest.fixture()
 def with_fail_keyring() -> None:
-    from keyring.backends.fail import Keyring
-
-    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
+    keyring.set_keyring(FailKeyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -183,11 +182,9 @@ def with_null_keyring() -> None:
 
 @pytest.fixture()
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
-    from keyring.backends.fail import Keyring
-
     mocker.patch(
         "keyring.backend.get_all_keyring",
-        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+        lambda: [FailKeyring()],  # type: ignore[no-untyped-call]
     )
     from keyring.backends.chainer import ChainerBackend
 
@@ -240,9 +237,7 @@ def config(
     auth_config_source: DictConfigSource,
     mocker: MockerFixture,
 ) -> Config:
-    from keyring.backends.fail import Keyring
-
-    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
+    keyring.set_keyring(FailKeyring())  # type: ignore[no-untyped-call]
 
     c = Config()
     c.merge(config_source.config)

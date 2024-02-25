@@ -72,11 +72,13 @@ class PackageFilterPolicy:
             else:
                 return [":none:"]
 
-        return list({
-            name.strip() if cls.is_reserved(name) else canonicalize_name(name)
-            for name in policy.strip().split(",")
-            if name
-        })
+        return list(
+            {
+                name.strip() if cls.is_reserved(name) else canonicalize_name(name)
+                for name in policy.strip().split(",")
+                if name
+            }
+        )
 
     @classmethod
     def validator(cls, policy: str) -> bool:
@@ -136,6 +138,9 @@ class Config:
         },
         "warnings": {
             "export": True,
+        },
+        "keyring": {
+            "enabled": True,
         },
     }
 
@@ -270,6 +275,11 @@ class Config:
 
             value = value[key]
 
+        if self._use_environment and isinstance(value, dict):
+            # this is a configuration table, it is likely that we missed env vars
+            # in order to capture them recurse, eg: virtualenvs.options
+            return {k: self.get(f"{setting_name}.{k}") for k in value}
+
         return self.process(value)
 
     def process(self, value: Any) -> Any:
@@ -294,6 +304,8 @@ class Config:
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "virtualenvs.options.no-pip",
+            "virtualenvs.options.no-setuptools",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.system-git-client",
@@ -301,6 +313,7 @@ class Config:
             "installer.parallel",
             "solver.lazy-wheel",
             "warnings.export",
+            "keyring.enabled",
         }:
             return boolean_normalizer
 

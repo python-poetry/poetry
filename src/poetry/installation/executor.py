@@ -68,6 +68,17 @@ class Executor:
         self._use_modern_installation = config.get(
             "installer.modern-installation", True
         )
+        if not self._use_modern_installation:
+            self._io.write_line(
+                "<warning>Warning: Setting `installer.modern-installation` to `false` "
+                "is deprecated.</>"
+            )
+            self._io.write_line(
+                "<warning>The pip-based installer will be removed in a future release.</>"
+            )
+            self._io.write_line(
+                "<warning>See https://github.com/python-poetry/poetry/issues/8987.</>"
+            )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -855,17 +866,18 @@ class Executor:
         package = operation.package
 
         if not package.source_url or package.source_type == "legacy":
-            # Since we are installing from our own distribution cache
-            # pip will write a `direct_url.json` file pointing to the cache
-            # distribution.
-            # That's not what we want, so we remove the direct_url.json file,
-            # if it exists.
-            for (
-                direct_url_json
-            ) in self._env.site_packages.find_distribution_direct_url_json_files(
-                distribution_name=package.name, writable_only=True
-            ):
-                direct_url_json.unlink(missing_ok=True)
+            if not self._use_modern_installation:
+                # Since we are installing from our own distribution cache pip will write
+                # a `direct_url.json` file pointing to the cache distribution.
+                #
+                # That's not what we want, so we remove the direct_url.json file, if it
+                # exists.
+                for (
+                    direct_url_json
+                ) in self._env.site_packages.find_distribution_direct_url_json_files(
+                    distribution_name=package.name, writable_only=True
+                ):
+                    direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None

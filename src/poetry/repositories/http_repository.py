@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import hashlib
 
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,13 +12,14 @@ from typing import Iterator
 import requests
 import requests.adapters
 
+from packaging.metadata import parse_email
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
-from poetry.core.packages.utils.link import Link
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
 from poetry.config.config import Config
+from poetry.inspection.info import PackageInfo
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
 from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from poetry.repositories.cached_repository import CachedRepository
@@ -30,13 +30,14 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.packages.utils.link import Link
 
-    from poetry.inspection.info import PackageInfo
     from poetry.repositories.link_sources.base import LinkSource
     from poetry.utils.authenticator import RepositoryCertificateConfig
 
@@ -108,14 +109,14 @@ class HTTPRepository(CachedRepository):
             )
             yield filepath
 
-    def _get_info_from_wheel(self, url: str) -> PackageInfo:
+    def _get_info_from_wheel(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        link = Link(url)
         netloc = link.netloc
 
         # If "lazy-wheel" is enabled and the domain supports range requests
         # or we don't know yet, we try range requests.
+        raise_accepts_ranges = self._lazy_wheel
         if self._lazy_wheel and self._supports_range_requests.get(netloc, True):
             try:
                 package_info = PackageInfo.from_metadata(
@@ -124,15 +125,15 @@ class HTTPRepository(CachedRepository):
             except HTTPRangeRequestUnsupported:
                 # Do not set to False if we already know that the domain supports
                 # range requests for some URLs!
-                if netloc not in self._supports_range_requests:
-                    self._supports_range_requests[netloc] = False
+                raise_accepts_ranges = False
+                self._supports_range_requests.setdefault(netloc, False)
             else:
                 self._supports_range_requests[netloc] = True
                 return package_info
 
         try:
             with self._cached_or_downloaded_file(
-                link, raise_accepts_ranges=self._lazy_wheel
+                link, raise_accepts_ranges=raise_accepts_ranges
             ) as filepath:
                 return PackageInfo.from_wheel(filepath)
         except HTTPRangeRequestSupported:
@@ -145,17 +146,68 @@ class HTTPRepository(CachedRepository):
                 level="debug",
             )
             self._supports_range_requests[netloc] = True
-            return self._get_info_from_wheel(link.url)
+            return self._get_info_from_wheel(link)
 
-    def _get_info_from_sdist(self, url: str) -> PackageInfo:
+    def _get_info_from_sdist(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        with self._cached_or_downloaded_file(Link(url)) as filepath:
+        with self._cached_or_downloaded_file(link) as filepath:
             return PackageInfo.from_sdist(filepath)
 
-    def _get_info_from_urls(self, urls: dict[str, list[str]]) -> PackageInfo:
+    def _get_info_from_metadata(self, link: Link) -> PackageInfo | None:
+        if link.has_metadata:
+            try:
+                assert link.metadata_url is not None
+                response = self.session.get(link.metadata_url)
+                if link.metadata_hashes and (
+                    hash_name := get_highest_priority_hash_type(
+                        set(link.metadata_hashes.keys()), f"{link.filename}.metadata"
+                    )
+                ):
+                    metadata_hash = getattr(hashlib, hash_name)(
+                        response.text.encode()
+                    ).hexdigest()
+                    if metadata_hash != link.metadata_hashes[hash_name]:
+                        self._log(
+                            f"Metadata file hash ({metadata_hash}) does not match"
+                            f" expected hash ({link.metadata_hashes[hash_name]})."
+                            f" Metadata file for {link.filename} will be ignored.",
+                            level="warning",
+                        )
+                        return None
+
+                metadata, _ = parse_email(response.content)
+                return PackageInfo.from_metadata(metadata)
+
+            except requests.HTTPError:
+                self._log(
+                    f"Failed to retrieve metadata at {link.metadata_url}",
+                    level="warning",
+                )
+
+        return None
+
+    def _get_info_from_links(
+        self,
+        links: list[Link],
+        *,
+        ignore_yanked: bool = True,
+    ) -> PackageInfo:
+        # Sort links by distribution type
+        wheels: list[Link] = []
+        sdists: list[Link] = []
+        for link in links:
+            if link.yanked and ignore_yanked:
+                # drop yanked files unless the entire release is yanked
+                continue
+            if link.is_wheel:
+                wheels.append(link)
+            elif link.filename.endswith(
+                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
+            ):
+                sdists.append(link)
+
         # Prefer to read data from wheels: this is faster and more reliable
-        wheels = urls.get("bdist_wheel")
         if wheels:
             # We ought just to be able to look at any of the available wheels to read
             # metadata, they all should give the same answer.
@@ -171,8 +223,7 @@ class HTTPRepository(CachedRepository):
             universal_python3_wheel = None
             platform_specific_wheels = []
             for wheel in wheels:
-                link = Link(wheel)
-                m = wheel_file_re.match(link.filename)
+                m = wheel_file_re.match(wheel.filename)
                 if not m:
                     continue
 
@@ -192,13 +243,19 @@ class HTTPRepository(CachedRepository):
                     platform_specific_wheels.append(wheel)
 
             if universal_wheel is not None:
-                return self._get_info_from_wheel(universal_wheel)
+                return self._get_info_from_metadata(
+                    universal_wheel
+                ) or self._get_info_from_wheel(universal_wheel)
 
             info = None
             if universal_python2_wheel and universal_python3_wheel:
-                info = self._get_info_from_wheel(universal_python2_wheel)
+                info = self._get_info_from_metadata(
+                    universal_python2_wheel
+                ) or self._get_info_from_wheel(universal_python2_wheel)
 
-                py3_info = self._get_info_from_wheel(universal_python3_wheel)
+                py3_info = self._get_info_from_metadata(
+                    universal_python3_wheel
+                ) or self._get_info_from_wheel(universal_python3_wheel)
 
                 if info.requires_python or py3_info.requires_python:
                     info.requires_python = str(
@@ -248,16 +305,24 @@ class HTTPRepository(CachedRepository):
 
             # Prefer non platform specific wheels
             if universal_python3_wheel:
-                return self._get_info_from_wheel(universal_python3_wheel)
+                return self._get_info_from_metadata(
+                    universal_python3_wheel
+                ) or self._get_info_from_wheel(universal_python3_wheel)
 
             if universal_python2_wheel:
-                return self._get_info_from_wheel(universal_python2_wheel)
+                return self._get_info_from_metadata(
+                    universal_python2_wheel
+                ) or self._get_info_from_wheel(universal_python2_wheel)
 
             if platform_specific_wheels:
                 first_wheel = platform_specific_wheels[0]
-                return self._get_info_from_wheel(first_wheel)
+                return self._get_info_from_metadata(
+                    first_wheel
+                ) or self._get_info_from_wheel(first_wheel)
 
-        return self._get_info_from_sdist(urls["sdist"][0])
+        return self._get_info_from_metadata(sdists[0]) or self._get_info_from_sdist(
+            sdists[0]
+        )
 
     def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
         if not links:
@@ -265,33 +330,34 @@ class HTTPRepository(CachedRepository):
                 f'No valid distribution links found for package: "{data.name}" version:'
                 f' "{data.version}"'
             )
-        urls = defaultdict(list)
+
         files: list[dict[str, Any]] = []
         for link in links:
             if link.yanked and not data.yanked:
                 # drop yanked files unless the entire release is yanked
                 continue
-            if link.is_wheel:
-                urls["bdist_wheel"].append(link.url)
-            elif link.filename.endswith(
-                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
-            ):
-                urls["sdist"].append(link.url)
 
-            file_hash = f"{link.hash_name}:{link.hash}" if link.hash else None
+            file_hash: str | None
+            for hash_name in ("sha512", "sha384", "sha256"):
+                if hash_name in link.hashes:
+                    file_hash = f"{hash_name}:{link.hashes[hash_name]}"
+                    break
+            else:
+                file_hash = self.calculate_sha256(link)
 
-            if not link.hash or (
-                link.hash_name is not None
-                and link.hash_name not in ("sha256", "sha384", "sha512")
-                and hasattr(hashlib, link.hash_name)
+            if file_hash is None and (
+                hash_type := get_highest_priority_hash_type(
+                    set(link.hashes.keys()), link.filename
+                )
             ):
-                file_hash = self.calculate_sha256(link) or file_hash
+                file_hash = f"{hash_type}:{link.hashes[hash_type]}"
 
             files.append({"file": link.filename, "hash": file_hash})
 
         data.files = files
 
-        info = self._get_info_from_urls(urls)
+        # drop yanked files unless the entire release is yanked
+        info = self._get_info_from_links(links, ignore_yanked=not data.yanked)
 
         data.summary = info.summary
         data.requires_dist = info.requires_dist
@@ -301,7 +367,10 @@ class HTTPRepository(CachedRepository):
 
     def calculate_sha256(self, link: Link) -> str | None:
         with self._cached_or_downloaded_file(link) as filepath:
-            known_hash = getattr(hashlib, link.hash_name)() if link.hash_name else None
+            hash_name = get_highest_priority_hash_type(
+                set(link.hashes.keys()), link.filename
+            )
+            known_hash = getattr(hashlib, hash_name)() if hash_name else None
             required_hash = hashlib.sha256()
 
             chunksize = 4096
@@ -314,7 +383,11 @@ class HTTPRepository(CachedRepository):
                         known_hash.update(chunk)
                     required_hash.update(chunk)
 
-            if not known_hash or known_hash.hexdigest() == link.hash:
+            if (
+                not hash_name
+                or not known_hash
+                or known_hash.hexdigest() == link.hashes[hash_name]
+            ):
                 return f"{required_hash.name}:{required_hash.hexdigest()}"
         return None
 
