@@ -263,7 +263,7 @@ removing them, sometimes the signature of an internal method has to be changed.
 As the author of a plugin, you are probably testing your plugin
 against the latest release of Poetry.
 Additionally, you should consider testing against the latest release branch and the
-master branch of Poetry and schedule a CI job that runs regularly even if you did not
+main branch of Poetry and schedule a CI job that runs regularly even if you did not
 make any changes to your plugin.
 This way, you will notice internal changes that break your plugin immediately
 and can prepare for the next Poetry release.

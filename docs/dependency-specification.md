@@ -132,7 +132,7 @@ requests = { git = "https://github.com/requests/requests.git" }
 ```
 
 Since we haven’t specified any other information,
-Poetry assumes that we intend to use the latest commit on the `master` branch
+Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
 You can combine the `git` key with the `branch` key to use another branch.
