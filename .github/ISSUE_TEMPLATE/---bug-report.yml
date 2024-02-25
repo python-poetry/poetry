@@ -1,0 +1,100 @@
+name: "\U0001F41E Bug Report"
+labels: ["kind/bug", "status/triage"]
+description: "Poetry not working the way it is documented?"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to file a complete bug report.
+
+        Before submitting your issue, please review the [Before submitting a bug report](https://python-poetry.org/docs/contributing/#before-submitting-a-bug-report)
+        section of our documentation.
+
+  - type: textarea
+    attributes:
+      label: Description
+      description: |
+        Please describe what happened, with as much pertinent information as you can. Feel free to use markdown syntax.
+
+        Also, ensure that the issue is not already fixed in the [latest](https://github.com/python-poetry/poetry/releases/latest)
+        Poetry release.
+      render: "Markdown"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Workarounds
+      description: |
+        Is there a mitigation or workaround that allows users to avoid the issue today?
+      render: "Markdown"
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Poetry Installation Method
+      description: |
+        How did you install Poetry?
+      options:
+        - "pipx"
+        - "install.python-poetry.org"
+        - "system package manager (eg: dnf, apt etc.)"
+        - "pip"
+        - "other"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Operating System
+      description: |
+        What Operating System are you using?
+      placeholder: "Fedora 39"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Poetry Version
+      description: |
+        Please attach output from `poetry --version`
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Poetry Configuration
+      description: |
+        Please attach output from `poetry config --list`
+      render: 'bash session'
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Python Sysconfig
+      description: |
+        Please attach output from `python -m sysconfig`
+      render: 'bash session'
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Example pyproject.toml
+      description: |
+        Please provide an example `pyproject.toml` demonstrating the issue.
+      render: 'TOML'
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Poetry Runtime Logs
+      description: |
+        Please attach logs from `poetry -vvv <command>`
+      render: 'bash session'
+    validations:
+      required: true
