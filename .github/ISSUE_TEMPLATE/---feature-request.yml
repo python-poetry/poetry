@@ -40,7 +40,7 @@ body:
     attributes:
       label: Impact
       description: |
-        Please describe the motivation for this issue. Describe, as best you can, ow this improves or impacts the users
+        Please describe the motivation for this issue. Describe, as best you can, how this improves or impacts the users
         of Poetry and why this is important.
       render: "Markdown"
     validations:
@@ -50,7 +50,7 @@ body:
     attributes:
       label: Workarounds
       description: |
-        Is there a mitigation or workaround that allows users to achieve the same functionality today?
+        Is there a mitigation, workaround, or addon that allows users to achieve the same functionality today?
       render: "Markdown"
     validations:
       required: true
