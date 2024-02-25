@@ -17,6 +17,7 @@ from virtualenv.seed.wheels.embed import get_embed_wheel
 from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.site_packages import SitePackages
 from poetry.utils.helpers import get_real_windows_path
+from poetry.utils.helpers import is_dir_writable
 
 
 if TYPE_CHECKING:
@@ -55,6 +56,7 @@ class Env:
         self._marker_env: dict[str, Any] | None = None
         self._site_packages: SitePackages | None = None
         self._paths: dict[str, str] | None = None
+        self._installer_scheme_dict: dict[str, str] | None = None
         self._supported_tags: list[Tag] | None = None
         self._purelib: Path | None = None
         self._platlib: Path | None = None
@@ -243,6 +245,41 @@ class Env:
         return self._paths
 
     @property
+    def installer_scheme_dict(self) -> dict[str, str]:
+        """
+        This property exists to allow cases where system environment paths are not writable and
+        user site is enabled. This enables us to ensure packages (wheels) are correctly installed
+        into directories where the current user can write to.
+        """
+        if self._installer_scheme_dict is None:
+            paths = self.paths.copy()
+
+            if not self.is_venv() and paths.get("userbase"):
+                overrides: dict[str, str] = {}
+                base_path = os.path.commonpath([paths["include"], paths["purelib"]])
+
+                for key in [
+                    "include",
+                    "purelib",
+                    "platlib",
+                    "stdlib",
+                    "platinclude",
+                    "scripts",
+                    "data",
+                ]:
+                    if not is_dir_writable(path=Path(paths[key]), create=True):
+                        overrides[key] = paths[key].replace(
+                            base_path, paths["userbase"]
+                        )
+
+                for k, v in overrides.items():
+                    paths[k] = v
+
+            self._installer_scheme_dict = paths
+
+        return self._installer_scheme_dict
+
+    @property
     def supported_tags(self) -> list[Tag]:
         if self._supported_tags is None:
             self._supported_tags = self.get_supported_tags()
@@ -312,7 +349,9 @@ class Env:
     def run_python_script(self, content: str, **kwargs: Any) -> str:
         return self.run(
             self._executable,
-            "-I",
+            # if isolation is enabled for system env, user site would be
+            # incorrectly disabled
+            *(["-I"] if self.is_venv() else []),
             "-W",
             "ignore",
             "-c",
