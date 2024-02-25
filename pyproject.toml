@@ -31,7 +31,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.9.0"
+poetry-core = { git = "https://github.com/abn/poetry-core.git", branch = "vcs-normalize-source-url" }
 poetry-plugin-export = "^1.6.0"
 build = "^1.0.3"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
