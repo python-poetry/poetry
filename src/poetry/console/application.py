@@ -188,6 +188,18 @@ class Application(BaseApplication):
         self._load_plugins(io)
 
         exit_code: int = super()._run(io)
+
+        import os
+
+        if "PYTEST_CURRENT_TEST" not in os.environ:
+            io.write_line(
+                "<warning>"
+                "The Poetry project has renamed the <b>master</> branch to <b>main</>. The use of the <b>master</> "
+                "branch is now deprecated and the branch will be removed in the near future. Please update your refs "
+                "to use <b>main</> branch instead. Alternatively consider using released versions."
+                "</>"
+            )
+
         return exit_code
 
     def _configure_io(self, io: IO) -> None:
