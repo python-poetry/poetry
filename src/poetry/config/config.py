@@ -275,6 +275,11 @@ class Config:
 
             value = value[key]
 
+        if self._use_environment and isinstance(value, dict):
+            # this is a configuration table, it is likely that we missed env vars
+            # in order to capture them recurse, eg: virtualenvs.options
+            return {k: self.get(f"{setting_name}.{k}") for k in value}
+
         return self.process(value)
 
     def process(self, value: Any) -> Any:

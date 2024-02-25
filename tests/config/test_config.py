@@ -75,6 +75,23 @@ def test_config_get_from_environment_variable(
     assert config.get(name) is value
 
 
+def test_config_get_from_environment_variable_nested(
+    config: Config,
+    environ: Iterator[None],
+) -> None:
+    options = config.default_config["virtualenvs"]["options"]
+    expected = {}
+
+    for k, v in options.items():
+        if isinstance(v, bool):
+            expected[k] = not v
+            os.environ[f"POETRY_VIRTUALENVS_OPTIONS_{k.upper().replace('-', '_')}"] = (
+                "true" if expected[k] else "false"
+            )
+
+    assert config.get("virtualenvs.options") == expected
+
+
 @pytest.mark.parametrize(
     ("path_config", "expected"),
     [("~/.venvs", Path.home() / ".venvs"), ("venv", Path("venv"))],
