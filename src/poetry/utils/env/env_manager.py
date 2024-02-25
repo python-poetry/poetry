@@ -20,7 +20,6 @@ import virtualenv
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.constraints.version import Version
-from poetry.core.constraints.version import parse_constraint
 
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import WINDOWS
@@ -31,6 +30,7 @@ from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
 from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
 from poetry.utils.env.exceptions import PythonVersionNotFound
 from poetry.utils.env.generic_env import GenericEnv
+from poetry.utils.env.python_manager import Python
 from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env.system_env import SystemEnv
@@ -277,12 +277,8 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        prefer_active_python = self._poetry.config.get(
-            "virtualenvs.prefer-active-python"
-        )
-        python_minor = self.get_python_version(
-            precision=2, prefer_active_python=prefer_active_python, io=self._io
-        ).to_string()
+        python = Python.get_preferred_python(config=self._poetry.config, io=self._io)
+        python_minor = python.minor_version.to_string()
 
         env = None
         envs = None
@@ -480,8 +476,11 @@ class EnvManager:
         )
         venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
-        if not executable and prefer_active_python:
-            executable = self._detect_active_python()
+        python = (
+            Python(executable)
+            if executable
+            else Python.get_preferred_python(config=self._poetry.config, io=self._io)
+        )
 
         venv_path = (
             self.in_project_venv
@@ -491,19 +490,8 @@ class EnvManager:
         if not name:
             name = self._poetry.package.name
 
-        python_patch = ".".join([str(v) for v in sys.version_info[:3]])
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
-        if executable:
-            encoding = "locale" if sys.version_info >= (3, 10) else None
-            python_patch = subprocess.check_output(
-                [executable, "-c", GET_PYTHON_VERSION_ONELINER],
-                text=True,
-                encoding=encoding,
-            ).strip()
-            python_minor = ".".join(python_patch.split(".")[:2])
-
         supported_python = self._poetry.package.python_constraint
-        if not supported_python.allows(Version.parse(python_patch)):
+        if not supported_python.allows(python.patch_version):
             # The currently activated or chosen Python version
             # is not compatible with the Python constraint specified
             # for the project.
@@ -512,71 +500,29 @@ class EnvManager:
             # Otherwise, we try to find a compatible Python version.
             if executable and not prefer_active_python:
                 raise NoCompatiblePythonVersionFound(
-                    self._poetry.package.python_versions, python_patch
+                    self._poetry.package.python_versions,
+                    python.patch_version.to_string(),
                 )
 
             self._io.write_error_line(
-                f"<warning>The currently activated Python version {python_patch} is not"
+                f"<warning>The currently activated Python version {python.patch_version.to_string()} is not"
                 f" supported by the project ({self._poetry.package.python_versions}).\n"
                 "Trying to find and use a compatible version.</warning> "
             )
 
-            for suffix in sorted(
-                self._poetry.package.AVAILABLE_PYTHONS,
-                key=lambda v: (v.startswith("3"), -len(v), v),
-                reverse=True,
-            ):
-                if len(suffix) == 1:
-                    if not parse_constraint(f"^{suffix}.0").allows_any(
-                        supported_python
-                    ):
-                        continue
-                elif not supported_python.allows_any(parse_constraint(suffix + ".*")):
-                    continue
-
-                python_name = f"python{suffix}"
-                if self._io.is_debug():
-                    self._io.write_error_line(f"<debug>Trying {python_name}</debug>")
-
-                python = self._full_python_path(python_name)
-                if python is None:
-                    continue
-
-                try:
-                    encoding = "locale" if sys.version_info >= (3, 10) else None
-                    python_patch = subprocess.check_output(
-                        [python, "-c", GET_PYTHON_VERSION_ONELINER],
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        encoding=encoding,
-                    ).strip()
-                except CalledProcessError:
-                    continue
-
-                if supported_python.allows(Version.parse(python_patch)):
-                    self._io.write_error_line(
-                        f"Using <c1>{python_name}</c1> ({python_patch})"
-                    )
-                    executable = python
-                    python_minor = ".".join(python_patch.split(".")[:2])
-                    break
-
-            if not executable:
-                raise NoCompatiblePythonVersionFound(
-                    self._poetry.package.python_versions
-                )
+            python = Python.get_compatible_python(poetry=self._poetry, io=self._io)
 
         if in_project_venv:
             venv = venv_path
         else:
             name = self.generate_env_name(name, str(cwd))
-            name = f"{name}-py{python_minor.strip()}"
+            name = f"{name}-py{python.minor_version.to_string()}"
             venv = venv_path / name
 
         if venv_prompt is not None:
             venv_prompt = venv_prompt.format(
                 project_name=self._poetry.package.name or "virtualenv",
-                python_version=python_minor,
+                python_version=python.minor_version.to_string(),
             )
 
         if not venv.exists():
@@ -613,7 +559,7 @@ class EnvManager:
         if create_venv:
             self.build_venv(
                 venv,
-                executable=executable,
+                executable=python.executable,
                 flags=self._poetry.config.get("virtualenvs.options"),
                 prompt=venv_prompt,
             )

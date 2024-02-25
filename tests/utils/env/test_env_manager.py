@@ -1070,7 +1070,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
-        executable=None,
+        executable=Path(sys.executable),
         flags=venv_flags_default,
         prompt=f"simple-project-py{version.major}.{version.minor}",
     )
