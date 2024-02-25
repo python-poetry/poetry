@@ -1,0 +1,56 @@
+name: "\U0001F381 Feature Request"
+labels: ["kind/feature", "status/triage"]
+description: "Did you find errors, omissions, or anything unintelligible in the documentation?"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to file a complete bug report.
+
+        Before submitting your issue, please search [issues](https://github.com/python-poetry/poetry/issues) to ensure
+        this is not a duplicate.
+
+        If the issue is trivial, why not submit a pull request instead?
+
+  - type: dropdown
+    attributes:
+      label: Issue Kind
+      description: |
+        What best describes this issue?
+      options:
+        - "Brand new capability"
+        - "Change in current behaviour"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Description
+      description: |
+        Please describe the issue, with as much pertinent information as you can. Feel free to use markdown syntax.
+
+        Also, ensure that the issue is not already fixed in the [development documentation](https://python-poetry.org/docs/main/).
+      render: "Markdown"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Impact
+      description: |
+        Please describe the motivation for this issue. Describe, as best you can, ow this improves or impacts the users
+        of Poetry and why this is important.
+      render: "Markdown"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Workarounds
+      description: |
+        Is there a mitigation or workaround that allows users to achieve the same functionality today?
+      render: "Markdown"
+    validations:
+      required: true
