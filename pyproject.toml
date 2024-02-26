@@ -43,7 +43,7 @@ importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
 keyring = "^24.0.0"
 # packaging uses calver, so version is unclamped
-packaging = ">=20.5"
+packaging = ">=23.1"
 pexpect = "^4.7.0"
 pkginfo = "^1.9.4"
 platformdirs = ">=3.0.0,<5"
