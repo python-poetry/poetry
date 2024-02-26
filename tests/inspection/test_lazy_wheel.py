@@ -317,6 +317,16 @@ def test_metadata_from_wheel_url_with_redirect(
     )
 
 
+def test_metadata_from_wheel_url_with_redirect_after_500(
+    assert_metadata_from_wheel_url: AssertMetadataFromWheelUrl,
+) -> None:
+    assert_metadata_from_wheel_url(
+        negative_offset_error=(codes.internal_server_error, b"Internal server error"),
+        expected_requests=10,
+        redirect=True,
+    )
+
+
 @pytest.mark.parametrize(
     ("negative_offset_failure", "expected_requests"),
     [
