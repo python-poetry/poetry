@@ -1,6 +1,18 @@
 # Change Log
 
 
+## [1.8.1] - 2024-02-26
+
+### Fixed
+
+- Update the minimum required version of `packaging` ([#9031](https://github.com/python-poetry/poetry/pull/9031)).
+- Handle unexpected responses from servers that do not support HTTP range requests with negative offsets more robust ([#9030](https://github.com/python-poetry/poetry/pull/9030)).
+
+### Docs
+
+- Rename `master` branch to `main` ([#9022](https://github.com/python-poetry/poetry/pull/9022)).
+
+
 ## [1.8.0] - 2024-02-25
 
 ### Added
@@ -2126,7 +2138,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.1...main
+[1.8.1]: https://github.com/python-poetry/poetry/releases/tag/1.8.1
 [1.8.0]: https://github.com/python-poetry/poetry/releases/tag/1.8.0
 [1.7.1]: https://github.com/python-poetry/poetry/releases/tag/1.7.1
 [1.7.0]: https://github.com/python-poetry/poetry/releases/tag/1.7.0
