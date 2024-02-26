@@ -156,9 +156,11 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
     "negative_offset_error",
     [
         None,
+        (codes.not_found, b"Not found"),  # Nexus
         (codes.method_not_allowed, b"Method not allowed"),
         (codes.requested_range_not_satisfiable, b"Requested range not satisfiable"),
-        (codes.not_implemented, b"Unsupported client range"),
+        (codes.internal_server_error, b"Internal server error"),  # GAR
+        (codes.not_implemented, b"Unsupported client range"),  # PyPI
         (NEGATIVE_OFFSET_AS_POSITIVE, b"handle negative offset as positive"),
     ],
 )
