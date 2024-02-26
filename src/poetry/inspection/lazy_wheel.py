@@ -608,22 +608,10 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
             # Initial range request for just the end of the file.
             file_length, tail = self._try_initial_chunk_request(initial_chunk_size)
         except HTTPError as e:
+            # Our initial request using a negative byte range was not supported.
             resp = e.response
             code = resp.status_code if resp is not None else None
-            # Our initial request using a negative byte range was not supported.
-            if code in [codes.not_implemented, codes.method_not_allowed]:
-                # pypi notably does not support negative byte ranges: see
-                # https://github.com/pypi/warehouse/issues/12823.
-                logger.debug(
-                    "Negative byte range not supported for domain '%s': "
-                    "using HEAD request before lazy wheel from now on",
-                    domain,
-                )
-                # Avoid trying a negative byte range request against this domain for the
-                # rest of the resolve.
-                self._domains_without_negative_range.add(domain)
-                # Apply a HEAD request to get the real size, and nothing else for now.
-                return (self._content_length_from_head(), None)
+
             # This indicates that the requested range from the end was larger than the
             # actual file size: https://www.rfc-editor.org/rfc/rfc9110#status.416.
             if code == codes.requested_range_not_satisfiable:
@@ -633,10 +621,21 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
                 file_length = self._parse_full_length_from_content_range(
                     resp.headers["Content-Range"]
                 )
-                return (file_length, None)
-            # If we get some other error, then we expect that non-range requests will
-            # also fail, so we error out here and let the user figure it out.
-            raise
+                return file_length, None
+
+            # pypi notably does not support negative byte ranges: see
+            # https://github.com/pypi/warehouse/issues/12823.
+            logger.debug(
+                "Negative byte range not supported for domain '%s': "
+                "using HEAD request before lazy wheel from now on (code: %s)",
+                domain,
+                code,
+            )
+            # Avoid trying a negative byte range request against this domain for the
+            # rest of the resolve.
+            self._domains_without_negative_range.add(domain)
+            # Apply a HEAD request to get the real size, and nothing else for now.
+            return self._content_length_from_head(), None
 
         # Some servers that do not support negative offsets,
         # handle a negative offset like "-10" as "0-10".
