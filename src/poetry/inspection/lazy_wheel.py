@@ -383,7 +383,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         :raises HTTPRangeRequestUnsupported: if the response fails to indicate support
                                              for "bytes" ranges."""
         self._request_count += 1
-        head = self._session.head(self._url, headers=self._uncached_headers())
+        head = self._session.head(self._url, headers=self._uncached_headers(), allow_redirects=True)
         head.raise_for_status()
         assert head.status_code == codes.ok
         accepted_range = head.headers.get("Accept-Ranges", None)

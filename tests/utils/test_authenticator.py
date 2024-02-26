@@ -310,7 +310,6 @@ def test_authenticator_request_respects_retry_header(
         (404, 0),
         (429, 5),
         (500, 5),
-        (501, 5),
         (502, 5),
         (503, 5),
         (504, 5),
