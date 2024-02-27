@@ -101,6 +101,29 @@ Writing lock file
     assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
+def test_add_non_package_mode_no_name(
+    repo: TestRepository,
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    poetry = project_factory(
+        name="foobar", pyproject_content="[tool.poetry]\npackage-mode = false\n"
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("cachy")
+
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 1
+
+    pyproject: dict[str, Any] = poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == "^0.2.0"
+
+
 def test_add_replace_by_constraint(
     app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
 ) -> None:

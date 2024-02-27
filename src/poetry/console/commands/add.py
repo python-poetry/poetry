@@ -122,7 +122,9 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
-        project_name = canonicalize_name(poetry_content["name"])
+        project_name = (
+            canonicalize_name(name) if (name := poetry_content.get("name")) else None
+        )
 
         if group == MAIN_GROUP:
             if "dependencies" not in poetry_content:
