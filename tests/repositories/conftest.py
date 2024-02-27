@@ -50,8 +50,7 @@ def get_metadata_mock() -> RequestsSessionGet:
                     / "metadata"
                     / posixpath.basename(url)
                 )
-                .read_text()
-                .encode()
+                .read_bytes()
             )
             return response
         raise requests.HTTPError()
