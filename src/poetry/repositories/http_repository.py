@@ -122,9 +122,13 @@ class HTTPRepository(CachedRepository):
                 package_info = PackageInfo.from_metadata(
                     metadata_from_wheel_url(link.filename, link.url, self.session)
                 )
-            except LazyWheelUnsupportedError:
+            except LazyWheelUnsupportedError as e:
                 # Do not set to False if we already know that the domain supports
                 # range requests for some URLs!
+                self._log(
+                    f"Disabling lazy wheel support for {netloc}: {e}",
+                    level="debug",
+                )
                 raise_accepts_ranges = False
                 self._supports_range_requests.setdefault(netloc, False)
             else:
