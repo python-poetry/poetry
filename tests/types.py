@@ -6,12 +6,16 @@ from typing import Protocol
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
+    from typing import Dict
+    from typing import Tuple
 
     import requests
 
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
+    from httpretty.core import HTTPrettyRequest
 
     from poetry.config.config import Config
     from poetry.config.source import Source
@@ -19,6 +23,14 @@ if TYPE_CHECKING:
     from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
     from poetry.utils.env import Env
+
+    HTTPrettyResponse = Tuple[int, Dict[str, Any], bytes]  # status code, headers, body
+    HTTPrettyRequestCallback = Callable[
+        [HTTPrettyRequest, str, Dict[str, Any]], HTTPrettyResponse
+    ]
+    HTTPPrettyRequestCallbackWrapper = Callable[
+        [HTTPrettyRequestCallback], HTTPrettyRequestCallback
+    ]
 
 
 class CommandTesterFactory(Protocol):

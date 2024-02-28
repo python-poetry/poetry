@@ -29,6 +29,9 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import Mapping
 
+    import httpretty
+
+    from httpretty.core import HTTPrettyRequest
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
@@ -38,6 +41,7 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
     from poetry.utils.authenticator import Authenticator
+    from tests.types import HTTPrettyResponse
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
@@ -321,3 +325,25 @@ def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, A
             yield ([], obj)
 
     return {delimiter.join(path): value for path, value in recurse_keys(obj)}
+
+
+def http_setup_redirect(
+    http: type[httpretty.httpretty], *methods: str, status_code: int = 301
+) -> None:
+    redirect_uri_regex = re.compile("^(?P<protocol>https?)://redirect.(?P<uri>.*)$")
+
+    def redirect_request_callback(
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> HTTPrettyResponse:
+        redirect_uri_match = redirect_uri_regex.match(uri)
+        assert redirect_uri_match is not None
+        redirect_uri = f"{redirect_uri_match.group('protocol')}://{redirect_uri_match.group('uri')}"
+        return status_code, {"Location": redirect_uri}, b""
+
+    for method in methods:
+        http.register_uri(
+            method,
+            redirect_uri_regex,
+            status=status_code,
+            body=redirect_request_callback,
+        )
