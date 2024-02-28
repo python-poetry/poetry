@@ -41,15 +41,19 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class HTTPRangeRequestUnsupported(Exception):
+class LazyWheelUnsupportedError(Exception):
+    """Raised when a lazy wheel is unsupported."""
+
+
+class HTTPRangeRequestUnsupported(LazyWheelUnsupportedError):
     """Raised when the remote server appears unable to support byte ranges."""
 
 
-class UnsupportedWheel(Exception):
+class UnsupportedWheel(LazyWheelUnsupportedError):
     """Unsupported wheel."""
 
 
-class InvalidWheel(Exception):
+class InvalidWheel(LazyWheelUnsupportedError):
     """Invalid (e.g. corrupt) wheel."""
 
     def __init__(self, location: str, name: str) -> None:
@@ -85,6 +89,24 @@ def metadata_from_wheel_url(
         # themselves are invalid, not because we've messed up our bookkeeping
         # and produced an invalid file.
         raise InvalidWheel(url, name)
+    except Exception as e:
+        if isinstance(e, LazyWheelUnsupportedError):
+            # this is expected when the code handles issues with lazy wheel metadata retrieval correctly
+            raise e
+
+        logger.debug(
+            "There was an unexpected %s when handling lazy wheel metadata retrieval for %s from %s: %s",
+            type(e).__name__,
+            name,
+            url,
+            e,
+        )
+
+        # Catch all exception to handle any issues that may have occurred during
+        # attempts to use Lazy Wheel.
+        raise LazyWheelUnsupportedError(
+            f"Attempts to use lazy wheel metadata retrieval for {name} from {url} failed"
+        ) from e
 
 
 class MergeIntervals:
@@ -590,6 +612,12 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
                 f"did not receive partial content: got code {code}"
             )
 
+        if "Content-Range" not in tail.headers:
+            raise LazyWheelUnsupportedError(
+                f"file length cannot be determined for {self._url}, "
+                f"did not receive content range header from server"
+            )
+
         file_length = self._parse_full_length_from_content_range(
             tail.headers["Content-Range"]
         )
@@ -614,10 +642,13 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
 
             # This indicates that the requested range from the end was larger than the
             # actual file size: https://www.rfc-editor.org/rfc/rfc9110#status.416.
-            if code == codes.requested_range_not_satisfiable:
+            if (
+                code == codes.requested_range_not_satisfiable
+                and resp is not None
+                and "Content-Range" in resp.headers
+            ):
                 # In this case, we don't have any file content yet, but we do know the
                 # size the file will be, so we can return that and exit here.
-                assert resp is not None
                 file_length = self._parse_full_length_from_content_range(
                     resp.headers["Content-Range"]
                 )

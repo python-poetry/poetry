@@ -5,12 +5,9 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Protocol
-from typing import Tuple
 from urllib.parse import urlparse
 
-import httpretty
 import pytest
 import requests
 
@@ -18,20 +15,21 @@ from requests import codes
 
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
 from poetry.inspection.lazy_wheel import InvalidWheel
+from poetry.inspection.lazy_wheel import LazyWheelUnsupportedError
 from poetry.inspection.lazy_wheel import metadata_from_wheel_url
+from tests.helpers import http_setup_redirect
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    import httpretty
 
     from httpretty.core import HTTPrettyRequest
+    from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
-
-    HTTPrettyResponse = Tuple[int, Dict[str, Any], bytes]  # status code, headers, body
-    HTTPrettyRequestCallback = Callable[
-        [HTTPrettyRequest, str, Dict[str, Any]], HTTPrettyResponse
-    ]
+    from tests.types import HTTPPrettyRequestCallbackWrapper
+    from tests.types import HTTPrettyRequestCallback
+    from tests.types import HTTPrettyResponse
 
     class RequestCallbackFactory(Protocol):
         def __call__(
@@ -40,6 +38,17 @@ if TYPE_CHECKING:
             accept_ranges: str | None = "bytes",
             negative_offset_error: tuple[int, bytes] | None = None,
         ) -> HTTPrettyRequestCallback: ...
+
+    class AssertMetadataFromWheelUrl(Protocol):
+        def __call__(
+            self,
+            *,
+            accept_ranges: str | None = "bytes",
+            negative_offset_error: tuple[int, bytes] | None = None,
+            expected_requests: int = 3,
+            request_callback_wrapper: HTTPPrettyRequestCallbackWrapper | None = None,
+            redirect: bool = True,
+        ) -> None: ...
 
 
 NEGATIVE_OFFSET_AS_POSITIVE = -1
@@ -152,6 +161,55 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
     return _factory
 
 
+@pytest.fixture
+def assert_metadata_from_wheel_url(
+    http: type[httpretty.httpretty],
+    handle_request_factory: RequestCallbackFactory,
+) -> AssertMetadataFromWheelUrl:
+    def _assertion(
+        *,
+        accept_ranges: str | None = "bytes",
+        negative_offset_error: tuple[int, bytes] | None = None,
+        expected_requests: int = 3,
+        request_callback_wrapper: HTTPPrettyRequestCallbackWrapper | None = None,
+        redirect: bool = False,
+    ) -> None:
+        latest_requests = http.latest_requests()
+        latest_requests.clear()
+
+        domain = (
+            f"lazy-wheel-{negative_offset_error[0] if negative_offset_error else 0}.com"
+        )
+        uri_regex = re.compile(f"^https://{domain}/.*$")
+        request_callback = handle_request_factory(
+            accept_ranges=accept_ranges, negative_offset_error=negative_offset_error
+        )
+        if request_callback_wrapper is not None:
+            request_callback = request_callback_wrapper(request_callback)
+
+        http.register_uri(http.GET, uri_regex, body=request_callback)
+        http.register_uri(http.HEAD, uri_regex, body=request_callback)
+
+        if redirect:
+            http_setup_redirect(http, http.GET, http.HEAD)
+
+        url_prefix = "redirect." if redirect else ""
+        url = f"https://{url_prefix}{domain}/poetry_core-1.5.0-py3-none-any.whl"
+
+        metadata = metadata_from_wheel_url("poetry-core", url, requests.Session())
+
+        assert metadata["name"] == "poetry-core"
+        assert metadata["version"] == "1.5.0"
+        assert metadata["author"] == "Sébastien Eustace"
+        assert metadata["requires_dist"] == [
+            'importlib-metadata (>=1.7.0) ; python_version < "3.8"'
+        ]
+
+        assert len(latest_requests) == expected_requests
+
+    return _assertion
+
+
 @pytest.mark.parametrize(
     "negative_offset_error",
     [
@@ -165,31 +223,9 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
     ],
 )
 def test_metadata_from_wheel_url(
-    http: type[httpretty.httpretty],
-    handle_request_factory: RequestCallbackFactory,
+    assert_metadata_from_wheel_url: AssertMetadataFromWheelUrl,
     negative_offset_error: tuple[int, bytes] | None,
 ) -> None:
-    domain = (
-        f"lazy-wheel-{negative_offset_error[0] if negative_offset_error else 0}.com"
-    )
-    uri_regex = re.compile(f"^https://{domain}/.*$")
-    request_callback = handle_request_factory(
-        negative_offset_error=negative_offset_error
-    )
-    http.register_uri(http.GET, uri_regex, body=request_callback)
-    http.register_uri(http.HEAD, uri_regex, body=request_callback)
-
-    url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
-
-    metadata = metadata_from_wheel_url("poetry-core", url, requests.Session())
-
-    assert metadata["name"] == "poetry-core"
-    assert metadata["version"] == "1.5.0"
-    assert metadata["author"] == "Sébastien Eustace"
-    assert metadata["requires_dist"] == [
-        'importlib-metadata (>=1.7.0) ; python_version < "3.8"'
-    ]
-
     # negative offsets supported:
     # 1. end of central directory
     # 2. whole central directory
@@ -207,15 +243,60 @@ def test_metadata_from_wheel_url(
             expected_requests += 1
         else:
             expected_requests += 2
-    latest_requests = http.latest_requests()
-    assert len(latest_requests) == expected_requests
+
+    assert_metadata_from_wheel_url(
+        negative_offset_error=negative_offset_error, expected_requests=expected_requests
+    )
 
     # second wheel -> one less request if negative offsets are not supported
-    latest_requests.clear()
-    metadata_from_wheel_url("poetry-core", url, requests.Session())
     expected_requests = min(expected_requests, 4)
-    latest_requests = httpretty.latest_requests()
-    assert len(latest_requests) == expected_requests
+    assert_metadata_from_wheel_url(
+        negative_offset_error=negative_offset_error, expected_requests=expected_requests
+    )
+
+
+def test_metadata_from_wheel_url_416_missing_content_range(
+    assert_metadata_from_wheel_url: AssertMetadataFromWheelUrl,
+) -> None:
+    def request_callback_wrapper(
+        request_callback: HTTPrettyRequestCallback,
+    ) -> HTTPrettyRequestCallback:
+        def _wrapped(
+            request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
+        ) -> HTTPrettyResponse:
+            status_code, response_headers, body = request_callback(
+                request, uri, response_headers
+            )
+            return (
+                status_code,
+                {
+                    header: response_headers[header]
+                    for header in response_headers
+                    if header.lower() != "content-range"
+                },
+                body,
+            )
+
+        return _wrapped
+
+    assert_metadata_from_wheel_url(
+        negative_offset_error=(
+            codes.requested_range_not_satisfiable,
+            b"Requested range not satisfiable",
+        ),
+        expected_requests=5,
+        request_callback_wrapper=request_callback_wrapper,
+    )
+
+
+def test_metadata_from_wheel_url_with_redirect(
+    assert_metadata_from_wheel_url: AssertMetadataFromWheelUrl,
+) -> None:
+    assert_metadata_from_wheel_url(
+        negative_offset_error=None,
+        expected_requests=6,
+        redirect=True,
+    )
 
 
 @pytest.mark.parametrize("negative_offset_as_positive", [False, True])
@@ -320,3 +401,19 @@ def test_metadata_from_wheel_url_invalid_wheel(
     latest_requests = http.latest_requests()
     assert len(latest_requests) == 1
     assert latest_requests[0].method == "GET"
+
+
+def test_metadata_from_wheel_url_handles_unexpected_errors(
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "poetry.inspection.lazy_wheel.LazyWheelOverHTTP.read_metadata",
+        side_effect=RuntimeError(),
+    )
+
+    with pytest.raises(LazyWheelUnsupportedError):
+        metadata_from_wheel_url(
+            "demo-missing-dist-info",
+            "https://runtime-error.com/demo_missing_dist_info-0.1.0-py2.py3-none-any.whl",
+            requests.Session(),
+        )
