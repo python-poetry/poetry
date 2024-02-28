@@ -37,6 +37,7 @@ from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
+from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
@@ -322,6 +323,11 @@ def http() -> Iterator[type[httpretty.httpretty]]:
 
 
 @pytest.fixture
+def http_redirector(http: type[httpretty.httpretty]) -> None:
+    http_setup_redirect(http, http.HEAD, http.GET, http.PUT, http.POST)
+
+
+@pytest.fixture
 def project_root() -> Path:
     return Path(__file__).parent.parent
 
@@ -513,3 +519,9 @@ def venv_flags_default() -> dict[str, bool]:
         "no-pip": False,
         "no-setuptools": False,
     }
+
+
+@pytest.fixture(autouse=(os.name == "nt"))
+def httpretty_windows_mock_urllib3_wait_for_socket(mocker: MockerFixture) -> None:
+    # this is a workaround for https://github.com/gabrielfalcao/HTTPretty/issues/442
+    mocker.patch("urllib3.util.wait.select_wait_for_socket", returns=True)
