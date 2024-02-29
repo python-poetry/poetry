@@ -548,7 +548,21 @@ Note that, at the moment, only pure python wheels are supported.
 ### Options
 
 * `--format (-f)`: Limit the format to either `wheel` or `sdist`.
+* `--local-version (-l)`: Add or replace a local version label to the build.
 * `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
+
+{{% note %}}
+When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
+compliant. This is useful for adding build numbers, platform specificities etc. for private packages.
+{{% /note %}}
+
+{{% warning %}}
+Local version identifiers SHOULD NOT be used when publishing upstream projects to a public index server, but MAY be
+used to identify private builds created directly from the project source.
+
+See [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers) for more information.
+{{% /warning %}}
+
 
 ## publish
 
