@@ -47,6 +47,15 @@ Depending on your system configuration, credentials might be saved in your comma
 Many shells do not save commands to history when they are prefixed by a space character. For more information, please refer to your shell's documentation.
 {{% /warning %}}
 
+{{% note %}}
+If you would like to provide the password interactively, you can simply omit `<password>` in your command. And
+Poetry will prompt you to enter the credential manually.
+
+```bash
+poetry config http-basic.foo <username>
+```
+{{% /note %}}
+
 Once this is done, you can add dependencies to your project from this source.
 
 ```bash
