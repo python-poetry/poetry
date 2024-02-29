@@ -640,8 +640,8 @@ Note that this command has no option.
 The shell command spawns a shell within the project's virtual environment.
 
 By default, the current active shell is detected and used. Failing that,
-the shell defined via the environment variable `SHELL` (on posix) or
-`COMSPEC` (on windows) is used.
+the shell defined via the environment variable `SHELL` (on *nix) or
+`COMSPEC` (on Windows) is used.
 
 If a virtual environment does not exist, it will be created.
 
