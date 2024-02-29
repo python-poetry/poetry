@@ -548,6 +548,7 @@ Note that, at the moment, only pure python wheels are supported.
 ### Options
 
 * `--format (-f)`: Limit the format to either `wheel` or `sdist`.
+* `--clean`: Clean output directory before building.
 * `--local-version (-l)`: Add or replace a local version label to the build.
 * `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
 
