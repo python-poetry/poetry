@@ -15,6 +15,12 @@ class BuildCommand(EnvCommand):
     options = [
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
         option(
+            "local-version",
+            "l",
+            "Add or replace a local version label to the build.",
+            flag=False,
+        ),
+        option(
             "output",
             "o",
             "Set output directory for build artifacts. Default is `dist`.",
@@ -44,6 +50,11 @@ class BuildCommand(EnvCommand):
             builders = list(BUILD_FORMATS.values())
         else:
             raise ValueError(f"Invalid format: {fmt}")
+
+        if local_version_label := self.option("local-version"):
+            self.poetry.package.version = self.poetry.package.version.replace(
+                local=local_version_label
+            )
 
         for builder in builders:
             builder(self.poetry, executable=executable).build(target_dir)

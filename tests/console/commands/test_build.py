@@ -41,8 +41,13 @@ def tmp_tester(
     return command_tester_factory("build", tmp_poetry)
 
 
-def get_package_glob(poetry: Poetry) -> str:
-    return f"{poetry.package.name.replace('-', '_')}-{poetry.package.version}*"
+def get_package_glob(poetry: Poetry, local_version: str | None = None) -> str:
+    version = poetry.package.version
+
+    if local_version:
+        version = version.replace(local=local_version)
+
+    return f"{poetry.package.name.replace('-', '_')}-{version}*"
 
 
 def test_build_format_is_not_valid(tmp_tester: CommandTester) -> None:
@@ -58,6 +63,21 @@ def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
     build_artifacts = tuple(
         (tmp_project_path / "dist").glob(get_package_glob(tmp_poetry))
     )
+    assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_with_local_version_label(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
+) -> None:
+    local_version_label = "local-version"
+    tmp_tester.execute(f"--local-version {local_version_label}")
+    build_artifacts = tuple(
+        (tmp_project_path / "dist").glob(
+            get_package_glob(tmp_poetry, local_version=local_version_label)
+        )
+    )
+
     assert len(build_artifacts) > 0
     assert all(archive.exists() for archive in build_artifacts)
 
