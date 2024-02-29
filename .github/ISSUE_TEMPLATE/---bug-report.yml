@@ -90,7 +90,7 @@ body:
     attributes:
       label: Poetry Runtime Logs
       description: |
-        Please attach logs from `poetry -vvv <command>`
+        Please attach logs from the failing command using `poetry -vvv <command>`
       render: 'bash session'
     validations:
       required: true
