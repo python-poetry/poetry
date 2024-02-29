@@ -2,6 +2,7 @@ name: 'Lock Threads'
 
 on:
   schedule:
+    # at minute 0
     - cron: '0 * * * *'
   workflow_dispatch:
 
