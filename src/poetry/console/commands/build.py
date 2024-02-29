@@ -6,6 +6,7 @@ from cleo.helpers import option
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.env import build_environment
+from poetry.utils.helpers import remove_directory
 
 
 class BuildCommand(EnvCommand):
@@ -14,6 +15,11 @@ class BuildCommand(EnvCommand):
 
     options = [
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
+        option(
+            "clean",
+            "Clean output directory before building.",
+            flag=True,
+        ),
         option(
             "local-version",
             "l",
@@ -74,6 +80,10 @@ class BuildCommand(EnvCommand):
 
             if not dist_dir.is_absolute():
                 dist_dir = self.poetry.pyproject_path.parent / dist_dir
+
+            if self.option("clean"):
+                remove_directory(path=dist_dir, force=True)
+
             self._build(fmt, executable=env.python, target_dir=dist_dir)
 
         return 0

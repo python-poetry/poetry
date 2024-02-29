@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.factory import Factory
+from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
@@ -79,6 +80,35 @@ def test_build_with_local_version_label(
     )
 
     assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+@pytest.mark.parametrize("clean", [True, False])
+def test_build_with_clean(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, clean: bool
+) -> None:
+    dist_dir = tmp_project_path.joinpath("dist")
+    dist_dir.joinpath("hello").touch(exist_ok=True)
+
+    tmp_tester.execute("--clean" if clean else "")
+    build_artifacts = tuple(dist_dir.glob("*"))
+
+    assert len(build_artifacts) == 2 if clean else 3
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_with_clean_non_existing_output(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
+) -> None:
+    dist_dir = tmp_project_path.joinpath("dist")
+
+    remove_directory(dist_dir, force=True)
+    assert not dist_dir.exists()
+
+    tmp_tester.execute("--clean")
+    build_artifacts = tuple(dist_dir.glob("*"))
+
+    assert len(build_artifacts) == 2
     assert all(archive.exists() for archive in build_artifacts)
 
 
