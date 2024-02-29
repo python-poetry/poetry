@@ -191,8 +191,8 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 "If you do not want to install the current project"
                 " use <c1>--no-root</c1>.\n"
                 "If you want to use Poetry only for dependency management"
-                " but not for packaging, you can set the operating mode to "
-                '"non-package" in your pyproject.toml file.\n'
+                " but not for packaging, you can disable package mode by setting"
+                " <c1>package-mode = false</> in your pyproject.toml file.\n"
                 "In a future version of Poetry this warning will become an error!",
                 style="warning",
             )
