@@ -637,10 +637,13 @@ Note that this command has no option.
 
 ## shell
 
-The `shell` command spawns a shell,
-according to the `$SHELL` environment variable,
-within the virtual environment.
-If one doesn't exist yet, it will be created.
+The shell command spawns a shell within the project's virtual environment.
+
+By default, the current active shell is detected and used. Failing that,
+the shell defined via the environment variable `SHELL` (on *nix) or
+`COMSPEC` (on Windows) is used.
+
+If a virtual environment does not exist, it will be created.
 
 ```bash
 poetry shell
@@ -649,6 +652,11 @@ poetry shell
 Note that this command starts a new shell and activates the virtual environment.
 
 As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
+
+{{% note %}}
+Poetry internally uses the [Shellingham](https://github.com/sarugaku/shellingham) project to detect current
+active shell.
+{{% /note %}}
 
 ## check
 
