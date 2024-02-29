@@ -17,7 +17,6 @@ body:
         Please describe what happened, with as much pertinent information as you can. Feel free to use markdown syntax.
 
         Also, ensure that the issue is not already fixed in the [latest](https://github.com/python-poetry/poetry/releases/latest) Poetry release.
-      render: "Markdown"
     validations:
       required: true
 
@@ -26,7 +25,6 @@ body:
       label: Workarounds
       description: |
         Is there a mitigation or workaround that allows users to avoid the issue today?
-      render: "Markdown"
     validations:
       required: true
 
