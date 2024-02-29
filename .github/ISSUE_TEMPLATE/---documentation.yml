@@ -42,6 +42,5 @@ body:
       label: Description
       description: |
         Please describe the feature, with as much pertinent information as you can. Feel free to use markdown syntax.
-      render: "Markdown"
     validations:
       required: true

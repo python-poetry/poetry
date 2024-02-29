@@ -31,7 +31,6 @@ body:
         Please describe the issue, with as much pertinent information as you can. Feel free to use markdown syntax.
 
         Also, ensure that the issue is not already fixed in the [development documentation](https://python-poetry.org/docs/main/).
-      render: "Markdown"
     validations:
       required: true
 
@@ -40,7 +39,6 @@ body:
       label: Impact
       description: |
         Please describe the motivation for this issue. Describe, as best you can, how this improves or impacts the users of Poetry and why this is important.
-      render: "Markdown"
     validations:
       required: true
 
@@ -49,6 +47,5 @@ body:
       label: Workarounds
       description: |
         Is there a mitigation, workaround, or addon that allows users to achieve the same functionality today?
-      render: "Markdown"
     validations:
       required: true
