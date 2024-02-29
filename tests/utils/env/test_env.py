@@ -27,7 +27,6 @@ from poetry.utils.env import build_environment
 
 
 if TYPE_CHECKING:
-
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
