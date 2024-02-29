@@ -144,9 +144,9 @@ class Layout:
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][
-                    dep_name
-                ] = dep_constraint
+                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
+                    dep_constraint
+                )
         else:
             del poetry_content["group"]
 

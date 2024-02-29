@@ -1127,9 +1127,7 @@ def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage) -> None:
             dir=d1
         ) as d4, tempfile.TemporaryDirectory(dir=d2) as d3, tempfile.NamedTemporaryFile(
             dir=d4
-        ) as source_file, tempfile.NamedTemporaryFile(
-            dir=d3
-        ) as lock_file:
+        ) as source_file, tempfile.NamedTemporaryFile(dir=d3) as lock_file:
             lock_file.close()
             try:
                 os.symlink(Path(d3), symlink_path)
