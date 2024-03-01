@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from enum import IntEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -51,7 +52,10 @@ if TYPE_CHECKING:
         ) -> None: ...
 
 
-NEGATIVE_OFFSET_AS_POSITIVE = -1
+class NegativeOffsetFailure(IntEnum):
+    # numbers must be negative to avoid conflicts with HTTP status codes
+    as_positive = -1  # JFrog Artifactory bug (RTDEV-38572)
+    one_more = -2  # JFrog Artifactory bug (one more byte than requested)
 
 
 def build_head_response(
@@ -68,7 +72,7 @@ def build_partial_response(
     wheel_bytes: bytes,
     response_headers: dict[str, Any],
     *,
-    negative_offset_as_positive: bool = False,
+    negative_offset_failure: NegativeOffsetFailure | None = None,
 ) -> HTTPrettyResponse:
     status_code = 206
     response_headers["Accept-Ranges"] = "bytes"
@@ -76,11 +80,18 @@ def build_partial_response(
     if rng.startswith("-"):
         # negative offset
         offset = int(rng)
-        if negative_offset_as_positive:
+        if negative_offset_failure == NegativeOffsetFailure.as_positive:
             # some servers interpret a negative offset like "-10" as "0-10"
             start = 0
             end = min(-offset, total_length - 1)
             body = wheel_bytes[start : end + 1]
+        elif negative_offset_failure == NegativeOffsetFailure.one_more:
+            # https://github.com/python-poetry/poetry/issues/9056#issuecomment-1973273721
+            offset -= 1  # one more byte
+            start = total_length + offset  # negative start of content range possible!
+            end = total_length - 1
+            body = wheel_bytes[offset:]
+            response_headers["Content-Length"] = -offset  # just wrong...
         else:
             start = total_length + offset
             if start < 0:
@@ -131,12 +142,14 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
 
             rng = request.headers.get("Range", "=").split("=")[1]
 
-            negative_offset_as_positive = False
+            negative_offset_failure = None
             if negative_offset_error and rng.startswith("-"):
                 if negative_offset_error[0] == codes.requested_range_not_satisfiable:
                     response_headers["Content-Range"] = f"bytes */{len(wheel_bytes)}"
-                if negative_offset_error[0] == NEGATIVE_OFFSET_AS_POSITIVE:
-                    negative_offset_as_positive = True
+                if negative_offset_error[0] == NegativeOffsetFailure.as_positive:
+                    negative_offset_failure = NegativeOffsetFailure.as_positive
+                elif negative_offset_error[0] == NegativeOffsetFailure.one_more:
+                    negative_offset_failure = NegativeOffsetFailure.one_more
                 else:
                     return (
                         negative_offset_error[0],
@@ -148,7 +161,7 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
                     rng,
                     wheel_bytes,
                     response_headers,
-                    negative_offset_as_positive=negative_offset_as_positive,
+                    negative_offset_failure=negative_offset_failure,
                 )
 
             status_code = 200
@@ -219,7 +232,8 @@ def assert_metadata_from_wheel_url(
         (codes.requested_range_not_satisfiable, b"Requested range not satisfiable"),
         (codes.internal_server_error, b"Internal server error"),  # GAR
         (codes.not_implemented, b"Unsupported client range"),  # PyPI
-        (NEGATIVE_OFFSET_AS_POSITIVE, b"handle negative offset as positive"),
+        (NegativeOffsetFailure.as_positive, b"handle negative offset as positive"),
+        (NegativeOffsetFailure.one_more, b"one more byte than requested"),
     ],
 )
 def test_metadata_from_wheel_url(
@@ -236,10 +250,11 @@ def test_metadata_from_wheel_url(
     # 3.-5. see negative offsets 1.-3.
     expected_requests = 3
     if negative_offset_error:
-        if negative_offset_error[0] in (
+        if negative_offset_error[0] in {
             codes.requested_range_not_satisfiable,
-            NEGATIVE_OFFSET_AS_POSITIVE,
-        ):
+            NegativeOffsetFailure.as_positive,
+            NegativeOffsetFailure.one_more,
+        }:
             expected_requests += 1
         else:
             expected_requests += 2
@@ -299,17 +314,25 @@ def test_metadata_from_wheel_url_with_redirect(
     )
 
 
-@pytest.mark.parametrize("negative_offset_as_positive", [False, True])
+@pytest.mark.parametrize(
+    ("negative_offset_failure", "expected_requests"),
+    [
+        (None, 1),
+        (NegativeOffsetFailure.as_positive, 1),
+        (NegativeOffsetFailure.one_more, 2),
+    ],
+)
 def test_metadata_from_wheel_url_smaller_than_initial_chunk_size(
     http: type[httpretty.httpretty],
     handle_request_factory: RequestCallbackFactory,
-    negative_offset_as_positive: bool,
+    negative_offset_failure: NegativeOffsetFailure | None,
+    expected_requests: int,
 ) -> None:
-    domain = f"tiny-wheel-{str(negative_offset_as_positive).casefold()}.com"
+    domain = f"tiny-wheel-{str(negative_offset_failure).casefold()}.com"
     uri_regex = re.compile(f"^https://{domain}/.*$")
     request_callback = handle_request_factory(
         negative_offset_error=(
-            (NEGATIVE_OFFSET_AS_POSITIVE, b"") if negative_offset_as_positive else None
+            (negative_offset_failure, b"") if negative_offset_failure else None
         )
     )
     http.register_uri(http.GET, uri_regex, body=request_callback)
@@ -324,10 +347,8 @@ def test_metadata_from_wheel_url_smaller_than_initial_chunk_size(
     assert metadata["author"] == "Jason R. Coombs"
     assert len(metadata["requires_dist"]) == 12
 
-    # only one request because server gives a normal response with the entire wheel
-    # except for when server interprets negative offset as positive
     latest_requests = http.latest_requests()
-    assert len(latest_requests) == 1
+    assert len(latest_requests) == expected_requests
 
 
 @pytest.mark.parametrize("accept_ranges", [None, "none"])

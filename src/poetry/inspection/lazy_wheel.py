@@ -669,12 +669,12 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
             return self._content_length_from_head(), None
 
         # Some servers that do not support negative offsets,
-        # handle a negative offset like "-10" as "0-10".
-        if int(
-            tail.headers["Content-Length"]
-        ) == initial_chunk_size + 1 and tail.headers["Content-Range"].startswith(
-            f"bytes 0-{initial_chunk_size}"
-        ):
+        # handle a negative offset like "-10" as "0-10"...
+        # ... or behave even more strangely, see
+        # https://github.com/python-poetry/poetry/issues/9056#issuecomment-1973273721
+        if int(tail.headers["Content-Length"]) > initial_chunk_size or tail.headers.get(
+            "Content-Range", ""
+        ).startswith("bytes -"):
             tail = None
             self._domains_without_negative_range.add(domain)
         return file_length, tail
