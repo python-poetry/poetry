@@ -79,6 +79,8 @@ You can specify a package in the following forms:
   - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
   - A git url with a revision\
  (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
+  - A subdirectory of a git repository\
+ (<b>git+https://github.com/python-poetry/poetry.git#subdirectory=tests/fixtures/sample_project</b>)
   - A git SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)
   - A git SSH url with a revision\
  (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)
