@@ -14,6 +14,7 @@ import requests
 
 from requests import codes
 
+from poetry.inspection.lazy_wheel import HTTPRangeRequestNotRespected
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
 from poetry.inspection.lazy_wheel import InvalidWheel
 from poetry.inspection.lazy_wheel import LazyWheelUnsupportedError
@@ -38,6 +39,7 @@ if TYPE_CHECKING:
             *,
             accept_ranges: str | None = "bytes",
             negative_offset_error: tuple[int, bytes] | None = None,
+            ignore_accept_ranges: bool = False,
         ) -> HTTPrettyRequestCallback: ...
 
     class AssertMetadataFromWheelUrl(Protocol):
@@ -113,6 +115,7 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
         *,
         accept_ranges: str | None = "bytes",
         negative_offset_error: tuple[int, bytes] | None = None,
+        ignore_accept_ranges: bool = False,
     ) -> HTTPrettyRequestCallback:
         def handle_request(
             request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
@@ -156,7 +159,7 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
                         response_headers,
                         negative_offset_error[1],
                     )
-            if accept_ranges == "bytes" and rng:
+            if accept_ranges == "bytes" and rng and not ignore_accept_ranges:
                 return build_partial_response(
                     rng,
                     wheel_bytes,
@@ -402,6 +405,31 @@ def test_metadata_from_wheel_url_range_requests_not_supported_two_requests(
     assert len(latest_requests) == 2
     assert latest_requests[0].method == "GET"
     assert latest_requests[1].method == "HEAD"
+
+
+def test_metadata_from_wheel_url_range_requests_supported_but_not_respected(
+    http: type[httpretty.httpretty],
+    handle_request_factory: RequestCallbackFactory,
+) -> None:
+    domain = "range-requests-not-respected.com"
+    uri_regex = re.compile(f"^https://{domain}/.*$")
+    request_callback = handle_request_factory(
+        negative_offset_error=(codes.method_not_allowed, b"Method not allowed"),
+        ignore_accept_ranges=True,
+    )
+    http.register_uri(http.GET, uri_regex, body=request_callback)
+    http.register_uri(http.HEAD, uri_regex, body=request_callback)
+
+    url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
+
+    with pytest.raises(HTTPRangeRequestNotRespected):
+        metadata_from_wheel_url("poetry-core", url, requests.Session())
+
+    latest_requests = http.latest_requests()
+    assert len(latest_requests) == 3
+    assert latest_requests[0].method == "GET"
+    assert latest_requests[1].method == "HEAD"
+    assert latest_requests[2].method == "GET"
 
 
 def test_metadata_from_wheel_url_invalid_wheel(

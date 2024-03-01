@@ -49,6 +49,11 @@ class HTTPRangeRequestUnsupported(LazyWheelUnsupportedError):
     """Raised when the remote server appears unable to support byte ranges."""
 
 
+class HTTPRangeRequestNotRespected(LazyWheelUnsupportedError):
+    """Raised when the remote server tells us that it supports byte ranges
+    but does not respect a respective request."""
+
+
 class UnsupportedWheel(LazyWheelUnsupportedError):
     """Unsupported wheel."""
 
@@ -429,7 +434,12 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         self._request_count += 1
         response = self._session.get(self._url, headers=headers, stream=True)
         response.raise_for_status()
-        assert int(response.headers["Content-Length"]) == (end - start + 1)
+        if int(response.headers["Content-Length"]) != (end - start + 1):
+            raise HTTPRangeRequestNotRespected(
+                f"server did not respect byte range request: "
+                f"requested {end - start + 1} bytes, got "
+                f"{response.headers['Content-Length']} bytes"
+            )
         return response
 
     def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
