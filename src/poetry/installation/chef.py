@@ -127,7 +127,10 @@ class Chef:
     ) -> Path:
         from subprocess import CalledProcessError
 
-        with ephemeral_environment(self._env.python) as venv:
+        with ephemeral_environment(
+            self._env.python,
+            flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+        ) as venv:
             env = IsolatedEnv(venv, self._pool)
             builder = ProjectBuilder.from_isolated_env(
                 env, directory, runner=quiet_subprocess_runner
