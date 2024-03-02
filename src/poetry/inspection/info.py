@@ -4,7 +4,6 @@ import contextlib
 import functools
 import glob
 import logging
-import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -56,7 +55,7 @@ with build.env.DefaultIsolatedEnv() as env:
     builder.metadata_path(dest)
 """
 
-PEP517_META_BUILD_DEPS = ["build==1.0.3", "pyproject_hooks==1.0.0"]
+PEP517_META_BUILD_DEPS = ["build==1.1.1", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
@@ -579,7 +578,7 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
             return info
 
     with ephemeral_environment(
-        flags={"no-pip": False, "setuptools": "bundle", "wheel": "bundle"}
+        flags={"no-pip": False, "no-setuptools": True, "no-wheel": True}
     ) as venv:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         dest_dir = venv.path.parent / "dist"
@@ -600,31 +599,10 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
             venv.run_python_script(pep517_meta_build_script)
             info = PackageInfo.from_metadata_directory(dest_dir)
         except EnvCommandError as e:
-            # something went wrong while attempting pep517 metadata build
-            # fallback to egg_info if setup.py available
             logger.debug("PEP517 build failed: %s", e)
-            setup_py = path / "setup.py"
-            if not setup_py.exists():
-                raise PackageInfoError(
-                    path,
-                    e,
-                    "No fallback setup.py file was found to generate egg_info.",
-                )
-
-            cwd = Path.cwd()
-            os.chdir(path)
-            try:
-                venv.run("python", "setup.py", "egg_info")
-                info = PackageInfo.from_metadata_directory(path)
-            except EnvCommandError as fbe:
-                raise PackageInfoError(
-                    path, e, "Fallback egg_info generation failed.", fbe
-                )
-            finally:
-                os.chdir(cwd)
+            raise PackageInfoError(path, e, "PEP517 build failed")
 
     if info:
-        logger.debug("Falling back to parsed setup.py file for %s", path)
         return info
 
     # if we reach here, everything has failed and all hope is lost
