@@ -7,6 +7,7 @@ import pytest
 
 from deepdiff import DeepDiff
 
+from poetry.inspection.info import PackageInfo
 from poetry.utils.dependency_specification import RequirementsParser
 
 
@@ -167,12 +168,19 @@ def test_parse_dependency_specification(
 ) -> None:
     original = Path.exists
 
+    # Parsing file and path dependencies reads metadata from the file or path in
+    # question: for these tests we mock that out.
     def _mock(self: Path) -> bool:
         if "/" in requirement and self == Path.cwd().joinpath(requirement):
             return True
         return original(self)
 
     mocker.patch("pathlib.Path.exists", _mock)
+
+    mocker.patch(
+        "poetry.inspection.info.get_pep517_metadata",
+        return_value=PackageInfo(name="demo", version="0.1.2"),
+    )
 
     assert any(
         not DeepDiff(
