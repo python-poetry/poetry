@@ -7,7 +7,6 @@ import re
 import shutil
 import sys
 
-from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -26,8 +25,6 @@ from keyring.errors import KeyringLocked
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.factory import Factory
-from poetry.inspection.info import PackageInfo
-from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
@@ -277,19 +274,6 @@ def config_dir(tmp_path: Path) -> Path:
 def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
     mocker.patch("poetry.config.config.CONFIG_DIR", new=config_dir)
-
-
-@pytest.fixture(autouse=True)
-def pep517_metadata_mock(mocker: MockerFixture) -> None:
-    def get_pep517_metadata(path: Path) -> PackageInfo:
-        with suppress(PackageInfoError):
-            return PackageInfo.from_setup_files(path)
-        return PackageInfo(name="demo", version="0.1.2")
-
-    mocker.patch(
-        "poetry.inspection.info.get_pep517_metadata",
-        get_pep517_metadata,
-    )
 
 
 @pytest.fixture

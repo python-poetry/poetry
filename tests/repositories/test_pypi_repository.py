@@ -239,37 +239,11 @@ def test_fallback_pep_658_metadata(
         assert dep.python_versions == "~2.7"
 
 
-def test_fallback_can_read_setup_to_get_dependencies(
-    pypi_repository: PyPiRepository,
-) -> None:
-    repo = pypi_repository
-    repo._fallback = True
-
-    package = repo.package("sqlalchemy", Version.parse("1.2.12"))
-
-    assert package.name == "sqlalchemy"
-    assert len(package.requires) == 9
-    assert len([r for r in package.requires if r.is_optional()]) == 9
-
-    assert package.extras == {
-        "mssql-pymssql": [Dependency("pymssql", "*")],
-        "mssql-pyodbc": [Dependency("pyodbc", "*")],
-        "mysql": [Dependency("mysqlclient", "*")],
-        "oracle": [Dependency("cx_oracle", "*")],
-        "postgresql": [Dependency("psycopg2", "*")],
-        "postgresql-pg8000": [Dependency("pg8000", "*")],
-        "postgresql-psycopg2binary": [Dependency("psycopg2-binary", "*")],
-        "postgresql-psycopg2cffi": [Dependency("psycopg2cffi", "*")],
-        "pymysql": [Dependency("pymysql", "*")],
-    }
-
-
 def test_pypi_repository_supports_reading_bz2_files(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
     repo._fallback = True
-
     package = repo.package("twisted", Version.parse("18.9.0"))
 
     assert package.name == "twisted"

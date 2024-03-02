@@ -28,11 +28,6 @@ if TYPE_CHECKING:
     from tests.types import SetProjectContext
 
 
-@pytest.fixture(autouse=True)
-def pep517_metadata_mock() -> None:
-    pass
-
-
 @pytest.fixture
 def demo_sdist(fixture_dir: FixtureDirGetter) -> Path:
     return fixture_dir("distributions") / "demo-0.1.0.tar.gz"
@@ -150,18 +145,28 @@ def demo_check_info(info: PackageInfo, requires_dist: set[str] | None = None) ->
     if requires_dist:
         assert set(info.requires_dist) == requires_dist
     else:
+        # Exact formatting various according to the exact mechanism used to extract the
+        # metadata.
         assert set(info.requires_dist) in (
-            # before https://github.com/python-poetry/poetry-core/pull/510
             {
                 'cleo; extra == "foo"',
                 "pendulum (>=1.4.4)",
                 'tomlkit; extra == "bar"',
             },
-            # after https://github.com/python-poetry/poetry-core/pull/510
             {
                 'cleo ; extra == "foo"',
                 "pendulum (>=1.4.4)",
                 'tomlkit ; extra == "bar"',
+            },
+            {
+                'cleo ; extra == "foo"',
+                "pendulum>=1.4.4",
+                'tomlkit ; extra == "bar"',
+            },
+            {
+                "cleo ; extra == 'foo'",
+                "pendulum (>=1.4.4)",
+                "tomlkit ; extra == 'bar'",
             },
         )
 
@@ -243,9 +248,7 @@ def test_info_from_bdist(demo_wheel: Path) -> None:
 
 
 def test_info_from_poetry_directory(fixture_dir: FixtureDirGetter) -> None:
-    info = PackageInfo.from_directory(
-        fixture_dir("inspection") / "demo", disable_build=True
-    )
+    info = PackageInfo.from_directory(fixture_dir("inspection") / "demo")
     demo_check_info(info)
 
 
@@ -273,16 +276,6 @@ def test_info_from_requires_txt(fixture_dir: FixtureDirGetter) -> None:
     )
     assert info is not None
     demo_check_info(info)
-
-
-def test_info_from_setup_py(demo_setup: Path) -> None:
-    info = PackageInfo.from_setup_files(demo_setup)
-    demo_check_info(info, requires_dist={"package"})
-
-
-def test_info_from_setup_cfg(demo_setup_cfg: Path) -> None:
-    info = PackageInfo.from_setup_files(demo_setup_cfg)
-    demo_check_info(info, requires_dist={"package"})
 
 
 def test_info_no_setup_pkg_info_no_deps(fixture_dir: FixtureDirGetter) -> None:
@@ -318,14 +311,7 @@ def test_info_no_setup_pkg_info_no_deps_dynamic(fixture_dir: FixtureDirGetter) -
 def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
-    assert spy.call_count == 0
-    demo_check_info(info, requires_dist={"package"})
-
-
-def test_info_setup_cfg(mocker: MockerFixture, demo_setup_cfg: Path) -> None:
-    spy = mocker.spy(VirtualEnv, "run")
-    info = PackageInfo.from_directory(demo_setup_cfg)
-    assert spy.call_count == 0
+    assert spy.call_count == 5
     demo_check_info(info, requires_dist={"package"})
 
 
@@ -356,14 +342,6 @@ def test_info_setup_complex_pep517_legacy(
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_setup_complex_disable_build(
-    mocker: MockerFixture, demo_setup_complex: Path
-) -> None:
-    # Cannot extract install_requires from list comprehension.
-    with pytest.raises(PackageInfoError):
-        PackageInfo.from_directory(demo_setup_complex, disable_build=True)
-
-
 @pytest.mark.network
 def test_info_setup_complex_calls_script(demo_setup_complex_calls_script: Path) -> None:
     """Building the project requires calling a script from its build_requires."""
@@ -389,24 +367,6 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     spy = mocker.spy(ProjectBuilder, "from_isolated_env")
     _ = PackageInfo.from_directory(source_dir)
     assert spy.call_count == 1
-
-
-@pytest.mark.network
-def test_info_setup_missing_install_requires_is_fine(
-    mocker: MockerFixture, source_dir: Path
-) -> None:
-    setup = "from setuptools import setup; "
-    setup += "setup("
-    setup += 'name="demo", '
-    setup += 'version="0.1.0", '
-    setup += ")"
-
-    setup_py = source_dir / "setup.py"
-    setup_py.write_text(setup)
-
-    spy = mocker.spy(VirtualEnv, "run")
-    _ = PackageInfo.from_directory(source_dir)
-    assert spy.call_count == 0
 
 
 def test_info_prefer_poetry_config_over_egg_info(fixture_dir: FixtureDirGetter) -> None:

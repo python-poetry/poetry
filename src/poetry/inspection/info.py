@@ -27,7 +27,6 @@ from poetry.core.version.requirements import InvalidRequirement
 
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import isolated_builder
-from poetry.utils.setup_reader import SetupReader
 
 
 if TYPE_CHECKING:
@@ -342,58 +341,6 @@ class PackageInfo:
         return info.update(new_info)
 
     @staticmethod
-    def has_setup_files(path: Path) -> bool:
-        return any((path / f).exists() for f in SetupReader.FILES)
-
-    @classmethod
-    def from_setup_files(cls, path: Path) -> PackageInfo:
-        """
-        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses
-        the implementation at `poetry.utils.setup_reader.SetupReader` in order to parse
-        the file. This is not reliable for complex setup files and should only attempted
-        as a fallback.
-
-        :param path: Path to `setup.py` file
-        """
-        if not cls.has_setup_files(path):
-            raise PackageInfoError(
-                path, "No setup files (setup.py, setup.cfg) was found."
-            )
-
-        try:
-            result = SetupReader.read_from_directory(path)
-        except Exception as e:
-            raise PackageInfoError(path, e)
-
-        python_requires = result["python_requires"]
-        if python_requires is None:
-            python_requires = "*"
-
-        requires = "".join(dep + "\n" for dep in result["install_requires"])
-        if result["extras_require"]:
-            requires += "\n"
-
-        for extra_name, deps in result["extras_require"].items():
-            requires += f"[{extra_name}]\n"
-
-            for dep in deps:
-                requires += dep + "\n"
-
-            requires += "\n"
-
-        requirements = parse_requires(requires)
-
-        info = cls(
-            name=result.get("name"),
-            version=result.get("version"),
-            summary=result.get("description", ""),
-            requires_dist=requirements,
-            requires_python=python_requires,
-        )
-
-        return info
-
-    @staticmethod
     def _find_dist_info(path: Path) -> Iterator[Path]:
         """
         Discover all `*.*-info` directories in a given path.
@@ -491,16 +438,13 @@ class PackageInfo:
         return None
 
     @classmethod
-    def from_directory(cls, path: Path, disable_build: bool = False) -> PackageInfo:
+    def from_directory(cls, path: Path) -> PackageInfo:
         """
-        Generate package information from a package source directory. If `disable_build`
-        is not `True` and introspection of all available metadata fails, the package is
-        attempted to be built in an isolated environment so as to generate required
-        metadata.
+        Generate package information from a package source directory. If introspection
+        of all available metadata fails, the package is attempted to be built in an
+        isolated environment so as to generate required metadata.
 
         :param path: Path to generate package information from.
-        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated
-            build is attempted in order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
         info: PackageInfo | None
@@ -511,10 +455,7 @@ class PackageInfo:
 
             if not info or info.requires_dist is None:
                 try:
-                    if disable_build:
-                        info = cls.from_setup_files(path)
-                    else:
-                        info = get_pep517_metadata(path)
+                    info = get_pep517_metadata(path)
                 except PackageInfoError:
                     if not info:
                         raise
@@ -590,11 +531,6 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
     :param path: Path to package source to build and read metadata for.
     """
     info = None
-
-    with contextlib.suppress(PackageInfoError):
-        info = PackageInfo.from_setup_files(path)
-        if all(x is not None for x in (info.version, info.name, info.requires_dist)):
-            return info
 
     with tempfile.TemporaryDirectory() as dist:
         try:
