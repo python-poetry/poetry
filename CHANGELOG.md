@@ -1,6 +1,20 @@
 # Change Log
 
 
+## [1.8.2] - 2024-03-02
+
+### Fixed
+
+- Harden `lazy-wheel` error handling if the index server is behaving badly in an unexpected way ([#9051](https://github.com/python-poetry/poetry/pull/9051)).
+- Improve `lazy-wheel` error handling if the index server does not handle HTTP range requests correctly ([#9082](https://github.com/python-poetry/poetry/pull/9082)).
+- Improve `lazy-wheel` error handling if the index server pretends to support HTTP range requests but does not respect them ([#9084](https://github.com/python-poetry/poetry/pull/9084)).
+- Improve `lazy-wheel` to allow redirects for HEAD requests ([#9087](https://github.com/python-poetry/poetry/pull/9087)).
+- Improve debug logging for `lazy-wheel` errors ([#9059](https://github.com/python-poetry/poetry/pull/9059)).
+- Fix an issue where the hash of a metadata file could not be calculated correctly due to an encoding issue ([#9048](https://github.com/python-poetry/poetry/pull/9048)).
+- Fix an issue where `poetry add` failed in non-package mode if no project name was set ([#9046](https://github.com/python-poetry/poetry/pull/9046)).
+- Fix an issue where a hint to non-package mode was not compliant with the final name of the setting ([#9073](https://github.com/python-poetry/poetry/pull/9073)).
+
+
 ## [1.8.1] - 2024-02-26
 
 ### Fixed
@@ -2138,7 +2152,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.1...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.2...main
+[1.8.2]: https://github.com/python-poetry/poetry/releases/tag/1.8.2
 [1.8.1]: https://github.com/python-poetry/poetry/releases/tag/1.8.1
 [1.8.0]: https://github.com/python-poetry/poetry/releases/tag/1.8.0
 [1.7.1]: https://github.com/python-poetry/poetry/releases/tag/1.7.1
