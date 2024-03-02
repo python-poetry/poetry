@@ -169,7 +169,7 @@ class HTTPRepository(CachedRepository):
                     )
                 ):
                     metadata_hash = getattr(hashlib, hash_name)(
-                        response.text.encode()
+                        response.content
                     ).hexdigest()
                     if metadata_hash != link.metadata_hashes[hash_name]:
                         self._log(
