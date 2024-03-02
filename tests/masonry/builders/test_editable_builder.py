@@ -15,6 +15,7 @@ import pytest
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
 from poetry.core.constraints.version import Version
+from poetry.core.masonry.metadata import Metadata
 from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
@@ -100,6 +101,13 @@ def bad_scripts_too_many_colon(fixture_dir: FixtureDirGetter) -> Poetry:
     return poetry
 
 
+def expected_metadata_version() -> str:
+    # Get the metadata version that we should expect: which is poetry-core's default
+    # value.
+    metadata = Metadata()
+    return metadata.metadata_version
+
+
 def test_builder_installs_proper_files_for_standard_packages(
     simple_poetry: Poetry, tmp_venv: VirtualEnv
 ) -> None:
@@ -147,8 +155,9 @@ def test_builder_installs_proper_files_for_standard_packages(
             key=lambda x: tuple(map(int, x.split("."))),
         )
     )
+    metadata_version = expected_metadata_version()
     metadata = f"""\
-Metadata-Version: 2.1
+Metadata-Version: {metadata_version}
 Name: simple-project
 Version: 1.2.3
 Summary: Some description.
@@ -314,8 +323,9 @@ def test_builder_generates_proper_metadata_when_multiple_readme_files(
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
     assert dist_info.joinpath("METADATA").exists()
 
-    metadata = """\
-Metadata-Version: 2.1
+    metadata_version = expected_metadata_version()
+    metadata = f"""\
+Metadata-Version: {metadata_version}
 Name: my-package
 Version: 0.1
 Summary: Some description.
