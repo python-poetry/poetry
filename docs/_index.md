@@ -62,6 +62,12 @@ pipx install poetry
 {{< step >}}
 **Install Poetry (advanced)**
 
+{{% note %}}
+You can skip this step, if you simply want the latest version and already installed Poetry as described in the
+previous step. This step details advanced usages of this installation method. For example, installing Poetry from
+source, having multiple versions installed at the same time etc.
+{{% /note %}}
+
 `pipx` can install different versions of Poetry, using the same syntax as pip:
 
 ```bash
@@ -150,6 +156,12 @@ above.
 {{< /step >}}
 {{< step >}}
 **Install Poetry (advanced)**
+
+{{% note %}}
+You can skip this step, if you simply want the latest version and already installed Poetry as described in the
+previous step. This step details advanced usages of this installation method. For example, installing Poetry from
+source, using a pre-release build, configuring a different installation location etc.
+{{% /note %}}
 
 By default, Poetry is installed into a platform and user-specific directory:
 
