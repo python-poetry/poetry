@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import argument
 
@@ -9,6 +10,7 @@ from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
     from poetry.core.masonry.utils.module import Module
 
 
@@ -16,7 +18,7 @@ class RunCommand(EnvCommand):
     name = "run"
     description = "Runs a command in the appropriate environment."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument("args", "The command and arguments/options to run.", multiple=True)
     ]
 

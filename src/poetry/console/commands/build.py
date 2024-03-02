@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import option
 
@@ -9,11 +11,15 @@ from poetry.utils.env import build_environment
 from poetry.utils.helpers import remove_directory
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
+
+
 class BuildCommand(EnvCommand):
     name = "build"
     description = "Builds a package, as a tarball and a wheel by default."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
         option(
             "clean",
@@ -35,7 +41,7 @@ class BuildCommand(EnvCommand):
         ),
     ]
 
-    loggers = [
+    loggers: ClassVar[list[str]] = [
         "poetry.core.masonry.builders.builder",
         "poetry.core.masonry.builders.sdist",
         "poetry.core.masonry.builders.wheel",

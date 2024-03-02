@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -12,6 +13,8 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from poetry.core.constraints.version import Version
 
 
@@ -22,14 +25,14 @@ class VersionCommand(Command):
         "bump rule is provided."
     )
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "version",
             "The version number or the rule to update the version.",
             optional=True,
         ),
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option("short", "s", "Output the version number only"),
         option(
             "dry-run",
@@ -48,7 +51,7 @@ The new version should ideally be a valid semver string or a valid bump rule:
 patch, minor, major, prepatch, preminor, premajor, prerelease.
 """
 
-    RESERVED = {
+    RESERVED: ClassVar[set[str]] = {
         "major",
         "minor",
         "patch",
