@@ -102,6 +102,14 @@ class Python:
         return cls(executable=sys.executable)
 
     @classmethod
+    def get_by_name(cls, python_name: str) -> Python | None:
+        executable = cls._full_python_path(python_name)
+        if not executable:
+            return None
+
+        return cls(executable=executable)
+
+    @classmethod
     def get_preferred_python(cls, config: Config, io: IO | None = None) -> Python:
         io = io or NullIO()
 
