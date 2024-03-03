@@ -35,10 +35,22 @@ class _Writer:
 
     def write(self) -> str:
         buffer = []
-
+        version_solutions = []
         required_python_version_notification = False
         for incompatibility in self._root.external_incompatibilities:
             if isinstance(incompatibility.cause, PythonCause):
+                root_constraint = parse_constraint(
+                    incompatibility.cause.root_python_version
+                )
+                constraint = parse_constraint(incompatibility.cause.python_version)
+
+                version_solutions.append(
+                    "For <fg=default;options=bold>"
+                    f"{incompatibility.terms[0].dependency.name}</>,"
+                    " a possible solution would be to set the"
+                    " `<fg=default;options=bold>python</>` property to"
+                    f' <fg=yellow>"{root_constraint.intersect(constraint)}"</>'
+                )
                 if not required_python_version_notification:
                     buffer.append(
                         "The current project's supported Python range"
@@ -91,7 +103,31 @@ class _Writer:
                 message = " " * padding + message
 
             buffer.append(message)
+        if required_python_version_notification:
+            # Add suggested solution
+            links = ",".join(
+                f"\n    <fg=blue>{link}</>"
+                for link in [
+                    "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",
+                    "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",
+                ]
+            )
 
+            description = (
+                "The Python requirement can be specified via the"
+                " `<fg=default;options=bold>python</>` or"
+                " `<fg=default;options=bold>markers</>` properties"
+            )
+            if version_solutions:
+                description += "\n\n    " + "\n".join(version_solutions)
+
+            description = description.strip(" ")
+
+            buffer.append(
+                f"\n  <fg=blue;options=bold>* </>"
+                f"<fg=default;options=bold>Check your dependencies Python requirement</>:"
+                f" {description}\n{links}\n",
+            )
         return "\n".join(buffer)
 
     def _write(
