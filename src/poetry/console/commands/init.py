@@ -16,6 +16,7 @@ from tomlkit import inline_table
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.dependency_specification import RequirementsParser
+from poetry.utils.env.python_manager import Python
 
 
 if TYPE_CHECKING:
@@ -96,7 +97,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.config.config import Config
         from poetry.layouts import layout
         from poetry.pyproject.toml import PyProjectTOML
-        from poetry.utils.env import EnvManager
 
         is_interactive = self.io.is_interactive() and allow_interactive
 
@@ -174,11 +174,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             config = Config.create()
             python = (
                 ">="
-                + EnvManager.get_python_version(
-                    precision=2,
-                    prefer_active_python=config.get("virtualenvs.prefer-active-python"),
-                    io=self.io,
-                ).to_string()
+                + Python.get_preferred_python(config, self.io).minor_version.to_string()
             )
 
             if is_interactive:
