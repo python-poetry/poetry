@@ -6,6 +6,7 @@ import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from poetry.console.logging.filters import POETRY_FILTER
 from poetry.console.logging.formatters import FORMATTERS
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class IOFormatter(logging.Formatter):
-    _colors = {
+    _colors: ClassVar[dict[str, str]] = {
         "error": "fg=red",
         "warning": "fg=yellow",
         "debug": "debug",

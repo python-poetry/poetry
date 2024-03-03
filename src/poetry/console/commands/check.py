@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from cleo.helpers import option
 
@@ -11,6 +12,8 @@ from poetry.console.commands.command import Command
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from cleo.io.inputs.option import Option
+
 
 class CheckCommand(Command):
     name = "check"
@@ -19,7 +22,7 @@ class CheckCommand(Command):
         " consistency with the poetry.lock file."
     )
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "lock",
             None,

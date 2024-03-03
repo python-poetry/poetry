@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -8,12 +10,19 @@ from cleo.helpers import option
 from poetry.console.commands.command import Command
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
+
 class NewCommand(Command):
     name = "new"
     description = "Creates a new Python project at <path>."
 
-    arguments = [argument("path", "The path to create the project at.")]
-    options = [
+    arguments: ClassVar[list[Argument]] = [
+        argument("path", "The path to create the project at.")
+    ]
+    options: ClassVar[list[Option]] = [
         option("name", None, "Set the resulting package name.", flag=False),
         option("src", None, "Use the src layout for the project."),
         option(

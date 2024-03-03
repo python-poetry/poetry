@@ -136,8 +136,6 @@ known-first-party = ["poetry"]
 known-third-party = ["poetry.core"]
 required-imports = ["from __future__ import annotations"]
 
-[tool.ruff.lint.per-file-ignores]
-"src/poetry/console/*" = ["RUF012"]  # Can't annotate properly until new version of Cleo
 
 [tool.mypy]
 files = "src, tests"

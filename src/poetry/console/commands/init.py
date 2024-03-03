@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Dict
 from typing import Mapping
 from typing import Union
@@ -17,6 +18,7 @@ from poetry.utils.dependency_specification import RequirementsParser
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
@@ -32,7 +34,7 @@ class InitCommand(Command):
         "Creates a basic <comment>pyproject.toml</> file in the current directory."
     )
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
         option("author", None, "Author name of the package.", flag=False),

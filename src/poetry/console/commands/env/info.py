@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import option
 
@@ -8,6 +9,8 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
+
     from poetry.utils.env import Env
 
 
@@ -15,7 +18,7 @@ class EnvInfoCommand(Command):
     name = "env info"
     description = "Displays information about the current environment."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("path", "p", "Only display the environment's path."),
         option(
             "executable", "e", "Only display the environment's python executable path."
