@@ -106,10 +106,10 @@ class _Writer:
         if required_python_version_notification:
             # Add suggested solution
             links = ",".join(
-                f"\n    <fg=blue>{link}</>"
-                for link in [
-                    "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",
-                    "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",
+                f"\n    <fg=blue>https://python-poetry.org/docs/dependency-specification/#{section}</>"
+                for section in [
+                    "python-restricted-dependencies",
+                    "using-environment-markers",
                 ]
             )
 
