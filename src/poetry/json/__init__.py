@@ -14,10 +14,6 @@ from poetry.core.json import SCHEMA_DIR as CORE_SCHEMA_DIR
 SCHEMA_DIR = Path(__file__).parent / "schemas"
 
 
-class ValidationError(ValueError):
-    pass
-
-
 def validate_object(obj: dict[str, Any]) -> list[str]:
     schema_file = Path(SCHEMA_DIR, "poetry.json")
     schema = json.loads(schema_file.read_text(encoding="utf-8"))

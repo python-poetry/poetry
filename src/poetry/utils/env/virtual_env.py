@@ -18,7 +18,6 @@ from poetry.utils.env.base_env import Env
 from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
-from poetry.utils.env.script_strings import GET_PYTHON_VERSION
 from poetry.utils.env.script_strings import GET_SYS_PATH
 from poetry.utils.env.script_strings import GET_SYS_TAGS
 from poetry.utils.env.system_env import SystemEnv
@@ -49,16 +48,6 @@ class VirtualEnv(Env):
         output = self.run_python_script(GET_SYS_PATH)
         paths: list[str] = json.loads(output)
         return paths
-
-    def get_version_info(self) -> tuple[Any, ...]:
-        output = self.run_python_script(GET_PYTHON_VERSION)
-        assert isinstance(output, str)
-
-        return tuple(int(s) for s in output.strip().split("."))
-
-    def get_python_implementation(self) -> str:
-        implementation: str = self.marker_env["platform_python_implementation"]
-        return implementation
 
     def get_supported_tags(self) -> list[Tag]:
         output = self.run_python_script(GET_SYS_TAGS)

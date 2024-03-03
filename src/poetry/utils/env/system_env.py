@@ -30,12 +30,6 @@ class SystemEnv(Env):
     def sys_path(self) -> list[str]:
         return sys.path
 
-    def get_version_info(self) -> tuple[Any, ...]:
-        return tuple(sys.version_info)
-
-    def get_python_implementation(self) -> str:
-        return platform.python_implementation()
-
     def get_paths(self) -> dict[str, str]:
         import site
 
