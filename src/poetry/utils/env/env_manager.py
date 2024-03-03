@@ -5,7 +5,6 @@ import hashlib
 import os
 import plistlib
 import re
-import shutil
 import subprocess
 import sys
 
@@ -18,7 +17,6 @@ import tomlkit
 import virtualenv
 
 from cleo.io.null_io import NullIO
-from cleo.io.outputs.output import Verbosity
 from poetry.core.constraints.version import Version
 
 from poetry.toml.file import TOMLFile
@@ -97,70 +95,6 @@ class EnvManager:
         self._poetry = poetry
         self._io = io or NullIO()
 
-    @staticmethod
-    def _full_python_path(python: str) -> Path | None:
-        # eg first find pythonXY.bat on windows.
-        path_python = shutil.which(python)
-        if path_python is None:
-            return None
-
-        try:
-            encoding = "locale" if sys.version_info >= (3, 10) else None
-            executable = subprocess.check_output(
-                [path_python, "-c", "import sys; print(sys.executable)"],
-                text=True,
-                encoding=encoding,
-            ).strip()
-            return Path(executable)
-
-        except CalledProcessError:
-            return None
-
-    @staticmethod
-    def _detect_active_python(io: None | IO = None) -> Path | None:
-        io = io or NullIO()
-        io.write_error_line(
-            "Trying to detect current active python executable as specified in"
-            " the config.",
-            verbosity=Verbosity.VERBOSE,
-        )
-
-        executable = EnvManager._full_python_path("python")
-
-        if executable is not None:
-            io.write_error_line(f"Found: {executable}", verbosity=Verbosity.VERBOSE)
-        else:
-            io.write_error_line(
-                "Unable to detect the current active python executable. Falling"
-                " back to default.",
-                verbosity=Verbosity.VERBOSE,
-            )
-
-        return executable
-
-    @staticmethod
-    def get_python_version(
-        precision: int = 3,
-        prefer_active_python: bool = False,
-        io: None | IO = None,
-    ) -> Version:
-        version = ".".join(str(v) for v in sys.version_info[:precision])
-
-        if prefer_active_python:
-            executable = EnvManager._detect_active_python(io)
-
-            if executable:
-                encoding = "locale" if sys.version_info >= (3, 10) else None
-                python_patch = subprocess.check_output(
-                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
-                    text=True,
-                    encoding=encoding,
-                ).strip()
-
-                version = ".".join(str(v) for v in python_patch.split(".")[:precision])
-
-        return Version.parse(version)
-
     @property
     def in_project_venv(self) -> Path:
         venv: Path = self._poetry.file.path.parent / ".venv"
@@ -189,23 +123,9 @@ class EnvManager:
             # Executable in PATH or full executable path
             pass
 
-        python_path = self._full_python_path(python)
-        if python_path is None:
+        python_ = Python.get_by_name(python)
+        if python_ is None:
             raise PythonVersionNotFound(python)
-
-        try:
-            encoding = "locale" if sys.version_info >= (3, 10) else None
-            python_version_string = subprocess.check_output(
-                [python_path, "-c", GET_PYTHON_VERSION_ONELINER],
-                text=True,
-                encoding=encoding,
-            )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
-
-        python_version = Version.parse(python_version_string.strip())
-        minor = f"{python_version.major}.{python_version.minor}"
-        patch = python_version.text
 
         create = False
         # If we are required to create the virtual environment in the project directory,
@@ -218,10 +138,10 @@ class EnvManager:
                 _venv = VirtualEnv(venv)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
-                if patch != current_patch:
+                if python_.patch_version.to_string() != current_patch:
                     create = True
 
-            self.create_venv(executable=python_path, force=create)
+            self.create_venv(executable=python_.executable, force=create)
 
             return self.get(reload=True)
 
@@ -233,11 +153,14 @@ class EnvManager:
                 current_minor = current_env["minor"]
                 current_patch = current_env["patch"]
 
-                if current_minor == minor and current_patch != patch:
+                if (
+                    current_minor == python_.minor_version.to_string()
+                    and current_patch != python_.patch_version.to_string()
+                ):
                     # We need to recreate
                     create = True
 
-        name = f"{self.base_env_name}-py{minor}"
+        name = f"{self.base_env_name}-py{python_.minor_version.to_string()}"
         venv = venv_path / name
 
         # Create if needed
@@ -251,13 +174,16 @@ class EnvManager:
                 _venv = VirtualEnv(venv)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
-                if patch != current_patch:
+                if python_.patch_version.to_string() != current_patch:
                     create = True
 
-            self.create_venv(executable=python_path, force=create)
+            self.create_venv(executable=python_.executable, force=create)
 
         # Activate
-        envs[self.base_env_name] = {"minor": minor, "patch": patch}
+        envs[self.base_env_name] = {
+            "minor": python_.minor_version.to_string(),
+            "patch": python_.patch_version.to_string(),
+        }
         self.envs_file.write(envs)
 
         return self.get(reload=True)
