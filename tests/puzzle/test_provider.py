@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import shutil
+
+from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
@@ -31,6 +34,8 @@ from tests.helpers import get_dependency
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
@@ -179,10 +184,10 @@ def test_search_for_vcs_setup_egg_info(provider: Provider) -> None:
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -199,10 +204,10 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider) -> None:
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -219,10 +224,10 @@ def test_search_for_vcs_read_setup(provider: Provider, mocker: MockerFixture) ->
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -243,10 +248,10 @@ def test_search_for_vcs_read_setup_with_extras(
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
 
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(
@@ -265,22 +270,22 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
 def test_search_for_directory_setup_egg_info(
-    provider: Provider, directory: str, fixture_dir: FixtureDirGetter
+    provider: Provider, directory: str, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
-    dependency = DirectoryDependency(
-        "demo",
-        fixture_dir("git") / "github.com" / "demo" / directory,
+    path = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / directory, tmp_path / "project"
     )
+    dependency = DirectoryDependency("demo", path)
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -288,23 +293,23 @@ def test_search_for_directory_setup_egg_info(
 
 
 def test_search_for_directory_setup_egg_info_with_extras(
-    provider: Provider, fixture_dir: FixtureDirGetter
+    provider: Provider, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
-    dependency = DirectoryDependency(
-        "demo",
-        fixture_dir("git") / "github.com" / "demo" / "demo",
-        extras=["foo"],
+    path = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo", tmp_path / "project"
     )
+
+    dependency = DirectoryDependency("demo", path, extras=["foo"])
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -313,49 +318,52 @@ def test_search_for_directory_setup_egg_info_with_extras(
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
 def test_search_for_directory_setup_with_base(
-    provider: Provider, directory: str, fixture_dir: FixtureDirGetter
+    provider: Provider, directory: str, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
-    dependency = DirectoryDependency(
-        "demo",
-        fixture_dir("git") / "github.com" / "demo" / directory,
-        base=fixture_dir("git") / "github.com" / "demo" / directory,
+    path = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / directory, tmp_path / "project"
     )
+
+    dependency = DirectoryDependency("demo", path, base=path)
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
-    assert package.root_dir == (fixture_dir("git") / "github.com" / "demo" / directory)
+    assert package.root_dir == path
 
 
 def test_search_for_directory_setup_read_setup(
-    provider: Provider, mocker: MockerFixture, fixture_dir: FixtureDirGetter
+    provider: Provider,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
-    dependency = DirectoryDependency(
-        "demo",
-        fixture_dir("git") / "github.com" / "demo" / "demo",
+    path = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo", tmp_path / "project"
     )
+    dependency = DirectoryDependency("demo", path)
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -363,25 +371,28 @@ def test_search_for_directory_setup_read_setup(
 
 
 def test_search_for_directory_setup_read_setup_with_extras(
-    provider: Provider, mocker: MockerFixture, fixture_dir: FixtureDirGetter
+    provider: Provider,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
-    dependency = DirectoryDependency(
-        "demo",
-        fixture_dir("git") / "github.com" / "demo" / "demo",
-        extras=["foo"],
+    path = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo", tmp_path / "project"
     )
+
+    dependency = DirectoryDependency("demo", path, extras=["foo"])
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
 
-    required = [r for r in package.requires if not r.is_optional()]
-    optional = [r for r in package.requires if r.is_optional()]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
+    required = {r for r in package.requires if not r.is_optional()}
+    optional = {r for r in package.requires if r.is_optional()}
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {get_dependency("tomlkit"), get_dependency("cleo")}
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -389,12 +400,14 @@ def test_search_for_directory_setup_read_setup_with_extras(
 
 
 def test_search_for_directory_setup_read_setup_with_no_dependencies(
-    provider: Provider, fixture_dir: FixtureDirGetter
+    provider: Provider, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
-    dependency = DirectoryDependency(
-        "demo",
+    path = shutil.copytree(
         fixture_dir("git") / "github.com" / "demo" / "no-dependencies",
+        tmp_path / "project",
     )
+
+    dependency = DirectoryDependency("demo", path)
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
@@ -405,29 +418,28 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(
 
 
 def test_search_for_directory_poetry(
-    provider: Provider, fixture_dir: FixtureDirGetter
+    provider: Provider, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
-    dependency = DirectoryDependency(
-        "project-with-extras",
-        fixture_dir("project_with_extras"),
-    )
+    path = shutil.copytree(fixture_dir("project_with_extras"), tmp_path / "project")
+
+    dependency = DirectoryDependency("project-with-extras", path)
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "project-with-extras"
     assert package.version.text == "1.2.3"
 
-    required = [
+    required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
-    ]
-    optional = [
+    }
+    optional = {
         r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
-    ]
-    assert required == []
-    assert optional == [
+    }
+    assert not required
+    assert optional == {
         get_dependency("cachy", ">=0.2.0"),
         get_dependency("pendulum", ">=1.4.4"),
-    ]
+    }
     extras_a = canonicalize_name("extras-a")
     extras_b = canonicalize_name("extras-b")
     assert set(package.extras) == {extras_a, extras_b}
@@ -436,30 +448,28 @@ def test_search_for_directory_poetry(
 
 
 def test_search_for_directory_poetry_with_extras(
-    provider: Provider, fixture_dir: FixtureDirGetter
+    provider: Provider, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
-    dependency = DirectoryDependency(
-        "project-with-extras",
-        fixture_dir("project_with_extras"),
-        extras=["extras_a"],
-    )
+    path = shutil.copytree(fixture_dir("project_with_extras"), tmp_path / "project")
+
+    dependency = DirectoryDependency("project-with-extras", path, extras=["extras_a"])
 
     package = provider.search_for_direct_origin_dependency(dependency)
 
     assert package.name == "project-with-extras"
     assert package.version.text == "1.2.3"
 
-    required = [
+    required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
-    ]
-    optional = [
+    }
+    optional = {
         r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
-    ]
-    assert required == []
-    assert optional == [
+    }
+    assert not required
+    assert optional == {
         get_dependency("cachy", ">=0.2.0"),
         get_dependency("pendulum", ">=1.4.4"),
-    ]
+    }
     extras_a = canonicalize_name("extras-a")
     extras_b = canonicalize_name("extras-b")
     assert set(package.extras) == {extras_a, extras_b}
@@ -480,17 +490,17 @@ def test_search_for_file_sdist(
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
 
-    required = [
+    required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
-    ]
-    optional = [
+    }
+    optional = {
         r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
-    ]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [
+    }
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {
         get_dependency("cleo"),
         get_dependency("tomlkit"),
-    ]
+    }
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -511,17 +521,17 @@ def test_search_for_file_sdist_with_extras(
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
 
-    required = [
+    required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
-    ]
-    optional = [
+    }
+    optional = {
         r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
-    ]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [
+    }
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {
         get_dependency("cleo"),
         get_dependency("tomlkit"),
-    ]
+    }
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -541,17 +551,17 @@ def test_search_for_file_wheel(
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
 
-    required = [
+    required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
-    ]
-    optional = [
+    }
+    optional = {
         r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
-    ]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [
+    }
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {
         get_dependency("cleo"),
         get_dependency("tomlkit"),
-    ]
+    }
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -572,17 +582,17 @@ def test_search_for_file_wheel_with_extras(
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
 
-    required = [
+    required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
-    ]
-    optional = [
+    }
+    optional = {
         r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
-    ]
-    assert required == [get_dependency("pendulum", ">=1.4.4")]
-    assert optional == [
+    }
+    assert required == {get_dependency("pendulum", ">=1.4.4")}
+    assert optional == {
         get_dependency("cleo"),
         get_dependency("tomlkit"),
-    ]
+    }
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],

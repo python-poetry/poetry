@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -1298,13 +1299,13 @@ def test_run_installs_with_local_setuptools_directory(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: Path,
+    tmp_path: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
-    root_dir = Path(__file__).parent.parent.parent
+    root_dir = tmp_path / "root"
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
-    file_path = fixture_dir("project_with_setup/")
+    file_path = shutil.copytree(fixture_dir("project_with_setup"), root_dir / "project")
     package.add_dependency(
         Factory.create_dependency(
             "project-with-setup",

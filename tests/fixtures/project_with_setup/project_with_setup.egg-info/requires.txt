@@ -1,2 +1,0 @@
-pendulum>=1.4.4
-cachy[msgpack]>=0.2.0
