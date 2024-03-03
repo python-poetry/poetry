@@ -229,3 +229,12 @@ python = "^{python}"
 """
 
     assert expected in pyproject_file.read_text()
+
+
+def test_basic_interactive_new(
+    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, init_basic_toml: str
+) -> None:
+    path = tmp_path / "somepackage"
+    tester.execute(f"--interactive {path.as_posix()}", inputs=init_basic_inputs)
+    verify_project_directory(path, "my-package", "my_package", None)
+    assert init_basic_toml in tester.io.fetch_output()
