@@ -76,10 +76,10 @@ def get_dependency(
 
 
 def copy_path(source: Path, dest: Path) -> None:
-    if dest.is_symlink() or dest.is_file():
-        dest.unlink()  # missing_ok is only available in Python >= 3.8
-    elif dest.is_dir():
+    if dest.is_dir():
         shutil.rmtree(dest)
+    else:
+        dest.unlink(missing_ok=True)
 
     if source.is_dir():
         shutil.copytree(source, dest)
@@ -108,12 +108,13 @@ def mock_clone(
 
     assert parsed.resource is not None
     folder = FIXTURE_PATH / "git" / parsed.resource / path
+    assert folder.is_dir()
 
     if not source_root:
         source_root = Path(Config.create().get("cache-dir")) / "src"
 
     dest = source_root / path
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.mkdir(parents=True, exist_ok=True)
 
     copy_path(folder, dest)
     return MockDulwichRepo(dest)
