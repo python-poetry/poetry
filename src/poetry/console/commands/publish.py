@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
+
+
 class PublishCommand(Command):
     name = "publish"
     description = "Publishes a package to a remote repository."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "repository", "r", "The repository to publish the package to.", flag=False
         ),
@@ -51,7 +57,7 @@ The --repository option should match the name of a configured repository using
 the config command.
 """
 
-    loggers = ["poetry.publishing.publisher"]
+    loggers: ClassVar[list[str]] = ["poetry.publishing.publisher"]
 
     def handle(self) -> int:
         from poetry.publishing.publisher import Publisher

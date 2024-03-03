@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
+
 class EnvRemoveCommand(Command):
     name = "env remove"
     description = "Remove virtual environments associated with the project."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "python",
             "The python executables associated with, or names of the virtual"
@@ -19,7 +27,7 @@ class EnvRemoveCommand(Command):
             multiple=True,
         )
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "all",
             description=(

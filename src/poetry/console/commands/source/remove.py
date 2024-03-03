@@ -1,16 +1,23 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from tomlkit.items import AoT
 
 from poetry.console.commands.command import Command
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+
+
 class SourceRemoveCommand(Command):
     name = "source remove"
     description = "Remove source configured for the project."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "name",
             "Source repository name.",

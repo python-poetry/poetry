@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import argument
 
@@ -8,6 +9,7 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
     from cleo.ui.table import Rows
 
 
@@ -15,7 +17,7 @@ class SourceShowCommand(Command):
     name = "source show"
     description = "Show information about sources configured for the project."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "source",
             "Source(s) to show information for. Defaults to showing all sources.",
