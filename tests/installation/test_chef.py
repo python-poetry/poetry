@@ -206,8 +206,9 @@ def test_prepare_directory_script(
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-    archive = fixture_dir("project_with_setup_calls_script").resolve()
-
+    archive = shutil.copytree(
+        fixture_dir("project_with_setup_calls_script").resolve(), tmp_path / "project"
+    )
     wheel = chef.prepare(archive)
 
     assert wheel.name == "project_with_setup_calls_script-0.1.2-py3-none-any.whl"
