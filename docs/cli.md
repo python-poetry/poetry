@@ -102,11 +102,17 @@ my-package
 
 ### Options
 
+* `--interactive (-i)`: Allow interactive specification of project configuration.
 * `--name`: Set the resulting package name.
 * `--src`: Use the src layout for the project.
 * `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
   keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
   in mind.
+* `--description`: Description of the package.
+* `--author`: Author of the package.
+* `--python` Compatible Python versions.
+* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+* `--dev-dependency`: Development requirements, see `--dependency`.
 
 
 ## init

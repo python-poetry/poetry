@@ -103,7 +103,9 @@ class Layout:
 
         return package
 
-    def create(self, path: Path, with_tests: bool = True) -> None:
+    def create(
+        self, path: Path, with_tests: bool = True, with_pyproject: bool = True
+    ) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
@@ -112,7 +114,8 @@ class Layout:
         if with_tests:
             self._create_tests(path)
 
-        self._write_poetry(path)
+        if with_pyproject:
+            self._write_poetry(path)
 
     def generate_poetry_content(self) -> TOMLDocument:
         template = POETRY_DEFAULT
