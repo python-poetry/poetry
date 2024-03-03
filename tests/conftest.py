@@ -26,6 +26,7 @@ from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.factory import Factory
 from poetry.layouts import layout
+from poetry.packages.direct_origin import _get_package_from_git
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.utils.cache import ArtifactCache
@@ -299,6 +300,8 @@ def git_mock(mocker: MockerFixture) -> None:
     mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
     p = mocker.patch("poetry.vcs.git.Git.get_revision")
     p.return_value = MOCK_DEFAULT_GIT_REVISION
+
+    _get_package_from_git.cache_clear()
 
 
 @pytest.fixture
