@@ -4,7 +4,6 @@ import contextlib
 import os
 import re
 import shutil
-import sys
 import urllib.parse
 
 from pathlib import Path
@@ -74,24 +73,16 @@ def get_dependency(
     return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
-def copy_or_symlink(source: Path, dest: Path) -> None:
+def copy_path(source: Path, dest: Path) -> None:
     if dest.is_symlink() or dest.is_file():
         dest.unlink()  # missing_ok is only available in Python >= 3.8
     elif dest.is_dir():
         shutil.rmtree(dest)
 
-    # os.symlink requires either administrative privileges or developer mode on Win10,
-    # throwing an OSError if neither is active.
-    if sys.platform == "win32":
-        try:
-            os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
-        except OSError:
-            if source.is_dir():
-                shutil.copytree(str(source), str(dest))
-            else:
-                shutil.copyfile(str(source), str(dest))
+    if source.is_dir():
+        shutil.copytree(source, dest)
     else:
-        os.symlink(str(source), str(dest))
+        shutil.copyfile(source, dest)
 
 
 class MockDulwichRepo:
@@ -122,7 +113,7 @@ def mock_clone(
     dest = source_root / path
     dest.parent.mkdir(parents=True, exist_ok=True)
 
-    copy_or_symlink(folder, dest)
+    copy_path(folder, dest)
     return MockDulwichRepo(dest)
 
 
@@ -138,7 +129,7 @@ def mock_download(
 
     fixture = FIXTURE_PATH / parts.path.lstrip("/")
 
-    copy_or_symlink(fixture, dest)
+    copy_path(fixture, dest)
 
 
 class TestExecutor(Executor):
