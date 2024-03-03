@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from poetry.publishing.uploader import HashManager
+from poetry.publishing.hash_manager import HashManager
 
 
 if TYPE_CHECKING:
