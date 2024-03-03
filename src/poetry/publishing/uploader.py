@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import io
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -18,6 +15,7 @@ from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
+from poetry.publishing.hash_manager import HashManager
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
 
@@ -126,19 +124,13 @@ class Uploader:
 
         file_type = self._get_type(file)
 
-        blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
+        hash_manager = HashManager()
+        hash_manager.hash(file)
+        file_hashes = hash_manager.hexdigest()
 
-        md5_hash = hashlib.md5()
-        sha256_hash = hashlib.sha256()
-        with file.open("rb") as fp:
-            for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
-                md5_hash.update(content)
-                sha256_hash.update(content)
-                blake2_256_hash.update(content)
-
-        md5_digest = md5_hash.hexdigest()
-        sha2_digest = sha256_hash.hexdigest()
-        blake2_256_digest = blake2_256_hash.hexdigest()
+        md5_digest = file_hashes.md5
+        sha2_digest = file_hashes.sha256
+        blake2_256_digest = file_hashes.blake2_256
 
         py_version: str | None = None
         if file_type == "bdist_wheel":
