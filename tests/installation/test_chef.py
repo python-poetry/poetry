@@ -133,10 +133,13 @@ def test_prepare_directory_with_extensions(
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     env = EnvManager.get_system_env()
     chef = Chef(artifact_cache, env, Factory.create_pool(config))
-    archive = fixture_dir("extended_with_no_setup").resolve()
+    archive = shutil.copytree(
+        fixture_dir("extended_with_no_setup").resolve(), tmp_path / "project"
+    )
 
     wheel = chef.prepare(archive)
 
@@ -206,8 +209,9 @@ def test_prepare_directory_script(
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-    archive = fixture_dir("project_with_setup_calls_script").resolve()
-
+    archive = shutil.copytree(
+        fixture_dir("project_with_setup_calls_script").resolve(), tmp_path / "project"
+    )
     wheel = chef.prepare(archive)
 
     assert wheel.name == "project_with_setup_calls_script-0.1.2-py3-none-any.whl"

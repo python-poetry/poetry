@@ -29,6 +29,14 @@ The current project's supported Python range (>=3.6,<4.0) is not compatible with
 
 Because no versions of foo match !=1.0.0
  and foo (1.0.0) requires Python <3.5, foo is forbidden.
-So, because myapp depends on foo (*), version solving failed."""
+So, because myapp depends on foo (*), version solving failed.
+
+  <fg=blue;options=bold>* </><fg=default;options=bold>Check your dependencies Python requirement</>: The Python requirement can be specified via the `<fg=default;options=bold>python</>` or `<fg=default;options=bold>markers</>` properties
+
+    For <fg=default;options=bold>foo</>, a possible solution would be to set the `<fg=default;options=bold>python</>` property to <fg=yellow>"<empty>"</>
+
+    <fg=blue>https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies</>,
+    <fg=blue>https://python-poetry.org/docs/dependency-specification/#using-environment-markers</>
+"""
 
     check_solver_result(root, provider, error=error)

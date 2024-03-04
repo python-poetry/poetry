@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
 
 class InstallCommand(InstallerCommand):
     name = "install"
     description = "Installs the project dependencies."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
             "no-dev",
@@ -82,7 +89,10 @@ If you want to use Poetry only for dependency management but not for packaging,
 you can set the "package-mode" to false in your pyproject.toml file.
 """
 
-    _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
+    _loggers: ClassVar[list[str]] = [
+        "poetry.repositories.pypi_repository",
+        "poetry.inspection.info",
+    ]
 
     @property
     def activated_groups(self) -> set[str]:

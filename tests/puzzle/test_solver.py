@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import re
+import shutil
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -2046,10 +2048,15 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
 
 
 def test_duplicate_path_dependencies(
-    solver: Solver, package: ProjectPackage, fixture_dir: FixtureDirGetter
+    solver: Solver,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     set_package_python_versions(solver.provider, "^3.7")
-    project_dir = fixture_dir("with_conditional_path_deps")
+    project_dir = shutil.copytree(
+        fixture_dir("with_conditional_path_deps"), tmp_path / "project"
+    )
 
     path1 = (project_dir / "demo_one").as_posix()
     demo1 = Package("demo", "1.2.3", source_type="directory", source_url=path1)
@@ -2079,10 +2086,15 @@ def test_duplicate_path_dependencies(
 
 
 def test_duplicate_path_dependencies_same_path(
-    solver: Solver, package: ProjectPackage, fixture_dir: FixtureDirGetter
+    solver: Solver,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     set_package_python_versions(solver.provider, "^3.7")
-    project_dir = fixture_dir("with_conditional_path_deps")
+    project_dir = shutil.copytree(
+        fixture_dir("with_conditional_path_deps"), tmp_path / "project"
+    )
 
     path1 = (project_dir / "demo_one").as_posix()
     demo1 = Package("demo", "1.2.3", source_type="directory", source_url=path1)
@@ -2647,11 +2659,16 @@ def test_solver_can_resolve_directory_dependencies(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
+    project_dir = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo",
+        tmp_path / "project",
+    )
+    path = project_dir.as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
@@ -2732,13 +2749,18 @@ def test_solver_can_resolve_directory_dependencies_with_extras(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
+    project_dir = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo",
+        tmp_path / "project",
+    )
+    path = project_dir.as_posix()
 
     package.add_dependency(
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
@@ -2770,11 +2792,15 @@ def test_solver_can_resolve_sdist_dependencies(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").as_posix()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    path = shutil.copy(fixture_dir("distributions") / "demo-0.1.0.tar.gz", project_dir)
+    path = Path(path).as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
@@ -2800,13 +2826,17 @@ def test_solver_can_resolve_sdist_dependencies_with_extras(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").as_posix()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    path = shutil.copy(fixture_dir("distributions") / "demo-0.1.0.tar.gz", project_dir)
+    path = Path(path).as_posix()
 
     package.add_dependency(
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
@@ -2838,11 +2868,17 @@ def test_solver_can_resolve_wheel_dependencies(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").as_posix()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    path = shutil.copy(
+        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl", project_dir
+    )
+    path = Path(path).as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
@@ -2868,13 +2904,19 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").as_posix()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    path = shutil.copy(
+        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl", project_dir
+    )
+    path = Path(path).as_posix()
 
     package.add_dependency(
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
@@ -3753,6 +3795,7 @@ def test_solver_cannot_choose_another_version_for_directory_dependencies(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.1.0")
@@ -3762,7 +3805,10 @@ def test_solver_cannot_choose_another_version_for_directory_dependencies(
     repo.add_package(demo)
     repo.add_package(pendulum)
 
-    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
+    project_dir = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo", tmp_path / "project"
+    )
+    path = project_dir.as_posix()
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
     package.add_dependency(Factory.create_dependency("foo", "^1.2.3"))
@@ -3778,6 +3824,7 @@ def test_solver_cannot_choose_another_version_for_file_dependencies(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
@@ -3787,7 +3834,11 @@ def test_solver_cannot_choose_another_version_for_file_dependencies(
     repo.add_package(demo)
     repo.add_package(pendulum)
 
-    path = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").as_posix()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    path = shutil.copy(
+        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl", project_dir
+    )
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
     package.add_dependency(Factory.create_dependency("foo", "^1.2.3"))
@@ -3826,13 +3877,18 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     package: ProjectPackage,
     http: type[httpretty.httpretty],
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
-    path = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    path = shutil.copy(
+        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl", project_dir
+    )
 
     http.register_uri(
         "GET",
         "https://foo.bar/demo-0.1.0-py2.py3-none-any.whl",
-        body=path.read_bytes(),
+        body=Path(path).read_bytes(),
         streaming=True,
     )
     pendulum = get_package("pendulum", "2.0.3")
@@ -4343,6 +4399,7 @@ def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     """
     Another package requires the same dependency with extras that is required
@@ -4358,7 +4415,11 @@ def test_solver_direct_origin_dependency_with_extras_requested_by_other_package(
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = (fixture_dir("git") / "github.com" / "demo" / "demo").as_posix()
+    project_dir = shutil.copytree(
+        fixture_dir("git") / "github.com" / "demo" / "demo",
+        tmp_path / "project",
+    )
+    path = project_dir.as_posix()
 
     # project requires path dependency of demo while demo-foo requires demo[foo]
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
