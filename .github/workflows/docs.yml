@@ -33,6 +33,9 @@ jobs:
         with:
           repository: python-poetry/website
 
+      - name: Bootstrap poetry
+        run: pipx install poetry
+
       - name: Checkout Poetry Source
         uses: actions/checkout@v4
         with:
@@ -55,7 +58,6 @@ jobs:
 
       - name: Fetch Documentation
         run: |
-          pipx install poetry
           poetry install --no-root --only main
           poetry run python bin/website build --local ./poetry
 
