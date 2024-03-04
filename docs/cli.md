@@ -579,6 +579,10 @@ Should match a repository name set by the [`config`](#config) command.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
 
+{{% note %}}
+See [Configuring Credentials]({{< relref "repositories/#configuring-credentials" >}}) for more information on how to configure credentials.
+{{% /note %}}
+
 ## config
 
 The `config` command allows you to edit poetry config settings and repositories.
