@@ -1562,7 +1562,13 @@ def test_executor_known_hashes(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
+    mock_file_downloads: None,
 ) -> None:
+    # when installing sdist, an isolated build environment is required to extract metadata
+    # this will install any build system requirements into the environment, to avoid failures when
+    # network is not available we enable mock_file_downloads fixture here
+    # see: https://github.com/python-poetry/poetry/issues/9114
+
     package_source_url: Path = (
         fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     ).resolve()
