@@ -7,6 +7,7 @@ from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
+from poetry.utils._compat import is_relative_to
 
 
 if TYPE_CHECKING:
@@ -39,9 +40,12 @@ class EnvRemoveCommand(Command):
     def handle(self) -> int:
         from poetry.utils.env import EnvManager
 
+        is_in_project = self.poetry.config.get("virtualenvs.in-project")
+
         pythons = self.argument("python")
-        all = self.option("all")
-        if not (pythons or all):
+        remove_all_envs = self.option("all")
+
+        if not (pythons or remove_all_envs or is_in_project):
             self.line("No virtualenv provided.")
 
         manager = EnvManager(self.poetry)
@@ -49,14 +53,17 @@ class EnvRemoveCommand(Command):
         for python in pythons:
             venv = manager.remove(python)
             self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
-        if all:
+        if remove_all_envs or is_in_project:
             for venv in manager.list():
-                manager.remove_venv(venv.path)
-                self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
+                if not is_in_project or is_relative_to(
+                    venv.path, self.poetry.pyproject_path.parent
+                ):
+                    manager.remove_venv(venv.path)
+                    self.line(f"Deleted virtualenv: <comment>{venv.path}</comment>")
             # Since we remove all the virtualenvs, we can also remove the entry
             # in the envs file. (Strictly speaking, we should do this explicitly,
             # in case it points to a virtualenv that had been removed manually before.)
-            if manager.envs_file.exists():
+            if remove_all_envs and manager.envs_file.exists():
                 manager.envs_file.remove_section(manager.base_env_name)
 
         return 0
