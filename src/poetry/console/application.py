@@ -111,14 +111,12 @@ class Application(BaseApplication):
 
     @property
     def poetry(self) -> Poetry:
-        from pathlib import Path
-
         from poetry.factory import Factory
 
         if self._poetry is not None:
             return self._poetry
 
-        project_path = Path.cwd()
+        project_path = None  # Use the default project path search behavior.
 
         if self._io and self._io.input.option("directory"):
             project_path = self._io.input.option("directory")
