@@ -137,3 +137,27 @@ def test_remove_multiple(
     for name in remaining_envs:
         assert (venv_cache / name).exists()
     assert set(tester.io.fetch_output().split("\n")) == expected
+
+
+def test_remove_in_project(tester: CommandTester, venvs_in_project_dir: Path) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute()
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_remove_in_project_all(
+    tester: CommandTester, venvs_in_project_dir: Path
+) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute("--all")
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected

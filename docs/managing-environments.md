@@ -160,3 +160,12 @@ poetry env remove --all
 ```
 
 If you remove the currently activated virtual environment, it will be automatically deactivated.
+
+{{% note %}}
+If you use the [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}}) configuration, you
+can simply use the command as shown below.
+
+```bash
+poetry env remove
+```
+{{% /note %}}
