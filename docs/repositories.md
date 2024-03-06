@@ -76,6 +76,16 @@ poetry config http-basic.foo-pub <username> <password>
 
 {{% /note %}}
 
+{{% note %}}
+When configuring a repository using environment variables, note that correct suffixes need to be used.
+
+```bash
+export POETRY_REPOSITORIES_FOO_URL=https://pypi.example.org/legacy/
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
+```
+{{% /note %}}
+
 Now, all the is left is to build and publish your project using the
 [`publish`]({{< relref "cli#publish" >}}).
 
