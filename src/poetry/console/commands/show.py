@@ -58,6 +58,7 @@ class ShowCommand(GroupCommand, EnvCommand):
             " packages",
         ),
         option("latest", "l", "Show the latest version."),
+        option("scripts", "s", "Show all available scripts."),
         option(
             "outdated",
             "o",
@@ -81,6 +82,9 @@ lists all packages available."""
 
         if self.option("tree"):
             self.init_styles(self.io)
+
+        if self.option("scripts"):
+            return self.display_available_scripts()
 
         if self.option("top-level"):
             if self.option("tree"):
@@ -412,6 +416,17 @@ lists all packages available."""
                     break
 
         return 0
+
+    def display_available_scripts(self):
+        scripts = self.poetry.local_config.get("scripts")
+
+        if not scripts:
+            self.line("No scripts available.")
+            return 0
+        
+        self.line("Available script entry-points:\n")
+        for script, module in scripts.items():
+            self.line(f"\t<info>{script}</info> \t\t<c1>{module}</c1>")
 
     def display_package_tree(
         self,
