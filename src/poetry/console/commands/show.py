@@ -417,16 +417,17 @@ lists all packages available."""
 
         return 0
 
-    def display_available_scripts(self):
+    def display_available_scripts(self) -> int:
         scripts = self.poetry.local_config.get("scripts")
 
-        if not scripts:
+        if scripts:
+            self.line("Available script entry-points:\n")
+            for script, module in scripts.items():
+                self.line(f"\t<info>{script}</info> \t\t<c1>{module}</c1>")
+        else:
             self.line("No scripts available.")
-            return 0
-        
-        self.line("Available script entry-points:\n")
-        for script, module in scripts.items():
-            self.line(f"\t<info>{script}</info> \t\t<c1>{module}</c1>")
+
+        return 0
 
     def display_package_tree(
         self,
