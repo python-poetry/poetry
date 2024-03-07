@@ -4,6 +4,7 @@ import functools
 import hashlib
 
 from contextlib import contextmanager
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -374,7 +375,11 @@ class HTTPRepository(CachedRepository):
             hash_name = get_highest_priority_hash_type(
                 set(link.hashes.keys()), link.filename
             )
-            known_hash = getattr(hashlib, hash_name)() if hash_name else None
+            known_hash = None
+            with suppress(ValueError, AttributeError):
+                # Handle ValueError here as well since under FIPS environments
+                # this is what is raised (e.g., for MD5)
+                known_hash = getattr(hashlib, hash_name)() if hash_name else None
             required_hash = hashlib.sha256()
 
             chunksize = 4096
