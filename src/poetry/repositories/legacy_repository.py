@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import suppress
+from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -11,6 +13,7 @@ from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
+from poetry.repositories.link_sources.html import SimpleRepositoryRootPage
 
 
 if TYPE_CHECKING:
@@ -135,7 +138,29 @@ class LegacyRepository(HTTPRepository):
         )
 
     def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
-        response = self._get_response(f"/{name}/")
-        if not response:
+        if not (response := self._get_response(f"/{name}/")):
             raise PackageNotFound(f"Package [{name}] not found.")
         return SimpleRepositoryPage(response.url, response.text)
+
+    @cached_property
+    def root_page(self) -> SimpleRepositoryRootPage:
+        if not (response := self._get_response("/")):
+            self._log(
+                f"Unable to retrieve package listing from package source {self.name}",
+                level="error",
+            )
+            return SimpleRepositoryRootPage()
+
+        return SimpleRepositoryRootPage(response.text)
+
+    def search(self, query: str) -> list[Package]:
+        results: list[Package] = []
+
+        for candidate in self.root_page.search(query):
+            with suppress(PackageNotFound):
+                page = self.get_page(candidate)
+
+                for package in page.packages:
+                    results.append(package)
+
+        return results
