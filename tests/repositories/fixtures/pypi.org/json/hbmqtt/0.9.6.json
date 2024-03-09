@@ -90,13 +90,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "cc1f010f129465cc396339640fcffed9",
-        "sha256": "6764d3c7cf6d056238c04709c23dbb72e2b0227495efd871c2f1da10a4472cd9"
+        "md5": "b284e3118882f169aa618a856cd91c5f",
+        "sha256": "379f1d9044997c69308ac2e01621c817b5394e1fbe0696e62538ae2dd0aa7e07"
       },
       "downloads": -1,
       "filename": "hbmqtt-0.9.6.tar.gz",
       "has_sig": false,
-      "md5_digest": "cc1f010f129465cc396339640fcffed9",
+      "md5_digest": "b284e3118882f169aa618a856cd91c5f",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,

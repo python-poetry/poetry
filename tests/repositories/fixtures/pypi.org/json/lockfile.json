@@ -5,16 +5,16 @@
       "filename": "lockfile-0.12.2-py2.py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/c8/22/9460e311f340cb62d26a38c419b1381b8593b0bb6b5d1f056938b086d362/lockfile-0.12.2-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "07b04864472c90cdf4452cf250687334",
-        "sha256": "6c3cb24f344923d30b2785d5ad75182c8ea7ac1b6171b08657258ec7429d50fa"
+        "md5": "71d44ac2adeca84c00c0291e1635382a",
+        "sha256": "62e668c1cb0ef8eeb837d21c2f5a5748ea6eed3d079669df290fda8172825f90"
       }
     },
     {
       "filename": "lockfile-0.12.2.tar.gz",
       "url": "https://files.pythonhosted.org/packages/17/47/72cb04a58a35ec495f96984dddb48232b551aafb95bde614605b754fe6f7/lockfile-0.12.2.tar.gz",
       "hashes": {
-        "md5": "a6a1a82957a23afdf44cfdd039b65ff9",
-        "sha256": "6aed02de03cba24efabcd600b30540140634fc06cfa603822d508d5361e9f799"
+        "md5": "303430a1d9089ff9326cecbe57e35a32",
+        "sha256": "58c5fd9fc313dc5bf5702eeab043cde1bed7149b09bec681a82064226a331a37"
       }
     }
   ],

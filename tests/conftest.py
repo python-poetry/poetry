@@ -11,6 +11,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 
 import httpretty
 import keyring
@@ -60,6 +61,11 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
     from tests.types import SetProjectContext
+
+
+pytest_plugins = [
+    "tests.repositories.fixtures",
+]
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -279,7 +285,6 @@ def download_mock(mocker: MockerFixture) -> None:
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
     mocker.patch("poetry.packages.direct_origin.download_file", new=mock_download)
-    mocker.patch("poetry.repositories.http_repository.download_file", new=mock_download)
 
 
 @pytest.fixture(autouse=True)
@@ -323,7 +328,7 @@ def git_mock(mocker: MockerFixture) -> None:
 @pytest.fixture
 def http() -> Iterator[type[httpretty.httpretty]]:
     httpretty.reset()
-    with httpretty.enabled(allow_net_connect=False):
+    with httpretty.enabled(allow_net_connect=False, verbose=True):
         yield httpretty
 
 

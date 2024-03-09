@@ -17,7 +17,7 @@
       "Topic :: Software Development :: Libraries :: Python Modules",
       "Topic :: Text Processing :: Markup"
     ],
-    "description": "YAML is a data serialization format designed for human readability\nand interaction with scripting languages.  PyYAML is a YAML parser\nand emitter for Python.\n\nPyYAML features a complete YAML 1.1 parser, Unicode support, pickle\nsupport, capable extension API, and sensible error messages.  PyYAML\nsupports standard YAML tags and provides Python-specific tags that\nallow to represent an arbitrary Python object.\n\nPyYAML is applicable for a broad range of tasks from complex\nconfiguration files to object serialization and persistance.",
+    "description": "",
     "description_content_type": "",
     "docs_url": null,
     "download_url": "http://pyyaml.org/download/pyyaml/PyYAML-3.13.tar.gz",
@@ -52,13 +52,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "a83441aa7004e474bed6f6daeb61f27a",
-        "sha256": "d5eef459e30b09f5a098b9cea68bebfeb268697f78d647bd255a085371ac7f3f"
+        "md5": "57862339584f6f631cb2cd434c0dce22",
+        "sha256": "0cac9398d467c1d43b14380faeaa90dfc99223c0cf8d08ddb5168156240e9fc0"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp27-cp27m-win32.whl",
       "has_sig": false,
-      "md5_digest": "a83441aa7004e474bed6f6daeb61f27a",
+      "md5_digest": "57862339584f6f631cb2cd434c0dce22",
       "packagetype": "bdist_wheel",
       "python_version": "cp27",
       "requires_python": null,
@@ -72,13 +72,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "dd05ba2d6cb042452a3849dea13b94f0",
-        "sha256": "e01d3203230e1786cd91ccfdc8f8454c8069c91bee3962ad93b87a4b2860f537"
+        "md5": "595ab135b3b5d73984b6aa3c430804dc",
+        "sha256": "22604446b01612af63e369c6bed7a2c454eda9bd5ccb7edf9bfbfd39a14ae464"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp27-cp27m-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "dd05ba2d6cb042452a3849dea13b94f0",
+      "md5_digest": "595ab135b3b5d73984b6aa3c430804dc",
       "packagetype": "bdist_wheel",
       "python_version": "cp27",
       "requires_python": null,
@@ -92,13 +92,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "49365caa070d53e30deceae118e4fea8",
-        "sha256": "558dd60b890ba8fd982e05941927a3911dc409a63dcb8b634feaa0cda69330d3"
+        "md5": "febd1e0a6e54bc16ead1a355a41ef2a0",
+        "sha256": "8e537c28684698935e2c86a5ed6bc5af736e46712e9a7f8a4c69f3694f4b6bc3"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp34-cp34m-win32.whl",
       "has_sig": false,
-      "md5_digest": "49365caa070d53e30deceae118e4fea8",
+      "md5_digest": "febd1e0a6e54bc16ead1a355a41ef2a0",
       "packagetype": "bdist_wheel",
       "python_version": "cp34",
       "requires_python": null,
@@ -112,13 +112,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "0c486a54c19dd18b9e65a559886935c4",
-        "sha256": "d46d7982b62e0729ad0175a9bc7e10a566fc07b224d2c79fafb5e032727eaa04"
+        "md5": "ca6e472447f541d5a1bf5ff998e8fc2e",
+        "sha256": "a1ecddafcc43a383acb99f241ca7da0011082dd7a9236495ba8a87fbad0c40d2"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp34-cp34m-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "0c486a54c19dd18b9e65a559886935c4",
+      "md5_digest": "ca6e472447f541d5a1bf5ff998e8fc2e",
       "packagetype": "bdist_wheel",
       "python_version": "cp34",
       "requires_python": null,
@@ -132,13 +132,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "53ce2b9f6b741fb2f070d12839b5789e",
-        "sha256": "a7c28b45d9f99102fa092bb213aa12e0aaf9a6a1f5e395d36166639c1f96c3a1"
+        "md5": "2f45666423475f050b5b5785930e5876",
+        "sha256": "e0aa0b28e3faf7a8bcb8f4ab3d28e4fb01d687bcfb75e5f6b12d53b82f99b6cc"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp35-cp35m-win32.whl",
       "has_sig": false,
-      "md5_digest": "53ce2b9f6b741fb2f070d12839b5789e",
+      "md5_digest": "2f45666423475f050b5b5785930e5876",
       "packagetype": "bdist_wheel",
       "python_version": "cp35",
       "requires_python": null,
@@ -152,13 +152,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "1b70e7ced4c82364bda4ac9094d6e259",
-        "sha256": "bc558586e6045763782014934bfaf39d48b8ae85a2713117d16c39864085c613"
+        "md5": "a21cdc697d03b9b446f95e6d6b5ab93e",
+        "sha256": "b96803e106c5ebbae46018e0523ec7dc970d95b2cf8761d6c0a2c75d8d5c027b"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp35-cp35m-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "1b70e7ced4c82364bda4ac9094d6e259",
+      "md5_digest": "a21cdc697d03b9b446f95e6d6b5ab93e",
       "packagetype": "bdist_wheel",
       "python_version": "cp35",
       "requires_python": null,
@@ -172,13 +172,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "8f62197b853b5b387ff588df05cee7a6",
-        "sha256": "40c71b8e076d0550b2e6380bada1f1cd1017b882f7e16f09a65be98e017f211a"
+        "md5": "088e59a995c3387ebe666841bc02ab1b",
+        "sha256": "9a3dbf2d52067e59d74d161655e6d841596cd736ad17f5fdadd9eb9416faddef"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp36-cp36m-win32.whl",
       "has_sig": false,
-      "md5_digest": "8f62197b853b5b387ff588df05cee7a6",
+      "md5_digest": "088e59a995c3387ebe666841bc02ab1b",
       "packagetype": "bdist_wheel",
       "python_version": "cp36",
       "requires_python": null,
@@ -192,13 +192,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "ff7280dd032d202b417871d39febadec",
-        "sha256": "3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b"
+        "md5": "a4db4b28a9d04264f93d1aaf0d0ae88d",
+        "sha256": "cc1531e17d6de77b03971719feb1e8e5ff976bea3d645c3772dbb9fbb91ffde1"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp36-cp36m-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "ff7280dd032d202b417871d39febadec",
+      "md5_digest": "a4db4b28a9d04264f93d1aaf0d0ae88d",
       "packagetype": "bdist_wheel",
       "python_version": "cp36",
       "requires_python": null,
@@ -212,13 +212,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "03ac720a2dcb18f2f1a3d026d281d778",
-        "sha256": "e170a9e6fcfd19021dd29845af83bb79236068bf5fd4df3327c1be18182b2531"
+        "md5": "60fd8936e8bdf917a750172f33b62d51",
+        "sha256": "a0184bd61052fa6942d65c294468116eaf00f43669437d46ad5530f7005c7f37"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp37-cp37m-win32.whl",
       "has_sig": false,
-      "md5_digest": "03ac720a2dcb18f2f1a3d026d281d778",
+      "md5_digest": "60fd8936e8bdf917a750172f33b62d51",
       "packagetype": "bdist_wheel",
       "python_version": "cp37",
       "requires_python": null,
@@ -232,13 +232,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "02ab28701247a80e059daa6efe11e67d",
-        "sha256": "aa7dd4a6a427aed7df6fb7f08a580d68d9b118d90310374716ae90b710280af1"
+        "md5": "36d19ecd2632ba0e0a362f2a28d9244a",
+        "sha256": "84492bd518aeafdf1d2bceae160a60d748f75eb815533d96b8232205161f21f4"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13-cp37-cp37m-win_amd64.whl",
       "has_sig": false,
-      "md5_digest": "02ab28701247a80e059daa6efe11e67d",
+      "md5_digest": "36d19ecd2632ba0e0a362f2a28d9244a",
       "packagetype": "bdist_wheel",
       "python_version": "cp37",
       "requires_python": null,
@@ -252,13 +252,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "b78b96636d68ac581c0e2f38158c224f",
-        "sha256": "3ef3092145e9b70e3ddd2c7ad59bdd0252a94dfe3949721633e41344de00a6bf"
+        "md5": "406a166b8ce8df5790f7689ad45d201e",
+        "sha256": "e6c07f136ba90afc1b049d7577b4f955845d796f359324662758f403929fd481"
       },
       "downloads": -1,
       "filename": "PyYAML-3.13.tar.gz",
       "has_sig": false,
-      "md5_digest": "b78b96636d68ac581c0e2f38158c224f",
+      "md5_digest": "406a166b8ce8df5790f7689ad45d201e",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,

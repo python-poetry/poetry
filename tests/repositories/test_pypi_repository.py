@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-import json
-import shutil
-
 from io import BytesIO
-from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
 
@@ -17,16 +12,13 @@ from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
 from poetry.factory import Factory
-from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
-    from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
-    from tests.types import RequestsSessionGet
+    from tests.types import DistributionHashGetter
 
 
 @pytest.fixture(autouse=True)
@@ -34,67 +26,24 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
     pass
 
 
-class MockRepository(PyPiRepository):
-    JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
-    DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
-
-    def __init__(self, fallback: bool = False) -> None:
-        super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
-        self._lazy_wheel = False
-
-    def get_json_page(self, name: NormalizedName) -> SimpleJsonPage:
-        fixture = self.JSON_FIXTURES / (name + ".json")
-
-        if not fixture.exists():
-            raise PackageNotFound(f"Package [{name}] not found.")
-
-        return SimpleJsonPage("", json.loads(fixture.read_text()))
-
-    def _get(
-        self, url: str, headers: dict[str, str] | None = None
-    ) -> dict[str, Any] | None:
-        parts = url.split("/")[1:]
-        name = parts[0]
-        version = parts[1] if len(parts) == 3 else None
-
-        if not version:
-            fixture = self.JSON_FIXTURES / (name + ".json")
-        else:
-            fixture = self.JSON_FIXTURES / name / (version + ".json")
-
-        if not fixture.exists():
-            return None
-
-        with fixture.open(encoding="utf-8") as f:
-            data: dict[str, Any] = json.load(f)
-            return data
-
-    def _download(
-        self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
-    ) -> None:
-        filename = url.split("/")[-1]
-
-        fixture = self.DIST_FIXTURES / filename
-
-        shutil.copyfile(str(fixture), dest)
-
-
-def test_find_packages() -> None:
-    repo = MockRepository()
+def test_find_packages(pypi_repository: PyPiRepository) -> None:
+    repo = pypi_repository
     packages = repo.find_packages(Factory.create_dependency("requests", "^2.18"))
 
     assert len(packages) == 5
 
 
-def test_find_packages_with_prereleases() -> None:
-    repo = MockRepository()
+def test_find_packages_with_prereleases(pypi_repository: PyPiRepository) -> None:
+    repo = pypi_repository
     packages = repo.find_packages(Factory.create_dependency("toga", ">=0.3.0.dev2"))
 
     assert len(packages) == 7
 
 
-def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
-    repo = MockRepository()
+def test_find_packages_does_not_select_prereleases_if_not_allowed(
+    pypi_repository: PyPiRepository,
+) -> None:
+    repo = pypi_repository
     packages = repo.find_packages(Factory.create_dependency("pyyaml", "*"))
 
     assert len(packages) == 1
@@ -103,8 +52,10 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed() -> None:
 @pytest.mark.parametrize(
     ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
-def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
-    repo = MockRepository()
+def test_find_packages_only_prereleases(
+    constraint: str, count: int, pypi_repository: PyPiRepository
+) -> None:
+    repo = pypi_repository
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert len(packages) == count
@@ -121,15 +72,19 @@ def test_find_packages_only_prereleases(constraint: str, count: int) -> None:
         ("==21.11b0", ["21.11b0"]),
     ],
 )
-def test_find_packages_yanked(constraint: str, expected: list[str]) -> None:
-    repo = MockRepository()
+def test_find_packages_yanked(
+    constraint: str, expected: list[str], pypi_repository: PyPiRepository
+) -> None:
+    repo = pypi_repository
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert [str(p.version) for p in packages] == expected
 
 
-def test_package() -> None:
-    repo = MockRepository()
+def test_package(
+    pypi_repository: PyPiRepository, dist_hash_getter: DistributionHashGetter
+) -> None:
+    repo = pypi_repository
 
     package = repo.package("requests", Version.parse("2.18.4"))
 
@@ -141,13 +96,13 @@ def test_package() -> None:
 
     assert package.files == [
         {
-            "file": "requests-2.18.4-py2.py3-none-any.whl",
-            "hash": "sha256:6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b",
-        },
-        {
-            "file": "requests-2.18.4.tar.gz",
-            "hash": "sha256:9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e",
-        },
+            "file": filename,
+            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+        }
+        for filename in [
+            f"{package.name}-{package.version}-py2.py3-none-any.whl",
+            f"{package.name}-{package.version}.tar.gz",
+        ]
     ]
 
     win_inet = package.extras[canonicalize_name("socks")][0]
@@ -175,9 +130,13 @@ def test_package() -> None:
     ],
 )
 def test_package_yanked(
-    package_name: str, version: str, yanked: bool, yanked_reason: str
+    package_name: str,
+    version: str,
+    yanked: bool,
+    yanked_reason: str,
+    pypi_repository: PyPiRepository,
 ) -> None:
-    repo = MockRepository()
+    repo = pypi_repository
 
     package = repo.package(package_name, Version.parse(version))
 
@@ -187,8 +146,8 @@ def test_package_yanked(
     assert package.yanked_reason == yanked_reason
 
 
-def test_package_not_canonicalized() -> None:
-    repo = MockRepository()
+def test_package_not_canonicalized(pypi_repository: PyPiRepository) -> None:
+    repo = pypi_repository
 
     package = repo.package("discord.py", Version.parse("2.0.0"))
 
@@ -204,9 +163,13 @@ def test_package_not_canonicalized() -> None:
     ],
 )
 def test_find_links_for_package_yanked(
-    package_name: str, version: str, yanked: bool, yanked_reason: str
+    package_name: str,
+    version: str,
+    yanked: bool,
+    yanked_reason: str,
+    pypi_repository: PyPiRepository,
 ) -> None:
-    repo = MockRepository()
+    repo = pypi_repository
 
     package = repo.package(package_name, Version.parse(version))
     links = repo.find_links_for_package(package)
@@ -217,8 +180,9 @@ def test_find_links_for_package_yanked(
         assert link.yanked_reason == yanked_reason
 
 
-def test_fallback_on_downloading_packages() -> None:
-    repo = MockRepository(fallback=True)
+def test_fallback_on_downloading_packages(pypi_repository: PyPiRepository) -> None:
+    repo = pypi_repository
+    repo._fallback = True
 
     package = repo.package("jupyter", Version.parse("1.0.0"))
 
@@ -236,8 +200,11 @@ def test_fallback_on_downloading_packages() -> None:
     ]
 
 
-def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> None:
-    repo = MockRepository(fallback=True)
+def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found(
+    pypi_repository: PyPiRepository,
+) -> None:
+    repo = pypi_repository
+    repo._fallback = True
 
     package = repo.package("isort", Version.parse("4.3.4"))
 
@@ -250,11 +217,11 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found() -> N
 
 
 def test_fallback_pep_658_metadata(
-    mocker: MockerFixture, get_metadata_mock: RequestsSessionGet
+    mocker: MockerFixture, pypi_repository: PyPiRepository
 ) -> None:
-    repo = MockRepository(fallback=True)
+    repo = pypi_repository
+    repo._fallback = True
 
-    mocker.patch.object(repo.session, "get", get_metadata_mock)
     spy = mocker.spy(repo, "_get_info_from_metadata")
 
     try:
@@ -273,8 +240,11 @@ def test_fallback_pep_658_metadata(
         assert dep.python_versions == "~2.7"
 
 
-def test_fallback_can_read_setup_to_get_dependencies() -> None:
-    repo = MockRepository(fallback=True)
+def test_fallback_can_read_setup_to_get_dependencies(
+    pypi_repository: PyPiRepository,
+) -> None:
+    repo = pypi_repository
+    repo._fallback = True
 
     package = repo.package("sqlalchemy", Version.parse("1.2.12"))
 
@@ -295,8 +265,11 @@ def test_fallback_can_read_setup_to_get_dependencies() -> None:
     }
 
 
-def test_pypi_repository_supports_reading_bz2_files() -> None:
-    repo = MockRepository(fallback=True)
+def test_pypi_repository_supports_reading_bz2_files(
+    pypi_repository: PyPiRepository,
+) -> None:
+    repo = pypi_repository
+    repo._fallback = True
 
     package = repo.package("twisted", Version.parse("18.9.0"))
 
@@ -336,8 +309,8 @@ def test_pypi_repository_supports_reading_bz2_files() -> None:
         )
 
 
-def test_invalid_versions_ignored() -> None:
-    repo = MockRepository()
+def test_invalid_versions_ignored(pypi_repository: PyPiRepository) -> None:
+    repo = pypi_repository
 
     # the json metadata for this package contains one malformed version
     # and a correct one.
@@ -345,6 +318,7 @@ def test_invalid_versions_ignored() -> None:
     assert len(packages) == 1
 
 
+@pytest.mark.usefixtures("pypi_repository")
 def test_get_should_invalid_cache_on_too_many_redirects_error(
     mocker: MockerFixture,
 ) -> None:
@@ -364,15 +338,17 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(
     assert delete_cache.called
 
 
-def test_urls() -> None:
-    repository = PyPiRepository()
+def test_urls(pypi_repository: PyPiRepository) -> None:
+    repository = pypi_repository
 
     assert repository.url == "https://pypi.org/simple/"
     assert repository.authenticated_url == "https://pypi.org/simple/"
 
 
-def test_find_links_for_package_of_supported_types() -> None:
-    repo = MockRepository()
+def test_find_links_for_package_of_supported_types(
+    pypi_repository: PyPiRepository,
+) -> None:
+    repo = pypi_repository
     package = repo.find_packages(Factory.create_dependency("hbmqtt", "0.9.6"))
 
     assert len(package) == 1
@@ -384,8 +360,10 @@ def test_find_links_for_package_of_supported_types() -> None:
     assert links[0].show_url == "hbmqtt-0.9.6.tar.gz"
 
 
-def test_get_release_info_includes_only_supported_types() -> None:
-    repo = MockRepository()
+def test_get_release_info_includes_only_supported_types(
+    pypi_repository: PyPiRepository,
+) -> None:
+    repo = pypi_repository
 
     release_info = repo._get_release_info(
         name=canonicalize_name("hbmqtt"), version=Version.parse("0.9.6")

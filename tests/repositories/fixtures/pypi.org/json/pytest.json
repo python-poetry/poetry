@@ -5,16 +5,16 @@
       "filename": "pytest-3.5.0-py2.py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "c0b6697b7130c495aba71cdfcf939cc9",
-        "sha256": "6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c"
+        "md5": "d3b1e9aea9e5b9e7a226d8b08aa43662",
+        "sha256": "28e4d9c2ae3196d74805c2eba24f350ae4c791a5b9b397c79b41506a48dc64ca"
       }
     },
     {
       "filename": "pytest-3.5.0.tar.gz",
       "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz",
       "hashes": {
-        "md5": "b8e13a4091f07ff1fda081cf40ff99f1",
-        "sha256": "fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1"
+        "md5": "ccd78dac54112045f561c4df86631f19",
+        "sha256": "677b1d6decd29c041fe64276f29f79fbe66e40c59e445eb251366b4a8ab8bf68"
       }
     }
   ],

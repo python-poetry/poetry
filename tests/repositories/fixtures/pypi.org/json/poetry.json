@@ -2,83 +2,11 @@
   "name": "poetry",
   "files": [
     {
-      "filename": "poetry-0.12.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/9f/34/cb438970b165513f66f681082092871aa3b88be60218f74ca933a8af4009/poetry-0.12.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "e41b413e4ee8d551cc867adb968843a5",
-        "sha256": "1c818dcca72a9dc5cd13a30e29654986e3e288f6b158673e3d5b2cc51dec2309"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c6/68/471e26c5d04474aa51b4eb3173645b0e8987e4fb632a035488278d626438/poetry-0.12.0.tar.gz",
-      "hashes": {
-        "md5": "18c57cdba5fc86cb74b36e766114959b",
-        "sha256": "f8565669c5b7679fb5a560a1f93d367f7729f5f2ad1ed06e835549196e764fdb"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/de/b4/087632dcc5d0d54bbc2c66a91d23ab6550c26e0849eab0ce713c638cbcb9/poetry-0.12.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "01da4d43121437cd730160b803d4fe48",
-        "sha256": "2f1c3f3545ff0b192f543a35523ece22824bdee0954627960a7562ec0e377113"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/89/90/1698d2d1f7c3d25b62c701995cce4f0432308c9899614e34489e8d5c364a/poetry-0.12.1.tar.gz",
-      "hashes": {
-        "md5": "9dd2e98a85a36bde43d0f10b991d6982",
-        "sha256": "adefe0e70c91bc98b272a2c0dd7ac67882de62972eafac7625606b14cc49c8a9"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/a5/62/4f4c9a0c49145e5368829806baa202f760403299d3a6a4d8d9e2dd277f85/poetry-0.12.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "8d52945ff3e6d057f0a5c8d43dbdd1be",
-        "sha256": "07bb0d57798b54564526a83b3b6ee31450e3ff9c91580deff7970402e8cf9648"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/72/9d/30c6c7b2823bda75a568827fe518bc6fc7d59a199336767afb7ac888da4c/poetry-0.12.2.tar.gz",
-      "hashes": {
-        "md5": "03a09bf2b231701bc698e9fe2e237bd0",
-        "sha256": "1b9c7a70ac71a416c2b4ec69b89e37fa39afd965a1d0fe58a01e3121d89e98ef"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/91/5c/fd1507d5950bf31050650b0ea973c3aa98cd231ed0a18ab36eefde7db9c3/poetry-0.12.3-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "541da5e58318b5b5804ee068c9c98468",
-        "sha256": "936365627f5a29921886c5d2f9aef688899e691af706d136bf17d291a4f33d9b"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
-      "filename": "poetry-0.12.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/23/86/9166b68a9b9084eca5a3a53ef6131b3318a0b9c48ee8593623330e164c85/poetry-0.12.3.tar.gz",
-      "hashes": {
-        "md5": "48e88e9ae840e2f0c5da5cd00c8b5b1e",
-        "sha256": "dbc6f7269f8015d2f2408471f2b2eec2365b5bfd20cff8d9824664b67505aaae"
-      },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-    },
-    {
       "filename": "poetry-0.12.4-py2.py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/1b/af/013cdcc6f9d4c0bf025b3924981991a8b034db7818fd324c525b7e8a2b6c/poetry-0.12.4-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "a7975e8b090eb3e006814d5e7c2c986f",
-        "sha256": "9d3759bf7f3d8107262cda917b615c185da57e96785a696dd1f117526917f850"
+        "md5": "763b00c6295dfdc3d0223eb35eadffb3",
+        "sha256": "1819c1587198652bafb1698b6ef1f70f4ff85682e536ca991509e9b1e679cc21"
       },
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
     },
@@ -86,8 +14,8 @@
       "filename": "poetry-0.12.4.tar.gz",
       "url": "https://files.pythonhosted.org/packages/b5/4f/8a864e12a4a03f13467d5ac3d0cc67e75130ae966e3528e9ecbe3df980d6/poetry-0.12.4.tar.gz",
       "hashes": {
-        "md5": "c3d1d7576d2ee6663b59e12236a163e9",
-        "sha256": "fc924ef535c9229aac4f7cfda948e64e890417242d808c0880febb0ea333b9f6"
+        "md5": "49660b27968a8b2cfe0c451e4489a8ae",
+        "sha256": "484b55eea5617b4bc20ca538cfcc7e0fcb870fb1390abab4d0af33f22718434d"
       },
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
     }

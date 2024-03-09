@@ -51,13 +51,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "a7975e8b090eb3e006814d5e7c2c986f",
-        "sha256": "9d3759bf7f3d8107262cda917b615c185da57e96785a696dd1f117526917f850"
+        "md5": "763b00c6295dfdc3d0223eb35eadffb3",
+        "sha256": "1819c1587198652bafb1698b6ef1f70f4ff85682e536ca991509e9b1e679cc21"
       },
       "downloads": -1,
       "filename": "poetry-0.12.4-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "a7975e8b090eb3e006814d5e7c2c986f",
+      "md5_digest": "763b00c6295dfdc3d0223eb35eadffb3",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
@@ -68,13 +68,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "c3d1d7576d2ee6663b59e12236a163e9",
-        "sha256": "fc924ef535c9229aac4f7cfda948e64e890417242d808c0880febb0ea333b9f6"
+        "md5": "49660b27968a8b2cfe0c451e4489a8ae",
+        "sha256": "484b55eea5617b4bc20ca538cfcc7e0fcb870fb1390abab4d0af33f22718434d"
       },
       "downloads": -1,
       "filename": "poetry-0.12.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "c3d1d7576d2ee6663b59e12236a163e9",
+      "md5_digest": "49660b27968a8b2cfe0c451e4489a8ae",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

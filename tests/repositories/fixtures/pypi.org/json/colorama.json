@@ -5,16 +5,16 @@
       "filename": "colorama-0.3.9-py2.py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "cc0c01c7b3b34d0354d813e9ab26aca3",
-        "sha256": "463f8483208e921368c9f306094eb6f725c6ca42b0f97e313cb5d5512459feda"
+        "md5": "faef2bbd3c2ecc43e0969877d67b4c92",
+        "sha256": "5b632359f1ed2b7676a869812ba0edaacb99be04679b29eb56c07a5e137ab5a2"
       }
     },
     {
       "filename": "colorama-0.3.9.tar.gz",
       "url": "https://files.pythonhosted.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz",
       "hashes": {
-        "md5": "3a0e415259690f4dd7455c2683ee5850",
-        "sha256": "48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1"
+        "md5": "8323a5b84fdf7ad810804e51fc256b39",
+        "sha256": "4c5a15209723ce1330a5c193465fe221098f761e9640d823a2ce7c03f983137f"
       }
     }
   ],

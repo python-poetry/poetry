@@ -352,13 +352,13 @@ def test_search_no_legacy_repositories() -> None:
 
 
 def test_search_legacy_repositories_are_not_skipped(
-    legacy_repository_url: str, mock_http_legacy_repository: None
+    legacy_repository: LegacyRepository,
 ) -> None:
     foo_package = get_package("foo", "1.0.0")
     demo_package = get_package("demo", "0.1.0")
 
     repo1 = Repository("repo1", [foo_package])
-    repo2 = LegacyRepository("repo2", legacy_repository_url)
+    repo2 = legacy_repository
     pool = RepositoryPool([repo1, repo2])
 
     assert pool.search("foo") == [foo_package]

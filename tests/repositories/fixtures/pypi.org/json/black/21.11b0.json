@@ -113,13 +113,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "945da11b34c11738560fc6698cffa425",
-        "sha256": "0b1f66cbfadcd332ceeaeecf6373d9991d451868d2e2219ad0ac1213fb701117"
+        "md5": "294e105f34e2e21286a49bfcfb8fb6ae",
+        "sha256": "e16b6879ed61f9268994b879174fad1cb2319a651afd20f8cf036428ac65f846"
       },
       "downloads": -1,
       "filename": "black-21.11b0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "945da11b34c11738560fc6698cffa425",
+      "md5_digest": "294e105f34e2e21286a49bfcfb8fb6ae",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.6.2",
@@ -133,13 +133,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "6040b4e4c6ccc4e7eb81bb2634ef299a",
-        "sha256": "83f3852301c8dcb229e9c444dd79f573c8d31c7c2dad9bbaaa94c808630e32aa"
+        "md5": "f01267bf2613f825dd6684629c1c829e",
+        "sha256": "f23c482185d842e2f19d506e55c004061167e3c677c063ecd721042c62086ada"
       },
       "downloads": -1,
       "filename": "black-21.11b0.tar.gz",
       "has_sig": false,
-      "md5_digest": "6040b4e4c6ccc4e7eb81bb2634ef299a",
+      "md5_digest": "f01267bf2613f825dd6684629c1c829e",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.6.2",

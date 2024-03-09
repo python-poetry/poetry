@@ -14,7 +14,7 @@
       "Programming Language :: Python :: 3",
       "Topic :: System :: Shells"
     ],
-    "description": "IPython provides a rich toolkit to help you make the most out of using Python\ninteractively.  Its main components are:\n\n* A powerful interactive Python shell\n* A `Jupyter <http://jupyter.org/>`_ kernel to work with Python code in Jupyter\n  notebooks and other interactive frontends.\n\nThe enhanced interactive Python shells have the following main features:\n\n* Comprehensive object introspection.\n\n* Input history, persistent across sessions.\n\n* Caching of output results during a session with automatically generated\n  references.\n\n* Extensible tab completion, with support by default for completion of python\n  variables and keywords, filenames and function keywords.\n\n* Extensible system of 'magic' commands for controlling the environment and\n  performing many tasks related either to IPython or the operating system.\n\n* A rich configuration system with easy switching between different setups\n  (simpler than changing $PYTHONSTARTUP environment variables every time).\n\n* Session logging and reloading.\n\n* Extensible syntax processing for special purpose situations.\n\n* Access to the system shell with user-extensible alias system.\n\n* Easily embeddable in other Python programs and GUIs.\n\n* Integrated access to the pdb debugger and the Python profiler.\n\nThe latest development version is always available from IPython's `GitHub\nsite <http://github.com/ipython>`_.",
+    "description": "",
     "docs_url": null,
     "download_url": "https://github.com/ipython/ipython/downloads",
     "downloads": {
@@ -74,13 +74,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "512f0431c850c75a12baa9f8c4a9f12f",
-        "sha256": "4d0a08f3fd8837502bf33e9497a5ab28fe63e2fa4201765f378cb139c7a60d5f"
+        "md5": "ae0b233f09e1047a0240d30345b8ff91",
+        "sha256": "b593bcf0c53490f56809805a94b289403c8025859583a71f50c2305860ad187d"
       },
       "downloads": -1,
       "filename": "ipython-4.1.0rc1-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "512f0431c850c75a12baa9f8c4a9f12f",
+      "md5_digest": "ae0b233f09e1047a0240d30345b8ff91",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "size": 736900,
@@ -90,13 +90,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "2aff56d8e78341f64663bcbc81366376",
-        "sha256": "6244a8e3293088ee31c1854abe1a1e7a409cf3ac2fb7579aa9616bdfadd3d4dc"
+        "md5": "1bdec8cbb110f7c7b991c8d45f626fd4",
+        "sha256": "d5203d06ac3225a746f856b592aeaffa3d1a7f1efa535263b06bdebc094d9701"
       },
       "downloads": -1,
       "filename": "ipython-4.1.0rc1.tar.gz",
       "has_sig": false,
-      "md5_digest": "2aff56d8e78341f64663bcbc81366376",
+      "md5_digest": "1bdec8cbb110f7c7b991c8d45f626fd4",
       "packagetype": "sdist",
       "python_version": "source",
       "size": 4933377,
@@ -106,13 +106,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "a9ff233f176dd99b076b81dc8904ab7a",
-        "sha256": "efa3a5a676648cb18e2a2d3cd6353f3c83f0f704df8eb0eb6ae7d0dcbf187ea1"
+        "md5": "c641fd1d26083c589503ede5b9321f47",
+        "sha256": "83bf3b3b5d3b7afdfc885c5906a9e146dc840143e75ba62f241afb0e4c701a94"
       },
       "downloads": -1,
       "filename": "ipython-4.1.0rc1.zip",
       "has_sig": false,
-      "md5_digest": "a9ff233f176dd99b076b81dc8904ab7a",
+      "md5_digest": "c641fd1d26083c589503ede5b9321f47",
       "packagetype": "sdist",
       "python_version": "source",
       "size": 5100723,

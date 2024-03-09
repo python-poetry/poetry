@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from tests.types import HTTPPrettyRequestCallbackWrapper
     from tests.types import HTTPrettyRequestCallback
     from tests.types import HTTPrettyResponse
+    from tests.types import PackageDistributionLookup
 
     class RequestCallbackFactory(Protocol):
         def __call__(
@@ -110,7 +111,10 @@ def build_partial_response(
 
 
 @pytest.fixture
-def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFactory:
+def handle_request_factory(
+    fixture_dir: FixtureDirGetter,
+    package_distribution_lookup: PackageDistributionLookup,
+) -> RequestCallbackFactory:
     def _factory(
         *,
         accept_ranges: str | None = "bytes",
@@ -122,17 +126,12 @@ def handle_request_factory(fixture_dir: FixtureDirGetter) -> RequestCallbackFact
         ) -> HTTPrettyResponse:
             name = Path(urlparse(uri).path).name
 
-            wheel = Path(__file__).parents[1] / (
-                "repositories/fixtures/pypi.org/dists/" + name
+            wheel = package_distribution_lookup(name) or package_distribution_lookup(
+                "demo-0.1.0-py2.py3-none-any.whl"
             )
 
-            if not wheel.exists():
-                wheel = fixture_dir("distributions") / name
-
-                if not wheel.exists():
-                    wheel = (
-                        fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-                    )
+            if not wheel:
+                return 404, response_headers, b"Not Found"
 
             wheel_bytes = wheel.read_bytes()
 

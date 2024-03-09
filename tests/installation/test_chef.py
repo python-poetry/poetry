@@ -23,7 +23,6 @@ from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 from poetry.utils.env import ephemeral_environment
-from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
@@ -31,16 +30,17 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
+    from poetry.repositories.pypi_repository import PyPiRepository
     from poetry.utils.cache import ArtifactCache
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
-def pool() -> RepositoryPool:
+def pool(pypi_repository: PyPiRepository) -> RepositoryPool:
     pool = RepositoryPool()
 
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     return pool
 
@@ -50,9 +50,7 @@ def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
     mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
-def test_isolated_env_install_success(
-    pool: RepositoryPool, mock_file_downloads: None
-) -> None:
+def test_isolated_env_install_success(pool: RepositoryPool) -> None:
     with ephemeral_environment(Path(sys.executable)) as venv:
         env = IsolatedEnv(venv, pool)
         assert "poetry-core" not in venv.run("pip", "freeze")
@@ -92,7 +90,6 @@ def test_prepare_sdist(
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
-    mock_file_downloads: None,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
@@ -111,7 +108,6 @@ def test_prepare_directory(
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
-    mock_file_downloads: None,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
@@ -155,7 +151,6 @@ def test_prepare_directory_editable(
     config_cache_dir: Path,
     artifact_cache: ArtifactCache,
     fixture_dir: FixtureDirGetter,
-    mock_file_downloads: None,
 ) -> None:
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)

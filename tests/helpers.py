@@ -43,6 +43,11 @@ if TYPE_CHECKING:
     from tests.types import HTTPrettyResponse
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
+FIXTURE_PATH_INSTALLATION = Path(__file__).parent / "installation" / "fixtures"
+FIXTURE_PATH_DISTRIBUTIONS = FIXTURE_PATH / "distributions"
+FIXTURE_PATH_REPOSITORIES = Path(__file__).parent / "repositories" / "fixtures"
+FIXTURE_PATH_REPOSITORIES_LEGACY = FIXTURE_PATH_REPOSITORIES / "legacy"
+FIXTURE_PATH_REPOSITORIES_PYPI = FIXTURE_PATH_REPOSITORIES / "pypi.org"
 
 # Used as a mock for latest git revision.
 MOCK_DEFAULT_GIT_REVISION = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"

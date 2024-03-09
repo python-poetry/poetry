@@ -101,13 +101,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "0ec47fbf522751f6c5fa904cb33f1f59",
-        "sha256": "957cfda87797e389580cb8b9e3870841ca991e2125350677b2ca83a0e99390a3"
+        "md5": "52aecc0484efd07d62575d152f6a98f6",
+        "sha256": "82da6dcae3676123d6f493a876259614e7e6e970b14c59b1830a2c901ed91306"
       },
       "downloads": -1,
       "filename": "zipp-3.5.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "0ec47fbf522751f6c5fa904cb33f1f59",
+      "md5_digest": "52aecc0484efd07d62575d152f6a98f6",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.6",
@@ -121,13 +121,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "617efbf3edb707c57008ec00f408972f",
-        "sha256": "f5812b1e007e48cff63449a5e9f4e7ebea716b4111f9c4f9a645f91d579bf0c4"
+        "md5": "16bf2a24fae340052e8565c264d21092",
+        "sha256": "239d50954a15aa4b283023f18dc451ba811fb4d263f4dd6855642e4d1c80cc9f"
       },
       "downloads": -1,
       "filename": "zipp-3.5.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "617efbf3edb707c57008ec00f408972f",
+      "md5_digest": "16bf2a24fae340052e8565c264d21092",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.6",

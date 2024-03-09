@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "python-language-server-0.21.2.tar.gz",
+      "hashes": {
+        "md5": "677602ec38bc1c7b72de6128d90d846b",
+        "sha256": "91b564e092f3135b2bac70dbd23d283da5ad50269766a76648787b69fe702c7e"
+      },
+      "requires-python": null,
+      "size": 51676,
+      "upload-time": "2018-09-06T18:11:28.546667Z",
+      "url": "https://files.pythonhosted.org/packages/9f/1d/2817b5dc2dd77f897410a11c1c9e2a6d96b3273c53d4219dd9edab7882af/python-language-server-0.21.2.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 8878952,
+    "api-version": "1.1"
+  },
+  "name": "python-language-server",
+  "versions": [
+    "0.21.2"
+  ]
+}

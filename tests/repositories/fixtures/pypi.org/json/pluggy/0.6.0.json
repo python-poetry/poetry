@@ -50,13 +50,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
-        "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
+        "md5": "ef8a88abcd501afd47cb22245fe4315a",
+        "sha256": "a982e208d054867661d27c6d2a86b17ba05fbb6b1bdc01f42660732dd107f865"
       },
       "downloads": -1,
       "filename": "pluggy-0.6.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "ffdde7c3a5ba9a440404570366ffb6d5",
+      "md5_digest": "ef8a88abcd501afd47cb22245fe4315a",
       "packagetype": "sdist",
       "python_version": "source",
       "size": 19678,
