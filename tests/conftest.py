@@ -532,6 +532,12 @@ def httpretty_windows_mock_urllib3_wait_for_socket(mocker: MockerFixture) -> Non
     mocker.patch("urllib3.util.wait.select_wait_for_socket", returns=True)
 
 
+@pytest.fixture
+def disable_http_status_force_list(mocker: MockerFixture) -> Iterator[None]:
+    mocker.patch("poetry.utils.authenticator.STATUS_FORCELIST", [])
+    yield
+
+
 @pytest.fixture(autouse=True)
 def tmp_working_directory(tmp_path: Path) -> Iterator[Path]:
     with switch_working_directory(tmp_path):

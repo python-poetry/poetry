@@ -556,7 +556,9 @@ def test_get_40x_and_returns_none(
         repo.get_page("foo")
 
 
-def test_get_5xx_raises(http: type[httpretty.httpretty]) -> None:
+def test_get_5xx_raises(
+    http: type[httpretty.httpretty], disable_http_status_force_list: None
+) -> None:
     repo = MockHttpRepository({"/foo/": 500}, http)
 
     with pytest.raises(RepositoryError):
