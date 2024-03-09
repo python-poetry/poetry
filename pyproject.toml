@@ -162,10 +162,8 @@ exclude = [
 module = [
     'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
-    'poetry.utils.env.site_packages',
     'tests.console.commands.self.test_show_plugins',
     'tests.helpers',
-    'tests.repositories.test_installed_repository',
 ]
 warn_unused_ignores = false
 
