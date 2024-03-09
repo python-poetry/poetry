@@ -21,7 +21,7 @@
       "Topic :: Software Development :: Testing",
       "Topic :: Utilities"
     ],
-    "description": ".. image:: http://docs.pytest.org/en/latest/_static/pytest1.png\n   :target: http://docs.pytest.org\n   :align: center\n   :alt: pytest\n\n------\n\n.. image:: https://img.shields.io/pypi/v/pytest.svg\n    :target: https://pypi.python.org/pypi/pytest\n\n.. image:: https://anaconda.org/conda-forge/pytest/badges/version.svg\n    :target: https://anaconda.org/conda-forge/pytest\n\n.. image:: https://img.shields.io/pypi/pyversions/pytest.svg\n    :target: https://pypi.python.org/pypi/pytest\n\n.. image:: https://img.shields.io/coveralls/pytest-dev/pytest/master.svg\n    :target: https://coveralls.io/r/pytest-dev/pytest\n\n.. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master\n    :target: https://travis-ci.org/pytest-dev/pytest\n\n.. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true\n    :target: https://ci.appveyor.com/project/pytestbot/pytest\n\n.. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg\n    :target: https://www.codetriage.com/pytest-dev/pytest\n\nThe ``pytest`` framework makes it easy to write small tests, yet\nscales to support complex functional testing for applications and libraries.\n\nAn example of a simple test:\n\n.. code-block:: python\n\n    # content of test_sample.py\n    def inc(x):\n        return x + 1\n\n    def test_answer():\n        assert inc(3) == 5\n\n\nTo execute it::\n\n    $ pytest\n    ============================= test session starts =============================\n    collected 1 items\n\n    test_sample.py F\n\n    ================================== FAILURES ===================================\n    _________________________________ test_answer _________________________________\n\n        def test_answer():\n    >       assert inc(3) == 5\n    E       assert 4 == 5\n    E        +  where 4 = inc(3)\n\n    test_sample.py:5: AssertionError\n    ========================== 1 failed in 0.04 seconds ===========================\n\n\nDue to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.\n\n\nFeatures\n--------\n\n- Detailed info on failing `assert statements <http://docs.pytest.org/en/latest/assert.html>`_ (no need to remember ``self.assert*`` names);\n\n- `Auto-discovery\n  <http://docs.pytest.org/en/latest/goodpractices.html#python-test-discovery>`_\n  of test modules and functions;\n\n- `Modular fixtures <http://docs.pytest.org/en/latest/fixture.html>`_ for\n  managing small or parametrized long-lived test resources;\n\n- Can run `unittest <http://docs.pytest.org/en/latest/unittest.html>`_ (or trial),\n  `nose <http://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;\n\n- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);\n\n- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;\n\n\nDocumentation\n-------------\n\nFor full documentation, including installation, tutorials and PDF documents, please see http://docs.pytest.org.\n\n\nBugs/Requests\n-------------\n\nPlease use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.\n\n\nChangelog\n---------\n\nConsult the `Changelog <http://docs.pytest.org/en/latest/changelog.html>`__ page for fixes and enhancements of each version.\n\n\nLicense\n-------\n\nCopyright Holger Krekel and others, 2004-2017.\n\nDistributed under the terms of the `MIT`_ license, pytest is free and open source software.\n\n.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE\n\n\n",
+    "description": "",
     "docs_url": null,
     "download_url": "",
     "downloads": {
@@ -58,13 +58,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "c0b6697b7130c495aba71cdfcf939cc9",
-        "sha256": "6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c"
+        "md5": "d3b1e9aea9e5b9e7a226d8b08aa43662",
+        "sha256": "28e4d9c2ae3196d74805c2eba24f350ae4c791a5b9b397c79b41506a48dc64ca"
       },
       "downloads": -1,
       "filename": "pytest-3.5.0-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "c0b6697b7130c495aba71cdfcf939cc9",
+      "md5_digest": "d3b1e9aea9e5b9e7a226d8b08aa43662",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "size": 194247,
@@ -74,13 +74,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "b8e13a4091f07ff1fda081cf40ff99f1",
-        "sha256": "fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1"
+        "md5": "ccd78dac54112045f561c4df86631f19",
+        "sha256": "677b1d6decd29c041fe64276f29f79fbe66e40c59e445eb251366b4a8ab8bf68"
       },
       "downloads": -1,
       "filename": "pytest-3.5.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "b8e13a4091f07ff1fda081cf40ff99f1",
+      "md5_digest": "ccd78dac54112045f561c4df86631f19",
       "packagetype": "sdist",
       "python_version": "source",
       "size": 830816,

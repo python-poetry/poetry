@@ -5,16 +5,8 @@
       "filename": "trackpy-0.4.1.tar.gz",
       "url": "https://files.pythonhosted.org/packages/62/31/797febf2ea8ea316c345c1d0f10503c3901f3fca5c3ffdc6e92717efdcad/trackpy-0.4.1.tar.gz",
       "hashes": {
-        "md5": "4c92e8b74840f57c6047f56a4a4412c4",
-        "sha256": "f682f75e99f6c29c65e8531899b957c67d9d5a027b28b44258fa2c4a18e851cd"
-      }
-    },
-    {
-      "filename": "trackpy-unknown.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/35/23/3b6422d3c006251e2ad857f5fe520b193d473154f88d1f27de50798f2c6c/trackpy-unknown.tar.gz",
-      "hashes": {
-        "md5": "6a879fe7871bd5c62d41b5a2ed84a5cd",
-        "sha256": "88fedb53b03451a56422d4ecb393ea6bb043e821b3ee1e6518485b303e3bddf5"
+        "md5": "0a36455659d70201b8cb329ba9de3c46",
+        "sha256": "d8512e45935954c8274b547944ff08a2d7e3942a6d53ca2540023034b922aba1"
       }
     }
   ],

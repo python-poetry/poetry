@@ -12,18 +12,19 @@ if TYPE_CHECKING:
     from typing import Dict
     from typing import Tuple
 
-    import requests
-
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
     from httpretty.core import HTTPrettyRequest
+    from packaging.utils import NormalizedName
 
     from poetry.config.config import Config
     from poetry.config.source import Source
     from poetry.installation import Installer
     from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
+    from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.utils.env import Env
+    from tests.repositories.fixtures.distribution_hashes import DistributionHash
 
     HTTPrettyResponse = Tuple[int, Dict[str, Any], bytes]  # status code, headers, body
     HTTPrettyRequestCallback = Callable[
@@ -78,8 +79,31 @@ class HTMLPageGetter(Protocol):
     def __call__(self, content: str, base_url: str | None = None) -> str: ...
 
 
-class RequestsSessionGet(Protocol):
-    def __call__(self, url: str, **__: Any) -> requests.Response: ...
+class NormalizedNameTransformer(Protocol):
+    def __call__(self, name: str) -> NormalizedName: ...
+
+
+class SpecializedLegacyRepositoryMocker(Protocol):
+    def __call__(
+        self,
+        transformer_or_suffix: NormalizedNameTransformer | str,
+        repository_name: str = "special",
+        repository_url: str = "https://legacy.foo.bar",
+    ) -> LegacyRepository: ...
+
+
+class PythonHostedFileMocker(Protocol):
+    def __call__(
+        self, distribution_locations: list[Path], metadata: Path | None = None
+    ) -> None: ...
+
+
+class PackageDistributionLookup(Protocol):
+    def __call__(self, name: str) -> Path | None: ...
+
+
+class DistributionHashGetter(Protocol):
+    def __call__(self, name: str) -> DistributionHash: ...
 
 
 class SetProjectContext(Protocol):

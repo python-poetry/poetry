@@ -33,16 +33,14 @@ from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
-from tests.repositories.test_legacy_repository import (
-    MockRepository as MockLegacyRepository,
-)
-from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.installation.operations.operation import Operation
+    from poetry.repositories.legacy_repository import LegacyRepository
+    from poetry.repositories.pypi_repository import PyPiRepository
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
@@ -1097,16 +1095,16 @@ def test_run_installs_extras_with_deps_if_requested(
     assert installer.executor.removals_count == expected_removals_count
 
 
-@pytest.mark.network
 def test_installer_with_pypi_repository(
     package: ProjectPackage,
     locker: Locker,
     installed: CustomInstalledRepository,
     config: Config,
     env: NullEnv,
+    pypi_repository: PyPiRepository,
 ) -> None:
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(), env, package, locker, pool, config, installed=installed
@@ -1118,7 +1116,6 @@ def test_installer_with_pypi_repository(
     assert result == 0
 
     expected = fixture("with-pypi-repository")
-
     assert expected == locker.written_data
 
 
@@ -1901,11 +1898,12 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     env: NullEnv,
     mocker: MockerFixture,
     config: Config,
+    pypi_repository: PyPiRepository,
 ) -> None:
     mocker.patch("sys.platform", "darwin")
 
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(),
@@ -1964,9 +1962,10 @@ def test_installer_required_extras_should_be_installed(
     installed: CustomInstalledRepository,
     env: NullEnv,
     config: Config,
+    pypi_repository: PyPiRepository,
 ) -> None:
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(),
@@ -2100,6 +2099,8 @@ def test_installer_can_install_dependencies_from_forced_source(
     installed: CustomInstalledRepository,
     env: NullEnv,
     config: Config,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -2107,8 +2108,8 @@ def test_installer_can_install_dependencies_from_forced_source(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(MockLegacyRepository())
-    pool.add_repository(MockRepository())
+    pool.add_repository(legacy_repository)
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(),
@@ -2235,9 +2236,10 @@ def test_installer_can_handle_old_lock_files(
     repo: Repository,
     installed: CustomInstalledRepository,
     config: Config,
+    pypi_repository: PyPiRepository,
 ) -> None:
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
 

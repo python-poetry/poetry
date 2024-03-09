@@ -13,7 +13,7 @@
       "Programming Language :: Python :: 3.6",
       "Programming Language :: Python :: 3.7"
     ],
-    "description": "# CliKit\n\nCliKit is a group of utilities to build beautiful and testable command line interfaces.\n\nThis is at the core of [Cleo](https://github.com/sdispater/cleo).\n",
+    "description": "",
     "description_content_type": "text/markdown",
     "docs_url": null,
     "download_url": "",
@@ -53,13 +53,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "280f18c82d0810c9b5ca11380529c04c",
-        "sha256": "a7597999555aeb2ce9946f07187f690ab6864213f337e51250178c4bd19bd810"
+        "md5": "c3558fef2a1148bb1df96376def5c8fe",
+        "sha256": "60900adbac91d6d2cefc88efe2639ce3090f4520106596ac855bee3763f276c0"
       },
       "downloads": -1,
       "filename": "clikit-0.2.4-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "280f18c82d0810c9b5ca11380529c04c",
+      "md5_digest": "c3558fef2a1148bb1df96376def5c8fe",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
@@ -73,13 +73,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "2543daad83b072e960ded5f68074a443",
-        "sha256": "d6807cf4a41e6b981b056075c0aefca2db1dabc597ed18fa4d92b8b2e2678835"
+        "md5": "f7cdbad3508038a04561f646aae68146",
+        "sha256": "0fdd41e86e8b118a8b1e94ef2835925ada541d481c9b3b2fc635fa68713e6125"
       },
       "downloads": -1,
       "filename": "clikit-0.2.4.tar.gz",
       "has_sig": false,
-      "md5_digest": "2543daad83b072e960ded5f68074a443",
+      "md5_digest": "f7cdbad3508038a04561f646aae68146",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

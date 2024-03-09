@@ -1,0 +1,142 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "ad06c78c59547c822f72c2758b51935ae8e4056bd8909a8fd8912bf7d9f88fa7"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "ad06c78c59547c822f72c2758b51935ae8e4056bd8909a8fd8912bf7d9f88fa7"
+      },
+      "filename": "ipython-4.1.0rc1-py2.py3-none-any.whl",
+      "hashes": {
+        "md5": "ae0b233f09e1047a0240d30345b8ff91",
+        "sha256": "b593bcf0c53490f56809805a94b289403c8025859583a71f50c2305860ad187d"
+      },
+      "requires-python": null,
+      "size": 736900,
+      "upload-time": "2016-01-26T19:58:35.544443Z",
+      "url": "https://files.pythonhosted.org/packages/ac/02/04a5d372b4e64f9c97b2846646aec1ce4532885005aa4ba51eb20b80e17f/ipython-4.1.0rc1-py2.py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "ipython-4.1.0rc1.tar.gz",
+      "hashes": {
+        "md5": "1bdec8cbb110f7c7b991c8d45f626fd4",
+        "sha256": "d5203d06ac3225a746f856b592aeaffa3d1a7f1efa535263b06bdebc094d9701"
+      },
+      "requires-python": null,
+      "size": 4933377,
+      "upload-time": "2016-01-26T19:58:53.938491Z",
+      "url": "https://files.pythonhosted.org/packages/a0/de/f71f0c8b8a26ef28cc968fbf1859729ad3e68146cd2eb4a759e9c88da218/ipython-4.1.0rc1.tar.gz",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "ipython-4.1.0rc1.zip",
+      "hashes": {
+        "md5": "1f18b85e1d93dc10554ade23864f02cc",
+        "sha256": "8fe8ae7e62942f58b24b908fa2bee3dce0e2470a8cd22ea753f2de9bedf5ffc5"
+      },
+      "requires-python": null,
+      "size": 5100723,
+      "upload-time": "2016-01-26T19:59:14.449245Z",
+      "url": "https://files.pythonhosted.org/packages/71/f0/9d670266b840b8b921dc7106ecddd892f6fb893424883498e1ba3ec3a3a1/ipython-4.1.0rc1.zip",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "130f1323b932eb7b6fefa2928c20eaeebfa90ef94c06347a3a960566b98bdcd0"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "130f1323b932eb7b6fefa2928c20eaeebfa90ef94c06347a3a960566b98bdcd0"
+      },
+      "filename": "ipython-5.7.0-py2-none-any.whl",
+      "hashes": {
+        "md5": "cf35939995e0fd8c44fca7509308abde",
+        "sha256": "3d93d3995e2e52a98dc4f44361cd5bf68dbde62925d1f820b97d8f0e1d941f73"
+      },
+      "requires-python": null,
+      "size": 760413,
+      "upload-time": "2018-05-10T18:56:05.083695Z",
+      "url": "https://files.pythonhosted.org/packages/52/19/aadde98d6bde1667d0bf431fb2d22451f880aaa373e0a241c7e7cb5815a0/ipython-5.7.0-py2-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "5251032152a45b01a679c73fab3a836053167987c9343251cd29bd39b8f9f1c7"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "5251032152a45b01a679c73fab3a836053167987c9343251cd29bd39b8f9f1c7"
+      },
+      "filename": "ipython-5.7.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "8805d83c415de06f5eadd55aeb2fa738",
+        "sha256": "b94c7a3971290024ffaa916d51ee377ee85f8860a62b5f30c58f5376f0956a06"
+      },
+      "requires-python": null,
+      "size": 760415,
+      "upload-time": "2018-05-10T18:56:07.665559Z",
+      "url": "https://files.pythonhosted.org/packages/c7/b6/03e0b5b0972e6161d16c4cec8d41a20372bd0634f8cb4cc0c984b8a91db6/ipython-5.7.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "ipython-5.7.0.tar.gz",
+      "hashes": {
+        "md5": "01f2808ebe78ff2f28dc39be3aa635ca",
+        "sha256": "4e7fb265e0264498bd0d62c6261936a658bf3d38beb8a7b10cd2c6327c62ac2a"
+      },
+      "requires-python": null,
+      "size": 4977745,
+      "upload-time": "2018-05-10T18:56:17.132984Z",
+      "url": "https://files.pythonhosted.org/packages/3c/fd/559fead731a29eaa55cc235c8029807b2520976a937c30e9ee603f3bb566/ipython-5.7.0.tar.gz",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "3b26900950637e01c03a8de278805adb022c5bbb1e94db2f31d137b5266b7726"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "3b26900950637e01c03a8de278805adb022c5bbb1e94db2f31d137b5266b7726"
+      },
+      "filename": "ipython-7.5.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "99a386eca39b536033c71aacf9f98e2b",
+        "sha256": "634f505893bbbdb79d1a04d89f4633d8cfc41115337847fbf9d5a23610fc3e3d"
+      },
+      "requires-python": ">=3.5",
+      "size": 770001,
+      "upload-time": "2019-04-25T15:38:21.726776Z",
+      "url": "https://files.pythonhosted.org/packages/a9/2e/41dce4ed129057e05a555a7f9629aa2d5f81fdcd4d16568bc24b75a1d2c9/ipython-7.5.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "ipython-7.5.0.tar.gz",
+      "hashes": {
+        "md5": "0e8c1d7c14f309f6cd2dfd4e48e75cb1",
+        "sha256": "cd2a17ac273fea8bf8953118a2d83bad94f592f0db3e83fff9129a1842e36dbe"
+      },
+      "requires-python": ">=3.5",
+      "size": 5118610,
+      "upload-time": "2019-04-25T15:38:33.098872Z",
+      "url": "https://files.pythonhosted.org/packages/75/74/9b0ef91c8e356c907bb12297000951acb804583b54eeaddc342c5bad4d96/ipython-7.5.0.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 22152965,
+    "api-version": "1.1"
+  },
+  "name": "ipython",
+  "versions": [
+    "4.1.0rc1",
+    "5.7.0",
+    "7.5.0"
+  ]
+}

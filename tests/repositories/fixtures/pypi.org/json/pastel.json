@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "cf50590355f03d1956c461705e74e4cf1f34730179656436d3c2a8dede08c4f7"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "cf50590355f03d1956c461705e74e4cf1f34730179656436d3c2a8dede08c4f7"
+      },
+      "filename": "pastel-0.1.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "632fcf45cc28aed4a4dce1324d1bd1d1",
+        "sha256": "d88b34efa115392ee42c55d6f82cdf5e5e08221ef2e18a16ae696a80008c3499"
+      },
+      "requires-python": null,
+      "size": 6718,
+      "upload-time": "2017-02-01T23:26:20.148511Z",
+      "url": "https://files.pythonhosted.org/packages/9b/7e/7d701686013c0d7dae62e0977467232a6adc2e562c23878eb3cd4f97d02e/pastel-0.1.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "pastel-0.1.0.tar.gz",
+      "hashes": {
+        "md5": "43ea5f07660f630da18ae1827f5b4333",
+        "sha256": "22f14474c4120b37c54ac2173b49b0ac1de9283ca714be6eb3ea8b39296285a9"
+      },
+      "requires-python": null,
+      "size": 4490,
+      "upload-time": "2017-02-01T23:26:21.720111Z",
+      "url": "https://files.pythonhosted.org/packages/bd/13/a68f2e448b471e8c49e9b596d569ae167a5135ac672b1dc5f24f62f9c15f/pastel-0.1.0.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 8202286,
+    "api-version": "1.1"
+  },
+  "name": "pastel",
+  "versions": [
+    "0.1.0"
+  ]
+}

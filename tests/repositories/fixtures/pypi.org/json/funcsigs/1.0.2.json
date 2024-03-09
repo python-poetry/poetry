@@ -48,13 +48,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "701d58358171f34b6d1197de2923a35a",
-        "sha256": "330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca"
+        "md5": "bb61ae651a30926a4b4723e68f97238f",
+        "sha256": "510ab97424949e726b4b44294018e90142c9aadf8e737cf3a125b4cffed42e79"
       },
       "downloads": -1,
       "filename": "funcsigs-1.0.2-py2.py3-none-any.whl",
       "has_sig": true,
-      "md5_digest": "701d58358171f34b6d1197de2923a35a",
+      "md5_digest": "bb61ae651a30926a4b4723e68f97238f",
       "packagetype": "bdist_wheel",
       "python_version": "2.7",
       "size": 17697,
@@ -64,13 +64,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "7e583285b1fb8a76305d6d68f4ccc14e",
-        "sha256": "a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"
+        "md5": "e6206f7ae6f315c05108d5b587cccc3e",
+        "sha256": "c55716fcd1228645c214b44568d1fb9af2e28668a9c58e72a17a89a75d24ecd6"
       },
       "downloads": -1,
       "filename": "funcsigs-1.0.2.tar.gz",
       "has_sig": true,
-      "md5_digest": "7e583285b1fb8a76305d6d68f4ccc14e",
+      "md5_digest": "e6206f7ae6f315c05108d5b587cccc3e",
       "packagetype": "sdist",
       "python_version": "source",
       "size": 27947,

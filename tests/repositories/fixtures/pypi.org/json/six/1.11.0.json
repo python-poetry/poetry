@@ -39,13 +39,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "866ab722be6bdfed6830f3179af65468",
-        "sha256": "832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"
+        "md5": "35b1057b388e276352d0709138b1e194",
+        "sha256": "112f5b46e6aa106db3e4e2494a03694c938f41c4c4535edbdfc816c2e0cb50f2"
       },
       "downloads": -1,
       "filename": "six-1.11.0-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "866ab722be6bdfed6830f3179af65468",
+      "md5_digest": "35b1057b388e276352d0709138b1e194",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "size": 10702,
@@ -55,13 +55,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "d12789f9baf7e9fb2524c0c64f1773f8",
-        "sha256": "70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9"
+        "md5": "25d3568604f921dd23532b88a0ce17e7",
+        "sha256": "268a4ccb159c1a2d2c79336b02e75058387b0cdbb4cea2f07846a758f48a356d"
       },
       "downloads": -1,
       "filename": "six-1.11.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "d12789f9baf7e9fb2524c0c64f1773f8",
+      "md5_digest": "25d3568604f921dd23532b88a0ce17e7",
       "packagetype": "sdist",
       "python_version": "source",
       "size": 29860,

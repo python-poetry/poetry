@@ -5,16 +5,16 @@
       "filename": "attrs-17.4.0-py2.py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/b5/60/4e178c1e790fd60f1229a9b3cb2f8bc2f4cc6ff2c8838054c142c70b5adc/attrs-17.4.0-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "5835a573b3f0316e1602dac3fd9c1daf",
-        "sha256": "a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450"
+        "md5": "9d32f2b5a93343e01f54d87740f2da60",
+        "sha256": "d38e57f381e891928357c68e300d28d3d4dcddc50486d5f8dfaf743d40477619"
       }
     },
     {
       "filename": "attrs-17.4.0.tar.gz",
       "url": "https://files.pythonhosted.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5/attrs-17.4.0.tar.gz",
       "hashes": {
-        "md5": "d7a89063b2e0fd36bd82389c4d82821d",
-        "sha256": "1c7960ccfd6a005cd9f7ba884e6316b5e430a3f1a6c37c5f87d8b43f83b54ec9"
+        "md5": "c03e5b3608d9071fbd098850d8922668",
+        "sha256": "eb7536a1e6928190b3008c5b350bdf9850d619fff212341cd096f87a27a5e564"
       }
     }
   ],

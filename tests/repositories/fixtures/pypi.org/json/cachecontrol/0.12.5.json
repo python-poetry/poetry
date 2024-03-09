@@ -50,13 +50,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "f1baef403e8dd68c5a203e2eb23a0f2e",
-        "sha256": "cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"
+        "md5": "b9499189d24a2695f6ceb879b0764417",
+        "sha256": "963350642919d6d747288db041fe68a8dabb1aa3d3cef3587dbf2ec092592049"
       },
       "downloads": -1,
       "filename": "CacheControl-0.12.5.tar.gz",
       "has_sig": false,
-      "md5_digest": "f1baef403e8dd68c5a203e2eb23a0f2e",
+      "md5_digest": "b9499189d24a2695f6ceb879b0764417",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

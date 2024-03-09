@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "02a2b035758c39be414a32a2582d2c4f072465cb99b487c727d145d863052ffe"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "02a2b035758c39be414a32a2582d2c4f072465cb99b487c727d145d863052ffe"
+      },
+      "filename": "futures-3.2.0-py2-none-any.whl",
+      "hashes": {
+        "md5": "33e76564a87766c3e186d986ddc55bd8",
+        "sha256": "d89e1540e8b553fbda912230db359954365a1f5d0d0fa7fab96ad3969d9d5a93"
+      },
+      "requires-python": ">=2.6, <3",
+      "size": 15847,
+      "upload-time": "2017-11-30T23:22:35.590688Z",
+      "url": "https://files.pythonhosted.org/packages/2d/99/b2c4e9d5a30f6471e410a146232b4118e697fa3ffc06d6a65efde84debd0/futures-3.2.0-py2-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "futures-3.2.0.tar.gz",
+      "hashes": {
+        "md5": "40eb168dab84e606df3fdb7e67fe27b7",
+        "sha256": "baf0d469c9e541b747986b7404cd63a5496955bd0c43a3cc068c449b09b7d4a4"
+      },
+      "requires-python": ">=2.6, <3",
+      "size": 27320,
+      "upload-time": "2017-11-30T23:22:36.994073Z",
+      "url": "https://files.pythonhosted.org/packages/1f/9e/7b2ff7e965fc654592269f2906ade1c7d705f1bf25b7d469fa153f7d19eb/futures-3.2.0.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 15602876,
+    "api-version": "1.1"
+  },
+  "name": "futures",
+  "versions": [
+    "3.2.0"
+  ]
+}
