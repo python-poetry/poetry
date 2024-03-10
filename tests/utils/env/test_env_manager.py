@@ -1156,7 +1156,9 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     manager = EnvManager(poetry)
 
     poetry.package.python_versions = "^3.7"
-    venv_name = manager.generate_env_name("", str(poetry.file.path.parent))
+    venv_name = manager.generate_env_name(
+        "non-package-mode", str(poetry.file.path.parent)
+    )
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
@@ -1179,7 +1181,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
             "no-pip": False,
             "no-setuptools": False,
         },
-        prompt="virtualenv-py3.7",
+        prompt="non-package-mode-py3.7",
     )
 
 

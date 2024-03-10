@@ -1,17 +1,17 @@
-[tool.poetry]
+[project]
 name = "invalid"
 version = "1.0.0"
-authors = [
-    "Foo <foo@bar.com>"
-]
-readme = "never/exists.md"
-license = "INVALID"
+license = { text = "INVALID" }
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Clowns",
     "Natural Language :: Ukranian",
     "Topic :: Communications :: Chat :: AOL Instant Messenger",
 ]
+dynamic = [ "readme", "dependencies", "requires-python" ]
+
+[tool.poetry]
+readme = "never/exists.md"
 
 [tool.poetry.dependencies]
 python = "*"

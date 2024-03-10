@@ -153,7 +153,7 @@ def test_create_poetry(fixture_dir: FixtureDirGetter) -> None:
 @pytest.mark.parametrize(
     ("project",),
     [
-        ("simple_project",),
+        ("simple_project_legacy",),
         ("project_with_extras",),
     ],
 )
@@ -502,23 +502,21 @@ def test_poetry_with_two_default_sources(
 def test_validate(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
     pyproject: dict[str, Any] = complete.read()
-    content = pyproject["tool"]["poetry"]
 
-    assert Factory.validate(content) == {"errors": [], "warnings": []}
+    assert Factory.validate(pyproject) == {"errors": [], "warnings": []}
 
 
 def test_validate_fails(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
     pyproject: dict[str, Any] = complete.read()
-    content = pyproject["tool"]["poetry"]
-    content["this key is not in the schema"] = ""
+    pyproject["tool"]["poetry"]["this key is not in the schema"] = ""
 
     expected = (
         "Additional properties are not allowed "
         "('this key is not in the schema' was unexpected)"
     )
 
-    assert Factory.validate(content) == {"errors": [expected], "warnings": []}
+    assert Factory.validate(pyproject) == {"errors": [expected], "warnings": []}
 
 
 def test_create_poetry_fails_on_invalid_configuration(
@@ -527,20 +525,12 @@ def test_create_poetry_fails_on_invalid_configuration(
     with pytest.raises(RuntimeError) as e:
         Factory().create_poetry(fixture_dir("invalid_pyproject"))
 
-    fastjsonschema_error = "data must contain ['description'] properties"
-    custom_error = "The fields ['description'] are required in package mode."
-
-    expected_template = """\
+    expected = """\
 The Poetry configuration is invalid:
-  - {schema_error}
   - Project name (invalid) is same as one of its dependencies
 """
-    expected = {
-        expected_template.format(schema_error=schema_error)
-        for schema_error in (fastjsonschema_error, custom_error)
-    }
 
-    assert str(e.value) in expected
+    assert str(e.value) == expected
 
 
 def test_create_poetry_fails_on_nameless_project(
@@ -549,19 +539,12 @@ def test_create_poetry_fails_on_nameless_project(
     with pytest.raises(RuntimeError) as e:
         Factory().create_poetry(fixture_dir("nameless_pyproject"))
 
-    fastjsonschema_error = "data must contain ['name'] properties"
-    custom_error = "The fields ['name'] are required in package mode."
-
-    expected_template = """\
+    expected = """\
 The Poetry configuration is invalid:
-  - {schema_error}
+  - Either [project.name] or [tool.poetry.name] is required in package mode.
 """
-    expected = {
-        expected_template.format(schema_error=schema_error)
-        for schema_error in (fastjsonschema_error, custom_error)
-    }
 
-    assert str(e.value) in expected
+    assert str(e.value) == expected
 
 
 def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter) -> None:
