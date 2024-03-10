@@ -266,7 +266,8 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             )
 
         # Refresh the locker
-        self.poetry.locker.set_local_config(poetry_content)
+        content["tool"]["poetry"] = poetry_content
+        self.poetry.locker.set_pyproject_data(content)
         self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line

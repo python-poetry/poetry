@@ -182,7 +182,7 @@ def test_check_lock_outdated(
 
     locker = Locker(
         lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_outdated_lockfile.locker._local_config,
+        pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
     )
     poetry_with_outdated_lockfile.set_locker(locker)
 
@@ -210,7 +210,7 @@ def test_check_lock_up_to_date(
 
     locker = Locker(
         lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_up_to_date_lockfile.locker._local_config,
+        pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
     )
     poetry_with_up_to_date_lockfile.set_locker(locker)
 

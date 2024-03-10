@@ -182,7 +182,7 @@ class PoetryTestApplication(Application):
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
         self._poetry.set_locker(
-            TestLocker(poetry.locker.lock, self._poetry.local_config)
+            TestLocker(poetry.locker.lock, self._poetry.pyproject.data)
         )
 
 
@@ -190,8 +190,8 @@ class TestLocker(Locker):
     # class name begins 'Test': tell pytest that it does not contain testcases.
     __test__ = False
 
-    def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
-        super().__init__(lock, local_config)
+    def __init__(self, lock: Path, pyproject_data: dict[str, Any]) -> None:
+        super().__init__(lock, pyproject_data)
         self._locked = False
         self._write = False
 

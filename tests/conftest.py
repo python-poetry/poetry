@@ -447,7 +447,7 @@ def project_factory(
 
         if use_test_locker:
             locker = TestLocker(
-                poetry.locker.lock, locker_config or poetry.locker._local_config
+                poetry.locker.lock, locker_config or poetry.locker._pyproject_data
             )
             locker.write()
 
