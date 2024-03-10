@@ -13,6 +13,8 @@ from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.dependency_group import MAIN_GROUP
+from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
@@ -3118,17 +3120,30 @@ def test_solver_chooses_from_correct_repository_if_forced(
     assert ops[0].package.source_url == legacy_repository.url
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
     pypi_repository: PyPiRepository,
+    project_dependencies: bool,
 ) -> None:
     package.python_versions = "^3.7"
-    package.add_dependency(Factory.create_dependency("foo", "^1.0"))
-    package.add_dependency(
-        Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
-    )
+    if project_dependencies:
+        main_group = DependencyGroup(MAIN_GROUP)
+        package.add_dependency_group(main_group)
+        main_group.add_dependency(Factory.create_dependency("foo", "^1.0"))
+        main_group.add_dependency(Factory.create_dependency("tomlkit", "^0.5"))
+        main_group.add_poetry_dependency(
+            Factory.create_dependency("tomlkit", {"source": "legacy"})
+        )
+    else:
+        package.add_dependency(Factory.create_dependency("foo", "^1.0"))
+        package.add_dependency(
+            Factory.create_dependency(
+                "tomlkit", {"version": "^0.5", "source": "legacy"}
+            )
+        )
 
     repo = Repository("repo")
     foo = get_package("foo", "1.0.0")

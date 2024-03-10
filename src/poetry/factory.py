@@ -73,7 +73,7 @@ class Factory(BaseFactory):
         # Load local sources
         repositories = {}
         existing_repositories = config.get("repositories", {})
-        for source in base_poetry.pyproject.poetry_config.get("source", []):
+        for source in base_poetry.local_config.get("source", []):
             name = source.get("name")
             url = source.get("url")
             if name and url and name not in existing_repositories:
@@ -340,22 +340,26 @@ class Factory(BaseFactory):
 
     @classmethod
     def validate(
-        cls, config: dict[str, Any], strict: bool = False
+        cls, toml_data: dict[str, Any], strict: bool = False
     ) -> dict[str, list[str]]:
-        results = super().validate(config, strict)
+        results = super().validate(toml_data, strict)
+        poetry_config = toml_data["tool"]["poetry"]
 
-        results["errors"].extend(validate_object(config))
+        results["errors"].extend(validate_object(poetry_config))
 
         # A project should not depend on itself.
-        dependencies = set(config.get("dependencies", {}).keys())
-        dependencies.update(config.get("dev-dependencies", {}).keys())
-        groups = config.get("group", {}).values()
+        # TODO: consider [project.dependencies] and [project.optional-dependencies]
+        dependencies = set(poetry_config.get("dependencies", {}).keys())
+        dependencies.update(poetry_config.get("dev-dependencies", {}).keys())
+        groups = poetry_config.get("group", {}).values()
         for group in groups:
             dependencies.update(group.get("dependencies", {}).keys())
 
         dependencies = {canonicalize_name(d) for d in dependencies}
 
-        project_name = config.get("name")
+        project_name = toml_data.get("project", {}).get("name") or poetry_config.get(
+            "name"
+        )
         if project_name is not None and canonicalize_name(project_name) in dependencies:
             results["errors"].append(
                 f"Project name ({project_name}) is same as one of its dependencies"

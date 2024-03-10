@@ -1,14 +1,10 @@
-[tool.poetry]
+[project]
 name = "foobar"
 version = "0.1.0"
-description = ""
-authors = ["Poetry Developer <developer@python-poetry.org>"]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-docker = "4.3.1"
-
-[tool.poetry.group.dev.dependencies]
+requires-python = ">=3.8,<4.0"
+dependencies = [
+    "docker>=4.3.1",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

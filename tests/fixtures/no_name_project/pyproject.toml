@@ -1,5 +1,5 @@
 [tool.poetry]
-name = ""
+package-mode = false
 version = "1.2.3"
 description = "This project has no name"
 authors = [
