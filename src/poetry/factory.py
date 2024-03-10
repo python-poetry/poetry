@@ -307,7 +307,7 @@ class Factory(BaseFactory):
         dependency_section = content["dependencies"] = tomlkit.table()
         dependency_section["python"] = package.python_versions
 
-        for dep in package.all_requires:
+        for dep in package.all_requires_for_locking:
             constraint: DependencySpec | str = dependency_to_specification(
                 dep, tomlkit.inline_table()
             )

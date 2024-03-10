@@ -104,7 +104,7 @@ class DebugResolveCommand(InitCommand):
 
             packages = [op.package for op in ops]
 
-            requires = package.all_requires
+            requires = package.all_requires_for_locking
             for pkg in packages:
                 for require in requires:
                     if pkg.name == require.name:

@@ -287,7 +287,7 @@ class PackageNode(DFSNode):
     def reachable(self) -> list[PackageNode]:
         children: list[PackageNode] = []
 
-        for dependency in self.package.all_requires:
+        for dependency in self.package.all_requires_for_locking:
             for pkg in self.packages:
                 if pkg.complete_name == dependency.complete_name and (
                     dependency.constraint.allows(pkg.version)
