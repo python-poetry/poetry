@@ -1094,7 +1094,7 @@ def test_content_hash_with_legacy_is_compatible(
 
     locker = locker.__class__(
         lock=locker.lock,
-        local_config=local_config,
+        pyproject_data={"tool": {"poetry": local_config}},
     )
 
     old_content_hash = sha256(

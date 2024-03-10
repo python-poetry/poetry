@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import warnings
 
 from hashlib import sha256
 from pathlib import Path
@@ -60,9 +61,9 @@ class Locker:
     ]
     _relevant_keys: ClassVar[list[str]] = [*_legacy_keys, "group"]
 
-    def __init__(self, lock: Path, local_config: dict[str, Any]) -> None:
+    def __init__(self, lock: Path, pyproject_data: dict[str, Any]) -> None:
         self._lock = lock
-        self._local_config = local_config
+        self._pyproject_data = pyproject_data
         self._lock_data: dict[str, Any] | None = None
         self._content_hash = self._get_content_hash()
 
@@ -97,8 +98,18 @@ class Locker:
 
         return False
 
+    def set_pyproject_data(self, pyproject_data: dict[str, Any]) -> None:
+        self._pyproject_data = pyproject_data
+        self._content_hash = self._get_content_hash()
+
     def set_local_config(self, local_config: dict[str, Any]) -> None:
-        self._local_config = local_config
+        warnings.warn(
+            "Locker.set_local_config() is deprecated and will be removed in a future"
+            " release. Use Locker.set_pyproject_data() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self._pyproject_data.setdefault("tool", {})["poetry"] = local_config
         self._content_hash = self._get_content_hash()
 
     def locked_repository(self) -> LockfileRepository:
@@ -305,7 +316,7 @@ class Locker:
         """
         Returns the sha256 hash of the sorted content of the pyproject file.
         """
-        content = self._local_config
+        content = self._pyproject_data.get("tool", {}).get("poetry", {})
 
         relevant_content = {}
         for key in self._relevant_keys:
