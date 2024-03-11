@@ -2335,3 +2335,61 @@ def test_show_outdated_missing_directory_dependency(
 
     with pytest.raises(ValueError, match="does not exist"):
         tester.execute("")
+
+
+def test_show_entry_point_scripts(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+
+    installed.add_package(cachy2)
+
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "msgpack-python": []},
+            },
+        }
+    )
+
+    tester.execute("--scripts")
+
+    expected = """\
+Available script entry-points:
+
+\tfoo \t\tfoo:bar
+\tbaz \t\tbar:baz.boom.bim
+\tfox \t\tfuz.foo:bar.baz
+"""
+
+    assert tester.io.fetch_output() == expected
