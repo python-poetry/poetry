@@ -3,6 +3,11 @@ from __future__ import annotations
 import sys
 
 from contextlib import suppress
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 # TODO: use try/except ImportError when
@@ -50,10 +55,27 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
     return string.encode(encodings[0], errors="ignore")
 
 
+def is_relative_to(this: Path, other: Path) -> bool:
+    """
+    Return whether `this` path is relative to the `other` path. This is compatibility wrapper around
+    `PurePath.is_relative_to()` method. This method was introduced only in Python 3.9.
+
+    See: https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to
+    """
+    if sys.version_info < (3, 9):
+        with suppress(ValueError):
+            this.relative_to(other)
+            return True
+        return False
+
+    return this.is_relative_to(other)
+
+
 __all__ = [
     "WINDOWS",
     "decode",
     "encode",
+    "is_relative_to",
     "metadata",
     "tomllib",
 ]

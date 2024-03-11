@@ -65,7 +65,8 @@ def venvs_in_project_dir(app: PoetryTestApplication) -> Iterator[Path]:
     try:
         yield venv_dir
     finally:
-        venv_dir.rmdir()
+        if venv_dir.exists():
+            venv_dir.rmdir()
 
 
 @pytest.fixture

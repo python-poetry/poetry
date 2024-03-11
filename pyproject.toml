@@ -44,7 +44,7 @@ keyring = "^24.0.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=23.1"
 pexpect = "^4.7.0"
-pkginfo = "^1.9.4"
+pkginfo = "^1.10"
 platformdirs = ">=3.0.0,<5"
 pyproject-hooks = "^1.0.0"
 requests = "^2.26"
