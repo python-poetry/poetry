@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import re
@@ -41,6 +42,8 @@ from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
+from tests.helpers import switch_working_directory
+from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
@@ -49,12 +52,14 @@ if TYPE_CHECKING:
 
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
+    from _pytest.tmpdir import TempPathFactory
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+    from tests.types import SetProjectContext
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -525,3 +530,34 @@ def venv_flags_default() -> dict[str, bool]:
 def httpretty_windows_mock_urllib3_wait_for_socket(mocker: MockerFixture) -> None:
     # this is a workaround for https://github.com/gabrielfalcao/HTTPretty/issues/442
     mocker.patch("urllib3.util.wait.select_wait_for_socket", returns=True)
+
+
+@pytest.fixture(autouse=True)
+def tmp_working_directory(tmp_path: Path) -> Iterator[Path]:
+    with switch_working_directory(tmp_path):
+        yield tmp_path
+
+
+@pytest.fixture(autouse=True, scope="session")
+def tmp_session_working_directory(tmp_path_factory: TempPathFactory) -> Iterator[Path]:
+    tmp_path = tmp_path_factory.mktemp("session-working-directory")
+    with switch_working_directory(tmp_path):
+        yield tmp_path
+
+
+@pytest.fixture
+def set_project_context(
+    tmp_working_directory: Path, tmp_path: Path, fixture_dir: FixtureDirGetter
+) -> SetProjectContext:
+    @contextlib.contextmanager
+    def project_context(project: str | Path, in_place: bool = False) -> Iterator[Path]:
+        if isinstance(project, str):
+            project = fixture_dir(project)
+
+        with with_working_directory(
+            source=project,
+            target=tmp_path.joinpath(project.name) if not in_place else None,
+        ) as path:
+            yield path
+
+    return project_context

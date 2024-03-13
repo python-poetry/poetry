@@ -338,3 +338,32 @@ def http_setup_redirect(
             status=status_code,
             body=redirect_request_callback,
         )
+
+
+@contextlib.contextmanager
+def switch_working_directory(path: Path, remove: bool = False) -> Iterator[Path]:
+    original_cwd = Path.cwd()
+    os.chdir(path)
+
+    with contextlib.suppress(Exception) as exception:
+        yield path
+
+    os.chdir(original_cwd)
+
+    if remove:
+        shutil.rmtree(path, ignore_errors=True)
+
+    if exception is not None:
+        raise exception
+
+
+@contextlib.contextmanager
+def with_working_directory(source: Path, target: Path | None = None) -> Iterator[Path]:
+    use_copy = target is not None
+
+    if use_copy:
+        assert target is not None
+        shutil.copytree(source, target)
+
+    with switch_working_directory(target or source, remove=use_copy) as path:
+        yield path
