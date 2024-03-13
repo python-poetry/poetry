@@ -8,6 +8,7 @@ from typing import Protocol
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+    from typing import ContextManager
     from typing import Dict
     from typing import Tuple
 
@@ -79,3 +80,9 @@ class HTMLPageGetter(Protocol):
 
 class RequestsSessionGet(Protocol):
     def __call__(self, url: str, **__: Any) -> requests.Response: ...
+
+
+class SetProjectContext(Protocol):
+    def __call__(
+        self, project: str | Path, in_place: bool = False
+    ) -> ContextManager[Path]: ...
