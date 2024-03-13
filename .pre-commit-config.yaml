@@ -26,7 +26,7 @@ repos:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.3.2
     hooks:
       - id: ruff
       - id: ruff-format
