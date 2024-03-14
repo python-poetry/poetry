@@ -39,6 +39,9 @@ class Chooser:
         self._no_binary_policy: PackageFilterPolicy = PackageFilterPolicy(
             self._config.get("installer.no-binary", [])
         )
+        self._only_binary_policy: PackageFilterPolicy = PackageFilterPolicy(
+            self._config.get("installer.only-binary", [])
+        )
 
     def choose_for(self, package: Package) -> Link:
         """
@@ -66,6 +69,15 @@ class Chooser:
 
             if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
                 logger.debug("Skipping unsupported distribution %s", link.filename)
+                continue
+
+            if link.is_sdist and not self._only_binary_policy.allows(package.name):
+                logger.debug(
+                    "Skipping source distribution for %s as requested in only binary policy for"
+                    " package (%s)",
+                    link.filename,
+                    package.name,
+                )
                 continue
 
             links.append(link)
