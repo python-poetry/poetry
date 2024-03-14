@@ -221,9 +221,7 @@ you encounter on the [issue tracker](https://github.com/python-poetry/poetry/iss
 
 *Introduced in 1.2.0*
 
-When set this configuration allows users to configure package distribution format policy for all or
-specific packages. Specifically, to disallow the use of binary distribution format for all, none or
-specific packages.
+When set, this configuration allows users to disallow the use of binary distribution format for all, none or specific packages.
 
 | Configuration          | Description                                                |
 |------------------------|------------------------------------------------------------|
