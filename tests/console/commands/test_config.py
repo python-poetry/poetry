@@ -58,6 +58,7 @@ experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
+installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 solver.lazy-wheel = true
@@ -90,6 +91,7 @@ experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
+installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 solver.lazy-wheel = true
@@ -143,6 +145,7 @@ experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
+installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 solver.lazy-wheel = true
@@ -174,6 +177,7 @@ experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
+installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 solver.lazy-wheel = true
@@ -303,6 +307,7 @@ experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
+installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 solver.lazy-wheel = true
@@ -342,6 +347,7 @@ experimental.system-git-client = false
 installer.max-workers = null
 installer.modern-installation = true
 installer.no-binary = null
+installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 repositories.foo.url = "https://foo.bar/simple/"
@@ -516,6 +522,13 @@ def test_config_installer_parallel(
 
 
 @pytest.mark.parametrize(
+    ("setting",),
+    [
+        ("installer.no-binary",),
+        ("installer.only-binary",),
+    ],
+)
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         ("true", [":all:"]),
@@ -528,11 +541,9 @@ def test_config_installer_parallel(
         ("", []),
     ],
 )
-def test_config_installer_no_binary(
-    tester: CommandTester, value: str, expected: list[str]
+def test_config_installer_binary_filter_config(
+    tester: CommandTester, setting: str, value: str, expected: list[str]
 ) -> None:
-    setting = "installer.no-binary"
-
     tester.execute(setting)
     assert tester.io.fetch_output().strip() == "null"
 

@@ -125,17 +125,18 @@ def pool() -> RepositoryPool:
     return pool
 
 
-@pytest.mark.parametrize("source_type", ["", "legacy"])
-def test_chooser_chooses_universal_wheel_link_if_available(
+def check_chosen_link_filename(
     env: MockEnv,
-    mock_pypi: None,
-    mock_legacy: None,
     source_type: str,
     pool: RepositoryPool,
+    filename: str | None,
+    config: Config | None = None,
+    package_name: str = "pytest",
+    package_version: str = "3.5.0",
 ) -> None:
-    chooser = Chooser(pool, env)
+    chooser = Chooser(pool, env, config)
+    package = Package(package_name, package_version)
 
-    package = Package("pytest", "3.5.0")
     if source_type == "legacy":
         package = Package(
             package.name,
@@ -145,9 +146,31 @@ def test_chooser_chooses_universal_wheel_link_if_available(
             source_url="https://foo.bar/simple/",
         )
 
-    link = chooser.choose_for(package)
+    try:
+        link = chooser.choose_for(package)
+    except RuntimeError as e:
+        if filename is None:
+            assert (
+                str(e)
+                == f"Unable to find installation candidates for {package.name} ({package.version})"
+            )
+        else:
+            pytest.fail("Package was not found")
+    else:
+        assert link.filename == filename
 
-    assert link.filename == "pytest-3.5.0-py2.py3-none-any.whl"
+
+@pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_chooses_universal_wheel_link_if_available(
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
+) -> None:
+    check_chosen_link_filename(
+        env, source_type, pool, "pytest-3.5.0-py2.py3-none-any.whl"
+    )
 
 
 @pytest.mark.parametrize(
@@ -172,22 +195,69 @@ def test_chooser_no_binary_policy(
     config: Config,
 ) -> None:
     config.merge({"installer": {"no-binary": policy.split(",")}})
+    check_chosen_link_filename(env, source_type, pool, filename, config)
 
-    chooser = Chooser(pool, env, config)
 
-    package = Package("pytest", "3.5.0")
-    if source_type == "legacy":
-        package = Package(
-            package.name,
-            package.version.text,
-            source_type="legacy",
-            source_reference="foo",
-            source_url="https://foo.bar/simple/",
-        )
+@pytest.mark.parametrize(
+    ("policy", "filename"),
+    [
+        (":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        (":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("black", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("pytest,black", "pytest-3.5.0-py2.py3-none-any.whl"),
+    ],
+)
+@pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_only_binary_policy(
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
+    policy: str,
+    filename: str,
+    config: Config,
+) -> None:
+    config.merge({"installer": {"only-binary": policy.split(",")}})
+    check_chosen_link_filename(env, source_type, pool, filename, config)
 
-    link = chooser.choose_for(package)
 
-    assert link.filename == filename
+@pytest.mark.parametrize(
+    ("no_binary", "only_binary", "filename"),
+    [
+        (":all:", ":all:", None),
+        (":none:", ":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        (":none:", ":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        (":all:", ":none:", "pytest-3.5.0.tar.gz"),
+        ("black", "black", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("black", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("pytest", "black", "pytest-3.5.0.tar.gz"),
+        ("pytest", "pytest", None),
+        ("pytest,black", "pytest,black", None),
+    ],
+)
+@pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_multiple_binary_policy(
+    env: MockEnv,
+    mock_pypi: None,
+    mock_legacy: None,
+    source_type: str,
+    pool: RepositoryPool,
+    no_binary: str,
+    only_binary: str,
+    filename: str | None,
+    config: Config,
+) -> None:
+    config.merge(
+        {
+            "installer": {
+                "no-binary": no_binary.split(","),
+                "only-binary": only_binary.split(","),
+            }
+        }
+    )
+    check_chosen_link_filename(env, source_type, pool, filename, config)
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -198,21 +268,9 @@ def test_chooser_chooses_specific_python_universal_wheel_link_if_available(
     source_type: str,
     pool: RepositoryPool,
 ) -> None:
-    chooser = Chooser(pool, env)
-
-    package = Package("isort", "4.3.4")
-    if source_type == "legacy":
-        package = Package(
-            package.name,
-            package.version.text,
-            source_type="legacy",
-            source_reference="foo",
-            source_url="https://foo.bar/simple/",
-        )
-
-    link = chooser.choose_for(package)
-
-    assert link.filename == "isort-4.3.4-py3-none-any.whl"
+    check_chosen_link_filename(
+        env, source_type, pool, "isort-4.3.4-py3-none-any.whl", None, "isort", "4.3.4"
+    )
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -222,21 +280,15 @@ def test_chooser_chooses_system_specific_wheel_link_if_available(
     env = MockEnv(
         supported_tags=[Tag("cp37", "cp37m", "win32"), Tag("py3", "none", "any")]
     )
-    chooser = Chooser(pool, env)
-
-    package = Package("pyyaml", "3.13.0")
-    if source_type == "legacy":
-        package = Package(
-            package.name,
-            package.version.text,
-            source_type="legacy",
-            source_reference="foo",
-            source_url="https://foo.bar/simple/",
-        )
-
-    link = chooser.choose_for(package)
-
-    assert link.filename == "PyYAML-3.13-cp37-cp37m-win32.whl"
+    check_chosen_link_filename(
+        env,
+        source_type,
+        pool,
+        "PyYAML-3.13-cp37-cp37m-win32.whl",
+        None,
+        "pyyaml",
+        "3.13.0",
+    )
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
@@ -247,21 +299,9 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
     source_type: str,
     pool: RepositoryPool,
 ) -> None:
-    chooser = Chooser(pool, env)
-
-    package = Package("pyyaml", "3.13.0")
-    if source_type == "legacy":
-        package = Package(
-            package.name,
-            package.version.text,
-            source_type="legacy",
-            source_reference="foo",
-            source_url="https://foo.bar/simple/",
-        )
-
-    link = chooser.choose_for(package)
-
-    assert link.filename == "PyYAML-3.13.tar.gz"
+    check_chosen_link_filename(
+        env, source_type, pool, "PyYAML-3.13.tar.gz", None, "pyyaml", "3.13.0"
+    )
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])

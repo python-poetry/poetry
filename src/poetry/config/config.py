@@ -132,6 +132,7 @@ class Config:
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
+            "only-binary": None,
         },
         "solver": {
             "lazy-wheel": True,
@@ -323,7 +324,7 @@ class Config:
         if name == "installer.max-workers":
             return int_normalizer
 
-        if name == "installer.no-binary":
+        if name in ["installer.no-binary", "installer.only-binary"]:
             return PackageFilterPolicy.normalize
 
         return lambda val: val

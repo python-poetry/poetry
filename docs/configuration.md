@@ -222,6 +222,7 @@ you encounter on the [issue tracker](https://github.com/python-poetry/poetry/iss
 *Introduced in 1.2.0*
 
 When set this configuration allows users to configure package distribution format policy for all or
+specific packages. Specifically, to disallow the use of binary distribution format for all, none or
 specific packages.
 
 | Configuration          | Description                                                |
@@ -258,6 +259,25 @@ export POETRY_INSTALLER_NO_BINARY=:all:
 Unless this is required system-wide, if configured globally, you could encounter slower install times
 across all your projects if incorrectly set.
 {{% /warning %}}
+
+### `installer.only-binary`
+
+**Type**: `string | boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_INSTALLER_ONLY_BINARY`
+
+*Introduced in 1.9.0*
+
+When set this configuration allows users to configure package distribution format policy for all or
+specific packages. Specifically, to enforce the use of binary distribution format for all, none or
+specific packages.
+
+{{% note %}}
+Please refer to [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) for information on allowed
+values, usage instructions and warnings.
+{{% /note %}}
 
 ### `installer.parallel`
 
