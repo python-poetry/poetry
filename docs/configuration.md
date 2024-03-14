@@ -268,8 +268,7 @@ across all your projects if incorrectly set.
 
 *Introduced in 1.9.0*
 
-When set this configuration allows users to configure package distribution format policy for all or
-specific packages. Specifically, to enforce the use of binary distribution format for all, none or
+When set, this configuration allows users to enforce the use of binary distribution format for all, none or
 specific packages.
 
 {{% note %}}
