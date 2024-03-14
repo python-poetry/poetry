@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import io
 import logging
@@ -18,6 +19,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import BinaryIO
 from typing import overload
 
 import requests
@@ -330,6 +332,24 @@ def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
             h.update(content)
 
     return h.hexdigest()
+
+
+def get_file_hash_urlsafe(
+    file: Path | BinaryIO, hash_algorithm: str = "sha256"
+) -> tuple[str, int]:
+    hashsum = hashlib.new(hash_algorithm)
+    with file.open("rb") if isinstance(file, Path) else file as src:
+        size = 0
+        while True:
+            buf = src.read(1024 * 8)
+            if not buf:
+                break
+            hashsum.update(buf)
+            size += len(buf)
+
+        src.seek(0)
+
+    return base64.urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("="), size
 
 
 def get_highest_priority_hash_type(

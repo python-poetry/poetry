@@ -14,6 +14,7 @@ from installer.sources import _WheelFileValidationError
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
+from poetry.utils.helpers import get_file_hash_urlsafe
 
 
 logger = logging.getLogger(__name__)
@@ -39,12 +40,8 @@ class WheelDestination(SchemeDictionaryDestination):
         stream: BinaryIO,
         is_executable: bool,
     ) -> RecordEntry:
-        import base64
-        import hashlib
-
         from installer.records import Hash
         from installer.records import RecordEntry
-        from installer.utils import _COPY_BUFSIZE
         from installer.utils import copyfileobj_with_hashing
         from installer.utils import make_file_executable
 
@@ -54,19 +51,7 @@ class WheelDestination(SchemeDictionaryDestination):
             # break pkgutil-style and pkg_resource-style namespace packages.
             # We instead log a warning and ignore it. See issue #9158.
             logger.warning(f"{target_path} already exists. Ignoring.")
-            # Following is copied from copyfileobj_with_hashing, to calculate the hash
-            # without copying to the file again.
-            hasher = hashlib.new(self.hash_algorithm)
-            size = 0
-            while True:
-                buf = stream.read(_COPY_BUFSIZE)
-                if not buf:
-                    break
-                hasher.update(buf)
-                size += len(buf)
-            hash_ = (
-                base64.urlsafe_b64encode(hasher.digest()).decode("ascii").rstrip("=")
-            )
+            hash_, size = get_file_hash_urlsafe(stream, hash_algorithm="sha256")
             return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 
         parent_folder = target_path.parent
