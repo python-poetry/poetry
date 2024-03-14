@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import zipfile
 
@@ -153,6 +154,23 @@ def poetry(
     return project_factory("simple", source=fixture_dir("simple_project"))
 
 
+@pytest.fixture(scope="session")
+def editable_source_directory_path() -> str:
+    return Path("/path/to/editable").resolve(strict=False).as_posix()
+
+
+@pytest.fixture(scope="session", autouse=(os.name == "nt"))
+def fix_editable_path_for_windows(
+    site_purelib: Path, editable_source_directory_path: str
+) -> None:
+    # we handle this as a special case since in certain scenarios (eg: on Windows GHA runners)
+    # the temp directory is on a different drive causing path resolutions without drive letters
+    # to give inconsistent results at different phases of the test suite execution; additionally
+    # this represents a more realistic scenario
+    editable_pth_file = site_purelib / "editable.pth"
+    editable_pth_file.write_text(editable_source_directory_path)
+
+
 def test_load_successful(
     repository: InstalledRepository, installed_results: list[metadata.PathDistribution]
 ) -> None:
@@ -231,17 +249,16 @@ def test_load_platlib_package(repository: InstalledRepository) -> None:
     assert lib64.version.text == "2.3.4"
 
 
-def test_load_editable_package(repository: InstalledRepository) -> None:
+def test_load_editable_package(
+    repository: InstalledRepository, editable_source_directory_path: str
+) -> None:
     # test editable package with text .pth file
     editable = get_package_from_repository("editable", repository)
     assert editable is not None
     assert editable.name == "editable"
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
-    assert (
-        editable.source_url
-        == Path("/path/to/editable").resolve(strict=False).as_posix()
-    )
+    assert editable.source_url == editable_source_directory_path
 
 
 def test_load_editable_with_import_package(repository: InstalledRepository) -> None:
