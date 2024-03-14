@@ -153,3 +153,33 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     repo._get_info_from_wheel(link)
     assert mock_metadata_from_wheel_url.call_count == 5
     assert mock_download.call_count == 4
+
+
+@pytest.mark.parametrize(
+    "mock_hashes",
+    [
+        None,
+        {"sha256": "e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"},
+        {"md5": "be7589b4902793e66d7d979bd8581591"},
+    ],
+)
+def test_calculate_sha256(
+    mocker: MockerFixture, mock_hashes: dict[str, Any] | None
+) -> None:
+    filename = "poetry_core-1.5.0-py3-none-any.whl"
+    filepath = MockRepository.DIST_FIXTURES / filename
+    mock_download = mocker.patch(
+        "poetry.repositories.http_repository.download_file",
+        side_effect=lambda _, dest, *args, **kwargs: shutil.copy(filepath, dest),
+    )
+    domain = "foo.com"
+    link = Link(f"https://{domain}/{filename}", hashes=mock_hashes)
+    repo = MockRepository()
+
+    calculated_hash = repo.calculate_sha256(link)
+
+    assert mock_download.call_count == 1
+    assert (
+        calculated_hash
+        == "sha256:e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
+    )
