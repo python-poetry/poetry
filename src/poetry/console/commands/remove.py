@@ -7,6 +7,7 @@ from typing import ClassVar
 from cleo.helpers import argument
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
 
@@ -66,39 +67,45 @@ list of installed packages
             group = self.option("group", self.default_group)
 
         content: dict[str, Any] = self.poetry.file.read()
-        poetry_content = content["tool"]["poetry"]
+        project_content = content.get("project", {})
+        poetry_content = content.get("tool", {}).get("poetry", {})
 
         if group is None:
-            removed = []
+            # remove from all groups
+            removed = set()
             group_sections = [
-                (group_name, group_section.get("dependencies", {}))
-                for group_name, group_section in poetry_content.get("group", {}).items()
+                (
+                    MAIN_GROUP,
+                    project_content.get("dependencies", []),
+                    poetry_content.get("dependencies", {}),
+                )
             ]
+            group_sections.extend(
+                (group_name, [], group_section.get("dependencies", {}))
+                for group_name, group_section in poetry_content.get("group", {}).items()
+            )
 
-            for group_name, section in [
-                (MAIN_GROUP, poetry_content["dependencies"]),
-                *group_sections,
-            ]:
-                removed += self._remove_packages(packages, section, group_name)
-                if group_name != MAIN_GROUP:
-                    if not section:
-                        del poetry_content["group"][group_name]
-                    else:
-                        poetry_content["group"][group_name]["dependencies"] = section
+            for group_name, project_section, poetry_section in group_sections:
+                removed |= self._remove_packages(
+                    packages, project_section, poetry_section, group_name
+                )
+                if group_name != MAIN_GROUP and not poetry_section:
+                    del poetry_content["group"][group_name]
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
             removed = self._remove_packages(
-                packages, poetry_content["dev-dependencies"], "dev"
+                packages, [], poetry_content["dev-dependencies"], "dev"
             )
 
             if not poetry_content["dev-dependencies"]:
                 del poetry_content["dev-dependencies"]
         else:
-            removed = []
+            removed = set()
             if "group" in poetry_content:
                 if group in poetry_content["group"]:
                     removed = self._remove_packages(
                         packages,
+                        [],
                         poetry_content["group"][group].get("dependencies", {}),
                         group,
                     )
@@ -109,15 +116,13 @@ list of installed packages
         if "group" in poetry_content and not poetry_content["group"]:
             del poetry_content["group"]
 
-        removed_set = set(removed)
-        not_found = set(packages).difference(removed_set)
+        not_found = set(packages).difference(removed)
         if not_found:
             raise ValueError(
                 "The following packages were not found: " + ", ".join(sorted(not_found))
             )
 
         # Refresh the locker
-        content["tool"]["poetry"] = poetry_content
         self.poetry.locker.set_pyproject_data(content)
         self.installer.set_locker(self.poetry.locker)
         self.installer.set_package(self.poetry.package)
@@ -125,7 +130,7 @@ list of installed packages
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(True)
         self.installer.execute_operations(not self.option("lock"))
-        self.installer.whitelist(removed_set)
+        self.installer.whitelist(removed)
 
         status = self.installer.run()
 
@@ -136,17 +141,27 @@ list of installed packages
         return status
 
     def _remove_packages(
-        self, packages: list[str], section: dict[str, Any], group_name: str
-    ) -> list[str]:
-        removed = []
+        self,
+        packages: list[str],
+        project_section: list[str],
+        poetry_section: dict[str, Any],
+        group_name: str,
+    ) -> set[str]:
+        removed = set()
         group = self.poetry.package.dependency_group(group_name)
-        section_keys = list(section.keys())
 
         for package in packages:
-            for existing_package in section_keys:
-                if canonicalize_name(existing_package) == canonicalize_name(package):
-                    del section[existing_package]
-                    removed.append(package)
-                    group.remove_dependency(package)
+            normalized_name = canonicalize_name(package)
+            for requirement in project_section.copy():
+                if Dependency.create_from_pep_508(requirement).name == normalized_name:
+                    project_section.remove(requirement)
+                    removed.add(package)
+            for existing_package in list(poetry_section):
+                if canonicalize_name(existing_package) == normalized_name:
+                    del poetry_section[existing_package]
+                    removed.add(package)
+
+        for package in removed:
+            group.remove_dependency(package)
 
         return removed
