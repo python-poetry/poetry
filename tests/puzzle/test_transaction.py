@@ -6,11 +6,16 @@ from typing import Any
 from poetry.core.packages.package import Package
 
 from poetry.installation.operations.update import Update
+from poetry.packages.transitive_package_info import TransitivePackageInfo
 from poetry.puzzle.transaction import Transaction
 
 
 if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
+
+
+def get_transitive_info(depth: int) -> TransitivePackageInfo:
+    return TransitivePackageInfo(depth, set(), {})
 
 
 def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> None:
@@ -43,11 +48,11 @@ def check_operations(ops: list[Operation], expected: list[dict[str, Any]]) -> No
 def test_it_should_calculate_operations_in_correct_order() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
-        [
-            (Package("a", "1.0.0"), 1),
-            (Package("b", "2.1.0"), 2),
-            (Package("d", "4.0.0"), 0),
-        ],
+        {
+            Package("a", "1.0.0"): get_transitive_info(1),
+            Package("b", "2.1.0"): get_transitive_info(2),
+            Package("d", "4.0.0"): get_transitive_info(0),
+        },
     )
 
     check_operations(
@@ -63,11 +68,11 @@ def test_it_should_calculate_operations_in_correct_order() -> None:
 def test_it_should_calculate_operations_for_installed_packages() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
-        [
-            (Package("a", "1.0.0"), 1),
-            (Package("b", "2.1.0"), 2),
-            (Package("d", "4.0.0"), 0),
-        ],
+        {
+            Package("a", "1.0.0"): get_transitive_info(1),
+            Package("b", "2.1.0"): get_transitive_info(2),
+            Package("d", "4.0.0"): get_transitive_info(0),
+        },
         installed_packages=[
             Package("a", "1.0.0"),
             Package("b", "2.0.0"),
@@ -94,11 +99,11 @@ def test_it_should_calculate_operations_for_installed_packages() -> None:
 def test_it_should_remove_installed_packages_if_required() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
-        [
-            (Package("a", "1.0.0"), 1),
-            (Package("b", "2.1.0"), 2),
-            (Package("d", "4.0.0"), 0),
-        ],
+        {
+            Package("a", "1.0.0"): get_transitive_info(1),
+            Package("b", "2.1.0"): get_transitive_info(2),
+            Package("d", "4.0.0"): get_transitive_info(0),
+        },
         installed_packages=[
             Package("a", "1.0.0"),
             Package("b", "2.0.0"),
@@ -126,11 +131,11 @@ def test_it_should_remove_installed_packages_if_required() -> None:
 def test_it_should_not_remove_installed_packages_that_are_in_result() -> None:
     transaction = Transaction(
         [],
-        [
-            (Package("a", "1.0.0"), 1),
-            (Package("b", "2.0.0"), 2),
-            (Package("c", "3.0.0"), 0),
-        ],
+        {
+            Package("a", "1.0.0"): get_transitive_info(1),
+            Package("b", "2.0.0"): get_transitive_info(2),
+            Package("c", "3.0.0"): get_transitive_info(0),
+        },
         installed_packages=[
             Package("a", "1.0.0"),
             Package("b", "2.0.0"),
@@ -151,19 +156,16 @@ def test_it_should_not_remove_installed_packages_that_are_in_result() -> None:
 def test_it_should_update_installed_packages_if_sources_are_different() -> None:
     transaction = Transaction(
         [Package("a", "1.0.0")],
-        [
-            (
-                Package(
-                    "a",
-                    "1.0.0",
-                    source_url="https://github.com/demo/demo.git",
-                    source_type="git",
-                    source_reference="main",
-                    source_resolved_reference="123456",
-                ),
-                1,
-            )
-        ],
+        {
+            Package(
+                "a",
+                "1.0.0",
+                source_url="https://github.com/demo/demo.git",
+                source_type="git",
+                source_reference="main",
+                source_resolved_reference="123456",
+            ): get_transitive_info(1)
+        },
         installed_packages=[Package("a", "1.0.0")],
     )
 

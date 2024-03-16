@@ -7,8 +7,6 @@ from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
-from poetry.installation.operations import Uninstall
-from poetry.installation.operations import Update
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
@@ -20,12 +18,14 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.packages.package import Package
     from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
     from poetry.packages import Locker
+    from poetry.packages.transitive_package_info import TransitivePackageInfo
     from poetry.utils.env import Env
 
 
@@ -196,12 +196,9 @@ class Installer:
         with solver.provider.use_source_root(
             source_root=self._env.path.joinpath("src")
         ):
-            ops = solver.solve(use_latest=use_latest).calculate_operations()
+            solved_packages = solver.solve(use_latest=use_latest).get_solved_packages()
 
-        lockfile_repo = LockfileRepository()
-        self._populate_lockfile_repo(lockfile_repo, ops)
-
-        self._write_lock_file(lockfile_repo, force=True)
+        self._write_lock_file(solved_packages, force=True)
 
         return 0
 
@@ -236,10 +233,19 @@ class Installer:
             with solver.provider.use_source_root(
                 source_root=self._env.path.joinpath("src")
             ):
-                ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+                solved_packages = solver.solve(
+                    use_latest=self._whitelist
+                ).get_solved_packages()
+
+            if not self.executor.enabled:
+                # If we are only in lock mode, no need to go any further
+                self._write_lock_file(solved_packages)
+                return 0
 
             lockfile_repo = LockfileRepository()
-            self._populate_lockfile_repo(lockfile_repo, ops)
+            for package in solved_packages:
+                if not lockfile_repo.has_package(package):
+                    lockfile_repo.add_package(package)
 
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
@@ -260,11 +266,6 @@ class Installer:
 
             locked_repository = self._locker.locked_repository()
             lockfile_repo = locked_repository
-
-        if not self.executor.enabled:
-            # If we are only in lock mode, no need to go any further
-            self._write_lock_file(lockfile_repo)
-            return 0
 
         if self._io.is_verbose():
             self._io.write_line("")
@@ -312,13 +313,17 @@ class Installer:
 
         if status == 0 and self._update:
             # Only write lock file when installation is success
-            self._write_lock_file(lockfile_repo)
+            self._write_lock_file(solved_packages)
 
         return status
 
-    def _write_lock_file(self, repo: LockfileRepository, force: bool = False) -> None:
+    def _write_lock_file(
+        self,
+        packages: dict[Package, TransitivePackageInfo],
+        force: bool = False,
+    ) -> None:
         if not self.is_dry_run() and (force or self._update):
-            updated_lock = self._locker.set_lock_data(self._package, repo.packages)
+            updated_lock = self._locker.set_lock_data(self._package, packages)
 
             if updated_lock:
                 self._io.write_line("")
@@ -326,17 +331,6 @@ class Installer:
 
     def _execute(self, operations: list[Operation]) -> int:
         return self._executor.execute(operations)
-
-    def _populate_lockfile_repo(
-        self, repo: LockfileRepository, ops: Iterable[Operation]
-    ) -> None:
-        for op in ops:
-            if isinstance(op, Uninstall):
-                continue
-
-            package = op.target_package if isinstance(op, Update) else op.package
-            if not repo.has_package(package):
-                repo.add_package(package)
 
     def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)

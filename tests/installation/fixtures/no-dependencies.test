@@ -2,5 +2,5 @@ package = []
 
 [metadata]
 python-versions = "*"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"

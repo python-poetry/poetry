@@ -525,6 +525,7 @@ class Provider:
             package = dependency_package.package
             dependency = dependency_package.dependency
             new_dependency = package.without_features().to_dependency()
+            new_dependency.marker = AnyMarker()
 
             # When adding dependency foo[extra] -> foo, preserve foo's source, if it's
             # specified. This prevents us from trying to get foo from PyPI
