@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from poetry.utils.extras import get_extra_package_names
@@ -10,13 +11,14 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.installation.operations.operation import Operation
+    from poetry.packages.transitive_package_info import TransitivePackageInfo
 
 
 class Transaction:
     def __init__(
         self,
         current_packages: list[Package],
-        result_packages: list[tuple[Package, int]],
+        result_packages: list[Package] | dict[Package, TransitivePackageInfo],
         installed_packages: list[Package] | None = None,
         root_package: Package | None = None,
     ) -> None:
@@ -28,6 +30,10 @@ class Transaction:
 
         self._installed_packages = installed_packages
         self._root_package = root_package
+
+    def get_solved_packages(self) -> dict[Package, TransitivePackageInfo]:
+        assert isinstance(self._result_packages, dict)
+        return self._result_packages
 
     def calculate_operations(
         self,
@@ -47,13 +53,19 @@ class Transaction:
         if extras is not None:
             assert self._root_package is not None
             extra_packages = get_extra_package_names(
-                [package for package, _ in self._result_packages],
+                self._result_packages,
                 {k: [d.name for d in v] for k, v in self._root_package.extras.items()},
                 extras,
             )
 
+        if isinstance(self._result_packages, dict):
+            priorities = {
+                pkg: info.depth for pkg, info in self._result_packages.items()
+            }
+        else:
+            priorities = defaultdict(int)
         uninstalls: set[NormalizedName] = set()
-        for result_package, priority in self._result_packages:
+        for result_package in self._result_packages:
             installed = False
             is_unsolicited_extra = extras is not None and (
                 result_package.optional and result_package.name not in extra_packages
@@ -87,7 +99,11 @@ class Transaction:
                         and not result_package.is_same_package_as(installed_package)
                     ):
                         operations.append(
-                            Update(installed_package, result_package, priority=priority)
+                            Update(
+                                installed_package,
+                                result_package,
+                                priority=priorities[result_package],
+                            )
                         )
                     else:
                         operations.append(
@@ -100,7 +116,7 @@ class Transaction:
                 installed
                 or (skip_directory and result_package.source_type == "directory")
             ):
-                op = Install(result_package, priority=priority)
+                op = Install(result_package, priority=priorities[result_package])
                 if is_unsolicited_extra:
                     op.skip("Not required")
                 operations.append(op)
@@ -109,7 +125,7 @@ class Transaction:
             for current_package in self._current_packages:
                 found = any(
                     current_package.name == result_package.name
-                    for result_package, _ in self._result_packages
+                    for result_package in self._result_packages
                 )
 
                 if not found:
@@ -120,7 +136,7 @@ class Transaction:
 
             if synchronize:
                 result_package_names = {
-                    result_package.name for result_package, _ in self._result_packages
+                    result_package.name for result_package in self._result_packages
                 }
                 # We preserve pip when not managed by poetry, this is done to avoid
                 # externally managed virtual environments causing unnecessary removals.
