@@ -4,9 +4,11 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = ">=3.5"
+groups = ["main"]
+markers = 'python_version >= "3.5"'
 files = []
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
