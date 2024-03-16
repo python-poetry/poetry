@@ -232,7 +232,7 @@ class EnvManager:
         venv = venv_path / name
 
         # Create if needed
-        if not venv.exists() or venv.exists() and create:
+        if not venv.exists() or create:
             in_venv = os.environ.get("VIRTUAL_ENV") is not None
             if in_venv or not venv.exists():
                 create = True

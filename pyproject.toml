@@ -40,7 +40,7 @@ dulwich = "^0.21.2"
 fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-keyring = "^24.0.0"
+keyring = "^24.3.1"
 # packaging uses calver, so version is unclamped
 packaging = ">=23.1"
 pexpect = "^4.7.0"
@@ -64,6 +64,7 @@ pre-commit = ">=2.10"
 coverage = ">=7.2.0"
 deepdiff = "^6.3"
 httpretty = "^1.1"
+jaraco-classes = "^3.3.1"
 pytest = "^8.0"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
@@ -161,10 +162,8 @@ exclude = [
 module = [
     'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
-    'poetry.utils.env.site_packages',
     'tests.console.commands.self.test_show_plugins',
     'tests.helpers',
-    'tests.repositories.test_installed_repository',
 ]
 warn_unused_ignores = false
 
@@ -173,7 +172,6 @@ module = [
     'deepdiff.*',
     'fastjsonschema.*',
     'httpretty.*',
-    'keyring.*',
     'pexpect.*',
     'requests_toolbelt.*',
     'shellingham.*',
