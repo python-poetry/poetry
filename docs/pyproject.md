@@ -423,7 +423,8 @@ Note that `install --extras` and the variations mentioned above (`--all-extras`,
 ```toml
 [tool.poetry.dependencies]
 pandas = {version="^2.2.1", extras=["computation", "performance"]}
-
+```
+```toml
 [tool.poetry.group.dev.dependencies]
 fastapi = {version="^0.92.0", extras=["all"]}
 ```
