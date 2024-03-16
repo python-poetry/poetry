@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import functools
 import logging
@@ -167,8 +166,7 @@ class Authenticator:
     def close(self) -> None:
         for session in self._sessions_for_netloc.values():
             if session is not None:
-                with contextlib.suppress(AttributeError):
-                    session.close()
+                session.close()
 
     def __del__(self) -> None:
         self.close()
