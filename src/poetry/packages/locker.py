@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.vcs_dependency import VCSDependency
     from tomlkit.toml_document import TOMLDocument
 
+    from poetry.packages.transitive_package_info import TransitivePackageInfo
     from poetry.repositories.lockfile_repository import LockfileRepository
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ GENERATED_COMMENT = (
 
 
 class Locker:
-    _VERSION = "2.0"
+    _VERSION = "2.1"
     _READ_VERSION_RANGE = ">=1,<3"
 
     _legacy_keys: ClassVar[list[str]] = [
@@ -236,7 +237,9 @@ class Locker:
 
         return repository
 
-    def set_lock_data(self, root: Package, packages: list[Package]) -> bool:
+    def set_lock_data(
+        self, root: Package, packages: dict[Package, TransitivePackageInfo]
+    ) -> bool:
         """Store lock data and eventually persist to the lock file"""
         lock = self._compute_lock_data(root, packages)
 
@@ -247,7 +250,7 @@ class Locker:
         return False
 
     def _compute_lock_data(
-        self, root: Package, packages: list[Package]
+        self, root: Package, packages: dict[Package, TransitivePackageInfo]
     ) -> TOMLDocument:
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
@@ -407,7 +410,9 @@ class Locker:
 
         return lock_data
 
-    def _lock_packages(self, packages: list[Package]) -> list[dict[str, Any]]:
+    def _lock_packages(
+        self, packages: dict[Package, TransitivePackageInfo]
+    ) -> list[dict[str, Any]]:
         locked = []
 
         for package in sorted(
@@ -422,13 +427,15 @@ class Locker:
                 x.source_resolved_reference or "",
             ),
         ):
-            spec = self._dump_package(package)
+            spec = self._dump_package(package, packages[package])
 
             locked.append(spec)
 
         return locked
 
-    def _dump_package(self, package: Package) -> dict[str, Any]:
+    def _dump_package(
+        self, package: Package, transitive_info: TransitivePackageInfo
+    ) -> dict[str, Any]:
         dependencies: dict[str, list[Any]] = {}
         for dependency in sorted(
             package.requires,
@@ -498,8 +505,21 @@ class Locker:
             "description": package.description or "",
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "files": sorted(package.files, key=lambda x: x["file"]),
+            "groups": sorted(transitive_info.groups, key=lambda x: (x != "main", x)),
         }
+        if transitive_info.markers:
+            if len(markers := set(transitive_info.markers.values())) == 1:
+                if not (marker := next(iter(markers))).is_any():
+                    data["markers"] = str(marker)
+            else:
+                data["markers"] = inline_table()
+                for k, v in sorted(
+                    transitive_info.markers.items(),
+                    key=lambda x: (x[0] != "main", x[0]),
+                ):
+                    if not v.is_any():
+                        data["markers"][k] = str(v)
+        data["files"] = sorted(package.files, key=lambda x: x["file"])
 
         if dependencies:
             data["dependencies"] = table()

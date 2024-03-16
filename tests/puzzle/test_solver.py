@@ -10,13 +10,11 @@ from typing import Any
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
-from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
-from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
 
@@ -38,6 +36,8 @@ from tests.helpers import get_package
 if TYPE_CHECKING:
     import httpretty
 
+    from cleo.io.null_io import NullIO
+    from poetry.core.packages.project_package import ProjectPackage
     from pytest_mock import MockerFixture
 
     from poetry.installation.operations.operation import Operation
@@ -56,31 +56,6 @@ DEFAULT_SOURCE_REF = (
 def set_package_python_versions(provider: Provider, python_versions: str) -> None:
     provider._package.python_versions = python_versions
     provider._python_constraint = provider._package.python_constraint
-
-
-@pytest.fixture()
-def io() -> NullIO:
-    return NullIO()
-
-
-@pytest.fixture()
-def package() -> ProjectPackage:
-    return ProjectPackage("root", "1.0")
-
-
-@pytest.fixture()
-def repo() -> Repository:
-    return Repository("repo")
-
-
-@pytest.fixture()
-def pool(repo: Repository) -> RepositoryPool:
-    return RepositoryPool([repo])
-
-
-@pytest.fixture()
-def solver(package: ProjectPackage, pool: RepositoryPool, io: NullIO) -> Solver:
-    return Solver(package, pool, [], [], io)
 
 
 def check_solver_result(
@@ -845,7 +820,7 @@ def test_solver_merge_extras_into_base_package_multiple_repos_fixes_5727(
     package_b = Package("B", "1.0", source_type="legacy")
     package_b.add_dependency(package_a.with_features(["foo"]).to_dependency())
 
-    package_a = Package("A", "1.0", source_type="legacy")
+    package_a = Package("A", "1.0", source_type="legacy", source_reference="legacy")
     package_a.extras = {canonicalize_name("foo"): []}
 
     repo = Repository("legacy")
@@ -3442,7 +3417,9 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency(
     repo.add_package(package_extra)  # extra only in default repo
 
     for version in lib_versions:
-        package_lib = get_package("lib", version)
+        package_lib = Package(
+            "lib", version, source_type="legacy", source_reference="explicit"
+        )
 
         dep_extra = get_dependency("extra", ">=1.0")
         package_lib.add_dependency(
@@ -3453,7 +3430,9 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency(
         explicit_repo.add_package(package_lib)  # lib only in explicit repo
 
     for version in other_versions:
-        package_other = get_package("other", version)
+        package_other = Package(
+            "other", version, source_type="legacy", source_reference="explicit"
+        )
         package_other.add_dependency(Factory.create_dependency("lib", ">=1.0"))
         explicit_repo.add_package(package_other)  # other only in explicit repo
 
@@ -3461,12 +3440,18 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency(
 
     transaction = solver.solve()
 
+    expected_lib = Package(
+        "lib", "2.0", source_type="legacy", source_reference="explicit"
+    )
+    expected_other = Package(
+        "other", "2.0", source_type="legacy", source_reference="explicit"
+    )
     check_solver_result(
         transaction,
         [
             {"job": "install", "package": get_package("extra", "1.0")},
-            {"job": "install", "package": get_package("lib", "2.0")},
-            {"job": "install", "package": get_package("other", "2.0")},
+            {"job": "install", "package": expected_lib},
+            {"job": "install", "package": expected_other},
         ],
     )
 
@@ -3513,7 +3498,9 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
     repo.add_package(package_other_extra)  # extra only in default repo
 
     for version in lib_versions:
-        package_lib = get_package("lib", version)
+        package_lib = Package(
+            "lib", version, source_type="legacy", source_reference="explicit"
+        )
 
         dep_extra = get_dependency("extra", ">=1.0")
         package_lib.add_dependency(
@@ -3534,7 +3521,9 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
         explicit_repo.add_package(package_lib)  # lib only in explicit repo
 
     for version in other_versions:
-        package_other = get_package("other", version)
+        package_other = Package(
+            "other", version, source_type="legacy", source_reference="explicit"
+        )
         package_other.add_dependency(
             Factory.create_dependency(
                 "lib", {"version": ">=1.0", "extras": ["other-extra"]}
@@ -3546,13 +3535,19 @@ def test_direct_dependency_with_extras_from_explicit_and_transitive_dependency2(
 
     transaction = solver.solve()
 
+    expected_lib = Package(
+        "lib", "2.0", source_type="legacy", source_reference="explicit"
+    )
+    expected_other = Package(
+        "other", "2.0", source_type="legacy", source_reference="explicit"
+    )
     check_solver_result(
         transaction,
         [
             {"job": "install", "package": get_package("other-extra", "1.0")},
             {"job": "install", "package": get_package("extra", "1.0")},
-            {"job": "install", "package": get_package("lib", "2.0")},
-            {"job": "install", "package": get_package("other", "2.0")},
+            {"job": "install", "package": expected_lib},
+            {"job": "install", "package": expected_other},
         ],
     )
 
@@ -4024,7 +4019,12 @@ def test_solver_cannot_choose_url_dependency_for_explicit_source(
     )
 
     package_pendulum = get_package("pendulum", "1.4.4")
-    package_demo = get_package("demo", "0.1.0")
+    package_demo = Package(
+        "demo",
+        "0.1.0",
+        source_type="legacy" if explicit_source else None,
+        source_reference="repo" if explicit_source else None,
+    )
     package_demo_url = Package(
         "demo",
         "0.1.0",
