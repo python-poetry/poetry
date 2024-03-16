@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
 
-    from poetry.repositories.link_sources.html import SimpleRepositoryPage
+    from poetry.repositories.link_sources.html import HTMLPage
     from tests.types import HTTPrettyRequestCallback
     from tests.types import NormalizedNameTransformer
     from tests.types import SpecializedLegacyRepositoryMocker
@@ -129,7 +129,7 @@ def specialized_legacy_repository_mocker(
         )
         original_get_page = specialized_repository._get_page
 
-        def _mocked_get_page(name: NormalizedName) -> SimpleRepositoryPage:
+        def _mocked_get_page(name: NormalizedName) -> HTMLPage:
             return original_get_page(
                 canonicalize_name(f"{name}{transformer_or_suffix}")
                 if isinstance(transformer_or_suffix, str)
