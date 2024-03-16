@@ -592,7 +592,7 @@ def test_get_redirected_response_url(
     monkeypatch.setattr(repo.session, "get", get_mock)
     page = repo.get_page("foo")
     assert page is not None
-    assert page._url == "http://legacy.redirect.bar/foo/"
+    assert page._url == "http://legacy.redirect.bar/foo"
 
 
 @pytest.mark.parametrize(
