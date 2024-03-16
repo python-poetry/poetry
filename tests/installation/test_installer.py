@@ -894,9 +894,9 @@ def test_run_with_optional_and_python_restricted_dependencies(
     repo.add_package(package_d)
 
     package.extras = {canonicalize_name("foo"): [get_dependency("A", "~1.0")]}
-    package.add_dependency(
-        Factory.create_dependency("A", {"version": "~1.0", "optional": True})
-    )
+    dep_a = Factory.create_dependency("A", {"version": "~1.0", "optional": True})
+    dep_a._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_a)
     package.add_dependency(
         Factory.create_dependency("B", {"version": "^1.0", "python": "~2.4"})
     )
@@ -942,9 +942,9 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     repo.add_package(package_d)
 
     package.extras = {canonicalize_name("foo"): [get_dependency("A", "~1.0")]}
-    package.add_dependency(
-        Factory.create_dependency("A", {"version": "~1.0", "optional": True})
-    )
+    dep_a = Factory.create_dependency("A", {"version": "~1.0", "optional": True})
+    dep_a._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_a)
     package.add_dependency(
         Factory.create_dependency("B", {"version": "^1.0", "platform": "custom"})
     )
@@ -1055,9 +1055,9 @@ def test_run_installs_extras_with_deps_if_requested(
 
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
     package.add_dependency(Factory.create_dependency("B", "^1.0"))
-    package.add_dependency(
-        Factory.create_dependency("C", {"version": "^1.0", "optional": True})
-    )
+    dep_c = Factory.create_dependency("C", {"version": "^1.0", "optional": True})
+    dep_c._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_c)
 
     package_c.add_dependency(Factory.create_dependency("D", "^1.0"))
 
@@ -1116,7 +1116,7 @@ def test_installer_with_pypi_repository(
     assert result == 0
 
     expected = fixture("with-pypi-repository")
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
 
 def test_run_installs_with_local_file(
