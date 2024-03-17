@@ -125,4 +125,4 @@ def pypi_repository(
         body=simple_callback,
     )
 
-    return PyPiRepository(disable_cache=True, fallback=False)
+    return PyPiRepository(disable_cache=True)

@@ -182,7 +182,6 @@ def test_find_links_for_package_yanked(
 
 def test_fallback_on_downloading_packages(pypi_repository: PyPiRepository) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     package = repo.package("jupyter", Version.parse("1.0.0"))
 
@@ -204,7 +203,6 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     package = repo.package("isort", Version.parse("4.3.4"))
 
@@ -220,7 +218,6 @@ def test_fallback_pep_658_metadata(
     mocker: MockerFixture, pypi_repository: PyPiRepository
 ) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     spy = mocker.spy(repo, "_get_info_from_metadata")
 
@@ -244,7 +241,6 @@ def test_fallback_can_read_setup_to_get_dependencies(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     package = repo.package("sqlalchemy", Version.parse("1.2.12"))
 
@@ -269,7 +265,6 @@ def test_pypi_repository_supports_reading_bz2_files(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     package = repo.package("twisted", Version.parse("18.9.0"))
 
