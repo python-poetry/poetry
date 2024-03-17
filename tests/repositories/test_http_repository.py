@@ -183,3 +183,41 @@ def test_calculate_sha256(
         calculated_hash
         == "sha256:e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
     )
+
+
+def test_calculate_sha256_defaults_to_sha256_on_md5_errors(
+    mocker: MockerFixture,
+) -> None:
+    raised_value_error = False
+
+    def mock_hashlib_md5_error() -> None:
+        nonlocal raised_value_error
+        raised_value_error = True
+        raise ValueError(
+            "[digital envelope routines: EVP_DigestInit_ex] disabled for FIPS"
+        )
+
+    filename = "poetry_core-1.5.0-py3-none-any.whl"
+    filepath = MockRepository.DIST_FIXTURES / filename
+    mock_download = mocker.patch(
+        "poetry.repositories.http_repository.download_file",
+        side_effect=lambda _, dest, *args, **kwargs: shutil.copy(filepath, dest),
+    )
+    mock_hashlib_md5 = mocker.patch("hashlib.md5", side_effect=mock_hashlib_md5_error)
+
+    domain = "foo.com"
+    link = Link(
+        f"https://{domain}/{filename}",
+        hashes={"md5": "be7589b4902793e66d7d979bd8581591"},
+    )
+    repo = MockRepository()
+
+    calculated_hash = repo.calculate_sha256(link)
+
+    assert raised_value_error
+    assert mock_download.call_count == 1
+    assert mock_hashlib_md5.call_count == 1
+    assert (
+        calculated_hash
+        == "sha256:e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
+    )
