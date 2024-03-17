@@ -35,7 +35,7 @@ def mock_files_python_hosted_factory(http: type[httpretty]) -> PythonHostedFileM
                 for location in metadata_locations:
                     fixture = location / name
                     if fixture.exists():
-                        return [200, headers, fixture.read_text()]
+                        return [200, headers, fixture.read_bytes()]
             else:
                 for location in distribution_locations:
                     fixture = location / name

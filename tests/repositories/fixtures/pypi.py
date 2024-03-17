@@ -86,7 +86,7 @@ def pypi_repository(
     def search_callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> HTTPrettyResponse:
-        search_html = FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("search", "search.html")
+        search_html = FIXTURE_PATH_REPOSITORIES_PYPI / "search" / "search.html"
         return 200, headers, search_html.read_bytes()
 
     def simple_callback(
@@ -96,13 +96,9 @@ def pypi_repository(
             return json_callback(request, uri, headers)
         return legacy_repository_html_callback(request, uri, headers)
 
-    def _get_json_filepath(name: str, version: str | None = None) -> Path | None:
+    def _get_json_filepath(name: str) -> Path | None:
         for base in package_json_locations:
-            if not version:
-                fixture = base / f"{name}.json"
-            else:
-                fixture = base / name / f"{version}.json"
-
+            fixture = base / f"{name}.json"
             if fixture.exists():
                 return fixture
 
@@ -114,8 +110,7 @@ def pypi_repository(
         path = urlparse(uri).path
         parts = path.rstrip("/").split("/")[2:]
         name = parts[0]
-        version = parts[1] if len(parts) == 3 else None
-        fixture = _get_json_filepath(name, version)
+        fixture = _get_json_filepath(name)
 
         if fixture is None or not fixture.exists():
             return default_callback(request, uri, headers)
@@ -130,12 +125,6 @@ def pypi_repository(
 
     http.register_uri(
         http.GET,
-        re.compile(r"https://pypi.org/pypi/(.*)?/json$"),
-        body=json_callback,
-    )
-
-    http.register_uri(
-        http.GET,
         re.compile(r"https://pypi.org/pypi/(.*)?(?!/json)$"),
         body=default_callback,
     )
@@ -146,4 +135,4 @@ def pypi_repository(
         body=simple_callback,
     )
 
-    return PyPiRepository(disable_cache=True, fallback=False)
+    return PyPiRepository(disable_cache=True)

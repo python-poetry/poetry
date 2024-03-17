@@ -41,8 +41,13 @@ class SimpleJsonPage(LinkSource):
                         metadata = bool(metadata_value)
                     break
 
+            hashes = file.get("hashes")
             link = Link(
-                url, requires_python=requires_python, yanked=yanked, metadata=metadata
+                url,
+                requires_python=requires_python,
+                hashes=hashes,
+                yanked=yanked,
+                metadata=metadata,
             )
 
             if link.ext not in self.SUPPORTED_FORMATS:
