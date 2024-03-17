@@ -22,7 +22,7 @@ class MockSinglePageRepository(SinglePageRepository):
     def __init__(self, page: str) -> None:
         super().__init__(
             "single-page",
-            url=f"http://single-page.foo.bar/{page}.html",
+            url=f"http://single-page.foo.bar/single/page/repo/{page}.html",
             disable_cache=True,
         )
         self._lazy_wheel = False
@@ -67,3 +67,13 @@ def test_single_page_repository_find_packages() -> None:
     package = packages[0]
     assert package.name == dep.name
     assert package.to_dependency().to_pep_508() == dep.to_pep_508()
+
+
+def test_single_page_repository_get_page_with_relative_links() -> None:
+    repo = MockSinglePageRepository("mmcv_torch_releases")
+
+    base_path = Path("/single/page/torch1.12.0")
+    page = repo.get_page("mmcv")
+    for link in page.links:
+        path = Path(link.path)
+        assert path.parent == base_path
