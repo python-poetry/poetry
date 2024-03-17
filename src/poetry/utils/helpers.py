@@ -28,6 +28,7 @@ from poetry.utils.constants import REQUESTS_TIMEOUT
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Collection
     from collections.abc import Iterator
     from types import TracebackType
 
@@ -332,7 +333,7 @@ def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
 
 
 def get_highest_priority_hash_type(
-    hash_types: set[str], archive_name: str
+    hash_types: Collection[str], archive_name: str
 ) -> str | None:
     if not hash_types:
         return None

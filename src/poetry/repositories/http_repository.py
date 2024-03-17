@@ -166,7 +166,7 @@ class HTTPRepository(CachedRepository):
                 response = self.session.get(link.metadata_url)
                 if link.metadata_hashes and (
                     hash_name := get_highest_priority_hash_type(
-                        set(link.metadata_hashes.keys()), f"{link.filename}.metadata"
+                        link.metadata_hashes, f"{link.filename}.metadata"
                     )
                 ):
                     metadata_hash = getattr(hashlib, hash_name)(
@@ -351,9 +351,7 @@ class HTTPRepository(CachedRepository):
                 file_hash = self.calculate_sha256(link)
 
             if file_hash is None and (
-                hash_type := get_highest_priority_hash_type(
-                    set(link.hashes.keys()), link.filename
-                )
+                hash_type := get_highest_priority_hash_type(link.hashes, link.filename)
             ):
                 file_hash = f"{hash_type}:{link.hashes[hash_type]}"
 
@@ -372,9 +370,7 @@ class HTTPRepository(CachedRepository):
 
     def calculate_sha256(self, link: Link) -> str | None:
         with self._cached_or_downloaded_file(link) as filepath:
-            hash_name = get_highest_priority_hash_type(
-                set(link.hashes.keys()), link.filename
-            )
+            hash_name = get_highest_priority_hash_type(link.hashes, link.filename)
             known_hash = None
             with suppress(ValueError, AttributeError):
                 # Handle ValueError here as well since under FIPS environments
