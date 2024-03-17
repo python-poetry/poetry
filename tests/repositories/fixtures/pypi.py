@@ -107,13 +107,9 @@ def pypi_repository(
             return json_callback(request)
         return legacy_repository_html_callback(request)
 
-    def _get_json_filepath(name: str, version: str | None = None) -> Path | None:
+    def _get_json_filepath(name: str) -> Path | None:
         for base in package_json_locations:
-            if not version:
-                fixture = base / f"{name}.json"
-            else:
-                fixture = base / name / f"{version}.json"
-
+            fixture = base / f"{name}.json"
             if fixture.exists():
                 return fixture
 
@@ -124,8 +120,7 @@ def pypi_repository(
         path = urlparse(request.url).path
         parts = path.rstrip("/").split("/")[2:]
         name = parts[0]
-        version = parts[1] if len(parts) == 3 else None
-        fixture = _get_json_filepath(name, version)
+        fixture = _get_json_filepath(name)
 
         if fixture is None or not fixture.exists():
             return default_callback(request)
@@ -156,4 +151,4 @@ def pypi_repository(
         callback=simple_callback,
     )
 
-    return PyPiRepository(disable_cache=True, fallback=False)
+    return PyPiRepository(disable_cache=True)
