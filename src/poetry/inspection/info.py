@@ -4,6 +4,7 @@ import contextlib
 import functools
 import glob
 import logging
+import tempfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,7 +14,7 @@ from typing import Sequence
 
 import pkginfo
 
-from poetry.core.factory import Factory
+from build import BuildBackendException
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.pyproject.toml import PyProjectTOML
@@ -22,9 +23,9 @@ from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
 
-from poetry.utils.env import EnvCommandError
-from poetry.utils.env import ephemeral_environment
+from poetry.factory import Factory
 from poetry.utils.helpers import extractall
+from poetry.utils.isolated_build import isolated_builder
 from poetry.utils.setup_reader import SetupReader
 
 
@@ -37,25 +38,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-PEP517_META_BUILD = """\
-import build
-import build.env
-import pyproject_hooks
-
-source = '{source}'
-dest = '{dest}'
-
-with build.env.DefaultIsolatedEnv() as env:
-    builder = build.ProjectBuilder.from_isolated_env(
-        env, source, runner=pyproject_hooks.quiet_subprocess_runner
-    )
-    env.install(builder.build_system_requires)
-    env.install(builder.get_requires_for_build('wheel'))
-    builder.metadata_path(dest)
-"""
-
-PEP517_META_BUILD_DEPS = ["build==1.1.1", "pyproject_hooks==1.0.0"]
 
 
 class PackageInfoError(ValueError):
@@ -577,28 +559,15 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
         if all(x is not None for x in (info.version, info.name, info.requires_dist)):
             return info
 
-    with ephemeral_environment(
-        flags={"no-pip": False, "no-setuptools": True, "no-wheel": True}
-    ) as venv:
-        # TODO: cache PEP 517 build environment corresponding to each project venv
-        dest_dir = venv.path.parent / "dist"
-        dest_dir.mkdir()
-
-        pep517_meta_build_script = PEP517_META_BUILD.format(
-            source=path.as_posix(), dest=dest_dir.as_posix()
-        )
-
+    with tempfile.TemporaryDirectory() as dist:
         try:
-            venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *PEP517_META_BUILD_DEPS,
-            )
-            venv.run_python_script(pep517_meta_build_script)
-            info = PackageInfo.from_metadata_directory(dest_dir)
-        except EnvCommandError as e:
+            dest = Path(dist)
+
+            with isolated_builder(path, "wheel") as builder:
+                builder.metadata_path(dest)
+
+            info = PackageInfo.from_metadata_directory(dest)
+        except BuildBackendException as e:
             logger.debug("PEP517 build failed: %s", e)
             raise PackageInfoError(path, e, "PEP517 build failed")
 

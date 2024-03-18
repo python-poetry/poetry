@@ -4,15 +4,17 @@ import shutil
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from typing import Iterator
 from zipfile import ZipFile
 
 import pytest
 
+from build import BuildBackendException
+from build import ProjectBuilder
 from packaging.metadata import parse_email
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
-from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
 
 
@@ -23,6 +25,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
+    from tests.types import SetProjectContext
 
 
 @pytest.fixture(autouse=True)
@@ -131,6 +134,12 @@ setup(name="demo", version="0.1.0", install_requires=[i for i in ["package"]])
     )
 
     return source_dir
+
+
+@pytest.fixture(autouse=True)
+def use_project_context(set_project_context: SetProjectContext) -> Iterator[None]:
+    with set_project_context("sample_project"):
+        yield
 
 
 def demo_check_info(info: PackageInfo, requires_dist: set[str] | None = None) -> None:
@@ -296,9 +305,9 @@ def test_info_setup_complex_pep517_error(
     mocker: MockerFixture, demo_setup_complex: Path
 ) -> None:
     mocker.patch(
-        "poetry.utils.env.VirtualEnv.run",
+        "build.ProjectBuilder.from_isolated_env",
         autospec=True,
-        side_effect=EnvCommandError(CalledProcessError(1, "mock", output="mock")),
+        side_effect=BuildBackendException(CalledProcessError(1, "mock", output="mock")),
     )
 
     with pytest.raises(PackageInfoError):
@@ -343,7 +352,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup_py = source_dir / "setup.py"
     setup_py.write_text(setup)
 
-    spy = mocker.spy(VirtualEnv, "run")
+    spy = mocker.spy(ProjectBuilder, "from_isolated_env")
     _ = PackageInfo.from_directory(source_dir)
     assert spy.call_count == 1
 
