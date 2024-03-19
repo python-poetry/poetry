@@ -10,7 +10,6 @@ import pytest
 
 from poetry.repositories.pypi_repository import PyPiRepository
 from tests.helpers import FIXTURE_PATH_DISTRIBUTIONS
-from tests.helpers import FIXTURE_PATH_REPOSITORIES
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
@@ -43,7 +42,7 @@ def package_distribution_locations() -> list[Path]:
 
 @pytest.fixture
 def package_metadata_path() -> Path | None:
-    return FIXTURE_PATH_REPOSITORIES / "metadata"
+    return FIXTURE_PATH_REPOSITORIES_PYPI / "metadata"
 
 
 @pytest.fixture

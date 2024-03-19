@@ -1,25 +1,44 @@
 {
-  "name": "attrs",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "a1828f9b7a019e96302759189410f380814be1dd57a201a56c078f9e8e11a2e5"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "a1828f9b7a019e96302759189410f380814be1dd57a201a56c078f9e8e11a2e5"
+      },
       "filename": "attrs-17.4.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/b5/60/4e178c1e790fd60f1229a9b3cb2f8bc2f4cc6ff2c8838054c142c70b5adc/attrs-17.4.0-py2.py3-none-any.whl",
       "hashes": {
         "md5": "9d32f2b5a93343e01f54d87740f2da60",
         "sha256": "d38e57f381e891928357c68e300d28d3d4dcddc50486d5f8dfaf743d40477619"
-      }
+      },
+      "requires-python": null,
+      "size": 31658,
+      "upload-time": "2017-12-30T08:20:05.582456Z",
+      "url": "https://files.pythonhosted.org/packages/b5/60/4e178c1e790fd60f1229a9b3cb2f8bc2f4cc6ff2c8838054c142c70b5adc/attrs-17.4.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "attrs-17.4.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5/attrs-17.4.0.tar.gz",
       "hashes": {
         "md5": "c03e5b3608d9071fbd098850d8922668",
         "sha256": "eb7536a1e6928190b3008c5b350bdf9850d619fff212341cd096f87a27a5e564"
-      }
+      },
+      "requires-python": null,
+      "size": 97071,
+      "upload-time": "2017-12-30T08:20:08.575620Z",
+      "url": "https://files.pythonhosted.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5/attrs-17.4.0.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3451237
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "attrs",
+  "versions": [
+    "17.4.0"
+  ]
 }

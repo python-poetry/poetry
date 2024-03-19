@@ -1,33 +1,58 @@
 {
-  "name": "jupyter",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "89666fe631d5e97add0c96b87457f91671b0ce522e4f55d88886507984a5f743"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "89666fe631d5e97add0c96b87457f91671b0ce522e4f55d88886507984a5f743"
+      },
       "filename": "jupyter-1.0.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/83/df/0f5dd132200728a86190397e1ea87cd76244e42d39ec5e88efd25b2abd7e/jupyter-1.0.0-py2.py3-none-any.whl",
       "hashes": {
         "md5": "b2f5e2daab779c7bda0be38925ab1b92",
         "sha256": "83c4591b9c7392ea5f91e0d9f8e98d894f76e8e669260788f0fcb281ec0b3b1f"
-      }
+      },
+      "requires-python": null,
+      "size": 2736,
+      "upload-time": "2015-08-12T00:42:58.951595Z",
+      "url": "https://files.pythonhosted.org/packages/83/df/0f5dd132200728a86190397e1ea87cd76244e42d39ec5e88efd25b2abd7e/jupyter-1.0.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "jupyter-1.0.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c9/a9/371d0b8fe37dd231cf4b2cff0a9f0f25e98f3a73c3771742444be27f2944/jupyter-1.0.0.tar.gz",
       "hashes": {
         "md5": "78acaec88533ea6b6e761e7d086a1d04",
         "sha256": "3ef1e86ba0556ea5922b846416a41acfd2625830d996c7d06d80c90bed1dc193"
-      }
+      },
+      "requires-python": null,
+      "size": 12916,
+      "upload-time": "2015-08-12T00:43:08.537857Z",
+      "url": "https://files.pythonhosted.org/packages/c9/a9/371d0b8fe37dd231cf4b2cff0a9f0f25e98f3a73c3771742444be27f2944/jupyter-1.0.0.tar.gz",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "jupyter-1.0.0.zip",
-      "url": "https://files.pythonhosted.org/packages/fc/21/a372b73e3a498b41b92ed915ada7de2ad5e16631546329c03e484c3bf4e9/jupyter-1.0.0.zip",
       "hashes": {
         "md5": "7b7a957694a73ac0c19fe46c216c0ea0",
         "sha256": "4a855b9717c3ea24fd8ca4fd91ab5995894aecc4d20e7f39c28786a2c1869fae"
-      }
+      },
+      "requires-python": null,
+      "size": 16690,
+      "upload-time": "2015-08-12T00:43:12.460314Z",
+      "url": "https://files.pythonhosted.org/packages/fc/21/a372b73e3a498b41b92ed915ada7de2ad5e16631546329c03e484c3bf4e9/jupyter-1.0.0.zip",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 1673841
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "jupyter",
+  "versions": [
+    "1.0.0"
+  ]
 }

@@ -2,10 +2,10 @@
   "files": [
     {
       "core-metadata": {
-        "sha256": "02a2b035758c39be414a32a2582d2c4f072465cb99b487c727d145d863052ffe"
+        "sha256": "e73888099c1e04d81a9824591e3efc584f5181ff1583e1ce2a90af6d1cc731f8"
       },
       "data-dist-info-metadata": {
-        "sha256": "02a2b035758c39be414a32a2582d2c4f072465cb99b487c727d145d863052ffe"
+        "sha256": "e73888099c1e04d81a9824591e3efc584f5181ff1583e1ce2a90af6d1cc731f8"
       },
       "filename": "futures-3.2.0-py2-none-any.whl",
       "hashes": {
@@ -34,7 +34,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 15602876,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "futures",

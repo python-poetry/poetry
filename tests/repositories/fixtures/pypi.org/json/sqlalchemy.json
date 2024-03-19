@@ -1,17 +1,26 @@
 {
-  "name": "SQLAlchemy",
   "files": [
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "SQLAlchemy-1.2.12.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/25/c9/b0552098cee325425a61efdf380c51b5c721e459081c85bbb860f501c091/SQLAlchemy-1.2.12.tar.gz",
       "hashes": {
         "md5": "4a2617b5254748828d09349fc4eff6bd",
         "sha256": "b5a127599b3f27847fba6119de0fcb70832a8041b103701a708b7c7d044faa38"
-      }
+      },
+      "requires-python": null,
+      "size": 5634807,
+      "upload-time": "2018-09-19T18:14:55.299706Z",
+      "url": "https://files.pythonhosted.org/packages/25/c9/b0552098cee325425a61efdf380c51b5c721e459081c85bbb860f501c091/SQLAlchemy-1.2.12.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 4289618
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "sqlalchemy",
+  "versions": [
+    "1.2.12"
+  ]
 }

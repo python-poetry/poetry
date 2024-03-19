@@ -1,19 +1,26 @@
 {
   "files": [
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "poetry_core-1.5.0.tar.gz",
       "hashes": {
         "md5": "3f9b36a7a94cd235bfd5f05794828445",
         "sha256": "0ae8d28caf5c12ec1714b16d2e7157ddd52397ea6bfdeba5a9432e449a0184da"
       },
       "requires-python": ">=3.7,<4.0",
+      "size": 448812,
+      "upload-time": "2023-01-28T10:52:53.916268Z",
       "url": "https://files.pythonhosted.org/packages/57/bb/2435fef60bb01f6c0891d9482c7053b50e90639f0f74d7658e99bdd4da69/poetry_core-1.5.0.tar.gz",
       "yanked": false
     }
   ],
   "meta": {
-    "_last-serial": 16600250,
-    "api-version": "1.0"
+    "_last-serial": 0,
+    "api-version": "1.1"
   },
-  "name": "poetry-core"
+  "name": "poetry-core",
+  "versions": [
+    "1.5.0"
+  ]
 }

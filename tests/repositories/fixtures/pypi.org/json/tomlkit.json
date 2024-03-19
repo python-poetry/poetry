@@ -1,45 +1,77 @@
 {
-  "name": "tomlkit",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "4997b3d6f4b23bbd12d75af591167d982af7a862e473b2fbce20c8172ec93d93"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4997b3d6f4b23bbd12d75af591167d982af7a862e473b2fbce20c8172ec93d93"
+      },
       "filename": "tomlkit-0.5.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/9b/ca/8b60a94c01ee655ffb81d11c11396cb6fff89459317aa1fe3e98ee80f055/tomlkit-0.5.2-py2.py3-none-any.whl",
       "hashes": {
         "md5": "7bcf6cf4a6034339bb6a481f27b9ba62",
         "sha256": "a50f685abd033a7b50b13330833c15699885186517b713d9f7e8280ce7976e4c"
       },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 116499,
+      "upload-time": "2018-11-09T17:09:28.212157Z",
+      "url": "https://files.pythonhosted.org/packages/9b/ca/8b60a94c01ee655ffb81d11c11396cb6fff89459317aa1fe3e98ee80f055/tomlkit-0.5.2-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "tomlkit-0.5.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f6/8c/c27d292cf7c0f04f0e1b5c75ab95dc328542ccbe9a809a1eada66c897bd2/tomlkit-0.5.2.tar.gz",
       "hashes": {
         "md5": "7c31987ef6fba2cd64715cae27fade64",
         "sha256": "4a226ccf11ee5a2e76bfc185747b54ee7718706aeb3aabb981327249dbe2b1d4"
       },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 29813,
+      "upload-time": "2018-11-09T17:09:29.709061Z",
+      "url": "https://files.pythonhosted.org/packages/f6/8c/c27d292cf7c0f04f0e1b5c75ab95dc328542ccbe9a809a1eada66c897bd2/tomlkit-0.5.2.tar.gz",
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "729d3b14964e2455c0082529dc24dce1c6c84dc74f76d14b5ce7a0f044b12bbe"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "729d3b14964e2455c0082529dc24dce1c6c84dc74f76d14b5ce7a0f044b12bbe"
+      },
       "filename": "tomlkit-0.5.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/71/c6/06c014b92cc48270765d6a9418d82239b158d8a9b69e031b0e2c6598740b/tomlkit-0.5.3-py2.py3-none-any.whl",
       "hashes": {
         "md5": "b868779f054c64bc6c2ae4ad2cdbf6b3",
         "sha256": "d4fe74be9b732d76886da6da2e96f76ae42551e53afce1ea29bc703629b70497"
       },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 116796,
+      "upload-time": "2018-11-19T20:05:37.276181Z",
+      "url": "https://files.pythonhosted.org/packages/71/c6/06c014b92cc48270765d6a9418d82239b158d8a9b69e031b0e2c6598740b/tomlkit-0.5.3-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "tomlkit-0.5.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f7/f7/bbd9213bfe76cb7821c897f9ed74877fd74993b4ca2fe9513eb5a31030f9/tomlkit-0.5.3.tar.gz",
       "hashes": {
         "md5": "cdbdc302a184d1f1e38d5e0810e3b212",
         "sha256": "e2f785651609492c771d9887ccb2369d891d16595d2d97972e2cbe5e8fb3439f"
       },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 29864,
+      "upload-time": "2018-11-19T20:05:39.200001Z",
+      "url": "https://files.pythonhosted.org/packages/f7/f7/bbd9213bfe76cb7821c897f9ed74877fd74993b4ca2fe9513eb5a31030f9/tomlkit-0.5.3.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 4504211
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "tomlkit",
+  "versions": [
+    "0.5.2",
+    "0.5.3"
+  ]
 }

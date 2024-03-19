@@ -1,6 +1,8 @@
 {
   "files": [
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "wheel-0.40.0.tar.gz",
       "hashes": {
         "md5": "5f175a8d693f74878964d4fd29729ab7",
@@ -14,7 +16,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 17289142,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "wheel",

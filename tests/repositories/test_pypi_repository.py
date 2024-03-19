@@ -28,7 +28,7 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
 
 def test_find_packages(pypi_repository: PyPiRepository) -> None:
     repo = pypi_repository
-    packages = repo.find_packages(Factory.create_dependency("requests", "^2.18"))
+    packages = repo.find_packages(Factory.create_dependency("requests", "~2.18.0"))
 
     assert len(packages) == 5
 

@@ -1,25 +1,44 @@
 {
-  "name": "six",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "d8e61e1b2a777206b74022118a9dd3410b5bee46bd65366c521ae4c5246c2019"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "d8e61e1b2a777206b74022118a9dd3410b5bee46bd65366c521ae4c5246c2019"
+      },
       "filename": "six-1.11.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/67/4b/141a581104b1f6397bfa78ac9d43d8ad29a7ca43ea90a2d863fe3056e86a/six-1.11.0-py2.py3-none-any.whl",
       "hashes": {
         "md5": "35b1057b388e276352d0709138b1e194",
         "sha256": "112f5b46e6aa106db3e4e2494a03694c938f41c4c4535edbdfc816c2e0cb50f2"
-      }
+      },
+      "requires-python": null,
+      "size": 10702,
+      "upload-time": "2017-09-17T18:46:53.702194Z",
+      "url": "https://files.pythonhosted.org/packages/67/4b/141a581104b1f6397bfa78ac9d43d8ad29a7ca43ea90a2d863fe3056e86a/six-1.11.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "six-1.11.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/16/d8/bc6316cf98419719bd59c91742194c111b6f2e85abac88e496adefaf7afe/six-1.11.0.tar.gz",
       "hashes": {
         "md5": "25d3568604f921dd23532b88a0ce17e7",
         "sha256": "268a4ccb159c1a2d2c79336b02e75058387b0cdbb4cea2f07846a758f48a356d"
-      }
+      },
+      "requires-python": null,
+      "size": 29860,
+      "upload-time": "2017-09-17T18:46:54.492027Z",
+      "url": "https://files.pythonhosted.org/packages/16/d8/bc6316cf98419719bd59c91742194c111b6f2e85abac88e496adefaf7afe/six-1.11.0.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3180827
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "six",
+  "versions": [
+    "1.11.0"
+  ]
 }
