@@ -116,9 +116,18 @@ def isolated_builder(
 
     from poetry.factory import Factory
 
-    # we recreate the project's Poetry instance in order to retrieve the correct repository pool
-    # when a pool is not provided
-    pool = pool or Factory().create_poetry().pool
+    try:
+        # we recreate the project's Poetry instance in order to retrieve the correct repository pool
+        # when a pool is not provided
+        pool = pool or Factory().create_poetry().pool
+    except RuntimeError:
+        # the context manager is not being called within a Poetry project context
+        # fallback to a default pool using only PyPI as source
+        from poetry.repositories import RepositoryPool
+        from poetry.repositories.pypi_repository import PyPiRepository
+
+        # fallback to using only PyPI
+        pool = RepositoryPool(repositories=[PyPiRepository()])
 
     python_executable = (
         python_executable or EnvManager.get_system_env(naive=True).python
