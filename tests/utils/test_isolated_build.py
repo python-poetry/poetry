@@ -15,6 +15,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.env import ephemeral_environment
 from poetry.utils.isolated_build import IsolatedBuildInstallError
 from poetry.utils.isolated_build import IsolatedEnv
+from poetry.utils.isolated_build import isolated_builder
 from tests.helpers import get_dependency
 
 
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.repositories.pypi_repository import PyPiRepository
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -78,3 +80,16 @@ def test_isolated_env_install_failure(
         with pytest.raises(IsolatedBuildInstallError) as e:
             env.install({"a", "b>1"})
         assert e.value.requirements == {"a", "b>1"}
+
+
+def test_isolated_builder_outside_poetry_project_context(
+    tmp_working_directory: Path, fixture_dir: FixtureDirGetter
+) -> None:
+    source = fixture_dir("project_with_setup")
+    destination = tmp_working_directory / "dist"
+
+    try:
+        with isolated_builder(source, "wheel") as builder:
+            builder.metadata_path(destination)
+    except RuntimeError:
+        pytest.fail("Isolated builder did not fallback to default repository pool")
