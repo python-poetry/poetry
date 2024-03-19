@@ -6,12 +6,12 @@ import tempfile
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
 from build import BuildBackendException
 from build import ProjectBuilder
 from build.env import IsolatedEnv as BaseIsolatedEnv
-from poetry.core.utils.helpers import temporary_directory
 from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import-untyped]
 
 from poetry.utils._compat import decode
@@ -174,7 +174,7 @@ class Chef:
         suffix = archive.suffix
         zip = suffix == ".zip"
 
-        with temporary_directory() as tmp_dir:
+        with TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
             archive_dir = Path(tmp_dir)
             extractall(source=archive, dest=archive_dir, zip=zip)
 
