@@ -16,7 +16,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 8878952,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "python-language-server",

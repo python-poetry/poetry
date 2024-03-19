@@ -2,10 +2,10 @@
   "files": [
     {
       "core-metadata": {
-        "sha256": "892426a14eeae04120b2baa0212d7090f3a22e64ffd5d0ad3bc4c515b59a9c89"
+        "sha256": "5627f48cfca57f878bf73ea222fa8ca2f24ad248061a2f0151f22219386838f9"
       },
       "data-dist-info-metadata": {
-        "sha256": "892426a14eeae04120b2baa0212d7090f3a22e64ffd5d0ad3bc4c515b59a9c89"
+        "sha256": "5627f48cfca57f878bf73ea222fa8ca2f24ad248061a2f0151f22219386838f9"
       },
       "filename": "cleo-1.0.0a5-py3-none-any.whl",
       "hashes": {
@@ -34,7 +34,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 20402192,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "cleo",

@@ -1,25 +1,44 @@
 {
-  "name": "colorama",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "b44948f8400b680c05976397672aa7542b3bf013a46af8eff2ca8e3a7bef00d8"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "b44948f8400b680c05976397672aa7542b3bf013a46af8eff2ca8e3a7bef00d8"
+      },
       "filename": "colorama-0.3.9-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl",
       "hashes": {
         "md5": "faef2bbd3c2ecc43e0969877d67b4c92",
         "sha256": "5b632359f1ed2b7676a869812ba0edaacb99be04679b29eb56c07a5e137ab5a2"
-      }
+      },
+      "requires-python": null,
+      "size": 20181,
+      "upload-time": "2017-04-27T07:12:36.597052Z",
+      "url": "https://files.pythonhosted.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "colorama-0.3.9.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz",
       "hashes": {
         "md5": "8323a5b84fdf7ad810804e51fc256b39",
         "sha256": "4c5a15209723ce1330a5c193465fe221098f761e9640d823a2ce7c03f983137f"
-      }
+      },
+      "requires-python": null,
+      "size": 25053,
+      "upload-time": "2017-04-27T07:12:12.351237Z",
+      "url": "https://files.pythonhosted.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 2833818
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "colorama",
+  "versions": [
+    "0.3.9"
+  ]
 }

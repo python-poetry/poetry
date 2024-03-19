@@ -1,25 +1,77 @@
 {
-  "name": "pytest",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "3825a201ef8accd23ae8e728ac48c8f06fdf04cbdf2aa5f0729cbcab5d06a833"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "3825a201ef8accd23ae8e728ac48c8f06fdf04cbdf2aa5f0729cbcab5d06a833"
+      },
       "filename": "pytest-3.5.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl",
       "hashes": {
         "md5": "d3b1e9aea9e5b9e7a226d8b08aa43662",
         "sha256": "28e4d9c2ae3196d74805c2eba24f350ae4c791a5b9b397c79b41506a48dc64ca"
-      }
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 194247,
+      "upload-time": "2018-03-22T23:47:54.595523Z",
+      "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "pytest-3.5.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz",
       "hashes": {
         "md5": "ccd78dac54112045f561c4df86631f19",
         "sha256": "677b1d6decd29c041fe64276f29f79fbe66e40c59e445eb251366b4a8ab8bf68"
-      }
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 830816,
+      "upload-time": "2018-03-22T23:47:56.511852Z",
+      "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "8a80e51c143666a2d213dc466ec5be4ab558c6d84457173f4ed079f4331ebb71"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "8a80e51c143666a2d213dc466ec5be4ab558c6d84457173f4ed079f4331ebb71"
+      },
+      "filename": "pytest-3.5.1-py2.py3-none-any.whl",
+      "hashes": {
+        "md5": "f1de372a436700e3a785e85c11d15821",
+        "sha256": "6d3e83b1c1697d220137e436980e73b3ca674f643e666d7c24b0321cb57b76a4"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 192143,
+      "upload-time": "2018-04-24T21:37:43.104462Z",
+      "url": "https://files.pythonhosted.org/packages/76/52/fc48d02492d9e6070cb672d9133382e83084f567f88eff1c27bd2c6c27a8/pytest-3.5.1-py2.py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "pytest-3.5.1.tar.gz",
+      "hashes": {
+        "md5": "961104636090457187851ccb9ef0f677",
+        "sha256": "b8fe151f3e181801dd38583a1c03818fbc662a8fce96c9063a0af624613e78f8"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 830571,
+      "upload-time": "2018-04-24T21:37:44.492084Z",
+      "url": "https://files.pythonhosted.org/packages/b2/85/24954df0ea8156599563b753de54383a5d702081093b7953334e4701b8d8/pytest-3.5.1.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3697219
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "pytest",
+  "versions": [
+    "3.5.0",
+    "3.5.1"
+  ]
 }

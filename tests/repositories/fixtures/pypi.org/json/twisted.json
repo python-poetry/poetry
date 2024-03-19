@@ -1,17 +1,26 @@
 {
-  "name": "Twisted",
   "files": [
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "Twisted-18.9.0.tar.bz2",
-      "url": "https://files.pythonhosted.org/packages/5d/0e/a72d85a55761c2c3ff1cb968143a2fd5f360220779ed90e0fadf4106d4f2/Twisted-18.9.0.tar.bz2",
       "hashes": {
         "md5": "35ff4705ea90a76bf972ff3b229546ca",
         "sha256": "4335327da58be11dd6e482ec6b85eb055bcc953a9570cd59e7840a2ce9419a8e"
-      }
+      },
+      "requires-python": null,
+      "size": 3088398,
+      "upload-time": "2018-10-15T09:11:22.298247Z",
+      "url": "https://files.pythonhosted.org/packages/5d/0e/a72d85a55761c2c3ff1cb968143a2fd5f360220779ed90e0fadf4106d4f2/Twisted-18.9.0.tar.bz2",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 4376865
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "twisted",
+  "versions": [
+    "18.9.0"
+  ]
 }

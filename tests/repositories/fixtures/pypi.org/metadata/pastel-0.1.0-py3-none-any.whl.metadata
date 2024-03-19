@@ -1,0 +1,20 @@
+Metadata-Version: 2.0
+Name: pastel
+Version: 0.1.0
+Summary: Bring colors to your terminal.
+Home-page: https://github.com/sdispater/pastel
+Author: Sébastien Eustace
+Author-email: sebastien@eustace.io
+License: MIT
+Download-URL: https://github.com/sdispater/pastel/archive/0.1.0.tar.gz
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+

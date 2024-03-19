@@ -2,10 +2,10 @@
   "files": [
     {
       "core-metadata": {
-        "sha256": "9a67e27fe067ace2169e406619fcf39ac779d60060bb658cb85dc4682c85f634"
+        "sha256": "82a6364f64a513ebbd7108338b20ed5e84cbee20a93e3e02c2cbe2d824d1b54b"
       },
       "data-dist-info-metadata": {
-        "sha256": "9a67e27fe067ace2169e406619fcf39ac779d60060bb658cb85dc4682c85f634"
+        "sha256": "82a6364f64a513ebbd7108338b20ed5e84cbee20a93e3e02c2cbe2d824d1b54b"
       },
       "filename": "discord.py-2.0.0-py3-none-any.whl",
       "hashes": {
@@ -34,7 +34,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 19260702,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "discord-py",

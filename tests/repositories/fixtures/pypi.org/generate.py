@@ -4,7 +4,7 @@ following for a specified list of releases.
 
 1. Fetch relevant project json file from https://pypi.org/simple/<name>.
 2. Fetch relevant release json file from https://pypi.org/pypi/<name>/<version>/json.
-3. Download all files (if not otherwise specified) for each release.
+3. Download all files (if not otherwise specified) for each release, including <filename>.metadata files.
 4. Stub (zero-out) all files not relevant for test cases, only sdist and bdist metadata is retained.
     a, We also retain `__init__.py` files as some packages use it for dynamic version detection when building sdist.
     b. Some release bdist, notably that of setuptools, wheel and poetry-core are retained as is in the `dist/` directory
@@ -51,6 +51,7 @@ from typing import Any
 from typing import Callable
 from typing import Iterator
 
+from packaging.metadata import parse_email
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.packages.package import Package
 from tests.helpers import FIXTURE_PATH
@@ -64,6 +65,8 @@ from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
+    import requests
+
     from poetry.core.packages.utils.link import Link
 
 logger = logging.getLogger("pypi.generator")
@@ -368,12 +371,25 @@ class MockedRepositoryFactory:
 
         return result
 
+    @cached_property
+    def known_missing_files(self) -> set[str]:
+        return {pkg.name for pkg in PROJECT_SPECS if pkg.ignore_missing_files}
+
+    @staticmethod
+    def _clean_file_item(data: dict[str, Any]) -> dict[str, Any]:
+        filename = data["filename"]
+        metadata_file = (
+            FIXTURE_PATH_REPOSITORIES_PYPI / "metadata" / f"{filename}.metadata"
+        )
+
+        if metadata_file.exists():
+            metadata = ReleaseFileMetadata(metadata_file)
+            for key in ["core-metadata", "data-dist-info-metadata"]:
+                data[key] = {"sha256": metadata.sha256}
+
+        return data
+
     def clean(self) -> None:
-        ignore_missing_files = {
-            project.name
-            for project in self.project_specs
-            if project.ignore_missing_files
-        }
         json_fixture_dir = FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("json")
 
         for file in json_fixture_dir.glob("*.json"):
@@ -392,15 +408,18 @@ class MockedRepositoryFactory:
             existing_content = file.read_text(encoding="utf-8")
             data = json.loads(existing_content)
 
-            if "versions" in data:
+            if "versions" in data and file.stem not in self.known_missing_files:
                 data["versions"] = self.known_releases_by_project[file.stem]
 
-            if "files" in data and package.name not in ignore_missing_files:
+            if "files" in data and package.name not in self.known_missing_files:
                 data["files"] = [
-                    _file
+                    self._clean_file_item(_file)
                     for _file in data["files"]
                     if RELEASE_FILE_COLLECTION.filename_exists(_file["filename"])
                 ]
+
+            if "meta" in data:
+                data["meta"]["_last-serial"] = 0
 
             content = json.dumps(data, ensure_ascii=False, indent=2)
             if existing_content != content:
@@ -461,6 +480,8 @@ class MockedRepositoryFactory:
         for link in links:
             logger.info("Processing release file %s", link.filename)
 
+            self.process_metadata_file(link)
+
             existing_release_file_location = RELEASE_FILE_LOCATIONS.dist.joinpath(
                 link.filename
             )
@@ -517,6 +538,30 @@ class MockedRepositoryFactory:
             return sdist_check
 
         return bdist_check
+
+    def process_metadata_file(self, link: Link) -> None:
+        # we enforce the availability of the metadata file
+        link._metadata = True
+
+        logger.info("Processing metadata file for %s", link.filename)
+
+        assert link.metadata_url is not None
+        response: requests.Response = self.pypi.session.get(
+            link.metadata_url, raise_for_status=False
+        )
+
+        if response.status_code != 200:
+            logger.info("Skipping metadata for %s", link.filename)
+            return None
+
+        metadata, _ = parse_email(response.content)
+        content = response.content.decode(encoding="utf-8").replace(
+            metadata["description"], ""
+        )
+
+        FIXTURE_PATH_REPOSITORIES_PYPI.joinpath(
+            "metadata", f"{link.filename}.metadata"
+        ).write_text(content, encoding="utf-8")
 
     def copy_as_is(self, link: Link) -> ReleaseFileMetadata:
         dst = FIXTURE_PATH_REPOSITORIES_PYPI / "dists" / link.filename
@@ -715,8 +760,9 @@ class MockedProject(MockedJsonFile):
 
 
 if __name__ == "__main__":
+    # set refresh to true when recreating package json files
     factory = MockedRepositoryFactory(
-        RELEASE_SPECS, PROJECT_SPECS, PyPiRepository(disable_cache=True), refresh=False
+        RELEASE_SPECS, PROJECT_SPECS, PyPiRepository(disable_cache=True), refresh=True
     )
     factory.process()
     factory.clean()

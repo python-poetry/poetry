@@ -2,10 +2,10 @@
   "files": [
     {
       "core-metadata": {
-        "sha256": "cf50590355f03d1956c461705e74e4cf1f34730179656436d3c2a8dede08c4f7"
+        "sha256": "a3d071a0b389c60bee1f22fa02aea80322ff957ba0704d4c385f48291af2125d"
       },
       "data-dist-info-metadata": {
-        "sha256": "cf50590355f03d1956c461705e74e4cf1f34730179656436d3c2a8dede08c4f7"
+        "sha256": "a3d071a0b389c60bee1f22fa02aea80322ff957ba0704d4c385f48291af2125d"
       },
       "filename": "pastel-0.1.0-py3-none-any.whl",
       "hashes": {
@@ -34,7 +34,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 8202286,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "pastel",
