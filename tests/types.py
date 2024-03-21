@@ -94,7 +94,9 @@ class SpecializedLegacyRepositoryMocker(Protocol):
 
 class PythonHostedFileMocker(Protocol):
     def __call__(
-        self, distribution_locations: list[Path], metadata: Path | None = None
+        self,
+        distribution_locations: list[Path],
+        metadata_locations: list[Path] | None = None,
     ) -> None: ...
 
 
