@@ -14,6 +14,7 @@ from installer.sources import _WheelFileValidationError
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
+from poetry.utils.helpers import get_file_hash_urlsafe
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,10 @@ class WheelDestination(SchemeDictionaryDestination):
         if target_path.exists():
             # Contrary to the base library we don't raise an error here since it can
             # break pkgutil-style and pkg_resource-style namespace packages.
-            logger.warning(f"Installing {target_path} over existing file")
+            # We instead log a warning and ignore it. See issue #9158.
+            logger.warning(f"{target_path} already exists. Ignoring.")
+            hash_, size = get_file_hash_urlsafe(stream, hash_algorithm="sha256")
+            return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 
         parent_folder = target_path.parent
         if not parent_folder.exists():

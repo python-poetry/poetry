@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import locale
 import os
 
-from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,6 +15,7 @@ from poetry.core.masonry.utils.package_include import PackageInclude
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.env import build_environment
+from poetry.utils.helpers import get_file_hash_urlsafe
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install
 
@@ -261,25 +260,11 @@ class EditableBuilder(Builder):
         with record.open("w", encoding="utf-8", newline="") as f:
             csv_writer = csv.writer(f)
             for path in added_files:
-                hash = self._get_file_hash(path)
-                size = path.stat().st_size
-                csv_writer.writerow((path, f"sha256={hash}", size))
+                hash_, size = get_file_hash_urlsafe(path)
+                csv_writer.writerow((path, f"sha256={hash_}", size))
 
             # RECORD itself is recorded with no hash or size
             csv_writer.writerow((record, "", ""))
-
-    def _get_file_hash(self, filepath: Path) -> str:
-        hashsum = hashlib.sha256()
-        with filepath.open("rb") as src:
-            while True:
-                buf = src.read(1024 * 8)
-                if not buf:
-                    break
-                hashsum.update(buf)
-
-            src.seek(0)
-
-        return urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
 
     def _debug(self, msg: str) -> None:
         if self._io.is_debug():
