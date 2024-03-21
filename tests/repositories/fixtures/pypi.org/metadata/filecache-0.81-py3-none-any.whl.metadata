@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: filecache
+Version: 0.81
+Summary: Persistent caching decorator
+Home-page: https://github.com/ubershmekel/filecache
+Author: ubershmekel
+Author-email: ubershmekel@gmail.com
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Utilities
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Description-Content-Type: text/markdown
+

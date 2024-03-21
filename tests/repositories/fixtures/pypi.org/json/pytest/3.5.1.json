@@ -30,6 +30,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://pytest.org",
     "keywords": "test unittest",
     "license": "MIT license",
@@ -44,6 +45,7 @@
       "Source": "https://github.com/pytest-dev/pytest",
       "Tracker": "https://github.com/pytest-dev/pytest/issues"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/pytest/3.5.1/",
     "requires_dist": [
       "py (>=1.5.0)",
@@ -61,7 +63,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 13600682,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

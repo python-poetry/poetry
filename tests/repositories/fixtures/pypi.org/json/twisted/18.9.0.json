@@ -20,6 +20,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://twistedmatrix.com/",
     "keywords": "",
     "license": "MIT",
@@ -32,6 +33,7 @@
     "project_urls": {
       "Homepage": "http://twistedmatrix.com/"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/Twisted/18.9.0/",
     "requires_dist": null,
     "requires_python": "",
@@ -40,7 +42,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 13478846,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

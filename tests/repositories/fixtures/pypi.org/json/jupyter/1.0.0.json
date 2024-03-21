@@ -24,6 +24,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://jupyter.org",
     "keywords": null,
     "license": "BSD",
@@ -37,6 +38,7 @@
       "Download": "UNKNOWN",
       "Homepage": "http://jupyter.org"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/jupyter/1.0.0/",
     "requires_dist": null,
     "requires_python": null,
@@ -45,7 +47,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 1673841,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

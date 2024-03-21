@@ -20,6 +20,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://github.com/toastdriven/pylev",
     "keywords": null,
     "license": "UNKNOWN",
@@ -33,6 +34,7 @@
       "Download": "UNKNOWN",
       "Homepage": "http://github.com/toastdriven/pylev"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/pylev/1.3.0/",
     "requires_dist": null,
     "requires_python": null,
@@ -41,18 +43,19 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 10513237,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "4a18ac5d436decb5e4ef80633930559e",
-        "sha256": "79fe82d35708f7308ec60e7f424b15fc294fb43aca6c673679051a73be1b1e1d"
+        "blake2b_256": "401c7dff1d242bf1e19f9c6202f0ba4e6fd18cc7ecb8bc85b17b2d16c806e228",
+        "md5": "6da14dfce5034873fc5c2d7a6e83dc29",
+        "sha256": "1d29a87beb45ebe1e821e7a3b10da2b6b2f4c79b43f482c2df1a1f748a6e114e"
       },
       "downloads": -1,
       "filename": "pylev-1.3.0-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "4a18ac5d436decb5e4ef80633930559e",
+      "md5_digest": "6da14dfce5034873fc5c2d7a6e83dc29",
       "packagetype": "bdist_wheel",
       "python_version": "2.7",
       "requires_python": null,
@@ -66,13 +69,14 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "4a43a124071fbaceee448320adce16df",
-        "sha256": "80a7c3932ef653ae7f1d09fb0fd73476b48db58c85a31e6ef401848562c395f0"
+        "blake2b_256": "cc61dab2081d3d86dcf0b9f5dcfb11b256d76cd14aad7ccdd7c8dd5e7f7e41a0",
+        "md5": "3be579cfc32ce5140cc04001f898741b",
+        "sha256": "063910098161199b81e453025653ec53556c1be7165a9b7c50be2f4d57eae1c3"
       },
       "downloads": -1,
       "filename": "pylev-1.3.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "4a43a124071fbaceee448320adce16df",
+      "md5_digest": "3be579cfc32ce5140cc04001f898741b",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,

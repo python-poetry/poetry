@@ -23,6 +23,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://www.sqlalchemy.org",
     "keywords": "",
     "license": "MIT License",
@@ -35,6 +36,7 @@
     "project_urls": {
       "Homepage": "http://www.sqlalchemy.org"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/SQLAlchemy/1.2.12/",
     "requires_dist": null,
     "requires_python": "",
@@ -43,7 +45,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14239243,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
@@ -53,7 +55,7 @@
       },
       "downloads": -1,
       "filename": "SQLAlchemy-1.2.12.tar.gz",
-      "has_sig": true,
+      "has_sig": false,
       "md5_digest": "4a2617b5254748828d09349fc4eff6bd",
       "packagetype": "sdist",
       "python_version": "source",

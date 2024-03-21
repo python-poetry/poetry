@@ -29,6 +29,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/pypa/setuptools",
     "keywords": "CPAN PyPI distutils eggs package management",
     "license": "",
@@ -42,6 +43,7 @@
       "Documentation": "https://setuptools.readthedocs.io/",
       "Homepage": "https://github.com/pypa/setuptools"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/setuptools/39.2.0/",
     "requires_dist": [
       "certifi (==2016.9.26); extra == 'certs'",
@@ -53,18 +55,19 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14429235,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "bac10a56787c677a8850f0a2325892de",
-        "sha256": "9c2959b23011edc14cd3f18dc21d4bcd9702db8a47e0c02f4796aaccb5571a4b"
+        "blake2b_256": "7fe1820d941153923aac1d49d7fc37e17b6e73bfbd2904959fffbad77900cf92",
+        "md5": "8d066d2201311ed30be535b473e32fed",
+        "sha256": "8fca9275c89964f13da985c3656cb00ba029d7f3916b37990927ffdf264e7926"
       },
       "downloads": -1,
       "filename": "setuptools-39.2.0-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "bac10a56787c677a8850f0a2325892de",
+      "md5_digest": "8d066d2201311ed30be535b473e32fed",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",
@@ -78,13 +81,14 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "8954553fcbf9f3619242215c18f18038",
-        "sha256": "ea495c0cf868d748cfa418fa7a1a5fa4f6884184a071a95c3fb661bff591488b"
+        "blake2b_256": "1a04d6f1159feaccdfc508517dba1929eb93a2854de729fa68da9d5c6b48fa00",
+        "md5": "dd4e3fa83a21bf7bf9c51026dc8a4e59",
+        "sha256": "f7cddbb5f5c640311eb00eab6e849f7701fa70bf6a183fc8a2c33dd1d1672fb2"
       },
       "downloads": -1,
       "filename": "setuptools-39.2.0.zip",
       "has_sig": false,
-      "md5_digest": "8954553fcbf9f3619242215c18f18038",
+      "md5_digest": "dd4e3fa83a21bf7bf9c51026dc8a4e59",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",

@@ -2,15 +2,14 @@
   "files": [
     {
       "core-metadata": {
-        "sha256": "ad06c78c59547c822f72c2758b51935ae8e4056bd8909a8fd8912bf7d9f88fa7"
+        "sha256": "16762b4f9bbc29f0aa70a7dbd69dee034a28cbdcd72c7c70f09b5bc6da762592"
       },
       "data-dist-info-metadata": {
-        "sha256": "ad06c78c59547c822f72c2758b51935ae8e4056bd8909a8fd8912bf7d9f88fa7"
+        "sha256": "16762b4f9bbc29f0aa70a7dbd69dee034a28cbdcd72c7c70f09b5bc6da762592"
       },
       "filename": "ipython-4.1.0rc1-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "ae0b233f09e1047a0240d30345b8ff91",
-        "sha256": "b593bcf0c53490f56809805a94b289403c8025859583a71f50c2305860ad187d"
+        "sha256": "4d0a08f3fd8837502bf33e9497a5ab28fe63e2fa4201765f378cb139c7a60d5f"
       },
       "requires-python": null,
       "size": 736900,
@@ -23,8 +22,7 @@
       "data-dist-info-metadata": false,
       "filename": "ipython-4.1.0rc1.tar.gz",
       "hashes": {
-        "md5": "1bdec8cbb110f7c7b991c8d45f626fd4",
-        "sha256": "d5203d06ac3225a746f856b592aeaffa3d1a7f1efa535263b06bdebc094d9701"
+        "sha256": "6244a8e3293088ee31c1854abe1a1e7a409cf3ac2fb7579aa9616bdfadd3d4dc"
       },
       "requires-python": null,
       "size": 4933377,
@@ -37,8 +35,7 @@
       "data-dist-info-metadata": false,
       "filename": "ipython-4.1.0rc1.zip",
       "hashes": {
-        "md5": "1f18b85e1d93dc10554ade23864f02cc",
-        "sha256": "8fe8ae7e62942f58b24b908fa2bee3dce0e2470a8cd22ea753f2de9bedf5ffc5"
+        "sha256": "efa3a5a676648cb18e2a2d3cd6353f3c83f0f704df8eb0eb6ae7d0dcbf187ea1"
       },
       "requires-python": null,
       "size": 5100723,
@@ -48,10 +45,10 @@
     },
     {
       "core-metadata": {
-        "sha256": "130f1323b932eb7b6fefa2928c20eaeebfa90ef94c06347a3a960566b98bdcd0"
+        "sha256": "07bb0f56a1a5d60d319a01d196c2593ea972f2285e85e473131282ef64b83e59"
       },
       "data-dist-info-metadata": {
-        "sha256": "130f1323b932eb7b6fefa2928c20eaeebfa90ef94c06347a3a960566b98bdcd0"
+        "sha256": "07bb0f56a1a5d60d319a01d196c2593ea972f2285e85e473131282ef64b83e59"
       },
       "filename": "ipython-5.7.0-py2-none-any.whl",
       "hashes": {
@@ -66,10 +63,10 @@
     },
     {
       "core-metadata": {
-        "sha256": "5251032152a45b01a679c73fab3a836053167987c9343251cd29bd39b8f9f1c7"
+        "sha256": "891e312c0f4969308ab703c5e4437dab51f4cac0b190e1e51045ec4a5cad2de4"
       },
       "data-dist-info-metadata": {
-        "sha256": "5251032152a45b01a679c73fab3a836053167987c9343251cd29bd39b8f9f1c7"
+        "sha256": "891e312c0f4969308ab703c5e4437dab51f4cac0b190e1e51045ec4a5cad2de4"
       },
       "filename": "ipython-5.7.0-py3-none-any.whl",
       "hashes": {
@@ -98,10 +95,10 @@
     },
     {
       "core-metadata": {
-        "sha256": "3b26900950637e01c03a8de278805adb022c5bbb1e94db2f31d137b5266b7726"
+        "sha256": "865b29decaca03261c0df6ce2a374ef5f3df4c3f9f7b3388c534a703d45a12ef"
       },
       "data-dist-info-metadata": {
-        "sha256": "3b26900950637e01c03a8de278805adb022c5bbb1e94db2f31d137b5266b7726"
+        "sha256": "865b29decaca03261c0df6ce2a374ef5f3df4c3f9f7b3388c534a703d45a12ef"
       },
       "filename": "ipython-7.5.0-py3-none-any.whl",
       "hashes": {
@@ -130,7 +127,7 @@
     }
   ],
   "meta": {
-    "_last-serial": 22152965,
+    "_last-serial": 0,
     "api-version": "1.1"
   },
   "name": "ipython",

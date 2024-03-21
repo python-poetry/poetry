@@ -99,6 +99,10 @@ KNOWN_DISTRIBUTION_HASHES = {
         "7592aa158137726d9579e5d4347bd03a88f9fc82e11061303215feaaf000d32c",
         "434114a36f986671d132033e130f26b7",
     ),
+    "demo_metadata_version_unknown-0.1.0-py2.py3-none-any.whl": DistributionHash(
+        "d716cd66546468ec3d4d40f4a4ecc813e3e4c661e155ecbc3a932f47d46d6e05",
+        "749f823ff755a2f46bfb5ab25fdf9810",
+    ),
     "demo_missing_dist_info-0.1.0-py2.py3-none-any.whl": DistributionHash(
         "cf8eaade81dd1db42f60c0e9c8610c1c12006baa9f7ad994b1c2bae92ea4b426",
         "da33c6088e72fbaaf873999606767353",
@@ -122,6 +126,10 @@ KNOWN_DISTRIBUTION_HASHES = {
     "futures-3.2.0.tar.gz": DistributionHash(
         "baf0d469c9e541b747986b7404cd63a5496955bd0c43a3cc068c449b09b7d4a4",
         "40eb168dab84e606df3fdb7e67fe27b7",
+    ),
+    "hbmqtt-0.9.6.tar.gz": DistributionHash(
+        "379f1d9044997c69308ac2e01621c817b5394e1fbe0696e62538ae2dd0aa7e07",
+        "b284e3118882f169aa618a856cd91c5f",
     ),
     "ipython-5.7.0-py2-none-any.whl": DistributionHash(
         "3d93d3995e2e52a98dc4f44361cd5bf68dbde62925d1f820b97d8f0e1d941f73",

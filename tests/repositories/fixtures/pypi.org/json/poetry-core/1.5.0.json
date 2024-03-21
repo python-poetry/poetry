@@ -23,6 +23,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/python-poetry/poetry-core",
     "keywords": "packaging,dependency,poetry",
     "license": "MIT",
@@ -37,6 +38,7 @@
       "Homepage": "https://github.com/python-poetry/poetry-core",
       "Repository": "https://github.com/python-poetry/poetry-core"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/poetry-core/1.5.0/",
     "requires_dist": [
       "importlib-metadata (>=1.7.0) ; python_version < \"3.8\""
@@ -47,7 +49,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 16600250,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
