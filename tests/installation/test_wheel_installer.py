@@ -132,14 +132,14 @@ def test_bench_installer_demo(
     group="django_wheel",
 )
 def test_bench_installer_copy_django(
-    env: MockEnv, demo_wheel: Path, benchmark, tmp_path: Path
+    env: MockEnv, django_wheel: Path, benchmark, tmp_path: Path
 ) -> None:
     installer = WheelInstaller(env, wheel_destination_class=WheelDestinationCopy)
     benchmark.pedantic(
         installer.install,
-        args=(demo_wheel,),
+        args=(django_wheel,),
         setup=delete_tmp_dir_func_factory(tmp_path),
-        rounds=1000,
+        rounds=30,
     )
 
 
@@ -147,12 +147,12 @@ def test_bench_installer_copy_django(
     group="django_wheel",
 )
 def test_bench_installer_django(
-    env: MockEnv, demo_wheel: Path, benchmark, tmp_path: Path
+    env: MockEnv, django_wheel: Path, benchmark, tmp_path: Path
 ) -> None:
     installer = WheelInstaller(env)
     benchmark.pedantic(
         installer.install,
-        args=(demo_wheel,),
+        args=(django_wheel,),
         setup=delete_tmp_dir_func_factory(tmp_path),
-        rounds=1000,
+        rounds=30,
     )
