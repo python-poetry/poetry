@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import sys
 
 from pathlib import Path
@@ -85,7 +86,8 @@ def test_isolated_env_install_failure(
 def test_isolated_builder_outside_poetry_project_context(
     tmp_working_directory: Path, fixture_dir: FixtureDirGetter
 ) -> None:
-    source = fixture_dir("project_with_setup")
+    source = tmp_working_directory / "source"
+    shutil.copytree(fixture_dir("project_with_setup"), source)
     destination = tmp_working_directory / "dist"
 
     try:
