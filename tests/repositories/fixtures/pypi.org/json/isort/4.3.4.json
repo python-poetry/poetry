@@ -30,6 +30,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/timothycrosley/isort",
     "keywords": "Refactor",
     "license": "MIT",
@@ -42,6 +43,7 @@
     "project_urls": {
       "Homepage": "https://github.com/timothycrosley/isort"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/isort/4.3.4/",
     "requires_dist": null,
     "requires_python": "",
@@ -50,7 +52,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 11968646,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

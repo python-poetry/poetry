@@ -22,6 +22,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/sdispater/clikit",
     "keywords": "packaging,dependency,poetry",
     "license": "MIT",
@@ -35,12 +36,13 @@
       "Homepage": "https://github.com/sdispater/clikit",
       "Repository": "https://github.com/sdispater/clikit"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/clikit/0.2.4/",
     "requires_dist": [
-      "enum34 (>=1.1,<2.0); python_version >= \"2.7\" and python_version < \"2.8\"",
-      "typing (>=3.6,<4.0); python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\"",
+      "pastel (>=0.1.0,<0.2.0)",
       "pylev (>=1.3,<2.0)",
-      "pastel (>=0.1.0,<0.2.0)"
+      "typing (>=3.6,<4.0); python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\"",
+      "enum34 (>=1.1,<2.0); python_version >= \"2.7\" and python_version < \"2.8\""
     ],
     "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     "summary": "CliKit is a group of utilities to build beautiful and testable command line interfaces.",
@@ -48,7 +50,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 7436676,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

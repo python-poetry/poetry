@@ -25,6 +25,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/beerfactory/hbmqtt",
     "keywords": "",
     "license": "MIT",
@@ -37,6 +38,7 @@
     "project_urls": {
       "Homepage": "https://github.com/beerfactory/hbmqtt"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/hbmqtt/0.9.6/",
     "requires_dist": null,
     "requires_python": "",
@@ -45,11 +47,12 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 6518769,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
+        "blake2b_256": "ee27912d1d8c307a72985edf0b6ad9fc1c32e22bfc42efbd0244902c43bd9307",
         "md5": "e7ecbb2bf3aa2b3b5b2a47dc5289039a",
         "sha256": "c83ba91dc5cf9a01f83afb5380701504f69bdf9ea1c071f4dfdc1cba412fcd63"
       },
@@ -70,6 +73,7 @@
     {
       "comment_text": "",
       "digests": {
+        "blake2b_256": "4f4b69014d0fd585b45bfdb77ef0e70bcf035fc8fc798c2a0610fd7cfae56cfd",
         "md5": "d7896681b8d7d27b53302350b5b3c9c2",
         "sha256": "57799a933500caadb472000ba0c1e043d4768608cd8142104f89c53930d8613c"
       },

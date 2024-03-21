@@ -1,23 +1,56 @@
 {
-  "name": "setuptools",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "73f25249f8930d4b8f842a9e71ed57cf898d19b28beac684454b9c8a1c0cc2d8"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "73f25249f8930d4b8f842a9e71ed57cf898d19b28beac684454b9c8a1c0cc2d8"
+      },
       "filename": "setuptools-39.2.0-py2.py3-none-any.whl",
+      "hashes": {
+        "sha256": "8fca9275c89964f13da985c3656cb00ba029d7f3916b37990927ffdf264e7926"
+      },
+      "requires-python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",
+      "size": 567556,
+      "upload-time": "2018-05-19T19:19:22.625819Z",
       "url": "https://files.pythonhosted.org/packages/7f/e1/820d941153923aac1d49d7fc37e17b6e73bfbd2904959fffbad77900cf92/setuptools-39.2.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "bac10a56787c677a8850f0a2325892de",
-        "sha256": "9c2959b23011edc14cd3f18dc21d4bcd9702db8a47e0c02f4796aaccb5571a4b"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "setuptools-39.2.0.zip",
-      "url": "https://files.pythonhosted.org/packages/1a/04/d6f1159feaccdfc508517dba1929eb93a2854de729fa68da9d5c6b48fa00/setuptools-39.2.0.zip",
       "hashes": {
-        "md5": "520b72f2ed79f0854d2d757a890289f4",
-        "sha256": "63a8deff51e99dd78fcabf4ce58739851ff9726e8ea2d3848f43f3aa365bb459"
-      }
+        "sha256": "f7cddbb5f5c640311eb00eab6e849f7701fa70bf6a183fc8a2c33dd1d1672fb2"
+      },
+      "requires-python": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*",
+      "size": 851112,
+      "upload-time": "2018-05-19T19:19:24.480740Z",
+      "url": "https://files.pythonhosted.org/packages/1a/04/d6f1159feaccdfc508517dba1929eb93a2854de729fa68da9d5c6b48fa00/setuptools-39.2.0.zip",
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "4cf21fee4bb46056adb125243cf6d0f5e1efafab06fae67223b43631dbd81cb6"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4cf21fee4bb46056adb125243cf6d0f5e1efafab06fae67223b43631dbd81cb6"
+      },
+      "filename": "setuptools-67.6.1-py3-none-any.whl",
+      "hashes": {
+        "md5": "3b5b846e000da033d54eeaaf7915126e",
+        "sha256": "e728ca814a823bf7bf60162daf9db95b93d532948c4c0bea762ce62f60189078"
+      },
+      "requires-python": ">=3.7",
+      "size": 1089263,
+      "upload-time": "2023-03-28T13:45:43.525946Z",
+      "url": "https://files.pythonhosted.org/packages/0b/fc/8781442def77b0aa22f63f266d4dadd486ebc0c5371d6290caf4320da4b7/setuptools-67.6.1-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "setuptools-67.6.1.tar.gz",
       "hashes": {
         "md5": "ee2562f783544d1f95022c906dd3cf98",
@@ -31,9 +64,10 @@
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3879671
+    "_last-serial": 0,
+    "api-version": "1.1"
   },
+  "name": "setuptools",
   "versions": [
     "39.2.0",
     "67.6.1"
