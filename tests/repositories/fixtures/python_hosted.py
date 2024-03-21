@@ -24,18 +24,18 @@ if TYPE_CHECKING:
 @pytest.fixture
 def mock_files_python_hosted_factory(http: type[httpretty]) -> PythonHostedFileMocker:
     def factory(
-        distribution_locations: list[Path], metadata: Path | None = None
+        distribution_locations: list[Path], metadata_locations: list[Path] | None = None
     ) -> None:
         def file_callback(
             request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
         ) -> list[int | dict[str, Any] | bytes | str]:
             name = Path(urlparse(uri).path).name
 
-            if metadata and name.endswith(".metadata"):
-                fixture = metadata / name
-
-                if fixture.exists():
-                    return [200, headers, fixture.read_text()]
+            if metadata_locations and name.endswith(".metadata"):
+                for location in metadata_locations:
+                    fixture = location / name
+                    if fixture.exists():
+                        return [200, headers, fixture.read_text()]
             else:
                 for location in distribution_locations:
                     fixture = location / name
@@ -68,10 +68,10 @@ def mock_files_python_hosted_factory(http: type[httpretty]) -> PythonHostedFileM
 def mock_files_python_hosted(
     mock_files_python_hosted_factory: PythonHostedFileMocker,
     package_distribution_locations: list[Path],
-    package_metadata_path: Path | None,
+    package_metadata_locations: list[Path] | None,
 ) -> Iterator[None]:
     mock_files_python_hosted_factory(
         distribution_locations=package_distribution_locations,
-        metadata=package_metadata_path,
+        metadata_locations=package_metadata_locations,
     )
     yield None

@@ -35,19 +35,31 @@ pytest_plugins = [
 def package_distribution_locations() -> list[Path]:
     return [
         FIXTURE_PATH_REPOSITORIES_PYPI / "dists",
+        FIXTURE_PATH_REPOSITORIES_PYPI / "dists" / "mocked",
         FIXTURE_PATH_REPOSITORIES_PYPI / "stubbed",
         FIXTURE_PATH_DISTRIBUTIONS,
     ]
 
 
 @pytest.fixture
-def package_metadata_path() -> Path | None:
-    return FIXTURE_PATH_REPOSITORIES_PYPI / "metadata"
+def package_json_locations() -> list[Path]:
+    return [
+        FIXTURE_PATH_REPOSITORIES_PYPI / "json",
+        FIXTURE_PATH_REPOSITORIES_PYPI / "json" / "mocked",
+    ]
+
+
+@pytest.fixture
+def package_metadata_locations() -> list[Path]:
+    return [
+        FIXTURE_PATH_REPOSITORIES_PYPI / "metadata",
+        FIXTURE_PATH_REPOSITORIES_PYPI / "metadata" / "mocked",
+    ]
 
 
 @pytest.fixture
 def package_distribution_lookup(
-    package_distribution_locations: list[Path], package_metadata_path: Path | None
+    package_distribution_locations: list[Path],
 ) -> PackageDistributionLookup:
     def lookup(name: str) -> Path | None:
         for location in package_distribution_locations:
@@ -63,6 +75,7 @@ def package_distribution_lookup(
 def pypi_repository(
     http: type[httpretty],
     legacy_repository_html_callback: HTTPrettyRequestCallback,
+    package_json_locations: list[Path],
     mock_files_python_hosted: None,
 ) -> PyPiRepository:
     def default_callback(
@@ -83,6 +96,18 @@ def pypi_repository(
             return json_callback(request, uri, headers)
         return legacy_repository_html_callback(request, uri, headers)
 
+    def _get_json_filepath(name: str, version: str | None = None) -> Path | None:
+        for base in package_json_locations:
+            if not version:
+                fixture = base / f"{name}.json"
+            else:
+                fixture = base / name / f"{version}.json"
+
+            if fixture.exists():
+                return fixture
+
+        return None
+
     def json_callback(
         request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
     ) -> HTTPrettyResponse:
@@ -90,13 +115,9 @@ def pypi_repository(
         parts = path.rstrip("/").split("/")[2:]
         name = parts[0]
         version = parts[1] if len(parts) == 3 else None
-        json_fixtures = FIXTURE_PATH_REPOSITORIES_PYPI / "json"
-        if not version:
-            fixture = json_fixtures / f"{name}.json"
-        else:
-            fixture = json_fixtures / name / (version + ".json")
+        fixture = _get_json_filepath(name, version)
 
-        if not fixture.exists():
+        if fixture is None or not fixture.exists():
             return default_callback(request, uri, headers)
 
         return 200, headers, fixture.read_bytes()
