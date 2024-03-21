@@ -23,6 +23,7 @@
       "Topic :: Utilities"
     ],
     "description": "",
+    "description_content_type": null,
     "docs_url": null,
     "download_url": "",
     "downloads": {
@@ -30,6 +31,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/pytest-dev/pluggy",
     "keywords": "",
     "license": "MIT license",
@@ -39,14 +41,60 @@
     "package_url": "https://pypi.org/project/pluggy/",
     "platform": "unix",
     "project_url": "https://pypi.org/project/pluggy/",
+    "project_urls": {
+      "Homepage": "https://github.com/pytest-dev/pluggy"
+    },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/pluggy/0.6.0/",
     "requires_dist": null,
     "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     "summary": "plugin and hook calling mechanisms for python",
-    "version": "0.6.0"
+    "version": "0.6.0",
+    "yanked": false,
+    "yanked_reason": null
   },
-  "last_serial": 3361295,
+  "last_serial": 0,
   "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "de6f342e8044d0071eefc3c9cda33055",
+        "sha256": "9b835f86bfe5498c87ace7f4899cb1b0c40e71c9277377f6851c74a307879285"
+      },
+      "downloads": -1,
+      "filename": "pluggy-0.6.0-py2-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "de6f342e8044d0071eefc3c9cda33055",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 11953,
+      "upload_time": "2018-04-15T17:55:28",
+      "upload_time_iso_8601": "2018-04-15T17:55:28.983278Z",
+      "url": "https://files.pythonhosted.org/packages/82/05/43e3947125a2137cba4746135c75934ceed1863f27e050fc560052104a71/pluggy-0.6.0-py2-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "f2fc2c3179edccaa7728650178c9133c",
+        "sha256": "8c646771f5eab7557d1f3924077c55408e86bdfb700f7d86a6d83abeabff4c66"
+      },
+      "downloads": -1,
+      "filename": "pluggy-0.6.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "f2fc2c3179edccaa7728650178c9133c",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 13723,
+      "upload_time": "2018-04-15T17:55:22",
+      "upload_time_iso_8601": "2018-04-15T17:55:22.927924Z",
+      "url": "https://files.pythonhosted.org/packages/ba/65/ded3bc40bbf8d887f262f150fbe1ae6637765b5c9534bd55690ed2c0b0f7/pluggy-0.6.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
     {
       "comment_text": "",
       "digests": {
@@ -59,9 +107,14 @@
       "md5_digest": "ef8a88abcd501afd47cb22245fe4315a",
       "packagetype": "sdist",
       "python_version": "source",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 19678,
       "upload_time": "2017-11-24T16:33:11",
-      "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"
+      "upload_time_iso_8601": "2017-11-24T16:33:11.250495Z",
+      "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
     }
-  ]
+  ],
+  "vulnerabilities": []
 }

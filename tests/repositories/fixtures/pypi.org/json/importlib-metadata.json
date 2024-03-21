@@ -1,27 +1,42 @@
 {
-  "name": "importlib-metadata",
   "files": [
     {
-      "hashes": {
-        "md5": "7cfd9d7d6dbaf8c0ea81cc0c86a63c30",
-        "sha256": "7e161a9fc58a218ba5d2d49827331b977cc421fd42f681488fb90c0ce9ad0097"
+      "core-metadata": {
+        "sha256": "d176e226c843ad287df418105af818b0545801d6827ab3e800e457913be05260"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "d176e226c843ad287df418105af818b0545801d6827ab3e800e457913be05260"
       },
       "filename": "importlib_metadata-1.7.0-py2.py3-none-any.whl",
-      "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
-      "url": "https://files.pythonhosted.org/packages/8e/58/cdea07eb51fc2b906db0968a94700866fc46249bdc75cac23f9d13168929/importlib_metadata-1.7.0-py2.py3-none-any.whl"
+      "hashes": {
+        "sha256": "dc15b2969b4ce36305c51eebe62d418ac7791e9a157911d58bfb1f9ccd8e2070"
+      },
+      "requires-python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
+      "size": 31809,
+      "upload-time": "2020-06-26T21:38:16.079439Z",
+      "url": "https://files.pythonhosted.org/packages/8e/58/cdea07eb51fc2b906db0968a94700866fc46249bdc75cac23f9d13168929/importlib_metadata-1.7.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
-      "hashes": {
-        "md5": "35624f96c0aceaa5959f79a1a14f3586",
-        "sha256": "7a20a5d402d450dd394334e4c6f4f48e728cdef1e52d72f75837a6a455927a1a"
-      },
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "importlib_metadata-1.7.0.tar.gz",
-      "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
-      "url": "https://files.pythonhosted.org/packages/e2/ae/0b037584024c1557e537d25482c306cf6327b5a09b6c4b893579292c1c38/importlib_metadata-1.7.0.tar.gz"
+      "hashes": {
+        "sha256": "90bb658cdbbf6d1735b6341ce708fc7024a3e14e99ffdc5783edea9f9b077f83"
+      },
+      "requires-python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
+      "size": 29233,
+      "upload-time": "2020-06-26T21:38:17.338581Z",
+      "url": "https://files.pythonhosted.org/packages/e2/ae/0b037584024c1557e537d25482c306cf6327b5a09b6c4b893579292c1c38/importlib_metadata-1.7.0.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3879671
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "importlib-metadata",
+  "versions": [
+    "1.7.0"
+  ]
 }

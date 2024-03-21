@@ -21,6 +21,7 @@
       "Topic :: Software Development :: Libraries :: Python Modules"
     ],
     "description": "",
+    "description_content_type": null,
     "docs_url": null,
     "download_url": "UNKNOWN",
     "downloads": {
@@ -28,6 +29,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://funcsigs.readthedocs.org",
     "keywords": null,
     "license": "ASL",
@@ -37,45 +39,63 @@
     "package_url": "https://pypi.org/project/funcsigs/",
     "platform": "UNKNOWN",
     "project_url": "https://pypi.org/project/funcsigs/",
+    "project_urls": {
+      "Download": "UNKNOWN",
+      "Homepage": "http://funcsigs.readthedocs.org"
+    },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/funcsigs/1.0.2/",
     "requires_dist": null,
     "requires_python": null,
     "summary": "Python function signatures from PEP362 for Python 2.6, 2.7 and 3.2+",
-    "version": "1.0.2"
+    "version": "1.0.2",
+    "yanked": false,
+    "yanked_reason": null
   },
-  "last_serial": 2083703,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "bb61ae651a30926a4b4723e68f97238f",
-        "sha256": "510ab97424949e726b4b44294018e90142c9aadf8e737cf3a125b4cffed42e79"
+        "blake2b_256": "69cbf5be453359271714c01b9bd06126eaf2e368f1fddfff30818754b5ac2328",
+        "md5": "701d58358171f34b6d1197de2923a35a",
+        "sha256": "330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca"
       },
       "downloads": -1,
       "filename": "funcsigs-1.0.2-py2.py3-none-any.whl",
-      "has_sig": true,
-      "md5_digest": "bb61ae651a30926a4b4723e68f97238f",
+      "has_sig": false,
+      "md5_digest": "701d58358171f34b6d1197de2923a35a",
       "packagetype": "bdist_wheel",
       "python_version": "2.7",
+      "requires_python": null,
       "size": 17697,
       "upload_time": "2016-04-25T22:22:05",
-      "url": "https://files.pythonhosted.org/packages/69/cb/f5be453359271714c01b9bd06126eaf2e368f1fddfff30818754b5ac2328/funcsigs-1.0.2-py2.py3-none-any.whl"
+      "upload_time_iso_8601": "2016-04-25T22:22:05.222685Z",
+      "url": "https://files.pythonhosted.org/packages/69/cb/f5be453359271714c01b9bd06126eaf2e368f1fddfff30818754b5ac2328/funcsigs-1.0.2-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "e6206f7ae6f315c05108d5b587cccc3e",
-        "sha256": "c55716fcd1228645c214b44568d1fb9af2e28668a9c58e72a17a89a75d24ecd6"
+        "blake2b_256": "944adb842e7a0545de1cdb0439bb80e6e42dfe82aaeaadd4072f2263a4fbed23",
+        "md5": "7e583285b1fb8a76305d6d68f4ccc14e",
+        "sha256": "a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"
       },
       "downloads": -1,
       "filename": "funcsigs-1.0.2.tar.gz",
-      "has_sig": true,
-      "md5_digest": "e6206f7ae6f315c05108d5b587cccc3e",
+      "has_sig": false,
+      "md5_digest": "7e583285b1fb8a76305d6d68f4ccc14e",
       "packagetype": "sdist",
       "python_version": "source",
+      "requires_python": null,
       "size": 27947,
       "upload_time": "2016-04-25T22:22:33",
-      "url": "https://files.pythonhosted.org/packages/94/4a/db842e7a0545de1cdb0439bb80e6e42dfe82aaeaadd4072f2263a4fbed23/funcsigs-1.0.2.tar.gz"
+      "upload_time_iso_8601": "2016-04-25T22:22:33.882246Z",
+      "url": "https://files.pythonhosted.org/packages/94/4a/db842e7a0545de1cdb0439bb80e6e42dfe82aaeaadd4072f2263a4fbed23/funcsigs-1.0.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
     }
-  ]
+  ],
+  "vulnerabilities": []
 }

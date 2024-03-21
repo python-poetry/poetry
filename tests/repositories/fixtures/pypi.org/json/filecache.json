@@ -1,0 +1,42 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "3fed106198f49b73a473e1322cf26f28137f215c8998209b684c20ce01971505"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "3fed106198f49b73a473e1322cf26f28137f215c8998209b684c20ce01971505"
+      },
+      "filename": "filecache-0.81-py3-none-any.whl",
+      "hashes": {
+        "sha256": "91ce1a42b532d0e9ad75364c13159bafc3015973d4a5a0dbf37e4b4feb194055"
+      },
+      "requires-python": null,
+      "size": 4449,
+      "upload-time": "2020-05-29T20:07:06.928906Z",
+      "url": "https://files.pythonhosted.org/packages/eb/79/f96a2addff21798ea11aa51ae15052514e9ac0ab4ab9470ddd1a0da6fd3e/filecache-0.81-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "filecache-0.81.tar.gz",
+      "hashes": {
+        "sha256": "be071ad64937b51f38b03ecd82b9b68c08d0f570cdddb30aa8f90150fe54b30a"
+      },
+      "requires-python": null,
+      "size": 6423,
+      "upload-time": "2020-05-29T20:07:07.751617Z",
+      "url": "https://files.pythonhosted.org/packages/b3/f5/647f13b1cae32f8d3b84866f6bac688b7923c5d7643b994e5e89865c9a2a/filecache-0.81.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "filecache",
+  "versions": [
+    "0.81"
+  ]
+}

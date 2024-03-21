@@ -20,6 +20,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/python-poetry/cleo",
     "keywords": "cli,commands",
     "license": "MIT",
@@ -32,10 +33,11 @@
     "project_urls": {
       "Homepage": "https://github.com/python-poetry/cleo"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/cleo/1.0.0a5/",
     "requires_dist": [
-      "crashtest (>=0.3.1,<0.4.0)",
-      "pylev (>=1.3.0,<2.0.0)"
+      "pylev (>=1.3.0,<2.0.0)",
+      "crashtest (>=0.3.1,<0.4.0)"
     ],
     "requires_python": ">=3.7,<4.0",
     "summary": "Cleo allows you to create beautiful and testable command-line interfaces.",
@@ -43,7 +45,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14027784,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

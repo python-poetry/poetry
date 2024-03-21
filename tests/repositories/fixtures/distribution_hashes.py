@@ -123,6 +123,10 @@ KNOWN_DISTRIBUTION_HASHES = {
         "baf0d469c9e541b747986b7404cd63a5496955bd0c43a3cc068c449b09b7d4a4",
         "40eb168dab84e606df3fdb7e67fe27b7",
     ),
+    "hbmqtt-0.9.6.tar.gz": DistributionHash(
+        "379f1d9044997c69308ac2e01621c817b5394e1fbe0696e62538ae2dd0aa7e07",
+        "b284e3118882f169aa618a856cd91c5f",
+    ),
     "ipython-5.7.0-py2-none-any.whl": DistributionHash(
         "3d93d3995e2e52a98dc4f44361cd5bf68dbde62925d1f820b97d8f0e1d941f73",
         "cf35939995e0fd8c44fca7509308abde",

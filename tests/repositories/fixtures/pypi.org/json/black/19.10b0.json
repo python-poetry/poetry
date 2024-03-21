@@ -26,6 +26,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/psf/black",
     "keywords": "automation formatter yapf autopep8 pyfmt gofmt rustfmt",
     "license": "MIT",
@@ -38,6 +39,7 @@
     "project_urls": {
       "Homepage": "https://github.com/psf/black"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/black/19.10b0/",
     "requires_dist": [
       "click (>=6.5)",
@@ -56,7 +58,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14955312,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
@@ -66,7 +68,7 @@
       },
       "downloads": -1,
       "filename": "black-19.10b0-py36-none-any.whl",
-      "has_sig": true,
+      "has_sig": false,
       "md5_digest": "4a420234749e1ea350581160ef51cd02",
       "packagetype": "bdist_wheel",
       "python_version": "py36",
@@ -86,7 +88,7 @@
       },
       "downloads": -1,
       "filename": "black-19.10b0.tar.gz",
-      "has_sig": true,
+      "has_sig": false,
       "md5_digest": "c383543109a66a5a99113e6326db5251",
       "packagetype": "sdist",
       "python_version": "source",

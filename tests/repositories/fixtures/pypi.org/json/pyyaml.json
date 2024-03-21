@@ -1,97 +1,195 @@
 {
-  "name": "PyYAML",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "eb5621acdfd1a084efcc04d1a5292117422c616dc2ea004d8e760aadbd3f8388"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "eb5621acdfd1a084efcc04d1a5292117422c616dc2ea004d8e760aadbd3f8388"
+      },
       "filename": "PyYAML-3.13-cp27-cp27m-win32.whl",
+      "hashes": {
+        "sha256": "d5eef459e30b09f5a098b9cea68bebfeb268697f78d647bd255a085371ac7f3f"
+      },
+      "requires-python": null,
+      "size": 191712,
+      "upload-time": "2018-07-05T22:53:15.231061Z",
       "url": "https://files.pythonhosted.org/packages/b8/2e/9c2285870c9de070a1fa5ede702ab5fb329901b3cc4028c24f44eda27c5f/PyYAML-3.13-cp27-cp27m-win32.whl",
-      "hashes": {
-        "md5": "57862339584f6f631cb2cd434c0dce22",
-        "sha256": "0cac9398d467c1d43b14380faeaa90dfc99223c0cf8d08ddb5168156240e9fc0"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "eb5621acdfd1a084efcc04d1a5292117422c616dc2ea004d8e760aadbd3f8388"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "eb5621acdfd1a084efcc04d1a5292117422c616dc2ea004d8e760aadbd3f8388"
+      },
       "filename": "PyYAML-3.13-cp27-cp27m-win_amd64.whl",
+      "hashes": {
+        "sha256": "e01d3203230e1786cd91ccfdc8f8454c8069c91bee3962ad93b87a4b2860f537"
+      },
+      "requires-python": null,
+      "size": 209872,
+      "upload-time": "2018-07-05T22:53:16.904443Z",
       "url": "https://files.pythonhosted.org/packages/df/4d/1ef8d60464a171112401e17a3a3e88fdb1d5b44af7606e8652b2f39ee9ce/PyYAML-3.13-cp27-cp27m-win_amd64.whl",
-      "hashes": {
-        "md5": "595ab135b3b5d73984b6aa3c430804dc",
-        "sha256": "22604446b01612af63e369c6bed7a2c454eda9bd5ccb7edf9bfbfd39a14ae464"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp34-cp34m-win32.whl",
+      "hashes": {
+        "sha256": "558dd60b890ba8fd982e05941927a3911dc409a63dcb8b634feaa0cda69330d3"
+      },
+      "requires-python": null,
+      "size": 192898,
+      "upload-time": "2018-07-05T22:53:19.190872Z",
       "url": "https://files.pythonhosted.org/packages/35/f0/cf0363b5c431c3a828284903aeacc6bdbba342fd4d7871dda9a3b0b00d15/PyYAML-3.13-cp34-cp34m-win32.whl",
-      "hashes": {
-        "md5": "febd1e0a6e54bc16ead1a355a41ef2a0",
-        "sha256": "8e537c28684698935e2c86a5ed6bc5af736e46712e9a7f8a4c69f3694f4b6bc3"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp34-cp34m-win_amd64.whl",
+      "hashes": {
+        "sha256": "d46d7982b62e0729ad0175a9bc7e10a566fc07b224d2c79fafb5e032727eaa04"
+      },
+      "requires-python": null,
+      "size": 206242,
+      "upload-time": "2018-07-05T22:53:20.770605Z",
       "url": "https://files.pythonhosted.org/packages/8c/bc/8950092a86259dc511e02a4c3a517ed4b28a254e4da134e3c04e5264e5a3/PyYAML-3.13-cp34-cp34m-win_amd64.whl",
-      "hashes": {
-        "md5": "ca6e472447f541d5a1bf5ff998e8fc2e",
-        "sha256": "a1ecddafcc43a383acb99f241ca7da0011082dd7a9236495ba8a87fbad0c40d2"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp35-cp35m-win32.whl",
+      "hashes": {
+        "sha256": "a7c28b45d9f99102fa092bb213aa12e0aaf9a6a1f5e395d36166639c1f96c3a1"
+      },
+      "requires-python": null,
+      "size": 187499,
+      "upload-time": "2018-07-05T22:53:22.576919Z",
       "url": "https://files.pythonhosted.org/packages/29/33/8bbcd3740d9e96cfb57427b8db7a12093402a3a83f2054887e027b2849de/PyYAML-3.13-cp35-cp35m-win32.whl",
-      "hashes": {
-        "md5": "2f45666423475f050b5b5785930e5876",
-        "sha256": "e0aa0b28e3faf7a8bcb8f4ab3d28e4fb01d687bcfb75e5f6b12d53b82f99b6cc"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp35-cp35m-win_amd64.whl",
+      "hashes": {
+        "sha256": "bc558586e6045763782014934bfaf39d48b8ae85a2713117d16c39864085c613"
+      },
+      "requires-python": null,
+      "size": 205387,
+      "upload-time": "2018-07-05T22:53:24.438646Z",
       "url": "https://files.pythonhosted.org/packages/ad/d4/d895fb7ac1b0828151b829a32cefc8a8b58b4499570520b91af20982b880/PyYAML-3.13-cp35-cp35m-win_amd64.whl",
-      "hashes": {
-        "md5": "a21cdc697d03b9b446f95e6d6b5ab93e",
-        "sha256": "b96803e106c5ebbae46018e0523ec7dc970d95b2cf8761d6c0a2c75d8d5c027b"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp36-cp36m-win32.whl",
+      "hashes": {
+        "sha256": "40c71b8e076d0550b2e6380bada1f1cd1017b882f7e16f09a65be98e017f211a"
+      },
+      "requires-python": null,
+      "size": 188186,
+      "upload-time": "2018-07-05T22:53:25.923669Z",
       "url": "https://files.pythonhosted.org/packages/fb/51/0c49c6caafe8d9a27ad9b0ca9f91adda5a5072b9efbbe7585fb97a4c71c4/PyYAML-3.13-cp36-cp36m-win32.whl",
-      "hashes": {
-        "md5": "088e59a995c3387ebe666841bc02ab1b",
-        "sha256": "9a3dbf2d52067e59d74d161655e6d841596cd736ad17f5fdadd9eb9416faddef"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp36-cp36m-win_amd64.whl",
+      "hashes": {
+        "sha256": "3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b"
+      },
+      "requires-python": null,
+      "size": 206277,
+      "upload-time": "2018-07-05T22:53:27.386610Z",
       "url": "https://files.pythonhosted.org/packages/4f/ca/5fad249c5032270540c24d2189b0ddf1396aac49b0bdc548162edcf14131/PyYAML-3.13-cp36-cp36m-win_amd64.whl",
-      "hashes": {
-        "md5": "a4db4b28a9d04264f93d1aaf0d0ae88d",
-        "sha256": "cc1531e17d6de77b03971719feb1e8e5ff976bea3d645c3772dbb9fbb91ffde1"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp37-cp37m-win32.whl",
+      "hashes": {
+        "sha256": "e170a9e6fcfd19021dd29845af83bb79236068bf5fd4df3327c1be18182b2531"
+      },
+      "requires-python": null,
+      "size": 188313,
+      "upload-time": "2018-07-05T22:53:28.995194Z",
       "url": "https://files.pythonhosted.org/packages/5c/ed/d6557f70daaaab6ee5cd2f8ccf7bedd63081e522e38679c03840e1acc114/PyYAML-3.13-cp37-cp37m-win32.whl",
-      "hashes": {
-        "md5": "60fd8936e8bdf917a750172f33b62d51",
-        "sha256": "a0184bd61052fa6942d65c294468116eaf00f43669437d46ad5530f7005c7f37"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bb6a78439e80d7904471d134b006d366645dfdf9241495f8a9626f778f9dc5bd"
+      },
       "filename": "PyYAML-3.13-cp37-cp37m-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/bf/96/d02ef8e1f3073e07ffdc240444e5041f403f29c0775f9f1653f18221082f/PyYAML-3.13-cp37-cp37m-win_amd64.whl",
       "hashes": {
-        "md5": "36d19ecd2632ba0e0a362f2a28d9244a",
-        "sha256": "84492bd518aeafdf1d2bceae160a60d748f75eb815533d96b8232205161f21f4"
-      }
+        "sha256": "aa7dd4a6a427aed7df6fb7f08a580d68d9b118d90310374716ae90b710280af1"
+      },
+      "requires-python": null,
+      "size": 206614,
+      "upload-time": "2018-07-05T22:53:30.864210Z",
+      "url": "https://files.pythonhosted.org/packages/bf/96/d02ef8e1f3073e07ffdc240444e5041f403f29c0775f9f1653f18221082f/PyYAML-3.13-cp37-cp37m-win_amd64.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "PyYAML-3.13.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/9e/a3/1d13970c3f36777c583f136c136f804d70f500168edc1edea6daa7200769/PyYAML-3.13.tar.gz",
       "hashes": {
-        "md5": "406a166b8ce8df5790f7689ad45d201e",
-        "sha256": "e6c07f136ba90afc1b049d7577b4f955845d796f359324662758f403929fd481"
-      }
+        "sha256": "3ef3092145e9b70e3ddd2c7ad59bdd0252a94dfe3949721633e41344de00a6bf"
+      },
+      "requires-python": null,
+      "size": 270607,
+      "upload-time": "2018-07-05T22:52:16.800539Z",
+      "url": "https://files.pythonhosted.org/packages/9e/a3/1d13970c3f36777c583f136c136f804d70f500168edc1edea6daa7200769/PyYAML-3.13.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 4034753
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "pyyaml",
+  "versions": [
+    "3.13.0"
+  ]
 }

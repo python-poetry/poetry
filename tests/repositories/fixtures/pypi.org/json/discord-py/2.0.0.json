@@ -27,6 +27,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/Rapptz/discord.py",
     "keywords": "",
     "license": "MIT",
@@ -41,24 +42,25 @@
       "Homepage": "https://github.com/Rapptz/discord.py",
       "Issue tracker": "https://github.com/Rapptz/discord.py/issues"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/discord.py/2.0.0/",
     "requires_dist": [
-      "PyNaCl (<1.6,>=1.3.0) ; extra == 'voice'",
-      "typing-extensions (<5,>=4.3) ; extra == 'test'",
-      "pytest-mock ; extra == 'test'",
-      "pytest-cov ; extra == 'test'",
-      "pytest-asyncio ; extra == 'test'",
-      "pytest ; extra == 'test'",
-      "coverage[toml] ; extra == 'test'",
-      "cchardet ; extra == 'speed'",
-      "Brotli ; extra == 'speed'",
-      "aiodns (>=1.1) ; extra == 'speed'",
-      "orjson (>=3.5.4) ; extra == 'speed'",
-      "typing-extensions (<5,>=4.3) ; extra == 'docs'",
-      "sphinxcontrib-websupport ; extra == 'docs'",
-      "sphinxcontrib-trio (==1.1.2) ; extra == 'docs'",
+      "aiohttp (<4,>=3.7.4)",
       "sphinx (==4.4.0) ; extra == 'docs'",
-      "aiohttp (<4,>=3.7.4)"
+      "sphinxcontrib-trio (==1.1.2) ; extra == 'docs'",
+      "sphinxcontrib-websupport ; extra == 'docs'",
+      "typing-extensions (<5,>=4.3) ; extra == 'docs'",
+      "orjson (>=3.5.4) ; extra == 'speed'",
+      "aiodns (>=1.1) ; extra == 'speed'",
+      "Brotli ; extra == 'speed'",
+      "cchardet ; extra == 'speed'",
+      "coverage[toml] ; extra == 'test'",
+      "pytest ; extra == 'test'",
+      "pytest-asyncio ; extra == 'test'",
+      "pytest-cov ; extra == 'test'",
+      "pytest-mock ; extra == 'test'",
+      "typing-extensions (<5,>=4.3) ; extra == 'test'",
+      "PyNaCl (<1.6,>=1.3.0) ; extra == 'voice'"
     ],
     "requires_python": ">=3.8.0",
     "summary": "A Python wrapper for the Discord API",
@@ -66,7 +68,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14796560,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

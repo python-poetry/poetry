@@ -42,7 +42,6 @@ import sys
 import tarfile
 import zipfile
 
-from abc import abstractmethod
 from functools import cached_property
 from gzip import GzipFile
 from pathlib import Path
@@ -69,6 +68,8 @@ if TYPE_CHECKING:
 
     from poetry.core.packages.utils.link import Link
 
+ENABLE_RELEASE_JSON = True
+
 logger = logging.getLogger("pypi.generator")
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
@@ -76,91 +77,13 @@ handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
 logger.addHandler(handler)
 
 
-@dataclasses.dataclass
-class ReleaseSpecification:
-    name: str
-    version: str
-    stub: bool = True
-    is_fake: bool = False
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, ReleaseSpecification):
-            return self.name == other.name and self.version == other.version
-        return False
-
-
-@dataclasses.dataclass
-class ProjectSpecification:
-    name: str
-    ignore_missing_files: bool = False
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, ProjectSpecification):
-            return self.name == other.name
-        return False
-
-
-PROJECT_SPECS = [
-    ProjectSpecification("requests", ignore_missing_files=True),
-]
-
-RELEASE_SPECS = [
-    ReleaseSpecification("attrs", "17.4.0"),
-    ReleaseSpecification("black", "19.10b0"),
-    ReleaseSpecification("black", "21.11b0"),
-    ReleaseSpecification("cachecontrol", "0.12.5", is_fake=True),
-    ReleaseSpecification("cleo", "1.0.0a5"),
-    ReleaseSpecification("clikit", "0.2.4"),
-    # tests.installation.test_installer.test_installer_with_pypi_repository on windows
-    ReleaseSpecification("colorama", "0.3.9"),
-    ReleaseSpecification("discord-py", "2.0.0"),
-    ReleaseSpecification("funcsigs", "1.0.2", is_fake=True),
-    ReleaseSpecification("futures", "3.2.0"),
-    ReleaseSpecification("hbmqtt", "0.9.6", is_fake=True),
-    ReleaseSpecification("importlib-metadata", "1.7.0", is_fake=True),
-    ReleaseSpecification("ipython", "4.1.0rc1", is_fake=True),
-    # tests.repositories.test_legacy_repository.test_get_package_from_both_py2_and_py3_specific_wheels
-    # tests.repositories.test_legacy_repository.test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash
-    ReleaseSpecification("ipython", "5.7.0"),
-    # tests.repositories.test_legacy_repository.test_get_package_retrieves_non_sha256_hashes
-    # tests.repositories.test_legacy_repository.test_get_package_with_dist_and_universal_py3_wheel
-    ReleaseSpecification("ipython", "7.5.0"),
-    ReleaseSpecification("isort", "4.3.4"),
-    ReleaseSpecification("isort-metadata", "4.3.4", is_fake=True),
-    ReleaseSpecification("jupyter", "1.0.0"),
-    ReleaseSpecification("lockfile", "0.12.2", is_fake=True),
-    ReleaseSpecification("more-itertools", "4.1.0"),
-    ReleaseSpecification("pastel", "0.1.0"),
-    ReleaseSpecification("pluggy", "0.6.0"),
-    ReleaseSpecification("poetry", "0.12.4", is_fake=True),
-    ReleaseSpecification("poetry-core", "1.5.0", stub=False),
-    ReleaseSpecification("py", "1.5.3"),
-    ReleaseSpecification("pygame-music-grid", "3.13", is_fake=True),
-    ReleaseSpecification("pylev", "1.3.0", is_fake=True),
-    ReleaseSpecification("pytest", "3.5.0"),
-    ReleaseSpecification("pytest", "3.5.1"),
-    # tests.repositories.test_legacy_repository.test_get_package_information_skips_dependencies_with_invalid_constraints
-    ReleaseSpecification("python-language-server", "0.21.2"),
-    ReleaseSpecification("pyyaml", "3.13.0", is_fake=True),
-    ReleaseSpecification("requests", "2.18.4"),
-    ReleaseSpecification("setuptools", "39.2.0", is_fake=True),
-    ReleaseSpecification("setuptools", "67.6.1", stub=False),
-    ReleaseSpecification("six", "1.11.0"),
-    ReleaseSpecification("sqlalchemy", "1.2.12"),
-    ReleaseSpecification("toga", "0.3.0", is_fake=True),
-    ReleaseSpecification("tomlkit", "0.5.2"),
-    ReleaseSpecification("tomlkit", "0.5.3"),
-    ReleaseSpecification("trackpy", "0.4.1", is_fake=True),
-    ReleaseSpecification("twisted", "18.9.0"),
-    ReleaseSpecification("wheel", "0.40.0", stub=False),
-    ReleaseSpecification("zipp", "3.5.0"),
-]
-
-
 @dataclasses.dataclass(frozen=True)
 class _ReleaseFileLocations:
     dist: Path = dataclasses.field(
         default=FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("dist")
+    )
+    mocked: Path = dataclasses.field(
+        default=FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("dist", "mocked")
     )
     stubbed: Path = dataclasses.field(
         default=FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("stubbed")
@@ -199,7 +122,7 @@ class _ReleaseFileCollection:
                 return ReleaseFileMetadata(location)
         return None
 
-    def list(self, location: Path | None) -> Iterator[ReleaseFileMetadata]:
+    def list(self, location: Path | None = None) -> Iterator[ReleaseFileMetadata]:
         locations = [location] if location is not None else self.locations
         for candidate in locations:
             for file in candidate.glob("*.tar.*"):
@@ -326,193 +249,9 @@ def cleanup_installation_fixtures(metadata: ReleaseFileMetadata) -> None:
             file.write_text(content, encoding="utf-8")
 
 
-class MockedRepositoryFactory:
-    def __init__(
-        self,
-        release_specs: list[ReleaseSpecification],
-        project_specs: list[ProjectSpecification],
-        pypi: PyPiRepository | None = None,
-        refresh: bool = False,
-    ) -> None:
-        self.pypi = pypi or PyPiRepository(disable_cache=True)
-        self.packages: dict[str, MockedProject] = {}
-        self.release_specs = release_specs
-        self.project_specs = project_specs
-        self.refresh = refresh
-
-    def process(self) -> None:
-        for file in FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("stubbed").iterdir():
-            if file.is_file():
-                file.unlink()
-
-        files = []
-
-        for dist in self.release_specs:
-            files.extend(self.add_release_file(dist))
-
-        for pkg in self.packages.values():
-            pkg.write()
-
-        files.extend(RELEASE_FILE_COLLECTION.list(RELEASE_FILE_LOCATIONS.demo))
-        generate_distribution_hashes_fixture(files=files)
-
-    @cached_property
-    def known_releases_by_project(self) -> dict[str, list[str]]:
-        result: dict[str, list[str]] = {}
-
-        for package in self.packages.values():
-            if package.name not in result:
-                result[package.name] = []
-
-            for release in package.releases:
-                result[package.name].append(release.version)
-
-            result[package.name].sort()
-
-        return result
-
-    @cached_property
-    def known_missing_files(self) -> set[str]:
-        return {pkg.name for pkg in PROJECT_SPECS if pkg.ignore_missing_files}
-
-    @staticmethod
-    def _clean_file_item(data: dict[str, Any]) -> dict[str, Any]:
-        filename = data["filename"]
-        metadata_file = (
-            FIXTURE_PATH_REPOSITORIES_PYPI / "metadata" / f"{filename}.metadata"
-        )
-
-        if metadata_file.exists():
-            metadata = ReleaseFileMetadata(metadata_file)
-            for key in ["core-metadata", "data-dist-info-metadata"]:
-                data[key] = {"sha256": metadata.sha256}
-
-        return data
-
-    def clean(self) -> None:
-        json_fixture_dir = FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("json")
-
-        for file in json_fixture_dir.glob("*.json"):
-            if file.stem not in self.packages:
-                logger.info(
-                    "Removing %s", file.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI)
-                )
-                file.unlink()
-                continue
-
-            package = self.packages[file.stem]
-
-            if package.is_fake:
-                continue
-
-            existing_content = file.read_text(encoding="utf-8")
-            data = json.loads(existing_content)
-
-            if "versions" in data and file.stem not in self.known_missing_files:
-                data["versions"] = self.known_releases_by_project[file.stem]
-
-            if "files" in data and package.name not in self.known_missing_files:
-                data["files"] = [
-                    self._clean_file_item(_file)
-                    for _file in data["files"]
-                    if RELEASE_FILE_COLLECTION.filename_exists(_file["filename"])
-                ]
-
-            if "meta" in data:
-                data["meta"]["_last-serial"] = 0
-
-            content = json.dumps(data, ensure_ascii=False, indent=2)
-            if existing_content != content:
-                logger.info(
-                    "Cleaning up %s", file.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI)
-                )
-                file.write_text(content + "\n", encoding="utf-8")
-
-        for file in json_fixture_dir.glob("*/*.json"):
-            if (
-                file.parent.name in self.packages
-                and self.packages[file.parent.name].is_fake
-            ):
-                logger.info(
-                    "Skipping clean up for %s (fake)",
-                    file.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
-                )
-                continue
-
-            if (
-                file.parent.name not in self.packages
-                or file.stem not in self.known_releases_by_project[file.parent.stem]
-            ):
-                logger.info(
-                    "Removing %s", file.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI)
-                )
-                file.unlink()
-
-                if len(list(file.parent.iterdir())) == 0:
-                    logger.info(
-                        "Removing empty directory %s",
-                        file.parent.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
-                    )
-                    file.parent.rmdir()
-
-    def add_release_file(self, spec: ReleaseSpecification) -> list[ReleaseFileMetadata]:
-        logger.info("Processing release %s-%s", spec.name, spec.version)
-
-        if spec.name not in self.packages:
-            prefer_remote = self.refresh and not spec.is_fake
-            self.packages[spec.name] = MockedProject(
-                spec.name,
-                self.get_json_data(spec.name, None, prefer_remote=prefer_remote),
-                is_fake=spec.is_fake,
-            )
-
-        package = self.packages[spec.name]
-        release = MockedRelease(
-            spec.name, spec.version, self.get_json_data(spec.name, spec.version)
-        )
-
-        links = (
-            []
-            if spec.is_fake
-            else self.pypi.find_links_for_package(Package(spec.name, spec.version))
-        )
-
-        for link in links:
-            logger.info("Processing release file %s", link.filename)
-
-            self.process_metadata_file(link)
-
-            existing_release_file_location = RELEASE_FILE_LOCATIONS.dist.joinpath(
-                link.filename
-            )
-            if existing_release_file_location.exists():
-                logger.info(
-                    "Release file already exists at %s, skipping",
-                    existing_release_file_location.relative_to(
-                        FIXTURE_PATH_REPOSITORIES_PYPI
-                    ),
-                )
-                # we do not re-download or stub this
-                existing_file = RELEASE_FILE_COLLECTION.find(link.filename)
-                assert existing_file is not None
-                release.files.append(existing_file)
-
-                continue
-
-            if not spec.stub and link.is_wheel:
-                file = self.copy_as_is(link)
-            elif link.is_wheel or (link.is_sdist and link.filename.endswith(".zip")):
-                file = self.process_zipfile(link)
-            else:
-                file = self.process_tarfile(link)
-
-            release.add_file(file)
-
-        if not spec.is_fake:
-            release.write()
-
-        package.add_release(release)
-        return release.files
+class FileManager:
+    def __init__(self, pypi: PyPiRepository) -> None:
+        self.pypi = pypi
 
     @staticmethod
     def should_preserve_file_content_check(link: Link) -> Callable[[str], bool]:
@@ -633,136 +372,348 @@ class MockedRepositoryFactory:
 
         return ReleaseFileMetadata(dst)
 
-    def get_json_data(
-        self, name: str, version: str | None, prefer_remote: bool = False
+
+class Project:
+    def __init__(self, name: str, releases: list[Release]):
+        self.name = name
+        self.releases: list[Release] = releases
+
+    @property
+    def filenames(self) -> list[str]:
+        filenames = []
+
+        for release in self.releases:
+            filenames.extend(release.filenames)
+
+        return filenames
+
+    @property
+    def files(self) -> list[ReleaseFileMetadata]:
+        files = []
+
+        for release in self.releases:
+            files.extend(release.files)
+
+        return files
+
+    @property
+    def versions(self) -> list[str]:
+        return [release.version for release in self.releases]
+
+    @cached_property
+    def json_path(self) -> Path:
+        return FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("json", f"{self.name}.json")
+
+    @staticmethod
+    def _finalise_file_item(
+        data: dict[str, Any], files: list[ReleaseFileMetadata] | None = None
     ) -> dict[str, Any]:
-        json_fixture_dir = FIXTURE_PATH_REPOSITORIES_PYPI / "json"
+        filename = data["filename"]
 
-        if version is None:
-            path = json_fixture_dir / f"{name}.json"
-        else:
-            path = json_fixture_dir / name / f"{version}.json"
+        for file in files or []:
+            if file.path.name == filename:
+                data["hashes"] = {"md5": file.md5, "sha256": file.sha256}
+                break
 
-        data: dict[str, Any] = {}
-
-        if path.exists():
-            data = json.loads(path.read_text())
-
-        if prefer_remote and (remote_data := self._get_remote_json_data(name, version)):
-            return remote_data
-
-        logger.info(
-            "Loading existing json fixture at %s",
-            path.relative_to(json_fixture_dir),
+        metadata_file = (
+            FIXTURE_PATH_REPOSITORIES_PYPI / "metadata" / f"{filename}.metadata"
         )
+
+        if metadata_file.exists():
+            metadata = ReleaseFileMetadata(metadata_file)
+            for key in ["core-metadata", "data-dist-info-metadata"]:
+                data[key] = {"sha256": metadata.sha256}
+
         return data
 
-    def _get_remote_json_data(
-        self, name: str, version: str | None = None
-    ) -> dict[str, Any]:
-        if version is None:
-            logger.info("Fetching remote json via https://pypi.org/simple/%s", name)
-            response = self.pypi._get(
-                f"simple/{name}/",
+    def _finalise(self, data: dict[str, Any]) -> None:
+        files = self.files
+
+        data["versions"] = self.versions
+
+        data["files"] = [
+            self._finalise_file_item(_file, files)
+            for _file in data["files"]
+            if _file["filename"] in self.filenames
+        ]
+
+        data["meta"]["_last-serial"] = 0
+
+        logger.info(
+            "Finalising up %s",
+            self.json_path.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
+        )
+        self.json_path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+
+        for file in files:
+            cleanup_installation_fixtures(file)
+            cleanup_installation_fixtures(file)
+
+    def populate(self, pypi: PyPiRepository) -> None:
+        logger.info("Fetching remote json via https://pypi.org/simple/%s", self.name)
+        data = (
+            pypi._get(
+                f"simple/{self.name}/",
                 headers={"Accept": "application/vnd.pypi.simple.v1+json"},
             )
-        else:
-            logger.info(
-                "Fetching remote json via https://pypi.org/pypi/%s/%s/json",
-                name,
-                version,
-            )
+            or {}
+        )
 
-            response = self.pypi._get(f"pypi/{name}/{version}/json")
+        for release in self.releases:
+            release.populate(pypi)
 
-        return response or {}
+        self._finalise(data)
 
 
-class MockedJsonFile:
-    def __init__(self, data: dict[str, Any]) -> None:
-        self.data = data
-        self._content = json.dumps(data, ensure_ascii=False, indent=2)
-
-    @property
-    @abstractmethod
-    def json_filepath(self) -> Path: ...
-
-    def write(self) -> None:
-        self.data.get("info", {"description": ""})["description"] = ""
-
-        if "vulnerabilities" in self.data:
-            self.data["vulnerabilities"] = []
-
-        content = json.dumps(self.data, ensure_ascii=False, indent=2)
-
-        if not self.json_filepath.exists() or self._content != content:
-            logger.info("Writing json content to %s", self.json_filepath)
-            self.json_filepath.parent.mkdir(exist_ok=True)
-            self.json_filepath.write_text(content + "\n", encoding="utf-8")
-            self._content = content
-
-
-class MockedRelease(MockedJsonFile):
-    def __init__(self, name: str, version: str, data: dict[str, Any]) -> None:
+class Release:
+    def __init__(
+        self,
+        name: str,
+        version: str,
+        download_files: bool = True,
+        stub: bool = True,
+        preserved_files: list[str] | None = None,
+    ):
         self.name = name
         self.version = version
+        self.filenames: list[str] = preserved_files or []
+        self.download_files: bool = download_files
+        self.stub: bool = stub
         self.files: list[ReleaseFileMetadata] = []
-        super().__init__(data=data)
 
-    @property
-    def json_filepath(self) -> Path:
+    @cached_property
+    def json_path(self) -> Path:
         return (
             FIXTURE_PATH_REPOSITORIES_PYPI / "json" / self.name / f"{self.version}.json"
         )
 
-    def add_file(self, metadata: ReleaseFileMetadata) -> None:
-        self.files.append(metadata)
+    @staticmethod
+    def _finalise_file_item(
+        data: dict[str, Any], files: list[ReleaseFileMetadata] | None = None
+    ) -> dict[str, Any]:
+        filename = data["filename"]
 
-        for item in self.data["urls"]:
-            if item["filename"] == metadata.path.name:
-                item["digests"] = {"md5": metadata.md5, "sha256": metadata.sha256}
-                item["md5_digest"] = metadata.md5
+        for file in files or []:
+            if file.path.name == filename:
+                data["digests"] = {"md5": file.md5, "sha256": file.sha256}
+                data["md5_digest"] = file.md5
+                break
+
+        return data
+
+    def _finalise(self, data: dict[str, Any]) -> None:
+        data.get("info", {"description": ""})["description"] = ""
+
+        if "vulnerabilities" in data:
+            data["vulnerabilities"] = []
+
+        data["urls"] = [
+            self._finalise_file_item(item, self.files)
+            for item in data["urls"]
+            if item["filename"] in self.filenames
+        ]
+
+        for item in data["urls"]:
+            self._finalise_file_item(item, self.files)
+
+        data["last_serial"] = 0
+
+        logger.info(
+            "Finalising up %s",
+            self.json_path.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
+        )
+
+        if not self.json_path.parent.exists():
+            self.json_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self.json_path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+
+    def populate(self, pypi: PyPiRepository) -> None:
+        fm = FileManager(pypi)
+
+        links = pypi.find_links_for_package(Package(self.name, self.version))
+
+        for link in links:
+            self.filenames.append(link.filename)
+
+            fm.process_metadata_file(link)
+
+            if self.download_files:
+                if not self.stub and link.is_wheel:
+                    file = fm.copy_as_is(link)
+                elif link.is_wheel or (
+                    link.is_sdist and link.filename.endswith(".zip")
+                ):
+                    file = fm.process_zipfile(link)
+                else:
+                    file = fm.process_tarfile(link)
+
+                self.files.append(file)
+
+        if ENABLE_RELEASE_JSON:
+            logger.info(
+                "Fetching remote json via https://pypi.org/pypi/%s/%s/json",
+                self.name,
+                self.version,
+            )
+            data = pypi._get(f"pypi/{self.name}/{self.version}/json") or {}
+            self._finalise(data)
 
 
-class MockedProject(MockedJsonFile):
-    def __init__(self, name: str, data: dict[str, Any], is_fake: bool = False) -> None:
-        self.name = name
-        self.releases: list[MockedRelease] = []
-        self.is_fake: bool = is_fake
-        super().__init__(data=data)
+def cleanup_old_files(releases: dict[str, list[str]]) -> None:
+    json_fixture_path = FIXTURE_PATH_REPOSITORIES_PYPI / "json"
 
-    @property
-    def json_filepath(self) -> Path:
-        return FIXTURE_PATH_REPOSITORIES_PYPI / "json" / f"{self.name}.json"
+    for json_file in json_fixture_path.glob("*.json"):
+        if json_file.stem not in releases and json_file.stem not in {"isort-metadata"}:
+            json_file.unlink()
 
-    def add_release(self, release: MockedRelease) -> None:
-        self.releases.append(release)
+    for json_file in json_fixture_path.glob("*/*.json"):
+        if json_file.parent.name == "mocked":
+            continue
 
-        if self.is_fake:
-            return
+        if (
+            json_file.parent.name not in releases
+            or json_file.stem not in releases[json_file.parent.name]
+        ):
+            logger.info(
+                "Removing unmanaged release file %s",
+                json_file.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
+            )
+            json_file.unlink()
 
-        for file in release.files:
-            for item in self.data.get("files", []):
-                if item["filename"] == file.path.name:
-                    item["hashes"] = {"md5": file.md5, "sha256": file.sha256}
+            if len(list(json_file.parent.iterdir())) == 0:
+                logger.info(
+                    "Removing empty directory %s",
+                    json_file.parent.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
+                )
+                json_file.parent.rmdir()
 
-            cleanup_legacy_html_hashes(file)
-            cleanup_installation_fixtures(file)
 
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, MockedProject):
-            return self.name == other.name
+PROJECTS = [
+    Project("attrs", releases=[Release("attrs", "17.4.0")]),
+    Project(
+        "black", releases=[Release("black", "19.10b0"), Release("black", "21.11b0")]
+    ),
+    Project("cleo", releases=[Release("cleo", "1.0.0a5")]),
+    Project("clikit", releases=[Release("clikit", "0.2.4")]),
+    # tests.installation.test_installer.test_installer_with_pypi_repository on windows
+    Project("colorama", releases=[Release("colorama", "0.3.9")]),
+    Project("discord-py", releases=[Release("discord-py", "2.0.0")]),
+    Project("funcsigs", releases=[Release("funcsigs", "1.0.2", download_files=False)]),
+    Project("filecache", releases=[Release("filecache", "0.81", download_files=False)]),
+    Project("futures", releases=[Release("futures", "3.2.0")]),
+    # tests.repositories.test_pypi_repository.test_get_release_info_includes_only_supported_types
+    Project(
+        "hbmqtt",
+        releases=[
+            Release(
+                "hbmqtt",
+                "0.9.6",
+                preserved_files=[
+                    "hbmqtt-0.9.6.linux-x86_64.tar.gz",
+                    "hbmqtt-0.9.6-py3.8.egg",
+                ],
+            )
+        ],
+    ),
+    Project(
+        "importlib-metadata",
+        releases=[Release("importlib-metadata", "1.7.0", download_files=False)],
+    ),
+    Project(
+        "ipython",
+        releases=[
+            Release("ipython", "4.1.0rc1", download_files=False),
+            # tests.repositories.test_legacy_repository.test_get_package_from_both_py2_and_py3_specific_wheels
+            # tests.repositories.test_legacy_repository.test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash
+            Release("ipython", "5.7.0"),
+            # tests.repositories.test_legacy_repository.test_get_package_retrieves_non_sha256_hashes
+            # tests.repositories.test_legacy_repository.test_get_package_with_dist_and_universal_py3_wheel
+            Release("ipython", "7.5.0"),
+        ],
+    ),
+    Project("isort", releases=[Release("isort", "4.3.4")]),
+    Project("jupyter", releases=[Release("jupyter", "1.0.0")]),
+    Project("more-itertools", releases=[Release("more-itertools", "4.1.0")]),
+    Project("pastel", releases=[Release("pastel", "0.1.0")]),
+    Project("pluggy", releases=[Release("pluggy", "0.6.0")]),
+    Project("poetry-core", releases=[Release("poetry-core", "1.5.0", stub=False)]),
+    Project("py", releases=[Release("py", "1.5.3")]),
+    Project("pylev", releases=[Release("pylev", "1.3.0", download_files=False)]),
+    Project(
+        "pytest", releases=[Release("pytest", "3.5.0"), Release("pytest", "3.5.1")]
+    ),
+    # tests.repositories.test_legacy_repository.test_get_package_information_skips_dependencies_with_invalid_constraints
+    Project(
+        "python-language-server", releases=[Release("python-language-server", "0.21.2")]
+    ),
+    Project("pyyaml", releases=[Release("pyyaml", "3.13.0", download_files=False)]),
+    # tests.repositories.test_pypi_repository.test_find_packages
+    Project(
+        "requests",
+        releases=[
+            Release("requests", "2.18.0", download_files=False),
+            Release("requests", "2.18.1", download_files=False),
+            Release("requests", "2.18.2", download_files=False),
+            Release("requests", "2.18.3", download_files=False),
+            # tests.repositories.test_pypi_repository.test_package
+            Release("requests", "2.18.4", download_files=True),
+            Release("requests", "2.19.0", download_files=False),
+        ],
+    ),
+    Project(
+        "setuptools",
+        releases=[
+            Release("setuptools", "39.2.0", download_files=False),
+            Release("setuptools", "67.6.1", stub=False),
+        ],
+    ),
+    Project("six", releases=[Release("six", "1.11.0")]),
+    Project("sqlalchemy", releases=[Release("sqlalchemy", "1.2.12")]),
+    # tests.repositories.test_pypi_repository.test_find_packages_with_prereleases
+    Project(
+        "toga",
+        releases=[
+            Release("toga", "0.3.0", download_files=False),
+            Release("toga", "0.3.0dev1", download_files=False),
+            Release("toga", "0.3.0dev2", download_files=False),
+            Release("toga", "0.4.0", download_files=False),
+        ],
+    ),
+    Project(
+        "tomlkit", releases=[Release("tomlkit", "0.5.2"), Release("tomlkit", "0.5.3")]
+    ),
+    Project("twisted", releases=[Release("twisted", "18.9.0")]),
+    Project("wheel", releases=[Release("wheel", "0.40.0", stub=False)]),
+    Project("zipp", releases=[Release("zipp", "3.5.0")]),
+]
 
-        if isinstance(other, str):
-            return self.name == other
 
-        return False
+def main() -> None:
+    pypi = PyPiRepository(disable_cache=False)
+    files: list[ReleaseFileMetadata] = []
+    releases: dict[str, list[str]] = {}
+
+    for project in PROJECTS:
+        project = Project(project.name, releases=project.releases)
+        project.populate(pypi)
+
+        releases[project.name] = project.versions
+        files.extend(project.files)
+
+    rfc = _ReleaseFileCollection(
+        [RELEASE_FILE_LOCATIONS.demo, RELEASE_FILE_LOCATIONS.mocked]
+    )
+    files.extend(rfc.list())
+
+    generate_distribution_hashes_fixture(files)
+
+    cleanup_old_files(releases)
 
 
 if __name__ == "__main__":
-    # set refresh to true when recreating package json files
-    factory = MockedRepositoryFactory(
-        RELEASE_SPECS, PROJECT_SPECS, PyPiRepository(disable_cache=True), refresh=True
-    )
-    factory.process()
-    factory.clean()
+    main()

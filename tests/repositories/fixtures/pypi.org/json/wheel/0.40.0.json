@@ -25,6 +25,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "",
     "keywords": "wheel,packaging",
     "license": "",
@@ -39,6 +40,7 @@
       "Documentation": "https://wheel.readthedocs.io/",
       "Issue Tracker": "https://github.com/pypa/wheel/issues"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/wheel/0.40.0/",
     "requires_dist": [
       "pytest >= 6.0.0 ; extra == \"test\""
@@ -49,7 +51,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 17289142,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",

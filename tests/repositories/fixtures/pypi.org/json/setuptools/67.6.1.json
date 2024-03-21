@@ -23,6 +23,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/pypa/setuptools",
     "keywords": "CPAN PyPI distutils eggs package management",
     "license": "",
@@ -37,6 +38,7 @@
       "Documentation": "https://setuptools.pypa.io/",
       "Homepage": "https://github.com/pypa/setuptools"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/setuptools/67.6.1/",
     "requires_dist": [
       "sphinx (>=3.5) ; extra == 'docs'",
@@ -91,7 +93,7 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 17478645,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
