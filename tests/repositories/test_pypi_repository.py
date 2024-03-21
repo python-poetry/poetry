@@ -37,7 +37,7 @@ def test_find_packages_with_prereleases(pypi_repository: PyPiRepository) -> None
     repo = pypi_repository
     packages = repo.find_packages(Factory.create_dependency("toga", ">=0.3.0.dev2"))
 
-    assert len(packages) == 7
+    assert len(packages) == 2
 
 
 def test_find_packages_does_not_select_prereleases_if_not_allowed(
@@ -104,8 +104,7 @@ def test_package(
             f"{package.name}-{package.version}.tar.gz",
         ]
     ]
-
-    win_inet = package.extras[canonicalize_name("socks")][0]
+    win_inet = package.extras[canonicalize_name("socks")][1]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
 
@@ -309,7 +308,9 @@ def test_invalid_versions_ignored(pypi_repository: PyPiRepository) -> None:
 
     # the json metadata for this package contains one malformed version
     # and a correct one.
-    packages = repo.find_packages(Factory.create_dependency("pygame-music-grid", "*"))
+    packages = repo.find_packages(
+        Factory.create_dependency("invalid-version-package", "*")
+    )
     assert len(packages) == 1
 
 

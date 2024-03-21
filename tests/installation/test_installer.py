@@ -1916,7 +1916,11 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         executor=Executor(env, pool, config, NullIO()),
     )
 
-    package.add_dependency(Factory.create_dependency("poetry", {"version": "^0.12.0"}))
+    package.add_dependency(
+        Factory.create_dependency(
+            "with-transitive-extra-dependency", {"version": "^0.12"}
+        )
+    )
 
     installer.update(True)
     result = installer.run()
@@ -1979,7 +1983,7 @@ def test_installer_required_extras_should_be_installed(
     )
     package.add_dependency(
         Factory.create_dependency(
-            "cachecontrol", {"version": "^0.12.5", "extras": ["filecache"]}
+            "with-extra-dependency", {"version": "^0.12", "extras": ["filecache"]}
         )
     )
 
