@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -9,6 +10,7 @@ import pytest
 
 from poetry.core.constraints.version import parse_constraint
 
+from poetry.installation.wheel_installer import WheelDestinationCopy
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.utils.env import MockEnv
 
@@ -27,6 +29,11 @@ def env(tmp_path: Path) -> MockEnv:
 @pytest.fixture(scope="module")
 def demo_wheel(fixture_dir: FixtureDirGetter) -> Path:
     return fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
+
+
+@pytest.fixture(scope="module")
+def django_wheel(fixture_dir: FixtureDirGetter) -> Path:
+    return fixture_dir("distributions/Django-5.0.3-py3-none-any.whl")
 
 
 @pytest.fixture(scope="module")
@@ -81,3 +88,71 @@ def test_enable_bytecode_compilation(
         assert not list(cache_dir.glob("*.opt-2.pyc"))
     else:
         assert not cache_dir.exists()
+
+
+def delete_tmp_dir_func_factory(tmp_path: Path):
+    def delete_tmp_dir():
+        shutil.rmtree(tmp_path)
+        tmp_path.mkdir()
+
+    return delete_tmp_dir
+
+
+@pytest.mark.benchmark(
+    group="demo_wheel",
+)
+def test_bench_installer_copy_demo(
+    env: MockEnv, demo_wheel: Path, benchmark, tmp_path: Path
+) -> None:
+    installer = WheelInstaller(env, wheel_destination_class=WheelDestinationCopy)
+    benchmark.pedantic(
+        installer.install,
+        args=(demo_wheel,),
+        setup=delete_tmp_dir_func_factory(tmp_path),
+        rounds=1000,
+    )
+
+
+@pytest.mark.benchmark(
+    group="demo_wheel",
+)
+def test_bench_installer_demo(
+    env: MockEnv, demo_wheel: Path, benchmark, tmp_path: Path
+) -> None:
+    installer = WheelInstaller(env)
+    benchmark.pedantic(
+        installer.install,
+        args=(demo_wheel,),
+        setup=delete_tmp_dir_func_factory(tmp_path),
+        rounds=1000,
+    )
+
+
+@pytest.mark.benchmark(
+    group="django_wheel",
+)
+def test_bench_installer_copy_django(
+    env: MockEnv, demo_wheel: Path, benchmark, tmp_path: Path
+) -> None:
+    installer = WheelInstaller(env, wheel_destination_class=WheelDestinationCopy)
+    benchmark.pedantic(
+        installer.install,
+        args=(demo_wheel,),
+        setup=delete_tmp_dir_func_factory(tmp_path),
+        rounds=1000,
+    )
+
+
+@pytest.mark.benchmark(
+    group="django_wheel",
+)
+def test_bench_installer_django(
+    env: MockEnv, demo_wheel: Path, benchmark, tmp_path: Path
+) -> None:
+    installer = WheelInstaller(env)
+    benchmark.pedantic(
+        installer.install,
+        args=(demo_wheel,),
+        setup=delete_tmp_dir_func_factory(tmp_path),
+        rounds=1000,
+    )

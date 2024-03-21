@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+import os
 import platform
 import sys
+import tempfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,7 +16,6 @@ from installer.sources import _WheelFileValidationError
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
-from poetry.utils.helpers import get_file_hash_urlsafe
 
 
 logger = logging.getLogger(__name__)
@@ -49,10 +50,7 @@ class WheelDestination(SchemeDictionaryDestination):
         if target_path.exists():
             # Contrary to the base library we don't raise an error here since it can
             # break pkgutil-style and pkg_resource-style namespace packages.
-            # We instead log a warning and ignore it. See issue #9158.
-            logger.warning(f"{target_path} already exists. Ignoring.")
-            hash_, size = get_file_hash_urlsafe(stream, hash_algorithm="sha256")
-            return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
+            logger.warning(f"Installing {target_path} over existing file")
 
         parent_folder = target_path.parent
         if not parent_folder.exists():
@@ -69,9 +67,49 @@ class WheelDestination(SchemeDictionaryDestination):
         return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 
 
+class WheelDestinationCopy(SchemeDictionaryDestination):
+    """SchemeDictionaryDestination that copies the files with os.replace to avoid race condition"""
+
+    def write_to_fs(
+        self,
+        scheme: Scheme,
+        path: str,
+        stream: BinaryIO,
+        is_executable: bool,
+    ) -> RecordEntry:
+        from installer.records import Hash
+        from installer.records import RecordEntry
+        from installer.utils import copyfileobj_with_hashing
+        from installer.utils import make_file_executable
+
+        target_path = Path(self.scheme_dict[scheme]) / path
+
+        parent_folder = target_path.parent
+        if not parent_folder.exists():
+            # Due to the parallel installation it can happen
+            # that two threads try to create the directory.
+            parent_folder.mkdir(parents=True, exist_ok=True)
+
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            with open(fp.name, "wb") as f:
+                hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
+            if target_path.exists():
+                # Contrary to the base library we don't raise an error here since it can
+                # break pkgutil-style and pkg_resource-style namespace packages.
+                # We instead log a warning and ignore it. See issue #9158.
+                logger.warning(f"{target_path} already exists. Overwritting.")
+            os.replace(fp.name, target_path)
+
+        if is_executable:
+            make_file_executable(target_path)
+
+        return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
+
+
 class WheelInstaller:
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: Env, wheel_destination_class=WheelDestination) -> None:
         self._env = env
+        self.wheel_destination_class = wheel_destination_class
 
         script_kind: LauncherKind
         if not WINDOWS:
@@ -103,7 +141,7 @@ class WheelInstaller:
             scheme_dict["headers"] = str(
                 Path(scheme_dict["include"]) / source.distribution
             )
-            destination = WheelDestination(
+            destination = self.wheel_destination_class(
                 scheme_dict,
                 interpreter=str(self._env.python),
                 script_kind=self._script_kind,
