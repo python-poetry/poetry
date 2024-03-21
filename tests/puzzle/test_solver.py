@@ -3019,18 +3019,19 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
 def test_solver_skips_invalid_versions(
     package: ProjectPackage, io: NullIO, pypi_repository: PyPiRepository
 ) -> None:
-    package.python_versions = "^3.7"
+    package.python_versions = "^3.9"
 
     pool = RepositoryPool([pypi_repository])
 
     solver = Solver(package, pool, [], [], io)
 
-    package.add_dependency(Factory.create_dependency("trackpy", "^0.4"))
+    package.add_dependency(Factory.create_dependency("six-unknown-version", "^1.11"))
 
     transaction = solver.solve()
 
     check_solver_result(
-        transaction, [{"job": "install", "package": get_package("trackpy", "0.4.1")}]
+        transaction,
+        [{"job": "install", "package": get_package("six-unknown-version", "1.11.0")}],
     )
 
 
