@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import re
+
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -7,6 +10,7 @@ import pytest
 
 from poetry.core.utils.helpers import parse_requires
 
+from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
     from httpretty import httpretty
     from httpretty.core import HTTPrettyRequest
 
+    from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
 
@@ -188,3 +193,35 @@ def test_download_file_raise_accepts_ranges(
     else:
         download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
         assert dest.is_file()
+
+
+def test_downloader_uses_authenticator_by_default(
+    config: Config,
+    http: type[httpretty],
+    tmp_working_directory: Path,
+) -> None:
+    import poetry.utils.authenticator
+
+    # force set default authenticator to None so that it is recreated using patched config
+    poetry.utils.authenticator._authenticator = None
+
+    config.merge(
+        {
+            "repositories": {"foo": {"url": "https://foo.bar/files/"}},
+            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
+        }
+    )
+
+    http.register_uri(
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
+    )
+
+    Downloader(
+        "https://foo.bar/files/foo-0.1.0.tar.gz",
+        tmp_working_directory / "foo-0.1.0.tar.gz",
+    )
+
+    request = http.last_request()
+    basic_auth = base64.b64encode(b"bar:baz").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
