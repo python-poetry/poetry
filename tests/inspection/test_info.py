@@ -272,10 +272,30 @@ def test_info_from_setup_cfg(demo_setup_cfg: Path) -> None:
 
 
 def test_info_no_setup_pkg_info_no_deps(fixture_dir: FixtureDirGetter) -> None:
-    info = PackageInfo.from_directory(
-        fixture_dir("inspection") / "demo_no_setup_pkg_info_no_deps",
-        disable_build=True,
+    info = PackageInfo.from_metadata_directory(
+        fixture_dir("inspection") / "demo_no_setup_pkg_info_no_deps"
     )
+    assert info is not None
+    assert info.name == "demo"
+    assert info.version == "0.1.0"
+    assert info.requires_dist is None
+
+
+def test_info_no_setup_pkg_info_no_deps_for_sure(fixture_dir: FixtureDirGetter) -> None:
+    info = PackageInfo.from_metadata_directory(
+        fixture_dir("inspection") / "demo_no_setup_pkg_info_no_deps_for_sure",
+    )
+    assert info is not None
+    assert info.name == "demo"
+    assert info.version == "0.1.0"
+    assert info.requires_dist == []
+
+
+def test_info_no_setup_pkg_info_no_deps_dynamic(fixture_dir: FixtureDirGetter) -> None:
+    info = PackageInfo.from_metadata_directory(
+        fixture_dir("inspection") / "demo_no_setup_pkg_info_no_deps_dynamic",
+    )
+    assert info is not None
     assert info.name == "demo"
     assert info.version == "0.1.0"
     assert info.requires_dist is None

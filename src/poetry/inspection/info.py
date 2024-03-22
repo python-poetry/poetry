@@ -15,6 +15,8 @@ from typing import Sequence
 import pkginfo
 
 from build import BuildBackendException
+from poetry.core.constraints.version import Version
+from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.pyproject.toml import PyProjectTOML
@@ -23,7 +25,6 @@ from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
 
-from poetry.factory import Factory
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import isolated_builder
 from poetry.utils.setup_reader import SetupReader
@@ -38,6 +39,8 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+DYNAMIC_METADATA_VERSION = Version.parse("2.2")
 
 
 class PackageInfoError(ValueError):
@@ -217,6 +220,43 @@ class PackageInfo:
         return package
 
     @classmethod
+    def _requirements_from_distribution(
+        cls,
+        dist: pkginfo.BDist | pkginfo.SDist | pkginfo.Wheel,
+    ) -> list[str] | None:
+        """
+        Helper method to extract package requirements from a `pkginfo.Distribution`
+        instance.
+
+        :param dist: The distribution instance to extract requirements from.
+        """
+        # If the distribution lists requirements, we use those.
+        #
+        # If the distribution does not list requirements, but the metadata is new enough
+        # to specify that this is because there definitely are none: then we return an
+        # empty list.
+        #
+        # If there is a requires.txt, we use that.
+        if dist.requires_dist:
+            return list(dist.requires_dist)
+
+        if dist.metadata_version is not None:
+            metadata_version = Version.parse(dist.metadata_version)
+            if (
+                metadata_version >= DYNAMIC_METADATA_VERSION
+                and "Requires-Dist" not in dist.dynamic
+            ):
+                return []
+
+        requires = Path(dist.filename) / "requires.txt"
+        if requires.exists():
+            text = requires.read_text(encoding="utf-8")
+            requirements = parse_requires(text)
+            return requirements
+
+        return None
+
+    @classmethod
     def _from_distribution(
         cls, dist: pkginfo.BDist | pkginfo.SDist | pkginfo.Wheel
     ) -> PackageInfo:
@@ -226,15 +266,7 @@ class PackageInfo:
 
         :param dist: The distribution instance to parse information from.
         """
-        requirements = None
-
-        if dist.requires_dist:
-            requirements = list(dist.requires_dist)
-        else:
-            requires = Path(dist.filename) / "requires.txt"
-            if requires.exists():
-                text = requires.read_text(encoding="utf-8")
-                requirements = parse_requires(text)
+        requirements = cls._requirements_from_distribution(dist)
 
         info = cls(
             name=dist.name,
