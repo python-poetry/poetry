@@ -179,6 +179,20 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
+def test_info_from_wheel_metadata_version_unknown(
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    path = (
+        fixture_dir("distributions")
+        / "demo_metadata_version_unknown-0.1.0-py2.py3-none-any.whl"
+    )
+
+    with pytest.raises(PackageInfoError) as e:
+        PackageInfo.from_wheel(path)
+
+    assert "Unknown metadata version" in str(e.value)
+
+
 def test_info_from_wheel_metadata(demo_wheel_metadata: RawMetadata) -> None:
     info = PackageInfo.from_metadata(demo_wheel_metadata)
     demo_check_info(info)
