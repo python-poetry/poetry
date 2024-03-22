@@ -20,10 +20,9 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import overload
 
-import requests
-
 from requests.utils import atomic_open
 
+from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
@@ -171,10 +170,10 @@ class Downloader:
     ):
         self._dest = dest
 
-        get = requests.get if not session else session.get
+        session = session or get_default_authenticator()
         headers = {"Accept-Encoding": "Identity"}
 
-        self._response = get(
+        self._response = session.get(
             url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
         )
         self._response.raise_for_status()
