@@ -539,8 +539,8 @@ class PackageInfo:
         try:
             wheel = pkginfo.Wheel(str(path))
             return cls._from_distribution(wheel)
-        except ValueError:
-            return PackageInfo()
+        except ValueError as e:
+            raise PackageInfoError(path, e)
 
     @classmethod
     def from_bdist(cls, path: Path) -> PackageInfo:
