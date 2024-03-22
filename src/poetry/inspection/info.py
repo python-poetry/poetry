@@ -266,6 +266,11 @@ class PackageInfo:
 
         :param dist: The distribution instance to parse information from.
         """
+        if dist.metadata_version not in pkginfo.distribution.HEADER_ATTRS:
+            # This check can be replaced once upstream implements strict parsing
+            # https://bugs.launchpad.net/pkginfo/+bug/2058697
+            raise ValueError("Unknown metadata version")
+
         requirements = cls._requirements_from_distribution(dist)
 
         info = cls(
