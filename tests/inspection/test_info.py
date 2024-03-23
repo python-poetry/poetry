@@ -315,7 +315,6 @@ def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     demo_check_info(info, requires_dist={"package"})
 
 
-@pytest.mark.network
 def test_info_setup_complex(demo_setup_complex: Path) -> None:
     info = PackageInfo.from_directory(demo_setup_complex)
     demo_check_info(info, requires_dist={"package"})
@@ -334,7 +333,6 @@ def test_info_setup_complex_pep517_error(
         PackageInfo.from_directory(demo_setup_complex)
 
 
-@pytest.mark.network
 def test_info_setup_complex_pep517_legacy(
     demo_setup_complex_pep517_legacy: Path,
 ) -> None:
@@ -342,14 +340,12 @@ def test_info_setup_complex_pep517_legacy(
     demo_check_info(info, requires_dist={"package"})
 
 
-@pytest.mark.network
 def test_info_setup_complex_calls_script(demo_setup_complex_calls_script: Path) -> None:
     """Building the project requires calling a script from its build_requires."""
     info = PackageInfo.from_directory(demo_setup_complex_calls_script)
     demo_check_info(info, requires_dist={"package"})
 
 
-@pytest.mark.network
 @pytest.mark.parametrize("missing", ["version", "name"])
 def test_info_setup_missing_mandatory_should_trigger_pep517(
     mocker: MockerFixture, source_dir: Path, missing: str
