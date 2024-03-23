@@ -2133,7 +2133,7 @@ def test_installer_can_install_dependencies_from_forced_source(
 def test_run_installs_with_url_file(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
-    url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    url = "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency(Factory.create_dependency("demo", {"url": url}))
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -2159,9 +2159,9 @@ def test_run_installs_with_same_version_url_files(
     env_platform: str,
 ) -> None:
     urls = {
-        "linux": "https://python-poetry.org/distributions/demo-0.1.0.tar.gz",
+        "linux": "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz",
         "win32": (
-            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         ),
     }
     for platform, url in urls.items():
@@ -2727,7 +2727,9 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     A dependency with explicit source should not be satisfied by
     a direct origin dependency even if there is a version match.
     """
-    demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    demo_url = (
+        "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    )
     package.add_dependency(
         Factory.create_dependency(
             "demo",

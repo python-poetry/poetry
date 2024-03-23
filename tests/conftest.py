@@ -42,7 +42,6 @@ from tests.helpers import get_package
 from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
-from tests.helpers import mock_download
 from tests.helpers import switch_working_directory
 from tests.helpers import with_working_directory
 
@@ -278,13 +277,6 @@ def config_dir(tmp_path: Path) -> Path:
 def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
     mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
     mocker.patch("poetry.config.config.CONFIG_DIR", new=config_dir)
-
-
-@pytest.fixture(autouse=True)
-def download_mock(mocker: MockerFixture) -> None:
-    # Patch download to not download anything but to just copy from fixtures
-    mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
-    mocker.patch("poetry.packages.direct_origin.download_file", new=mock_download)
 
 
 @pytest.fixture(autouse=True)

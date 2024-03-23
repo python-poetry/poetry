@@ -3906,7 +3906,7 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
 
     http.register_uri(
         "GET",
-        "https://foo.bar/demo-0.1.0-py2.py3-none-any.whl",
+        "https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
         body=Path(path).read_bytes(),
         streaming=True,
     )
@@ -3921,7 +3921,9 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     package.add_dependency(
         Factory.create_dependency(
             "demo",
-            {"url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl"},
+            {
+                "url": "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            },
         )
     )
     package.add_dependency(Factory.create_dependency("foo", "^1.2.3"))
@@ -3947,7 +3949,7 @@ def test_solver_cannot_choose_url_dependency_for_explicit_source(
             "demo",
             {
                 "markers": "sys_platform != 'darwin'",
-                "url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+                "url": "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
             },
         )
     )
@@ -3968,7 +3970,7 @@ def test_solver_cannot_choose_url_dependency_for_explicit_source(
         "demo",
         "0.1.0",
         source_type="url",
-        source_url="https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        source_url="https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
     )
     # The url demo dependency depends on pendulum.
     repo.add_package(package_pendulum)
