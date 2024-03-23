@@ -10,8 +10,6 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    import httpretty
-
     from cleo.testers.command_tester import CommandTester
 
     from poetry.poetry import Poetry
@@ -92,10 +90,7 @@ def poetry_with_invalid_lockfile(
 def test_lock_check_outdated_legacy(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
-    http: type[httpretty.httpretty],
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
         pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
@@ -119,10 +114,7 @@ def test_lock_check_outdated_legacy(
 def test_lock_check_up_to_date_legacy(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
-    http: type[httpretty.httpretty],
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
         pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
