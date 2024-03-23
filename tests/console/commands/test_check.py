@@ -12,8 +12,6 @@ from poetry.toml import TOMLFile
 if TYPE_CHECKING:
     from typing import Iterator
 
-    import httpretty
-
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
@@ -172,11 +170,8 @@ def test_check_lock_missing(
 def test_check_lock_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
-    http: type[httpretty.httpretty],
     options: str,
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
         pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
@@ -200,11 +195,8 @@ def test_check_lock_outdated(
 def test_check_lock_up_to_date(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
-    http: type[httpretty.httpretty],
     options: str,
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
         pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
