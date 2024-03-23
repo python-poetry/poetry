@@ -2,8 +2,6 @@ name: Test Fixture Consistency
 
 on:
   pull_request:
-    branches:
-      - '**'
 
 concurrency:
   group: tests-fixture-${{ github.head_ref || github.ref }}
