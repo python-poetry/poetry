@@ -80,7 +80,6 @@ def test_prepare_directory(
     os.unlink(wheel)
 
 
-@pytest.mark.network
 def test_prepare_directory_with_extensions(
     config: Config,
     config_cache_dir: Path,
@@ -126,7 +125,6 @@ def test_prepare_directory_editable(
     os.unlink(wheel)
 
 
-@pytest.mark.network
 def test_prepare_directory_script(
     config: Config,
     config_cache_dir: Path,
