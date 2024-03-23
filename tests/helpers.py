@@ -4,7 +4,6 @@ import contextlib
 import os
 import re
 import shutil
-import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -34,12 +33,10 @@ if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
-    from requests import Session
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
-    from poetry.utils.authenticator import Authenticator
     from tests.types import HTTPrettyResponse
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
@@ -120,21 +117,6 @@ def mock_clone(
 
     copy_path(folder, dest)
     return MockDulwichRepo(dest)
-
-
-def mock_download(
-    url: str,
-    dest: Path,
-    *,
-    session: Authenticator | Session | None = None,
-    chunk_size: int = 1024,
-    raise_accepts_ranges: bool = False,
-) -> None:
-    parts = urllib.parse.urlparse(url)
-
-    fixture = FIXTURE_PATH / parts.path.lstrip("/")
-
-    copy_path(fixture, dest)
 
 
 class TestExecutor(Executor):

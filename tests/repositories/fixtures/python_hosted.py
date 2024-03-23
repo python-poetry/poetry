@@ -44,10 +44,21 @@ def mock_files_python_hosted_factory(http: type[httpretty]) -> PythonHostedFileM
 
             return [404, headers, b"Not Found"]
 
+        def mock_file_callback(
+            request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+        ) -> list[int | dict[str, Any] | bytes | str]:
+            return [200, headers, b""]
+
         http.register_uri(
             http.GET,
             re.compile("^https://files.pythonhosted.org/.*$"),
             body=file_callback,
+        )
+
+        http.register_uri(
+            http.GET,
+            re.compile("^https://mock.pythonhosted.org/.*$"),
+            body=mock_file_callback,
         )
 
     return factory

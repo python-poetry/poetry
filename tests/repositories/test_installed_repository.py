@@ -335,7 +335,7 @@ def test_load_pep_610_compliant_url_packages(repository: InstalledRepository) ->
     assert package.source_type == "url"
     assert (
         package.source_url
-        == "https://python-poetry.org/distributions/url-pep-610-1.2.3.tar.gz"
+        == "https://mock.pythonhosted.org/distributions/url-pep-610-1.2.3.tar.gz"
     )
 
 

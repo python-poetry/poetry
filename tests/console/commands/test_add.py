@@ -734,7 +734,7 @@ def test_add_url_constraint_wheel(
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     tester.execute(
-        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     )
 
     expected = """\
@@ -746,7 +746,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
   - Installing demo\
- (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+ (0.1.0 https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 
 Writing lock file
 """
@@ -760,7 +760,7 @@ Writing lock file
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "url": "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     }
 
 
@@ -776,7 +776,7 @@ def test_add_url_constraint_wheel_with_extras(
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
     tester.execute(
-        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         f"[{extra_name},bar]"
     )
 
@@ -791,7 +791,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing tomlkit (0.5.5)
   - Installing demo\
- (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
+ (0.1.0 https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 
 Writing lock file
 """
@@ -808,7 +808,7 @@ Writing lock file
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
         "url": (
-            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         ),
         "extras": [extra_name, "bar"],
     }

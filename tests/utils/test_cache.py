@@ -177,12 +177,12 @@ def test_detect_corrupted_cache_key_file(
 def test_get_cache_directory_for_link(tmp_path: Path) -> None:
     cache = ArtifactCache(cache_dir=tmp_path)
     directory = cache.get_cache_directory_for_link(
-        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+        Link("https://files.pythonhosted.org/poetry-1.1.0.tar.gz")
     )
 
     expected = Path(
-        f"{tmp_path.as_posix()}/11/4f/a8/"
-        "1c89d75547e4967082d30a28360401c82c83b964ddacee292201bf85f2"
+        f"{tmp_path.as_posix()}/41/9c/6e/"
+        "ef83f08fcf4dac7cd78d843e7974d601a19c90e4bb90bb76b4a7a61548"
     )
 
     assert directory == expected
@@ -225,7 +225,7 @@ def test_get_cached_archives(fixture_dir: FixtureDirGetter) -> None:
     ("link", "strict", "available_packages"),
     [
         (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             True,
             [
                 Path("/cache/demo-0.1.0-py2.py3-none-any"),
@@ -271,7 +271,7 @@ def test_get_not_found_cached_archive_for_link(
     ("link", "cached", "strict"),
     [
         (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
             False,
         ),
@@ -281,7 +281,7 @@ def test_get_not_found_cached_archive_for_link(
             False,
         ),
         (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             "/cache/demo-0.1.0.tar.gz",
             True,
         ),
@@ -328,7 +328,7 @@ def test_get_cached_archive_for_link_no_race_condition(
     tmp_path: Path, mocker: MockerFixture
 ) -> None:
     cache = ArtifactCache(cache_dir=tmp_path)
-    link = Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+    link = Link("https://files.pythonhosted.org/demo-0.1.0.tar.gz")
 
     def replace_file(_: str, dest: Path) -> None:
         dest.unlink(missing_ok=True)
