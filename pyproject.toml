@@ -105,9 +105,6 @@ src = ["src"]
 target-version = "py38"
 
 [tool.ruff.lint]
-unfixable = [
-    "ERA", # do not autoremove commented out code
-]
 extend-select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
@@ -126,6 +123,12 @@ ignore = [
     "B904", # use 'raise ... from err'
     "B905", # use explicit 'strict=' parameter with 'zip()'
     "N818", #  Exception name should be named with an Error suffix
+]
+extend-safe-fixes = [
+    "TCH", # move import from and to TYPE_CHECKING blocks
+]
+unfixable = [
+    "ERA", # do not autoremove commented out code
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
