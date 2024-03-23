@@ -8,16 +8,12 @@ on:
       - '!docs/**'
       - '!.cirrus.yml'
       - '!.github/workflows/docs.yml'
-    branches:
-      - main
   pull_request:
     paths-ignore:
       - '**'
       - '!docs/**'
       - '!.cirrus.yml'
       - '!.github/workflows/docs.yml'
-    branches:
-      - '**'
 
 jobs:
   tests:
