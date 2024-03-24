@@ -24,13 +24,17 @@ from poetry.utils.env import MockEnv
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import build_environment
+from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
+    from typing import Iterator
+
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
+    from tests.types import SetProjectContext
 
 MINIMAL_SCRIPT = """\
 
@@ -463,35 +467,29 @@ def test_env_finds_fallback_executables_for_generic_env(
 
 
 @pytest.fixture
-def extended_without_setup_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
-    poetry = Factory().create_poetry(fixture_dir("extended_project_without_setup"))
-
-    return poetry
+def extended_without_setup_poetry(
+    fixture_dir: FixtureDirGetter, set_project_context: SetProjectContext
+) -> Iterator[Poetry]:
+    with set_project_context("extended_project_without_setup") as cwd:
+        yield Factory().create_poetry(cwd)
 
 
 def test_build_environment_called_build_script_specified(
-    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_path: Path
+    mocker: MockerFixture,
+    extended_without_setup_poetry: Poetry,
 ) -> None:
-    project_env = MockEnv(path=tmp_path / "project")
-    ephemeral_env = MockEnv(path=tmp_path / "ephemeral")
+    patched_install = mocker.patch("poetry.utils.isolated_build.IsolatedEnv.install")
 
-    mocker.patch(
-        "poetry.utils.env.ephemeral_environment"
-    ).return_value.__enter__.return_value = ephemeral_env
+    with ephemeral_environment() as project_env:
+        import poetry.utils.env
 
-    with build_environment(extended_without_setup_poetry, project_env) as env:
-        assert env == ephemeral_env
-        assert env.executed == [  # type: ignore[attr-defined]
-            [
-                str(sys.executable),
-                str(env.pip_embedded),
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *extended_without_setup_poetry.pyproject.build_system.requires,
-            ]
-        ]
+        spy = mocker.spy(poetry.utils.env, "ephemeral_environment")
+
+        with build_environment(extended_without_setup_poetry, project_env):
+            assert patched_install.call_count == 1
+            assert patched_install.call_args == mocker.call(["poetry-core", "cython"])
+
+        assert spy.call_count == 1
 
 
 def test_build_environment_not_called_without_build_script_specified(
