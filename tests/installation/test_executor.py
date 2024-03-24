@@ -1426,7 +1426,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     mocker.stopall()  # to get real output
     output = io.fetch_output().strip()
-    print(output)
+
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
 
