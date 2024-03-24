@@ -1,9 +1,8 @@
-name: 'Lock Threads'
+name: Lock Threads
 
 on:
   schedule:
-    # at the end of everyday
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *' # every day at midnight
   workflow_dispatch:
 
 permissions:
@@ -12,10 +11,10 @@ permissions:
   discussions: write
 
 concurrency:
-  group: lock-threads
+  group: ${{ github.workflow }}
 
 jobs:
-  action:
+  lock-threads:
     runs-on: ubuntu-latest
     steps:
       - uses: dessant/lock-threads@v5
