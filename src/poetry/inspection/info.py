@@ -248,7 +248,7 @@ class PackageInfo:
         if dist.metadata_version not in pkginfo.distribution.HEADER_ATTRS:
             # This check can be replaced once upstream implements strict parsing
             # https://bugs.launchpad.net/pkginfo/+bug/2058697
-            raise ValueError("Unknown metadata version")
+            raise ValueError(f"Unknown metadata version: {dist.metadata_version}")
 
         requirements = None
 
