@@ -1,0 +1,34 @@
+name: Bootstrap Poetry
+description: Configure the environment with the specified Python and Poetry version.
+
+inputs:
+  python-version:
+    description: Desired Python version
+    default: "3.12"
+  python-latest:
+    description: Use an uncached Python if a newer match is available
+    default: 'false'
+  poetry-spec:
+    description: pip-compatible installation specification to use for Poetry
+    default: 'poetry'
+
+runs:
+  using: composite
+  steps:
+    # Enable handling long path names (+260 char) on the Windows platform
+    # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+    - id: git-config-longpaths
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: git config --system core.longpaths true
+
+    - id: pipx-poetry
+      shell: bash
+      run: pipx install '${{ inputs.poetry-spec }}'
+
+    - id: setup-python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        check-latest: ${{ inputs.python-latest == 'true' }}
+        cache: poetry
