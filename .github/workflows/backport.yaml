@@ -37,4 +37,6 @@ jobs:
           git config --global user.name  "${{ steps.app-token.outputs.slug }}[bot]"
           git config --global user.email "${{ steps.app-token.outputs.slug }}[bot]@users.noreply.github.com"
 
-          ./.github/scripts/backport.sh --pr ${{ github.event.pull_request.number }} --comment
+          gh repo fork --remote-name fork
+
+          ./.github/scripts/backport.sh --pr ${{ github.event.pull_request.number }} --comment --remote fork
