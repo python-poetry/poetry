@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       # This workflow requires a non-GHA token in order to trigger downstream CI, and to access the 'fork' repository.
       - id: app-token
-        uses: actions/create-github-app-token
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
           private-key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
