@@ -6,7 +6,7 @@ freebsd_instance:
 test_task:
   name: "Tests / FreeBSD / "
   only_if: $CIRRUS_TAG == ''
-  skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
+  skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py', 'tests/**')"
   env:
     # `SHELL` environment variable is not set by default, so we explicitly set it to
     # avoid failures on tests that depend on it.
