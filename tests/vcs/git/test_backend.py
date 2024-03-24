@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+
+from poetry.vcs.git.backend import Git
 from poetry.vcs.git.backend import is_revision_sha
 
 
@@ -24,3 +27,17 @@ def test_invalid_revision_sha_min_len() -> None:
 def test_invalid_revision_sha_max_len() -> None:
     result = is_revision_sha(VALID_SHA + "42")
     assert result is False
+
+
+@pytest.mark.parametrize(
+    ("url"),
+    [
+        "git@github.com:python-poetry/poetry.git",
+        "https://github.com/python-poetry/poetry.git",
+        "https://github.com/python-poetry/poetry",
+        "https://github.com/python-poetry/poetry/",
+    ],
+)
+def test_get_name_from_source_url(url: str) -> None:
+    name = Git.get_name_from_source_url(url)
+    assert name == "poetry"
