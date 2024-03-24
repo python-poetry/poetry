@@ -190,7 +190,7 @@ def test_info_from_wheel_metadata_version_unknown(
     with pytest.raises(PackageInfoError) as e:
         PackageInfo.from_wheel(path)
 
-    assert "Unknown metadata version" in str(e.value)
+    assert "Unknown metadata version: 999.3" in str(e.value)
 
 
 def test_info_from_wheel_metadata(demo_wheel_metadata: RawMetadata) -> None:
