@@ -28,7 +28,7 @@ jobs:
         with:
           filters: |
             workflow: &workflow
-              - '.github/workflwos/tests.yaml'
+              - '.github/workflows/tests.yaml'
             fixtures-pypi:
               - *workflow
               - 'tests/repositories/fixtures/pypi.org/**'
