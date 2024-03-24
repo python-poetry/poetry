@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 class AddCommand(InstallerCommand, InitCommand):
     name = "add"
-    description = "Adds a new dependency to <comment>pyproject.toml</>."
+    description = "Adds a new dependency to <comment>pyproject.toml</> and installs it."
 
     arguments: ClassVar[list[Argument]] = [
         argument("name", "The packages to add.", multiple=True)
