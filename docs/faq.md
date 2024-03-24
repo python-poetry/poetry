@@ -171,14 +171,21 @@ dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/sta
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
-from the global Python installation, there are valid reasons why it's not necessary
-and is an overhead, like when working with containers.
+from the global Python installation, there are rare scenarios where the use a Poetry managed
+virtual environment is not possible or preferred.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
 
 ```bash
 poetry config virtualenvs.create false
 ```
+
+{{% warning %}}
+The recommended best practice, including when installing an application within a container, is to make
+use of a virtual environment. This can also be managed by another tool.
+
+The Poetry team strongly encourages the use of a virtual environment.
+{{% /warning %}}
 
 ### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
