@@ -777,7 +777,6 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    print(content)
     assert content == expected
 
 
