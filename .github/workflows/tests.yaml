@@ -2,24 +2,79 @@ name: Tests
 
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
-      - '.cirrus.yml'
-      - '.github/workflows/docs.yml'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '.cirrus.yml'
-      - '.github/workflows/docs.yml'
 
 concurrency:
   group: tests-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  tests:
+  changes:
+    name: Detect changed files
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      fixtures-pypi: ${{ steps.changes.outputs.fixtures-pypi }}
+      pytest: ${{ steps.changes.outputs.pytest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            workflow: &workflow
+              - '.github/workflwos/tests.yaml'
+            fixtures-pypi:
+              - *workflow
+              - 'tests/repositories/fixtures/pypi.org/**'
+            pytest:
+              - *workflow
+              - 'poetry.lock'
+              - 'pyproject.toml'
+              - 'src/**.py'
+              - 'tests/**'
+
+  fixtures-pypi:
+    name: PyPI Fixtures
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.fixtures-pypi == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: poetry
+
+      - name: Configure poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config virtualenvs.options.no-pip true
+          poetry config virtualenvs.options.no-setuptools true
+
+      - name: Install dependencies
+        run: poetry install --only main,test
+
+      - name: Regenerate PyPI fixtures
+        run: PYTHONPATH="$PWD" poetry run python tests/repositories/fixtures/pypi.org/generate.py
+
+      - name: Check for changed files
+        run: git diff --exit-code --stat HEAD tests/repositories/fixtures/pypi.org
+
+  pytest:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.image }}
+    needs: changes
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
@@ -32,65 +87,74 @@ jobs:
           - os: macOS
             image: macos-12
       fail-fast: false
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.pytest == 'true'
 
       - name: Bootstrap poetry
+        if: needs.changes.outputs.pytest == 'true'
         run: pipx install poetry
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
+        if: needs.changes.outputs.pytest == 'true'
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
 
       - name: Enable long paths for git on Windows
-        if: ${{ matrix.os == 'Windows' }}
+        if: needs.changes.outputs.pytest == 'true' && matrix.os == 'Windows'
         # Enable handling long path names (+260 char) on the Windows platform
         # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
         run: git config --system core.longpaths true
 
       - name: Configure poetry
+        if: needs.changes.outputs.pytest == 'true'
         run: |
           poetry config virtualenvs.in-project true
           poetry config virtualenvs.options.no-pip true
           poetry config virtualenvs.options.no-setuptools true
 
       - name: Check lock file
+        if: needs.changes.outputs.pytest == 'true'
         run: poetry check --lock
 
       - name: Install dependencies
+        if: needs.changes.outputs.pytest == 'true'
         run: poetry install --with github-actions
 
       - name: Run mypy
+        if: needs.changes.outputs.pytest == 'true'
         run: poetry run mypy
 
       - name: Run pytest
+        if: needs.changes.outputs.pytest == 'true'
         env:
-          POETRY_TEST_INTEGRATION_GIT_USERNAME: ${GITHUB_ACTOR}
-          POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          POETRY_TEST_INTEGRATION_GIT_USERNAME: ${{ github.actor }}
+          POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ github.token }}
         run: poetry run pytest --integration -v
 
       - name: Get Plugin Version (poetry-plugin-export)
         id: poetry-plugin-export-version
+        if: needs.changes.outputs.pytest == 'true'
         run: |
           echo version=$(poetry show poetry-plugin-export | grep version | cut -d : -f 2 | xargs) >> $GITHUB_OUTPUT
 
       - name: Checkout Plugin Source (poetry-plugin-export)
         uses: actions/checkout@v4
+        if: needs.changes.outputs.pytest == 'true'
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
           ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
       - name: Run pytest (poetry-plugin-export)
+        if: needs.changes.outputs.pytest == 'true'
         working-directory: ./poetry-plugin-export
         run: poetry run -C .. pytest -v
 
       - name: Check for clean working tree
+        if: needs.changes.outputs.pytest == 'true'
         run: |
           git diff --exit-code --stat HEAD
           git -C poetry-plugin-export diff --exit-code --stat HEAD
