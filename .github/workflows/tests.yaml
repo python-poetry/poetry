@@ -75,7 +75,7 @@ jobs:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.image }}
     needs: changes
-    if: matrix.skip
+    if: ${{ matrix.skip }}
     strategy:
       matrix:
         os: [Ubuntu, macOS, Windows]
