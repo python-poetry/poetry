@@ -9,7 +9,21 @@ concurrency:
   group: ${{ github.workflow }}
 
 jobs:
-  lock-threads:
+  lock-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: dessant/lock-threads@v5
+        with:
+          process-only: issues
+          issue-inactive-days: 30
+          issue-comment: >
+            This issue has been automatically locked since there
+            has not been any recent activity after it was closed.
+            Please open a new issue for related bugs.
+
+  lock-prs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -17,14 +31,9 @@ jobs:
     steps:
       - uses: dessant/lock-threads@v5
         with:
-          issue-inactive-days: 30
-          issue-comment: >
-            This issue has been automatically locked since there
-            has not been any recent activity after it was closed.
-            Please open a new issue for related bugs.
+          process-only: prs
           pr-inactive-days: 30
           pr-comment: >
             This pull request has been automatically locked since there
             has not been any recent activity after it was closed.
             Please open a new issue for related bugs.
-          process-only: 'issues, prs'
