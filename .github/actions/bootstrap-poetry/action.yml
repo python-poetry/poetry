@@ -3,8 +3,8 @@ description: Configure the environment with the specified Python and Poetry vers
 
 inputs:
   python-version:
-    description: Desired Python version expression
-    default: '3.12'
+    description: Desired node-semver compatible Python version expression (or 'default')
+    default: 'default'
   python-latest:
     description: Use an uncached Python if a newer match is available
     default: 'false'
@@ -28,13 +28,17 @@ runs:
   steps:
     - uses: actions/setup-python@v5
       id: setup-python
+      if: inputs.python-version != 'default'
       with:
         python-version: ${{ inputs.python-version }}
         check-latest: ${{ inputs.python-latest == 'true' }}
         allow-prereleases: ${{ inputs.python-prereleases == 'true' }}
         update-environment: false
 
-    - run: pipx install --python '${{ steps.setup-python.outputs.python-path }}' '${{ inputs.poetry-spec }}'
+    - run: >
+        pipx install \
+          ${{ inputs.python-version != 'default' && format('--python "{0}"', steps.setup-python.outputs.python-path) || '' }} \
+          '${{ inputs.poetry-spec }}'
       shell: bash
 
     # Enable handling long path names (+260 char) on the Windows platform
