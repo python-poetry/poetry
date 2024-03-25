@@ -87,7 +87,9 @@ jobs:
 
       - uses: ./.github/actions/bootstrap-poetry
 
-      - run: poetry install --sync --only main,test
+      - uses: ./.github/actions/poetry-install
+        with:
+          args: --only main,test
 
       - run: poetry run env PYTHONPATH="$GITHUB_WORKSPACE" python tests/repositories/fixtures/pypi.org/generate.py
 

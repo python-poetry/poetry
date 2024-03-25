@@ -3,10 +3,13 @@ description: Configure the environment with the specified Python and Poetry vers
 
 inputs:
   python-version:
-    description: Desired Python version
-    default: "3.12"
+    description: Desired Python version expression
+    default: '3.12'
   python-latest:
     description: Use an uncached Python if a newer match is available
+    default: 'false'
+  python-prereleases:
+    description: Allow usage of pre-release Python versions
     default: 'false'
   poetry-spec:
     description: pip-compatible installation specification to use for Poetry
@@ -15,17 +18,19 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: actions/setup-python@v5
+      id: setup-python
+      with:
+        python-version: ${{ inputs.python-version }}
+        check-latest: ${{ inputs.python-latest == 'true' }}
+        allow-prereleases: ${{ inputs.python-prereleases == 'true' }}
+        update-environment: false
+
+    - run: pipx install --python '${{ steps.setup-python.outputs.python-path }}' '${{ inputs.poetry-spec }}'
+      shell: bash
+
     # Enable handling long path names (+260 char) on the Windows platform
     # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
     - run: git config --system core.longpaths true
       if: runner.os == 'Windows'
       shell: pwsh
-
-    - run: pipx install '${{ inputs.poetry-spec }}'
-      shell: bash
-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ inputs.python-version }}
-        check-latest: ${{ inputs.python-latest == 'true' }}
-        cache: poetry

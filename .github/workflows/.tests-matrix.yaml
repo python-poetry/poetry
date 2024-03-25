@@ -34,18 +34,14 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
 
-      - run: poetry install --sync
-
-      - run: poetry env info
-
-      - run: poetry show
+      - uses: ./.github/actions/poetry-install
 
       - uses: actions/cache@v4
         with:
           path: .mypy_cache
-          key: mypy-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          key: mypy-${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
           restore-keys: |
-            mypy-${{ runner.os }}-${{ env.pythonLocation }}-
+            mypy-${{ runner.os }}-py${{ inputs.python-version }}-
             mypy-${{ runner.os }}-
 
       - run: poetry run mypy
@@ -61,11 +57,9 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
 
-      - run: poetry install --sync --with github-actions
-
-      - run: poetry env info
-
-      - run: poetry show
+      - uses: ./.github/actions/poetry-install
+        with:
+          args: --with github-actions
 
       - run: poetry run pytest --integration -v
         env:
@@ -85,11 +79,9 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
 
-      - run: poetry install --sync --with github-actions
-
-      - run: poetry env info
-
-      - run: poetry show
+      - uses: ./.github/actions/poetry-install
+        with:
+          args: --with github-actions
 
       - run: poetry run pip list --format json | jq -r '.[] | "\(.name)=\(.version)"' >> $GITHUB_OUTPUT
         id: package-versions
