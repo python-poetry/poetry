@@ -20,9 +20,8 @@ jobs:
     outputs:
       project: ${{ steps.changes.outputs.project }}
       fixtures-pypi: ${{ steps.changes.outputs.fixtures-pypi }}
-      mypy: ${{ steps.changes.outputs.mypy }}
-      pytest: ${{ steps.changes.outputs.pytest }}
-      pytest-export: ${{ steps.changes.outputs.pytest-export }}
+      src: ${{ steps.changes.outputs.src }}
+      tests: ${{ steps.changes.outputs.tests }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -39,16 +38,13 @@ jobs:
             fixtures-pypi:
               - *workflow
               - 'tests/repositories/fixtures/pypi.org/**'
-            mypy:
+            src:
               - *project
               - 'src/**.py'
-            pytest:
+            tests:
               - *project
               - 'src/**.py'
               - 'tests/**'
-            pytest-export:
-              - *project
-              - 'src/**.py'
 
   lockfile:
     name: Check poetry.lock
@@ -61,6 +57,25 @@ jobs:
       - uses: ./.github/actions/bootstrap-poetry
 
       - run: poetry check --lock
+
+  smoke:
+    name: Smoke-test build and install
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.project == 'true'
+    needs: lockfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: pipx run build
+
+      - run: pipx run twine check --strict dist/*
+
+      - run: pipx install --suffix=@build dist/*.whl
+
+      - uses: ./.github/actions/bootstrap-poetry
+
+      # Smoke test: confirm the version of the installed wheel matches the project.
+      - run: poetry@build --version | grep $(poetry version --short)
 
   fixtures-pypi:
     name: Check fixtures (PyPI)
@@ -99,9 +114,9 @@ jobs:
     with:
       runner: ${{ matrix.os.image }}
       python-version: ${{ matrix.python-version }}
-      run-mypy: ${{ needs.changes.outputs.mypy == 'true' }}
-      run-pytest: ${{ needs.changes.outputs.pytest == 'true' }}
-      run-pytest-export: ${{ needs.changes.outputs.pytest-export == 'true' }}
+      run-mypy: ${{ needs.changes.outputs.src == 'true' }}
+      run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
+      run-pytest-export: ${{ needs.changes.outputs.src == 'true' }}
     secrets: inherit
 
   status:
@@ -110,6 +125,7 @@ jobs:
     if: always()
     needs:
       - lockfile
+      - smoke
       - fixtures-pypi
       - tests-matrix
     steps:
