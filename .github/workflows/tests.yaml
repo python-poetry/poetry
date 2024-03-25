@@ -52,8 +52,8 @@ jobs:
   lockfile:
     name: Check poetry.lock
     runs-on: ubuntu-latest
-    needs: changes
     if: needs.changes.outputs.project == 'true'
+    needs: changes
     steps:
       - uses: actions/checkout@v4
 
@@ -64,8 +64,8 @@ jobs:
   fixtures-pypi:
     name: Check fixtures (PyPI)
     runs-on: ubuntu-latest
-    needs: changes
     if: needs.changes.outputs.fixtures-pypi == 'true'
+    needs: changes
     steps:
       - uses: actions/checkout@v4
 
@@ -192,3 +192,16 @@ jobs:
         working-directory: ./poetry-plugin-export
 
       - run: git -C poetry-plugin-export diff --exit-code --stat HEAD
+
+  status:
+    name: Status
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lockfile
+      - fixtures-pypi
+      - mypy
+      - pytest
+      - pytest-export
+    steps:
+      - run: ${{ (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) && 'false' || 'true' }}
