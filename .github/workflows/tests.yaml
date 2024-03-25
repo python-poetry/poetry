@@ -89,7 +89,7 @@ jobs:
           - name: Ubuntu
             image: ubuntu-22.04
           - name: macOS
-            image: macos-12
+            image: macos-13
           - name: Windows
             image: windows-2022
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
