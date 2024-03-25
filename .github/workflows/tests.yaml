@@ -24,6 +24,7 @@ jobs:
       tests: ${{ steps.changes.outputs.tests }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: dorny/paths-filter@v3
         id: changes
         with:
@@ -40,10 +41,10 @@ jobs:
               - 'tests/repositories/fixtures/pypi.org/**'
             src:
               - *project
-              - 'src/**.py'
+              - 'src/**/*.py'
             tests:
               - *project
-              - 'src/**.py'
+              - 'src/**/*.py'
               - 'tests/**'
 
   lockfile:
@@ -96,10 +97,20 @@ jobs:
       - run: git diff --exit-code --stat HEAD tests/repositories/fixtures/pypi.org
 
   tests-matrix:
+    # Use this matrix with multiple jobs defined in a reusable workflow:
+    uses: ./.github/workflows/.tests-matrix.yaml
     name: ${{ matrix.os.name }} (Python ${{ matrix.python-version }})
+    if: '!cancelled()'
     needs:
       - lockfile
       - changes
+    with:
+      runner: ${{ matrix.os.image }}
+      python-version: ${{ matrix.python-version }}
+      run-mypy: ${{ needs.changes.outputs.src == 'true' }}
+      run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
+      run-pytest-export: ${{ needs.changes.outputs.src == 'true' }}
+    secrets: inherit
     strategy:
       matrix:
         os:
@@ -111,15 +122,6 @@ jobs:
             image: windows-2022
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
-    # Use this matrix with multiple jobs defined in a reusable workflow:
-    uses: ./.github/workflows/.tests-matrix.yaml
-    with:
-      runner: ${{ matrix.os.image }}
-      python-version: ${{ matrix.python-version }}
-      run-mypy: ${{ needs.changes.outputs.src == 'true' }}
-      run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
-      run-pytest-export: ${{ needs.changes.outputs.src == 'true' }}
-    secrets: inherit
 
   status:
     name: Status
