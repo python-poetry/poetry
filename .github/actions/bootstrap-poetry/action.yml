@@ -17,17 +17,14 @@ runs:
   steps:
     # Enable handling long path names (+260 char) on the Windows platform
     # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
-    - id: git-config-longpaths
+    - run: git config --system core.longpaths true
       if: runner.os == 'Windows'
       shell: pwsh
-      run: git config --system core.longpaths true
 
-    - id: pipx-poetry
+    - run: pipx install '${{ inputs.poetry-spec }}'
       shell: bash
-      run: pipx install '${{ inputs.poetry-spec }}'
 
-    - id: setup-python
-      uses: actions/setup-python@v5
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
         check-latest: ${{ inputs.python-latest == 'true' }}
