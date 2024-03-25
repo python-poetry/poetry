@@ -1,7 +1,4 @@
 tests_task:
-  # We skip running Cirrus on tags to match GHA.
-  only_if: &not_tag $CIRRUS_TAG == ''
-
   # We only use Cirrus CI for FreeBSD at present; the rest of the task will assume FreeBSD.
   freebsd_instance:
     image_family: freebsd-14-0
@@ -70,7 +67,6 @@ tests_task:
 status_task:
   name: "Tests / FreeBSD Status"
 
-  only_if: *not_tag
   depends_on:
     - pytest
     - mypy
