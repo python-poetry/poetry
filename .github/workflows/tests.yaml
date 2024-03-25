@@ -104,6 +104,10 @@ jobs:
 
       - run: poetry install --sync
 
+      - run: poetry env info
+
+      - run: poetry show
+
       - run: poetry run mypy
 
   pytest:
@@ -132,6 +136,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - run: poetry install --sync --with github-actions
+
+      - run: poetry env info
+
+      - run: poetry show
 
       - run: poetry run pytest --integration -v
         env:
@@ -166,6 +174,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - run: poetry install --sync --with github-actions
+
+      - run: poetry env info
+
+      - run: poetry show
 
       - id: poetry-plugin-export
         run: echo version=$(poetry run pip list --format json | jq -r '.[] | select(.name == "poetry-plugin-export").version') >> $GITHUB_OUTPUT
