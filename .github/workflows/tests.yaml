@@ -108,6 +108,14 @@ jobs:
 
       - run: poetry show
 
+      - uses: actions/cache@v4
+        with:
+          path: .mypy_cache
+          key: mypy-${{ matrix.os.image }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          restore-keys: |
+            mypy-${{ matrix.os.image }}-${{ env.pythonLocation }}-
+            mypy-${{ matrix.os.image }}-
+
       - run: poetry run mypy
 
   pytest:
