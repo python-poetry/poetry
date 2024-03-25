@@ -28,13 +28,13 @@ jobs:
         with:
           app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
           private-key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
-      - run: |
+      - name: backport.sh
+        run: |
           git config --global user.name  "${{ steps.app-token.outputs.slug }}[bot]"
           git config --global user.email "${{ steps.app-token.outputs.slug }}[bot]@users.noreply.github.com"
 
           gh repo fork --remote-name fork
 
           ./.github/scripts/backport.sh --pr ${{ github.event.pull_request.number }} --comment --remote fork
-        name: backport.sh
         env:
             GH_TOKEN: ${{ steps.app-token.outputs.token }}
