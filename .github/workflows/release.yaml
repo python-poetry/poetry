@@ -35,7 +35,9 @@ jobs:
   upload-pypi:
     name: Upload (PyPI)
     runs-on: ubuntu-latest
-    environment: pypi
+    environment:
+      name: pypi
+      url: https://pypi.org/project/poetry/
     permissions:
       id-token: write
     needs: build
