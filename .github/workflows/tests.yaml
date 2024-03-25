@@ -30,6 +30,7 @@ jobs:
         with:
           filters: |
             workflow: &workflow
+              - '.github/actions/**'
               - '.github/workflows/tests.yaml'
               - '.github/workflows/.tests-matrix.yaml'
             project: &project
