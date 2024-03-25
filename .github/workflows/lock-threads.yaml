@@ -5,17 +5,15 @@ on:
     - cron: '0 0 * * *' # every day at midnight
   workflow_dispatch:
 
-permissions:
-  issues: write
-  pull-requests: write
-  discussions: write
-
 concurrency:
   group: ${{ github.workflow }}
 
 jobs:
   lock-threads:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
       - uses: dessant/lock-threads@v5
         with:

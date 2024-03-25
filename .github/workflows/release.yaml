@@ -22,6 +22,8 @@ jobs:
   upload-github:
     name: Upload (GitHub)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: build
     steps:
       - uses: actions/download-artifact@v4
