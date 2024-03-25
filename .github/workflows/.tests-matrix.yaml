@@ -91,14 +91,14 @@ jobs:
 
       - run: poetry show
 
-      - id: poetry-plugin-export
-        run: echo version=$(poetry run pip list --format json | jq -r '.[] | select(.name == "poetry-plugin-export").version') >> $GITHUB_OUTPUT
+      - run: poetry run pip list --format json | jq -r '.[] | "\(.name)=\(.version)"' >> $GITHUB_OUTPUT
+        id: package-versions
 
       - uses: actions/checkout@v4
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
-          ref: refs/tags/${{ steps.poetry-plugin-export.outputs.version }}
+          ref: refs/tags/${{ steps.package-versions.outputs.poetry-plugin-export }}
 
       - run: poetry run -C .. pytest -v
         working-directory: ./poetry-plugin-export
