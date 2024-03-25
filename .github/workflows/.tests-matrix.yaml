@@ -1,0 +1,106 @@
+# Reusable workflow consumed by tests.yaml; used to share a single matrix across jobs.
+on:
+  workflow_call:
+    inputs:
+      runner:
+        required: true
+        type: string
+      python-version:
+        required: true
+        type: string
+      run-mypy:
+        required: true
+        type: boolean
+      run-pytest:
+        required: true
+        type: boolean
+      run-pytest-export:
+        required: true
+        type: boolean
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  mypy:
+    name: mypy
+    runs-on: ${{ inputs.runner }}
+    if: inputs.run-mypy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/bootstrap-poetry
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - run: poetry install --sync
+
+      - run: poetry env info
+
+      - run: poetry show
+
+      - uses: actions/cache@v4
+        with:
+          path: .mypy_cache
+          key: mypy-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          restore-keys: |
+            mypy-${{ runner.os }}-${{ env.pythonLocation }}-
+            mypy-${{ runner.os }}-
+
+      - run: poetry run mypy
+
+  pytest:
+    name: pytest
+    runs-on: ${{ inputs.runner }}
+    if: inputs.run-pytest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/bootstrap-poetry
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - run: poetry install --sync --with github-actions
+
+      - run: poetry env info
+
+      - run: poetry show
+
+      - run: poetry run pytest --integration -v
+        env:
+          POETRY_TEST_INTEGRATION_GIT_USERNAME: ${{ github.actor }}
+          POETRY_TEST_INTEGRATION_GIT_PASSWORD: ${{ github.token }}
+
+      - run: git diff --exit-code --stat HEAD
+
+  pytest-export:
+    name: pytest (poetry-plugin-export)
+    runs-on: ${{ inputs.runner }}
+    if: inputs.run-pytest-export
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/bootstrap-poetry
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - run: poetry install --sync --with github-actions
+
+      - run: poetry env info
+
+      - run: poetry show
+
+      - id: poetry-plugin-export
+        run: echo version=$(poetry run pip list --format json | jq -r '.[] | select(.name == "poetry-plugin-export").version') >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        with:
+          path: poetry-plugin-export
+          repository: python-poetry/poetry-plugin-export
+          ref: refs/tags/${{ steps.poetry-plugin-export.outputs.version }}
+
+      - run: poetry run -C .. pytest -v
+        working-directory: ./poetry-plugin-export
+
+      - run: git -C poetry-plugin-export diff --exit-code --stat HEAD
