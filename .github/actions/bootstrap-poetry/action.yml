@@ -15,6 +15,14 @@ inputs:
     description: pip-compatible installation specification to use for Poetry
     default: 'poetry'
 
+outputs:
+  python-path:
+    description: Path to the installed Python interpreter
+    value: ${{ steps.setup-python.outputs.python-path }}
+  python-version:
+    description: Version of the installed Python interpreter
+    value: ${{ steps.setup-python.outputs.python-version }}
+
 runs:
   using: composite
   steps:
