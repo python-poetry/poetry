@@ -48,7 +48,8 @@ jobs:
 
       - run: poetry install --sync --no-root --only main
 
-      - run: |
+      - name: website-build
+        run: |
           # Rebuild the docs files from the PR checkout.
           poetry run python bin/website build --local ./poetry
           # Build website assets (CSS/JS).
