@@ -31,6 +31,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/bootstrap-poetry
+        id: bootstrap-poetry
         with:
           python-version: ${{ inputs.python-version }}
 
@@ -39,9 +40,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .mypy_cache
-          key: mypy-${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          key: mypy-${{ runner.os }}-py${{ steps.bootstrap-poetry.outputs.python-version }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
           restore-keys: |
-            mypy-${{ runner.os }}-py${{ inputs.python-version }}-
+            mypy-${{ runner.os }}-py${{ steps.bootstrap-poetry.outputs.python-version }}-
             mypy-${{ runner.os }}-
 
       - run: poetry run mypy
