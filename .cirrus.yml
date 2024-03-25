@@ -75,3 +75,6 @@ status_task:
     image: alpine:latest
     cpu: 0.5
     memory: 512M
+
+  # No-op the clone.
+  clone_script: true
