@@ -100,7 +100,7 @@ jobs:
     # Use this matrix with multiple jobs defined in a reusable workflow:
     uses: ./.github/workflows/.tests-matrix.yaml
     name: ${{ matrix.os.name }} (Python ${{ matrix.python-version }})
-    if: '!cancelled()'
+    if: '!failure()'
     needs:
       - lockfile
       - changes
