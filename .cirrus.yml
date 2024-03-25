@@ -16,6 +16,7 @@ test_task:
       - PYTHON: python3.9
       - PYTHON: python3.10
       - PYTHON: python3.11
+      - PYTHON: python3.12
   install_prereqs_script:
     - V=$(printf '%s' $PYTHON | tr -d '.[:alpha:]')
     - pkg install -y python${V} py${V}-sqlite3
