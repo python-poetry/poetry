@@ -41,7 +41,6 @@ tests_task:
     - echo "PATH=${POETRY_HOME}/bin:${PATH}" >> $CIRRUS_ENV
 
   setup_environment_script:
-    # FIXME: --sync is broken due to a bug with py-sqlite3 packaging.
     # TODO: caching
     - poetry install
     - poetry env info

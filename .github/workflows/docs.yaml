@@ -46,7 +46,9 @@ jobs:
 
       - uses: ./.github/actions/bootstrap-poetry
 
-      - run: poetry install --sync --no-root --only main
+      - uses: ./.github/actions/poetry-install
+        with:
+          args: --no-root --only main
 
       - name: website-build
         run: |
