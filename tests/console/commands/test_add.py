@@ -1010,6 +1010,34 @@ cachy = "^0.2.0"
     assert expected in string_content
 
 
+def test_add_creating_poetry_section_does_not_remove_existing_tools(
+    repo: TestRepository,
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content=(
+            '[project]\nname = "foobar"\nversion="0"\n' '[tool.foo]\nkey = "value"\n'
+        ),
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("--group dev cachy")
+
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 2
+
+    pyproject: dict[str, Any] = poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert "foo" in pyproject["tool"]
+    assert pyproject["tool"]["foo"]["key"] == "value"
+
+
 def test_add_to_dev_section_deprecated(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
@@ -1074,11 +1102,18 @@ Writing lock file
     assert content["dependencies"]["pyyaml"] == "^3.13"
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    project_dependencies: bool,
 ) -> None:
     pyproject: dict[str, Any] = app.poetry.file.read()
-    pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+    if project_dependencies:
+        pyproject["project"]["dependencies"] = ["foo>1"]
+    else:
+        pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
@@ -1099,11 +1134,18 @@ If you prefer to upgrade it to the latest available version,\
     assert expected in tester.io.fetch_output()
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    project_dependencies: bool,
 ) -> None:
     pyproject: dict[str, Any] = app.poetry.file.read()
-    pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
+    if project_dependencies:
+        pyproject["project"]["dependencies"] = ["foo-bar>1"]
+    else:
+        pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
     pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
@@ -1136,49 +1178,72 @@ def test_add_should_fail_circular_dependency(
     assert expected in tester.io.fetch_error()
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_latest_should_not_create_duplicate_keys(
     project_factory: ProjectFactory,
     repo: TestRepository,
     command_tester_factory: CommandTesterFactory,
+    project_dependencies: bool,
 ) -> None:
-    pyproject_content = """\
-    [tool.poetry]
-    name = "simple-project"
-    version = "1.2.3"
-    description = "Some description."
-    authors = [
-        "Python Poetry <tests@python-poetry.org>"
-    ]
-    license = "MIT"
-    readme = "README.md"
+    if project_dependencies:
+        pyproject_content = """\
+        [project]
+        name = "simple-project"
+        version = "1.2.3"
+        dependencies = [
+            "Foo >= 0.6,<0.7",
+        ]
+        """
+    else:
+        pyproject_content = """\
+        [tool.poetry]
+        name = "simple-project"
+        version = "1.2.3"
 
-    [tool.poetry.dependencies]
-    python = "^3.6"
-    Foo = "^0.6"
-    """
+        [tool.poetry.dependencies]
+        python = "^3.6"
+        Foo = "^0.6"
+        """
 
     poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
     pyproject: dict[str, Any] = poetry.file.read()
 
-    assert "Foo" in pyproject["tool"]["poetry"]["dependencies"]
-    assert pyproject["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
-    assert "foo" not in pyproject["tool"]["poetry"]["dependencies"]
+    if project_dependencies:
+        assert "tool" not in pyproject
+        assert pyproject["project"]["dependencies"] == ["Foo >= 0.6,<0.7"]
+    else:
+        assert "project" not in pyproject
+        assert "Foo" in pyproject["tool"]["poetry"]["dependencies"]
+        assert pyproject["tool"]["poetry"]["dependencies"]["Foo"] == "^0.6"
+        assert "foo" not in pyproject["tool"]["poetry"]["dependencies"]
 
     tester = command_tester_factory("add", poetry=poetry)
     repo.add_package(get_package("foo", "1.1.2"))
     tester.execute("foo@latest")
 
     updated_pyproject: dict[str, Any] = poetry.file.read()
-    assert "Foo" in updated_pyproject["tool"]["poetry"]["dependencies"]
-    assert updated_pyproject["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
-    assert "foo" not in updated_pyproject["tool"]["poetry"]["dependencies"]
+    if project_dependencies:
+        assert "tool" not in updated_pyproject
+        assert updated_pyproject["project"]["dependencies"] == ["foo (>=1.1.2,<2.0.0)"]
+    else:
+        assert "project" not in updated_pyproject
+        assert "Foo" in updated_pyproject["tool"]["poetry"]["dependencies"]
+        assert updated_pyproject["tool"]["poetry"]["dependencies"]["Foo"] == "^1.1.2"
+        assert "foo" not in updated_pyproject["tool"]["poetry"]["dependencies"]
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    project_dependencies: bool,
 ) -> None:
     pyproject: dict[str, Any] = app.poetry.file.read()
-    pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+    if project_dependencies:
+        pyproject["project"]["dependencies"] = ["foo>1"]
+    else:
+        pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
     pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
@@ -1202,10 +1267,16 @@ Writing lock file
     assert expected in tester.io.fetch_output()
 
     pyproject2: dict[str, Any] = app.poetry.file.read()
-    content = pyproject2["tool"]["poetry"]
+    project_content = pyproject2["project"]
+    poetry_content = pyproject2["tool"]["poetry"]
 
-    assert "foo" in content["dependencies"]
-    assert content["dependencies"]["foo"] == "^1.1.2"
+    if project_dependencies:
+        assert "foo" not in poetry_content["dependencies"]
+        assert project_content["dependencies"] == ["foo (>=1.1.2,<2.0.0)"]
+    else:
+        assert "dependencies" not in project_content
+        assert "foo" in poetry_content["dependencies"]
+        assert poetry_content["dependencies"]["foo"] == "^1.1.2"
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
@@ -1466,3 +1537,134 @@ def test_add_does_not_update_locked_dependencies(
         p for p in lock_data["package"] if p["name"] == "docker"
     )
     assert docker_locked_after_command["version"] == expected_docker
+
+
+def test_add_creates_dependencies_array_if_necessary(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    pyproject_content = """\
+    [project]
+    name = "simple-project"
+    version = "1.2.3"
+
+    [project.optional-dependencies]
+    test = ["foo"]
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+
+    repo.add_package(get_package("foo", "2.0"))
+    repo.add_package(get_package("bar", "2.0"))
+
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("bar>=1.0")
+
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+    assert updated_pyproject["project"]["dependencies"] == ["bar (>=1.0)"]
+
+
+@pytest.mark.parametrize("has_poetry_section", [True, False])
+def test_add_does_not_add_poetry_dependencies_if_not_necessary(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    has_poetry_section: bool,
+) -> None:
+    pyproject_content = """\
+    [project]
+    name = "simple-project"
+    version = "1.2.3"
+    dependencies = [
+        "foo >= 1.0",
+    ]
+    """
+    if has_poetry_section:
+        pyproject_content += """\
+    [tool.poetry]
+    packages = [ { include = "simple" } ]
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+    pyproject: dict[str, Any] = poetry.file.read()
+
+    if has_poetry_section:
+        assert "dependencies" not in pyproject["tool"]["poetry"]
+    else:
+        assert "tool" not in pyproject
+
+    repo.add_package(get_package("foo", "2.0"))
+    repo.add_package(get_package("bar", "2.0"))
+
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("bar>=1.0 --platform linux")
+
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+    if has_poetry_section:
+        assert "dependencies" not in pyproject["tool"]["poetry"]
+    else:
+        assert "tool" not in pyproject
+    assert updated_pyproject["project"]["dependencies"] == [
+        "foo >= 1.0",
+        'bar (>=1.0) ; sys_platform == "linux"',
+    ]
+
+
+@pytest.mark.parametrize("has_poetry_section", [True, False])
+def test_add_poetry_dependencies_if_necessary(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+    has_poetry_section: bool,
+) -> None:
+    pyproject_content = """\
+    [project]
+    name = "simple-project"
+    version = "1.2.3"
+    dependencies = [
+        "foo >= 1.0",
+    ]
+    """
+    if has_poetry_section:
+        pyproject_content += """\
+    [tool.poetry]
+    packages = [ { include = "simple" } ]
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+    pyproject: dict[str, Any] = poetry.file.read()
+
+    if has_poetry_section:
+        assert "dependencies" not in pyproject["tool"]["poetry"]
+    else:
+        assert "tool" not in pyproject
+
+    repo.add_package(get_package("foo", "2.0"))
+    other_repo = LegacyRepository(name="my-index", url="https://my-index.fake")
+    poetry.pool.add_repository(other_repo)
+    package = get_package("bar", "2.0")
+    mocker.patch.object(other_repo, "package", return_value=package)
+    mocker.patch.object(other_repo, "_find_packages", wraps=lambda _, name: [package])
+    repo.add_package(package)
+
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("bar>=1.0 --platform linux --allow-prereleases --source my-index")
+
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+    if has_poetry_section:
+        assert "dependencies" not in pyproject["tool"]["poetry"]
+    else:
+        assert "tool" not in pyproject
+    assert updated_pyproject["project"]["dependencies"] == [
+        "foo >= 1.0",
+        'bar (>=1.0) ; sys_platform == "linux"',
+    ]
+    assert updated_pyproject["tool"]["poetry"]["dependencies"] == {
+        "bar": {
+            "platform": "linux",
+            "source": "my-index",
+            "allow-prereleases": True,
+        }
+    }
