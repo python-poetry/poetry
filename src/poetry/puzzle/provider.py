@@ -419,7 +419,7 @@ class Provider:
         """
         package = dependency_package.package
         if package.is_root():
-            dependencies = package.all_requires
+            dependencies = package.all_requires_for_locking
         else:
             dependencies = package.requires
 
@@ -479,7 +479,7 @@ class Provider:
             dependency_package = dependency_package.clone()
             package = dependency_package.package
             dependency = dependency_package.dependency
-            requires = package.all_requires
+            requires = package.all_requires_for_locking
         elif package.is_direct_origin():
             requires = package.requires
         else:

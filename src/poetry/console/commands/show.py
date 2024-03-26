@@ -315,7 +315,7 @@ lists all packages available."""
         write_why = self.option("why") and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
 
-        requires = root.all_requires
+        requires = root.all_requires_for_locking
 
         for locked in locked_packages:
             color = "cyan"
@@ -406,7 +406,7 @@ lists all packages available."""
         packages = locked_repository.packages
 
         for p in packages:
-            for require in root.all_requires:
+            for require in root.all_requires_for_locking:
                 if p.name == require.name:
                     self.display_package_tree(self.io, p, packages)
                     break
@@ -544,7 +544,7 @@ lists all packages available."""
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
-        requires = root.all_requires
+        requires = root.all_requires_for_locking
         if package.is_direct_origin():
             for dep in requires:
                 if dep.name == package.name and dep.source_type == package.source_type:
