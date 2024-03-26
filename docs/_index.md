@@ -426,7 +426,7 @@ plugins(
 	)
 ```
 
-#### prezto
+#### Prezto
 
 ```zsh
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
@@ -434,4 +434,5 @@ poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 
 {{% note %}}
 You may need to restart your shell in order for these changes to take effect.
+If completions still don't work, try removing `~/.cache/prezto/zcompcache` and starting a new shell.
 {{% /note %}}
