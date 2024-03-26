@@ -44,9 +44,9 @@ jobs:
         with:
           hugo-version: '0.83.1'
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: ./poetry/.github/actions/bootstrap-poetry
 
-      - uses: ./.github/actions/poetry-install
+      - uses: ./poetry/.github/actions/poetry-install
         with:
           args: --no-root --only main
 
