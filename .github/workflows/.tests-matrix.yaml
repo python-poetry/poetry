@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ inputs.runner }}
     if: inputs.run-mypy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - uses: ./.github/actions/bootstrap-poetry
         id: bootstrap-poetry
@@ -37,7 +37,7 @@ jobs:
 
       - uses: ./.github/actions/poetry-install
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
         with:
           path: .mypy_cache
           key: mypy-${{ runner.os }}-py${{ steps.bootstrap-poetry.outputs.python-version }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
@@ -52,7 +52,7 @@ jobs:
     runs-on: ${{ inputs.runner }}
     if: inputs.run-pytest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - uses: ./.github/actions/bootstrap-poetry
         with:
@@ -74,7 +74,7 @@ jobs:
     runs-on: ${{ inputs.runner }}
     if: inputs.run-pytest-export
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - uses: ./.github/actions/bootstrap-poetry
         with:
@@ -87,7 +87,7 @@ jobs:
       - run: poetry run pip list --format json | jq -r '.[] | "\(.name)=\(.version)"' >> $GITHUB_OUTPUT
         id: package-versions
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export

@@ -21,9 +21,9 @@ jobs:
         )
       )
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       # This workflow requires a non-GHA token in order to trigger downstream CI, and to access the 'fork' repository.
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@78e5f2ddc08efcb88fbbee6cfa3fed770ba550c3 # v1
         id: app-token
         with:
           app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
@@ -37,4 +37,4 @@ jobs:
 
           ./.github/scripts/backport.sh --pr ${{ github.event.pull_request.number }} --comment --remote fork
         env:
-            GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
