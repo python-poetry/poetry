@@ -38,16 +38,18 @@ The `pyproject.toml` file is what is the most important here. This will orchestr
 your project and its dependencies. For now, it looks like this:
 
 ```toml
-[tool.poetry]
+[project]
 name = "poetry-demo"
 version = "0.1.0"
 description = ""
-authors = ["Sébastien Eustace <sebastien@eustace.io>"]
+authors = [
+    {name = "Sébastien Eustace", email = "sebastien@eustace.io"}
+]
 readme = "README.md"
-packages = [{include = "poetry_demo"}]
+requires-python = ">=3.8"
 
-[tool.poetry.dependencies]
-python = "^3.7"
+[tool.poetry]
+packages = [{include = "poetry_demo"}]
 
 
 [build-system]
@@ -122,7 +124,20 @@ In the [pyproject section]({{< relref "pyproject" >}}) you can see which fields 
 
 ### Specifying dependencies
 
-If you want to add dependencies to your project, you can specify them in the `tool.poetry.dependencies` section.
+If you want to add dependencies to your project, you can specify them in the
+`project` or `tool.poetry.dependencies` section.
+See the [Dependency specification]({{< relref "dependency-specification" >}})
+for more information.
+
+```toml
+[project]
+# ...
+dependencies = [
+    "pendulum (>=2.1,<3.0)"
+]
+```
+
+or
 
 ```toml
 [tool.poetry.dependencies]

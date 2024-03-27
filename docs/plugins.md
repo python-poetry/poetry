@@ -32,16 +32,16 @@ The plugin package must depend on Poetry
 and declare a proper [plugin]({{< relref "pyproject#plugins" >}}) in the `pyproject.toml` file.
 
 ```toml
-[tool.poetry]
+[project]
 name = "my-poetry-plugin"
 version = "1.0.0"
-
 # ...
-[tool.poetry.dependencies]
-python = "^3.7"
-poetry = "^1.2"
+requires-python = ">=3.7"
+dependencies = [
+    "poetry (>=1.2,<2.0)",
+]
 
-[tool.poetry.plugins."poetry.plugin"]
+[project.entry-points."poetry.plugin"]
 demo = "poetry_demo_plugin.plugin:MyPlugin"
 ```
 
