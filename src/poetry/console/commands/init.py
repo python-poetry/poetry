@@ -105,8 +105,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
                 self.line_error(
-                    "<error>A pyproject.toml file with a poetry section already"
-                    " exists.</error>"
+                    "<error>A pyproject.toml file with a project and/or"
+                    " a poetry section already exists.</error>"
                 )
                 return 1
 
@@ -173,7 +173,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not python:
             config = Config.create()
             python = (
-                "^"
+                ">="
                 + EnvManager.get_python_version(
                     precision=2,
                     prefer_active_python=config.get("virtualenvs.prefer-active-python"),
@@ -255,7 +255,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if create_layout:
             layout_.create(project_path, with_pyproject=False)
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_project_content()
         for section, item in content.items():
             pyproject.data.append(section, item)
 
