@@ -14,9 +14,86 @@ menu:
 Dependencies for a project can be specified in various forms, which depend on the type
 of the dependency and on the optional constraints that might be needed for it to be installed.
 
+## `project.dependencies` and `tool.poetry.dependencies`
+
+Prior Poetry 2.0, dependencies had to be declared in the `tool.poetry.dependencies`
+section of the `pyproject.toml` file.
+
+```toml
+[tool.poetry.dependencies]
+requests = "^2.13.0"
+```
+
+With Poetry 2.0, you should consider using the `project.dependencies` section instead.
+
+```toml
+[project]
+# ...
+dependencies = [
+    "requests (>=2.23.0,<3.0.0)"
+]
+```
+
+While dependencies in `tool.poetry.dependencies` are specified using toml tables,
+dependencies in `project.dependencies` are specified as strings according
+to [PEP 508](https://peps.python.org/pep-0508/).
+
+In many cases, `tool.poetry.dependencies` can be replaced with `project.dependencies`.
+However, there are some cases where you might still need to use `tool.poetry.dependencies`.
+For example, if you want to define additional information that is not required for building
+but only for locking (for example an explicit source), you can enrich dependency
+information in the `tool.poetry` section.
+
+```toml
+[project]
+# ...
+dependencies = [
+    "requests>=2.13.0",
+]
+
+[tool.poetry.dependencies]
+requests = { source = "private-source" }
+```
+
+When both are specified, `project.dependencies` are used for metadata when building the project,
+`tool.poetry.dependencies` is only used to enrich `project.dependencies` for locking.
+
+Alternatively, you can add `dependencies` to `dynamic` and define your dependencies
+completely in the `tool.poetry` section. Using only the `tool.poetry` section might
+make sense in non-package mode when you will not build an sdist or a wheel.
+
+```toml
+[project]
+# ...
+dynamic = [ "dependencies" ]
+
+[tool.poetry.dependencies]
+requests = { version = ">=2.13.0", source = "private-source" }
+```
+
+{{% note %}}
+Another use case for `tool.poetry.dependencies` are relative path dependencies
+since `project.dependencies` only support absolute paths.
+{{% /note %}}
+
+{{% note %}}
+Only main dependencies can be specified in the `project` section.
+Other [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}})
+must still be specified in the `tool.poetry` section.
+{{% /note %}}
+
 ## Version constraints
 
+{{% warning %}}
+Some of the following constraints can only be used in `tool.poetry.dependencies` and not in `project.dependencies`.
+When using `poetry add` such constraints are automatically converted into an equivalent constraint.
+{{% /warning %}}
+
 ### Caret requirements
+
+{{% warning %}}
+Not supported in `project.dependencies`.
+{{% /warning %}}
 
 **Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
 
@@ -33,6 +110,10 @@ Here are some more examples of caret requirements and the versions that would be
 | ^0          | >=0.0.0 <1.0.0   |
 
 ### Tilde requirements
+
+{{% warning %}}
+Not supported in `project.dependencies`.
+{{% /warning %}}
 
 **Tilde requirements** specify a minimal version with some ability to update.
 If you specify a major, minor, and patch version or only a major and minor version, only patch-level changes are allowed.
@@ -131,6 +212,16 @@ the minimum information you need to specify is the location of the repository wi
 requests = { git = "https://github.com/requests/requests.git" }
 ```
 
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "requests @ git+https://github.com/requests/requests.git"
+]
+```
+
 Since we haven’t specified any other information,
 Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
@@ -147,6 +238,18 @@ requests = { git = "https://github.com/kennethreitz/requests.git", branch = "nex
 flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 # Get a revision by its tag
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
+```
+
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "requests @ git+https://github.com/requests/requests.git@next",
+    "flask @ git+https://github.com/pallets/flask.git@38eb5d3b",
+    "numpy @ git+https://github.com/numpy/numpy.git@v0.13.2",
+]
 ```
 
 In cases where the package you want to install is located in a subdirectory of the VCS repository, you can use the `subdirectory` option, similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides:
@@ -212,6 +315,16 @@ my-package = { path = "../my-package/", develop = false }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
+In the `project` section, you can only use absolute paths:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "my-package @ file:///absolute/path/to/my-package/dist/my-package-0.1.0.tar.gz"
+]
+```
+
 {{% note %}}
 Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
 to make sure the behavior is the same for all poetry versions.
@@ -228,6 +341,16 @@ you can use the `url` property:
 my-package = { url = "https://example.com/my-package-0.1.0.tar.gz" }
 ```
 
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "my-package @ https://example.com/my-package-0.1.0.tar.gz"
+]
+```
+
 with the corresponding `add` call:
 
 ```bash
@@ -242,6 +365,16 @@ for a dependency as shown here.
 ```toml
 [tool.poetry.dependencies]
 gunicorn = { version = "^20.1", extras = ["gevent"] }
+```
+
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "gunicorn[gevent] (>=20.1,<21.0)"
+]
 ```
 
 {{% note %}}
@@ -275,6 +408,10 @@ In this example, we expect `foo` to be configured correctly. See [using a privat
 for further information.
 {{% /note %}}
 
+{{% note %}}
+It is not possible to define source dependencies in the `project` section.
+{{% /note %}}
+
 ## Python restricted dependencies
 
 You can also specify that a dependency should be installed only for specific Python versions:
@@ -286,7 +423,18 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "^3.2" }
+pathlib2 = { version = "^2.2", python = "^3.9" }
+```
+
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "tomli (>=2.0.1,<3.11) ; python_version < '3.11'",
+    "pathlib2 (>=2.2,<3.0) ; python_version >= '3.9' and python_version < '4.0'"
+]
 ```
 
 ## Using environment markers
@@ -298,6 +446,16 @@ via the `markers` property:
 ```toml
 [tool.poetry.dependencies]
 pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platform == 'win32'" }
+```
+
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "pathlib2 (>=2.2,<3.0) ; python_version <= '3.4' or sys_platform == 'win32'"
+]
 ```
 
 ## Multiple constraints dependencies
@@ -314,6 +472,17 @@ you would declare it like so:
 foo = [
     {version = "<=1.9", python = ">=3.6,<3.8"},
     {version = "^2.0", python = ">=3.8"}
+]
+```
+
+or in the `project` section:
+
+```toml
+[project]
+# ...
+dependencies = [
+    "foo (<=1.9) ; python_version >= '3.6' and python_version < '3.8'",
+    "foo (>=2.0,<3.0) ; python_version >= '3.8'"
 ]
 ```
 
