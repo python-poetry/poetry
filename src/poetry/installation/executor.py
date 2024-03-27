@@ -5,6 +5,7 @@ import functools
 import itertools
 import json
 import threading
+import warnings
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
@@ -393,6 +394,12 @@ class Executor:
         error: bool = False,
         warning: bool = False,
     ) -> str:
+        warnings.warn(
+            "'Executor.get_operation_message()' and its boolean parameters "
+            "are deprecated, please use 'Operation.get_message()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return operation.get_message()
 
     def _display_summary(self, operations: list[Operation]) -> None:

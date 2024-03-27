@@ -417,6 +417,17 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected in io.fetch_output()
 
 
+def test_get_operation_message_deprecated(
+    config: Config,
+    pool: RepositoryPool,
+    io_decorated: BufferedIO,
+    env: MockEnv,
+) -> None:
+    executor = Executor(env, pool, config, io_decorated)
+    with pytest.warns(DeprecationWarning):
+        executor.get_operation_message(Install(Package("clikit", "0.2.3")))
+
+
 def test_execute_works_with_ansi_output(
     config: Config,
     pool: RepositoryPool,
