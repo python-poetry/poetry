@@ -322,7 +322,7 @@ class Installer:
 
             if updated_lock:
                 self._io.write_line("")
-                self._io.write_line("<info>Writing lock file</>")
+                self._io.write_line("<info>Lock file written</>")
 
     def _execute(self, operations: list[Operation]) -> int:
         return self._executor.execute(operations)

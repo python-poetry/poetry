@@ -337,7 +337,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
   - Removing docker (4.3.1)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -357,7 +357,7 @@ def test_remove_with_lock_does_not_perform_uninstall_op(
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected

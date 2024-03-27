@@ -59,7 +59,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing poetry-plugin (0.1.0)
 
-Writing lock file
+Lock file written
 """
     assert_plugin_add_result(tester, expected, "^0.1.0")
 
@@ -81,7 +81,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing poetry-plugin (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert_plugin_add_result(tester, expected, "^0.2.0")
@@ -104,7 +104,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (2.0.5)
   - Installing poetry-plugin (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     assert_plugin_add_result(
@@ -131,7 +131,7 @@ Package operations: 3 installs, 0 updates, 0 removals
   - Installing tomlkit (0.7.0)
   - Installing poetry-plugin (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     constraint: dict[str, str | list[str]] = {
@@ -170,7 +170,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (2.0.5)
   - Installing poetry-plugin (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     constraint = {
@@ -270,7 +270,7 @@ Package operations: 0 installs, 1 update, 0 removals
 
   - Updating poetry-plugin (1.2.3 -> 2.3.4)
 
-Writing lock file
+Lock file written
 """
 
     assert_plugin_add_result(tester, expected, "^2.3.4")
@@ -307,7 +307,7 @@ Package operations: 1 install, 1 update, 0 removals
   - Updating tomlkit (0.7.1 -> 0.7.2)
   - Installing poetry-plugin (1.2.3)
 
-Writing lock file
+Lock file written
 """
 
     assert_plugin_add_result(tester, expected, "^1.2.3")
