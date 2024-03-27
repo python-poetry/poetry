@@ -11,6 +11,14 @@ type: docs
 
 # Managing dependencies
 
+{{% note %}}
+Since Poetry 2.0, main dependencies can be specified in `project.dependencies`
+instead of `tool.poetry.dependencies`.
+See [Dependency specification]({{< relref "dependency-specification" >}}) for more information.
+Only main dependencies can be specified in the `project` section.
+Other groups must still be specified in the `tool.poetry` section.
+{{% /note %}}
+
 ## Dependency groups
 
 Poetry provides a way to **organize** your dependencies by **groups**. For instance, you might have
@@ -37,7 +45,22 @@ the dependencies logically.
 {{% /note %}}
 
 {{% note %}}
-The dependencies declared in `tool.poetry.dependencies` are part of an implicit `main` group.
+The dependencies declared in `project.dependencies` respectively `tool.poetry.dependencies`
+are part of an implicit `main` group.
+{{% /note %}}
+
+```toml
+[project]
+# ...
+dependencies = [  # main dependency group
+    "httpx",
+    "pendulum",
+]
+
+[tool.poetry.group.test.dependencies]
+pytest = "^6.0.0"
+pytest-mock = "*"
+```
 
 ```toml
 [tool.poetry.dependencies]  # main dependency group
@@ -48,7 +71,6 @@ pendulum = "*"
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
-{{% /note %}}
 
 {{% note %}}
 Dependency groups, other than the implicit `main` group, must only contain dependencies you need in your development

@@ -306,33 +306,8 @@ dependencies = [
 
 These are the dependencies that will be declared when building an sdist or a wheel.
 
-If you want to define additional information that is not required for building
-but only for locking (for example an explicit source), you can enrich dependency
-information in the `tool.poetry` section.
-
-```toml
-[project]
-# ...
-dependencies = [
-    "requests>=2.13.0",
-]
-
-[tool.poetry.dependencies]
-requests = { source = "private-source" }
-```
-
-Alternatively, you can add `dependencies` to `dynamic` and define your dependencies
-completely in the `tool.poetry` section. Using only the `tool.poetry` section might
-make sense in non-package mode when you will not build an sdist or a wheel.
-
-```toml
-[project]
-# ...
-dynamic = [ "dependencies" ]
-
-[tool.poetry.dependencies]
-requests = { version = ">=2.13.0", source = "private-source" }
-```
+See [Dependency specification]({{< relref "dependency-specification" >}}) for more information
+about the relation between `project.dependencies` and `tool.poetry.dependencies`.
 
 ### optional-dependencies
 
