@@ -407,7 +407,7 @@ def test_install_logs_output_decorated(
         "\x1b[39;1mInstalling\x1b[39;22m the current project: "
         "\x1b[36msimple-project\x1b[39m (\x1b[39;1m1.2.3\x1b[39;22m)"
         "\x1b[1G\x1b[2K"
-        "\x1b[39;1mInstalling\x1b[39;22m the current project: "
+        "\x1b[39;1mInstalled\x1b[39;22m the current project: "
         "\x1b[36msimple-project\x1b[39m (\x1b[32m1.2.3\x1b[39m)"
         "\n"
     )
