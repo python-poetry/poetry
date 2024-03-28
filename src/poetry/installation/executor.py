@@ -400,7 +400,13 @@ class Executor:
             DeprecationWarning,
             stacklevel=2,
         )
-        return operation.get_message()
+        new_state = {"done": done, "error": error, "warning": warning}
+        old_state = {attr: getattr(operation, attr) for attr in new_state}
+        op_state = vars(operation)
+        op_state.update(new_state)
+        message = operation.get_message()
+        op_state.update(old_state)
+        return message
 
     def _display_summary(self, operations: list[Operation]) -> None:
         installs = 0

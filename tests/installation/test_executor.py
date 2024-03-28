@@ -11,6 +11,7 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
+from typing import TypedDict
 
 import pytest
 
@@ -417,15 +418,51 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected in io.fetch_output()
 
 
+class OperationState(TypedDict, total=False):
+    done: bool
+    error: bool
+    warning: bool
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        Install(Package("foo", "0.1.0")),
+        Update(Package("foo", "0.1.0"), Package("foo", "0.2.0")),
+        Update(Package("foo", "0.2.0"), Package("foo", "0.1.0")),
+        Uninstall(Package("foo", "0.1.0")),
+    ],
+)
+@pytest.mark.parametrize(
+    "new_state",
+    [
+        OperationState(),
+        OperationState(done=True),
+        OperationState(error=True),
+        OperationState(warning=True),
+    ],
+)
 def test_get_operation_message_deprecated(
     config: Config,
     pool: RepositoryPool,
     io_decorated: BufferedIO,
     env: MockEnv,
+    operation: Operation,
+    new_state: OperationState,
 ) -> None:
     executor = Executor(env, pool, config, io_decorated)
     with pytest.warns(DeprecationWarning):
-        executor.get_operation_message(Install(Package("clikit", "0.2.3")))
+        msg_legacy_way = executor.get_operation_message(operation, **new_state)
+    old_state = {
+        "done": operation.done,
+        "warning": operation.warning,
+        "error": operation.error,
+    }
+    op_state = vars(operation)
+    op_state.update(new_state)
+    msg = operation.get_message()
+    assert msg_legacy_way == msg
+    op_state.update(old_state)
 
 
 def test_execute_works_with_ansi_output(
