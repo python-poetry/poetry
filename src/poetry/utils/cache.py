@@ -198,9 +198,7 @@ class ArtifactCache:
     def get_cache_directory_for_link(self, link: Link) -> Path:
         key_parts = {"url": link.url_without_fragment}
 
-        if hash_name := get_highest_priority_hash_type(
-            set(link.hashes.keys()), link.filename
-        ):
+        if hash_name := get_highest_priority_hash_type(link.hashes, link.filename):
             key_parts[hash_name] = link.hashes[hash_name]
 
         if link.subdirectory_fragment:

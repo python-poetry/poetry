@@ -85,6 +85,16 @@ poetry config http-basic.foo-pub <username> <password>
 
 {{% /note %}}
 
+{{% note %}}
+When configuring a repository using environment variables, note that correct suffixes need to be used.
+
+```bash
+export POETRY_REPOSITORIES_FOO_URL=https://pypi.example.org/legacy/
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
+```
+{{% /note %}}
+
 Now, all the is left is to build and publish your project using the
 [`publish`]({{< relref "cli#publish" >}}).
 
@@ -530,12 +540,6 @@ Poetry will fallback to Pip style use of keyring so that backends like
 Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a chance to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
 preferably by installing a plugin.
-
-If you are letting Poetry manage your virtual environments you will want a virtualenv
-seeder installed in Poetry's virtualenv that installs the desired keyring backend
-during `poetry install`. To again use Azure DevOps as an example: [azure-devops-artifacts-helpers](https://pypi.org/project/azure-devops-artifacts-helpers/)
-provides such a seeder. This would of course best achieved by installing a Poetry plugin
-if it exists for you use case instead of doing it yourself.
 
 {{% /note %}}
 

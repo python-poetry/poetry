@@ -81,6 +81,10 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
             ),
+            "installer.only-binary": (
+                PackageFilterPolicy.validator,
+                PackageFilterPolicy.normalize,
+            ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
             "warnings.export": (boolean_validator, boolean_normalizer),
             "keyring.enabled": (boolean_validator, boolean_normalizer),

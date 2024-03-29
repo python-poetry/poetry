@@ -58,7 +58,7 @@ class Factory(BaseFactory):
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
         poetry_file = base_poetry.pyproject_path
-        locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.local_config)
+        locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.pyproject.data)
 
         # Loading global configuration
         config = Config.create()

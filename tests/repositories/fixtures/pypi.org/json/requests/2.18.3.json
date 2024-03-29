@@ -1,0 +1,109 @@
+{
+  "info": {
+    "author": "Kenneth Reitz",
+    "author_email": "me@kennethreitz.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: Apache Software License",
+      "Natural Language :: English",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2.6",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy"
+    ],
+    "description": "",
+    "description_content_type": null,
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "http://python-requests.org",
+    "keywords": "",
+    "license": "Apache 2.0",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "requests",
+    "package_url": "https://pypi.org/project/requests/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/requests/",
+    "project_urls": {
+      "Homepage": "http://python-requests.org"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/requests/2.18.3/",
+    "requires_dist": [
+      "certifi (>=2017.4.17)",
+      "chardet (>=3.0.2,<3.1.0)",
+      "idna (>=2.5,<2.6)",
+      "urllib3 (<1.23,>=1.21.1)",
+      "cryptography (>=1.3.4); extra == 'security'",
+      "idna (>=2.0.0); extra == 'security'",
+      "pyOpenSSL (>=0.14); extra == 'security'",
+      "PySocks (!=1.5.7,>=1.5.6); extra == 'socks'",
+      "win-inet-pton; sys_platform == \"win32\" and (python_version == \"2.7\" or python_version == \"2.6\") and extra == 'socks'"
+    ],
+    "requires_python": "",
+    "summary": "Python HTTP for Humans.",
+    "version": "2.18.3",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "ba92c35ed010e8f96781f08dfa6d9a6a19445a175a9304aceedece77cd48b68f",
+        "md5": "d2d34c959a45f7da592a383485ad8b8c",
+        "sha256": "b62be4ec5999c24d10c98d248a136e7db20ca6616a2b65060cd9399417331e8a"
+      },
+      "downloads": -1,
+      "filename": "requests-2.18.3-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d2d34c959a45f7da592a383485ad8b8c",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2.py3",
+      "requires_python": null,
+      "size": 88626,
+      "upload_time": "2017-08-02T13:23:31",
+      "upload_time_iso_8601": "2017-08-02T13:23:31.998938Z",
+      "url": "https://files.pythonhosted.org/packages/ba/92/c35ed010e8f96781f08dfa6d9a6a19445a175a9304aceedece77cd48b68f/requests-2.18.3-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "c338d95ddb6cc8558930600be088e174a2152261a1e0708a18bf91b5b8c90b22",
+        "md5": "c8f60cf816a35c0c3fef0a40d0e407a6",
+        "sha256": "fb68a7baef4965c12d9cd67c0f5a46e6e28be3d8c7b6910c758fbcc99880b518"
+      },
+      "downloads": -1,
+      "filename": "requests-2.18.3.tar.gz",
+      "has_sig": false,
+      "md5_digest": "c8f60cf816a35c0c3fef0a40d0e407a6",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 126008,
+      "upload_time": "2017-08-02T13:23:35",
+      "upload_time_iso_8601": "2017-08-02T13:23:35.599515Z",
+      "url": "https://files.pythonhosted.org/packages/c3/38/d95ddb6cc8558930600be088e174a2152261a1e0708a18bf91b5b8c90b22/requests-2.18.3.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

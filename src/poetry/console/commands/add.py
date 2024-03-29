@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 class AddCommand(InstallerCommand, InitCommand):
     name = "add"
-    description = "Adds a new dependency to <comment>pyproject.toml</>."
+    description = "Adds a new dependency to <comment>pyproject.toml</> and installs it."
 
     arguments: ClassVar[list[Argument]] = [
         argument("name", "The packages to add.", multiple=True)
@@ -266,7 +266,8 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             )
 
         # Refresh the locker
-        self.poetry.locker.set_local_config(poetry_content)
+        content["tool"]["poetry"] = poetry_content
+        self.poetry.locker.set_pyproject_data(content)
         self.installer.set_locker(self.poetry.locker)
 
         # Cosmetic new line

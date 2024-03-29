@@ -777,7 +777,6 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    print(content)
     assert content == expected
 
 
@@ -863,7 +862,7 @@ def test_locker_dumps_dependency_information_correctly(
     )
     package_a.add_dependency(
         Factory.create_dependency(
-            "E", {"url": "https://python-poetry.org/poetry-1.2.0.tar.gz"}
+            "E", {"url": "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"}
         )
     )
     package_a.add_dependency(
@@ -913,7 +912,7 @@ files = []
 B = {{path = "project_with_extras", develop = true}}
 C = {{path = "directory/project_with_transitive_directory_dependencies"}}
 D = {{path = "distributions/demo-0.1.0.tar.gz"}}
-E = {{url = "https://python-poetry.org/poetry-1.2.0.tar.gz"}}
+E = {{url = "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"}}
 F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
 G = {{git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar"}}
 H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
@@ -1094,7 +1093,7 @@ def test_content_hash_with_legacy_is_compatible(
 
     locker = locker.__class__(
         lock=locker.lock,
-        local_config=local_config,
+        pyproject_data={"tool": {"poetry": local_config}},
     )
 
     old_content_hash = sha256(

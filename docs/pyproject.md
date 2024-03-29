@@ -421,6 +421,10 @@ poetry install --all-extras
 {{% note %}}
 Note that `install --extras` and the variations mentioned above (`--all-extras`, `--extras foo`, etc.) only work on dependencies defined in the current project. If you want to install extras defined by dependencies, you'll have to express that in the dependency itself:
 ```toml
+[tool.poetry.dependencies]
+pandas = {version="^2.2.1", extras=["computation", "performance"]}
+```
+```toml
 [tool.poetry.group.dev.dependencies]
 fastapi = {version="^0.92.0", extras=["all"]}
 ```

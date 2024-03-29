@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import shutil
 
 from pathlib import Path
@@ -12,6 +13,7 @@ import pytest
 from packaging.metadata import parse_email
 from poetry.core.packages.utils.link import Link
 
+from poetry.inspection.info import PackageInfoError
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils.helpers import HTTPRangeRequestSupported
@@ -116,13 +118,18 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
 
     # 1. range request and download
     mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
-    repo._get_info_from_wheel(link)
+
+    with contextlib.suppress(PackageInfoError):
+        repo._get_info_from_wheel(link)
+
     assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 1
     assert mock_download.call_args[1]["raise_accepts_ranges"] is False
 
     # 2. only download
-    repo._get_info_from_wheel(link)
+    with contextlib.suppress(PackageInfoError):
+        repo._get_info_from_wheel(link)
+
     assert mock_metadata_from_wheel_url.call_count == 1
     assert mock_download.call_count == 2
     assert mock_download.call_args[1]["raise_accepts_ranges"] is True
@@ -130,26 +137,105 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     # 3. download and range request
     mock_metadata_from_wheel_url.side_effect = None
     mock_download.side_effect = HTTPRangeRequestSupported
-    repo._get_info_from_wheel(link)
+
+    with contextlib.suppress(PackageInfoError):
+        repo._get_info_from_wheel(link)
+
     assert mock_metadata_from_wheel_url.call_count == 2
     assert mock_download.call_count == 3
     assert mock_download.call_args[1]["raise_accepts_ranges"] is True
 
     # 4. only range request
-    repo._get_info_from_wheel(link)
+    with contextlib.suppress(PackageInfoError):
+        repo._get_info_from_wheel(link)
+
     assert mock_metadata_from_wheel_url.call_count == 3
     assert mock_download.call_count == 3
 
     # 5. range request and download
     mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
     mock_download.side_effect = None
-    repo._get_info_from_wheel(link)
+
+    with contextlib.suppress(PackageInfoError):
+        repo._get_info_from_wheel(link)
+
     assert mock_metadata_from_wheel_url.call_count == 4
     assert mock_download.call_count == 4
     assert mock_download.call_args[1]["raise_accepts_ranges"] is False
 
     # 6. only range request
     mock_metadata_from_wheel_url.side_effect = None
-    repo._get_info_from_wheel(link)
+
+    with contextlib.suppress(PackageInfoError):
+        repo._get_info_from_wheel(link)
+
     assert mock_metadata_from_wheel_url.call_count == 5
     assert mock_download.call_count == 4
+
+
+@pytest.mark.parametrize(
+    "mock_hashes",
+    [
+        None,
+        {"sha256": "e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"},
+        {"md5": "be7589b4902793e66d7d979bd8581591"},
+    ],
+)
+def test_calculate_sha256(
+    mocker: MockerFixture, mock_hashes: dict[str, Any] | None
+) -> None:
+    filename = "poetry_core-1.5.0-py3-none-any.whl"
+    filepath = MockRepository.DIST_FIXTURES / filename
+    mock_download = mocker.patch(
+        "poetry.repositories.http_repository.download_file",
+        side_effect=lambda _, dest, *args, **kwargs: shutil.copy(filepath, dest),
+    )
+    domain = "foo.com"
+    link = Link(f"https://{domain}/{filename}", hashes=mock_hashes)
+    repo = MockRepository()
+
+    calculated_hash = repo.calculate_sha256(link)
+
+    assert mock_download.call_count == 1
+    assert (
+        calculated_hash
+        == "sha256:e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
+    )
+
+
+def test_calculate_sha256_defaults_to_sha256_on_md5_errors(
+    mocker: MockerFixture,
+) -> None:
+    raised_value_error = False
+
+    def mock_hashlib_md5_error() -> None:
+        nonlocal raised_value_error
+        raised_value_error = True
+        raise ValueError(
+            "[digital envelope routines: EVP_DigestInit_ex] disabled for FIPS"
+        )
+
+    filename = "poetry_core-1.5.0-py3-none-any.whl"
+    filepath = MockRepository.DIST_FIXTURES / filename
+    mock_download = mocker.patch(
+        "poetry.repositories.http_repository.download_file",
+        side_effect=lambda _, dest, *args, **kwargs: shutil.copy(filepath, dest),
+    )
+    mock_hashlib_md5 = mocker.patch("hashlib.md5", side_effect=mock_hashlib_md5_error)
+
+    domain = "foo.com"
+    link = Link(
+        f"https://{domain}/{filename}",
+        hashes={"md5": "be7589b4902793e66d7d979bd8581591"},
+    )
+    repo = MockRepository()
+
+    calculated_hash = repo.calculate_sha256(link)
+
+    assert raised_value_error
+    assert mock_download.call_count == 1
+    assert mock_hashlib_md5.call_count == 1
+    assert (
+        calculated_hash
+        == "sha256:e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
+    )

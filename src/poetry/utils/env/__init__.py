@@ -35,7 +35,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from cleo.io.io import IO
-    from poetry.core.poetry import Poetry as CorePoetry
+
+    from poetry.poetry import Poetry
 
 
 @contextmanager
@@ -56,7 +57,7 @@ def ephemeral_environment(
 
 @contextmanager
 def build_environment(
-    poetry: CorePoetry, env: Env | None = None, io: IO | None = None
+    poetry: Poetry, env: Env | None = None, io: IO | None = None
 ) -> Iterator[Env]:
     """
     If a build script is specified for the project, there could be additional build
@@ -66,7 +67,10 @@ def build_environment(
     environment is returned.
     """
     if not env or poetry.package.build_script:
-        with ephemeral_environment(executable=env.python if env else None) as venv:
+        with ephemeral_environment(
+            executable=env.python if env else None,
+            flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+        ) as venv:
             if io:
                 requires = [
                     f"<c1>{requirement}</c1>"
@@ -78,16 +82,10 @@ def build_environment(
                     f" {', '.join(requires)}"
                 )
 
-            output = venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *poetry.pyproject.build_system.requires,
-            )
+            from poetry.utils.isolated_build import IsolatedEnv
 
-            if io and io.is_debug() and output:
-                io.write_error(output)
+            isolated_env = IsolatedEnv(venv, poetry.pool)
+            isolated_env.install(poetry.pyproject.build_system.requires)
 
             yield venv
     else:

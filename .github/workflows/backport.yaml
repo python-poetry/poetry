@@ -8,29 +8,33 @@ on:
 
 jobs:
   backport:
-    name: Backport
+    name: Create backport
     runs-on: ubuntu-latest
-    # Only react to merged PRs for security reasons.
+    # This workflow only applies to merged PRs; and triggers on a PR being closed, or the backport label being applied.
     # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target.
     if: >
       github.event.pull_request.merged
       && (
-        github.event.action == 'closed'
-        || (
-          github.event.action == 'labeled'
-          && contains(github.event.label.name, 'backport')
+          (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'backport/'))
+        ||
+          (github.event.action == 'labeled' && contains(github.event.label.name, 'backport/')
         )
       )
     steps:
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@v2
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      # This workflow requires a non-GHA token in order to trigger downstream CI, and to access the 'fork' repository.
+      - uses: actions/create-github-app-token@78e5f2ddc08efcb88fbbee6cfa3fed770ba550c3 # v1
+        id: app-token
         with:
-          app_id: ${{ secrets.POETRY_TOKEN_APP_ID }}
-          private_key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
-      - name: Generate backport
-        uses: tibdex/backport@v2
-        with:
-          github_token: ${{ steps.generate_token.outputs.token }}
-          title_template: "[<%= base %>] <%= title %>"
-          label_pattern: "^backport/(?<base>([^ ]+))$"
+          app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
+          private-key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
+      - name: backport.sh
+        run: |
+          git config --global user.name  "${{ steps.app-token.outputs.slug }}[bot]"
+          git config --global user.email "${{ steps.app-token.outputs.slug }}[bot]@users.noreply.github.com"
+
+          gh repo fork --remote-name fork
+
+          ./.github/scripts/backport.sh --pr ${{ github.event.pull_request.number }} --comment --remote fork
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}

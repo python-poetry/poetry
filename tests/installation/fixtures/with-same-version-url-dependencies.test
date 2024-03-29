@@ -10,7 +10,7 @@ files = [
 
 [package.source]
 type = "url"
-url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+url = "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [package.dependencies]
 pendulum = ">=1.4.4"
@@ -30,7 +30,7 @@ files = [
 ]
 [package.source]
 type = "url"
-url = "https://python-poetry.org/distributions/demo-0.1.0.tar.gz"
+url = "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz"
 
 [package.dependencies]
 pendulum = ">=1.4.4"

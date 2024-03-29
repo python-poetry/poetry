@@ -18,8 +18,6 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.utils.link import Link
 
 from poetry.installation.chef import Chef
-from poetry.installation.chef import ChefBuildError
-from poetry.installation.chef import ChefInstallError
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -34,6 +32,8 @@ from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
+from poetry.utils.isolated_build import IsolatedBuildError
+from poetry.utils.isolated_build import IsolatedBuildInstallError
 from poetry.utils.pip import pip_install
 
 
@@ -310,7 +310,7 @@ class Executor:
                     trace = ExceptionTrace(e)
                     trace.render(io)
                     pkg = operation.package
-                    if isinstance(e, ChefBuildError):
+                    if isinstance(e, IsolatedBuildError):
                         pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
                             requirement = pkg.source_url
@@ -328,7 +328,7 @@ class Executor:
                             f" running '{pip_command} \"{requirement}\"'."
                             "</info>"
                         )
-                    elif isinstance(e, ChefInstallError):
+                    elif isinstance(e, IsolatedBuildInstallError):
                         message = (
                             "<error>"
                             "Cannot install build-system.requires"

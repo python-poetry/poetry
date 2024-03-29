@@ -31,10 +31,6 @@ from poetry.utils.env import MockEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
-from tests.repositories.test_legacy_repository import (
-    MockRepository as MockLegacyRepository,
-)
-from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRepository
 
 
 if TYPE_CHECKING:
@@ -45,6 +41,8 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.puzzle.provider import Provider
     from poetry.puzzle.transaction import Transaction
+    from poetry.repositories.legacy_repository import LegacyRepository
+    from poetry.repositories.pypi_repository import PyPiRepository
     from tests.types import FixtureDirGetter
 
 DEFAULT_SOURCE_REF = (
@@ -2944,9 +2942,9 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(
 
 
 def test_solver_can_solve_with_legacy_repository_using_proper_dists(
-    package: ProjectPackage, io: NullIO
+    package: ProjectPackage, io: NullIO, legacy_repository: LegacyRepository
 ) -> None:
-    repo = MockLegacyRepository()
+    repo = legacy_repository
     pool = RepositoryPool([repo])
 
     solver = Solver(package, pool, [], [], io)
@@ -2988,10 +2986,11 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
 def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_dists(
     package: ProjectPackage,
     io: NullIO,
+    legacy_repository: LegacyRepository,
 ) -> None:
     package.python_versions = "^3.7"
 
-    repo = MockLegacyRepository()
+    repo = legacy_repository
     pool = RepositoryPool([repo])
 
     solver = Solver(package, pool, [], [], io)
@@ -3017,20 +3016,22 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
     )
 
 
-def test_solver_skips_invalid_versions(package: ProjectPackage, io: NullIO) -> None:
-    package.python_versions = "^3.7"
+def test_solver_skips_invalid_versions(
+    package: ProjectPackage, io: NullIO, pypi_repository: PyPiRepository
+) -> None:
+    package.python_versions = "^3.9"
 
-    repo = MockPyPIRepository()
-    pool = RepositoryPool([repo])
+    pool = RepositoryPool([pypi_repository])
 
     solver = Solver(package, pool, [], [], io)
 
-    package.add_dependency(Factory.create_dependency("trackpy", "^0.4"))
+    package.add_dependency(Factory.create_dependency("six-unknown-version", "^1.11"))
 
     transaction = solver.solve()
 
     check_solver_result(
-        transaction, [{"job": "install", "package": get_package("trackpy", "0.4.1")}]
+        transaction,
+        [{"job": "install", "package": get_package("six-unknown-version", "1.11.0")}],
     )
 
 
@@ -3059,13 +3060,15 @@ def test_multiple_constraints_on_root(
 
 
 def test_solver_chooses_most_recent_version_amongst_repositories(
-    package: ProjectPackage, io: NullIO
+    package: ProjectPackage,
+    io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("tomlkit", {"version": "^0.5"}))
 
-    repo = MockLegacyRepository()
-    pool = RepositoryPool([repo, MockPyPIRepository()])
+    pool = RepositoryPool([legacy_repository, pypi_repository])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3080,15 +3083,17 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
 
 
 def test_solver_chooses_from_correct_repository_if_forced(
-    package: ProjectPackage, io: NullIO
+    package: ProjectPackage,
+    io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
         Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
     )
 
-    repo = MockLegacyRepository()
-    pool = RepositoryPool([repo, MockPyPIRepository()])
+    pool = RepositoryPool([legacy_repository, pypi_repository])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3103,19 +3108,21 @@ def test_solver_chooses_from_correct_repository_if_forced(
                     "tomlkit",
                     "0.5.2",
                     source_type="legacy",
-                    source_url=repo.url,
-                    source_reference=repo.name,
+                    source_url=legacy_repository.url,
+                    source_reference=legacy_repository.name,
                 ),
             }
         ],
     )
 
-    assert ops[0].package.source_url == "http://legacy.foo.bar"
+    assert ops[0].package.source_url == legacy_repository.url
 
 
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
     package: ProjectPackage,
     io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("foo", "^1.0"))
@@ -3127,7 +3134,8 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
     foo = get_package("foo", "1.0.0")
     foo.add_dependency(Factory.create_dependency("tomlkit", "^0.5.0"))
     repo.add_package(foo)
-    pool = RepositoryPool([MockLegacyRepository(), repo, MockPyPIRepository()])
+
+    pool = RepositoryPool([legacy_repository, repo, pypi_repository])
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3142,7 +3150,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
                     "tomlkit",
                     "0.5.2",
                     source_type="legacy",
-                    source_url="http://legacy.foo.bar",
+                    source_url=legacy_repository.url,
                     source_reference="legacy",
                 ),
             },
@@ -3150,21 +3158,24 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         ],
     )
 
-    assert ops[0].package.source_url == "http://legacy.foo.bar"
+    assert ops[0].package.source_url == legacy_repository.url
 
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
 
 
 def test_solver_does_not_choose_from_secondary_repository_by_default(
-    package: ProjectPackage, io: NullIO
+    package: ProjectPackage,
+    io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("clikit", {"version": "^0.2.0"}))
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), priority=Priority.SECONDARY)
-    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(pypi_repository, priority=Priority.SECONDARY)
+    pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3179,7 +3190,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
                     "pastel",
                     "0.1.0",
                     source_type="legacy",
-                    source_url="http://legacy.foo.bar",
+                    source_url=legacy_repository.url,
                     source_reference="legacy",
                 ),
             },
@@ -3190,22 +3201,24 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
                     "clikit",
                     "0.2.4",
                     source_type="legacy",
-                    source_url="http://legacy.foo.bar",
+                    source_url=legacy_repository.url,
                     source_reference="legacy",
                 ),
             },
         ],
     )
 
-    assert ops[0].package.source_url == "http://legacy.foo.bar"
+    assert ops[0].package.source_url == legacy_repository.url
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
-    assert ops[2].package.source_url == "http://legacy.foo.bar"
+    assert ops[2].package.source_url == legacy_repository.url
 
 
 def test_solver_chooses_from_secondary_if_explicit(
     package: ProjectPackage,
     io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -3213,8 +3226,8 @@ def test_solver_chooses_from_secondary_if_explicit(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), priority=Priority.SECONDARY)
-    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(pypi_repository, priority=Priority.SECONDARY)
+    pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3229,7 +3242,7 @@ def test_solver_chooses_from_secondary_if_explicit(
                     "pastel",
                     "0.1.0",
                     source_type="legacy",
-                    source_url="http://legacy.foo.bar",
+                    source_url=legacy_repository.url,
                     source_reference="legacy",
                 ),
             },
@@ -3238,7 +3251,7 @@ def test_solver_chooses_from_secondary_if_explicit(
         ],
     )
 
-    assert ops[0].package.source_url == "http://legacy.foo.bar"
+    assert ops[0].package.source_url == legacy_repository.url
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
     assert ops[2].package.source_type is None
@@ -3246,14 +3259,17 @@ def test_solver_chooses_from_secondary_if_explicit(
 
 
 def test_solver_does_not_choose_from_explicit_repository(
-    package: ProjectPackage, io: NullIO
+    package: ProjectPackage,
+    io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("attrs", {"version": "^17.4.0"}))
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
-    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(pypi_repository, priority=Priority.EXPLICIT)
+    pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3264,6 +3280,8 @@ def test_solver_does_not_choose_from_explicit_repository(
 def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
     package: ProjectPackage,
     io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -3271,8 +3289,8 @@ def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
-    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(pypi_repository, priority=Priority.EXPLICIT)
+    pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3292,17 +3310,19 @@ def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
 def test_solver_ignores_explicit_repo_for_transient_dependencies(
     package: ProjectPackage,
     io: NullIO,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
-    # clikit depends on pylev, which is in MockPyPIRepository (explicit) but not in
-    # MockLegacyRepository
+    # clikit depends on pylev, which is in pypi_repository (explicit) but not in
+    # legacy_repository
     package.python_versions = "^3.7"
     package.add_dependency(
         Factory.create_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
     )
 
     pool = RepositoryPool()
-    pool.add_repository(MockPyPIRepository(), priority=Priority.EXPLICIT)
-    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(pypi_repository, priority=Priority.EXPLICIT)
+    pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
 
@@ -3887,7 +3907,7 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
 
     http.register_uri(
         "GET",
-        "https://foo.bar/demo-0.1.0-py2.py3-none-any.whl",
+        "https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
         body=Path(path).read_bytes(),
         streaming=True,
     )
@@ -3902,7 +3922,9 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     package.add_dependency(
         Factory.create_dependency(
             "demo",
-            {"url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl"},
+            {
+                "url": "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            },
         )
     )
     package.add_dependency(Factory.create_dependency("foo", "^1.2.3"))
@@ -3928,7 +3950,7 @@ def test_solver_cannot_choose_url_dependency_for_explicit_source(
             "demo",
             {
                 "markers": "sys_platform != 'darwin'",
-                "url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+                "url": "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
             },
         )
     )
@@ -3949,7 +3971,7 @@ def test_solver_cannot_choose_url_dependency_for_explicit_source(
         "demo",
         "0.1.0",
         source_type="url",
-        source_url="https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        source_url="https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
     )
     # The url demo dependency depends on pendulum.
     repo.add_package(package_pendulum)

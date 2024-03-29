@@ -1,27 +1,44 @@
 {
-  "name": "clikit",
   "files": [
     {
-      "filename": "clikit-0.2.4-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/7b/0d/bb4c8a2d0edca8c300373ed736fb4680cf73be5be2ff84544dee5f979c14/clikit-0.2.4-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "280f18c82d0810c9b5ca11380529c04c",
-        "sha256": "a7597999555aeb2ce9946f07187f690ab6864213f337e51250178c4bd19bd810"
+      "core-metadata": {
+        "sha256": "bf1c55d7159f7b783967c3035898bcf4fee282a654fb70efd0fdafc6e782f8b8"
       },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+      "data-dist-info-metadata": {
+        "sha256": "bf1c55d7159f7b783967c3035898bcf4fee282a654fb70efd0fdafc6e782f8b8"
+      },
+      "filename": "clikit-0.2.4-py2.py3-none-any.whl",
+      "hashes": {
+        "md5": "c3558fef2a1148bb1df96376def5c8fe",
+        "sha256": "60900adbac91d6d2cefc88efe2639ce3090f4520106596ac855bee3763f276c0"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 85786,
+      "upload-time": "2019-05-11T17:09:23.516387Z",
+      "url": "https://files.pythonhosted.org/packages/7b/0d/bb4c8a2d0edca8c300373ed736fb4680cf73be5be2ff84544dee5f979c14/clikit-0.2.4-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "clikit-0.2.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c5/33/14fad4c82f256b0ef60dd25d4b6d8145b463da5274fd9cd842f06af318ed/clikit-0.2.4.tar.gz",
       "hashes": {
-        "md5": "2543daad83b072e960ded5f68074a443",
-        "sha256": "d6807cf4a41e6b981b056075c0aefca2db1dabc597ed18fa4d92b8b2e2678835"
+        "md5": "f7cdbad3508038a04561f646aae68146",
+        "sha256": "0fdd41e86e8b118a8b1e94ef2835925ada541d481c9b3b2fc635fa68713e6125"
       },
-      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 50980,
+      "upload-time": "2019-05-11T17:09:25.865051Z",
+      "url": "https://files.pythonhosted.org/packages/c5/33/14fad4c82f256b0ef60dd25d4b6d8145b463da5274fd9cd842f06af318ed/clikit-0.2.4.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 5256718
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "clikit",
+  "versions": [
+    "0.2.4"
+  ]
 }

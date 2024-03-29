@@ -4,6 +4,7 @@ import contextlib
 import functools
 import glob
 import logging
+import tempfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,6 +14,8 @@ from typing import Sequence
 
 import pkginfo
 
+from build import BuildBackendException
+from poetry.core.constraints.version import Version
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -22,10 +25,8 @@ from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.core.version.requirements import InvalidRequirement
 
-from poetry.utils.env import EnvCommandError
-from poetry.utils.env import ephemeral_environment
 from poetry.utils.helpers import extractall
-from poetry.utils.setup_reader import SetupReader
+from poetry.utils.isolated_build import isolated_builder
 
 
 if TYPE_CHECKING:
@@ -38,24 +39,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-PEP517_META_BUILD = """\
-import build
-import build.env
-import pyproject_hooks
-
-source = '{source}'
-dest = '{dest}'
-
-with build.env.DefaultIsolatedEnv() as env:
-    builder = build.ProjectBuilder.from_isolated_env(
-        env, source, runner=pyproject_hooks.quiet_subprocess_runner
-    )
-    env.install(builder.build_system_requires)
-    env.install(builder.get_requires_for_build('wheel'))
-    builder.metadata_path(dest)
-"""
-
-PEP517_META_BUILD_DEPS = ["build==1.1.1", "pyproject_hooks==1.0.0"]
+DYNAMIC_METADATA_VERSION = Version.parse("2.2")
 
 
 class PackageInfoError(ValueError):
@@ -235,6 +219,43 @@ class PackageInfo:
         return package
 
     @classmethod
+    def _requirements_from_distribution(
+        cls,
+        dist: pkginfo.BDist | pkginfo.SDist | pkginfo.Wheel,
+    ) -> list[str] | None:
+        """
+        Helper method to extract package requirements from a `pkginfo.Distribution`
+        instance.
+
+        :param dist: The distribution instance to extract requirements from.
+        """
+        # If the distribution lists requirements, we use those.
+        #
+        # If the distribution does not list requirements, but the metadata is new enough
+        # to specify that this is because there definitely are none: then we return an
+        # empty list.
+        #
+        # If there is a requires.txt, we use that.
+        if dist.requires_dist:
+            return list(dist.requires_dist)
+
+        if dist.metadata_version is not None:
+            metadata_version = Version.parse(dist.metadata_version)
+            if (
+                metadata_version >= DYNAMIC_METADATA_VERSION
+                and "Requires-Dist" not in dist.dynamic
+            ):
+                return []
+
+        requires = Path(dist.filename) / "requires.txt"
+        if requires.exists():
+            text = requires.read_text(encoding="utf-8")
+            requirements = parse_requires(text)
+            return requirements
+
+        return None
+
+    @classmethod
     def _from_distribution(
         cls, dist: pkginfo.BDist | pkginfo.SDist | pkginfo.Wheel
     ) -> PackageInfo:
@@ -244,15 +265,12 @@ class PackageInfo:
 
         :param dist: The distribution instance to parse information from.
         """
-        requirements = None
+        if dist.metadata_version not in pkginfo.distribution.HEADER_ATTRS:
+            # This check can be replaced once upstream implements strict parsing
+            # https://bugs.launchpad.net/pkginfo/+bug/2058697
+            raise ValueError(f"Unknown metadata version: {dist.metadata_version}")
 
-        if dist.requires_dist:
-            requirements = list(dist.requires_dist)
-        else:
-            requires = Path(dist.filename) / "requires.txt"
-            if requires.exists():
-                text = requires.read_text(encoding="utf-8")
-                requirements = parse_requires(text)
+        requirements = cls._requirements_from_distribution(dist)
 
         info = cls(
             name=dist.name,
@@ -321,58 +339,6 @@ class PackageInfo:
             return new_info
 
         return info.update(new_info)
-
-    @staticmethod
-    def has_setup_files(path: Path) -> bool:
-        return any((path / f).exists() for f in SetupReader.FILES)
-
-    @classmethod
-    def from_setup_files(cls, path: Path) -> PackageInfo:
-        """
-        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses
-        the implementation at `poetry.utils.setup_reader.SetupReader` in order to parse
-        the file. This is not reliable for complex setup files and should only attempted
-        as a fallback.
-
-        :param path: Path to `setup.py` file
-        """
-        if not cls.has_setup_files(path):
-            raise PackageInfoError(
-                path, "No setup files (setup.py, setup.cfg) was found."
-            )
-
-        try:
-            result = SetupReader.read_from_directory(path)
-        except Exception as e:
-            raise PackageInfoError(path, e)
-
-        python_requires = result["python_requires"]
-        if python_requires is None:
-            python_requires = "*"
-
-        requires = "".join(dep + "\n" for dep in result["install_requires"])
-        if result["extras_require"]:
-            requires += "\n"
-
-        for extra_name, deps in result["extras_require"].items():
-            requires += f"[{extra_name}]\n"
-
-            for dep in deps:
-                requires += dep + "\n"
-
-            requires += "\n"
-
-        requirements = parse_requires(requires)
-
-        info = cls(
-            name=result.get("name"),
-            version=result.get("version"),
-            summary=result.get("description", ""),
-            requires_dist=requirements,
-            requires_python=python_requires,
-        )
-
-        return info
 
     @staticmethod
     def _find_dist_info(path: Path) -> Iterator[Path]:
@@ -472,16 +438,13 @@ class PackageInfo:
         return None
 
     @classmethod
-    def from_directory(cls, path: Path, disable_build: bool = False) -> PackageInfo:
+    def from_directory(cls, path: Path) -> PackageInfo:
         """
-        Generate package information from a package source directory. If `disable_build`
-        is not `True` and introspection of all available metadata fails, the package is
-        attempted to be built in an isolated environment so as to generate required
-        metadata.
+        Generate package information from a package source directory. If introspection
+        of all available metadata fails, the package is attempted to be built in an
+        isolated environment so as to generate required metadata.
 
         :param path: Path to generate package information from.
-        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated
-            build is attempted in order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
         info: PackageInfo | None
@@ -492,10 +455,7 @@ class PackageInfo:
 
             if not info or info.requires_dist is None:
                 try:
-                    if disable_build:
-                        info = cls.from_setup_files(path)
-                    else:
-                        info = get_pep517_metadata(path)
+                    info = get_pep517_metadata(path)
                 except PackageInfoError:
                     if not info:
                         raise
@@ -531,8 +491,8 @@ class PackageInfo:
         try:
             wheel = pkginfo.Wheel(str(path))
             return cls._from_distribution(wheel)
-        except ValueError:
-            return PackageInfo()
+        except ValueError as e:
+            raise PackageInfoError(path, e)
 
     @classmethod
     def from_bdist(cls, path: Path) -> PackageInfo:
@@ -572,33 +532,15 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
     """
     info = None
 
-    with contextlib.suppress(PackageInfoError):
-        info = PackageInfo.from_setup_files(path)
-        if all(x is not None for x in (info.version, info.name, info.requires_dist)):
-            return info
-
-    with ephemeral_environment(
-        flags={"no-pip": False, "no-setuptools": True, "no-wheel": True}
-    ) as venv:
-        # TODO: cache PEP 517 build environment corresponding to each project venv
-        dest_dir = venv.path.parent / "dist"
-        dest_dir.mkdir()
-
-        pep517_meta_build_script = PEP517_META_BUILD.format(
-            source=path.as_posix(), dest=dest_dir.as_posix()
-        )
-
+    with tempfile.TemporaryDirectory() as dist:
         try:
-            venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *PEP517_META_BUILD_DEPS,
-            )
-            venv.run_python_script(pep517_meta_build_script)
-            info = PackageInfo.from_metadata_directory(dest_dir)
-        except EnvCommandError as e:
+            dest = Path(dist)
+
+            with isolated_builder(path, "wheel") as builder:
+                builder.metadata_path(dest)
+
+            info = PackageInfo.from_metadata_directory(dest)
+        except BuildBackendException as e:
             logger.debug("PEP517 build failed: %s", e)
             raise PackageInfoError(path, e, "PEP517 build failed")
 

@@ -71,7 +71,8 @@ class SystemEnv(Env):
             "platform_release": platform.release(),
             "platform_system": platform.system(),
             "platform_version": platform.version(),
-            "python_full_version": platform.python_version(),
+            # Workaround for https://github.com/python/cpython/issues/99968
+            "python_full_version": platform.python_version().rstrip("+"),
             "platform_python_implementation": platform.python_implementation(),
             "python_version": ".".join(platform.python_version().split(".")[:2]),
             "sys_platform": sys.platform,

@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: with-transitive-extra-dependency
+Version: 0.12.4
+Summary: Mock Package
+Home-page: https://python-poetry.org/
+License: MIT
+Keywords: packaging,dependency,poetry
+Author: Poetry Team
+Author-email: noreply@python-poetry.org
+Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Dist: with-extra-dependency[filecache] (>=0.12.4,<0.13.0)
+Description-Content-Type: text/markdown
+

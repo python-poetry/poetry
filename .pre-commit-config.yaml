@@ -6,8 +6,9 @@ repos:
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        exclude: tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
       - id: end-of-file-fixer
-        exclude: ^.*\.egg-info/
+        exclude: ^.*\.egg-info/|tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: check-json
@@ -26,7 +27,7 @@ repos:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.3.3
     hooks:
       - id: ruff
       - id: ruff-format

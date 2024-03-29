@@ -184,7 +184,7 @@ class Git:
 
     @staticmethod
     def get_name_from_source_url(url: str) -> str:
-        return re.sub(r"(.git)?$", "", url.rsplit("/", 1)[-1])
+        return re.sub(r"(.git)?$", "", url.rstrip("/").rsplit("/", 1)[-1])
 
     @classmethod
     def _fetch_remote_refs(cls, url: str, local: Repo) -> FetchPackResult:

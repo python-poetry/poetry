@@ -33,7 +33,6 @@ from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import MockEnv
 from poetry.vcs.git.backend import Git
-from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
@@ -43,6 +42,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.installation.operations.operation import Operation
+    from poetry.repositories.pypi_repository import PyPiRepository
     from poetry.utils.env import VirtualEnv
     from tests.types import FixtureDirGetter
 
@@ -123,9 +123,11 @@ def io_not_decorated() -> BufferedIO:
 
 
 @pytest.fixture
-def pool() -> RepositoryPool:
+def pool(pypi_repository: PyPiRepository) -> RepositoryPool:
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+
+    pypi_repository._fallback = True
+    pool.add_repository(pypi_repository)
 
     return pool
 
@@ -161,7 +163,6 @@ def test_execute_executes_a_batch_of_operations(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
     copy_wheel: Callable[[], Path],
     fixture_dir: FixtureDirGetter,
@@ -274,7 +275,6 @@ def test_execute_prints_warning_for_yanked_package(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
     operations: list[Operation],
     has_warning: bool,
@@ -308,7 +308,6 @@ def test_execute_prints_warning_for_invalid_wheels(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
@@ -423,7 +422,6 @@ def test_execute_works_with_ansi_output(
     pool: RepositoryPool,
     io_decorated: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
@@ -460,7 +458,6 @@ def test_execute_works_with_no_ansi_output(
     pool: RepositoryPool,
     io_not_decorated: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
@@ -547,7 +544,6 @@ def test_executor_should_delete_incomplete_downloads(
     tmp_path: Path,
     mocker: MockerFixture,
     pool: RepositoryPool,
-    mock_file_downloads: None,
     env: MockEnv,
 ) -> None:
     cached_archive = tmp_path / "tomlkit-0.5.3-py2.py3-none-any.whl"
@@ -694,7 +690,6 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_files(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
-    mock_file_downloads: None,
 ) -> None:
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
@@ -790,7 +785,6 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
-    mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
     is_artifact_cached: bool,
@@ -866,7 +860,6 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
     pool: RepositoryPool,
     config: Config,
     io: BufferedIO,
-    mock_file_downloads: None,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
     is_sdist_cached: bool,
@@ -953,7 +946,6 @@ def test_executor_should_write_pep610_url_references_for_git(
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
@@ -1017,7 +1009,6 @@ def test_executor_should_write_pep610_url_references_for_editable_git(
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
@@ -1066,7 +1057,6 @@ def test_executor_should_append_subdirectory_for_git(
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
 ) -> None:
     package = Package(
@@ -1097,7 +1087,6 @@ def test_executor_should_write_pep610_url_references_for_git_with_subdirectories
     config: Config,
     artifact_cache: ArtifactCache,
     io: BufferedIO,
-    mock_file_downloads: None,
     wheel: Path,
 ) -> None:
     package = Package(
@@ -1168,7 +1157,6 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1244,7 +1232,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1276,7 +1263,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing {package_name} ({package_version} {package_url})
 
-  ChefBuildError
+  IsolatedBuildError
 
   hide the original error
   \
@@ -1313,7 +1300,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess_enc
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1349,7 +1335,6 @@ def test_build_system_requires_not_available(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1395,7 +1380,6 @@ def test_build_system_requires_install_failure(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1425,7 +1409,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing {package_name} ({package_version} {package_url})
 
-  ChefInstallError
+  IsolatedBuildInstallError
 
   Failed to install poetry-core>=1.1.0a7.
   \
@@ -1442,6 +1426,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     mocker.stopall()  # to get real output
     output = io.fetch_output().strip()
+
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
 
@@ -1450,7 +1435,6 @@ def test_other_error(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
-    mock_file_downloads: None,
     env: MockEnv,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -1562,13 +1546,7 @@ def test_executor_known_hashes(
     config: Config,
     io: BufferedIO,
     fixture_dir: FixtureDirGetter,
-    mock_file_downloads: None,
 ) -> None:
-    # when installing sdist, an isolated build environment is required to extract metadata
-    # this will install any build system requirements into the environment, to avoid failures when
-    # network is not available we enable mock_file_downloads fixture here
-    # see: https://github.com/python-poetry/poetry/issues/9114
-
     package_source_url: Path = (
         fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     ).resolve()

@@ -20,6 +20,8 @@ from tests.helpers import mock_metadata_entry_points
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from tests.types import SetProjectContext
+
 
 class FooCommand(Command):
     name = "foo"
@@ -85,44 +87,50 @@ def test_application_execute_plugin_command_with_plugins_disabled(
 
 
 @pytest.mark.parametrize("disable_cache", [True, False])
-def test_application_verify_source_cache_flag(disable_cache: bool) -> None:
-    app = Application()
+def test_application_verify_source_cache_flag(
+    disable_cache: bool, set_project_context: SetProjectContext
+) -> None:
+    with set_project_context("sample_project"):
+        app = Application()
 
-    tester = ApplicationTester(app)
-    command = "debug info"
+        tester = ApplicationTester(app)
+        command = "debug info"
 
-    if disable_cache:
-        command = f"{command} --no-cache"
+        if disable_cache:
+            command = f"{command} --no-cache"
 
-    assert not app._poetry
+        assert not app._poetry
 
-    tester.execute(command)
+        tester.execute(command)
 
-    assert app.poetry.pool.repositories
+        assert app.poetry.pool.repositories
 
-    for repo in app.poetry.pool.repositories:
-        assert isinstance(repo, CachedRepository)
-        assert repo._disable_cache == disable_cache
+        for repo in app.poetry.pool.repositories:
+            assert isinstance(repo, CachedRepository)
+            assert repo._disable_cache == disable_cache
 
 
 @pytest.mark.parametrize("disable_cache", [True, False])
 def test_application_verify_cache_flag_at_install(
-    mocker: MockerFixture, disable_cache: bool
+    mocker: MockerFixture,
+    disable_cache: bool,
+    set_project_context: SetProjectContext,
 ) -> None:
-    app = Application()
+    with set_project_context("sample_project"):
+        app = Application()
 
-    tester = ApplicationTester(app)
-    command = "install --dry-run"
+        tester = ApplicationTester(app)
+        command = "install --dry-run"
 
-    if disable_cache:
-        command = f"{command} --no-cache"
+        if disable_cache:
+            command = f"{command} --no-cache"
 
-    spy = mocker.spy(Authenticator, "__init__")
+        spy = mocker.spy(Authenticator, "__init__")
 
-    tester.execute(command)
+        tester.execute(command)
 
-    assert spy.call_count == 2
-    for call in spy.mock_calls:
-        (name, args, kwargs) = call
-        assert "disable_cache" in kwargs
-        assert disable_cache is kwargs["disable_cache"]
+        assert spy.call_count == 2
+        for call in spy.mock_calls:
+            (name, args, kwargs) = call
+            assert "disable_cache" in kwargs
+            assert disable_cache is kwargs["disable_cache"]

@@ -10,8 +10,6 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    import httpretty
-
     from cleo.testers.command_tester import CommandTester
 
     from poetry.poetry import Poetry
@@ -92,13 +90,10 @@ def poetry_with_invalid_lockfile(
 def test_lock_check_outdated_legacy(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
-    http: type[httpretty.httpretty],
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_outdated_lockfile.locker._local_config,
+        pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
     )
     poetry_with_outdated_lockfile.set_locker(locker)
 
@@ -119,13 +114,10 @@ def test_lock_check_outdated_legacy(
 def test_lock_check_up_to_date_legacy(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
-    http: type[httpretty.httpretty],
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_up_to_date_lockfile.locker._local_config,
+        pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
     )
     poetry_with_up_to_date_lockfile.set_locker(locker)
 
@@ -153,7 +145,7 @@ def test_lock_no_update(
 
     locker = Locker(
         lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_old_lockfile.locker._local_config,
+        pyproject_data=poetry_with_old_lockfile.locker._pyproject_data,
     )
     poetry_with_old_lockfile.set_locker(locker)
 
@@ -168,7 +160,7 @@ def test_lock_no_update(
 
     locker = Locker(
         lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config={},
+        pyproject_data={},
     )
     packages = locker.locked_repository().packages
 
@@ -196,7 +188,7 @@ def test_lock_no_update_path_dependencies(
     locker = Locker(
         lock=poetry_with_nested_path_deps_old_lockfile.pyproject.file.path.parent
         / "poetry.lock",
-        local_config=poetry_with_nested_path_deps_old_lockfile.locker._local_config,
+        pyproject_data=poetry_with_nested_path_deps_old_lockfile.locker._pyproject_data,
     )
     poetry_with_nested_path_deps_old_lockfile.set_locker(locker)
 
@@ -224,7 +216,7 @@ def test_lock_path_dependency_does_not_exist(
     poetry = _project_factory(project, project_factory, fixture_dir)
     locker = Locker(
         lock=poetry.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry.locker._local_config,
+        pyproject_data=poetry.locker._pyproject_data,
     )
     poetry.set_locker(locker)
     options = "" if update else "--no-update"
@@ -252,7 +244,7 @@ def test_lock_path_dependency_deleted_from_pyproject(
     poetry = _project_factory(project, project_factory, fixture_dir)
     locker = Locker(
         lock=poetry.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry.locker._local_config,
+        pyproject_data=poetry.locker._pyproject_data,
     )
     poetry.set_locker(locker)
 
@@ -279,7 +271,7 @@ def test_lock_with_incompatible_lockfile(
     locker = Locker(
         lock=poetry_with_incompatible_lockfile.pyproject.file.path.parent
         / "poetry.lock",
-        local_config=poetry_with_incompatible_lockfile.locker._local_config,
+        pyproject_data=poetry_with_incompatible_lockfile.locker._pyproject_data,
     )
     poetry_with_incompatible_lockfile.set_locker(locker)
 
@@ -309,7 +301,7 @@ def test_lock_with_invalid_lockfile(
 
     locker = Locker(
         lock=poetry_with_invalid_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_invalid_lockfile.locker._local_config,
+        pyproject_data=poetry_with_invalid_lockfile.locker._pyproject_data,
     )
     poetry_with_invalid_lockfile.set_locker(locker)
 

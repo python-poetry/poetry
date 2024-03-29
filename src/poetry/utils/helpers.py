@@ -20,15 +20,15 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import overload
 
-import requests
-
 from requests.utils import atomic_open
 
+from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Collection
     from collections.abc import Iterator
     from types import TracebackType
 
@@ -171,10 +171,10 @@ class Downloader:
     ):
         self._dest = dest
 
-        get = requests.get if not session else session.get
+        session = session or get_default_authenticator()
         headers = {"Accept-Encoding": "Identity"}
 
-        self._response = get(
+        self._response = session.get(
             url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
         )
         self._response.raise_for_status()
@@ -333,7 +333,7 @@ def get_file_hash(path: Path, hash_name: str = "sha256") -> str:
 
 
 def get_highest_priority_hash_type(
-    hash_types: set[str], archive_name: str
+    hash_types: Collection[str], archive_name: str
 ) -> str | None:
     if not hash_types:
         return None

@@ -1,17 +1,42 @@
 {
-  "name": "pylev",
   "files": [
     {
+      "core-metadata": {
+        "sha256": "4a5b8c2be7e6f09ffe9a9b8018091c79074f61601fbbb693d6a3bd93bb4d5242"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4a5b8c2be7e6f09ffe9a9b8018091c79074f61601fbbb693d6a3bd93bb4d5242"
+      },
       "filename": "pylev-1.3.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/40/1c/7dff1d242bf1e19f9c6202f0ba4e6fd18cc7ecb8bc85b17b2d16c806e228/pylev-1.3.0-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "6da14dfce5034873fc5c2d7a6e83dc29",
         "sha256": "1d29a87beb45ebe1e821e7a3b10da2b6b2f4c79b43f482c2df1a1f748a6e114e"
-      }
+      },
+      "requires-python": null,
+      "size": 4927,
+      "upload-time": "2014-10-23T00:24:34.125905Z",
+      "url": "https://files.pythonhosted.org/packages/40/1c/7dff1d242bf1e19f9c6202f0ba4e6fd18cc7ecb8bc85b17b2d16c806e228/pylev-1.3.0-py2.py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "pylev-1.3.0.tar.gz",
+      "hashes": {
+        "sha256": "063910098161199b81e453025653ec53556c1be7165a9b7c50be2f4d57eae1c3"
+      },
+      "requires-python": null,
+      "size": 3193,
+      "upload-time": "2014-10-23T00:24:19.460779Z",
+      "url": "https://files.pythonhosted.org/packages/cc/61/dab2081d3d86dcf0b9f5dcfb11b256d76cd14aad7ccdd7c8dd5e7f7e41a0/pylev-1.3.0.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 1279536
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "pylev",
+  "versions": [
+    "1.3.0"
+  ]
 }

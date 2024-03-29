@@ -15,7 +15,7 @@
       "Programming Language :: Python :: 3.3",
       "Programming Language :: Python :: 3.4"
     ],
-    "description": "Install the Jupyter system, including the notebook, qtconsole, and the IPython kernel.",
+    "description": "",
     "description_content_type": null,
     "docs_url": null,
     "download_url": "UNKNOWN",
@@ -24,6 +24,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://jupyter.org",
     "keywords": null,
     "license": "BSD",
@@ -37,6 +38,7 @@
       "Download": "UNKNOWN",
       "Homepage": "http://jupyter.org"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/jupyter/1.0.0/",
     "requires_dist": null,
     "requires_python": null,
@@ -45,18 +47,18 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 1673841,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "f81d039e084c2c0c4da9e4a86446b863",
-        "sha256": "5b290f93b98ffbc21c0c7e749f054b3267782166d72fa5e3ed1ed4eaf34a2b78"
+        "md5": "b2f5e2daab779c7bda0be38925ab1b92",
+        "sha256": "83c4591b9c7392ea5f91e0d9f8e98d894f76e8e669260788f0fcb281ec0b3b1f"
       },
       "downloads": -1,
       "filename": "jupyter-1.0.0-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "f81d039e084c2c0c4da9e4a86446b863",
+      "md5_digest": "b2f5e2daab779c7bda0be38925ab1b92",
       "packagetype": "bdist_wheel",
       "python_version": "3.4",
       "requires_python": null,
@@ -70,13 +72,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "c6030444c7eb6c05a4d7b1768c72aed7",
-        "sha256": "d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f"
+        "md5": "78acaec88533ea6b6e761e7d086a1d04",
+        "sha256": "3ef1e86ba0556ea5922b846416a41acfd2625830d996c7d06d80c90bed1dc193"
       },
       "downloads": -1,
       "filename": "jupyter-1.0.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "c6030444c7eb6c05a4d7b1768c72aed7",
+      "md5_digest": "78acaec88533ea6b6e761e7d086a1d04",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,
@@ -90,13 +92,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "25142b08e2ad7142b6f920bc8cc8dfeb",
-        "sha256": "3e1f86076bbb7c8c207829390305a2b1fe836d471ed54be66a3b8c41e7f46cc7"
+        "md5": "7b7a957694a73ac0c19fe46c216c0ea0",
+        "sha256": "4a855b9717c3ea24fd8ca4fd91ab5995894aecc4d20e7f39c28786a2c1869fae"
       },
       "downloads": -1,
       "filename": "jupyter-1.0.0.zip",
       "has_sig": false,
-      "md5_digest": "25142b08e2ad7142b6f920bc8cc8dfeb",
+      "md5_digest": "7b7a957694a73ac0c19fe46c216c0ea0",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": null,

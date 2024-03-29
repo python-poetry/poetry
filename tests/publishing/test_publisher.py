@@ -91,16 +91,17 @@ def test_publish_raises_error_for_undefined_repository(
         publisher.publish("my-repo", None, None)
 
 
-def test_publish_uses_token_if_it_exists(
-    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+def assert_publish_uses_token_if_it_exists(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config | None = None
 ) -> None:
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
-    poetry._config = config
-    poetry.config.merge({"pypi-token": {"pypi": "my-token"}})
-    publisher = Publisher(poetry, NullIO())
 
+    if config:
+        poetry._config = config
+
+    publisher = Publisher(poetry, NullIO())
     publisher.publish(None, None, None)
 
     assert [("__token__", "my-token")] == uploader_auth.call_args
@@ -108,6 +109,20 @@ def test_publish_uses_token_if_it_exists(
         ("https://upload.pypi.org/legacy/",),
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ] == uploader_upload.call_args
+
+
+def test_publish_uses_token_if_it_exists(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+) -> None:
+    config.merge({"pypi-token": {"pypi": "my-token"}})
+    assert_publish_uses_token_if_it_exists(fixture_dir, mocker, config)
+
+
+def test_publish_uses_env_token_if_it_exists(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, environ: None
+) -> None:
+    os.environ["POETRY_PYPI_TOKEN_PYPI"] = "my-token"
+    assert_publish_uses_token_if_it_exists(fixture_dir, mocker)
 
 
 def test_publish_uses_cert(

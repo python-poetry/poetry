@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.factory import Factory
 from poetry.packages import Locker
 from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
-    import httpretty
+    from typing import Iterator
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -17,42 +18,36 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
-    from tests.types import ProjectFactory
+    from tests.types import SetProjectContext
 
 
-@pytest.fixture()
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("check")
-
-
-def _project_factory(
-    fixture_name: str,
-    project_factory: ProjectFactory,
-    fixture_dir: FixtureDirGetter,
-) -> Poetry:
-    source = fixture_dir(fixture_name)
-    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
-    poetry_lock_content = (source / "poetry.lock").read_text(encoding="utf-8")
-    return project_factory(
-        name="foobar",
-        pyproject_content=pyproject_content,
-        poetry_lock_content=poetry_lock_content,
-        source=source,
-    )
+@pytest.fixture
+def poetry_sample_project(set_project_context: SetProjectContext) -> Iterator[Poetry]:
+    with set_project_context("sample_project", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
 
 
 @pytest.fixture
 def poetry_with_outdated_lockfile(
-    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
-) -> Poetry:
-    return _project_factory("outdated_lock", project_factory, fixture_dir)
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("outdated_lock", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
 
 
 @pytest.fixture
 def poetry_with_up_to_date_lockfile(
-    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
-) -> Poetry:
-    return _project_factory("up_to_date_lock", project_factory, fixture_dir)
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("up_to_date_lock", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
+
+
+@pytest.fixture()
+def tester(
+    command_tester_factory: CommandTesterFactory, poetry_sample_project: Poetry
+) -> CommandTester:
+    return command_tester_factory("check", poetry=poetry_sample_project)
 
 
 def test_check_valid(tester: CommandTester) -> None:
@@ -175,14 +170,11 @@ def test_check_lock_missing(
 def test_check_lock_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
-    http: type[httpretty.httpretty],
     options: str,
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_outdated_lockfile.locker._local_config,
+        pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
     )
     poetry_with_outdated_lockfile.set_locker(locker)
 
@@ -203,14 +195,11 @@ def test_check_lock_outdated(
 def test_check_lock_up_to_date(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
-    http: type[httpretty.httpretty],
     options: str,
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_up_to_date_lockfile.locker._local_config,
+        pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
     )
     poetry_with_up_to_date_lockfile.set_locker(locker)
 

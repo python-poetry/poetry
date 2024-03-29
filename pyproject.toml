@@ -32,19 +32,19 @@ Changelog = "https://python-poetry.org/history/"
 python = "^3.8"
 
 poetry-core = "1.9.0"
-poetry-plugin-export = "^1.6.0"
-build = "^1.0.3"
+poetry-plugin-export = "^1.7.0"
+build = "^1.1.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
 cleo = "^2.1.0"
 dulwich = "^0.21.2"
 fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-keyring = "^24.0.0"
+keyring = "^24.3.1"
 # packaging uses calver, so version is unclamped
 packaging = ">=23.1"
 pexpect = "^4.7.0"
-pkginfo = "^1.9.4"
+pkginfo = "^1.10"
 platformdirs = ">=3.0.0,<5"
 pyproject-hooks = "^1.0.0"
 requests = "^2.26"
@@ -64,6 +64,7 @@ pre-commit = ">=2.10"
 coverage = ">=7.2.0"
 deepdiff = "^6.3"
 httpretty = "^1.1"
+jaraco-classes = "^3.3.1"
 pytest = "^8.0"
 pytest-cov = "^4.0"
 pytest-mock = "^3.9"
@@ -93,7 +94,10 @@ build-backend = "poetry.core.masonry.api"
 extend-exclude = [
     "docs/*",
     # External to the project's coding standards
-    "tests/**/fixtures/*",
+    "tests/fixtures/git/*",
+    "tests/fixtures/project_with_setup*/*",
+    "tests/masonry/builders/fixtures/pep_561_stub_only*/*",
+    "tests/utils/fixtures/setups/*",
 ]
 fix = true
 line-length = 88
@@ -101,9 +105,6 @@ src = ["src"]
 target-version = "py38"
 
 [tool.ruff.lint]
-unfixable = [
-    "ERA", # do not autoremove commented out code
-]
 extend-select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
@@ -114,6 +115,7 @@ extend-select = [
     "PGH", # pygrep
     "RUF", # ruff checks
     "SIM", # flake8-simplify
+    "T20", # flake8-print
     "TCH", # flake8-type-checking
     "TID", # flake8-tidy-imports
     "UP",  # pyupgrade
@@ -122,6 +124,12 @@ ignore = [
     "B904", # use 'raise ... from err'
     "B905", # use explicit 'strict=' parameter with 'zip()'
     "N818", #  Exception name should be named with an Error suffix
+]
+extend-safe-fixes = [
+    "TCH", # move import from and to TYPE_CHECKING blocks
+]
+unfixable = [
+    "ERA", # do not autoremove commented out code
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
@@ -161,10 +169,8 @@ exclude = [
 module = [
     'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
-    'poetry.utils.env.site_packages',
     'tests.console.commands.self.test_show_plugins',
     'tests.helpers',
-    'tests.repositories.test_installed_repository',
 ]
 warn_unused_ignores = false
 
@@ -173,7 +179,6 @@ module = [
     'deepdiff.*',
     'fastjsonschema.*',
     'httpretty.*',
-    'keyring.*',
     'pexpect.*',
     'requests_toolbelt.*',
     'shellingham.*',
@@ -184,7 +189,7 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-addopts = "-n auto"
+addopts = "-n logical"
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
