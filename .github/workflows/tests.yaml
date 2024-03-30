@@ -1,12 +1,12 @@
 name: Tests
 
 on:
-  push:
-  pull_request:
   merge_group:
+  pull_request:
+  push:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
@@ -101,10 +101,10 @@ jobs:
     # Use this matrix with multiple jobs defined in a reusable workflow:
     uses: ./.github/workflows/.tests-matrix.yaml
     name: ${{ matrix.os.name }} (Python ${{ matrix.python-version }})
-    if: '!failure()'
+    if: '!failure() && !cancelled()'
     needs:
-      - lockfile
       - changes
+      - lockfile
     with:
       runner: ${{ matrix.os.image }}
       python-version: ${{ matrix.python-version }}
@@ -127,7 +127,7 @@ jobs:
   status:
     name: Status
     runs-on: ubuntu-latest
-    if: always()
+    if: '!cancelled()'
     needs:
       - lockfile
       - smoke
