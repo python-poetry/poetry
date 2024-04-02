@@ -28,10 +28,22 @@ class Uninstall(Operation):
     def job_type(self) -> str:
         return "uninstall"
 
+    @property
+    def message_verb(self) -> str:
+        return "Removed" if self.done else "Removing"
+
+    def get_message(self) -> str:
+        return (
+            f"<{self._message_base_tag}>{self.message_verb}"
+            f" <{self._message_package_color}>{self.package.name}"
+            f"</{self._message_package_color}>"
+            f" (<{self._message_color}>{self.package.full_pretty_version}</>)</>"
+        )
+
     def __str__(self) -> str:
         return (
-            "Uninstalling"
-            f" {self.package.pretty_name} ({self.format_version(self._package)})"
+            f"{self.message_verb} "
+            f"{self.package.pretty_name} ({self.format_version(self._package)})"
         )
 
     def __repr__(self) -> str:
