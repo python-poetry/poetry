@@ -193,7 +193,7 @@ class Executor:
                 #
                 # We need to explicitly check source type here, see:
                 # https://github.com/python-poetry/poetry-core/pull/98
-                is_parallel_unsafe = operation.job_type == "uninstall" or (
+                is_parallel_unsafe = (
                     operation.package.develop
                     and operation.package.source_type in {"directory", "git"}
                 )
