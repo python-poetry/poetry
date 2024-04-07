@@ -19,7 +19,7 @@ class NewCommand(Command):
         option(
             "readme",
             None,
-            "Specify the readme file format. One of md (default) or rst",
+            "Specify the readme file format. Default is md.",
             flag=False,
         ),
     ]
