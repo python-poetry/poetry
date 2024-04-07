@@ -112,7 +112,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
     def handle(self) -> int:
         from poetry.core.constraints.version import parse_constraint
         from tomlkit import inline_table
-        from tomlkit import parse as parse_toml
+        from tomlkit import nl
         from tomlkit import table
 
         from poetry.factory import Factory
@@ -150,17 +150,17 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 poetry_content["group"] = table(is_super_table=True)
 
             groups = poetry_content["group"]
+
             if group not in groups:
-                dependencies_toml: dict[str, Any] = parse_toml(
-                    f"[tool.poetry.group.{group}.dependencies]\n\n"
-                )
-                group_table = dependencies_toml["tool"]["poetry"]["group"][group]
-                poetry_content["group"][group] = group_table
+                groups[group] = table()
+                groups.add(nl())
 
-            if "dependencies" not in poetry_content["group"][group]:
-                poetry_content["group"][group]["dependencies"] = table()
+            this_group = groups[group]
 
-            section = poetry_content["group"][group]["dependencies"]
+            if "dependencies" not in this_group:
+                this_group["dependencies"] = table()
+
+            section = this_group["dependencies"]
 
         existing_packages = self.get_existing_packages_from_input(packages, section)
 
@@ -266,7 +266,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             )
 
         # Refresh the locker
-        content["tool"]["poetry"] = poetry_content
         self.poetry.locker.set_pyproject_data(content)
         self.installer.set_locker(self.poetry.locker)
 
