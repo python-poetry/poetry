@@ -795,10 +795,40 @@ Writing lock file
     }
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
+@pytest.mark.parametrize(
+    ("existing_extras", "expected_extras"),
+    [
+        (None, {"my-extra": ["cachy (==0.2.0)"]}),
+        (
+            {"other": ["foo>2"]},
+            {"other": ["foo>2"], "my-extra": ["cachy (==0.2.0)"]},
+        ),
+        ({"my-extra": ["foo>2"]}, {"my-extra": ["foo>2", "cachy (==0.2.0)"]}),
+        (
+            {"my-extra": ["foo>2", "cachy (==0.1.0)", "bar>1"]},
+            {"my-extra": ["foo>2", "cachy (==0.2.0)", "bar>1"]},
+        ),
+    ],
+)
 def test_add_constraint_with_optional(
-    app: PoetryTestApplication, tester: CommandTester
+    app: PoetryTestApplication,
+    tester: CommandTester,
+    project_dependencies: bool,
+    existing_extras: dict[str, list[str]] | None,
+    expected_extras: dict[str, list[str]],
 ) -> None:
-    tester.execute("cachy=0.2.0 --optional")
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    if project_dependencies:
+        pyproject["project"]["dependencies"] = ["foo>1"]
+        if existing_extras:
+            pyproject["project"]["optional-dependencies"] = existing_extras
+    else:
+        pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    tester.execute("cachy=0.2.0 --optional my-extra")
     expected = """\
 
 Updating dependencies
@@ -813,14 +843,37 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 0
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    pyproject2: dict[str, Any] = app.poetry.file.read()
+    project_content = pyproject2["project"]
+    poetry_content = pyproject2["tool"]["poetry"]
 
-    assert "cachy" in content["dependencies"]
-    assert content["dependencies"]["cachy"] == {
-        "version": "0.2.0",
-        "optional": True,
-    }
+    if project_dependencies:
+        assert "cachy" not in poetry_content["dependencies"]
+        assert "cachy" not in project_content["dependencies"]
+        assert "my-extra" in project_content["optional-dependencies"]
+        assert project_content["optional-dependencies"] == expected_extras
+        assert not tester.io.fetch_error()
+    else:
+        assert "dependencies" not in project_content
+        assert "optional-dependencies" not in project_content
+        assert "cachy" in poetry_content["dependencies"]
+        assert poetry_content["dependencies"]["cachy"] == {
+            "version": "0.2.0",
+            "optional": True,
+        }
+        assert (
+            "Optional dependencies will not be added to extras in legacy mode."
+            in tester.io.fetch_error()
+        )
+
+
+def test_add_constraint_with_optional_not_main_group(
+    app: PoetryTestApplication, tester: CommandTester
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("cachy=0.2.0 --group dev --optional my-extra")
+
+    assert str(e.value) == "You can only add optional dependencies to the main group"
 
 
 def test_add_constraint_with_python(
