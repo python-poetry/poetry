@@ -54,7 +54,12 @@ class AddCommand(InstallerCommand, InitCommand):
             flag=False,
             multiple=True,
         ),
-        option("optional", None, "Add as an optional dependency."),
+        option(
+            "optional",
+            None,
+            "Add as an optional dependency to an extra.",
+            flag=False,
+        ),
         option(
             "python",
             None,
@@ -137,6 +142,10 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 "You can only specify one package when using the --extras option"
             )
 
+        optional = self.option("optional")
+        if optional and group != MAIN_GROUP:
+            raise ValueError("You can only add optional dependencies to the main group")
+
         # tomlkit types are awkward to work with, treat content as a mostly untyped
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
@@ -156,13 +165,19 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 or "optional-dependencies" in project_content
             ):
                 use_project_section = True
+                if optional:
+                    project_section = project_content.get(
+                        "optional-dependencies", {}
+                    ).get(optional, array())
+                else:
+                    project_section = project_content.get("dependencies", array())
                 project_dependency_names = [
-                    Dependency.create_from_pep_508(dep).name
-                    for dep in project_content.get("dependencies", {})
+                    Dependency.create_from_pep_508(dep).name for dep in project_section
                 ]
+            else:
+                project_section = array()
 
             poetry_section = poetry_content.get("dependencies", table())
-            project_section = project_content.get("dependencies", array())
         else:
             if "group" not in poetry_content:
                 poetry_content["group"] = table(is_super_table=True)
@@ -194,6 +209,13 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             self.line("Nothing to add.")
             return 0
 
+        if optional and not use_project_section:
+            self.line_error(
+                "<warning>Optional dependencies will not be added to extras"
+                " in legacy mode. Consider converting your project to use the [project]"
+                " section.</warning>"
+            )
+
         requirements = self._determine_requirements(
             packages,
             allow_prereleases=self.option("allow-prereleases"),
@@ -214,7 +236,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
                 constraint[key] = value
 
-            if self.option("optional"):
+            if optional:
                 constraint["optional"] = True
 
             if self.option("allow-prereleases"):
@@ -290,7 +312,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 # that cannot be stored in the project section
                 poetry_constraint: dict[str, Any] = inline_table()
                 if not isinstance(constraint, str):
-                    for key in ["optional", "allow-prereleases", "develop", "source"]:
+                    for key in ["allow-prereleases", "develop", "source"]:
                         if value := constraint.get(key):
                             poetry_constraint[key] = value
                     if poetry_constraint:
@@ -310,9 +332,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     poetry_section[constraint_name] = poetry_constraint
 
         # Refresh the locker
-        if project_section and "dependencies" not in project_content:
+        if project_section:
             assert group == MAIN_GROUP
-            project_content["dependencies"] = project_section
+            if optional:
+                if "optional-dependencies" not in project_content:
+                    project_content["optional-dependencies"] = table()
+                if optional not in project_content["optional-dependencies"]:
+                    project_content["optional-dependencies"][optional] = project_section
+            elif "dependencies" not in project_content:
+                project_content["dependencies"] = project_section
         if poetry_section:
             if "tool" not in content:
                 content["tool"] = table()
