@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import TypeVar
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
-
-T = TypeVar("T", bound="Operation")
+    from typing_extensions import Self
 
 
 class Operation:
@@ -46,13 +44,13 @@ class Operation:
         version: str = package.full_pretty_version
         return version
 
-    def skip(self: T, reason: str) -> T:
+    def skip(self, reason: str) -> Self:
         self._skipped = True
         self._skip_reason = reason
 
         return self
 
-    def unskip(self: T) -> T:
+    def unskip(self) -> Self:
         self._skipped = False
         self._skip_reason = None
 

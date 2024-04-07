@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import FrozenSet
 from typing import Tuple
-from typing import TypeVar
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
+    from typing_extensions import Self
 
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import RepositoryPool
@@ -198,8 +198,6 @@ class Solver:
 
 DFSNodeID = Tuple[str, FrozenSet[str], bool]
 
-T = TypeVar("T", bound="DFSNode")
-
 
 class DFSNode:
     def __init__(self, id: DFSNodeID, name: str, base_name: str) -> None:
@@ -207,7 +205,7 @@ class DFSNode:
         self.name = name
         self.base_name = base_name
 
-    def reachable(self: T) -> list[T]:
+    def reachable(self) -> list[Self]:
         return []
 
     def visit(self, parents: list[PackageNode]) -> None:
