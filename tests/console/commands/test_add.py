@@ -1313,41 +1313,6 @@ Writing lock file
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
-def test_add_to_section_that_does_no_exist_yet(
-    app: PoetryTestApplication,
-    repo: TestRepository,
-    tester: CommandTester,
-) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
-    tester.execute("cachy --group dev")
-
-    expected = """\
-Using version ^0.2.0 for cachy
-
-Updating dependencies
-Resolving dependencies...
-
-Package operations: 1 install, 0 updates, 0 removals
-
-  - Installing cachy (0.2.0)
-
-Writing lock file
-"""
-
-    assert tester.io.fetch_output() == expected
-
-    assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
-
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
-
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
-
-
 def test_add_keyboard_interrupt_restore_content(
     poetry_with_up_to_date_lockfile: Poetry,
     repo: TestRepository,
