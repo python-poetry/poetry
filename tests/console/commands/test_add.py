@@ -992,13 +992,17 @@ def test_add_constraint_not_found_with_source(
     assert str(e.value) == "Could not find a matching version of package cachy"
 
 
+@pytest.mark.parametrize("group_name", ["dev", "foo.BAR"])
 def test_add_to_section_that_does_not_exist_yet(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    tester: CommandTester,
+    group_name: str,
 ) -> None:
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute("cachy --group dev")
+    tester.execute(f"cachy --group {group_name}")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -1020,12 +1024,13 @@ Writing lock file
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert "cachy" in content["group"][group_name]["dependencies"]
+    assert content["group"][group_name]["dependencies"]["cachy"] == "^0.2.0"
 
-    expected = """\
+    escaped_group_name = f'"{group_name}"' if "." in group_name else group_name
+    expected = f"""\
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.{escaped_group_name}.dependencies]
 cachy = "^0.2.0"
 
 """
