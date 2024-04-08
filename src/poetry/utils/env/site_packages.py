@@ -32,7 +32,6 @@ class SitePackages:
             self._platlib = purelib
 
         self._fallbacks = fallbacks or []
-        self._skip_write_checks = skip_write_checks
 
         self._candidates: list[Path] = []
         for path in itertools.chain([self._purelib, self._platlib], self._fallbacks):

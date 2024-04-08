@@ -96,8 +96,6 @@ class Executor:
         self._chooser = Chooser(pool, self._env, config)
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
-        self._total_operations = 0
-        self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
         self._sections: dict[int, SectionOutput] = {}
@@ -160,7 +158,6 @@ class Executor:
         return 0
 
     def execute(self, operations: list[Operation]) -> int:
-        self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
             self._skipped[job_type] = 0
@@ -404,7 +401,6 @@ class Executor:
     def _increment_operations_count(self, operation: Operation, executed: bool) -> None:
         with self._lock:
             if executed:
-                self._executed_operations += 1
                 self._executed[operation.job_type] += 1
             else:
                 self._skipped[operation.job_type] += 1

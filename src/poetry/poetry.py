@@ -85,11 +85,6 @@ class Poetry(BasePoetry):
 
         return self
 
-    def set_plugin_manager(self, plugin_manager: PluginManager) -> Poetry:
-        self._plugin_manager = plugin_manager
-
-        return self
-
     def get_sources(self) -> list[Source]:
         return [
             Source(**source)
