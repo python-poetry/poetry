@@ -51,9 +51,3 @@ class Operation:
         self._skip_reason = reason
 
         return self
-
-    def unskip(self: T) -> T:
-        self._skipped = False
-        self._skip_reason = None
-
-        return self

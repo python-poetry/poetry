@@ -19,9 +19,8 @@ if TYPE_CHECKING:
 
 
 class FileConfigSource(ConfigSource):
-    def __init__(self, file: TOMLFile, auth_config: bool = False) -> None:
+    def __init__(self, file: TOMLFile) -> None:
         self._file = file
-        self._auth_config = auth_config
 
     @property
     def name(self) -> str:
